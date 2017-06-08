@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+
+<tiles-definitions>
+    <definition extends="default" name="2fa/form">
+        <put-attribute name="body" value="/WEB-INF/views/2fa/form.jspx"/>
+    </definition>
+    <definition extends="default" name="2fa/thanks">
+        <put-attribute name="body" value="/WEB-INF/views/2fa/thanks.jspx"/>
+    </definition>
+    <definition extends="default" name="2fa/already">
+        <put-attribute name="body" value="/WEB-INF/views/2fa/already.jspx"/>
+    </definition>
+</tiles-definitions>

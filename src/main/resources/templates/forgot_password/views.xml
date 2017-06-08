@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "http://tiles.apache.org/dtds/tiles-config_3_0.dtd">
+
+<tiles-definitions>
+	<definition extends="login-layout" name="forgot_password/form">
+		<put-attribute name="body" value="/WEB-INF/views/forgot_password/form.jspx" />
+	</definition>
+	<definition extends="login-layout" name="forgot_password/thanks">
+		<put-attribute name="body" value="/WEB-INF/views/forgot_password/thanks.jspx" />
+	</definition>
+	<definition extends="login-layout" name="forgot_password/set_new">
+		<put-attribute name="body" value="/WEB-INF/views/forgot_password/set_new.jspx" />
+	</definition>
+</tiles-definitions>

@@ -1,0 +1,14 @@
+<div xmlns:c="http://java.sun.com/jsp/jstl/core"
+	xmlns:form="http://www.springframework.org/tags/form"
+	xmlns:jsp="http://java.sun.com/JSP/Page"
+	xmlns:spring="http://www.springframework.org/tags"
+	xmlns:util="urn:jsptagdir:/WEB-INF/tags/util" version="2.0">
+	<jsp:output omit-xml-declaration="yes" />
+
+	<spring:message code="label_2step_auth_title" htmlEscape="false" var="title" />
+	<util:panel id="title" title="${title}">
+		<p>
+			<spring:message code="label_2step_auth_turned_on" />
+		</p>
+	</util:panel>
+</div>

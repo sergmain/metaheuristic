@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+
+<!--
+
+    <spring:message code="global_language_switch" arguments="${label}" var="lang_label" htmlEscape="false" />
+    <spring:url var="img" value="/resources/images/${locale}.png" />
+-->
+
+    <img class="flag" src="/static/images/en.png" th:src="@{/static/images/${locale}.png}" alt="${lang_label}" />
+    &nbsp;
+    <a href="#" th:href="?lang=${locale}" class="language-link active">${label}</a>

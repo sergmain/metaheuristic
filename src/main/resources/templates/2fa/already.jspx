@@ -1,0 +1,34 @@
+<div xmlns:jsp="http://java.sun.com/JSP/Page"
+     xmlns:spring="http://www.springframework.org/tags"
+     xmlns:sec="http://www.springframework.org/security/tags"
+     version="2.0">
+    <jsp:output omit-xml-declaration="yes" />
+
+    <sec:authorize access="isAuthenticated()">
+
+        <spring:message code="label_2step_auth_title" htmlEscape="false" var="label_2step_auth_title" />
+
+        <div id="content-region-inner" class="content-region-inner inner">
+            <div id="content-tabs" class="content-tabs block">
+                <div id="content-tabs-inner" class="content-tabs-inner inner clearfix">
+                    <ul class="tabs primary">
+                        <li><a href="passwd"><spring:message code="label_change_password"/></a></li>
+                        <li class="active"><a href="2fa" class="active">${label_2step_auth_title}</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <div id="content-inner" class="content-inner block">
+                <div id="content-inner-inner" class="content-inner-inner inner">
+
+                    <h1 class="title">${label_2step_auth_title}</h1>
+                    <div id="content-content" class="content-content">
+                        <p>
+                            <spring:message code="label_2step_auth_turned_on" />
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </sec:authorize>
+</div>

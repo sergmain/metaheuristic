@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<div id="header-primary-menu-wrapper" class="header-primary-menu-wrapper full-width">
+
+    <div id="header-primary-menu" class="header-primary-menu row grid16-16">
+        <div id="header-primary-menu-inner" class="header-primary-menu-inner inner clearfix">
+            <div id="primary-menu" class="primary-menu block">
+                <div id="primary-menu-inner" class="primary-menu-inner inner clearfix">
+                    <ul class="menu sf-menu sf-js-enabled">
+
+<!--
+                        <spring:url value="/index" var="_url" />
+                        <spring:message code="page_name_home_title" var="home_title"/>
+-->
+                        <li class="leaf first">
+                            <a href="/" th:href="@{/}">Index</a>
+                            <!--<a href="${_url}" title="${home_title}"><spring:message code="page_name_home"/></a>-->
+                        </li>
+
+<!--
+                        <spring:url value="/about" var="_url" />
+                        <spring:message code="page_name_about_title" var="about_title"/>
+-->
+                        <li class="leaf">
+                            <a href="/about" title="Index" th:href="@{/about}">About</a>
+                            <!--<a href="/about" title="${about_title}"><spring:message code="page_name_about"/></a>-->
+                        </li>
+<!--
+                        <sec:authorize access="isAuthenticated()">
+                            <spring:url value="/cabinet" var="_url"/>
+                            <spring:message code="page_name_cabinet_title" var="cabinet_title"/>
+                            <li class="leaf">
+                                <a href="/about" th:href="@{/about}">Index</a>
+                                &lt;!&ndash;<a href="${_url}" title="${cabinet_title}"><spring:message code="page_name_cabinet"/></a>&ndash;&gt;
+                            </li>
+                        </sec:authorize>
+-->
+                        <!--<sec:authorize access="isAnonymous()">-->
+<!--
+                            <spring:url value="/login" var="login"/>
+                            <spring:message code="page_name_login_title" var="login_title"/>
+-->
+                            <li class="leaf last">
+                                <a href="/login" title="Login" th:href="@{/login}">Login</a>
+                                <!--<a href="${login}" title="${login_title}"><spring:message code="page_name_login"/></a>-->
+                            </li>
+                        <!--</sec:authorize>-->
+<!--
+                        <sec:authorize access="isAuthenticated()">
+                            <spring:url value="/passwd" var="passwd"/>
+                            <spring:message code="page_name_settings_title" var="settings_title"/>
+                            <li class="leaf">
+                                <a href="/about" th:href="@{/about}">Index</a>
+                                &lt;!&ndash;<a href="${passwd}" title="${settings_title}"><spring:message code="page_name_settings"/></a>&ndash;&gt;
+                            </li>
+                        </sec:authorize>
+-->
+                        <!--<sec:authorize access="isAuthenticated()">-->
+<!--
+                            <spring:url value="/logout" var="logout"/>
+                            <spring:message code="page_name_logout_title" var="logout_title"/>
+-->
+                            <form method="POST" action="/logout" th:formaction="@{/logout}" id="logout-form">
+                                <li class="leaf last">
+                                    <a href="#" title="Logout" onclick="document.getElementById('logout-form').submit();">Logout</a>
+                                    <!--<a href="#" title="${logout_title}" onclick="document.getElementById('logout-form').submit();"><spring:message code="page_name_logout"/></a>-->
+                                </li>
+                            </form>
+                        <!--</sec:authorize>-->
+                    </ul>
+                </div><!-- /primary-menu-inner -->
+            </div><!-- /primary-menu -->
+        </div><!-- /header-primary-menu-inner -->
+    </div><!-- /header-primary-menu -->
+</div><!-- /header-primary-menu-wrapper -->

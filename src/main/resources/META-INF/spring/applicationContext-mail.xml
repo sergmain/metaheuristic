@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+       ">
+    <!--
+        This will automatically locate any and all property files you have
+        within your classpath, provided they fall under the META-INF/spring
+        directory. The located property files are parsed and their values can
+        then be used within application context files in the form of
+        ${propertyKey}.
+    -->
+    <context:property-placeholder location="classpath:/META-INF/spring/email.properties"/>
+
+    <context:spring-configured/>
+
+    <context:component-scan base-package="aiai.server">
+        <context:include-filter expression="org.springframework.stereotype.Controller" type="annotation"/>
+        <context:include-filter expression="org.springframework.stereotype.Component" type="annotation"/>
+    </context:component-scan>
+
+    <context:annotation-config />
+
+    <bean class="org.springframework.mail.javamail.JavaMailSenderImpl" id="mailSender">
+        <property name="host" value="${email.host}"/>
+        <property name="protocol" value="${email.protocol}"/>
+        <property name="username" value="${email.username}"/>
+        <property name="password" value="${email.password}"/>
+        <property name="port" value="25"/>
+        <!--You need this if you use GMail-->
+
+        <!--
+        <property name="javaMailProperties">
+            <props>
+                <prop key="mail.smtp.auth">true</prop>
+                <prop key="mail.smtp.starttls.enable">true</prop>
+            </props>
+        </property>
+-->
+    </bean>
+    
+<bean class="org.springframework.mail.SimpleMailMessage" id="accountActivationMailTemplate">
+    <property name="from" value="${email.from}"/>
+    <property name="subject" value="Account Activation"/>
+    <property name="text">
+        <value><![CDATA[Hi {{NAME}}!
+
+You had registered with us. To activate your account, please click on the following URL:
+
+	http://localhost:8080/signup?id={{ID}}&k={{ACTIVATION_KEY}}
+
+Thanks]]></value>
+    </property>
+</bean>
+
+    <bean class="org.springframework.mail.SimpleMailMessage" id="accountRecoveryMailTemplate">
+        <property name="from" value="${email.from}"/>
+    <property name="subject" value="Account Recovery"/>
+        <property name="text">
+            <value><![CDATA[Hi {{NAME}}!
+
+You had requested account reset. To reset your account {{LOGIN}}, please click on the following URL:
+
+	http://localhost:8080/forgot/set/{{KEY_ID}}/{{KEY_ID_TIME}}
+
+This request was made from IP address {{REMOTE_ADDRESS}}.
+Note: This link is valid only for 24 hours.
+
+Thanks]]></value>
+        </property>
+    </bean>
+</beans>

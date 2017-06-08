@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<div xmlns:field="urn:jsptagdir:/WEB-INF/tags/form/fields"
+     xmlns:form="http://www.springframework.org/tags/form"
+     xmlns:fn="http://java.sun.com/jsp/jstl/functions" xmlns:jsp="http://java.sun.com/JSP/Page" xmlns:spring="http://www.springframework.org/tags" xmlns:util="urn:jsptagdir:/WEB-INF/tags/util"
+     xmlns:sec="http://www.springframework.org/security/tags"
+     version="2.0">
+    <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+    <jsp:output omit-xml-declaration="yes"/>
+
+    <sec:authorize access="isAnonymous()">
+        <spring:message code="label_sign_up" htmlEscape="false" var="title_sign_up" />
+        <spring:message code="security_login_title" htmlEscape="false" var="title_login"/>
+        <spring:message code="label_forgot_password" htmlEscape="false" var="title_forgot_password"/>
+
+        <div id="content-region-inner" class="content-region-inner inner">
+            <div id="content-tabs" class="content-tabs block">
+                <div id="content-tabs-inner" class="content-tabs-inner inner clearfix">
+                    <ul class="tabs primary">
+                        <li class="active"><a href="signup" class="active">${title_sign_up}</a></li>
+                        <li><a href="login">${title_login}</a></li>
+                        <li><a href="forgot">${title_forgot_password}</a></li>
+                    </ul>
+                </div><!-- /content-tabs-inner -->
+            </div><!-- /content-tabs -->
+
+            <div id="content-inner" class="content-inner block">
+                <div id="content-inner-inner" class="content-inner-inner inner">
+                    <h1 class="title">${title_sign_up}</h1>
+                    <div id="content-content" class="content-content">
+<!--
+                        <p class="errors">
+                            <spring:message code="sign_up_system_error"/>
+                        </p>
+-->
+                        <form:form action="" method="POST" commandName="form">
+                            <field:input field="name" id="c_name" min="1" required="true"/>
+                            <field:input field="login" id="c_login" min="1" required="true"/>
+                            <field:input field="emailAddress" id="c_emailAddress" min="1" required="true" validationMessageCode="field_invalid_email"/>
+                            <field:input field="password" id="c_password" min="5" required="true" type="password"/>
+                            <field:input field="retypePassword" id="c_retype_password" type="password"/>
+                            ${captcha_form}
+
+                            <div class="submit">
+                                <script type="text/javascript">
+                                    Spring.addDecoration(new Spring.ValidateAllDecoration({
+                                        elementId : 'proceed',
+                                        event : 'onclick'
+                                    }));
+                                </script>
+                                <spring:message code="button_submit" htmlEscape="false" var="submit_label" />
+                                <input id="proceed" type="submit" value="${fn:escapeXml(submit_label)}" />
+                            </div>
+                        </form:form>
+
+                    </div><!-- /content-content -->
+                </div><!-- /content-inner-inner -->
+            </div><!-- /content-inner -->
+        </div><!-- /content-region-inner -->
+    </sec:authorize>
+</div>
