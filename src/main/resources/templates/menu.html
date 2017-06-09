@@ -1,7 +1,5 @@
-<!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
 
-<div id="header-primary-menu-wrapper" class="header-primary-menu-wrapper full-width">
+<div xmlns:th="http://www.thymeleaf.org" id="header-primary-menu-wrapper" class="header-primary-menu-wrapper full-width" >
 
     <div id="header-primary-menu" class="header-primary-menu row grid16-16">
         <div id="header-primary-menu-inner" class="header-primary-menu-inner inner clearfix">
@@ -61,7 +59,7 @@
                             <spring:url value="/logout" var="logout"/>
                             <spring:message code="page_name_logout_title" var="logout_title"/>
 -->
-                            <form method="POST" action="/logout" th:formaction="@{/logout}" id="logout-form">
+                            <form method="POST" action="/logout" th:method="POST" th:action="@{/logout}" id="logout-form">
                                 <li class="leaf last">
                                     <a href="#" title="Logout" onclick="document.getElementById('logout-form').submit();">Logout</a>
                                     <!--<a href="#" title="${logout_title}" onclick="document.getElementById('logout-form').submit();"><spring:message code="page_name_logout"/></a>-->

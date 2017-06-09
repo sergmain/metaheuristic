@@ -6,11 +6,8 @@
     <title>AiAi</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-    <!--
-        <spring:url value="/favicon_0.gif" var="favicon" />
-        <link rel="shortcut icon" type="image/x-icon" href="${favicon}" />
-    -->
-
+    <script src="/static/js/jquery.min.js" th:src="@{/js/jquery.min.3.1.0.js}"></script>
+    
     <link type="text/css" rel="stylesheet" media="all" href="/static/css/system-menus.css" th:href="@{/css/system-menus.css}"/>
     <link type="text/css" rel="stylesheet" media="all" href="/static/css/style.css" th:href="@{/css/style.css}"/>
     <link type="text/css" rel="stylesheet" media="all" href="/static/css/typography.css" th:href="@{/css/typography.css}"/>
@@ -22,11 +19,12 @@
         <spring:url value="/${theme_css}" var="theme_css_url" />
         <link type="text/css" rel="stylesheet" media="all" href="${theme_css_url}"/>
     -->
-    <link type="text/css" rel="stylesheet" media="all" href="/static/css/green.css" th:href="@{/css-new/green.css}"/>
+    <link type="text/css" rel="stylesheet" media="all" href="/static/css/green.css" th:href="@{/css/green.css}"/>
 
 </head>
 <body style="position: relative; min-height: 100%; top: 0;" id="pid-node"
       class="front not-logged-in page-node no-sidebars i18n-en layout-first-main sidebars-both-last font-size-12 grid-type-fluid grid-width-16 fluid-95 tableHeader-processed">
+
 
 <!--
 <h2>

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{layout}">
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layout}">
+
 
 <section layout:fragment="content">
 
@@ -37,12 +38,11 @@
                             <c:if test="${empty param.login_error}">
                                 <p><spring:message code="security_login_message"/></p>
                             </c:if>
-                            <spring:url value="/jssc" var="form_url"/>
                             <spring:message code="form_field_requeired" var="form_field_requeired"/>
 
                             <div id="content-content" class="content-content">
-                                <form action="${fn:escapeXml(form_url)}" accept-charset="UTF-8" method="post" id="user-login" name="f">
-                                    <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+                                <form method="post" action="/jssc" th:method="POST" th:action="@{/logout}" accept-charset="UTF-8" id="user-login" name="f">
+                                    <!--<input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>-->
                                     <div>
                                         <div class="form-item" id="edit-name-wrapper">
                                             <label for="j_username"><spring:message code="security_login_form_username"/><span class="form-required" title="${form_field_requeired}">*</span></label>
