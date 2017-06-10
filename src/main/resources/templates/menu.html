@@ -1,3 +1,36 @@
+<div class="pure-menu pure-menu-open pure-menu-horizontal"  xmlns:th="http://www.thymeleaf.org" >
+    <a class="pure-menu-heading">Aiai project</a>
+    <ul>
+        <li class="pure-menu-item pure-menu-selected"><a class="pure-menu-link" href="/" th:href="@{/}">Index</a></li>
+        <li class="pure-menu-item"><a class="pure-menu-link" href="/about" th:href="@{/about}">About</a></li>
+        <li class="pure-menu-item"><a class="pure-menu-link" href="/example" th:href="@{/example}">Example</a></li>
+        <li class="pure-menu-item"><a class="pure-menu-link" href="/login" th:href="@{/login}">Login</a></li>
+        <li class="pure-menu-item pure-menu-disabled"><a class="pure-menu-link" >Logout</a></li>
+    </ul>
+</div>
+
+<!--
+<div class="pure-menu pure-menu-horizontal">
+    <a href="#" class="pure-menu-heading pure-menu-link">BRAND</a>
+    <ul class="pure-menu-list">
+        <li class="pure-menu-item"><a href="#" class="pure-menu-link">News</a></li>
+        <li class="pure-menu-item"><a href="#" class="pure-menu-link">Sports</a></li>
+        <li class="pure-menu-item"><a href="#" class="pure-menu-link">Finance</a></li>
+    </ul>
+</div>
+-->
+
+
+<!--
+<form method="POST" action="/logout" th:method="POST" th:action="@{/logout}" id="logout-form">
+    <li class="leaf last">
+        <a href="#" title="Logout" onclick="document.getElementById('logout-form').submit();">Logout</a>
+        &lt;!&ndash;<a href="#" title="${logout_title}" onclick="document.getElementById('logout-form').submit();"><spring:message code="page_name_logout"/></a>&ndash;&gt;
+    </li>
+</form>
+-->
+
+<!--
 
 <div xmlns:th="http://www.thymeleaf.org" id="header-primary-menu-wrapper" class="header-primary-menu-wrapper full-width" >
 
@@ -7,68 +40,57 @@
                 <div id="primary-menu-inner" class="primary-menu-inner inner clearfix">
                     <ul class="menu sf-menu sf-js-enabled">
 
-<!--
                         <spring:url value="/index" var="_url" />
                         <spring:message code="page_name_home_title" var="home_title"/>
--->
                         <li class="leaf first">
                             <a href="/" th:href="@{/}">Index</a>
-                            <!--<a href="${_url}" title="${home_title}"><spring:message code="page_name_home"/></a>-->
+                            <a href="${_url}" title="${home_title}"><spring:message code="page_name_home"/></a>
                         </li>
 
-<!--
                         <spring:url value="/about" var="_url" />
                         <spring:message code="page_name_about_title" var="about_title"/>
--->
                         <li class="leaf">
                             <a href="/about" title="Index" th:href="@{/about}">About</a>
-                            <!--<a href="/about" title="${about_title}"><spring:message code="page_name_about"/></a>-->
+                            <a href="/about" title="${about_title}"><spring:message code="page_name_about"/></a>
                         </li>
-<!--
                         <sec:authorize access="isAuthenticated()">
                             <spring:url value="/cabinet" var="_url"/>
                             <spring:message code="page_name_cabinet_title" var="cabinet_title"/>
                             <li class="leaf">
                                 <a href="/about" th:href="@{/about}">Index</a>
-                                &lt;!&ndash;<a href="${_url}" title="${cabinet_title}"><spring:message code="page_name_cabinet"/></a>&ndash;&gt;
+                                <a href="${_url}" title="${cabinet_title}"><spring:message code="page_name_cabinet"/></a>
                             </li>
                         </sec:authorize>
--->
-                        <!--<sec:authorize access="isAnonymous()">-->
-<!--
+                        <sec:authorize access="isAnonymous()">
                             <spring:url value="/login" var="login"/>
                             <spring:message code="page_name_login_title" var="login_title"/>
--->
                             <li class="leaf last">
                                 <a href="/login" title="Login" th:href="@{/login}">Login</a>
-                                <!--<a href="${login}" title="${login_title}"><spring:message code="page_name_login"/></a>-->
+                                <a href="${login}" title="${login_title}"><spring:message code="page_name_login"/></a>
                             </li>
-                        <!--</sec:authorize>-->
-<!--
+                        </sec:authorize>
                         <sec:authorize access="isAuthenticated()">
                             <spring:url value="/passwd" var="passwd"/>
                             <spring:message code="page_name_settings_title" var="settings_title"/>
                             <li class="leaf">
                                 <a href="/about" th:href="@{/about}">Index</a>
-                                &lt;!&ndash;<a href="${passwd}" title="${settings_title}"><spring:message code="page_name_settings"/></a>&ndash;&gt;
+                                <a href="${passwd}" title="${settings_title}"><spring:message code="page_name_settings"/></a>
                             </li>
                         </sec:authorize>
--->
-                        <!--<sec:authorize access="isAuthenticated()">-->
-<!--
+                        <sec:authorize access="isAuthenticated()">
                             <spring:url value="/logout" var="logout"/>
                             <spring:message code="page_name_logout_title" var="logout_title"/>
--->
                             <form method="POST" action="/logout" th:method="POST" th:action="@{/logout}" id="logout-form">
                                 <li class="leaf last">
                                     <a href="#" title="Logout" onclick="document.getElementById('logout-form').submit();">Logout</a>
-                                    <!--<a href="#" title="${logout_title}" onclick="document.getElementById('logout-form').submit();"><spring:message code="page_name_logout"/></a>-->
+                                    <a href="#" title="${logout_title}" onclick="document.getElementById('logout-form').submit();"><spring:message code="page_name_logout"/></a>
                                 </li>
                             </form>
-                        <!--</sec:authorize>-->
+                        </sec:authorize>
                     </ul>
-                </div><!-- /primary-menu-inner -->
-            </div><!-- /primary-menu -->
-        </div><!-- /header-primary-menu-inner -->
-    </div><!-- /header-primary-menu -->
-</div><!-- /header-primary-menu-wrapper -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+-->

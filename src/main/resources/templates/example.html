@@ -1,39 +1,62 @@
-<div xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layout}">
-
-<section layout:fragment="content">
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" layout:decorate="~{layout}">
 
     <script>
-        var table = function(html) {
+        var table = function (html) {
             $('#table').html(html);
-            $('#table').find('.nav').each(function() {
-                $(this).click(function() {
+            $('#table').find('.pure-button').each(function () {
+                $(this).click(function () {
                     $.post($(this).attr('href'), table);
                     return false;
                 });
             });
         }
 
-        $(function() {
+        $(function () {
             $.post('/example', table);
         });
     </script>
 
-    <table id="table" th:fragment="table">
-        <tr th:each="r : ${result.items}">
-            <td th:text="${r.id}">Sample Item</td>
-            <td th:text="${r.description}">Sample Description</td>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <a class="nav" href="#" th:href="${result.prevUrl}" th:if="${result.prevAvailable}">&lt; Prev</a>
-                <a class="nav" href="#" th:href="${result.nextUrl}" th:if="${result.nextAvailable}">Next &gt;</a>
-            </td>
-        </tr>
-    </table>
-
-</section>
-<footer>
-    <p layout:fragment="custom-footer">This is some footer content from content page 1</p>
-</footer>
+    <li class="sb-preview-table">
+        <div class="widget-preview-label">Table - Bordered</div>
+        <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Description</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="r : ${result.items}">
+                <td th:text="${r.id}">Sample Item</td>
+                <td th:text="${r.description}">Sample Description</td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <a class="pure-button prev" href="#" th:href="${result.prevUrl}" th:if="${result.prevAvailable}">&lt; Prev</a>
+                    <a class="pure-button next" href="#" th:href="${result.nextUrl}" th:if="${result.nextAvailable}">Next &gt;</a>
+                </td>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <ul class="pure-paginator">
+                        <li th:if="${result.prevAvailable}"><a class="pure-button prev" href="#" th:href="${result.prevUrl}">&#171;</a></li>
+                        <li th:if="${result.nextAvailable}"><a class="pure-button next" href="#" th:href="${result.nextUrl}">&#187;</a></li>
+                    </ul>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </li>
+    
+<!--
+    <li class="sb-preview-list">
+        <div class="widget-preview-label">Menus - Paginator</div>
+        <ul class="pure-paginator">
+            <li><a class="pure-button prev" href="#" th:href="${result.prevUrl}" th:if="${result.prevAvailable}">&#171;</a></li>
+            <li><a class="pure-button next" href="#" th:href="${result.nextUrl}" th:if="${result.nextAvailable}">&#187;</a></li>
+            &lt;!&ndash;<li><a class="pure-button-hidden next">&#187;</a></li>&ndash;&gt;
+        </ul>
+    </li>
+-->
 
 </div>

@@ -1,138 +1,234 @@
 <!DOCTYPE html>
-<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org">
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"  class='page-background' lang="en">
 
 <head>
 
-    <title>AiAi</title>
+    <title>AiAi pure skin</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-    <script src="/static/js/jquery.min.js" th:src="@{/js/jquery.min.3.1.0.js}"></script>
+    <script src="/static/js/jquery.min.3.1.0.js" th:src="@{/js/jquery.min.3.1.0.js}"></script>
+
+    <link type="text/css" rel="stylesheet" media="all" href="/static/css/pure-mine.css" th:href="@{/css/pure-mine.css}"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/pure-min.css">
+    <!--<link rel="stylesheet" href="https://yui-s.yahooapis.com/3.11.0/build/cssnormalize/cssnormalize-min.css">-->
+    <!--<link rel="stylesheet" type="text/css" href="https://yui-s.yahooapis.com/3.11.0/build/cssgrids/cssgrids-min.css">-->
+
+    <style>
+        .pure-g > div {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+        .l-box {
+            padding: 0 0 0 5em;
+            border: 1px solid black;
+        }
+    </style>
     
-    <link type="text/css" rel="stylesheet" media="all" href="/static/css/system-menus.css" th:href="@{/css/system-menus.css}"/>
-    <link type="text/css" rel="stylesheet" media="all" href="/static/css/style.css" th:href="@{/css/style.css}"/>
-    <link type="text/css" rel="stylesheet" media="all" href="/static/css/typography.css" th:href="@{/css/typography.css}"/>
-    <link type="text/css" rel="stylesheet" media="all" href="/static/css/main-style.css" th:href="@{/css/main-style.css}"/>
-    <link type="text/css" rel="stylesheet" media="all" href="/static/css/grid16-fluid.css" th:href="@{/css/grid16-fluid.css}"/>
-
-    <!--
-        <spring:theme code="styleSheet" var="theme_css" />
-        <spring:url value="/${theme_css}" var="theme_css_url" />
-        <link type="text/css" rel="stylesheet" media="all" href="${theme_css_url}"/>
-    -->
-    <link type="text/css" rel="stylesheet" media="all" href="/static/css/green.css" th:href="@{/css/green.css}"/>
-
 </head>
-<body style="position: relative; min-height: 100%; top: 0;" id="pid-node"
-      class="front not-logged-in page-node no-sidebars i18n-en layout-first-main sidebars-both-last font-size-12 grid-type-fluid grid-width-16 fluid-95 tableHeader-processed">
 
 
-<!--
-<h2>
-    <span th:text="'Message: ' + ${message}"></span>
-</h2>
--->
+<body class="pure-skin-mine">
+
+<div class="mega"> <!-- Mega container div to hide contents of page until done loading -->
 
 
-<div id="page" class="page">
-    <div id="page-inner" class="page-inner">
-        <!-- header-top row: width = grid_width -->
+    <div class="pure-g">
+        <div class="pure-u-1  l-box">
+            <div th:replace="menu"/>
+        </div>
+    </div>
 
-        <!-- header-group row: width = grid_width -->
-        <div id="header-group-wrapper" class="header-group-wrapper full-width">
-            <div id="header-group" class="header-group row grid16-16">
-                <div id="header-group-inner" class="header-group-inner inner clearfix">
-                    <div id="header-site-info" class="header-site-info block">
-                        <div id="header-site-info-inner" class="header-site-info-inner inner clearfix">
-                            <div id="logo">
-                                <!--<a href="/" title="Home"><img src="css-new/home.gif" alt="Home"></a>-->
-                            </div>
-                        </div><!-- /header-site-info-inner -->
-                    </div><!-- /header-site-info -->
-                </div><!-- /header-group-inner -->
-            </div><!-- /header-group -->
-        </div><!-- /header-group-wrapper -->
+    <div class="pure-g">
+        <div class="pure-u-3-4 l-box">
+            <div layout:fragment="content">
+                <p>Page content goes here</p>
+            </div>
+        </div>
+        <div class="pure-u-1-4 l-box"><p>Right fragment</p></div>
+    </div>
 
-        <div th:replace="menu"/>
-        <!--
-                <tiles:insertAttribute name="menu"/>
-        -->
+    <div class="pure-g">
+        <div class="pure-u-1 l-box"><p>Footer</p></div>
+    </div>
 
-        <!-- main row: width = grid_width -->
-        <div id="main-wrapper" class="main-wrapper full-width">
-            <div id="main" class="main row grid16-16">
-                <div id="main-inner" class="main-inner inner clearfix">
-                    <div id="sidebar-first" class="sidebar-first row nested grid16-2">
-                        <div id="sidebar-first-inner" class="sidebar-first-inner inner clearfix">
+    <div class="pure-g">
+        <div class="pure-u-1 l-box">
 
-                            <!--<div th:replace="lang-fragment"/>-->
-                            <!--<div th:replace="login-fragment"/>-->
-                            <!--
-                                                        <tiles:insertAttribute name="lang-fragment" ignore="true"/>
-                                                        <tiles:insertAttribute name="login-fragment" ignore="true"/>
-                            -->
+    <!-- this UL is the container for all previewed widgets -->
+    <ul id="widget-container">
 
-                        </div><!-- /sidebar-first-inner -->
-                    </div><!-- /sidebar-first -->
+        <!-- End of YUI Widgets Markup //////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
 
-                    <!-- main group: width = grid_width - sidebar_first_width -->
-                    <div id="main-group" class="main-group row nested grid16-14">
-                        <div id="main-group-inner" class="main-group-inner inner">
+        <li class="sb-preview-table">
+            <div class="widget-preview-label">Tables - Default</div>
+            <table class="pure-table">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Make</th>
+                    <th>Model</th>
+                    <th>Year</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Dodge</td>
+                    <td>Ram 1500</td>
+                    <td>2010</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Honda</td>
+                    <td>Accord</td>
+                    <td>2009</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Tesla</td>
+                    <td>Model S</td>
+                    <td>2013</td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
+        <li class="sb-preview-table">
+            <div class="widget-preview-label">Table - Bordered</div>
+            <table class="pure-table pure-table-bordered">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Make</th>
+                    <th>Model</th>
+                    <th>Year</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Dodge</td>
+                    <td>Ram 1500</td>
+                    <td>2010</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Honda</td>
+                    <td>Accord</td>
+                    <td>2009</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Tesla</td>
+                    <td>Model S</td>
+                    <td>2013</td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
+        <li class="sb-preview-table">
+            <div class="widget-preview-label">Table - Horizontal</div>
+            <table class="pure-table pure-table-horizontal">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Make</th>
+                    <th>Model</th>
+                    <th>Year</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Dodge</td>
+                    <td>Ram 1500</td>
+                    <td>2010</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Honda</td>
+                    <td>Accord</td>
+                    <td>2009</td>
+                </tr>
+                <tr>
+                    <td>3</td>
+                    <td>Tesla</td>
+                    <td>Model S</td>
+                    <td>2013</td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
+        <li class="sb-preview-table">
+            <div class="widget-preview-label">Table - Striped</div>
+            <table class="pure-table pure-table-horizontal">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Make</th>
+                    <th>Model</th>
+                    <th>Year</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr class='pure-table-odd'>
+                    <td>1</td>
+                    <td>Dodge</td>
+                    <td>Ram 1500</td>
+                    <td>2010</td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Honda</td>
+                    <td>Accord</td>
+                    <td>2009</td>
+                </tr>
+                <tr class='pure-table-odd'>
+                    <td>3</td>
+                    <td>Tesla</td>
+                    <td>Model S</td>
+                    <td>2013</td>
+                </tr>
+                </tbody>
+            </table>
+        </li>
 
-                            <div id="main-content" class="main-content row nested">
-                                <div id="main-content-inner" class="main-content-inner inner">
-                                    <!-- content group: width = grid_width - (sidebar_first_width + sidebar_last_width) -->
-                                    <div id="content-group" class="content-group row nested " style="width:100%">
-                                        <div id="content-group-inner" class="content-group-inner inner">
-                                            <div id="content-region" class="content-region row nested">
-
-                                                <section layout:fragment="content">
-                                                    <p>Page content goes here</p>
-                                                </section>
-
-                                            </div><!-- /content-region -->
-                                        </div><!-- /content-group-inner -->
-                                    </div><!-- /content-group -->
-
-                                </div><!-- /main-content-inner -->
-                            </div><!-- /main-content -->
-
-                        </div><!-- /main-group-inner -->
-                    </div><!-- /main-group -->
-                </div><!-- /main-inner -->
-            </div><!-- /main -->
-        </div><!-- /main-wrapper -->
-
-        <!-- postscript-bottom row: width = grid_width -->
-
-        <!-- footer row: width = grid_width -->
-        <div id="footer-wrapper" class="footer-wrapper full-width">
-            <div id="footer" class="footer row grid16-16">
-                <div id="footer-inner" class="footer-inner inner clearfix">
-
-                    <div id="block-block-4" class="block block-block even  last grid16-8">
-                        <div class="inner clearfix">
-                            <div class="content clearfix">
+        <li class="sb-preview-list">
+            <div class="widget-preview-label">Menus - Paginator</div>
+            <ul class="pure-paginator">
+                <li><a class="pure-button prev">&#171;</a></li>
+                <li><a class="pure-button">1</a></li>
+                <li><a class="pure-button pure-button-selected">2</a></li>
+                <li><a class="pure-button">3</a></li>
+                <li><a class="pure-button next">&#187;</a></li>
+            </ul>
+        </li>
 
 
-                                <div th:replace="footer"/>
-                                
-                            </div>
-                        </div><!-- /block-inner -->
-                    </div><!-- /block -->
-                </div><!-- /footer-inner -->
-            </div><!-- /footer -->
-        </div><!-- /footer-wrapper -->
 
-        <!-- footer-message row: width = grid_width -->
-        <div id="footer-message-wrapper" class="footer-message-wrapper full-width">
-            <div id="footer-message" class="footer-message row grid16-16">
-                <div id="footer-message-inner" class="footer-message-inner inner clearfix">
-                </div><!-- /footer-message-inner -->
-            </div><!-- /footer-message -->
-        </div><!-- /footer-message-wrapper -->
+        <!-- End of PURE Markup //////////////////////////////////////////////////////////-->
+        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
 
-    </div><!-- /page-inner -->
-</div><!-- /page -->
+    </ul> <!--   end of container for widget previews    -->
+
+        </div>
+    </div>
+
+
+</div> <!-- Close Mega container div to hide contents of page until done loading -->
+
 
 </body>
 </html>
