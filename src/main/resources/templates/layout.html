@@ -7,13 +7,13 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
     <meta name="_csrf" th:attr="content=${_csrf.token}"/>
-    <meta name="_csrf_header"  th:attr="content=${_csrf.headerName}"/>
+    <meta name="_csrf_header" th:attr="content=${_csrf.headerName}"/>
 
     <script src="/static/js/jquery.min.3.1.0.js" th:src="@{/js/jquery.min.3.1.0.js}"></script>
 
     <link rel="stylesheet" type="text/css" media="all" href="/static/css/pure-mine.css" th:href="@{/css/pure-mine.css}"/>
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/pure-min.css">
-    <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/3.3.7/css/bootstrap.min.css" />
+    <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/3.3.7/css/bootstrap.min.css"/>
 
     <style>
         .pure-g > div {
@@ -83,7 +83,7 @@
                         </div>
 
                         <div class="pure-u-1-4">
-                            <div th:replace="login-fragment" />
+                            <div th:replace="login-fragment"/>
                         </div>
                     </div>
 
@@ -91,8 +91,8 @@
                         <div class="pure-u-1 center-box">
                             <div th:replace="footer-fragment"/>
                         </div>
-
                     </div>
+
                 </div>
                 <div class="pure-u-1-12">&nbsp;</div>
             </div>

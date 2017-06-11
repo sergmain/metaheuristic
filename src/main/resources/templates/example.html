@@ -2,8 +2,7 @@
 
     <script>
         var table = function (html) {
-            $('#table').html(html);
-            $('#table').find('.pure-button').each(function () {
+            $('#table').html(html).find('.pure-button').each(function () {
                 $(this).click(function () {
                     $.post($(this).attr('href'), table);
                     return false;
@@ -14,10 +13,11 @@
         $(function () {
             var token = $("meta[name='_csrf']").attr("content");
             var header = $("meta[name='_csrf_header']").attr("content");
+
             $(document).ajaxSend(function(e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-
+            // is this the right usage?
             $.post('/example', table);
         });
         

@@ -36,8 +36,7 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
            &lt;!&ndash;<intercept-url pattern="/choices/**" access="hasRole('ROLE_ADMIN')" />&ndash;&gt;
 */
 
-        // https://docs.spring.io/spring-security/site/docs/current/reference/html/csrf.html#csrf-include-csrf-token-ajax
-//        http.csrf().disable(); // doesn't work with Ajax. need more infos
+//        http.csrf().disable();
 
         http
                 .authorizeRequests()
