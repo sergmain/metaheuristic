@@ -1,34 +1,29 @@
-<div class="pure-menu pure-menu-open pure-menu-horizontal"  xmlns:th="http://www.thymeleaf.org" >
+<div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
     <a class="pure-menu-heading">Aiai project</a>
     <ul>
-        <li class="pure-menu-item pure-menu-selected"><a class="pure-menu-link" href="/" th:href="@{/}">Index</a></li>
-        <li class="pure-menu-item"><a class="pure-menu-link" href="/about" th:href="@{/about}">About</a></li>
-        <li class="pure-menu-item"><a class="pure-menu-link" href="/example" th:href="@{/example}">Example</a></li>
-        <li class="pure-menu-item"><a class="pure-menu-link" href="/login" th:href="@{/login}">Login</a></li>
-        <li class="pure-menu-item pure-menu-disabled"><a class="pure-menu-link" >Logout</a></li>
+        <li th:attr="class=${#httpServletRequest.requestURI=='/' || #httpServletRequest.requestURI=='/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="/" th:href="@{/}">Index</a>
+        </li>
+        <li th:attr="class=${#httpServletRequest.requestURI=='/about'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="/about" th:href="@{/about}">About</a>
+        </li>
+        <li th:attr="class=${#httpServletRequest.requestURI=='/example'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="/example" th:href="@{/example}">Example</a>
+        </li>
+        <span sec:authorize="isAnonymous()">
+        <li th:attr="class=${#httpServletRequest.requestURI=='/login'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+                <a class="pure-menu-link" href="/login" th:href="@{/login}">Login</a>
+            </li>
+        </span>
+        <span sec:authorize="isAuthenticated()">
+            <li class="pure-menu-item pure-menu">
+                <form method="POST" action="/logout" th:method="POST" th:action="@{/logout}" id="logout-form">
+                    <a class="pure-menu-link" href="#" title="Logout" onclick="document.getElementById('logout-form').submit();">Logout</a>
+                </form>
+            </li>
+        </span>
     </ul>
 </div>
-
-<!--
-<div class="pure-menu pure-menu-horizontal">
-    <a href="#" class="pure-menu-heading pure-menu-link">BRAND</a>
-    <ul class="pure-menu-list">
-        <li class="pure-menu-item"><a href="#" class="pure-menu-link">News</a></li>
-        <li class="pure-menu-item"><a href="#" class="pure-menu-link">Sports</a></li>
-        <li class="pure-menu-item"><a href="#" class="pure-menu-link">Finance</a></li>
-    </ul>
-</div>
--->
-
-
-<!--
-<form method="POST" action="/logout" th:method="POST" th:action="@{/logout}" id="logout-form">
-    <li class="leaf last">
-        <a href="#" title="Logout" onclick="document.getElementById('logout-form').submit();">Logout</a>
-        &lt;!&ndash;<a href="#" title="${logout_title}" onclick="document.getElementById('logout-form').submit();"><spring:message code="page_name_logout"/></a>&ndash;&gt;
-    </li>
-</form>
--->
 
 <!--
 

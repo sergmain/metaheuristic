@@ -1,3 +1,31 @@
+<div xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4" th:if="${#httpServletRequest.requestURI != '/login'}">
+    <div sec:authorize="isAnonymous()">
+        <h1 class="widget-header">Sign in</h1>
+
+        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/jssc}" accept-charset="UTF-8" id="user-login" name="f">
+            <fieldset>
+                <label for="j_username">Login</label>
+                <input name="j_username" id="j_username" type="text" placeholder="Login"/>
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="j_password">Password</label>
+                <input name="j_password" id="j_password" type="password" placeholder="Password">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <input type="hidden" name="${_csrf.parameterName}" value="${_csrf.token}"/>
+
+                <label for="remember" class="pure-checkbox">
+                    <input id="remember" type="checkbox"/>
+                    Remember me
+                </label>
+
+                <button type="submit" class="pure-button pure-button-primary">Sign in</button>
+            </fieldset>
+        </form>
+    </div>
+</div>
+
+<!--
 <div xmlns:th="http://www.thymeleaf.org"
      xmlns:spring="http://www.springframework.org/tags" xmlns:util="urn:jsptagdir:/WEB-INF/tags/util"
      xmlns:sec="http://www.springframework.org/security/tags"
@@ -33,12 +61,13 @@
                                 <input id="proceed" type="submit" value="${fn:escapeXml(submit_label)}"/>
                             </div>
                         </form>
-                    </div><!-- /content-content -->
+                    </div>
 
                 </div>
-            </div><!-- /block-inner -->
-        </div><!-- /block -->
+            </div>
+        </div>
 
     </sec:authorize>
 
 </div>
+-->

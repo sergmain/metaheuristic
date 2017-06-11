@@ -918,7 +918,7 @@ striping:
 /* HEADINGS */
 .pure-skin-mine .pure-menu .pure-menu-heading {
     color: #1f1f1f;
-    text-transform: uppercase;
+    /*text-transform: uppercase;*/
     font-size: 90%;
     margin-top: 0.5em;
     border-bottom: solid 1px #e6e6e6;

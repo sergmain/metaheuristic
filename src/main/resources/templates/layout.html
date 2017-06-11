@@ -1,17 +1,19 @@
 <!DOCTYPE html>
-<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"  class='page-background' lang="en">
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" class='page-background' lang="en">
 
 <head>
 
     <title>AiAi pure skin</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
+    <meta name="_csrf" th:attr="content=${_csrf.token}"/>
+    <meta name="_csrf_header"  th:attr="content=${_csrf.headerName}"/>
+
     <script src="/static/js/jquery.min.3.1.0.js" th:src="@{/js/jquery.min.3.1.0.js}"></script>
 
-    <link type="text/css" rel="stylesheet" media="all" href="/static/css/pure-mine.css" th:href="@{/css/pure-mine.css}"/>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/pure-min.css">
-    <!--<link rel="stylesheet" href="https://yui-s.yahooapis.com/3.11.0/build/cssnormalize/cssnormalize-min.css">-->
-    <!--<link rel="stylesheet" type="text/css" href="https://yui-s.yahooapis.com/3.11.0/build/cssgrids/cssgrids-min.css">-->
+    <link rel="stylesheet" type="text/css" media="all" href="/static/css/pure-mine.css" th:href="@{/css/pure-mine.css}"/>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/pure-min.css">
+    <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/3.3.7/css/bootstrap.min.css" />
 
     <style>
         .pure-g > div {
@@ -19,212 +21,85 @@
             -moz-box-sizing: border-box;
             box-sizing: border-box;
         }
+
         .l-box {
-            padding: 0 0 0 5em;
+            /*padding: 0 0 0 5em;*/
             border: 1px solid black;
         }
+
+        .content-padding {
+            padding: 1em 0 1em 0;
+        }
+
+        .center-box {
+            text-align: center;
+        }
+
+        .widget-header {
+            /*text-transform: uppercase;*/
+            color: #aaa;
+            border-bottom: 1px solid #eee;
+            padding: 0.4em 0;
+            font-size: 80%;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+        }
+
+        .nav-button {
+            width: 100px;
+        }
     </style>
-    
+
 </head>
-
-
 <body class="pure-skin-mine">
+
 
 <div class="mega"> <!-- Mega container div to hide contents of page until done loading -->
 
-
     <div class="pure-g">
-        <div class="pure-u-1  l-box">
-            <div th:replace="menu"/>
-        </div>
-    </div>
+        <div class="pure-u-1-12">&nbsp;</div>
 
-    <div class="pure-g">
-        <div class="pure-u-3-4 l-box">
-            <div layout:fragment="content">
-                <p>Page content goes here</p>
+        <div class="pure-u-11-12">
+
+            <div class="pure-g">
+                <div class="pure-u-11-12">
+                    <div class="pure-g">
+                        <div class="pure-u-1">
+                            <div th:replace="menu-fragment"/>
+                        </div>
+                    </div>
+
+                    <div class="pure-g content-padding">
+                        <div class="pure-u-3-4">
+                            <div class="pure-g">
+                                <div class="pure-u-1-12">
+                                </div>
+                                <div class="pure-u-11-12">
+                                    <div layout:fragment="content">
+                                        <p>Page content goes here</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pure-u-1-4">
+                            <div th:replace="login-fragment" />
+                        </div>
+                    </div>
+
+                    <div class="pure-g">
+                        <div class="pure-u-1 center-box">
+                            <div th:replace="footer-fragment"/>
+                        </div>
+
+                    </div>
+                </div>
+                <div class="pure-u-1-12">&nbsp;</div>
             </div>
         </div>
-        <div class="pure-u-1-4 l-box"><p>Right fragment</p></div>
+
     </div>
-
-    <div class="pure-g">
-        <div class="pure-u-1 l-box"><p>Footer</p></div>
-    </div>
-
-    <div class="pure-g">
-        <div class="pure-u-1 l-box">
-
-    <!-- this UL is the container for all previewed widgets -->
-    <ul id="widget-container">
-
-        <!-- End of YUI Widgets Markup //////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-
-        <li class="sb-preview-table">
-            <div class="widget-preview-label">Tables - Default</div>
-            <table class="pure-table">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Make</th>
-                    <th>Model</th>
-                    <th>Year</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Dodge</td>
-                    <td>Ram 1500</td>
-                    <td>2010</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Honda</td>
-                    <td>Accord</td>
-                    <td>2009</td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td>Tesla</td>
-                    <td>Model S</td>
-                    <td>2013</td>
-                </tr>
-                </tbody>
-            </table>
-        </li>
-        <li class="sb-preview-table">
-            <div class="widget-preview-label">Table - Bordered</div>
-            <table class="pure-table pure-table-bordered">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Make</th>
-                    <th>Model</th>
-                    <th>Year</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Dodge</td>
-                    <td>Ram 1500</td>
-                    <td>2010</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Honda</td>
-                    <td>Accord</td>
-                    <td>2009</td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td>Tesla</td>
-                    <td>Model S</td>
-                    <td>2013</td>
-                </tr>
-                </tbody>
-            </table>
-        </li>
-        <li class="sb-preview-table">
-            <div class="widget-preview-label">Table - Horizontal</div>
-            <table class="pure-table pure-table-horizontal">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Make</th>
-                    <th>Model</th>
-                    <th>Year</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr>
-                    <td>1</td>
-                    <td>Dodge</td>
-                    <td>Ram 1500</td>
-                    <td>2010</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Honda</td>
-                    <td>Accord</td>
-                    <td>2009</td>
-                </tr>
-                <tr>
-                    <td>3</td>
-                    <td>Tesla</td>
-                    <td>Model S</td>
-                    <td>2013</td>
-                </tr>
-                </tbody>
-            </table>
-        </li>
-        <li class="sb-preview-table">
-            <div class="widget-preview-label">Table - Striped</div>
-            <table class="pure-table pure-table-horizontal">
-                <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Make</th>
-                    <th>Model</th>
-                    <th>Year</th>
-                </tr>
-                </thead>
-                <tbody>
-                <tr class='pure-table-odd'>
-                    <td>1</td>
-                    <td>Dodge</td>
-                    <td>Ram 1500</td>
-                    <td>2010</td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Honda</td>
-                    <td>Accord</td>
-                    <td>2009</td>
-                </tr>
-                <tr class='pure-table-odd'>
-                    <td>3</td>
-                    <td>Tesla</td>
-                    <td>Model S</td>
-                    <td>2013</td>
-                </tr>
-                </tbody>
-            </table>
-        </li>
-
-        <li class="sb-preview-list">
-            <div class="widget-preview-label">Menus - Paginator</div>
-            <ul class="pure-paginator">
-                <li><a class="pure-button prev">&#171;</a></li>
-                <li><a class="pure-button">1</a></li>
-                <li><a class="pure-button pure-button-selected">2</a></li>
-                <li><a class="pure-button">3</a></li>
-                <li><a class="pure-button next">&#187;</a></li>
-            </ul>
-        </li>
-
-
-
-        <!-- End of PURE Markup //////////////////////////////////////////////////////////-->
-        <!-- ////////////////////////////////////////////////////////////////////////////////////-->
-
-    </ul> <!--   end of container for widget previews    -->
-
-        </div>
-    </div>
+</div>
 
 
 </div> <!-- Close Mega container div to hide contents of page until done loading -->

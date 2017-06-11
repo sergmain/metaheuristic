@@ -9,21 +9,14 @@
                     return false;
                 });
             });
-        };
+        }
 
         $(function () {
-            var token = $("meta[name='_csrf']").attr("content");
-            var header = $("meta[name='_csrf_header']").attr("content");
-            $(document).ajaxSend(function(e, xhr, options) {
-                xhr.setRequestHeader(header, token);
-            });
-
             $.post('/example', table);
         });
-        
     </script>
 
-    <h1 class="widget-header">Example of table</h1>
+    <h1 class="widget-header">Table - Bordered</h1>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
@@ -39,12 +32,8 @@
         </tr>
         <tr>
             <td colspan="2">
-                <a class='pure-button prev' href="#" th:href="${result.prevUrl}">&lt; Prev</a>
-                <a class='pure-button next' href="#" th:href="${result.nextUrl}">Next &gt;</a>
-<!--
-                <a th:attr="class=${result.prevAvailable} ? 'pure-button nav-button prev' : 'pure-button-disabled nav-button prev'" href="#" th:href="${result.prevUrl}">&lt; Prev</a>
-                <a th:attr="class=${result.nextAvailable} ? 'pure-button nav-button next' : 'pure-button-disabled nav-button next'"href="#" th:href="${result.nextUrl}">Next &gt;</a>
--->
+                <a class="pure-button prev" href="#" th:href="${result.prevUrl}" th:if="${result.prevAvailable}">&lt; Prev</a>
+                <a class="pure-button next" href="#" th:href="${result.nextUrl}" th:if="${result.nextAvailable}">Next &gt;</a>
             </td>
         </tr>
         </tbody>
