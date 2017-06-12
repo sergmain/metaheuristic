@@ -5,10 +5,13 @@
             <a class="pure-menu-link" href="/" th:href="@{/}">Index</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/about'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="/about" th:href="@{/about}">About</a>
+            <a class="pure-menu-link" href="about.html" th:href="@{/about}">About</a>
+        </li>
+        <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="launchpad.html" th:href="@{/launchpad/index}">Launchpad</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/example'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="/example" th:href="@{/example}">Example</a>
+            <a class="pure-menu-link" href="example.html" th:href="@{/example}">Example</a>
         </li>
         <span sec:authorize="isAnonymous()">
         <li th:attr="class=${#httpServletRequest.requestURI=='/login'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">

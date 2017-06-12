@@ -1,0 +1,49 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" layout:decorate="~{/layout-launchpad}">
+
+    <script>
+        var table = function (html) {
+            $('#table').html(html).find('.pure-button').each(function () {
+                $(this).click(function () {
+                    $.post($(this).attr('href'), table);
+                    return false;
+                });
+            });
+        };
+
+        $(function () {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+
+            $(document).ajaxSend(function(e, xhr, options) {
+                xhr.setRequestHeader(header, token);
+            });
+            // is this the right usage?
+            $.post('/launchpad/experiments', table);
+        });
+
+    </script>
+
+    <h1 class="widget-header">Experiments</h1>
+
+    <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Description</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${result.items}">
+            <td th:text="${r.id}">Sample Item</td>
+            <td th:text="${r.description}">Sample Description</td>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <a class='pure-button prev' href="#" th:href="${result.prevUrl}">&lt; Prev</a>
+                <a class='pure-button next' href="#" th:href="${result.nextUrl}">Next &gt;</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>

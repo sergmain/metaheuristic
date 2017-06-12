@@ -70,11 +70,16 @@
                     </div>
 
                     <div class="pure-g content-padding">
-                        <div class="pure-u-3-4">
+                        <div class="pure-u-11-12">
                             <div class="pure-g">
                                 <div class="pure-u-1-12">
                                 </div>
                                 <div class="pure-u-11-12">
+                                    <div class="pure-g">
+                                        <div class="pure-u-1">
+                                            <div th:replace="menu-launchpad-fragment"/>
+                                        </div>
+                                    </div>
                                     <div layout:fragment="content">
                                         <p>Page content goes here</p>
                                     </div>
@@ -82,8 +87,8 @@
                             </div>
                         </div>
 
-                        <div class="pure-u-1-4">
-                            <div th:replace="login-fragment"/>
+                        <div class="pure-u-1-12">
+                            &nbsp;
                         </div>
                     </div>
 
