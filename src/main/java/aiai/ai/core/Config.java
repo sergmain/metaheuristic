@@ -3,6 +3,9 @@ package aiai.ai.core;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 
 /**
  * User: Serg
@@ -16,4 +19,20 @@ public class Config {
     public LayoutDialect layoutDialect() {
         return new LayoutDialect();
     }
+
+    @Configuration
+    public static class SchedulingConfigurerConfiguration implements SchedulingConfigurer {
+
+        @Override
+        public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
+/*
+            ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
+            taskScheduler.setPoolSize(100);
+            taskScheduler.initialize();
+            taskRegistrar.setTaskScheduler(taskScheduler);
+*/
+        }
+    }
+
+
 }
