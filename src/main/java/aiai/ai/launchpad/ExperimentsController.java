@@ -100,8 +100,11 @@ public class ExperimentsController {
         return "/launchpad/experiments"; // whole template on initial load
     }
 
-    @PostMapping("/experiments")
-    public String init(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
+    /**
+     * It's used to get as an Ajax call
+     */
+    @PostMapping("/experiments-part")
+    public String getExperiments(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
 
         if (items==null) {
             items = gen();
@@ -110,14 +113,14 @@ public class ExperimentsController {
         boolean prevAvailable = start > 0;
         if(prevAvailable) {
             int prevStart = start - limit;
-            result.setPrevUrl("/launchpad/experiments?start=" + prevStart);
+            result.setPrevUrl("/launchpad/experiments-part?start=" + prevStart);
         }
         result.setPrevAvailable(prevAvailable);
 
         int nextStart = start + limit;
         boolean nextAvailable = TOTAL_NUMBER > nextStart;
         if(nextAvailable) {
-            result.setNextUrl("/launchpad/experiments?start=" + nextStart);
+            result.setNextUrl("/launchpad/experiments-part?start=" + nextStart);
         }
         result.setNextAvailable(nextAvailable);
 

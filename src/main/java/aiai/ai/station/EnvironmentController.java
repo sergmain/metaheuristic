@@ -100,8 +100,11 @@ public class EnvironmentController {
         return "/station/envs";
     }
 
-    @PostMapping("/envs")
-    public String init(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
+    /**
+     * It's used to get as an Ajax call
+     */
+    @PostMapping("/envs-part")
+    public String getEnvironments(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
 
         if (items==null) {
             items = gen();
@@ -110,14 +113,14 @@ public class EnvironmentController {
         boolean prevAvailable = start > 0;
         if(prevAvailable) {
             int prevStart = start - limit;
-            result.setPrevUrl("/station/envs?start=" + prevStart);
+            result.setPrevUrl("/station/envs-part?start=" + prevStart);
         }
         result.setPrevAvailable(prevAvailable);
 
         int nextStart = start + limit;
         boolean nextAvailable = TOTAL_NUMBER > nextStart;
         if(nextAvailable) {
-            result.setNextUrl("/station/envs?start=" + nextStart);
+            result.setNextUrl("/station/envs-part?start=" + nextStart);
         }
         result.setNextAvailable(nextAvailable);
 

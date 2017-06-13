@@ -1,12 +1,8 @@
 package aiai.ai.core;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +15,13 @@ import java.util.Random;
  */
 @Controller
 public class ExampleController {
+
+/*
+    Create      POST
+    Read         GET
+    Update     PUT
+    Delete      DELETE
+*/
 
     public static final int TOTAL_NUMBER = 10;
 
@@ -99,11 +102,14 @@ public class ExampleController {
 
     @RequestMapping(value = "/example", method = RequestMethod.GET)
     public String init(@ModelAttribute Result result)  {
-        return "example"; // whole template on initial load
+        return "example";
     }
 
-    @RequestMapping(value = "/example", method = RequestMethod.POST)
-    public String init(@ModelAttribute Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
+    /**
+     * It's used to get as an Ajax call
+     */
+    @PostMapping("/example-part")
+    public String get(@ModelAttribute Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
 
         if (items==null) {
             items = gen();
@@ -112,14 +118,14 @@ public class ExampleController {
         boolean prevAvailable = start > 0;
         if(prevAvailable) {
             int prevStart = start - limit;
-            result.setPrevUrl("/example?start=" + prevStart);
+            result.setPrevUrl("/example-part?start=" + prevStart);
         }
         result.setPrevAvailable(prevAvailable);
 
         int nextStart = start + limit;
         boolean nextAvailable = TOTAL_NUMBER > nextStart;
         if(nextAvailable) {
-            result.setNextUrl("/example?start=" + nextStart);
+            result.setNextUrl("/example-part?start=" + nextStart);
         }
         result.setNextAvailable(nextAvailable);
 

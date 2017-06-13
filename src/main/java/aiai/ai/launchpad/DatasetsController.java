@@ -100,8 +100,11 @@ public class DatasetsController {
         return "/launchpad/datasets";
     }
 
-    @PostMapping("/datasets")
-    public String init(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
+    /**
+     * It's used to get as an Ajax call
+     */
+    @PostMapping("/datasets-part")
+    public String getDatasets(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
 
         if (items==null) {
             items = gen();
@@ -110,14 +113,14 @@ public class DatasetsController {
         boolean prevAvailable = start > 0;
         if(prevAvailable) {
             int prevStart = start - limit;
-            result.setPrevUrl("/launchpad/datasets?start=" + prevStart);
+            result.setPrevUrl("/launchpad/datasets-parts?start=" + prevStart);
         }
         result.setPrevAvailable(prevAvailable);
 
         int nextStart = start + limit;
         boolean nextAvailable = TOTAL_NUMBER > nextStart;
         if(nextAvailable) {
-            result.setNextUrl("/launchpad/datasets?start=" + nextStart);
+            result.setNextUrl("/launchpad/datasets-parts?start=" + nextStart);
         }
         result.setNextAvailable(nextAvailable);
 

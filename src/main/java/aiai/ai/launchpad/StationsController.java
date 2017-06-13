@@ -100,8 +100,11 @@ public class StationsController {
         return "/launchpad/stations"; 
     }
 
-    @PostMapping("/stations")
-    public String init(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
+    /**
+     * It's used to get as an Ajax call
+     */
+    @PostMapping("/stations-part")
+    public String getStations(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
 
         if (items==null) {
             items = gen();
@@ -110,14 +113,14 @@ public class StationsController {
         boolean prevAvailable = start > 0;
         if(prevAvailable) {
             int prevStart = start - limit;
-            result.setPrevUrl("/launchpad/stations?start=" + prevStart);
+            result.setPrevUrl("/launchpad/stations-part?start=" + prevStart);
         }
         result.setPrevAvailable(prevAvailable);
 
         int nextStart = start + limit;
         boolean nextAvailable = TOTAL_NUMBER > nextStart;
         if(nextAvailable) {
-            result.setNextUrl("/launchpad/stations?start=" + nextStart);
+            result.setNextUrl("/launchpad/stations-part?start=" + nextStart);
         }
         result.setNextAvailable(nextAvailable);
 
