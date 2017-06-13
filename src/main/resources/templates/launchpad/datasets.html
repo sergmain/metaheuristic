@@ -1,6 +1,6 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      layout:decorate="~{/layout-launchpad}"
-     th:if="(${@environment.getProperty('aiai.launchpad')} == 'true')"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
 
     <script>

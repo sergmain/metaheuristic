@@ -1,6 +1,6 @@
 <div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
      sec:authorize="isAuthenticated()"
-     th:if="(${@environment.getProperty('aiai.station')} == 'true')"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.station.enabled'))}"
 >
     <a class="pure-menu-heading">Station</a>
     <ul>

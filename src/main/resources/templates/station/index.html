@@ -1,6 +1,6 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      layout:decorate="~{/layout-station}"
-     th:if="(${@environment.getProperty('aiai.station')} == 'true')"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.station.enabled'))}"
 >
 
     <h2 class="title">Station index page</h2>
