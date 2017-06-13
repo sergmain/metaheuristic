@@ -90,7 +90,7 @@ public class StationsController {
         }
     }
 
-    @Value("${site.limits.items}")
+    @Value("${aiai.table.rows.limit}")
     private int limit;
 
     private static List<ExampleController.Item> items = null;

@@ -1,4 +1,7 @@
-<div sec:authorize="isAuthenticated()" class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
+<div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
+     sec:authorize="isAuthenticated()"
+     th:if="(${@environment.getProperty('aiai.launchpad')} == 'true')"
+>
     <a class="pure-menu-heading">Launchpad</a>
     <ul>
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">

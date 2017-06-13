@@ -15,22 +15,13 @@ import java.util.Map;
 @Controller
 public class DefaultController {
 
-    // inject via application.properties
-    @Value("${welcome.message:test}")
-    private String message = "Hello World";
-
     @RequestMapping("/")
     public String index1(Map<String, Object> model) {
-        return toIndex(model);
+        return "/index";
     }
 
     @GetMapping("/index")
     public String index2(Map<String, Object> model) {
-        return toIndex(model);
-    }
-
-    private String toIndex(Map<String, Object> model) {
-        model.put("message", this.message);
         return "/index";
     }
 

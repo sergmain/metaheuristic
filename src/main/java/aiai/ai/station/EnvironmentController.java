@@ -1,4 +1,4 @@
-package aiai.ai.launchpad;
+package aiai.ai.station;
 
 import aiai.ai.core.ExampleController;
 import org.springframework.beans.factory.annotation.Value;
@@ -11,12 +11,12 @@ import java.util.Random;
 
 /**
  * User: Serg
- * Date: 12.06.2017
- * Time: 20:22
+ * Date: 13.06.2017
+ * Time: 14:04
  */
 @Controller
-@RequestMapping("/launchpad")
-public class ExperimentsController {
+@RequestMapping("/station")
+public class EnvironmentController {
 
     public static final int TOTAL_NUMBER = 10;
 
@@ -95,12 +95,12 @@ public class ExperimentsController {
 
     private static List<ExampleController.Item> items = null;
 
-    @GetMapping("/experiments")
+    @GetMapping("/envs")
     public String init(@ModelAttribute ExampleController.Result result)  {
-        return "/launchpad/experiments"; // whole template on initial load
+        return "/station/envs";
     }
 
-    @PostMapping("/experiments")
+    @PostMapping("/envs")
     public String init(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
 
         if (items==null) {
@@ -110,20 +110,20 @@ public class ExperimentsController {
         boolean prevAvailable = start > 0;
         if(prevAvailable) {
             int prevStart = start - limit;
-            result.setPrevUrl("/launchpad/experiments?start=" + prevStart);
+            result.setPrevUrl("/station/envs?start=" + prevStart);
         }
         result.setPrevAvailable(prevAvailable);
 
         int nextStart = start + limit;
         boolean nextAvailable = TOTAL_NUMBER > nextStart;
         if(nextAvailable) {
-            result.setNextUrl("/launchpad/experiments?start=" + nextStart);
+            result.setNextUrl("/station/envs?start=" + nextStart);
         }
         result.setNextAvailable(nextAvailable);
 
         result.items.addAll( items.subList(start, nextAvailable? start+limit :10));
 
-        return "/launchpad/experiments :: table"; // *partial* update
+        return "/station/envs :: table"; // *partial* update
     }
 
 
@@ -141,3 +141,4 @@ public class ExperimentsController {
         return items;
     }
 }
+

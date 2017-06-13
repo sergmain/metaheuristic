@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" class='page-background' lang="en">
+
+<head>
+
+    <title>AiAi pure skin</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+    <meta name="_csrf" th:attr="content=${_csrf.token}"/>
+    <meta name="_csrf_header" th:attr="content=${_csrf.headerName}"/>
+
+    <script src="/static/js/jquery.min.3.1.0.js" th:src="@{/js/jquery.min.3.1.0.js}"></script>
+
+    <link rel="stylesheet" type="text/css" media="all" href="/static/css/pure-mine.css" th:href="@{/css/pure-mine.css}"/>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/pure/1.0.0/pure-min.css">
+    <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/3.3.7/css/bootstrap.min.css"/>
+
+    <style>
+        .pure-g > div {
+            -webkit-box-sizing: border-box;
+            -moz-box-sizing: border-box;
+            box-sizing: border-box;
+        }
+
+        .l-box {
+            /*padding: 0 0 0 5em;*/
+            border: 1px solid black;
+        }
+
+        .content-padding {
+            padding: 1em 0 1em 0;
+        }
+
+        .center-box {
+            text-align: center;
+        }
+
+        .widget-header {
+            /*text-transform: uppercase;*/
+            color: #aaa;
+            border-bottom: 1px solid #eee;
+            padding: 0.4em 0;
+            font-size: 80%;
+            font-weight: 500;
+            letter-spacing: 0.1em;
+        }
+
+        .nav-button {
+            width: 100px;
+        }
+    </style>
+
+</head>
+<body class="pure-skin-mine">
+
+
+<div class="mega"> <!-- Mega container div to hide contents of page until done loading -->
+
+    <div class="pure-g">
+        <div class="pure-u-1-12">&nbsp;</div>
+
+        <div class="pure-u-11-12">
+
+            <div class="pure-g">
+                <div class="pure-u-11-12">
+                    <div class="pure-g">
+                        <div class="pure-u-1">
+                            <div th:replace="menu-fragment"/>
+                        </div>
+                    </div>
+
+                    <div class="pure-g content-padding">
+                        <div class="pure-u-11-12">
+                            <div class="pure-g">
+                                <div class="pure-u-1-12">
+                                </div>
+                                <div class="pure-u-11-12">
+                                    <div class="pure-g">
+                                        <div class="pure-u-1">
+                                            <div th:replace="menu-station-fragment"/>
+                                        </div>
+                                    </div>
+                                    <div layout:fragment="content">
+                                        <p>Page content goes here</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="pure-u-1-12">
+                            &nbsp;
+                        </div>
+                    </div>
+
+                    <div class="pure-g">
+                        <div class="pure-u-1 center-box">
+                            <div th:replace="footer-fragment"/>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="pure-u-1-12">&nbsp;</div>
+            </div>
+        </div>
+
+    </div>
+
+</div> <!-- Close Mega container div to hide contents of page until done loading -->
+
+
+</body>
+</html>

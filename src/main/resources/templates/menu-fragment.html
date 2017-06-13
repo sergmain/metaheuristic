@@ -7,88 +7,22 @@
         <li th:attr="class=${#httpServletRequest.requestURI=='/about'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="about.html" th:href="@{/about}">About</a>
         </li>
-        <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad.html" th:href="@{/launchpad/index}">Launchpad</a>
+        <li th:if="(${@environment.getProperty('aiai.launchpad')} == 'true')" th:attr="class=${#httpServletRequest.requestURI=='/launchpad/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="launchpad/index.html" th:href="@{/launchpad/index}">Launchpad</a>
+        </li>
+        <li th:if="(${@environment.getProperty('aiai.station')} == 'true')" th:attr="class=${#httpServletRequest.requestURI=='/station/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="station/index.html" th:href="@{/station/index}">Station</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/example'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="example.html" th:href="@{/example}">Example</a>
         </li>
-        <span sec:authorize="isAnonymous()">
-        <li th:attr="class=${#httpServletRequest.requestURI=='/login'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-                <a class="pure-menu-link" href="/login" th:href="@{/login}">Login</a>
-            </li>
-        </span>
-        <span sec:authorize="isAuthenticated()">
-            <li class="pure-menu-item pure-menu">
-                <form method="POST" action="/logout" th:method="POST" th:action="@{/logout}" id="logout-form">
-                    <a class="pure-menu-link" href="#" title="Logout" onclick="document.getElementById('logout-form').submit();">Logout</a>
-                </form>
-            </li>
-        </span>
+        <li sec:authorize="isAnonymous()" th:attr="class=${#httpServletRequest.requestURI=='/login'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="/login" th:href="@{/login}">Login</a>
+        </li>
+        <li sec:authorize="isAuthenticated()" class="pure-menu-item pure-menu" >
+            <form method="POST" action="/logout" th:method="POST" th:action="@{/logout}" id="logout-form">
+                <a class="pure-menu-link" href="#" title="Logout" onclick="document.getElementById('logout-form').submit();">Logout</a>
+            </form>
+        </li>
     </ul>
 </div>
-
-<!--
-
-<div xmlns:th="http://www.thymeleaf.org" id="header-primary-menu-wrapper" class="header-primary-menu-wrapper full-width" >
-
-    <div id="header-primary-menu" class="header-primary-menu row grid16-16">
-        <div id="header-primary-menu-inner" class="header-primary-menu-inner inner clearfix">
-            <div id="primary-menu" class="primary-menu block">
-                <div id="primary-menu-inner" class="primary-menu-inner inner clearfix">
-                    <ul class="menu sf-menu sf-js-enabled">
-
-                        <spring:url value="/index" var="_url" />
-                        <spring:message code="page_name_home_title" var="home_title"/>
-                        <li class="leaf first">
-                            <a href="/" th:href="@{/}">Index</a>
-                            <a href="${_url}" title="${home_title}"><spring:message code="page_name_home"/></a>
-                        </li>
-
-                        <spring:url value="/about" var="_url" />
-                        <spring:message code="page_name_about_title" var="about_title"/>
-                        <li class="leaf">
-                            <a href="/about" title="Index" th:href="@{/about}">About</a>
-                            <a href="/about" title="${about_title}"><spring:message code="page_name_about"/></a>
-                        </li>
-                        <sec:authorize access="isAuthenticated()">
-                            <spring:url value="/cabinet" var="_url"/>
-                            <spring:message code="page_name_cabinet_title" var="cabinet_title"/>
-                            <li class="leaf">
-                                <a href="/about" th:href="@{/about}">Index</a>
-                                <a href="${_url}" title="${cabinet_title}"><spring:message code="page_name_cabinet"/></a>
-                            </li>
-                        </sec:authorize>
-                        <sec:authorize access="isAnonymous()">
-                            <spring:url value="/login" var="login"/>
-                            <spring:message code="page_name_login_title" var="login_title"/>
-                            <li class="leaf last">
-                                <a href="/login" title="Login" th:href="@{/login}">Login</a>
-                                <a href="${login}" title="${login_title}"><spring:message code="page_name_login"/></a>
-                            </li>
-                        </sec:authorize>
-                        <sec:authorize access="isAuthenticated()">
-                            <spring:url value="/passwd" var="passwd"/>
-                            <spring:message code="page_name_settings_title" var="settings_title"/>
-                            <li class="leaf">
-                                <a href="/about" th:href="@{/about}">Index</a>
-                                <a href="${passwd}" title="${settings_title}"><spring:message code="page_name_settings"/></a>
-                            </li>
-                        </sec:authorize>
-                        <sec:authorize access="isAuthenticated()">
-                            <spring:url value="/logout" var="logout"/>
-                            <spring:message code="page_name_logout_title" var="logout_title"/>
-                            <form method="POST" action="/logout" th:method="POST" th:action="@{/logout}" id="logout-form">
-                                <li class="leaf last">
-                                    <a href="#" title="Logout" onclick="document.getElementById('logout-form').submit();">Logout</a>
-                                    <a href="#" title="${logout_title}" onclick="document.getElementById('logout-form').submit();"><spring:message code="page_name_logout"/></a>
-                                </li>
-                            </form>
-                        </sec:authorize>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
--->

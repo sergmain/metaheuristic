@@ -1,9 +1,9 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
-     layout:decorate="~{/layout-launchpad}"
-     th:if="(${@environment.getProperty('aiai.launchpad')} == 'true')"
+     layout:decorate="~{/layout-station}"
+     th:if="(${@environment.getProperty('aiai.station')} == 'true')"
 >
 
-<script>
+    <script>
         var table = function (html) {
             $('#table').html(html).find('.pure-button').each(function () {
                 $(this).click(function () {
@@ -21,12 +21,12 @@
                 xhr.setRequestHeader(header, token);
             });
             // is this the right usage?
-            $.post('/launchpad/experiments', table);
+            $.post('/station/envs', table);
         });
 
     </script>
 
-    <h1 class="widget-header">Experiments</h1>
+    <h1 class="widget-header">Environments</h1>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>

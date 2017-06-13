@@ -92,7 +92,7 @@ public class ExampleController {
         }
     }
 
-    @Value("${site.limits.items}")
+    @Value("${aiai.table.rows.limit}")
     private int limit;
 
     private static List<Item> items = null;
