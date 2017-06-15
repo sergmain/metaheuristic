@@ -3,9 +3,10 @@ package aiai.ai.core;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 /**
  * User: Serg
@@ -13,6 +14,8 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
  * Time: 17:21
  */
 @Configuration
+@EnableJpaRepositories(basePackages = {"aiai.ai.launchpad", "aiai.ai.station"} )
+@EnableTransactionManagement
 public class Config {
 
     @Bean
@@ -33,6 +36,4 @@ public class Config {
 */
         }
     }
-
-
 }

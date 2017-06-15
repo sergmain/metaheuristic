@@ -2,7 +2,10 @@ package aiai.ai.launchpad;
 
 import aiai.ai.core.ExampleController;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -46,47 +49,13 @@ public class DatasetsController {
         }
     }
 
+    private DatasetsRepository repository;
+
     public static class Result {
-        public List<ExampleController.Item> items = new ArrayList<>();
-        public String prevUrl;
-        public String nextUrl;
-        public boolean prevAvailable;
-        public boolean nextAvailable;
+        public Slice<Datasets> items;
 
-        public List<ExampleController.Item> getItems() {
+        public Slice<Datasets> getItems() {
             return items;
-        }
-
-        public String getPrevUrl() {
-            return prevUrl;
-        }
-
-        public void setPrevUrl(String prevUrl) {
-            this.prevUrl = prevUrl;
-        }
-
-        public String getNextUrl() {
-            return nextUrl;
-        }
-
-        public void setNextUrl(String nextUrl) {
-            this.nextUrl = nextUrl;
-        }
-
-        public boolean isPrevAvailable() {
-            return prevAvailable;
-        }
-
-        public void setPrevAvailable(boolean prevAvailable) {
-            this.prevAvailable = prevAvailable;
-        }
-
-        public boolean isNextAvailable() {
-            return nextAvailable;
-        }
-
-        public void setNextAvailable(boolean nextAvailable) {
-            this.nextAvailable = nextAvailable;
         }
     }
 
@@ -100,47 +69,16 @@ public class DatasetsController {
         return "/launchpad/datasets";
     }
 
+
+
+    // fix default Pabeable - https://stackoverflow.com/questions/27032433/set-default-page-size-for-jpa-pageable-object
     /**
      * It's used to get as an Ajax call
      */
     @PostMapping("/datasets-part")
-    public String getDatasets(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
+    public String getDatasets(@ModelAttribute Result result, Pageable pageable /* @RequestParam(required = false, defaultValue = "0") int start */)  {
 
-        if (items==null) {
-            items = gen();
-        }
-
-        boolean prevAvailable = start > 0;
-        if(prevAvailable) {
-            int prevStart = start - limit;
-            result.setPrevUrl("/launchpad/datasets-parts?start=" + prevStart);
-        }
-        result.setPrevAvailable(prevAvailable);
-
-        int nextStart = start + limit;
-        boolean nextAvailable = TOTAL_NUMBER > nextStart;
-        if(nextAvailable) {
-            result.setNextUrl("/launchpad/datasets-parts?start=" + nextStart);
-        }
-        result.setNextAvailable(nextAvailable);
-
-        result.items.addAll( items.subList(start, nextAvailable? start+limit :10));
-
-        return "/launchpad/datasets :: table"; // *partial* update
-    }
-
-
-    private static Random r = new Random();
-
-    private static List<ExampleController.Item> gen() {
-        List<ExampleController.Item> items = new ArrayList<>();
-
-
-        for (int i = 0; i < TOTAL_NUMBER; i++) {
-            final int i1 = r.nextInt();
-            items.add(new ExampleController.Item("Id:"+ i1, "Desc: " + i1));
-        }
-
-        return items;
+        result.items = repository.findAll(pageable);
+        return "/launchpad/datasets :: table";
     }
 }

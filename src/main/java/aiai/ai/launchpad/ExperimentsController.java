@@ -104,7 +104,7 @@ public class ExperimentsController {
      * It's used to get as an Ajax call
      */
     @PostMapping("/experiments-part")
-    public String getExperiments(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
+    public String getExperiments(@ModelAttribute Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
 
         if (items==null) {
             items = gen();

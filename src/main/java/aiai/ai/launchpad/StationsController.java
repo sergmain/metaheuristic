@@ -47,13 +47,13 @@ public class StationsController {
     }
 
     public static class Result {
-        public List<ExampleController.Item> items = new ArrayList<>();
+        public List<Item> items = new ArrayList<>();
         public String prevUrl;
         public String nextUrl;
         public boolean prevAvailable;
         public boolean nextAvailable;
 
-        public List<ExampleController.Item> getItems() {
+        public List<Item> getItems() {
             return items;
         }
 
@@ -93,7 +93,7 @@ public class StationsController {
     @Value("${aiai.table.rows.limit}")
     private int limit;
 
-    private static List<ExampleController.Item> items = null;
+    private static List<Item> items = null;
 
     @GetMapping("/stations")
     public String init(@ModelAttribute ExampleController.Result result)  {
@@ -104,7 +104,7 @@ public class StationsController {
      * It's used to get as an Ajax call
      */
     @PostMapping("/stations-part")
-    public String getStations(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
+    public String getStations(@ModelAttribute Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
 
         if (items==null) {
             items = gen();
@@ -132,13 +132,13 @@ public class StationsController {
 
     private static Random r = new Random();
 
-    private static List<ExampleController.Item> gen() {
-        List<ExampleController.Item> items = new ArrayList<>();
+    private static List<Item> gen() {
+        List<Item> items = new ArrayList<>();
 
 
         for (int i = 0; i < TOTAL_NUMBER; i++) {
             final int i1 = r.nextInt();
-            items.add(new ExampleController.Item("Id:"+ i1, "Desc: " + i1));
+            items.add(new Item("Id:"+ i1, "Desc: " + i1));
         }
 
         return items;
