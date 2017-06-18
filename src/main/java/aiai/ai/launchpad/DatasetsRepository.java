@@ -3,8 +3,7 @@ package aiai.ai.launchpad;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.repository.CrudRepository;
-
-import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * User: Serg
@@ -12,9 +11,10 @@ import javax.transaction.Transactional;
  * Time: 19:53
  */
 
-@Transactional
 public interface DatasetsRepository extends CrudRepository<Datasets, Long> {
 
+    @Transactional(readOnly = true)
+//    @Transactional(rollbackFor = {Throwable.class})
     Slice<Datasets> findAll(Pageable pageable);
 /*
 
