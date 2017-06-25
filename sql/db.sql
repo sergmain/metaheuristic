@@ -14,6 +14,7 @@ ON AIAI_IDS
 
 create table AIAI_STATION (
 ID numeric(10,0) not null,
+VERSION numeric(5,0) NOT NULL,
 IP varchar(30),
 DESCRIPTION varchar(250)
 )
@@ -21,6 +22,7 @@ DESCRIPTION varchar(250)
 
 create table AIAI_DATASET (
 ID numeric(10,0) not null,
+VERSION numeric(5,0) NOT NULL,
 IP varchar(30),
 DESCRIPTION varchar(250)
 )

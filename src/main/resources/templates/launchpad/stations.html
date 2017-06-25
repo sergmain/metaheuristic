@@ -28,38 +28,39 @@
 
     <h1 class="widget-header">Stations</h1>
 
-    <a class="pure-button" href="stations-add.html" th:href="@{/launchpad/stations-add}">Add new record</a>
+    <a class="pure-button" href="station-form.html" th:href="@{/launchpad/station-add}">Add new record</a>
     <p></p>
-    
+
+    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.StationsController.Result"*/-->
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>
-            <th>#</th>
+            <th>Id</th>
+            <th>IP address</th>
             <th>Description</th>
+            <th>Edit</th>
+            <th>Delete</th>
         </tr>
         </thead>
         <tbody>
-        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.StationsController.Result"*/-->
         <tr th:each="r : ${result.items}">
             <td th:text="${r.id}">Sample Item</td>
+            <td th:text="${r.ip}">Sample IP address</td>
             <td th:text="${r.description}">Sample Description</td>
+            <td><a th:href="@{/launchpad/station-edit/(${r.id})}">Edit</a></td>
+            <td><a th:href="@{/launchpad/station-delete/(${r.id})}">Delete</a></td>
         </tr>
         <tr>
-            <td colspan="2">
-                <a class='pure-button prev' href="#" th:href="@{/launchpad/stations-part}">&lt; Prev</a>
-                <a class='pure-button next' href="#" th:href="@{/launchpad/stations-part}">Next &gt;</a>
-            </td>
-        </tr>
-        <tr>
-            <td colspan="2">
+            <td colspan="5">
                 <div>
                     <ul class='pagination pagination-centered'>
-                        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.StationsController.Result"*/-->
-                        <li th:class="${result.items.first}?'disabled':''">
+                        <!--<li th:class="${result.items.first}?'disabled':''">-->
+                        <li>
                             <span th:if='${result.items.first}'>← First</span>
                             <a class='pure-button prev' href="#" th:if='${not result.items.first}' th:href="@{/launchpad/stations-part(page=0,size=${result.items.pageable.pageSize})}">← First</a>
                         </li>
-                        <li th:class="${result.items.hasPrevious()}? '' : 'disabled'">
+                        <!--<li th:class="${result.items.hasPrevious()}? '' : 'disabled'">-->
+                        <li>
                             <span th:if='${not result.items.hasPrevious()}'>«</span>
                             <a class='pure-button prev' href="#" th:if='${result.items.hasPrevious()}' th:href="@{/launchpad/stations-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>«</a>
                         </li>
@@ -69,7 +70,8 @@
                                             <a th:if='${not item.current}' th:href='@{/launchpad/stations(page=${item.number - 1},size=${page.items.pageable.pageSize})}'><span th:text='${item.number}'>1</span></a>
                                         </li>
                         -->
-                        <li th:class="${result.items.hasNext()}? '' : 'disabled'">
+                        <!--<li th:class="${result.items.hasNext()}? '' : 'disabled'">-->
+                        <li>
                             <span th:if='${not result.items.hasNext()}'>»</span>
                             <a class='pure-button prev' href="#" th:if='${result.items.hasNext()}' th:href='@{/launchpad/stations-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>»</a>
                         </li>

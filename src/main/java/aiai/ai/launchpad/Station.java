@@ -31,11 +31,16 @@ public class Station implements Serializable {
     @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_STATION")
     private long id;
 
+    @Version
+    @Column(name = "VERSION")
+    public int version = 0;
+
     @Column(name = "IP")
     private String ip;
 
     @Column(name = "DESCRIPTION")
     private String description;
+
 
 }
 

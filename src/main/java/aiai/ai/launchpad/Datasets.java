@@ -31,6 +31,10 @@ public class Datasets implements Serializable {
     @Getter @Setter
     public long id;
 
+    @Version
+    @Column(name = "VERSION")
+    public int version = 0;
+
     @Column(name = "DESCRIPTION")
     @Getter @Setter
     public String desc;

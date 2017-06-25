@@ -2,15 +2,13 @@ package aiai.ai.launchpad;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
 
 /**
  * User: Serg
@@ -33,42 +31,56 @@ public class StationsController {
     @Data
     public static class Result {
         public Slice<Station> items;
-        public String prevUrl;
-        public String nextUrl;
-        public boolean prevAvailable;
-        public boolean nextAvailable;
     }
 
     @GetMapping("/stations")
     public String init(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable)  {
+        pageable = fixPageSize(pageable);
         result.items = repository.findAll(pageable);
         return "/launchpad/stations";
     }
 
-    @GetMapping(value = "/stations-add")
-    public String add(@ModelAttribute Result result) {
-        return "/launchpad/stations-add";
+    // for AJAX
+    @PostMapping("/stations-part")
+    public String getStations(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable )  {
+        pageable = fixPageSize(pageable);
+        result.items = repository.findAll(pageable);
+        return "/launchpad/stations :: table";
     }
 
-    /**
-     * It's used to get as an Ajax call
-     */
-    @PostMapping("/stations-add-commit")
-    public String addCommit(@ModelAttribute Result result, @RequestParam String ip, @RequestParam String desc) {
-        Station s = new Station();
-        s.setIp(ip);
-        s.setDescription(desc);
-        repository.save( s );
+    @GetMapping(value = "/station-add")
+    public String add(@ModelAttribute Result result) {
+        return "/launchpad/stations-form";
+    }
 
+    @GetMapping(value = "/station-edit/{id}")
+    public String edit(@PathVariable Long id, Model model){
+        model.addAttribute("station", repository.findById(id));
+        return "/launchpad/stations-form";
+    }
+
+    @PostMapping("/station-form-commit")
+    public String formCommit(Station station) {
+        repository.save( station );
         return "redirect:/launchpad/stations";
     }
 
-    /**
-     * It's used to get as an Ajax call
-     */
-    @PostMapping("/stations-part")
-    public String getStations(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable )  {
-        result.items = repository.findAll(pageable);
-        return "/launchpad/stations :: table"; // *partial* update
+    @GetMapping("/station-delete/{id}")
+    public String delete(@PathVariable Long id){
+        return "redirect:/launchpad/stations";
     }
+
+    @DeleteMapping("/stations-delete-commit")
+    public String deleteCommit(@PathVariable Long id) {
+        repository.deleteById(id);
+        return "redirect:/launchpad/stations";
+    }
+
+    private Pageable fixPageSize(Pageable pageable) {
+        if (pageable.getPageSize()!=limit) {
+            pageable = PageRequest.of(pageable.getPageNumber(), limit);
+        }
+        return pageable;
+    }
+
 }
