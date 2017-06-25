@@ -36,6 +36,7 @@
         </tr>
         </thead>
         <tbody>
+        <!--/*@thymesVar id="result" type="aiai.ai.station.EnvironmentController.Result"*/-->
         <tr th:each="r : ${result.items}">
             <td th:text="${r.id}">Sample Item</td>
             <td th:text="${r.description}">Sample Description</td>

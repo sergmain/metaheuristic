@@ -1,6 +1,5 @@
 package aiai.ai.station;
 
-import aiai.ai.core.ExampleController;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -47,13 +46,13 @@ public class EnvironmentController {
     }
 
     public static class Result {
-        public List<ExampleController.Item> items = new ArrayList<>();
+        public List<Item> items = new ArrayList<>();
         public String prevUrl;
         public String nextUrl;
         public boolean prevAvailable;
         public boolean nextAvailable;
 
-        public List<ExampleController.Item> getItems() {
+        public List<Item> getItems() {
             return items;
         }
 
@@ -93,10 +92,10 @@ public class EnvironmentController {
     @Value("${aiai.table.rows.limit}")
     private int limit;
 
-    private static List<ExampleController.Item> items = null;
+    private static List<Item> items = null;
 
     @GetMapping("/envs")
-    public String init(@ModelAttribute ExampleController.Result result)  {
+    public String init(@ModelAttribute Result result)  {
         return "/station/envs";
     }
 
@@ -104,7 +103,7 @@ public class EnvironmentController {
      * It's used to get as an Ajax call
      */
     @PostMapping("/envs-part")
-    public String getEnvironments(@ModelAttribute ExampleController.Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
+    public String getEnvironments(@ModelAttribute Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
 
         if (items==null) {
             items = gen();
@@ -132,13 +131,13 @@ public class EnvironmentController {
 
     private static Random r = new Random();
 
-    private static List<ExampleController.Item> gen() {
-        List<ExampleController.Item> items = new ArrayList<>();
+    private static List<Item> gen() {
+        List<Item> items = new ArrayList<>();
 
 
         for (int i = 0; i < TOTAL_NUMBER; i++) {
             final int i1 = r.nextInt();
-            items.add(new ExampleController.Item("Id:"+ i1, "Desc: " + i1));
+            items.add(new Item("Id:"+ i1, "Desc: " + i1));
         }
 
         return items;

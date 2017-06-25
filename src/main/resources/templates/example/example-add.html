@@ -1,0 +1,20 @@
+<div layout:fragment="content" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"  layout:decorate="~{layout}">
+    
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">New example record</h1>
+
+        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/example/example-add-commit}" accept-charset="UTF-8" id="example-form" name="f">
+            <fieldset>
+                <label for="id">Id</label>
+                <input name="id" id="id" type="text" placeholder="id"/>
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="description">Description</label>
+                <input name="desc" id="description" type="text" placeholder="description">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <button type="submit" class="pure-button pure-button-primary">Create new record</button>
+            </fieldset>
+        </form>
+    </div>
+</div>

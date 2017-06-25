@@ -1,7 +1,10 @@
 package aiai.ai.launchpad;
 
-import aiai.ai.core.ExampleController;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,129 +21,54 @@ import java.util.Random;
 @RequestMapping("/launchpad")
 public class StationsController {
 
-    public static final int TOTAL_NUMBER = 10;
+    @Value("${aiai.table.rows.limit}")
+    private int limit;
 
-    public static class Item {
-        public Item(String id, String description) {
-            this.id = id;
-            this.description = description;
-        }
+    private final StationsRepository repository;
 
-        public String id;
-        public String description;
-
-        public String getId() {
-            return id;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
+    public StationsController(StationsRepository repository) {
+        this.repository = repository;
     }
 
+    @Data
     public static class Result {
-        public List<Item> items = new ArrayList<>();
+        public Slice<Station> items;
         public String prevUrl;
         public String nextUrl;
         public boolean prevAvailable;
         public boolean nextAvailable;
-
-        public List<Item> getItems() {
-            return items;
-        }
-
-        public String getPrevUrl() {
-            return prevUrl;
-        }
-
-        public void setPrevUrl(String prevUrl) {
-            this.prevUrl = prevUrl;
-        }
-
-        public String getNextUrl() {
-            return nextUrl;
-        }
-
-        public void setNextUrl(String nextUrl) {
-            this.nextUrl = nextUrl;
-        }
-
-        public boolean isPrevAvailable() {
-            return prevAvailable;
-        }
-
-        public void setPrevAvailable(boolean prevAvailable) {
-            this.prevAvailable = prevAvailable;
-        }
-
-        public boolean isNextAvailable() {
-            return nextAvailable;
-        }
-
-        public void setNextAvailable(boolean nextAvailable) {
-            this.nextAvailable = nextAvailable;
-        }
     }
 
-    @Value("${aiai.table.rows.limit}")
-    private int limit;
-
-    private static List<Item> items = null;
-
     @GetMapping("/stations")
-    public String init(@ModelAttribute ExampleController.Result result)  {
-        return "/launchpad/stations"; 
+    public String init(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable)  {
+        result.items = repository.findAll(pageable);
+        return "/launchpad/stations";
+    }
+
+    @GetMapping(value = "/stations-add")
+    public String add(@ModelAttribute Result result) {
+        return "/launchpad/stations-add";
+    }
+
+    /**
+     * It's used to get as an Ajax call
+     */
+    @PostMapping("/stations-add-commit")
+    public String addCommit(@ModelAttribute Result result, @RequestParam String ip, @RequestParam String desc) {
+        Station s = new Station();
+        s.setIp(ip);
+        s.setDescription(desc);
+        repository.save( s );
+
+        return "redirect:/launchpad/stations";
     }
 
     /**
      * It's used to get as an Ajax call
      */
     @PostMapping("/stations-part")
-    public String getStations(@ModelAttribute Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
-
-        if (items==null) {
-            items = gen();
-        }
-
-        boolean prevAvailable = start > 0;
-        if(prevAvailable) {
-            int prevStart = start - limit;
-            result.setPrevUrl("/launchpad/stations-part?start=" + prevStart);
-        }
-        result.setPrevAvailable(prevAvailable);
-
-        int nextStart = start + limit;
-        boolean nextAvailable = TOTAL_NUMBER > nextStart;
-        if(nextAvailable) {
-            result.setNextUrl("/launchpad/stations-part?start=" + nextStart);
-        }
-        result.setNextAvailable(nextAvailable);
-
-        result.items.addAll( items.subList(start, nextAvailable? start+limit :10));
-
+    public String getStations(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable )  {
+        result.items = repository.findAll(pageable);
         return "/launchpad/stations :: table"; // *partial* update
-    }
-
-
-    private static Random r = new Random();
-
-    private static List<Item> gen() {
-        List<Item> items = new ArrayList<>();
-
-
-        for (int i = 0; i < TOTAL_NUMBER; i++) {
-            final int i1 = r.nextInt();
-            items.add(new Item("Id:"+ i1, "Desc: " + i1));
-        }
-
-        return items;
     }
 }

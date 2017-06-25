@@ -8,15 +8,18 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * User: Serg
- * Date: 15.06.2017
- * Time: 19:53
+ * Date: 25.06.2017
+ * Time: 15:52
  */
 @Component
-public interface DatasetsRepository extends CrudRepository<Datasets, Long> {
+@Transactional
+public interface StationsRepository extends CrudRepository<Station, Long> {
 
     @Transactional(readOnly = true)
-//    @Transactional(rollbackFor = {Throwable.class})
-    Slice<Datasets> findAll(Pageable pageable);
+    Slice<Station> findAll(Pageable pageable);
+
+//    Station save(Station account);
+
 /*
 
     List<Datasets> findByLastname(String lastname, Sort sort);

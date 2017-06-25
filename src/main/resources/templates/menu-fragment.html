@@ -14,7 +14,7 @@
             <a class="pure-menu-link" href="station/index.html" th:href="@{/station/index}">Station</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/example'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="example.html" th:href="@{/example}">Example</a>
+            <a class="pure-menu-link" href="example/example.html" th:href="@{/example/example}">Example</a>
         </li>
         <li sec:authorize="isAnonymous()" th:attr="class=${#httpServletRequest.requestURI=='/login'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="/login" th:href="@{/login}">Sign in</a>

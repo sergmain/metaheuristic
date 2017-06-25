@@ -49,7 +49,7 @@ spring.mail.properties.mail.smtp.writetimeout=5000
 
 
 e-mail template sample
-
+                                                               d
     <bean class="org.springframework.mail.SimpleMailMessage" id="accountActivationMailTemplate">
         <property name="from" value="${email.from}"/>
         <property name="subject" value="Account Activation"/>

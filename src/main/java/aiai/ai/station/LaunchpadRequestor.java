@@ -15,7 +15,7 @@ import java.util.Date;
  */
 @Service
 @EnableScheduling
-public class LauchpadRequestor {
+public class LaunchpadRequestor {
 
 
     /**
@@ -24,10 +24,12 @@ public class LauchpadRequestor {
      */
 
 
+/*
     @Scheduled(fixedDelayString  = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
     public void fixedDelayTask() {
         System.out.println(new Date() + " This runs in a fixed delay ");
     }
+*/
 
 /*
     @Scheduled(fixedRate = 6000)

@@ -1,6 +1,5 @@
 package aiai.ai.launchpad;
 
-import aiai.ai.core.ExampleController;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -62,10 +61,10 @@ public class DatasetsController {
     @Value("${aiai.table.rows.limit}")
     private int limit;
 
-    private static List<ExampleController.Item> items = null;
+    private static List<Item> items = null;
 
     @GetMapping("/datasets")
-    public String init(@ModelAttribute ExampleController.Result result)  {
+    public String init(@ModelAttribute Result result)  {
         return "/launchpad/datasets";
     }
 

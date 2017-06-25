@@ -1,6 +1,5 @@
 package aiai.ai.launchpad;
 
-import aiai.ai.core.ExampleController;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -47,13 +46,13 @@ public class ExperimentsController {
     }
 
     public static class Result {
-        public List<ExampleController.Item> items = new ArrayList<>();
+        public List<Item> items = new ArrayList<>();
         public String prevUrl;
         public String nextUrl;
         public boolean prevAvailable;
         public boolean nextAvailable;
 
-        public List<ExampleController.Item> getItems() {
+        public List<Item> getItems() {
             return items;
         }
 
@@ -93,10 +92,10 @@ public class ExperimentsController {
     @Value("${aiai.table.rows.limit}")
     private int limit;
 
-    private static List<ExampleController.Item> items = null;
+    private static List<Item> items = null;
 
     @GetMapping("/experiments")
-    public String init(@ModelAttribute ExampleController.Result result)  {
+    public String init(@ModelAttribute Result result)  {
         return "/launchpad/experiments"; // whole template on initial load
     }
 
@@ -124,7 +123,7 @@ public class ExperimentsController {
         }
         result.setNextAvailable(nextAvailable);
 
-        result.items.addAll( items.subList(start, nextAvailable? start+limit :10));
+        result.items.addAll( items.subList(start, nextAvailable? start+limit :items.size()-1));
 
         return "/launchpad/experiments :: table"; // *partial* update
     }
@@ -132,13 +131,13 @@ public class ExperimentsController {
 
     private static Random r = new Random();
 
-    private static List<ExampleController.Item> gen() {
-        List<ExampleController.Item> items = new ArrayList<>();
+    private static List<Item> gen() {
+        List<Item> items = new ArrayList<>();
 
 
         for (int i = 0; i < TOTAL_NUMBER; i++) {
             final int i1 = r.nextInt();
-            items.add(new ExampleController.Item("Id:"+ i1, "Desc: " + i1));
+            items.add(new Item("Id:"+ i1, "Desc: " + i1));
         }
 
         return items;

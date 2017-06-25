@@ -18,13 +18,15 @@
                 xhr.setRequestHeader(header, token);
             });
             // is this the right usage?
-            $.post('/example-part', table);
+            $.post('/example/example-part', table);
         });
         
     </script>
 
     <h1 class="widget-header">Example of table</h1>
 
+    <a class="pure-button" href="example-add.html" th:href="@{/example/example-add}">Add new record</a>
+    
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>
@@ -33,6 +35,8 @@
         </tr>
         </thead>
         <tbody>
+
+        <!--/*@thymesVar id="result" type="aiai.ai.core.ExampleController.Result"*/-->
         <tr th:each="r : ${result.items}">
             <td th:text="${r.id}">Sample Item</td>
             <td th:text="${r.description}">Sample Description</td>

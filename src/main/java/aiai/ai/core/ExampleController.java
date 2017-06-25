@@ -14,6 +14,7 @@ import java.util.Random;
  * Time: 21:16
  */
 @Controller
+@RequestMapping("/example")
 public class ExampleController {
 
 /*
@@ -100,38 +101,58 @@ public class ExampleController {
 
     private static List<Item> items = null;
 
-    @RequestMapping(value = "/example", method = RequestMethod.GET)
-    public String init(@ModelAttribute Result result)  {
-        return "example";
+    @GetMapping(value = "/example")
+    public String init(@ModelAttribute Result result) {
+        return "/example/example";
+    }
+
+    @GetMapping(value = "/example-add")
+    public String add(@ModelAttribute Result result) {
+        return "/example/example-add";
+    }
+
+    /**
+     * It's used to get as an Ajax call
+     */
+    @PostMapping("/example-add-commit")
+    public String addCommit(@ModelAttribute Result result, @RequestParam String id, @RequestParam String desc) {
+
+        if (items == null) {
+            items = gen();
+        }
+
+        items.add(new Item(id, desc));
+
+        return "/example/example";
     }
 
     /**
      * It's used to get as an Ajax call
      */
     @PostMapping("/example-part")
-    public String get(@ModelAttribute Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
+    public String get(@ModelAttribute Result result, @RequestParam(required = false, defaultValue = "0") int start) {
 
-        if (items==null) {
+        if (items == null) {
             items = gen();
         }
 
         boolean prevAvailable = start > 0;
-        if(prevAvailable) {
+        if (prevAvailable) {
             int prevStart = start - limit;
-            result.setPrevUrl("/example-part?start=" + prevStart);
+            result.setPrevUrl("/example/example-part?start=" + prevStart);
         }
         result.setPrevAvailable(prevAvailable);
 
         int nextStart = start + limit;
-        boolean nextAvailable = TOTAL_NUMBER > nextStart;
-        if(nextAvailable) {
-            result.setNextUrl("/example-part?start=" + nextStart);
+        boolean nextAvailable = items.size() > nextStart;
+        if (nextAvailable) {
+            result.setNextUrl("/example/example-part?start=" + nextStart);
         }
         result.setNextAvailable(nextAvailable);
 
-        result.items.addAll( items.subList(start, nextAvailable? start+limit :10));
+        result.items.addAll(items.subList(start, nextAvailable ? start + limit : items.size() ));
 
-        return "example :: table"; // *partial* update
+        return "/example/example :: table"; // *partial* update
     }
 
 
@@ -143,7 +164,7 @@ public class ExampleController {
 
         for (int i = 0; i < TOTAL_NUMBER; i++) {
             final int i1 = r.nextInt();
-            items.add(new Item("Id:"+ i1, "Desc: " + i1));
+            items.add(new Item("Id:" + i1, "Desc: " + i1));
         }
 
         return items;
