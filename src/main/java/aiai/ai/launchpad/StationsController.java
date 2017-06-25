@@ -10,6 +10,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+
 /**
  * User: Serg
  * Date: 12.06.2017
@@ -49,14 +51,15 @@ public class StationsController {
     }
 
     @GetMapping(value = "/station-add")
-    public String add(@ModelAttribute Result result) {
-        return "/launchpad/stations-form";
+    public String add(Model model) {
+        model.addAttribute("station", new Station());
+        return "/launchpad/station-form";
     }
 
     @GetMapping(value = "/station-edit/{id}")
     public String edit(@PathVariable Long id, Model model){
         model.addAttribute("station", repository.findById(id));
-        return "/launchpad/stations-form";
+        return "/launchpad/station-form";
     }
 
     @PostMapping("/station-form-commit")
@@ -66,12 +69,20 @@ public class StationsController {
     }
 
     @GetMapping("/station-delete/{id}")
-    public String delete(@PathVariable Long id){
-        return "redirect:/launchpad/stations";
+    public String delete(@PathVariable Long id, Model model){
+/*
+        final Optional<Station> value = repository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/stations";
+        }
+*/
+//        model.addAttribute("station", repository.findById(id).get());
+        model.addAttribute("station", repository.findById(id));
+        return "/launchpad/station-delete";
     }
 
-    @DeleteMapping("/stations-delete-commit")
-    public String deleteCommit(@PathVariable Long id) {
+    @PostMapping("/station-delete-commit")
+    public String deleteCommit(Long id) {
         repository.deleteById(id);
         return "redirect:/launchpad/stations";
     }

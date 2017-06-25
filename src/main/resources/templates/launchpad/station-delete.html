@@ -7,35 +7,49 @@
         <h1 class="widget-header">Station</h1>
 
         <!--/*@thymesVar id="station" type="aiai.ai.launchpad.Station"*/-->
-        <form class="form-horizontal">
-            <div class="form-group">
-                <label class="col-sm-2 control-label">Station Id:</label>
-                <div class="col-sm-10">
-                    <p class="form-control-static" th:text="${station.id}">Station Id</p></div>
-            </div>
-            <div class="form-group">
-                <label class="col-sm-2 control-label">IP address:</label>
-                <div class="col-sm-10">
-                    <p class="form-control-static" th:text="${station.ip}">IP address</p>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-sm-2 control-label">Description:</label>
-                <div class="col-sm-10">
-                    <p class="form-control-static" th:text="${station.description}">description</p>
-                </div>
-            </div>
+        <!--<form class="pure-form pure-form-stacked" th:object="${station}" method="post" action="#" th:method="POST" th:action="@{/launchpad/station-form-commit}" accept-charset="UTF-8" id="station-form" name="f">-->
+        <form class="form-horizontal" th:object="${station}">
+            <label for="id">IP</label>
+            <input name="id" id="id" type="text" placeholder="IP address" th:field="*{id}" th:disabled="true"/>
+
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">Station IP:</label>
+                            <div class="col-sm-10">
+                                <!--<p class="form-control-static" th:text="${station.id}">Station Id</p></div>-->
+                                <!--<p class="form-control-static" th:text="*{id}">Station Id</p></div>-->
+                                <!--<p class="form-control-static" th:field="*{id}" >Station Id</p></div>-->
+                                <input name="ip" id="ip" type="text" placeholder="IP address" th:field="*{ip}" th:disabled="true"/>
+                            </div>
+                        </div>
+            <!--
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">IP address:</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-static" th:text="${station.ip}">IP address</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">Description:</label>
+                            <div class="col-sm-10">
+                                <p class="form-control-static" th:text="${station.description}">description</p>
+                            </div>
+                        </div>
+            -->
         </form>
 
-        <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/stations}" accept-charset="UTF-8" id="station-form-cancel" name="f">
-            <fieldset>
-                <button type="submit" class="pure-button pure-button-primary">Cancel</button>
-            </fieldset>
-        </form>
-        <form class="pure-form pure-form-stacked" method="delete" action="#" th:method="delete" th:action="@{/launchpad/station-delete-commit}" accept-charset="UTF-8" id="station-form-commit" name="f">
-            <fieldset>
-                <button type="submit" class="pure-button pure-button-primary">Delete</button>
-            </fieldset>
-        </form>
+        <div>
+            <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/stations}" accept-charset="UTF-8" id="station-delete-cancel" name="f">
+                <fieldset>
+                    <button type="submit" class="pure-button pure-button-primary">Cancel</button>
+                </fieldset>
+            </form>
+            <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${station}" th:method="post" th:action="@{/launchpad/station-delete-commit}" accept-charset="UTF-8" id="station-delete-commit"
+                  name="f">
+                <input type="hidden" th:field="*{id}"/>
+                <fieldset>
+                    <button type="submit" class="pure-button pure-button-primary">Delete</button>
+                </fieldset>
+            </form>
+        </div>
     </div>
 </div>

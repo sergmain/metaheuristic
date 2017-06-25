@@ -47,8 +47,8 @@
             <td th:text="${r.id}">Sample Item</td>
             <td th:text="${r.ip}">Sample IP address</td>
             <td th:text="${r.description}">Sample Description</td>
-            <td><a th:href="@{/launchpad/station-edit/(${r.id})}">Edit</a></td>
-            <td><a th:href="@{/launchpad/station-delete/(${r.id})}">Delete</a></td>
+            <td><a th:href="${'/launchpad/station-edit/' + r.id}">Edit</a></td>
+            <td><a th:href="${'/launchpad/station-delete/' + r.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="5">

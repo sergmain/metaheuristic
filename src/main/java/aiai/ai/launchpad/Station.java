@@ -1,6 +1,7 @@
 package aiai.ai.launchpad;
 
 import lombok.Data;
+import lombok.NonNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -25,6 +26,8 @@ import java.io.Serializable;
 public class Station implements Serializable {
 
     private static final long serialVersionUID = -6094247705164836600L;
+
+    public Station() {}
 
     @Id
     @Column(name = "ID")
