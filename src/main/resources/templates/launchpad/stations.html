@@ -55,14 +55,14 @@
                 <div>
                     <ul class='pagination pagination-centered'>
                         <!--<li th:class="${result.items.first}?'disabled':''">-->
-                        <li>
-                            <span th:if='${result.items.first}'>← First</span>
-                            <a class='pure-button prev' href="#" th:if='${not result.items.first}' th:href="@{/launchpad/stations-part(page=0,size=${result.items.pageable.pageSize})}">← First</a>
+                        <li class="table-nav-padding">
+                            <span th:if='${result.items.first}' class="table-nav-button">« First</span>
+                            <a class='table-nav-button pure-button prev' href="#" th:if='${not result.items.first}' th:href="@{/launchpad/stations-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
                         </li>
                         <!--<li th:class="${result.items.hasPrevious()}? '' : 'disabled'">-->
-                        <li>
-                            <span th:if='${not result.items.hasPrevious()}'>«</span>
-                            <a class='pure-button prev' href="#" th:if='${result.items.hasPrevious()}' th:href="@{/launchpad/stations-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>«</a>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
+                            <a class='table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}' th:href="@{/launchpad/stations-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <!--
                                         <li th:each='item : ${result.items}' th:class="${item.current}? 'active' : ''">
@@ -71,9 +71,9 @@
                                         </li>
                         -->
                         <!--<li th:class="${result.items.hasNext()}? '' : 'disabled'">-->
-                        <li>
-                            <span th:if='${not result.items.hasNext()}'>»</span>
-                            <a class='pure-button prev' href="#" th:if='${result.items.hasNext()}' th:href='@{/launchpad/stations-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>»</a>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
+                            <a class='table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}' th:href='@{/launchpad/stations-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
                         <!--
                                         <li th:class="${page.lastPage}? 'disabled' : ''">

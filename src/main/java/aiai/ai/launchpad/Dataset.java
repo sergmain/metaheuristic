@@ -1,5 +1,6 @@
 package aiai.ai.launchpad;
 
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,21 +23,23 @@ import java.io.Serializable;
         allocationSize = 1,
         initialValue = 1
 )
-public class Datasets implements Serializable {
+@Data
+public class Dataset implements Serializable {
     private static final long serialVersionUID = -1972306380977162458L;
+
+    public Dataset() {
+    }
 
     @Id
     @Column(name = "ID")
     @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_DATASET")
-    @Getter @Setter
-    public long id;
+    private long id;
 
     @Version
     @Column(name = "VERSION")
-    public int version = 0;
+    private int version = 0;
 
     @Column(name = "DESCRIPTION")
-    @Getter @Setter
-    public String desc;
+    private String description;
 
 }

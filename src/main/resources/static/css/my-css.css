@@ -1,0 +1,36 @@
+.pure-g > div {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    box-sizing: border-box;
+}
+
+.l-box {
+    /*padding: 0 0 0 5em;*/
+    border: 1px solid black;
+}
+
+.content-padding {
+    padding: 1em 0 1em 0;
+}
+
+.center-box {
+    text-align: center;
+}
+
+.widget-header {
+    /*text-transform: uppercase;*/
+    color: #aaa;
+    border-bottom: 1px solid #eee;
+    padding: 0.4em 0;
+    font-size: 80%;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+}
+
+.table-nav-padding {
+    padding: 1em 0 0 0;
+}
+
+.table-nav-button {
+    width: 100px;
+}

@@ -1,15 +1,17 @@
 package aiai.ai.launchpad;
 
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Random;
+import java.util.Optional;
 
 /**
  * User: Serg
@@ -20,64 +22,74 @@ import java.util.Random;
 @RequestMapping("/launchpad")
 public class DatasetsController {
 
-    public static final int TOTAL_NUMBER = 10;
-
-    public static class Item {
-        public Item(String id, String description) {
-            this.id = id;
-            this.description = description;
-        }
-
-        public String id;
-        public String description;
-
-        public String getId() {
-            return id;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-    }
-
-    private DatasetsRepository repository;
-
-    public static class Result {
-        public Slice<Datasets> items;
-
-        public Slice<Datasets> getItems() {
-            return items;
-        }
-    }
-
     @Value("${aiai.table.rows.limit}")
     private int limit;
 
-    private static List<Item> items = null;
+    private DatasetsRepository repository;
+
+    public DatasetsController(DatasetsRepository repository) {
+        this.repository = repository;
+    }
+
+    @Data
+    public static class Result {
+        public Slice<Dataset> items;
+    }
 
     @GetMapping("/datasets")
-    public String init(@ModelAttribute Result result)  {
+    public String init(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable)  {
+        pageable = fixPageSize(pageable);
+        result.items = repository.findAll(pageable);
         return "/launchpad/datasets";
     }
 
-
-
-    // fix default Pabeable - https://stackoverflow.com/questions/27032433/set-default-page-size-for-jpa-pageable-object
-    /**
-     * It's used to get as an Ajax call
-     */
+    // for AJAX
     @PostMapping("/datasets-part")
-    public String getDatasets(@ModelAttribute Result result, Pageable pageable /* @RequestParam(required = false, defaultValue = "0") int start */)  {
-
+    public String getStations(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable )  {
+        pageable = fixPageSize(pageable);
         result.items = repository.findAll(pageable);
         return "/launchpad/datasets :: table";
     }
+
+    @GetMapping(value = "/dataset-add")
+    public String add(Model model) {
+        model.addAttribute("dataset", new Station());
+        return "/launchpad/dataset-form";
+    }
+
+    @GetMapping(value = "/dataset-edit/{id}")
+    public String edit(@PathVariable Long id, Model model){
+        model.addAttribute("dataset", repository.findById(id));
+        return "/launchpad/dataset-form";
+    }
+
+    @PostMapping("/dataset-form-commit")
+    public String formCommit(Dataset station) {
+        repository.save( station );
+        return "redirect:/launchpad/datasets";
+    }
+
+    @GetMapping("/dataset-delete/{id}")
+    public String delete(@PathVariable Long id, Model model){
+        final Optional<Dataset> value = repository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        model.addAttribute("dataset", value.get());
+        return "/launchpad/dataset-delete";
+    }
+
+    @PostMapping("/dataset-delete-commit")
+    public String deleteCommit(Long id) {
+        repository.deleteById(id);
+        return "redirect:/launchpad/datasets";
+    }
+
+    private Pageable fixPageSize(Pageable pageable) {
+        if (pageable.getPageSize()!=limit) {
+            pageable = PageRequest.of(pageable.getPageNumber(), limit);
+        }
+        return pageable;
+    }
+
 }

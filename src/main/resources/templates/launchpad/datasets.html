@@ -17,7 +17,7 @@
             var token = $("meta[name='_csrf']").attr("content");
             var header = $("meta[name='_csrf_header']").attr("content");
 
-            $(document).ajaxSend(function(e, xhr, options) {
+            $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
             // is this the right usage?
@@ -28,6 +28,10 @@
 
     <h1 class="widget-header">Datasets</h1>
 
+    <a class="pure-button" href="station-form.html" th:href="@{/launchpad/dataset-add}">Add new record</a>
+    <p></p>
+
+    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.DatasetsController.Result"*/-->
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>
@@ -36,15 +40,33 @@
         </tr>
         </thead>
         <tbody>
-        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.DatasetsController.Result"*/-->
         <tr th:each="r : ${result.items}">
-            <td th:text="${r.id}">Sample Item</td>
-            <td th:text="${r.description}">Sample Description</td>
+            <td th:text="${r.id}">#Id</td>
+            <td th:text="${r.description}">Dataset description</td>
+            <td><a th:href="${'/launchpad/dataset-edit/' + r.id}">Edit</a></td>
+            <td><a th:href="${'/launchpad/dataset-delete/' + r.id}">Delete</a></td>
         </tr>
         <tr>
-            <td colspan="2">
-                <a class='pure-button prev' href="#" th:href="${result.prevUrl}">&lt; Prev</a>
-                <a class='pure-button next' href="#" th:href="${result.nextUrl}">Next &gt;</a>
+            <td colspan="5">
+                <div>
+                    <ul class='pagination pagination-centered'>
+                        <li class="table-nav-padding">
+                            <span th:if='${result.items.first}' class="table-nav-button">« First</span>
+                            <a class='table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
+                               th:href="@{/launchpad/datasets-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                        </li>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
+                            <a class='table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
+                               th:href="@{/launchpad/datasets-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                        </li>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
+                            <a class='table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
+                               th:href='@{/launchpad/datasets-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
+                        </li>
+                    </ul>
+                </div>
             </td>
         </tr>
         </tbody>

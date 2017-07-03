@@ -70,14 +70,12 @@ public class StationsController {
 
     @GetMapping("/station-delete/{id}")
     public String delete(@PathVariable Long id, Model model){
-/*
         final Optional<Station> value = repository.findById(id);
         if (!value.isPresent()) {
             return "redirect:/launchpad/stations";
         }
-*/
-//        model.addAttribute("station", repository.findById(id).get());
-        model.addAttribute("station", repository.findById(id));
+        model.addAttribute("station", value.get());
+//        model.addAttribute("station", repository.findById(id));
         return "/launchpad/station-delete";
     }
 

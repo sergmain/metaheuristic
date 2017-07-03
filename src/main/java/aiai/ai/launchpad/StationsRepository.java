@@ -22,13 +22,13 @@ public interface StationsRepository extends CrudRepository<Station, Long> {
 
 /*
 
-    List<Datasets> findByLastname(String lastname, Sort sort);
+    List<Dataset> findByLastname(String lastname, Sort sort);
 
-    List<Datasets> findByLastname(String lastname, Pageable pageable);
+    List<Dataset> findByLastname(String lastname, Pageable pageable);
 
     Long deleteByLastname(String lastname);
 
-    List<Datasets> removeByLastname(String lastname);
+    List<Dataset> removeByLastname(String lastname);
 
 */
 }

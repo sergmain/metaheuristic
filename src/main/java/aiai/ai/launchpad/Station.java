@@ -24,7 +24,6 @@ import java.io.Serializable;
 )
 @Data
 public class Station implements Serializable {
-
     private static final long serialVersionUID = -6094247705164836600L;
 
     public Station() {}

@@ -4,21 +4,14 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">Station</h1>
+        <h1 class="widget-header">Datasets</h1>
 
-        <!--/*@thymesVar id="station" type="aiai.ai.launchpad.Station"*/-->
-        <!--<form class="pure-form pure-form-stacked" th:object="${station}" method="post" action="#" th:method="POST" th:action="@{/launchpad/station-form-commit}" accept-charset="UTF-8" id="station-form" name="f">-->
-        <form class="form-horizontal" th:object="${station}">
-            <div class="form-group">
-                <label class="col-sm-2 control-label">Station IP:</label>
-                <div class="col-sm-10">
-                    <input name="ip" id="ip" type="text" placeholder="IP address" th:field="*{ip}" th:disabled="true"/>
-                </div>
-            </div>
+        <!--/*@thymesVar id="dataset" type="aiai.ai.launchpad.Dataset"*/-->
+        <form class="form-horizontal" th:object="${dataset}">
             <div class="form-group">
                 <label class="col-sm-2 control-label">Description:</label>
                 <div class="col-sm-10">
-                    <input name="description" id="description" type="text" placeholder="Description" th:field="*{description}" th:disabled="true"/>
+                    <input name="description" id="description" type="text" placeholder="IP address" th:field="*{description}" th:disabled="true"/>
                 </div>
             </div>
         </form>
@@ -26,7 +19,7 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/stations}" accept-charset="UTF-8" id="station-delete-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/datasets}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>
@@ -36,7 +29,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${station}" th:method="post" th:action="@{/launchpad/station-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${dataset}" th:method="post" th:action="@{/launchpad/dataset-delete-commit}"
                           accept-charset="UTF-8"
                           id="station-delete-commit"
                           name="f">
