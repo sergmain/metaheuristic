@@ -1,12 +1,16 @@
 package aiai.ai.station;
 
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.Optional;
 
 /**
  * User: Serg
@@ -17,130 +21,74 @@ import java.util.Random;
 @RequestMapping("/station")
 public class EnvironmentController {
 
-    public static final int TOTAL_NUMBER = 10;
-
-    public static class Item {
-        public Item(String id, String description) {
-            this.id = id;
-            this.description = description;
-        }
-
-        public String id;
-        public String description;
-
-        public String getId() {
-            return id;
-        }
-
-        public void setId(String id) {
-            this.id = id;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-    }
-
-    public static class Result {
-        public List<Item> items = new ArrayList<>();
-        public String prevUrl;
-        public String nextUrl;
-        public boolean prevAvailable;
-        public boolean nextAvailable;
-
-        public List<Item> getItems() {
-            return items;
-        }
-
-        public String getPrevUrl() {
-            return prevUrl;
-        }
-
-        public void setPrevUrl(String prevUrl) {
-            this.prevUrl = prevUrl;
-        }
-
-        public String getNextUrl() {
-            return nextUrl;
-        }
-
-        public void setNextUrl(String nextUrl) {
-            this.nextUrl = nextUrl;
-        }
-
-        public boolean isPrevAvailable() {
-            return prevAvailable;
-        }
-
-        public void setPrevAvailable(boolean prevAvailable) {
-            this.prevAvailable = prevAvailable;
-        }
-
-        public boolean isNextAvailable() {
-            return nextAvailable;
-        }
-
-        public void setNextAvailable(boolean nextAvailable) {
-            this.nextAvailable = nextAvailable;
-        }
-    }
-
     @Value("${aiai.table.rows.limit}")
     private int limit;
 
-    private static List<Item> items = null;
+    private EnvironmentRepository repository;
+
+    public EnvironmentController(EnvironmentRepository repository) {
+        this.repository = repository;
+    }
+
+    @Data
+    public static class Result {
+        public Slice<Env> items;
+    }
 
     @GetMapping("/envs")
-    public String init(@ModelAttribute Result result)  {
+    public String init(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable)  {
+        pageable = fixPageSize(pageable);
+        result.items = repository.findAll(pageable);
         return "/station/envs";
     }
 
-    /**
-     * It's used to get as an Ajax call
-     */
+    // for AJAX
     @PostMapping("/envs-part")
-    public String getEnvironments(@ModelAttribute Result result, @RequestParam(required = false, defaultValue = "0") int start)  {
-
-        if (items==null) {
-            items = gen();
-        }
-
-        boolean prevAvailable = start > 0;
-        if(prevAvailable) {
-            int prevStart = start - limit;
-            result.setPrevUrl("/station/envs-part?start=" + prevStart);
-        }
-        result.setPrevAvailable(prevAvailable);
-
-        int nextStart = start + limit;
-        boolean nextAvailable = TOTAL_NUMBER > nextStart;
-        if(nextAvailable) {
-            result.setNextUrl("/station/envs-part?start=" + nextStart);
-        }
-        result.setNextAvailable(nextAvailable);
-
-        result.items.addAll( items.subList(start, nextAvailable? start+limit :10));
-
-        return "/station/envs :: table"; // *partial* update
+    public String getEnvs(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable )  {
+        pageable = fixPageSize(pageable);
+        result.items = repository.findAll(pageable);
+        return "/station/envs :: table";
     }
 
+    @GetMapping(value = "/env-add")
+    public String add(Model model) {
+        model.addAttribute("env", new Env());
+        return "/station/env-form";
+    }
 
-    private static Random r = new Random();
+    @GetMapping(value = "/env-edit/{id}")
+    public String edit(@PathVariable Long id, Model model){
+        model.addAttribute("env", repository.findById(id));
+        return "/station/env-form";
+    }
 
-    private static List<Item> gen() {
-        List<Item> items = new ArrayList<>();
+    @PostMapping("/env-form-commit")
+    public String formCommit(Env env) {
+        repository.save( env );
+        return "redirect:/station/envs";
+    }
 
-
-        for (int i = 0; i < TOTAL_NUMBER; i++) {
-            final int i1 = r.nextInt();
-            items.add(new Item("Id:"+ i1, "Desc: " + i1));
+    @GetMapping("/env-delete/{id}")
+    public String delete(@PathVariable Long id, Model model){
+        final Optional<Env> value = repository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/station/envs";
         }
+        model.addAttribute("env", value.get());
+        return "/station/env-delete";
+    }
 
-        return items;
+    @PostMapping("/env-delete-commit")
+    public String deleteCommit(Long id) {
+        repository.deleteById(id);
+        return "redirect:/station/envs";
+    }
+
+    private Pageable fixPageSize(Pageable pageable) {
+        if (pageable.getPageSize()!=limit) {
+            pageable = PageRequest.of(pageable.getPageNumber(), limit);
+        }
+        return pageable;
     }
 }
 

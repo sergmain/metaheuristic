@@ -45,7 +45,7 @@ public class DatasetsController {
 
     // for AJAX
     @PostMapping("/datasets-part")
-    public String getStations(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable )  {
+    public String getDatasets(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable )  {
         pageable = fixPageSize(pageable);
         result.items = repository.findAll(pageable);
         return "/launchpad/datasets :: table";
@@ -53,7 +53,7 @@ public class DatasetsController {
 
     @GetMapping(value = "/dataset-add")
     public String add(Model model) {
-        model.addAttribute("dataset", new Station());
+        model.addAttribute("dataset", new Dataset());
         return "/launchpad/dataset-form";
     }
 
@@ -64,8 +64,8 @@ public class DatasetsController {
     }
 
     @PostMapping("/dataset-form-commit")
-    public String formCommit(Dataset station) {
-        repository.save( station );
+    public String formCommit(Dataset dataset) {
+        repository.save( dataset );
         return "redirect:/launchpad/datasets";
     }
 
