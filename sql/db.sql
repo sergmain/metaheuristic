@@ -26,3 +26,11 @@ VERSION numeric(5,0) NOT NULL,
 DESCRIPTION varchar(250)
 )
 /
+
+create table AIAI_EXPERIMENT (
+ID numeric(10,0) not null,
+VERSION numeric(5,0) NOT NULL,
+NAME varchar(50),
+DESCRIPTION varchar(250)
+)
+/
