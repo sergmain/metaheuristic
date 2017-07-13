@@ -16,6 +16,7 @@ create table AIAI_STATION (
 ID numeric(10,0) not null,
 VERSION numeric(5,0) NOT NULL,
 IP varchar(30),
+UPDATE_TS TIMESTAMP DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
 DESCRIPTION varchar(250)
 )
 /
