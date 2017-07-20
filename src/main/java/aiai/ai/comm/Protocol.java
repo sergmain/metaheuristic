@@ -7,9 +7,15 @@ package aiai.ai.comm;
  */
 public class Protocol {
 
-    interface Command {
+    public static class Nop extends Command {
+        public Nop() {
+            this.setType(Type.Nop);
+        }
     }
 
-    public static class Nop implements Command {
+    public static class Ok extends Command {
+        public Ok() {
+            this.setType(Type.Ok);
+        }
     }
 }
