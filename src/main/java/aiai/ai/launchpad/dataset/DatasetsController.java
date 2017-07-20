@@ -1,4 +1,4 @@
-package aiai.ai.launchpad;
+package aiai.ai.launchpad.dataset;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -26,14 +27,25 @@ public class DatasetsController {
     private int limit;
 
     private DatasetsRepository repository;
+    private DatasetGroupsRepository groupsRepository;
 
-    public DatasetsController(DatasetsRepository repository) {
+    public DatasetsController(DatasetsRepository repository, DatasetGroupsRepository groupsRepository) {
         this.repository = repository;
+        this.groupsRepository = groupsRepository;
     }
 
     @Data
     public static class Result {
         public Slice<Dataset> items;
+    }
+
+    @Data
+    public static class DatasetDefinition {
+        public DatasetDefinition(Dataset dataset) {
+            this.dataset = dataset;
+        }
+
+        public Dataset dataset;
     }
 
     @GetMapping("/datasets")
@@ -61,6 +73,43 @@ public class DatasetsController {
     public String edit(@PathVariable Long id, Model model){
         model.addAttribute("dataset", repository.findById(id));
         return "/launchpad/dataset-form";
+    }
+
+    @GetMapping(value = "/dataset-definition/{id}")
+    public String toDatasetDefinition(@PathVariable(name="id") Long datasetId, Model model){
+        final Optional<Dataset> dataset = repository.findById(datasetId);
+        if (!dataset.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        
+        model.addAttribute("result", new DatasetDefinition(dataset.get()) );
+        return "/launchpad/dataset-definition";
+    }
+
+    @GetMapping(value = "/dataset-group-add-new/{id}")
+    public String addNewGroup(@PathVariable(name = "id") Long datasetId, Model model){
+        final Optional<Dataset> value = repository.findById(datasetId);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        Dataset dataset = value.get();
+
+        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
+        int groupNumber;
+        if (groups.isEmpty()) {
+            groupNumber = 1;
+        }
+        else {
+            groupNumber = groups.stream().mapToInt(DatasetGroup::getGroupNumber).max().getAsInt() + 1;
+        }
+
+        final DatasetGroup group = new DatasetGroup(groupNumber);
+        group.setDataset(dataset);
+
+        dataset.getDatasetGroups().add(group);
+
+        repository.save( dataset );
+        return "redirect:/launchpad/dataset-definition/"+datasetId;
     }
 
     @PostMapping("/dataset-form-commit")

@@ -153,7 +153,8 @@ public <T> T postForObject(String url,
     /**
      * Experementas. Spring Boot (m2/Snapshot) doesn't work at all
      */
-    @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
+    // C! this one is currently working, but ugly
+//    @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
     public void fixedDelayTaskViaHttpComponent() {
 
         try {

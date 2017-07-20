@@ -1,4 +1,4 @@
-package aiai.ai.launchpad;
+package aiai.ai.launchpad.station;
 
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;

@@ -1,4 +1,4 @@
-package aiai.ai.launchpad;
+package aiai.ai.launchpad.experiment;
 
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;

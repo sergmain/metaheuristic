@@ -6,7 +6,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New station record</h1>
 
-        <!--/*@thymesVar id="station" type="aiai.ai.launchpad.Station"*/-->
+        <!--/*@thymesVar id="station" type="aiai.ai.launchpad.station.Station"*/-->
         <form class="pure-form pure-form-stacked" th:object="${station}" method="post" action="#" th:method="POST" th:action="@{/launchpad/station-form-commit}" accept-charset="UTF-8" id="station-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <input type="hidden" th:field="*{version}"/>

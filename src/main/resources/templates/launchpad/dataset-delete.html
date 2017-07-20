@@ -6,7 +6,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Datasets</h1>
 
-        <!--/*@thymesVar id="dataset" type="aiai.ai.launchpad.Dataset"*/-->
+        <!--/*@thymesVar id="dataset" type="aiai.ai.launchpad.dataset.Dataset"*/-->
         <form class="form-horizontal" th:object="${dataset}">
             <div class="form-group">
                 <label class="col-sm-2 control-label">Description:</label>

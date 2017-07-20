@@ -1,0 +1,61 @@
+package aiai.ai.launchpad.dataset;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import javax.persistence.*;
+import java.io.Serializable;
+import java.util.Set;
+
+/**
+ * User: Serg
+ * Date: 20.07.2017
+ * Time: 21:22
+ */
+@Entity
+@Table(name = "AIAI_DATASET_GROUP")
+@TableGenerator(
+        name = "TABLE_AIAI_DATASET_GROUP",
+        table = "AIAI_IDS",
+        pkColumnName = "sequence_name",
+        valueColumnName = "sequence_next_value",
+        pkColumnValue = "AIAI_DATASET_GROUP",
+        allocationSize = 1,
+        initialValue = 1
+)
+@Data
+@EqualsAndHashCode(exclude={"dataset", "datasetColumns"})
+public class DatasetGroup  implements Serializable {
+    private static final long serialVersionUID = -3161178396332333392L;
+
+    public DatasetGroup() {
+    }
+
+    public DatasetGroup(int groupNumber) {
+        this.groupNumber = groupNumber;
+    }
+
+    @Id
+    @Column(name = "ID")
+    @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_DATASET_GROUP")
+    private long id;
+
+    @Version
+    @Column(name = "VERSION")
+    private int version = 0;
+
+    @Column(name = "GROUP_NUMBER")
+    private int groupNumber;
+
+    @Column(name = "DESCRIPTION")
+    private String description;
+
+    @ManyToOne
+    @JoinColumn(name = "DATASET_ID")
+    private Dataset dataset;
+
+    @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL)
+    private Set<DatasetColumn> datasetColumns;
+
+
+}

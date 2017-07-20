@@ -42,7 +42,7 @@
         </thead>
 
         <tbody>
-        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.ExperimentsController.Result"*/-->
+        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.experiment.ExperimentsController.Result"*/-->
         <tr th:each="r : ${result.items}">
             <td th:text="${r.id}">#Id</td>
             <td th:text="${r.name}">Experiment name</td>
