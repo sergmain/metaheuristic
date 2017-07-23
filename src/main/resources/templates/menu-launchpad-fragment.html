@@ -10,7 +10,7 @@
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/stations'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="/launchpad/stations.html" th:href="@{/launchpad/stations}">Stations</a>
         </li>
-        <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/datasets'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+        <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/datasets' || #httpServletRequest.requestURI.startsWith('/launchpad/dataset-definition')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="/launchpad/datasets.html" th:href="@{/launchpad/datasets}">Datasets</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/experiments'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">

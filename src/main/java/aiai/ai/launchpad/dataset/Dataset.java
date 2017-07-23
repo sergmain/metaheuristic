@@ -5,7 +5,7 @@ import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Set;
+import java.util.List;
 
 /**
  * User: Serg
@@ -44,9 +44,9 @@ public class Dataset implements Serializable {
     private String description;
 
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL)
-    private Set<DatasetColumn> datasetColumns;
+    private List<DatasetColumn> datasetColumns;
 
 
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL)
-    private Set<DatasetGroup> datasetGroups;
+    private List<DatasetGroup> datasetGroups;
 }

@@ -1,5 +1,6 @@
-package aiai.ai.launchpad.dataset;
+package aiai.ai.launchpad.dataset.repo;
 
+import aiai.ai.launchpad.dataset.Dataset;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.repository.CrudRepository;

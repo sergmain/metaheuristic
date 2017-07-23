@@ -5,7 +5,7 @@
 
     <script>
         var table = function (html) {
-            $('#table').html(html).find('.pure-button').each(function () {
+            $('#table').html(html).find('.ajax-elem').each(function () {
                 $(this).click(function () {
                     $.post($(this).attr('href'), table);
                     return false;
@@ -47,8 +47,8 @@
             <td th:text="${r.id}">#Id</td>
             <td th:text="${r.name}">Environment name</td>
             <td th:text="${r.description}">Environment description</td>
-            <td><a th:href="${'/station/env-edit/' + r.id}">Edit</a></td>
-            <td><a th:href="${'/station/env-delete/' + r.id}">Delete</a></td>
+            <td><a class="pure-button" th:href="${'/station/env-edit/' + r.id}">Edit</a></td>
+            <td><a class="pure-button" th:href="${'/station/env-delete/' + r.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="5">
@@ -56,17 +56,17 @@
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">
                             <span th:if='${result.items.first}' class="table-nav-button">« First</span>
-                            <a class='table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
                                th:href="@{/station/envs-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
-                            <a class='table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
                                th:href="@{/station/envs-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
-                            <a class='table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
                                th:href='@{/station/envs-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
                     </ul>

@@ -4,13 +4,18 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">New description of dataset</h1>
+        <h1 class="widget-header">New column</h1>
 
-        <!--/*@thymesVar id="dataset" type="aiai.ai.launchpad.dataset.Dataset"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${dataset}" method="post" action="#" th:method="POST" th:action="@{/launchpad/dataset-form-commit}" accept-charset="UTF-8" id="dataset-form" name="f">
+        <!--/*@thymesVar id="column" type="aiai.ai.launchpad.dataset.DatasetColumn"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${column}" method="post" action="#" th:method="POST" th:action="@{/launchpad/dataset-column-add-commit}" accept-charset="UTF-8" id="dataset-form" name="f">
             <input type="hidden" th:field="*{id}"/>
+            <input type="hidden" th:field="*{datasetGroup.id}" th:name="datasetGroupId"/>
             <input type="hidden" th:field="*{version}"/>
             <fieldset>
+
+                <label for="name">name</label>
+                <input name="name" id="name" type="text" placeholder="name"  th:field="*{name}">
+                <span class="pure-form-message">This is a required field.</span>
 
                 <label for="description">Description</label>
                 <input name="description" id="description" type="text" placeholder="description"  th:field="*{description}">
@@ -18,13 +23,9 @@
 
                 <table>
                     <tr>
+
                         <td>
-                            <a class="pure-button pure-button-primary" href="datasets.html" th:href="${'/launchpad/datasets'}">Cancel</a>
-<!--
-                            <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/datasets}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
-                                <button type="submit" class="pure-button pure-button-primary">Cancel</button>
-                            </form>
--->
+                            <a class="pure-button pure-button-primary" href="dataset-definition.html" th:href="${'/launchpad/dataset-definition/' + column.datasetGroup.dataset.id}">Cancel</a>
                         </td>
                         <td>
                             &nbsp;

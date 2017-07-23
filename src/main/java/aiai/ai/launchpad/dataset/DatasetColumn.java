@@ -56,4 +56,10 @@ public class DatasetColumn implements Serializable {
     @JoinColumn(name = "DATASET_GROUP_ID")
     private DatasetGroup datasetGroup;
 
+
+    /**
+     * last column in definition. is used in UI
+     */
+    @Transient
+    private boolean isLastColumn;
 }
