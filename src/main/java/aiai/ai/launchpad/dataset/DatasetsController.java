@@ -116,8 +116,15 @@ public class DatasetsController {
         }
 
         // last actual column in groups. there isn't any non-empty group after this one
-        for (int i = 0; i < dataset.getDatasetGroups().size()-1; i++) {
-            if (dataset.getDatasetGroups().get(i+1).getDatasetColumns().size()==0) {
+        for (int i = 0; i < dataset.getDatasetGroups().size(); i++) {
+            // case when last group isn't empty
+            if (i+1==dataset.getDatasetGroups().size()) {
+                final List<DatasetColumn> columns = dataset.getDatasetGroups().get(i).getDatasetColumns();
+                columns.get(columns.size()-1).setLastColumn(true);
+                break;
+            }
+            // case when there are some empty groups
+            if (i<dataset.getDatasetGroups().size()-1 && dataset.getDatasetGroups().get(i+1).getDatasetColumns().size()==0) {
                 final List<DatasetColumn> columns = dataset.getDatasetGroups().get(i).getDatasetColumns();
                 if (columns.isEmpty()) {
                     continue; 

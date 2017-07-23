@@ -58,8 +58,8 @@
                         <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-column-edit/' + r.id}">Edit</a></td>
                         <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-column-delete/' + r.id}">Delete</a></td>
                         <td>
-                            <a th:if="${not gIterStatus.first && rIterStatus.first && (g.datasetColumns.size()>1 || r.lastColumn) }" class='pure-button pure-button-primary' th:href="${'/launchpad/dataset-column-move-prev-group/' + r.id}">To prev group</a>
-                            <a th:if="${not gIterStatus.last && rIterStatus.last && g.datasetColumns.size()>1}" class='pure-button pure-button-primary' th:href="${'/launchpad/dataset-column-move-next-group/' + r.id}">To next group</a>
+                            <a th:if="${ (not gIterStatus.first) && rIterStatus.first && (g.datasetColumns.size()>1 || r.lastColumn) }" class='pure-button pure-button-primary' th:href="${'/launchpad/dataset-column-move-prev-group/' + r.id}">To prev group</a>
+                            <a th:if="${ (not gIterStatus.last) && rIterStatus.last && g.datasetColumns.size()>1}" class='pure-button pure-button-primary' th:href="${'/launchpad/dataset-column-move-next-group/' + r.id}">To next group</a>
                         </td>
                     </tr>
                     </tbody>
