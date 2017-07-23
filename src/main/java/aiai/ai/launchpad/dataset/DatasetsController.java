@@ -119,6 +119,9 @@ public class DatasetsController {
         for (int i = 0; i < dataset.getDatasetGroups().size()-1; i++) {
             if (dataset.getDatasetGroups().get(i+1).getDatasetColumns().size()==0) {
                 final List<DatasetColumn> columns = dataset.getDatasetGroups().get(i).getDatasetColumns();
+                if (columns.isEmpty()) {
+                    continue; 
+                }
                 columns.get(columns.size()-1).setLastColumn(true);
                 break;
             }
@@ -248,6 +251,19 @@ public class DatasetsController {
 
         repository.save( dataset );
         return "redirect:/launchpad/dataset-definition/"+datasetId;
+    }
+
+    @PostMapping(value = "/dataset-group-skip-commit")
+    public String setSkipForGroup(Long id, boolean skip){
+        final Optional<DatasetGroup> value = groupsRepository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        DatasetGroup group = value.get();
+        group.setSkip(skip);
+        groupsRepository.save( group );
+
+        return "redirect:/launchpad/dataset-definition/"+group.getDataset().getId();
     }
 
     @PostMapping("/dataset-form-commit")

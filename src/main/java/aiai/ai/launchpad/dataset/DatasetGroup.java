@@ -50,6 +50,9 @@ public class DatasetGroup  implements Serializable {
     @Column(name = "DESCRIPTION")
     private String description;
 
+    @Column(name = "IS_SKIP")
+    private boolean isSkip;
+
     @ManyToOne
     @JoinColumn(name = "DATASET_ID")
     private Dataset dataset;

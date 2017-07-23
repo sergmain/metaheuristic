@@ -45,9 +45,6 @@ public class DatasetColumn implements Serializable {
     @Column(name = "NAME")
     private String name;
 
-    @Column(name = "IS_SKIP")
-    private boolean isSkip;
-
     @ManyToOne
     @JoinColumn(name = "DATASET_ID")
     private Dataset dataset;
