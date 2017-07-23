@@ -23,15 +23,14 @@
 
                 <table>
                     <tr>
-
                         <td>
-                            <a class="pure-button pure-button-primary" href="dataset-definition.html" th:href="${'/launchpad/dataset-definition/' + column.datasetGroup.dataset.id}">Cancel</a>
+                            <button type="submit" class="pure-button pure-button-primary">Save changes</button>
                         </td>
                         <td>
                             &nbsp;
                         </td>
                         <td>
-                            <button type="submit" class="pure-button pure-button-primary">Save changes</button>
+                            <a class="pure-button pure-button-primary" href="dataset-definition.html" th:href="${'/launchpad/dataset-definition/' + column.datasetGroup.dataset.id}">Cancel</a>
                         </td>
                     </tr>
                 </table>

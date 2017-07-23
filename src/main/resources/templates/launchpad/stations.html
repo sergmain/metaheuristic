@@ -28,7 +28,7 @@
 
     <h1 class="widget-header">Stations</h1>
 
-    <a class="pure-button" href="station-form.html" th:href="@{/launchpad/station-add}">Add new record</a>
+    <a class="pure-button pure-button-primary" href="station-form.html" th:href="@{/launchpad/station-add}">Add new record</a>
     <p></p>
 
     <!--/*@thymesVar id="result" type="aiai.ai.launchpad.station.StationsController.Result"*/-->
@@ -46,8 +46,8 @@
             <td th:text="${r.id}">Sample Item</td>
             <td th:text="${r.ip}">Sample IP address</td>
             <td th:text="${r.description}">Sample Description</td>
-            <td><a class="pure-button" th:href="${'/launchpad/station-edit/' + r.id}">Edit</a></td>
-            <td><a class="pure-button" th:href="${'/launchpad/station-delete/' + r.id}">Delete</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-edit/' + r.id}">Edit</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-delete/' + r.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="5">

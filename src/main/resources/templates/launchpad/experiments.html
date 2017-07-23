@@ -28,7 +28,7 @@
 
     <h1 class="widget-header">Experiments</h1>
 
-    <a class="pure-button" href="experiment-form.html" th:href="@{/launchpad/experiment-add}">Add new record</a>
+    <a class="pure-button pure-button-primary" href="experiment-form.html" th:href="@{/launchpad/experiment-add}">Add new record</a>
     <p></p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
@@ -47,8 +47,8 @@
             <td th:text="${r.id}">#Id</td>
             <td th:text="${r.name}">Experiment name</td>
             <td th:text="${r.description}">Dataset description</td>
-            <td><a class="pure-button" th:href="${'/launchpad/experiment-edit/' + r.id}">Edit</a></td>
-            <td><a class="pure-button" th:href="${'/launchpad/experiment-delete/' + r.id}">Delete</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-edit/' + r.id}">Edit</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-delete/' + r.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="5">

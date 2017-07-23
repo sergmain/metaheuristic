@@ -19,16 +19,6 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/datasets}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
-                        <fieldset>
-                            <button type="submit" class="pure-button pure-button-primary">Cancel</button>
-                        </fieldset>
-                    </form>
-                </td>
-                <td>
-                    &nbsp;
-                </td>
-                <td>
                     <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${dataset}" th:method="post" th:action="@{/launchpad/dataset-delete-commit}"
                           accept-charset="UTF-8"
                           id="dataset-delete-commit"
@@ -36,6 +26,16 @@
                         <input type="hidden" th:field="*{id}"/>
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Delete</button>
+                        </fieldset>
+                    </form>
+                </td>
+                <td>
+                    &nbsp;
+                </td>
+                <td>
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/datasets}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
+                        <fieldset>
+                            <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>
                     </form>
                 </td>

@@ -7,7 +7,7 @@
 
     <!--/*@thymesVar id="result" type="aiai.ai.launchpad.dataset.DatasetsController.DatasetDefinition"*/-->
 
-    <a class="pure-button" href="#" th:href="${'/launchpad/dataset-group-add-new/'+result.dataset.id}">Add group record</a>
+    <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/dataset-group-add-new/'+result.dataset.id}">Add group record</a>
     <p></p>
 
     <div th:if='${result.dataset.datasetGroups.isEmpty()}'>
@@ -21,8 +21,8 @@
                 <p th:text="${'Group #' + g.groupNumber}">#Id</p>
             </td>
             <td>
-                <a class="pure-button" href="dataset-column-form.html" th:href="${'/launchpad/dataset-column-add/' + g.id}" th:if='${g.isAddColumn()}' >Add column</a>
-                <a class="pure-button" href="#" th:href="${'/launchpad/dataset-delete-group/' + g.id}" th:if='${g.datasetColumns.isEmpty()}' >Delete group</a>
+                <a class="pure-button pure-button-primary" href="dataset-column-form.html" th:href="${'/launchpad/dataset-column-add/' + g.id}" th:if='${g.isAddColumn()}' >Add column</a>
+                <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/dataset-delete-group/' + g.id}" th:if='${g.datasetColumns.isEmpty()}' >Delete group</a>
             </td>
             <td>
                 <table class="pure-table pure-table-bordered" id="table-ds-group-cols" th:fragment="table" th:if='${not result.dataset.datasetGroups.isEmpty()}'>
@@ -39,11 +39,11 @@
                         <td th:text="${r.id}">#Id</td>
                         <td th:text="${r.name}">Column name</td>
                         <td th:text="${r.description}">Column description</td>
-                        <td><a class="pure-button" th:href="${'/launchpad/dataset-column-edit/' + r.id}">Edit</a></td>
-                        <td><a class="pure-button" th:href="${'/launchpad/dataset-column-delete/' + r.id}">Delete</a></td>
+                        <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-column-edit/' + r.id}">Edit</a></td>
+                        <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-column-delete/' + r.id}">Delete</a></td>
                         <td>
-                            <a th:if="${not gIterStatus.first && rIterStatus.first && (g.datasetColumns.size()>1 || r.lastColumn) }" class='pure-button' th:href="${'/launchpad/dataset-column-move-prev-group/' + r.id}">To prev group</a>
-                            <a th:if="${not gIterStatus.last && rIterStatus.last && g.datasetColumns.size()>1}" class='pure-button' th:href="${'/launchpad/dataset-column-move-next-group/' + r.id}">To next group</a>
+                            <a th:if="${not gIterStatus.first && rIterStatus.first && (g.datasetColumns.size()>1 || r.lastColumn) }" class='pure-button pure-button-primary' th:href="${'/launchpad/dataset-column-move-prev-group/' + r.id}">To prev group</a>
+                            <a th:if="${not gIterStatus.last && rIterStatus.last && g.datasetColumns.size()>1}" class='pure-button pure-button-primary' th:href="${'/launchpad/dataset-column-move-next-group/' + r.id}">To next group</a>
                         </td>
                     </tr>
                     </tbody>
@@ -54,6 +54,6 @@
     </table>
 
     <p></p>
-    <a class="pure-button" href="#" th:href="${'/launchpad/datasets'}">Back to Datasets</a>
+    <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/datasets'}">Back to Datasets</a>
 
 </div>
