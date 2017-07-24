@@ -23,7 +23,7 @@ import java.io.Serializable;
         initialValue = 1
 )
 @Data
-@EqualsAndHashCode(exclude={"dataset", "datasetGroup"})
+@EqualsAndHashCode(exclude={"datasetGroup"})
 public class DatasetColumn implements Serializable {
     private static final long serialVersionUID = -1823497750685166069L;
 
@@ -45,11 +45,7 @@ public class DatasetColumn implements Serializable {
     @Column(name = "NAME")
     private String name;
 
-    @ManyToOne
-    @JoinColumn(name = "DATASET_ID")
-    private Dataset dataset;
-
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "DATASET_GROUP_ID")
     private DatasetGroup datasetGroup;
 

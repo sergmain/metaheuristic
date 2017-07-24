@@ -24,7 +24,7 @@ import java.util.List;
         initialValue = 1
 )
 @Data
-@EqualsAndHashCode(exclude={"datasetColumns", "datasetGroups"})
+@EqualsAndHashCode(exclude={"datasetGroups"})
 public class Dataset implements Serializable {
     private static final long serialVersionUID = -1972306380977162458L;
 
@@ -42,9 +42,6 @@ public class Dataset implements Serializable {
 
     @Column(name = "DESCRIPTION")
     private String description;
-
-    @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL)
-    private List<DatasetColumn> datasetColumns;
 
 
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL)

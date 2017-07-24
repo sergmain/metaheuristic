@@ -4,6 +4,7 @@ import aiai.ai.launchpad.dataset.repo.DatasetColumnRepository;
 import aiai.ai.launchpad.dataset.repo.DatasetGroupsRepository;
 import aiai.ai.launchpad.dataset.repo.DatasetsRepository;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -14,9 +15,14 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * User: Serg
@@ -117,22 +123,30 @@ public class DatasetsController {
             }
         }
 
-        // last actual column in groups. there isn't any non-empty group after this one
-        for (int i = 0; i < dataset.getDatasetGroups().size(); i++) {
-            // case when last group isn't empty
-            if (i + 1 == dataset.getDatasetGroups().size()) {
-                final List<DatasetColumn> columns = dataset.getDatasetGroups().get(i).getDatasetColumns();
-                columns.get(columns.size() - 1).setLastColumn(true);
-                break;
-            }
-            // case when there are some empty groups
-            if (i < dataset.getDatasetGroups().size() - 1 && dataset.getDatasetGroups().get(i + 1).getDatasetColumns().size() == 0) {
-                final List<DatasetColumn> columns = dataset.getDatasetGroups().get(i).getDatasetColumns();
-                if (columns.isEmpty()) {
-                    continue;
+        // ugly but it works
+        // dont invert the condition
+        if (dataset.getDatasetGroups().size()==1 && dataset.getDatasetGroups().get(0).getDatasetColumns().isEmpty()) {
+            // nothing to do with this
+        }
+        else {
+            // last actual column in groups. there isn't any non-empty group after this one
+            for (int i = 0; i < dataset.getDatasetGroups().size(); i++) {
+
+                // case when last group isn't empty
+                if (i + 1 == dataset.getDatasetGroups().size()) {
+                    final List<DatasetColumn> columns = dataset.getDatasetGroups().get(i).getDatasetColumns();
+                    columns.get(columns.size() - 1).setLastColumn(true);
+                    break;
                 }
-                columns.get(columns.size() - 1).setLastColumn(true);
-                break;
+                // case when there are some empty groups
+                if (i < dataset.getDatasetGroups().size() - 1 && dataset.getDatasetGroups().get(i + 1).getDatasetColumns().size() == 0) {
+                    final List<DatasetColumn> columns = dataset.getDatasetGroups().get(i).getDatasetColumns();
+                    if (columns.isEmpty()) {
+                        continue;
+                    }
+                    columns.get(columns.size() - 1).setLastColumn(true);
+                    break;
+                }
             }
         }
 
@@ -157,7 +171,6 @@ public class DatasetsController {
         DatasetGroup group = value.get();
 
         column.setDatasetGroup(group);
-        column.setDataset(group.getDataset());
         columnRepository.save(column);
 
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
@@ -171,8 +184,12 @@ public class DatasetsController {
         }
         DatasetColumn column = value.get();
 
+/*
         final long datasetId = column.getDataset().getId();
         List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
+*/
+        final Dataset dataset = column.getDatasetGroup().getDataset();
+        List<DatasetGroup> groups = dataset.getDatasetGroups();
         if (groups.size() < 2) {
             return "redirect:/launchpad/datasets";
         }
@@ -190,7 +207,7 @@ public class DatasetsController {
         }
 
         columnRepository.save(column);
-        return "redirect:/launchpad/dataset-definition/" + datasetId;
+        return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
     @GetMapping(value = "/dataset-column-move-next-group/{id}")
@@ -201,8 +218,12 @@ public class DatasetsController {
         }
         DatasetColumn column = value.get();
 
+/*
         final long datasetId = column.getDataset().getId();
         List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
+*/
+        final Dataset dataset = column.getDatasetGroup().getDataset();
+        List<DatasetGroup> groups = dataset.getDatasetGroups();
         if (groups.size() < 2) {
             return "redirect:/launchpad/datasets";
         }
@@ -217,7 +238,7 @@ public class DatasetsController {
         }
 
         columnRepository.save(column);
-        return "redirect:/launchpad/dataset-definition/" + datasetId;
+        return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
     @GetMapping(value = "/dataset-delete-group/{id}")
@@ -277,17 +298,40 @@ public class DatasetsController {
 
 
     @PostMapping(value = "/dataset-group-from-file")
-    public String createDefinitionFromFile(MultipartFile file, long id, boolean skip ) {
+    public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId) {
+        Optional<Dataset> optionalDataset = repository.findById(datasetId);
+        if (!optionalDataset.isPresent()) {
+            return "redirect:/launchpad/dataset-definition/" + datasetId;
+        }
+        Dataset dataset = optionalDataset.get();
+        groupsRepository.deleteDatasetGroupByDataset_Id(datasetId);
 
-        String line = null;
         try (InputStream is = file.getInputStream(); final InputStreamReader isr = new InputStreamReader(is, "UTF-8"); BufferedReader br = new BufferedReader(isr)) {
-            line = br.readLine();
+            String line = br.readLine();
+            List<String> names = Arrays.stream(line.split("[,]")).filter(s -> s != null && s.length() > 0).map(String::trim).collect(Collectors.toList());
+
+            DatasetGroup group = new DatasetGroup();
+            group.setDescription("Group #1");
+            group.setDataset(dataset);
+            List<DatasetGroup> groups = new ArrayList<>();
+            groups.add(group);
+            dataset.setDatasetGroups(groups);
+
+            int i = 1;
+            for (String name : names) {
+                DatasetColumn c = new DatasetColumn();
+                c.setDatasetGroup(group);
+                c.setName(StringUtils.substring(name, 0, 50));
+                c.setDescription(StringUtils.substring("Column #" + (i++) + ", " + name, 0, 250));
+                columnRepository.save(c);
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
+            throw new RuntimeException("error", e);
         }
-        
-        return "redirect:/launchpad/dataset-definition/" + id;
+
+        return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
     @PostMapping("/dataset-form-commit")
@@ -318,5 +362,4 @@ public class DatasetsController {
         }
         return pageable;
     }
-
 }

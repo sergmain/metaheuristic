@@ -18,4 +18,7 @@ public interface DatasetGroupsRepository extends CrudRepository<DatasetGroup, Lo
 
     @Transactional(readOnly = true)
     List<DatasetGroup> findByDataset_Id(Long datasetId);
+
+    void deleteDatasetGroupByDataset_Id(Long datasetId);
+
 }

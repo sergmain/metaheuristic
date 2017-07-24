@@ -1,6 +1,7 @@
 package aiai.ai.launchpad.dataset.repo;
 
 import aiai.ai.launchpad.dataset.DatasetColumn;
+import aiai.ai.launchpad.dataset.DatasetGroup;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
