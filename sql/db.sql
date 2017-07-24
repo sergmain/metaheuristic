@@ -30,7 +30,8 @@ CREATE TABLE AIAI_DATASET_GROUP (
   VERSION     NUMERIC(5, 0)  NOT NULL,
   GROUP_NUMBER  NUMERIC(3, 0) NOT NULL,
   DESCRIPTION VARCHAR(250),
-  IS_SKIP   tinyint(1) not null default 0
+  IS_SKIP     tinyint(1) not null default 0,
+  IS_FEATURE   tinyint(1) not null default 0
 );
 
 CREATE TABLE AIAI_DATASET_COLUMN (

@@ -296,6 +296,19 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
 
+    @PostMapping(value = "/dataset-group-feature-commit")
+    public String setFeatureForGroup(Long id, boolean feature) {
+        final Optional<DatasetGroup> value = groupsRepository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        DatasetGroup group = value.get();
+        group.setFeature(feature);
+        groupsRepository.save(group);
+
+        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
+    }
+
 
     @PostMapping(value = "/dataset-group-from-file")
     public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId) {

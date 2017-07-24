@@ -29,12 +29,16 @@
                 <p th:text="${'Group #' + g.groupNumber}">#Id</p>
             </td>
             <td>
-                <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/launchpad/dataset-group-skip-commit}" accept-charset="UTF-8" th:id="${'dataset-group-form-'+g.id}" name="f">
+                <form th:if="${ not g.feature}" class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/launchpad/dataset-group-skip-commit}" accept-charset="UTF-8" th:id="${'dataset-group-form-'+g.id}" name="f">
                     <input type="hidden" th:name="id" th:value="${g.id}"/>
                     <input type="hidden" th:name="version" th:value="${g.version}"/>                                          
                     Is skip:&nbsp;<input name="skip" id="skip" type="checkbox" placeholder="checkbox"  th:checked="${g.skip}" th:onclick="'document.getElementById(\'dataset-group-form-'+${g.id}+'\').submit();'">
                 </form>
-
+                <form th:if="${gIterStatus.last}" class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/launchpad/dataset-group-feature-commit}" accept-charset="UTF-8" th:id="${'dataset-group-feature-form-'+g.id}" name="f">
+                    <input type="hidden" th:name="id" th:value="${g.id}"/>
+                    <input type="hidden" th:name="version" th:value="${g.version}"/>
+                    Is feature:&nbsp;<input name="feature" id="feature" type="checkbox" placeholder="checkbox"  th:checked="${g.feature}" th:onclick="'document.getElementById(\'dataset-group-feature-form-'+${g.id}+'\').submit();'">
+                </form>
             </td>
             <td>
                 <a class="pure-button pure-button-primary" href="dataset-column-form.html" th:href="${'/launchpad/dataset-column-add/' + g.id}" th:if='${g.isAddColumn()}' >Add column</a>
