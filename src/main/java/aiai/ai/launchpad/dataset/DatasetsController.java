@@ -126,7 +126,14 @@ public class DatasetsController {
 
         // ugly but it works
         // dont invert the condition
-        if (dataset.getDatasetGroups().size() == 1 && dataset.getDatasetGroups().get(0).getDatasetColumns().isEmpty()) {
+        boolean isAllEmpty = true;
+        for (DatasetGroup group : dataset.getDatasetGroups()) {
+            if (!group.getDatasetColumns().isEmpty()) {
+                isAllEmpty = false;
+                break;
+            }
+        }
+        if (isAllEmpty) {
             // nothing to do with this
         }
         else {
@@ -157,8 +164,13 @@ public class DatasetsController {
 
     @GetMapping(value = "/dataset-column-add/{id}")
     public String addColumn(@PathVariable(name = "id") Long datasetGroupId, Model model) {
+        final Optional<DatasetGroup> value = groupsRepository.findById(datasetGroupId);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        DatasetGroup group = value.get();
         final DatasetColumn column = new DatasetColumn();
-        column.setDatasetGroup(groupsRepository.findById(datasetGroupId).get());
+        column.setDatasetGroup(group);
         model.addAttribute("column", column);
         return "/launchpad/dataset-column-form";
     }
@@ -175,6 +187,46 @@ public class DatasetsController {
         columnRepository.save(column);
 
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
+    }
+
+
+    @GetMapping(value = "/dataset-column-edit/{id}")
+    public String editDatasetColumn(@PathVariable Long id, Model model) {
+        final Optional<DatasetColumn> optionalColumn = columnRepository.findById(id);
+        if (!optionalColumn.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+
+        model.addAttribute("column", optionalColumn.get());
+        return "/launchpad/dataset-column-form";
+    }
+
+    @PostMapping("/dataset-column-form-commit")
+    public String datasetColumnFormCommit(DatasetColumn column) {
+        columnRepository.save(column);
+        return "redirect:/launchpad/dataset-definition/" + column.getDatasetGroup().getDataset().getId();
+    }
+
+    @GetMapping("/dataset-column-delete/{id}")
+    public String deleteColumn(@PathVariable Long id, Model model) {
+        final Optional<DatasetColumn> value = columnRepository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        model.addAttribute("column", value.get());
+        return "/launchpad/dataset-column-delete";
+    }
+
+    @PostMapping("/dataset-column-delete-commit")
+    public String deleteColumnCommit(Long id) {
+        final Optional<DatasetColumn> value = columnRepository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        DatasetColumn column = value.get();
+        final long datasetId = column.getDatasetGroup().getDataset().getId();
+        columnRepository.deleteById(id);
+        return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
     @GetMapping(value = "/dataset-column-move-prev-group/{id}")
@@ -300,6 +352,19 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
 
+    @PostMapping(value = "/dataset-header-commit")
+    public String setHeaderForDataset(Long id, boolean header) {
+        final Optional<Dataset> value = repository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        Dataset dataset = value.get();
+        dataset.setHeader(header);
+        repository.save(dataset);
+
+        return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+    }
+
 
     @PostMapping(value = "/dataset-group-from-file")
     public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId, @RequestParam(required = false, defaultValue = "false", name = "is_header") boolean isHeader ) {
@@ -309,7 +374,7 @@ public class DatasetsController {
         }
         Dataset dataset = optionalDataset.get();
         dataset.setHeader(isHeader);
-        groupsRepository.deleteDatasetGroupByDataset_Id(datasetId);
+        groupsRepository.deleteByDataset(dataset);
 
         try (InputStream is = file.getInputStream(); final InputStreamReader isr = new InputStreamReader(is, "UTF-8"); BufferedReader br = new BufferedReader(isr)) {
             String line = br.readLine();

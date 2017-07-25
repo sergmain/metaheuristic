@@ -30,7 +30,7 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="dataset-definition.html" th:href="${'/launchpad/dataset-definition/' + column.datasetGroup.dataset.id}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="dataset-definition.html" th:href="${'/launchpad/dataset-definition/' + column.getDatasetGroup().getDataset().getId()}">Cancel</a>
                         </td>
                     </tr>
                 </table>

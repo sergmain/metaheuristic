@@ -56,7 +56,7 @@ public class DatasetGroup  implements Serializable {
     @Column(name = "IS_FEATURE")
     private boolean isFeature;
 
-    @ManyToOne
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
     @JoinColumn(name = "DATASET_ID")
     private Dataset dataset;
 

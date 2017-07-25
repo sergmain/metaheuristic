@@ -18,6 +18,7 @@ public interface DatasetsRepository extends CrudRepository<Dataset, Long> {
 
     @Transactional(readOnly = true)
     Slice<Dataset> findAll(Pageable pageable);
+
 /*
 
     @Transactional(rollbackFor = {Throwable.class})

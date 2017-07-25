@@ -27,6 +27,14 @@
 
     <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/dataset-group-add-new/'+result.dataset.id}">Add group record</a>
     <p></p>
+    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/launchpad/dataset-header-commit}"
+          accept-charset="UTF-8" th:id="'dataset-header-form'" name="f">
+        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
+        <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
+        Is the first row the header:&nbsp;<input name="header" id="header" type="checkbox" placeholder="checkbox" th:checked="${result.dataset.header}"
+                                th:onclick="'document.getElementById(\'dataset-header-form\').submit();'">
+    </form>
+    <p></p>
 
     <div th:if='${result.dataset.datasetGroups.isEmpty()}'>
         <p>There isn't any group</p>

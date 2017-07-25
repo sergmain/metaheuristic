@@ -1,5 +1,6 @@
 package aiai.ai.launchpad.dataset.repo;
 
+import aiai.ai.launchpad.dataset.Dataset;
 import aiai.ai.launchpad.dataset.DatasetGroup;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
@@ -19,6 +20,7 @@ public interface DatasetGroupsRepository extends CrudRepository<DatasetGroup, Lo
     @Transactional(readOnly = true)
     List<DatasetGroup> findByDataset_Id(Long datasetId);
 
-    void deleteDatasetGroupByDataset_Id(Long datasetId);
+    void deleteByDataset_Id(Long datasetId);
+    void deleteByDataset(Dataset dataset);
 
 }

@@ -16,4 +16,6 @@ import java.util.List;
 @Component
 @Transactional
 public interface DatasetColumnRepository extends CrudRepository<DatasetColumn, Long> {
+
+    void deleteByDatasetGroup_Id(Long datasetId);
 }
