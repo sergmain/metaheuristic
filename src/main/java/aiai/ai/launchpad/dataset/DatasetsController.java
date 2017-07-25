@@ -16,13 +16,14 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * User: Serg
@@ -125,7 +126,7 @@ public class DatasetsController {
 
         // ugly but it works
         // dont invert the condition
-        if (dataset.getDatasetGroups().size()==1 && dataset.getDatasetGroups().get(0).getDatasetColumns().isEmpty()) {
+        if (dataset.getDatasetGroups().size() == 1 && dataset.getDatasetGroups().get(0).getDatasetColumns().isEmpty()) {
             // nothing to do with this
         }
         else {
@@ -321,8 +322,6 @@ public class DatasetsController {
 
         try (InputStream is = file.getInputStream(); final InputStreamReader isr = new InputStreamReader(is, "UTF-8"); BufferedReader br = new BufferedReader(isr)) {
             String line = br.readLine();
-            List<String> names = Arrays.stream(line.split("[,]")).filter(s -> s != null && s.length() > 0).map(String::trim).collect(Collectors.toList());
-
             DatasetGroup group = new DatasetGroup();
             group.setDescription("Group #1");
             group.setDataset(dataset);
@@ -330,17 +329,17 @@ public class DatasetsController {
             groups.add(group);
             dataset.setDatasetGroups(groups);
 
-            int i = 1;
-            for (String name : names) {
-                DatasetColumn c = new DatasetColumn();
-                c.setDatasetGroup(group);
-                c.setName(StringUtils.substring(name, 0, 50));
-                c.setDescription(StringUtils.substring("Column #" + (i++) + ", " + name, 0, 250));
-                columnRepository.save(c);
-            }
+            final AtomicInteger i = new AtomicInteger(1);
+            Arrays.stream(line.split("[,]")).filter(s -> s != null && s.length() > 0).map(String::trim).forEach(name -> {
+                        final DatasetColumn c = new DatasetColumn();
+                        c.setDatasetGroup(group);
+                        c.setName(StringUtils.substring(name, 0, 50));
+                        c.setDescription(StringUtils.substring("Column #" + (i.getAndAdd(1)) + ", " + name, 0, 250));
+                        columnRepository.save(c);
+                    }
+            );
 
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
             throw new RuntimeException("error", e);
         }
 
