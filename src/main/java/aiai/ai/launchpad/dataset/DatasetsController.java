@@ -120,12 +120,12 @@ public class DatasetsController {
             DatasetGroup groupNext = dataset.getDatasetGroups().get(i + 1);
             if (groupNext.getDatasetColumns().isEmpty()) {
                 group.setAddColumn(true);
+                //noinspection UnnecessaryContinue
                 continue;
             }
         }
 
         // ugly but it works
-        // dont invert the condition
         boolean isAllEmpty = true;
         for (DatasetGroup group : dataset.getDatasetGroups()) {
             if (!group.getDatasetColumns().isEmpty()) {
@@ -133,6 +133,9 @@ public class DatasetsController {
                 break;
             }
         }
+
+        // don't invert the condition
+        //noinspection StatementWithEmptyBody
         if (isAllEmpty) {
             // nothing to do with this
         }
@@ -314,6 +317,7 @@ public class DatasetsController {
             groupNumber = 1;
         }
         else {
+            //noinspection ConstantConditions
             groupNumber = groups.stream().mapToInt(DatasetGroup::getGroupNumber).max().getAsInt() + 1;
         }
 
