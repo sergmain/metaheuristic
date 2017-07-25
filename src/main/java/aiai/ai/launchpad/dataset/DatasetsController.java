@@ -184,11 +184,6 @@ public class DatasetsController {
             return "redirect:/launchpad/datasets";
         }
         DatasetColumn column = value.get();
-
-/*
-        final long datasetId = column.getDataset().getId();
-        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
-*/
         final Dataset dataset = column.getDatasetGroup().getDataset();
         List<DatasetGroup> groups = dataset.getDatasetGroups();
         if (groups.size() < 2) {
@@ -218,11 +213,6 @@ public class DatasetsController {
             return "redirect:/launchpad/datasets";
         }
         DatasetColumn column = value.get();
-
-/*
-        final long datasetId = column.getDataset().getId();
-        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
-*/
         final Dataset dataset = column.getDatasetGroup().getDataset();
         List<DatasetGroup> groups = dataset.getDatasetGroups();
         if (groups.size() < 2) {
@@ -312,12 +302,13 @@ public class DatasetsController {
 
 
     @PostMapping(value = "/dataset-group-from-file")
-    public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId) {
+    public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId, @RequestParam(required = false, defaultValue = "false", name = "is_header") boolean isHeader ) {
         Optional<Dataset> optionalDataset = repository.findById(datasetId);
         if (!optionalDataset.isPresent()) {
             return "redirect:/launchpad/dataset-definition/" + datasetId;
         }
         Dataset dataset = optionalDataset.get();
+        dataset.setHeader(isHeader);
         groupsRepository.deleteDatasetGroupByDataset_Id(datasetId);
 
         try (InputStream is = file.getInputStream(); final InputStreamReader isr = new InputStreamReader(is, "UTF-8"); BufferedReader br = new BufferedReader(isr)) {
@@ -347,9 +338,15 @@ public class DatasetsController {
     }
 
     @PostMapping("/dataset-form-commit")
-    public String formCommit(Dataset dataset) {
+    public String datasetFormCommit(Dataset dataset) {
         repository.save(dataset);
         return "redirect:/launchpad/datasets";
+    }
+
+    @PostMapping("/dataset-definition-form-commit")
+    public String datasetDefinitionFormCommit(DatasetDefinition datasetDefinition) {
+        repository.save(datasetDefinition.dataset);
+        return "redirect:/launchpad/dataset-definition/" + datasetDefinition.dataset.getId();
     }
 
     @GetMapping("/dataset-delete/{id}")

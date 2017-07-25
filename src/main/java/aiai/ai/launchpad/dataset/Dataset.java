@@ -43,6 +43,9 @@ public class Dataset implements Serializable {
     @Column(name = "DESCRIPTION")
     private String description;
 
+    @Column(name = "IS_HEADER")
+    private boolean isHeader;
+
 
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL)
     private List<DatasetGroup> datasetGroups;
