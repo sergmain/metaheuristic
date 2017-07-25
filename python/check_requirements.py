@@ -23,7 +23,6 @@ for req in dependencies:
         dnf.append(req)
     except VersionConflict as e:
         vc.append(req)
-        continue
 
 
 
