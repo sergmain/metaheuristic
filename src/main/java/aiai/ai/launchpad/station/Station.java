@@ -1,7 +1,6 @@
 package aiai.ai.launchpad.station;
 
 import lombok.Data;
-import lombok.NonNull;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -12,7 +11,7 @@ import java.io.Serializable;
  * Time: 15:56
  */
 @Entity
-@Table(name = "AIAI_STATION")
+@Table(name = "AIAI_LP_STATION")
 @TableGenerator(
         name = "TABLE_AIAI_STATION",
         table = "AIAI_IDS",

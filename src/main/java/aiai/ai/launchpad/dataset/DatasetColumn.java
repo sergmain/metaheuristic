@@ -12,7 +12,7 @@ import java.io.Serializable;
  * Time: 21:27
  */
 @Entity
-@Table(name = "AIAI_DATASET_COLUMN")
+@Table(name = "AIAI_LP_DATASET_COLUMN")
 @TableGenerator(
         name = "TABLE_AIAI_DATASET_COLUMN",
         table = "AIAI_IDS",

@@ -13,7 +13,7 @@ import java.util.List;
  * Time: 21:22
  */
 @Entity
-@Table(name = "AIAI_DATASET_GROUP")
+@Table(name = "AIAI_LP_DATASET_GROUP")
 @TableGenerator(
         name = "TABLE_AIAI_DATASET_GROUP",
         table = "AIAI_IDS",

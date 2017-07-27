@@ -11,7 +11,7 @@ import java.io.Serializable;
  * Time: 17:31
  */
 @Entity
-@Table(name = "AIAI_ENV")
+@Table(name = "AIAI_S_ENV")
 @TableGenerator(
         name = "TABLE_AIAI_ENV",
         table = "AIAI_IDS",
