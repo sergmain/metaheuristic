@@ -427,6 +427,15 @@ public class DatasetsController {
                 throw new RuntimeException("error", e);
             }
 
+            DatasetPath dp = new DatasetPath();
+            dp.setPath( datasetFile.getPath() );
+            dp.setChecksum(DatasetChecksum.getChecksumAsJson(datasetFile));
+            dp.setDataset(dataset);
+            dp.setFile(true);
+            dp.setPathNumber(pathNumber);
+            dp.setValid(true);
+            pathRepository.save(dp);
+
             try (InputStream is = new FileInputStream(datasetFile)) {
                 createColumnsDefinition(dataset, is);
             } catch (IOException e) {
