@@ -108,7 +108,7 @@
     <p></p>
     <p></p>
     <p></p>
-    <h2 class="widget-header">Create definition from .csv file</h2>
+    <h2 class="widget-header">Upload .csv file and create definition</h2>
     <p></p>
 
     <!--
@@ -130,7 +130,14 @@
         <fieldset>
             <label for="is_header">Is the first line the header?</label>
             <input name="is_header" id="is_header" type="checkbox" placeholder="checkbox" >
+<!--
             <span class="pure-form-message">This is a required field.</span>
+-->
+        </fieldset>
+        <fieldset>
+            <label for="is_header">Does this file use for definition only?</label>
+            <input name="is_definition_only" id="is_definition_only" type="checkbox" placeholder="checkbox" >
+            <span class="pure-form-message">If is_definition_only==true, then this dataset won't be registered as dataset.</span>
         </fieldset>
         <p></p>
         <button type="submit" class="pure-button pure-button-primary">Create definition</button>

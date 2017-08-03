@@ -2,8 +2,10 @@ package aiai.ai.launchpad.dataset;
 
 import aiai.ai.launchpad.dataset.repo.DatasetColumnRepository;
 import aiai.ai.launchpad.dataset.repo.DatasetGroupsRepository;
+import aiai.ai.launchpad.dataset.repo.DatasetPathRepository;
 import aiai.ai.launchpad.dataset.repo.DatasetsRepository;
 import lombok.Data;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -15,10 +17,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,14 +36,19 @@ public class DatasetsController {
     @Value("${aiai.table.rows.limit}")
     private int limit;
 
+    @Value("${aiai.launchpad.dir}")
+    private String launchpadDirAsString;
+
     private DatasetsRepository repository;
     private DatasetGroupsRepository groupsRepository;
     private DatasetColumnRepository columnRepository;
+    private DatasetPathRepository pathRepository;
 
-    public DatasetsController(DatasetsRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository) {
+    public DatasetsController(DatasetsRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository) {
         this.repository = repository;
         this.groupsRepository = groupsRepository;
         this.columnRepository = columnRepository;
+        this.pathRepository = pathRepository;
     }
 
     @Data
@@ -351,6 +355,7 @@ public class DatasetsController {
         }
         DatasetGroup group = value.get();
         group.setFeature(feature);
+        group.setSkip(false);
         groupsRepository.save(group);
 
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
@@ -371,7 +376,11 @@ public class DatasetsController {
 
 
     @PostMapping(value = "/dataset-group-from-file")
-    public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId, @RequestParam(required = false, defaultValue = "false", name = "is_header") boolean isHeader ) {
+    public String createDefinitionFromFile(MultipartFile file,
+                                           @RequestParam(name = "id") long datasetId,
+                                           @RequestParam(required = false, defaultValue = "false", name = "is_definition_only") boolean isDefinitionOnly,
+                                           @RequestParam(required = false, defaultValue = "false", name = "is_header") boolean isHeader
+    ) {
         Optional<Dataset> optionalDataset = repository.findById(datasetId);
         if (!optionalDataset.isPresent()) {
             return "redirect:/launchpad/dataset-definition/" + datasetId;
@@ -380,30 +389,85 @@ public class DatasetsController {
         dataset.setHeader(isHeader);
         groupsRepository.deleteByDataset(dataset);
 
-        try (InputStream is = file.getInputStream(); final InputStreamReader isr = new InputStreamReader(is, "UTF-8"); BufferedReader br = new BufferedReader(isr)) {
-            String line = br.readLine();
-            DatasetGroup group = new DatasetGroup();
-            group.setDescription("Group #1");
-            group.setDataset(dataset);
-            List<DatasetGroup> groups = new ArrayList<>();
-            groups.add(group);
-            dataset.setDatasetGroups(groups);
+        if (isDefinitionOnly) {
+            try (InputStream is = file.getInputStream()) {
+                createColumnsDefinition(dataset, is);
+            } catch (IOException e) {
+                throw new RuntimeException("error", e);
+            }
+        }
+        else {
 
-            final AtomicInteger i = new AtomicInteger(1);
-            Arrays.stream(line.split("[,]")).filter(s -> s != null && s.length() > 0).map(String::trim).forEach(name -> {
-                        final DatasetColumn c = new DatasetColumn();
-                        c.setDatasetGroup(group);
-                        c.setName(StringUtils.substring(name, 0, 50));
-                        c.setDescription(StringUtils.substring("Column #" + (i.getAndAdd(1)) + ", " + name, 0, 250));
-                        columnRepository.save(c);
-                    }
-            );
+            List<DatasetPath> paths = pathRepository.findByDataset_Id(datasetId);
+            int pathNumber;
+            if (paths.isEmpty()) {
+                pathNumber = 1;
+            }
+            else {
+                //noinspection ConstantConditions
+                pathNumber = paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
+            }
 
-        } catch (IOException e) {
-            throw new RuntimeException("error", e);
+            final String path = String.format("datasets%c%03d%c%d", File.separatorChar, dataset.getId(), File.separatorChar, pathNumber);
+
+            File launchpadDir = foFile(launchpadDirAsString);
+            File datasetDir = new File(launchpadDir, path);
+            if (!datasetDir.exists()) {
+                boolean status = datasetDir.mkdirs();
+                if (!status) {
+                    throw new IllegalStateException("Error create directory: " + datasetDir.getAbsolutePath());
+                }
+            }
+
+            File datasetFile;
+            try (InputStream is = file.getInputStream()) {
+                datasetFile = File.createTempFile("dataset-"+pathNumber, ".csv", datasetDir );
+                FileUtils.copyInputStreamToFile(is, datasetFile);
+            } catch (IOException e) {
+                throw new RuntimeException("error", e);
+            }
+
+            try (InputStream is = new FileInputStream(datasetFile)) {
+                createColumnsDefinition(dataset, is);
+            } catch (IOException e) {
+                throw new RuntimeException("error", e);
+            }
         }
 
         return "redirect:/launchpad/dataset-definition/" + datasetId;
+    }
+
+    private static File foFile(String launchpadDirAsString) {
+        if (launchpadDirAsString.charAt(0)=='.' && (launchpadDirAsString.charAt(1)=='\\' || launchpadDirAsString.charAt(1)=='/')) {
+            return new File(launchpadDirAsString.substring(2));
+        }
+        return new File(launchpadDirAsString);
+    }
+
+    private void createColumnsDefinition(Dataset dataset, InputStream is) throws IOException {
+        try (final InputStreamReader isr = new InputStreamReader(is, "UTF-8")) {
+            try (BufferedReader br = new BufferedReader(isr)) {
+                String line = br.readLine();
+                DatasetGroup group = new DatasetGroup();
+                group.setDescription("Group #1");
+                group.setDataset(dataset);
+                List<DatasetGroup> groups = new ArrayList<>();
+                groups.add(group);
+                dataset.setDatasetGroups(groups);
+
+                final AtomicInteger i = new AtomicInteger(1);
+                List<DatasetColumn> columns = new ArrayList<>();
+                Arrays.stream(line.split("[,]")).filter(s -> s != null && s.length() > 0).map(String::trim).forEach(name -> {
+                            final DatasetColumn c = new DatasetColumn();
+                            c.setDatasetGroup(group);
+                            c.setName(StringUtils.substring(name, 0, 50));
+                            c.setDescription(StringUtils.substring("Column #" + (i.getAndAdd(1)) + ", " + name, 0, 250));
+                            columns.add(c);
+                        }
+                );
+                columnRepository.saveAll(columns);
+            }
+        }
     }
 
     @PostMapping("/dataset-form-commit")

@@ -19,8 +19,10 @@
 
 .widget-header {
     /*text-transform: uppercase;*/
-    color: #aaa;
-    border-bottom: 1px solid #eee;
+    /*border-bottom: 1px solid #eee;*/
+    /*color: #aaa;*/
+    color: #000;
+    border-bottom: 1px solid #b0b0b0;
     padding: 0.4em 0;
     font-size: 80%;
     font-weight: 500;
