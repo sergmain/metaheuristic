@@ -58,11 +58,14 @@ public class DatasetsController {
 
     @Data
     public static class DatasetDefinition {
-        public DatasetDefinition(Dataset dataset) {
+        public DatasetDefinition(Dataset dataset, String launchpadDirAsString) {
             this.dataset = dataset;
+            this.launchpadDirAsString = launchpadDirAsString;
         }
 
         public Dataset dataset;
+        public List<DatasetPath> paths = new ArrayList<>();
+        public String launchpadDirAsString;
     }
 
     @GetMapping("/datasets")
@@ -99,9 +102,12 @@ public class DatasetsController {
             return "redirect:/launchpad/datasets";
         }
 
-        final DatasetDefinition definition = new DatasetDefinition(datasetOptional.get());
+        final DatasetDefinition definition = new DatasetDefinition(datasetOptional.get(), launchpadDirAsString);
         final Dataset dataset = definition.dataset;
+        definition.paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
 
+
+        // fix conditions for UI
         final int groupSize = dataset.getDatasetGroups().size();
         for (int i = 0; i < groupSize; i++) {
             DatasetGroup group = dataset.getDatasetGroups().get(i);
@@ -138,7 +144,7 @@ public class DatasetsController {
             }
         }
 
-        // don't invert the condition
+        // don't invert the condition, because ...
         //noinspection StatementWithEmptyBody
         if (isAllEmpty) {
             // nothing to do with this
@@ -317,13 +323,8 @@ public class DatasetsController {
 
         List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
         int groupNumber;
-        if (groups.isEmpty()) {
-            groupNumber = 1;
-        }
-        else {
-            //noinspection ConstantConditions
-            groupNumber = groups.stream().mapToInt(DatasetGroup::getGroupNumber).max().getAsInt() + 1;
-        }
+        //noinspection ConstantConditions
+        groupNumber = groups.isEmpty() ? 1 : groups.stream().mapToInt(DatasetGroup::getGroupNumber).max().getAsInt() + 1;
 
         final DatasetGroup group = new DatasetGroup(groupNumber);
         group.setDataset(dataset);
@@ -398,19 +399,13 @@ public class DatasetsController {
         }
         else {
 
-            List<DatasetPath> paths = pathRepository.findByDataset_Id(datasetId);
-            int pathNumber;
-            if (paths.isEmpty()) {
-                pathNumber = 1;
-            }
-            else {
-                //noinspection ConstantConditions
-                pathNumber = paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
-            }
-
+            List<DatasetPath> paths = pathRepository.findByDataset(dataset);
+            //noinspection ConstantConditions
+            int pathNumber = paths.isEmpty() ? 1 : paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
             final String path = String.format("datasets%c%03d%c%d", File.separatorChar, dataset.getId(), File.separatorChar, pathNumber);
 
-            File launchpadDir = foFile(launchpadDirAsString);
+            final File launchpadDir = toFile(launchpadDirAsString);
+
             File datasetDir = new File(launchpadDir, path);
             if (!datasetDir.exists()) {
                 boolean status = datasetDir.mkdirs();
@@ -428,7 +423,8 @@ public class DatasetsController {
             }
 
             DatasetPath dp = new DatasetPath();
-            dp.setPath( datasetFile.getPath() );
+            String pathToDataset = path + File.separatorChar + datasetFile.getName();
+            dp.setPath( pathToDataset );
             dp.setChecksum(DatasetChecksum.getChecksumAsJson(datasetFile));
             dp.setDataset(dataset);
             dp.setFile(true);
@@ -446,7 +442,7 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
-    private static File foFile(String launchpadDirAsString) {
+    private static File toFile(String launchpadDirAsString) {
         if (launchpadDirAsString.charAt(0)=='.' && (launchpadDirAsString.charAt(1)=='\\' || launchpadDirAsString.charAt(1)=='/')) {
             return new File(launchpadDirAsString.substring(2));
         }
@@ -506,6 +502,20 @@ public class DatasetsController {
         repository.deleteById(id);
         return "redirect:/launchpad/datasets";
     }
+
+    @GetMapping("/dataset-path-delete/{id}")
+    public String deletePath(@PathVariable Long id) {
+        final Optional<DatasetPath> value = pathRepository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        DatasetPath path = value.get();
+        Dataset dataset = path.getDataset();
+        pathRepository.delete(path);
+        return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+    }
+
+
 
     private Pageable fixPageSize(Pageable pageable) {
         if (pageable.getPageSize() != limit) {

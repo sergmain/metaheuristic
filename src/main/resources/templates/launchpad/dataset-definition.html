@@ -107,6 +107,37 @@
 
     <p></p>
     <p></p>
+    <h2 class="widget-header">Dataset files</h2>
+    <p>Launchpad directory: <span th:text="${@environment.getProperty('aiai.launchpad.dir')}"></span>.</p>
+
+    <table class="pure-table pure-table-bordered" id="table-ds-path-cols" th:fragment="table">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Path number</th>
+            <th>Path</th>
+            <th>Checksum</th>
+            <th>Is file?</th>
+            <th>Is valid?</th>
+            <th colspan="2">&nbsp;</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${result.paths}">
+            <td th:text="${p.id}">#Id</td>
+            <td th:text="${p.pathNumber}">Path number</td>
+            <td th:text="${p.path}">Path</td>
+            <td th:text="${p.checksum}">Checksum</td>
+            <td th:text="${p.isFile() ? 'True' : 'False'}">Is file?</td>
+            <td th:text="${p.isValid() ? 'True' : 'False'}">Is valid?</td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-path-delete/' + p.id}">Delete</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-path-validate/' + p.id}">Validate</a></td>
+        </tr>
+        </tbody>
+    </table>
+
+    <p></p>
+    <p></p>
     <p></p>
     <h2 class="widget-header">Upload .csv file and create definition</h2>
     <p></p>
