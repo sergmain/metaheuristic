@@ -32,7 +32,7 @@
         <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
         <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
         Is the first row the header:&nbsp;<input name="header" id="header" type="checkbox" placeholder="checkbox" th:checked="${result.dataset.header}"
-                                th:onclick="'document.getElementById(\'dataset-header-form\').submit();'">
+                                                 th:onclick="'document.getElementById(\'dataset-header-form\').submit();'">
     </form>
     <p></p>
 
@@ -107,6 +107,63 @@
 
     <p></p>
     <p></p>
+    <p></p>
+    <h2 class="widget-header">Upload .csv file and create definition</h2>
+    <p></p>
+
+    <!--
+        class="pure-form pure-form-stacked"
+    -->
+    <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST" th:action="@{/launchpad/dataset-group-from-file}">
+        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
+        <table>
+            <tr>
+                <td valign="top">
+                    <fieldset>
+
+                        <label for="uploadFile">CSV file</label>
+                        <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:width="200"/>
+                        <div class="fileUpload pure-button pure-button-primary">
+                            <span>Upload</span>
+                            <input name="file" id="uploadBtn" type="file" class="upload">
+                        </div>
+                        <span class="pure-form-message">This is a required field.</span>
+                    </fieldset>
+                </td>
+                <td width="50">&nbsp;</td>
+                <td valign="top">
+                    <fieldset>
+                        <label for="is_header">Is the first line the header?</label>
+                        <input name="is_header" id="is_header" type="checkbox" placeholder="checkbox">
+                        <!--
+                                    <span class="pure-form-message">This is a required field.</span>
+                        -->
+                    </fieldset>
+                </td>
+                <td width="50">&nbsp;</td>
+                <td valign="top">
+                    <fieldset>
+                        <label for="is_header">Does this file use for definition only?</label>
+                        <input name="is_definition_only" id="is_definition_only" type="checkbox" placeholder="checkbox">
+                        <span class="pure-form-message">If is_definition_only==true, then this file won't be registered as dataset.</span>
+                    </fieldset>
+                </td>
+            </tr>
+        </table>
+        <p></p>
+        <button type="submit" class="pure-button pure-button-primary">Create definition</button>
+    </form>
+
+    <script>
+        document.getElementById("uploadBtn").onchange = function () {
+            document.getElementById("uploadFile").value = this.value;
+        };
+    </script>
+
+
+    <p></p>
+    <p></p>
+    <p></p>
     <h2 class="widget-header">Dataset files</h2>
     <p>Launchpad directory: <b><span th:text="${@environment.getProperty('aiai.launchpad.dir')}"></span></b>.</p>
 
@@ -135,51 +192,6 @@
         </tr>
         </tbody>
     </table>
-
-    <p></p>
-    <p></p>
-    <p></p>
-    <h2 class="widget-header">Upload .csv file and create definition</h2>
-    <p></p>
-
-    <!--
-        class="pure-form pure-form-stacked"
-    -->
-    <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST" th:action="@{/launchpad/dataset-group-from-file}">
-        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
-        <fieldset>
-
-            <label for="uploadFile">CSV file</label>
-            <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:width="200"/>
-            <div class="fileUpload pure-button pure-button-primary">
-                <span>Upload</span>
-                <input name="file" id="uploadBtn" type="file" class="upload">
-            </div>
-            <span class="pure-form-message">This is a required field.</span>
-        </fieldset>
-        <p></p>
-        <fieldset>
-            <label for="is_header">Is the first line the header?</label>
-            <input name="is_header" id="is_header" type="checkbox" placeholder="checkbox" >
-<!--
-            <span class="pure-form-message">This is a required field.</span>
--->
-        </fieldset>
-        <fieldset>
-            <label for="is_header">Does this file use for definition only?</label>
-            <input name="is_definition_only" id="is_definition_only" type="checkbox" placeholder="checkbox" >
-            <span class="pure-form-message">If is_definition_only==true, then this dataset won't be registered as dataset.</span>
-        </fieldset>
-        <p></p>
-        <button type="submit" class="pure-button pure-button-primary">Create definition</button>
-    </form>
-
-    <script>
-        document.getElementById("uploadBtn").onchange = function () {
-            document.getElementById("uploadFile").value = this.value;
-        };
-    </script>
-
 
     <p></p>
     <p></p>
