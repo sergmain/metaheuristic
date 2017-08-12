@@ -4,13 +4,19 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.ClientProtocolException;
+import org.apache.http.Header;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.message.BasicHeader;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfToken;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -43,10 +49,72 @@ public class LaunchpadRequester {
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
+    private CsrfTokenRepository csrfTokenRepository;
+
     private RestTemplate restTemplate;
 
-    public LaunchpadRequester() {
+    public LaunchpadRequester(CsrfTokenRepository csrfTokenRepository) {
+        this.csrfTokenRepository = csrfTokenRepository;
         restTemplate = new RestTemplate();
+    }
+
+    /**
+     */
+    // C! this one is currently working, but ugly
+    @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
+    public void fixedDelayTaskViaHttpComponent() {
+
+        ExchangeData data = new ExchangeData(new Protocol.AssignStationId());
+
+        String jsonInString;
+        try {
+            jsonInString = mapper.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error", e);
+        }
+
+        final String urlTarget = launchpadUrl + "/srv/in-str";
+        try {
+
+            final CsrfToken csrfToken = csrfHeader();
+            final Header csrfHeader = new BasicHeader(csrfToken.getHeaderName(), csrfToken.getToken());
+            String json = Request.Post(urlTarget)
+                    .setHeaders(csrfHeader)
+                    .bodyForm(
+                            Form.form()
+                                    .add("_csrf", csrfToken.getToken())
+                                    .add("json", jsonInString)
+                                    .build(), UTF_8)
+                    .execute().returnContent().asString(UTF_8);
+
+            ExchangeData responses = mapper.readValue(json, ExchangeData.class);
+            for (Command command : responses.commands) {
+                switch(command.getType()) {
+                    case ReportStation:
+                        break;
+                    case RequestDatasets:
+                        break;
+                    case AssignStationId:
+                        System.out.println("New station Id: " + command.getResponse().get(CommConsts.STATION_ID));
+                        break;
+                }
+            }
+
+            System.out.println(new Date() + " This runs in a fixed delay via fixedDelayTaskViaHttpComponent(), result: " + json);
+        } catch (HttpResponseException e) {
+            e.printStackTrace();
+            System.out.println("target url: " + urlTarget);
+            System.out.println("http status code: " + e.getStatusCode());
+            throw new RuntimeException("Error", e);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Error", e);
+        }
+    }
+
+    CsrfToken csrfHeader() {
+        return csrfTokenRepository.generateToken(null);
     }
 
     /**
@@ -150,52 +218,12 @@ public <T> T postForObject(String url,
         }
     }
 
-    /**
-     * Experementas. Spring Boot (m2/Snapshot) doesn't work at all
-     */
-    // C! this one is currently working, but ugly
-//    @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
-    public void fixedDelayTaskViaHttpComponent() {
-
-        try {
-            ExchangeData data = new ExchangeData(new Protocol.Nop());
-
-            // Convert object to JSON string
-            String jsonInString = mapper.writeValueAsString(data);
-
-            final String urlTarget = launchpadUrl + "/srv/in-str";
-            final String urlStr = urlTarget + "?json=%s";
-            String url = String.format(urlStr, encode(jsonInString));
-            System.out.println("Final url to request is: " + url);
-            String json = Request.Get(url).execute().returnContent().asString(UTF_8);
-
-/*
-            String json = Request.Post(urlTarget)
-                    .bodyForm(Form.form().add("json", jsonInString).build(), UTF_8)
-                    .execute().returnContent().asString(UTF_8);
-*/
-
-            System.out.println(new Date() + " This runs in a fixed delay via fixedDelayTaskViaHttpComponent(), result: " + json);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Error", e);
-        }
-    }
-
-/*
-    @Scheduled(fixedRate = 6000)
-    public void fixedRateTask() {
-        System.out.println(new Date() + " This runs in a fixed rate");
-    }
-*/
-
     public static void main(String[] args) throws JsonProcessingException {
         List<Map<String, String>> commands = Collections.singletonList(Collections.singletonMap("command", "nop"));
-
         // Convert object to JSON string
         String jsonInString = mapper.writeValueAsString(commands);
-
         System.out.println(jsonInString);
     }
 }
+
 

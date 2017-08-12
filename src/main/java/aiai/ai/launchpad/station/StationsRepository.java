@@ -18,17 +18,5 @@ public interface StationsRepository extends CrudRepository<Station, Long> {
     @Transactional(readOnly = true)
     Slice<Station> findAll(Pageable pageable);
 
-//    Station save(Station account);
-
-/*
-
-    List<Dataset> findByLastname(String lastname, Sort sort);
-
-    List<Dataset> findByLastname(String lastname, Pageable pageable);
-
-    Long deleteByLastname(String lastname);
-
-    List<Dataset> removeByLastname(String lastname);
-
-*/
+    Station findByIp(String Ip);
 }

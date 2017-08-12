@@ -1,11 +1,14 @@
 package aiai.ai.sec;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRepository;
 
 /**
  * User: Serg
@@ -17,9 +20,13 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final AccessDeniedHandler accessDeniedHandler;
 
-    @Autowired
     public SpringSecurityConfig(AccessDeniedHandler accessDeniedHandler) {
         this.accessDeniedHandler = accessDeniedHandler;
+    }
+
+    @Bean
+    public CsrfTokenRepository csrfTokenRepository() {
+        return CookieCsrfTokenRepository.withHttpOnlyFalse();
     }
 
     // roles admin allow to access /admin/**
@@ -36,7 +43,9 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
            &lt;!&ndash;<intercept-url pattern="/choices/**" access="hasRole('ROLE_ADMIN')" />&ndash;&gt;
 */
 
-//        http.csrf().disable();
+        // Disabled until I'll figure out how to use REST-request with csrf
+        http.csrf().disable();
+//        http.csrf().csrfTokenRepository(csrfTokenRepository());
 
         http
                 .authorizeRequests()

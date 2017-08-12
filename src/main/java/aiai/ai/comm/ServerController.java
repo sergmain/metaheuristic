@@ -6,7 +6,10 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * User: Serg
@@ -17,36 +20,14 @@ import java.io.IOException;
 @RequestMapping("/srv")
 public class ServerController {
 
-    private static ObjectMapper mapper;
-    static {
-        mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-    }
+    private CommandProcessor commandProcessor;
 
-    private StationsRepository repository;
-
-    public ServerController(StationsRepository repository) {
-        this.repository = repository;
-    }
-
-//    @PostMapping("/in")
-    @GetMapping("/in")
-    public @ResponseBody String getDatasets(@RequestParam(required = false) String json )  {
-//    public void getDatasets(String json )  {
-
-        System.out.println("received json via GET: " + json);
-/*
-        List<Protocol.Command> commands
-
-        repository.save( dataset );
-
-        final Optional<Dataset> value = repository.findById(id);
-        repository.save( dataset );
-*/
-        return "[{}]";
+    public ServerController(CommandProcessor commandProcessor) {
+        this.commandProcessor = commandProcessor;
     }
 
 /*
+    // right this isn't working. some problem in 'ResponseEntity<ExchangeData> response = restTemplate.exchange()'. need to investigate
     @PostMapping("/in")
     public @ResponseBody ExchangeData postDatasets(@RequestBody ExchangeData data  )  {
         System.out.println("received json via POST: " + data);
@@ -63,20 +44,14 @@ public class ServerController {
     @GetMapping("/in-str")
     public @ResponseBody String getDataAsStr(@RequestParam(required = false) String json )  {
         System.out.println("received json via getDataAsStr(): " + json);
-        try {
-            ExchangeData data = mapper.readValue(json, ExchangeData.class);
-            System.out.println(data);
-        } catch (IOException e) {
-            return e.toString();
-        }
-
         return "Ok as string";
     }
 
     @PostMapping("/in-str")
-    public @ResponseBody String postDataAsStr(@RequestParam(required = false) String json )  {
+    public @ResponseBody String postDataAsStr(@RequestParam(required = false) String json , HttpServletRequest request)  {
         System.out.println("received json via postDataAsStr(): " + json);
-        return "Ok as string";
+        Map<String, String> sysParams = new HashMap<>();
+        sysParams.put(CommConsts.IP, request.getRemoteAddr());
+        return commandProcessor.processAll(json, sysParams);
     }
-
 }

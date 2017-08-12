@@ -14,11 +14,11 @@
             <fieldset>
 
                 <label for="name">name</label>
-                <input name="name" id="name" type="text" placeholder="name"  th:field="*{name}">
+                <input name="name" id="name" type="text" placeholder="name"  th:field="*{name}"  th:width="50"  th:maxlength="50">
                 <span class="pure-form-message">This is a required field.</span>
 
                 <label for="description">Description</label>
-                <input name="description" id="description" type="text" placeholder="description"  th:field="*{description}">
+                <input name="description" id="description" type="text" placeholder="description"  th:field="*{description}" th:width="100" th:maxlength="250">
                 <span class="pure-form-message">This is a required field.</span>
 
                 <table>
