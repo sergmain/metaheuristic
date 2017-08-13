@@ -58,9 +58,52 @@ public class LaunchpadRequester {
         restTemplate = new RestTemplate();
     }
 
+
+/*
+    @Test
+    public void test_Get_WithoutTokens() {
+        ResponseEntity<String> response = http(HttpMethod.GET, "/api/test", null);
+        assertEquals("GET Received", response.getBody());
+    }
+
+    @Test(expected = HttpClientErrorException.class)
+    public void test_Post_WithoutTokens() {
+        http(HttpMethod.POST, "/api/test", null);
+        fail("should throw the exception above");
+    }
+
+    @Test
+    public void test_Post_WithTokens() {
+        final String clientSecret = "my_little_secret";
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.set("X-CSRF-TOKEN", clientSecret);
+        httpHeaders.set("Cookie", "CSRF-TOKEN=" + clientSecret);
+        ResponseEntity<String> response = http(HttpMethod.POST, "/api/test", httpHeaders);
+        assertEquals("POST Received", response.getBody());
+    }
+
+    private ResponseEntity<String> http(final HttpMethod method, final String path, HttpHeaders headers) {
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders httpHeaders = headers == null ? new HttpHeaders() : headers;
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<Void> testRequest = new HttpEntity<>(httpHeaders);
+        return restTemplate.exchange("http://localhost:8181/" + path, method, testRequest, String.class);
+    }
+
+    public HttpHeaders csrfHeaders() {
+        CsrfToken csrfToken = csrfTokenRepository.generateToken(null);
+        HttpHeaders headers = basicAuthHeaders();
+
+        headers.add(csrfToken.getHeaderName(), csrfToken.getToken());
+        headers.add("Cookie", "XSRF-TOKEN=" + csrfToken.getToken());
+
+        return headers;
+}
+
+*/
+
     /**
      */
-    // C! this one is currently working, but ugly
     @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
     public void fixedDelayTaskViaHttpComponent() {
 
@@ -79,6 +122,8 @@ public class LaunchpadRequester {
 
             final CsrfToken csrfToken = csrfHeader();
             final Header csrfHeader = new BasicHeader(csrfToken.getHeaderName(), csrfToken.getToken());
+
+            // for actual working with csrf, an auto-login need to be added
             String json = Request.Post(urlTarget)
                     .setHeaders(csrfHeader)
                     .bodyForm(
