@@ -21,15 +21,12 @@ public class CommandProcessor {
 
     private StationsRepository stationsRepository;
 
-    private static ObjectMapper mapper;
-
-    static {
-        mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-    }
+    private ObjectMapper mapper;
 
     public CommandProcessor(StationsRepository stationsRepository) {
         this.stationsRepository = stationsRepository;
+        this.mapper = new ObjectMapper();
+        this.mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
     public Command process(Command command) {

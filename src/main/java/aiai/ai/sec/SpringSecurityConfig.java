@@ -18,12 +18,6 @@ import org.springframework.security.web.csrf.CsrfTokenRepository;
 @Configuration
 public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
-    private final AccessDeniedHandler accessDeniedHandler;
-
-    public SpringSecurityConfig(AccessDeniedHandler accessDeniedHandler) {
-        this.accessDeniedHandler = accessDeniedHandler;
-    }
-
     @Bean
     public CsrfTokenRepository csrfTokenRepository() {
         return CookieCsrfTokenRepository.withHttpOnlyFalse();
@@ -44,11 +38,12 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 */
 
         // Disabled until I'll figure out how to use REST-request with csrf
-        http.csrf().disable();
-//        http.csrf().csrfTokenRepository(csrfTokenRepository());
+//        http.csrf().disable();
+        http.csrf().csrfTokenRepository(csrfTokenRepository());
 
         http
                 .authorizeRequests()
+                .antMatchers("/css/**", "/js/**", "/webjars/**").permitAll()
                 .antMatchers("/", "/index", "/about", "/login", "/jssc", "/srv/**").permitAll()
                 .antMatchers("/example*").permitAll()
                 .antMatchers("/login").anonymous()
@@ -70,38 +65,6 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/index")
                 .deleteCookies("JSESSIONID")
-                .invalidateHttpSession(true)
-                .and()
-                .exceptionHandling().accessDeniedHandler(accessDeniedHandler);
+                .invalidateHttpSession(true);
     }
-
-    @Autowired
-    public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-
-        auth.inMemoryAuthentication()
-                .withUser("user").password("password").roles("USER")
-                .and()
-                .withUser("q").password("11").roles("ADMIN")
-                .and()
-                .withUser("admin").password("password").roles("ADMIN");
-    }
-
-    
-/*
-        <beans:bean class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" id="passwordEncoder">
-            <beans:constructor-arg value="10"/>
-        </beans:bean>
-
-        <beans:bean class="aiai.web.auth.CustomUserDetailsService" id="customUserDetailsService"/>
-
-        <authentication-manager alias="authenticationManager">
-            <authentication-provider user-service-ref="customUserDetailsService">
-                <password-encoder ref="passwordEncoder"/>
-            </authentication-provider>
-        </authentication-manager>
-
-        <beans:bean class="aiai.server.security.googleauth.GoogleAuthenticator" id="googleAuthenticator">
-            <beans:constructor-arg value="3"/>
-        </beans:bean>
-*/
 }

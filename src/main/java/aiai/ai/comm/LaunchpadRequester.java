@@ -104,7 +104,7 @@ public class LaunchpadRequester {
 
     /**
      */
-    @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
+//    @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
     public void fixedDelayTaskViaHttpComponent() {
 
         ExchangeData data = new ExchangeData(new Protocol.AssignStationId());

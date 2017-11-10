@@ -8,6 +8,10 @@
 
     <meta name="_csrf" th:attr="content=${_csrf.token}"/>
     <meta name="_csrf_header" th:attr="content=${_csrf.headerName}"/>
+<!--
+    <meta th:if="${_csrf!=null}" name="_csrf" th:attr="content=${_csrf.token}"/>
+    <meta th:if="${_csrf!=null}" name="_csrf_header" th:attr="content=${_csrf.headerName}"/>
+-->
 
     <script src="/static/js/jquery.min.3.1.0.js" th:src="@{/js/jquery.min.3.1.0.js}"></script>
 

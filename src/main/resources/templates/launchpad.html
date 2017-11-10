@@ -2,14 +2,13 @@
 
     <script>
         var table = function (html) {
-            $('#table').html(html);
-            $('#table').find('.pure-button').each(function () {
+            $('#table').html(html).find('.pure-button').each(function () {
                 $(this).click(function () {
                     $.post($(this).attr('href'), table);
                     return false;
                 });
             });
-        }
+        };
 
         $(function () {
             $.post('/example', table);
