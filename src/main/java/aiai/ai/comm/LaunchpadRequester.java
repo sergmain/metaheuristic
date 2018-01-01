@@ -10,11 +10,8 @@ import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.message.BasicHeader;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
 import org.springframework.stereotype.Service;
@@ -134,7 +131,7 @@ public class LaunchpadRequester {
                     .execute().returnContent().asString(UTF_8);
 
             ExchangeData responses = mapper.readValue(json, ExchangeData.class);
-            for (Command command : responses.commands) {
+            for (Command command : responses.getCommands()) {
                 switch(command.getType()) {
                     case ReportStation:
                         break;

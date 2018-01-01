@@ -1,4 +1,4 @@
-package aiai.ai.core;
+package aiai.ai;
 
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.springframework.context.annotation.Bean;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * Time: 17:21
  */
 @Configuration
-@EnableJpaRepositories(basePackages = {"aiai.ai.launchpad", "aiai.ai.station"} )
+@EnableJpaRepositories(basePackages = {"aiai.ai.repositories"} )
 @EnableTransactionManagement
 public class Config {
 

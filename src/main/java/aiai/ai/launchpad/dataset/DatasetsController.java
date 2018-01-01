@@ -1,9 +1,9 @@
 package aiai.ai.launchpad.dataset;
 
-import aiai.ai.launchpad.dataset.repo.DatasetColumnRepository;
-import aiai.ai.launchpad.dataset.repo.DatasetGroupsRepository;
-import aiai.ai.launchpad.dataset.repo.DatasetPathRepository;
-import aiai.ai.launchpad.dataset.repo.DatasetsRepository;
+import aiai.ai.repositories.DatasetColumnRepository;
+import aiai.ai.repositories.DatasetGroupsRepository;
+import aiai.ai.repositories.DatasetPathRepository;
+import aiai.ai.repositories.DatasetsRepository;
 import lombok.Data;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;

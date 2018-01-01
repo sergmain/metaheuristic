@@ -1,6 +1,10 @@
 package aiai.ai.comm;
 
+import aiai.ai.Consts;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -20,18 +24,31 @@ public class RestClient {
     @Value("${aiai.station.launchpad.url}")
     private String launchpadUrl;
 
+    @Autowired
     private RestTemplate rest;
+
     private HttpHeaders headers;
     private HttpStatus status;
+
+    @Bean
+    public RestTemplate restTemplate(RestTemplateBuilder builder) {
+        return builder.build();
+    }
+
 
     // String result = rest.getForObject("http://example.com/hotels/{hotel}/bookings/{booking}", String.class, "42", "21");
     // https://spring.io/blog/2009/03/27/rest-in-spring-3-resttemplate
 
     public RestClient() {
-        this.rest = new RestTemplate();
         this.headers = new HttpHeaders();
         headers.add("Content-Type", "application/json");
         headers.add("Accept", "*/*");
+    }
+
+    public ExchangeData getExchangeData(String uri) {
+        RestTemplate restTemplate = new RestTemplate();
+        ExchangeData data = restTemplate.getForObject(launchpadUrl + Consts.SERVER_REST_URL, ExchangeData.class);
+        return data;
     }
 
     public String get(String uri) {

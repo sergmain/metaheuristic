@@ -1,5 +1,10 @@
 package aiai.ai.comm;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,24 +13,100 @@ import java.util.List;
  * Date: 20.07.2017
  * Time: 18:58
  */
+@Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(value = { "commands" })
 public class ExchangeData {
-    public List<Command> commands = new ArrayList<>();
+
+    private Protocol.Nop nop;
+    private Protocol.Ok ok;
+    private Protocol.ReportStation reportStation;
+    private Protocol.RequestDatasets requestDatasets;
+    private Protocol.AssignStationId assignStationId;
+    private Protocol.RegisterInvite registerInvite;
+    private Protocol.RegisterInviteResult registerInviteResult;
+
+    @JsonProperty(value="success")
+    private boolean isSuccess = true;
+    private String msg;
+
+    static List<Command> asListOfNonNull(Command ... commands) {
+        List<Command> list = new ArrayList<>();
+        for (Command command : commands) {
+            if (command!=null) {
+                list.add(command);
+            }
+        }
+        return list;
+    }
 
     public ExchangeData() {
     }
 
     public ExchangeData(Command command) {
-        addCommand(command);
+        setCommand(command);
     }
 
-    public void addCommand(Command command) {
-        commands.add(command);
+    public void setCommand(Command command) {
+        switch (command.getType()) {
+            case Nop:
+                if (this.nop!=null) {
+                    throw new IllegalStateException("Was already initialized");
+                }
+                this.nop = (Protocol.Nop) command;
+                break;
+            case Ok:
+                if (this.ok!=null) {
+                    throw new IllegalStateException("Was already initialized");
+                }
+                this.ok = (Protocol.Ok) command;
+                break;
+            case ReportStation:
+                if (this.reportStation!=null) {
+                    throw new IllegalStateException("Was already initialized");
+                }
+                this.reportStation = (Protocol.ReportStation) command;
+                break;
+            case RequestDatasets:
+                if (this.requestDatasets!=null) {
+                    throw new IllegalStateException("Was already initialized");
+                }
+                this.requestDatasets = (Protocol.RequestDatasets) command;
+                break;
+            case AssignStationId:
+                if (this.assignStationId!=null) {
+                    throw new IllegalStateException("Was already initialized");
+                }
+                this.assignStationId = (Protocol.AssignStationId) command;
+                break;
+            case RegisterInvite:
+                if (this.registerInvite!=null) {
+                    throw new IllegalStateException("Was already initialized");
+                }
+                this.registerInvite = (Protocol.RegisterInvite) command;
+                break;
+            case RegisterInviteResult:
+                if (this.registerInviteResult!=null) {
+                    throw new IllegalStateException("Was already initialized");
+                }
+                this.registerInviteResult = (Protocol.RegisterInviteResult) command;
+                break;
+        }
+    }
+
+    public ExchangeData(boolean isSuccess, String msg) {
+        this.isSuccess = isSuccess;
+        this.msg = msg;
+    }
+
+    public List<Command> getCommands() {
+        return asListOfNonNull(nop, ok, reportStation, requestDatasets, assignStationId, registerInvite, registerInviteResult);
     }
 
     @Override
     public String toString() {
         return "ExchangeData{" +
-                "commands=" + commands +
+                "commands=" + getCommands() +
                 '}';
     }
 }

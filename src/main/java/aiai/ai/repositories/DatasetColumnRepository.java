@@ -1,4 +1,4 @@
-package aiai.ai.launchpad.dataset.repo;
+package aiai.ai.repositories;
 
 import aiai.ai.launchpad.dataset.DatasetColumn;
 import aiai.ai.launchpad.dataset.DatasetGroup;

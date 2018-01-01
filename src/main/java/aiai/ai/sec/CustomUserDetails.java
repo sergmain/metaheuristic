@@ -1,108 +1,113 @@
 package aiai.ai.sec;
 
+import aiai.ai.beans.Account;
+import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.stereotype.Service;
 
-import java.util.Collection;
+import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Serg
  * Date: 12.08.13
- * Time: 23:19
+ * Time: 23:17
  */
-public class CustomUserDetails implements UserDetails {
+@Service
+public class CustomUserDetails implements UserDetailsService {
 
-    private long userId;
-    private String username;
-    private String password;
-    private Collection<GrantedAuthority> authorities;
-    private boolean accountNonExpired;
-    private boolean accountNonLocked;
-    private boolean credentialsNonExpired;
-    private boolean enabled;
+    @Value("${aiai.master-username}")
+    private String masterUsername;
 
-    public CustomUserDetails() {
+    @Value("${aiai.master-token}")
+    private String masterToken;
+
+    @Value("${aiai.master-password}")
+    private String masterPassword;
+
+    private final AccountService accountService;
+
+    @Autowired
+    public CustomUserDetails(AccountService accountService) {
+        this.accountService = accountService;
     }
 
-    public CustomUserDetails(long userId, Collection<GrantedAuthority> authorities, String username, String password, boolean accountNonExpired, boolean accountNonLocked, boolean credentialsNonExpired, boolean enabled) {
-        this.userId = userId;
-        this.authorities = authorities;
-        this.username = username;
-        this.password = password;
-        this.accountNonExpired = accountNonExpired;
-        this.accountNonLocked = accountNonLocked;
-        this.credentialsNonExpired = credentialsNonExpired;
-        this.enabled = enabled;
-    }
+    @Data
+    public static class ComplexUsername {
+        String username;
+        String token;
 
+        private ComplexUsername(String username, String token) {
+            this.username = username;
+            this.token = token;
+        }
+
+        public static ComplexUsername getInstance(String fullUsername) {
+            int idx = fullUsername.lastIndexOf('=');
+            if (idx==-1) {
+                return null;
+            }
+            ComplexUsername complexUsername = new ComplexUsername(fullUsername.substring(0, idx), fullUsername.substring(idx + 1));
+
+            return complexUsername.isValid() ?complexUsername :null;
+        }
+
+        private boolean isValid() {
+            return username.length() > 0 && token.length() > 0;
+        }
+    }
     @Override
-    public Collection<GrantedAuthority> getAuthorities() {
-        return authorities;
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+
+        // strength - 10
+        // pass     - 123
+        // bcrypt   - $2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu
+
+        ComplexUsername complexUsername = ComplexUsername.getInstance(username);
+        if (complexUsername==null) {
+            throw new UsernameNotFoundException("Username not found");
+        }
+
+        if (StringUtils.equals(masterUsername,complexUsername.getUsername()) && StringUtils.equals(masterToken,complexUsername.getToken())) {
+
+            Account account = new Account();
+
+            account.setId( BigInteger.ONE );
+            account.setUsername(masterUsername);
+            account.setToken(masterToken);
+            account.setAccountNonExpired(true);
+            account.setAccountNonLocked(true);
+            account.setCredentialsNonExpired(true);
+            account.setEnabled(true);
+            account.setPassword(masterPassword);
+
+            account.setAuthorities("ROLE_ADMIN, ROLE_MANAGER");
+/*
+            List<GrantedAuthority> authList = new ArrayList<>();
+            authList.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+            authList.add(new SimpleGrantedAuthority("ROLE_MANAGER"));
+            account.setAuthorities(authList);
+*/
+
+            return account;
+        }
+
+        Account account = accountService.findByUsername(complexUsername.getUsername());
+        if (account==null) {
+            throw new UsernameNotFoundException("Username not found");
+        }
+        if (!complexUsername.getToken().equals(account.getToken())) {
+            throw new UsernameNotFoundException("Username not found");
+        }
+        return account;
     }
 
-    public long getUserId() {
-        return userId;
-    }
-
-    public void setUserId(int userId) {
-        this.userId = userId;
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
-    @Override
-    public String getUsername() {
-        return username;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return accountNonExpired;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return accountNonLocked;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return credentialsNonExpired;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setAccountNonExpired(boolean accountNonExpired) {
-        this.accountNonExpired = accountNonExpired;
-    }
-
-    public void setAccountNonLocked(boolean accountNonLocked) {
-        this.accountNonLocked = accountNonLocked;
-    }
-
-    public void setAuthorities(Collection<GrantedAuthority> authorities) {
-        this.authorities = authorities;
-    }
-
-    public void setCredentialsNonExpired(boolean credentialsNonExpired) {
-        this.credentialsNonExpired = credentialsNonExpired;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
 }

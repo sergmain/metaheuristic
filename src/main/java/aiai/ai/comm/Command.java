@@ -1,5 +1,7 @@
 package aiai.ai.comm;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -13,16 +15,18 @@ import java.util.Map;
  * Time: 19:07
  */
 @Data
+@JsonInclude(JsonInclude.Include.NON_EMPTY )
+@JsonIgnoreProperties(value = { "sysParams" })
 public class Command {
 
-    public enum Type { Nop, Ok, ReportStation, RequestDatasets, AssignStationId }
+    public enum Type { Nop, Ok, ReportStation, RequestDatasets, AssignStationId, RegisterInvite, RegisterInviteResult}
 
     private Type type;
 
     private Map<String, String> params = new HashMap<>();
 
-    private Map<String, String> sysParams = null;
+    private Map<String, String> sysParams;
 
-    private final Map<String, String> response = new HashMap<>();
+    private Map<String, String> response = new HashMap<>();
 
 }

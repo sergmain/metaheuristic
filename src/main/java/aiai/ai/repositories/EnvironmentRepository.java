@@ -1,5 +1,6 @@
-package aiai.ai.station;
+package aiai.ai.repositories;
 
+import aiai.ai.station.Env;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.repository.CrudRepository;

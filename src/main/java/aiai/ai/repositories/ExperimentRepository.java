@@ -1,5 +1,6 @@
-package aiai.ai.launchpad.experiment;
+package aiai.ai.repositories;
 
+import aiai.ai.launchpad.experiment.Experiment;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.repository.CrudRepository;

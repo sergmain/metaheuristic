@@ -1,5 +1,6 @@
 package aiai.ai.launchpad.station;
 
+import aiai.ai.repositories.StationsRepository;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;

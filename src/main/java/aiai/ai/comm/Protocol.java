@@ -1,5 +1,8 @@
 package aiai.ai.comm;
 
+import aiai.ai.beans.InviteResult;
+import lombok.Data;
+
 /**
  * User: Serg
  * Date: 13.07.2017
@@ -48,6 +51,30 @@ public class Protocol {
             this.setType(Type.RequestDatasets);
         }
     }
+
+    @Data
+    public static class RegisterInvite extends Command {
+        private String invite;
+
+        public RegisterInvite(String invite) {
+            this.setType(Type.RegisterInvite);
+            this.invite = invite;
+        }
+
+        public RegisterInvite() {
+            this.setType(Type.RegisterInvite);
+        }
+    }
+
+    @Data
+    public static class RegisterInviteResult extends Command {
+        private InviteResult inviteResult;
+        public RegisterInviteResult() {
+            this.setType(Type.RegisterInviteResult);
+        }
+    }
+
+
 
 
 }
