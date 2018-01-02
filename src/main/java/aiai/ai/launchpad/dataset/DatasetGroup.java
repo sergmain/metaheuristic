@@ -53,8 +53,8 @@ public class DatasetGroup  implements Serializable {
     @Column(name = "IS_SKIP")
     private boolean isSkip;
 
-    @Column(name = "IS_FEATURE")
-    private boolean isFeature;
+    @Column(name = "IS_LABEL")
+    private boolean isLabel;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
     @JoinColumn(name = "DATASET_ID")

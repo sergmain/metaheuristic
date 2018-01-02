@@ -32,7 +32,7 @@ CREATE TABLE AIAI_LP_DATASET_GROUP (
   GROUP_NUMBER  NUMERIC(3, 0) NOT NULL,
   DESCRIPTION VARCHAR(250),
   IS_SKIP     tinyint(1) not null default 0,
-  IS_FEATURE   tinyint(1) not null default 0
+  IS_LABEL   tinyint(1) not null default 0
 );
 
 CREATE TABLE AIAI_LP_DATASET_COLUMN (

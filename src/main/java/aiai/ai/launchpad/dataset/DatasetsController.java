@@ -348,14 +348,14 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
 
-    @PostMapping(value = "/dataset-group-feature-commit")
-    public String setFeatureForGroup(Long id, boolean feature) {
+    @PostMapping(value = "/dataset-group-label-commit")
+    public String setLabelForGroup(Long id, boolean label) {
         final Optional<DatasetGroup> value = groupsRepository.findById(id);
         if (!value.isPresent()) {
             return "redirect:/launchpad/datasets";
         }
         DatasetGroup group = value.get();
-        group.setFeature(feature);
+        group.setLabel(label);
         group.setSkip(false);
         groupsRepository.save(group);
 
