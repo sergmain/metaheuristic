@@ -30,11 +30,11 @@ public class Station implements Serializable {
     @Id
     @Column(name = "ID")
     @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_STATION")
-    private long id;
+    private Long id;
 
     @Version
     @Column(name = "VERSION")
-    public int version = 0;
+    public Integer version;
 
     @Column(name = "IP")
     private String ip;

@@ -38,11 +38,11 @@ public class DatasetGroup  implements Serializable {
     @Id
     @Column(name = "ID")
     @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_DATASET_GROUP")
-    private long id;
+    private Long id;
 
     @Version
     @Column(name = "VERSION")
-    private int version = 0;
+    private Integer version;
 
     @Column(name = "GROUP_NUMBER")
     private int groupNumber;

@@ -48,11 +48,11 @@ public class DatasetPath implements Serializable {
     @Id
     @Column(name = "ID")
     @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_LP_DATASET_PATH")
-    private long id;
+    private Long id;
 
     @Version
     @Column(name = "VERSION")
-    private int version = 0;
+    private Integer version;
 
     @Column(name = "PATH_NUMBER")
     private int pathNumber;
