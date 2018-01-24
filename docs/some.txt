@@ -1,0 +1,11 @@
+LGPL v3
+    https://www.gnu.org/licenses/lgpl.html
+
+License relationshop
+    https://www.dwheeler.com/essays/floss-license-slide.html
+
+Mysql FOSS license exception
+    https://www.mysql.com/about/legal/licensing/foss-exception/
+
+MariaDB lisencing FAQ
+    https://mariadb.com/kb/en/library/licensing-faq/
