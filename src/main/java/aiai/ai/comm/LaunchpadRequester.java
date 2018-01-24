@@ -1,3 +1,20 @@
+/*
+ * AiAi, Copyright (C) 2017-2018  Serge Maslyukov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package aiai.ai.comm;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,9 +53,7 @@ import java.util.Map;
 //@Log4j2
 public class LaunchpadRequester {
 
-    @Value("${aiai.station.launchpad.url}")
-    private String launchpadUrl;
-
+    public static final Charset UTF_8 = Charset.forName("utf8");
     private static ObjectMapper mapper;
 
     static {
@@ -46,14 +61,10 @@ public class LaunchpadRequester {
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
+    @Value("${aiai.station.launchpad.url}")
+    private String launchpadUrl;
     private CsrfTokenRepository csrfTokenRepository;
-
     private RestTemplate restTemplate;
-
-    public LaunchpadRequester(CsrfTokenRepository csrfTokenRepository) {
-        this.csrfTokenRepository = csrfTokenRepository;
-        restTemplate = new RestTemplate();
-    }
 
 
 /*
@@ -99,6 +110,28 @@ public class LaunchpadRequester {
 
 */
 
+    public LaunchpadRequester(CsrfTokenRepository csrfTokenRepository) {
+        this.csrfTokenRepository = csrfTokenRepository;
+        restTemplate = new RestTemplate();
+    }
+
+    public static String encode(String input) {
+        try {
+            String encode;
+            encode = URLEncoder.encode(input, "UTF-8");
+            return StringUtils.replace(encode, "+", "%20");
+        } catch (UnsupportedEncodingException | NullPointerException e) {
+            throw new RuntimeException("Error, inout: " + input, e);
+        }
+    }
+
+    public static void main(String[] args) throws JsonProcessingException {
+        List<Map<String, String>> commands = Collections.singletonList(Collections.singletonMap("command", "nop"));
+        // Convert object to JSON string
+        String jsonInString = mapper.writeValueAsString(commands);
+        System.out.println(jsonInString);
+    }
+
     /**
      */
 //    @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
@@ -132,7 +165,7 @@ public class LaunchpadRequester {
 
             ExchangeData responses = mapper.readValue(json, ExchangeData.class);
             for (Command command : responses.getCommands()) {
-                switch(command.getType()) {
+                switch (command.getType()) {
                     case ReportStation:
                         break;
                     case RequestDatasets:
@@ -220,8 +253,6 @@ public <T> T postForObject(String url,
         }
     }
 
-    public static final Charset UTF_8 = Charset.forName("utf8");
-
     /**
      * Experementas. Spring Boot (m2/Snapshot) doesn't work at all
      */
@@ -247,24 +278,6 @@ public <T> T postForObject(String url,
 //        ExchangeData result = response.getBody();
 
         System.out.println(new Date() + " This runs in a fixed delay (Complex), result: " + result);
-    }
-
-    public static String encode(String input) {
-        try {
-            String encode;
-            encode = URLEncoder.encode(input, "UTF-8");
-            return StringUtils.replace(encode, "+", "%20");
-        }
-        catch (UnsupportedEncodingException | NullPointerException e) {
-            throw new RuntimeException("Error, inout: " + input, e);
-        }
-    }
-
-    public static void main(String[] args) throws JsonProcessingException {
-        List<Map<String, String>> commands = Collections.singletonList(Collections.singletonMap("command", "nop"));
-        // Convert object to JSON string
-        String jsonInString = mapper.writeValueAsString(commands);
-        System.out.println(jsonInString);
     }
 }
 

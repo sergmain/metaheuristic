@@ -1,3 +1,20 @@
+/*
+ * AiAi, Copyright (C) 2017-2018  Serge Maslyukov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package aiai.ai.comm;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -15,7 +32,7 @@ import java.util.List;
  */
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(value = { "commands" })
+@JsonIgnoreProperties(value = {"commands"})
 public class ExchangeData {
 
     private Protocol.Nop nop;
@@ -26,19 +43,9 @@ public class ExchangeData {
     private Protocol.RegisterInvite registerInvite;
     private Protocol.RegisterInviteResult registerInviteResult;
 
-    @JsonProperty(value="success")
+    @JsonProperty(value = "success")
     private boolean isSuccess = true;
     private String msg;
-
-    static List<Command> asListOfNonNull(Command ... commands) {
-        List<Command> list = new ArrayList<>();
-        for (Command command : commands) {
-            if (command!=null) {
-                list.add(command);
-            }
-        }
-        return list;
-    }
 
     public ExchangeData() {
     }
@@ -47,56 +54,66 @@ public class ExchangeData {
         setCommand(command);
     }
 
+    public ExchangeData(boolean isSuccess, String msg) {
+        this.isSuccess = isSuccess;
+        this.msg = msg;
+    }
+
+    static List<Command> asListOfNonNull(Command... commands) {
+        List<Command> list = new ArrayList<>();
+        for (Command command : commands) {
+            if (command != null) {
+                list.add(command);
+            }
+        }
+        return list;
+    }
+
     public void setCommand(Command command) {
         switch (command.getType()) {
             case Nop:
-                if (this.nop!=null) {
+                if (this.nop != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
                 this.nop = (Protocol.Nop) command;
                 break;
             case Ok:
-                if (this.ok!=null) {
+                if (this.ok != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
                 this.ok = (Protocol.Ok) command;
                 break;
             case ReportStation:
-                if (this.reportStation!=null) {
+                if (this.reportStation != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
                 this.reportStation = (Protocol.ReportStation) command;
                 break;
             case RequestDatasets:
-                if (this.requestDatasets!=null) {
+                if (this.requestDatasets != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
                 this.requestDatasets = (Protocol.RequestDatasets) command;
                 break;
             case AssignStationId:
-                if (this.assignStationId!=null) {
+                if (this.assignStationId != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
                 this.assignStationId = (Protocol.AssignStationId) command;
                 break;
             case RegisterInvite:
-                if (this.registerInvite!=null) {
+                if (this.registerInvite != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
                 this.registerInvite = (Protocol.RegisterInvite) command;
                 break;
             case RegisterInviteResult:
-                if (this.registerInviteResult!=null) {
+                if (this.registerInviteResult != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
                 this.registerInviteResult = (Protocol.RegisterInviteResult) command;
                 break;
         }
-    }
-
-    public ExchangeData(boolean isSuccess, String msg) {
-        this.isSuccess = isSuccess;
-        this.msg = msg;
     }
 
     public List<Command> getCommands() {

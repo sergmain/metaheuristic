@@ -1,3 +1,20 @@
+/*
+ * AiAi, Copyright (C) 2017-2018  Serge Maslyukov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package aiai.ai.station;
 
 import aiai.ai.repositories.EnvironmentRepository;
@@ -31,13 +48,8 @@ public class EnvironmentController {
         this.repository = repository;
     }
 
-    @Data
-    public static class Result {
-        public Slice<Env> items;
-    }
-
     @GetMapping("/envs")
-    public String init(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable)  {
+    public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
         pageable = fixPageSize(pageable);
         result.items = repository.findAll(pageable);
         return "/station/envs";
@@ -45,7 +57,7 @@ public class EnvironmentController {
 
     // for AJAX
     @PostMapping("/envs-part")
-    public String getEnvs(@ModelAttribute Result result, @PageableDefault(size=5) Pageable pageable )  {
+    public String getEnvs(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
         pageable = fixPageSize(pageable);
         result.items = repository.findAll(pageable);
         return "/station/envs :: table";
@@ -58,19 +70,19 @@ public class EnvironmentController {
     }
 
     @GetMapping(value = "/env-edit/{id}")
-    public String edit(@PathVariable Long id, Model model){
+    public String edit(@PathVariable Long id, Model model) {
         model.addAttribute("env", repository.findById(id));
         return "/station/env-form";
     }
 
     @PostMapping("/env-form-commit")
     public String formCommit(Env env) {
-        repository.save( env );
+        repository.save(env);
         return "redirect:/station/envs";
     }
 
     @GetMapping("/env-delete/{id}")
-    public String delete(@PathVariable Long id, Model model){
+    public String delete(@PathVariable Long id, Model model) {
         final Optional<Env> value = repository.findById(id);
         if (!value.isPresent()) {
             return "redirect:/station/envs";
@@ -86,10 +98,15 @@ public class EnvironmentController {
     }
 
     private Pageable fixPageSize(Pageable pageable) {
-        if (pageable.getPageSize()!=limit) {
+        if (pageable.getPageSize() != limit) {
             pageable = PageRequest.of(pageable.getPageNumber(), limit);
         }
         return pageable;
+    }
+
+    @Data
+    public static class Result {
+        public Slice<Env> items;
     }
 }
 

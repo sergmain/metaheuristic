@@ -1,3 +1,20 @@
+/*
+ * AiAi, Copyright (C) 2017-2018  Serge Maslyukov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package aiai.ai.launchpad.dataset;
 
 import aiai.ai.repositories.DatasetColumnRepository;
@@ -51,21 +68,11 @@ public class DatasetsController {
         this.pathRepository = pathRepository;
     }
 
-    @Data
-    public static class Result {
-        public Slice<Dataset> items;
-    }
-
-    @Data
-    public static class DatasetDefinition {
-        public DatasetDefinition(Dataset dataset, String launchpadDirAsString) {
-            this.dataset = dataset;
-            this.launchpadDirAsString = launchpadDirAsString;
+    private static File toFile(String launchpadDirAsString) {
+        if (launchpadDirAsString.charAt(0) == '.' && (launchpadDirAsString.charAt(1) == '\\' || launchpadDirAsString.charAt(1) == '/')) {
+            return new File(launchpadDirAsString.substring(2));
         }
-
-        public Dataset dataset;
-        public List<DatasetPath> paths = new ArrayList<>();
-        public String launchpadDirAsString;
+        return new File(launchpadDirAsString);
     }
 
     @GetMapping("/datasets")
@@ -148,8 +155,7 @@ public class DatasetsController {
         //noinspection StatementWithEmptyBody
         if (isAllEmpty) {
             // nothing to do with this
-        }
-        else {
+        } else {
             // last actual column in groups. there isn't any non-empty group after this one
             for (int i = 0; i < dataset.getDatasetGroups().size(); i++) {
 
@@ -201,7 +207,6 @@ public class DatasetsController {
 
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
-
 
     @GetMapping(value = "/dataset-column-edit/{id}")
     public String editDatasetColumn(@PathVariable Long id, Model model) {
@@ -375,7 +380,6 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
-
     @PostMapping(value = "/dataset-group-from-file")
     public String createDefinitionFromFile(MultipartFile file,
                                            @RequestParam(name = "id") long datasetId,
@@ -396,8 +400,7 @@ public class DatasetsController {
             } catch (IOException e) {
                 throw new RuntimeException("error", e);
             }
-        }
-        else {
+        } else {
 
             List<DatasetPath> paths = pathRepository.findByDataset(dataset);
             //noinspection ConstantConditions
@@ -416,7 +419,7 @@ public class DatasetsController {
 
             File datasetFile;
             try (InputStream is = file.getInputStream()) {
-                datasetFile = File.createTempFile("dataset-"+pathNumber, ".csv", datasetDir );
+                datasetFile = File.createTempFile("dataset-" + pathNumber, ".csv", datasetDir);
                 FileUtils.copyInputStreamToFile(is, datasetFile);
             } catch (IOException e) {
                 throw new RuntimeException("error", e);
@@ -424,7 +427,7 @@ public class DatasetsController {
 
             DatasetPath dp = new DatasetPath();
             String pathToDataset = path + File.separatorChar + datasetFile.getName();
-            dp.setPath( pathToDataset );
+            dp.setPath(pathToDataset);
             dp.setChecksum(DatasetChecksum.getChecksumAsJson(datasetFile));
             dp.setDataset(dataset);
             dp.setFile(true);
@@ -440,13 +443,6 @@ public class DatasetsController {
         }
 
         return "redirect:/launchpad/dataset-definition/" + datasetId;
-    }
-
-    private static File toFile(String launchpadDirAsString) {
-        if (launchpadDirAsString.charAt(0)=='.' && (launchpadDirAsString.charAt(1)=='\\' || launchpadDirAsString.charAt(1)=='/')) {
-            return new File(launchpadDirAsString.substring(2));
-        }
-        return new File(launchpadDirAsString);
     }
 
     private void createColumnsDefinition(Dataset dataset, InputStream is) throws IOException {
@@ -515,12 +511,26 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
-
-
     private Pageable fixPageSize(Pageable pageable) {
         if (pageable.getPageSize() != limit) {
             pageable = PageRequest.of(pageable.getPageNumber(), limit);
         }
         return pageable;
+    }
+
+    @Data
+    public static class Result {
+        public Slice<Dataset> items;
+    }
+
+    @Data
+    public static class DatasetDefinition {
+        public Dataset dataset;
+        public List<DatasetPath> paths = new ArrayList<>();
+        public String launchpadDirAsString;
+        public DatasetDefinition(Dataset dataset, String launchpadDirAsString) {
+            this.dataset = dataset;
+            this.launchpadDirAsString = launchpadDirAsString;
+        }
     }
 }
