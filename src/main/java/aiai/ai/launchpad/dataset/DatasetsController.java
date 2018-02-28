@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -118,6 +119,8 @@ public class DatasetsController {
         final int groupSize = dataset.getDatasetGroups().size();
         for (int i = 0; i < groupSize; i++) {
             DatasetGroup group = dataset.getDatasetGroups().get(i);
+            group.setAddColumn(true);
+/*
             group.setAddColumn(false);
             if (i > 0) {
                 DatasetGroup groupPrev = dataset.getDatasetGroups().get(i - 1);
@@ -140,6 +143,7 @@ public class DatasetsController {
                 //noinspection UnnecessaryContinue
                 continue;
             }
+*/
         }
 
         // ugly but it works
@@ -340,6 +344,31 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
+    @PostMapping("/dataset-group-cmd-commit")
+    public String groupCommandFormCommit(Long id, String command) {
+        final Optional<DatasetGroup> value = groupsRepository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        DatasetGroup group = value.get();
+        group.setCommand(command);
+        groupsRepository.save(group);
+        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
+    }
+
+    @PostMapping(value = "/dataset-group-id-group-commit")
+    public String setIdGrouppForGroup(Long id, @RequestParam(name = "id_group", required = false, defaultValue = "false") boolean isIdGroup) {
+        final Optional<DatasetGroup> value = groupsRepository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        DatasetGroup group = value.get();
+        group.setIdGroup(isIdGroup);
+        groupsRepository.save(group);
+
+        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
+    }
+
     @PostMapping(value = "/dataset-group-skip-commit")
     public String setSkipForGroup(Long id, boolean skip) {
         final Optional<DatasetGroup> value = groupsRepository.findById(id);
@@ -367,80 +396,69 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
 
-    @PostMapping(value = "/dataset-header-commit")
-    public String setHeaderForDataset(Long id, boolean header) {
+    @PostMapping(value = "/dataset-is-editable-commit")
+    public String setHeaderForDataset(Long id, boolean editable) {
         final Optional<Dataset> value = repository.findById(id);
         if (!value.isPresent()) {
             return "redirect:/launchpad/datasets";
         }
         Dataset dataset = value.get();
-        dataset.setHeader(header);
+        dataset.setEditable(editable);
         repository.save(dataset);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
-    @PostMapping(value = "/dataset-group-from-file")
-    public String createDefinitionFromFile(MultipartFile file,
-                                           @RequestParam(name = "id") long datasetId,
-                                           @RequestParam(required = false, defaultValue = "false", name = "is_definition_only") boolean isDefinitionOnly,
-                                           @RequestParam(required = false, defaultValue = "false", name = "is_header") boolean isHeader
-    ) {
+    @PostMapping(value = "/dataset-upload-dataset-from-file")
+    public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId) {
         Optional<Dataset> optionalDataset = repository.findById(datasetId);
         if (!optionalDataset.isPresent()) {
             return "redirect:/launchpad/dataset-definition/" + datasetId;
         }
         Dataset dataset = optionalDataset.get();
-        dataset.setHeader(isHeader);
-        groupsRepository.deleteByDataset(dataset);
 
-        if (isDefinitionOnly) {
-            try (InputStream is = file.getInputStream()) {
-                createColumnsDefinition(dataset, is);
-            } catch (IOException e) {
-                throw new RuntimeException("error", e);
-            }
-        } else {
+        List<DatasetPath> paths = pathRepository.findByDataset(dataset);
+        //noinspection ConstantConditions
+        int pathNumber = paths.isEmpty() ? 1 : paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
+        final String path = String.format("datasets%c%03d%cinput%c%d", File.separatorChar, dataset.getId(), File.separatorChar, File.separatorChar, pathNumber);
 
-            List<DatasetPath> paths = pathRepository.findByDataset(dataset);
-            //noinspection ConstantConditions
-            int pathNumber = paths.isEmpty() ? 1 : paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
-            final String path = String.format("datasets%c%03d%c%d", File.separatorChar, dataset.getId(), File.separatorChar, pathNumber);
+        final File launchpadDir = toFile(launchpadDirAsString);
 
-            final File launchpadDir = toFile(launchpadDirAsString);
-
-            File datasetDir = new File(launchpadDir, path);
-            if (!datasetDir.exists()) {
-                boolean status = datasetDir.mkdirs();
-                if (!status) {
-                    throw new IllegalStateException("Error create directory: " + datasetDir.getAbsolutePath());
-                }
-            }
-
-            File datasetFile;
-            try (InputStream is = file.getInputStream()) {
-                datasetFile = File.createTempFile("dataset-" + pathNumber, ".csv", datasetDir);
-                FileUtils.copyInputStreamToFile(is, datasetFile);
-            } catch (IOException e) {
-                throw new RuntimeException("error", e);
-            }
-
-            DatasetPath dp = new DatasetPath();
-            String pathToDataset = path + File.separatorChar + datasetFile.getName();
-            dp.setPath(pathToDataset);
-            dp.setChecksum(DatasetChecksum.getChecksumAsJson(datasetFile));
-            dp.setDataset(dataset);
-            dp.setFile(true);
-            dp.setPathNumber(pathNumber);
-            dp.setValid(true);
-            pathRepository.save(dp);
-
-            try (InputStream is = new FileInputStream(datasetFile)) {
-                createColumnsDefinition(dataset, is);
-            } catch (IOException e) {
-                throw new RuntimeException("error", e);
+        File datasetDir = new File(launchpadDir, path);
+        if (!datasetDir.exists()) {
+            boolean status = datasetDir.mkdirs();
+            if (!status) {
+                throw new IllegalStateException("Error create directory: " + datasetDir.getAbsolutePath());
             }
         }
+
+        File datasetFile;
+        try (InputStream is = file.getInputStream()) {
+            datasetFile = File.createTempFile("dataset-" + pathNumber, ".csv", datasetDir);
+            FileUtils.copyInputStreamToFile(is, datasetFile);
+        } catch (IOException e) {
+            throw new RuntimeException("error", e);
+        }
+
+        DatasetPath dp = new DatasetPath();
+        String pathToDataset = path + File.separatorChar + datasetFile.getName();
+        dp.setPath(pathToDataset);
+        dp.setChecksum(DatasetChecksum.getChecksumAsJson(datasetFile));
+        dp.setDataset(dataset);
+        dp.setFile(true);
+        dp.setPathNumber(pathNumber);
+        dp.setValid(true);
+        dp.setRegisterTs(new Timestamp(System.currentTimeMillis()));
+
+        pathRepository.save(dp);
+
+/*
+        try (InputStream is = new FileInputStream(datasetFile)) {
+            createColumnsDefinition(dataset, is);
+        } catch (IOException e) {
+            throw new RuntimeException("error", e);
+        }
+*/
 
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
@@ -528,6 +546,7 @@ public class DatasetsController {
         public Dataset dataset;
         public List<DatasetPath> paths = new ArrayList<>();
         public String launchpadDirAsString;
+
         public DatasetDefinition(Dataset dataset, String launchpadDirAsString) {
             this.dataset = dataset;
             this.launchpadDirAsString = launchpadDirAsString;

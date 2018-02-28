@@ -1,6 +1,9 @@
 LGPL v3
     https://www.gnu.org/licenses/lgpl.html
 
+GPL v3
+    https://www.gnu.org/licenses/gpl.html
+
 License relationshop
     https://www.dwheeler.com/essays/floss-license-slide.html
 

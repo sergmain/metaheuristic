@@ -1,0 +1,3 @@
+https://stackoverflow.com/questions/41603357/model-ensemble-with-shared-layers
+https://medium.com/randomai/ensemble-and-store-models-in-keras-2-x-b881a6d7693f
+https://www.kaggle.com/currie32/an-ensemble-approach-cnn-and-timedistributed/output

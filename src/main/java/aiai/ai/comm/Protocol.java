@@ -19,6 +19,7 @@ package aiai.ai.comm;
 
 import aiai.ai.beans.InviteResult;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 /**
  * User: Serg
@@ -69,6 +70,7 @@ public class Protocol {
         }
     }
 
+    @EqualsAndHashCode(callSuper = false)
     @Data
     public static class RegisterInvite extends Command {
         private String invite;
@@ -83,6 +85,7 @@ public class Protocol {
         }
     }
 
+    @EqualsAndHashCode(callSuper = false)
     @Data
     public static class RegisterInviteResult extends Command {
         private InviteResult inviteResult;

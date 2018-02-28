@@ -1,0 +1,10 @@
+dataset:
+  input:
+    - file_01.txt
+    - file_02.txt
+    - file_03.txt
+  labels:
+    - file_04.txt
+    - file_05.txt
+  output:
+    dataset_06.txt

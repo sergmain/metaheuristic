@@ -22,7 +22,7 @@ CREATE TABLE AIAI_LP_DATASET (
   ID          NUMERIC(10, 0) NOT NULL,
   VERSION     NUMERIC(5, 0)  NOT NULL,
   DESCRIPTION VARCHAR(250),
-  IS_HEADER   tinyint(1) not null default 0
+  IS_EDITABLE   tinyint(1) not null default 1,
 );
 
 CREATE TABLE AIAI_LP_DATASET_GROUP (
@@ -31,8 +31,10 @@ CREATE TABLE AIAI_LP_DATASET_GROUP (
   VERSION     NUMERIC(5, 0)  NOT NULL,
   GROUP_NUMBER  NUMERIC(3, 0) NOT NULL,
   DESCRIPTION VARCHAR(250),
+  CMD         VARCHAR(250),
+  IS_ID_GROUP tinyint(1) not null default 0,
   IS_SKIP     tinyint(1) not null default 0,
-  IS_LABEL   tinyint(1) not null default 0
+  IS_LABEL    tinyint(1) not null default 0
 );
 
 CREATE TABLE AIAI_LP_DATASET_COLUMN (
@@ -49,10 +51,10 @@ CREATE TABLE AIAI_LP_DATASET_PATH (
   VERSION     NUMERIC(5, 0)  NOT NULL,
   PATH_NUMBER NUMERIC(3, 0) NOT NULL,
   PATH        VARCHAR(200),
-  REG_TS      TIMESTAMP DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
+  REG_TS      TIMESTAMP NOT NULL,
   CHECKSUM    VARCHAR(200),
   IS_FILE     tinyint(1) not null default 1,
-  IS_VALID     tinyint(1) not null default 0
+  IS_VALID    tinyint(1) not null default 0
 );
 
 CREATE TABLE AIAI_LP_EXPERIMENT (

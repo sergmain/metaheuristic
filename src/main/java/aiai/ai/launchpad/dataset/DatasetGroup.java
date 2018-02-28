@@ -55,8 +55,15 @@ public class DatasetGroup implements Serializable {
     private int groupNumber;
     @Column(name = "DESCRIPTION")
     private String description;
+    @Column(name = "CMD")
+    private String command;
+
+    @Column(name = "IS_ID_GROUP")
+    private boolean isIdGroup;
+
     @Column(name = "IS_SKIP")
     private boolean isSkip;
+
     @Column(name = "IS_LABEL")
     private boolean isLabel;
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})

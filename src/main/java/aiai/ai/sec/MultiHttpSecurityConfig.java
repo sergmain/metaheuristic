@@ -49,52 +49,6 @@ public class MultiHttpSecurityConfig {
     }
 
     @Configuration
-    @Order
-    public static class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
-
-        final CsrfTokenRepository csrfTokenRepository;
-
-        @Autowired
-        public SpringSecurityConfig(CsrfTokenRepository csrfTokenRepository) {
-            this.csrfTokenRepository = csrfTokenRepository;
-        }
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-
-            http
-                    .csrf().csrfTokenRepository(csrfTokenRepository)
-                    .and()
-                    .headers().frameOptions().sameOrigin()
-                    .and()
-                    .authorizeRequests()
-                    .antMatchers("/manager/html").denyAll()
-                    .antMatchers("/css/**", "/js/**", "/webjars/**").permitAll()
-                    .antMatchers("/", "/index", "/about", "/login", "/jssc", "/srv/**").permitAll()
-                    .antMatchers("/example*").permitAll()
-                    .antMatchers("/login").anonymous()
-                    .antMatchers("/logout", "/launchpad/**", "/stations/**", "/station/**").authenticated()
-                    .antMatchers("/admin/**").hasAnyRole("ADMIN")
-                    .antMatchers("/user/**").hasAnyRole("USER")
-                    .antMatchers("/**/**").denyAll()
-                    .and()
-                    .formLogin()
-                    .loginPage("/login")
-                    .usernameParameter("j_username")
-                    .passwordParameter("j_password")
-                    .loginProcessingUrl("/jssc")
-                    .defaultSuccessUrl("/index")
-                    .and()
-                    .logout()
-                    .logoutUrl("/logout")
-                    .logoutSuccessUrl("/index")
-                    .deleteCookies(Consts.SESSIONID_NAME)
-                    .invalidateHttpSession(true);
-        }
-
-    }
-
-    @Configuration
     @Order(1)
     public class RestAuthSecurityConfig extends WebSecurityConfigurerAdapter {
 
@@ -128,5 +82,54 @@ public class MultiHttpSecurityConfig {
                     .and()
                     .csrf().disable();
         }
+    }
+
+    @Configuration
+    @Order
+    public static class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
+
+        final CsrfTokenRepository csrfTokenRepository;
+
+        @Autowired
+        public SpringSecurityConfig(CsrfTokenRepository csrfTokenRepository) {
+            this.csrfTokenRepository = csrfTokenRepository;
+        }
+
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+
+            http
+                    .csrf().csrfTokenRepository(csrfTokenRepository)
+                    .and()
+                    .headers().frameOptions().sameOrigin()
+                    .and()
+                    .rememberMe()
+                    .and()
+                    .authorizeRequests()
+                    .antMatchers("/manager/html").denyAll()
+                    .antMatchers("/css/**", "/js/**", "/webjars/**").permitAll()
+                    .antMatchers("/favicon.ico", "/", "/index", "/about", "/login", "/jssc", "/srv/**").permitAll()
+                    .antMatchers("/example*").permitAll()
+                    .antMatchers("/login").anonymous()
+                    .antMatchers("/logout", "/launchpad/**", "/stations/**", "/station/**").authenticated()
+                    .antMatchers("/admin/**").hasAnyRole("ADMIN")
+                    .antMatchers("/user/**").hasAnyRole("USER")
+                    .antMatchers("/**/**").denyAll()
+                    .and()
+                    .formLogin()
+                    .loginPage("/login")
+                    .usernameParameter("j_username")
+                    .passwordParameter("j_password")
+                    .loginProcessingUrl("/jssc")
+                    .defaultSuccessUrl("/index")
+                    .and()
+                    .logout()
+                    .logoutUrl("/logout")
+                    .logoutSuccessUrl("/index")
+//                    .deleteCookies(Consts.SESSIONID_NAME)
+//                    .invalidateHttpSession(true)
+            ;
+        }
+
     }
 }
