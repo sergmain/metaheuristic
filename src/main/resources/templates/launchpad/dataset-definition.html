@@ -23,8 +23,8 @@
 
     <!--/*@thymesVar id="result" type="aiai.ai.launchpad.dataset.DatasetsController.DatasetDefinition"*/-->
 
-    <p></p>
-    <h4 class="widget-header">Dataset options</h4>
+    <p>&nbsp;</p>
+    <h2 class="widget-header">Dataset options</h2>
 
     <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
           th:action="@{/launchpad/dataset-is-editable-commit}"
@@ -35,7 +35,7 @@
                                                        th:checked="${result.dataset.editable}"
                                                        th:onclick="'document.getElementById(\'dataset-is-editable-form\').submit();'">
     </form>
-    <p></p>
+    <p>&nbsp;</p>
 
     <!--<form class="pure-form pure-form-stacked" th:object="${result.dataset}" method="post" action="#" th:method="POST"-->
     <form class="pure-form " th:object="${result.dataset}" method="post" action="#" th:method="POST"
@@ -53,12 +53,10 @@
                         <input name="description" id="description" type="text" placeholder="description" th:field="*{description}">
                         <span class="pure-form-message">This is a required field.</span>
 
-
                     </fieldset>
-                    <p></p>
                 </td>
                 <td width="20">
-                    <p></p>
+                    <p>&nbsp;</p>
                 </td>
                 <td valign="top" th:if="${ result.dataset.editable}">
                     <button type="submit" class="pure-button pure-button-primary">Save new description</button>
@@ -67,8 +65,29 @@
         </table>
     </form>
 
-    <p></p>
-    <p></p>
+    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
+          th:if="${ result.dataset.editable}"
+          th:action="@{/launchpad/dataset-cmd-assemble-commit}" accept-charset="UTF-8" id="dataset-cmd-assemble-form" name="f">
+        <table class="pure-table pure-table-bordered" id="table-dataset-cmd-assemble" >
+            <tr>
+                <td>
+                    <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
+                    <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
+                    <fieldset>
+                        <label for="command_assemble">Command</label>
+                        <input name="command_assemble" id="command_assemble" type="text" placeholder="command for assembling dataset" th:size="100"
+                               th:value="${result.dataset.assemblingCommand}">
+                    </fieldset>
+                </td>
+                <td>
+                    <button type="submit" class="pure-button pure-button-primary">Save command for assembling dataset</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+
+    <p>&nbsp;</p>
     <h2 class="widget-header">Groups and Columns</h2>
 
     <a class="pure-button pure-button-primary" href="#"
@@ -188,15 +207,9 @@
         </tbody>
     </table>
 
-    <p></p>
+    <p>&nbsp;</p>
     <h2 class="widget-header">Dataset files</h2>
     <p>Launchpad directory: <b><span th:text="${@environment.getProperty('aiai.launchpad.dir')}"></span></b>.</p>
-
-<!--
-    <p></p>
-    <h2 class="widget-header">Upload dataset file</h2>
-    <p></p>
--->
 
     <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
           th:action="@{/launchpad/dataset-upload-dataset-from-file}">
@@ -209,7 +222,7 @@
                         <label for="uploadFile">Dataset file</label>
                         <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:size="100"/>
                         <div class="fileUpload pure-button pure-button-primary">
-                            <span>Upload</span>
+                            <span>Select file</span>
                             <input name="file" id="uploadBtn" type="file" class="upload">
                         </div>
                         <span class="pure-form-message">This is a required field.</span>
@@ -228,8 +241,29 @@
     </script>
 
 
-    <p></p>
-    <p></p>
+    <p>&nbsp;</p>
+    <label>Raw dataset files</label>
+
+    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
+          th:if="${ not result.dataset.editable and result.dataset.assemblingCommand!=null and result.dataset.assemblingCommand.length() &gt; 0 }"
+          th:action="@{/launchpad/dataset-run-assembling-commit}" accept-charset="UTF-8" id="dataset-run-assembling-form" name="f">
+        <table>
+            <tr>
+                <td width="200">
+                    <fieldset>
+                        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
+                        <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
+                        <label for="command_assemble">Assembling command</label>
+                        <p th:text="${result.dataset.assemblingCommand}">Assembling command</p>
+                    </fieldset>
+                </td>
+                <td>&nbsp;</td>
+                <td>
+                    <button type="submit" class="pure-button pure-button-primary">Run dataset assembling</button>
+                </td>
+            </tr>
+        </table>
+    </form>
 
     <table class="pure-table pure-table-bordered" id="table-ds-path-cols" th:fragment="table">
         <thead>
@@ -261,9 +295,7 @@
         </tbody>
     </table>
 
-    <p></p>
-    <p></p>
-    <p></p>
+    <p>&nbsp;</p>
     <h2 class="widget-header">Back to dataset's section</h2>
     <p></p>
     <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/datasets'}">Back to Datasets</a>

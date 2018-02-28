@@ -53,6 +53,8 @@ public class Dataset implements Serializable {
     private Integer version;
     @Column(name = "DESCRIPTION")
     private String description;
+    @Column(name = "CMD_ASSEMBLE")
+    private String assemblingCommand;
     @Column(name = "IS_EDITABLE")
     private boolean isEditable;
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL)

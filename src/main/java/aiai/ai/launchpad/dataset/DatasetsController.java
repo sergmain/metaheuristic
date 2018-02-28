@@ -36,10 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.*;
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -409,8 +406,55 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
+    @PostMapping(value = "/dataset-cmd-assemble-commit")
+    public String setHeaderForDataset(Long id, @RequestParam(name = "command_assemble") String assemblingCommand) {
+        final Optional<Dataset> value = repository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        Dataset dataset = value.get();
+        dataset.setAssemblingCommand(assemblingCommand);
+        repository.save(dataset);
+
+        return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+    }
+
+    @PostMapping(value = "/dataset-run-assembling-commit")
+    public String runAssemblingOfDataset(Long id) {
+        final Optional<Dataset> value = repository.findById(id);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        Dataset dataset = value.get();
+        repository.save(dataset);
+
+        return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+    }
+
+    private static final Set<String> exts;
+
+    static {
+        exts = new HashSet<>();
+        Collections.addAll(exts, ".json", ".csv", ".txt", ".xml");
+    }
+
+    private static boolean checkExtension(String filename) {
+        int idx;
+        if ((idx=filename.lastIndexOf('.'))==-1) {
+            throw new IllegalStateException("'.' wasn't found, bad filename: " + filename);
+        }
+        String ext = filename.substring(idx).toLowerCase();
+        return exts.contains(ext);
+    }
+
     @PostMapping(value = "/dataset-upload-dataset-from-file")
     public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId) {
+
+        String originFilename = file.getOriginalFilename();
+        if (!checkExtension(originFilename)) {
+            throw new IllegalStateException("Not supported extension, filename: " + originFilename);
+        }
+
         Optional<Dataset> optionalDataset = repository.findById(datasetId);
         if (!optionalDataset.isPresent()) {
             return "redirect:/launchpad/dataset-definition/" + datasetId;
@@ -420,7 +464,7 @@ public class DatasetsController {
         List<DatasetPath> paths = pathRepository.findByDataset(dataset);
         //noinspection ConstantConditions
         int pathNumber = paths.isEmpty() ? 1 : paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
-        final String path = String.format("datasets%c%03d%cinput%c%d", File.separatorChar, dataset.getId(), File.separatorChar, File.separatorChar, pathNumber);
+        final String path = String.format("datasets%c%03d%craws%c%d", File.separatorChar, dataset.getId(), File.separatorChar, File.separatorChar, pathNumber);
 
         final File launchpadDir = toFile(launchpadDirAsString);
 
@@ -434,7 +478,7 @@ public class DatasetsController {
 
         File datasetFile;
         try (InputStream is = file.getInputStream()) {
-            datasetFile = File.createTempFile("dataset-" + pathNumber, ".csv", datasetDir);
+            datasetFile = new File(datasetDir, String.format("raw-%d-%s", pathNumber, originFilename));
             FileUtils.copyInputStreamToFile(is, datasetFile);
         } catch (IOException e) {
             throw new RuntimeException("error", e);
@@ -451,14 +495,6 @@ public class DatasetsController {
         dp.setRegisterTs(new Timestamp(System.currentTimeMillis()));
 
         pathRepository.save(dp);
-
-/*
-        try (InputStream is = new FileInputStream(datasetFile)) {
-            createColumnsDefinition(dataset, is);
-        } catch (IOException e) {
-            throw new RuntimeException("error", e);
-        }
-*/
 
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
