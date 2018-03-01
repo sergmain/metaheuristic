@@ -24,6 +24,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 public class TestYamlParser {
@@ -49,7 +50,9 @@ public class TestYamlParser {
 
             Yaml yaml = new Yaml();
 
-            Map<String, Map<String, String>> yamlParsers = yaml.load(is);
+            Map<String, Map<String, List<String>>> yamlParsers = yaml.load(is);
+
+            List<String> files = yamlParsers.get("dataset").get("input");
 
             Assert.assertThat(yamlParsers.keySet(), CoreMatchers.hasItems("dataset", "input", "labels", "output"));
         }
