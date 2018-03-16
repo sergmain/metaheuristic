@@ -333,6 +333,30 @@ public class DatasetsController {
         groupNumber = groups.isEmpty() ? 1 : groups.stream().mapToInt(DatasetGroup::getGroupNumber).max().getAsInt() + 1;
 
         final DatasetGroup group = new DatasetGroup(groupNumber);
+        group.setFeature(false);
+        group.setDataset(dataset);
+
+        dataset.getDatasetGroups().add(group);
+
+        repository.save(dataset);
+        return "redirect:/launchpad/dataset-definition/" + datasetId;
+    }
+
+    @GetMapping(value = "/dataset-group-add-new-feature/{id}")
+    public String addNewFeatureGroup(@PathVariable(name = "id") Long datasetId) {
+        final Optional<Dataset> value = repository.findById(datasetId);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        Dataset dataset = value.get();
+
+        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
+        int groupNumber;
+        //noinspection ConstantConditions
+        groupNumber = groups.isEmpty() ? 1 : groups.stream().mapToInt(DatasetGroup::getGroupNumber).max().getAsInt() + 1;
+
+        final DatasetGroup group = new DatasetGroup(groupNumber);
+        group.setFeature(true);
         group.setDataset(dataset);
 
         dataset.getDatasetGroups().add(group);
@@ -366,19 +390,6 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
 
-    @PostMapping(value = "/dataset-group-skip-commit")
-    public String setSkipForGroup(Long id, boolean skip) {
-        final Optional<DatasetGroup> value = groupsRepository.findById(id);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-        DatasetGroup group = value.get();
-        group.setSkip(skip);
-        groupsRepository.save(group);
-
-        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
-    }
-
     @PostMapping(value = "/dataset-group-label-commit")
     public String setLabelForGroup(Long id, boolean label) {
         final Optional<DatasetGroup> value = groupsRepository.findById(id);
@@ -387,7 +398,6 @@ public class DatasetsController {
         }
         DatasetGroup group = value.get();
         group.setLabel(label);
-        group.setSkip(false);
         groupsRepository.save(group);
 
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();

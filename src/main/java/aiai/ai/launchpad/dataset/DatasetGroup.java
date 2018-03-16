@@ -61,8 +61,8 @@ public class DatasetGroup implements Serializable {
     @Column(name = "IS_ID_GROUP")
     private boolean isIdGroup;
 
-    @Column(name = "IS_SKIP")
-    private boolean isSkip;
+    @Column(name = "IS_FEATURE")
+    private boolean isFeature;
 
     @Column(name = "IS_LABEL")
     private boolean isLabel;
@@ -71,6 +71,7 @@ public class DatasetGroup implements Serializable {
     private Dataset dataset;
     @OneToMany(mappedBy = "datasetGroup", cascade = CascadeType.ALL)
     private List<DatasetColumn> datasetColumns;
+
     /**
      * used only for UI
      */

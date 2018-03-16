@@ -65,28 +65,6 @@
         </table>
     </form>
 
-    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
-          th:if="${ result.dataset.editable}"
-          th:action="@{/launchpad/dataset-cmd-assemble-commit}" accept-charset="UTF-8" id="dataset-cmd-assemble-form" name="f">
-        <table class="pure-table pure-table-bordered" id="table-dataset-cmd-assemble" >
-            <tr>
-                <td>
-                    <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
-                    <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
-                    <fieldset>
-                        <label for="command_assemble">Command</label>
-                        <input name="command_assemble" id="command_assemble" type="text" placeholder="command for assembling dataset" th:size="100"
-                               th:value="${result.dataset.assemblingCommand}">
-                    </fieldset>
-                </td>
-                <td>
-                    <button type="submit" class="pure-button pure-button-primary">Save command for assembling dataset</button>
-                </td>
-            </tr>
-        </table>
-    </form>
-
-
     <p>&nbsp;</p>
     <h2 class="widget-header">Groups and Columns</h2>
 
@@ -104,13 +82,13 @@
         <thead>
         <tr>
             <th>Group Id</th>
-            <th>Group param</th>
+            <th>Type of group</th>
             <th th:if="${ result.dataset.editable}">Actions</th>
             <th>Columns</th>
         </tr>
         </thead>
         <tbody>
-        <tr th:each="g,gIterStatus : ${result.dataset.datasetGroups}">
+        <tr th:each="g,gIterStatus : ${result.dataset.datasetGroups}" th:if="${not g.isFeature()}">
             <td>
                 <p th:text="${'Group #' + g.groupNumber}">#Id</p>
             </td>
@@ -124,16 +102,7 @@
                                              th:checked="${g.idGroup}"
                                              th:onclick="'document.getElementById(\'dataset-group-id-group-form-'+${g.id}+'\').submit();'" th:disabled="${ not result.dataset.editable}">
                 </form>
-                <form th:if="${ (not g.label and result.dataset.editable) or (not result.dataset.editable and g.skip)}" class="pure-form pure-form-stacked" method="post" action="#"
-                      th:method="POST" th:action="@{/launchpad/dataset-group-skip-commit}" accept-charset="UTF-8"
-                      th:id="${'dataset-group-form-'+g.id}" name="f">
-                    <input type="hidden" th:name="id" th:value="${g.id}"/>
-                    <input type="hidden" th:name="version" th:value="${g.version}"/>
-                    Is skip:&nbsp;<input name="skip" id="skip" type="checkbox" placeholder="checkbox"
-                                         th:checked="${g.skip}"
-                                         th:onclick="'document.getElementById(\'dataset-group-form-'+${g.id}+'\').submit();'" th:disabled="${ not result.dataset.editable}">
-                </form>
-                <form th:if="${ (not g.isIdGroup() and not g.isSkip() and result.dataset.editable) or (not result.dataset.editable and g.label) }" class="pure-form pure-form-stacked" method="post" action="#"
+                <form th:if="${ (not g.isIdGroup() and result.dataset.editable) or (not result.dataset.editable and g.label) }" class="pure-form pure-form-stacked" method="post" action="#"
                       th:method="POST" th:action="@{/launchpad/dataset-group-label-commit}"
                       accept-charset="UTF-8" th:id="${'dataset-group-label-form-'+g.id}" name="f">
                     <input type="hidden" th:name="id" th:value="${g.id}"/>
@@ -151,18 +120,93 @@
                     group</a>
             </td>
             <td>
-                <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
+                <table class="pure-table pure-table-bordered" id="table-ds-group-cols" th:fragment="table"
+                       th:if='${not result.dataset.datasetGroups.isEmpty()}'>
+                    <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th colspan="3" th:if="${ result.dataset.editable}">&nbsp;</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="r,rIterStatus : ${g.datasetColumns}">
+                        <td th:text="${r.id}">#Id</td>
+                        <td th:text="${r.name}">Column name</td>
+                        <td th:text="${r.description}">Column description</td>
+                        <td th:if="${ result.dataset.editable}"><a class="pure-button pure-button-primary"
+                               th:href="${'/launchpad/dataset-column-edit/' + r.id}">Edit</a></td>
+                        <td th:if="${ result.dataset.editable}"><a class="pure-button pure-button-primary"
+                               th:href="${'/launchpad/dataset-column-delete/' + r.id}">Delete</a></td>
+                        <td th:if="${ result.dataset.editable}">
+                            <a th:if="${ (not gIterStatus.first) && rIterStatus.first && (g.datasetColumns.size()>1 || r.lastColumn) }"
+                               class='pure-button pure-button-primary'
+                               th:href="${'/launchpad/dataset-column-move-prev-group/' + r.id}">To prev group</a>
+                            <a th:if="${ (not gIterStatus.last) && rIterStatus.last && g.datasetColumns.size()>1}"
+                               class='pure-button pure-button-primary'
+                               th:href="${'/launchpad/dataset-column-move-next-group/' + r.id}">To next group</a>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+        </tbody>
+    </table>
 
+    <!-- ==================================== Feature section ==================================== -->
+
+    <p>&nbsp;</p>
+    <h2 class="widget-header">Feature groups</h2>
+
+    <a class="pure-button pure-button-primary" href="#"
+       th:if="${ result.dataset.editable}"
+       th:href="${'/launchpad/dataset-group-add-new-feature/'+result.dataset.id}">Add new feature group</a>
+    <p></p>
+
+<!--
+    <div th:if='${result.dataset.datasetGroups.isEmpty()}'>
+        <p>There isn't any feature group</p>
+    </div>
+-->
+
+    <table class="pure-table pure-table-bordered" id="table-ds-feature-groups" th:fragment="table"
+           th:if='${not result.dataset.datasetGroups.isEmpty()}'>
+        <thead>
+        <tr>
+            <th>Group Id</th>
+            <th>Type of group</th>
+            <th th:if="${ result.dataset.editable}">Actions</th>
+            <th>Columns</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="g,gIterStatus : ${result.dataset.datasetGroups}" th:if="${g.isFeature()}">
+            <td>
+                <p th:text="${'Group #' + g.groupNumber}">#Id</p>
+            </td>
+            <td>
+                <p>Feature</p>
+            </td>
+            <td th:if="${ result.dataset.editable}">
+                <a class="pure-button pure-button-primary" href="dataset-column-form.html" th:href="${'/launchpad/dataset-column-add/' + g.id}"
+                   th:if='${g.isAddColumn()}'>Add column</a>
+                <a class="pure-button pure-button-primary" href="#"
+                   th:href="${'/launchpad/dataset-delete-group/' + g.id}" th:if='${g.datasetColumns.isEmpty()}'>Delete
+                    group</a>
+            </td>
+            <td>
+                <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
                       th:action="@{/launchpad/dataset-group-cmd-commit}" accept-charset="UTF-8" id="dataset-group-cmd-form" name="f">
-                    <table class="pure-table pure-table-bordered" id="table-group-cmd-line" th:if="${ g.isLabel() }">
+                    <table class="pure-table pure-table-bordered" id="table-group-cmd-line">
                         <tr>
                             <td>
                                 <input type="hidden" th:name="id" th:value="${g.id}"/>
                                 <input type="hidden" th:name="version" th:value="${g.version}"/>
                                 <fieldset>
                                     <label for="command">Command</label>
-                                    <input name="command" id="command" type="text" placeholder="command" th:size="100"
-                                           th:value="${g.command}">
+                                    <input name="command" id="command" type="text" placeholder="command" th:size="100" th:value="${g.command}">
                                 </fieldset>
                             </td>
                             <td th:if="${ result.dataset.editable}">
@@ -172,7 +216,7 @@
                     </table>
                 </form>
 
-                <table class="pure-table pure-table-bordered" id="table-ds-group-cols" th:fragment="table"
+                <table class="pure-table pure-table-bordered" id="table-ds-feature-group-cols" th:fragment="table"
                        th:if='${not result.dataset.datasetGroups.isEmpty()}'>
                     <thead>
                     <tr>
@@ -245,6 +289,26 @@
     <label>Raw dataset files</label>
 
     <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
+          th:if="${ result.dataset.editable}"
+          th:action="@{/launchpad/dataset-cmd-assemble-commit}" accept-charset="UTF-8" id="dataset-cmd-assemble-form" name="f">
+        <table class="pure-table pure-table-bordered" id="table-dataset-cmd-assemble" >
+            <tr>
+                <td>
+                    <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
+                    <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
+                    <fieldset>
+                        <label for="input_command_assemble">Command</label>
+                        <input name="command_assemble" id="input_command_assemble" type="text" placeholder="command for assembling dataset" th:size="100"
+                               th:value="${result.dataset.assemblingCommand}">
+                    </fieldset>
+                </td>
+                <td>
+                    <button type="submit" class="pure-button pure-button-primary">Save command for assembling dataset</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
           th:if="${ not result.dataset.editable and result.dataset.assemblingCommand!=null and result.dataset.assemblingCommand.length() &gt; 0 }"
           th:action="@{/launchpad/dataset-run-assembling-commit}" accept-charset="UTF-8" id="dataset-run-assembling-form" name="f">
         <table>
@@ -253,8 +317,8 @@
                     <fieldset>
                         <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
                         <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
-                        <label for="command_assemble">Assembling command</label>
-                        <p th:text="${result.dataset.assemblingCommand}">Assembling command</p>
+                        <label for="p_command_assemble">Assembling command</label>
+                        <p id="p_command_assemble" th:text="${result.dataset.assemblingCommand}">Assembling command</p>
                     </fieldset>
                 </td>
                 <td>&nbsp;</td>
@@ -264,6 +328,8 @@
             </tr>
         </table>
     </form>
+
+    <p>&nbsp;</p>
 
     <table class="pure-table pure-table-bordered" id="table-ds-path-cols" th:fragment="table">
         <thead>
