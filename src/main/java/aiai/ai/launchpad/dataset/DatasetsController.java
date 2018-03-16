@@ -23,6 +23,7 @@ import aiai.ai.repositories.DatasetPathRepository;
 import aiai.ai.repositories.DatasetsRepository;
 import lombok.Data;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -118,6 +119,7 @@ public class DatasetsController {
             DatasetGroup group = dataset.getDatasetGroups().get(i);
             group.setAddColumn(true);
 /*
+    // TODO что это за кусок кода?
             group.setAddColumn(false);
             if (i > 0) {
                 DatasetGroup groupPrev = dataset.getDatasetGroups().get(i - 1);
@@ -153,6 +155,7 @@ public class DatasetsController {
         }
 
         // don't invert the condition, because ...
+        // TODO 2018-03-17 I forgot why
         //noinspection StatementWithEmptyBody
         if (isAllEmpty) {
             // nothing to do with this
@@ -436,10 +439,22 @@ public class DatasetsController {
             return "redirect:/launchpad/datasets";
         }
         Dataset dataset = value.get();
-        repository.save(dataset);
+
+        File yaml = createAssemblingYaml(dataset);
+        runAssembling(dataset.getAssemblingCommand(), yaml);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
+
+    private void runAssembling(String assemblingCommand, File yaml) {
+        throw new NotImplementedException("need to implement");
+    }
+
+    private File createAssemblingYaml(Dataset dataset) {
+        throw new NotImplementedException("need to implement");
+        //return null;
+    }
+
 
     private static final Set<String> exts;
 
@@ -474,7 +489,7 @@ public class DatasetsController {
         List<DatasetPath> paths = pathRepository.findByDataset(dataset);
         //noinspection ConstantConditions
         int pathNumber = paths.isEmpty() ? 1 : paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
-        final String path = String.format("datasets%c%03d%craws%c%d", File.separatorChar, dataset.getId(), File.separatorChar, File.separatorChar, pathNumber);
+        final String path = String.format("datasets%c%03d%craws", File.separatorChar, dataset.getId(), File.separatorChar);
 
         final File launchpadDir = toFile(launchpadDirAsString);
 
