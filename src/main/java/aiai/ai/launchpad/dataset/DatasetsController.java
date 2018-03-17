@@ -39,6 +39,7 @@ import java.io.*;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 /**
  * User: Serg
@@ -475,18 +476,37 @@ public class DatasetsController {
         // java -jar bin\app-assembly-dataset-1.0-SNAPSHOT.jar 6
         // Arrays.asList("java", "-version")
         try {
-            String[] splitCmd = assemblingCommand.split("\\s+");
-            List<String> cmd = Arrays.asList(splitCmd);
+            List<String> cmd = Arrays.stream(assemblingCommand.split("\\s+")).collect(Collectors.toList());
+//            List<String> cmd = Arrays.asList(splitCmd);
             cmd.add(yaml.getPath());
 
             ProcessBuilder pb = new ProcessBuilder();
             pb.command(cmd);
-            pb.directory(toFile(launchpadDirAsString));
+            File directory = toFile(launchpadDirAsString);
+            pb.directory(directory.getCanonicalFile());
             pb.redirectErrorStream(true);
-            Process process = pb.start();
-            int errCode = process.waitFor();
-            System.out.println("any errors of assembling? " + (errCode == 0 ? "No" : "Yes"));
-            System.out.println(output(process.getInputStream()));
+            final Process process = pb.start();
+
+            final StringBuilder out = new StringBuilder();
+            final Thread reader = new Thread(() -> {
+                try {
+                    final InputStream is = process.getInputStream();
+                    int c;
+                    while ((c = is.read()) != -1) {
+                        out.append((char) c);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            reader.start();
+
+            final int exitCode = process.waitFor();
+            reader.join();
+
+            System.out.println("any errors of assembling? " + (exitCode == 0 ? "No" : "Yes"));
+            System.out.println(out);
+//            System.out.println(output(process.getInputStream()));
 
 
 /*
@@ -521,8 +541,8 @@ public class DatasetsController {
             }
         }
 
-        File yamlFile = new File(datasetDir, "assembly-dataset.yaml");
-        File yamlFileBak = new File(datasetDir, "assembly-dataset.yaml.bak");
+        File yamlFile = new File(path, "assembly-dataset.yaml");
+        File yamlFileBak = new File(path, "assembly-dataset.yaml.bak");
         yamlFileBak.delete();
         if (yamlFile.exists()) {
             yamlFile.renameTo(yamlFileBak);
