@@ -446,13 +446,114 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
+
+    public static void main(String[] args) throws InterruptedException,
+            IOException {
+        ProcessBuilder pb = new ProcessBuilder("echo", "This is ProcessBuilder Example from JCG");
+        System.out.println("Run echo command");
+        Process process = pb.start();
+        int errCode = process.waitFor();
+        System.out.println("Echo command executed, any errors? " + (errCode == 0 ? "No" : "Yes"));
+        System.out.println("Echo Output:\n" + output(process.getInputStream()));
+    }
+
+    private static String output(InputStream inputStream) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line = null;
+            while ((line = br.readLine()) != null) {
+                sb.append(line).append(System.getProperty("line.separator"));
+            }
+        }
+        return sb.toString();
+    }
+
+
     private void runAssembling(String assemblingCommand, File yaml) {
-        throw new NotImplementedException("need to implement");
+
+        // https://examples.javacodegeeks.com/core-java/lang/processbuilder/java-lang-processbuilder-example/
+        // java -jar bin\app-assembly-dataset-1.0-SNAPSHOT.jar 6
+        // Arrays.asList("java", "-version")
+        try {
+            String[] splitCmd = assemblingCommand.split("\\s+");
+            List<String> cmd = Arrays.asList(splitCmd);
+            cmd.add(yaml.getPath());
+
+            ProcessBuilder pb = new ProcessBuilder();
+            pb.command(cmd);
+            pb.directory(toFile(launchpadDirAsString));
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            int errCode = process.waitFor();
+            System.out.println("any errors of assembling? " + (errCode == 0 ? "No" : "Yes"));
+            System.out.println(output(process.getInputStream()));
+
+
+/*
+            String line;
+            ProcessBuilder.redirectErrorStream(true);
+            Process p = Runtime.getRuntime().exec(assemblingCommand, null, toFile(launchpadDirAsString) );
+
+            try (BufferedReader input = new BufferedReader (new InputStreamReader(p.getInputStream()))) {
+                while ((line = input.readLine()) != null) {
+                    System.out.println(line);
+                }
+            }
+            System.out.println("Exit value: "+ p.exitValue() );
+*/
+        }
+        catch (Exception err) {
+            err.printStackTrace();
+        }
+
+        // throw new NotImplementedException("need to implement");
     }
 
     private File createAssemblingYaml(Dataset dataset) {
-        throw new NotImplementedException("need to implement");
-        //return null;
+        final String path = String.format("datasets%c%03d", File.separatorChar, dataset.getId());
+
+        final File launchpadDir = toFile(launchpadDirAsString);
+        final File datasetDir = new File(launchpadDir, path);
+        if (!datasetDir.exists()) {
+            boolean status = datasetDir.mkdirs();
+            if (!status) {
+                throw new IllegalStateException("Error create directory: " + datasetDir.getAbsolutePath());
+            }
+        }
+
+        File yamlFile = new File(datasetDir, "assembly-dataset.yaml");
+        File yamlFileBak = new File(datasetDir, "assembly-dataset.yaml.bak");
+        yamlFileBak.delete();
+        if (yamlFile.exists()) {
+            yamlFile.renameTo(yamlFileBak);
+        }
+
+/*
+        dataset:
+            raws:
+                - file_01.txt
+                - file_02.txt
+                - file_03.txt
+            output:
+                dataset_06.txt
+*/
+
+        List<DatasetPath> paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
+
+        String s = "";
+        s += "dataset:\n    raws:\n";
+        for (DatasetPath datasetPath : paths) {
+            s += "        - "+datasetPath.getPath()+'\n';
+        }
+        s += "    output:\n        output.txt\n";
+
+        try  {
+            FileUtils.write(yamlFile, s, "utf-8", false);
+        } catch (IOException e) {
+            throw new RuntimeException("error", e);
+        }
+
+        return yamlFile;
     }
 
 

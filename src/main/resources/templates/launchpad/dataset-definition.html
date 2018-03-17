@@ -257,6 +257,51 @@
     <h2 class="widget-header">Dataset files</h2>
     <p>Launchpad directory: <b><span th:text="${@environment.getProperty('aiai.launchpad.dir')}"></span></b>.</p>
 
+    <p>&nbsp;</p>
+    <label>Raw dataset files</label>
+
+    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
+          th:if="${ result.dataset.editable}"
+          th:action="@{/launchpad/dataset-cmd-assemble-commit}" accept-charset="UTF-8" id="dataset-cmd-assemble-form" name="f">
+        <table class="pure-table pure-table-bordered" id="table-dataset-cmd-assemble" >
+            <tr>
+                <td>
+                    <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
+                    <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
+                    <fieldset>
+                        <label for="input_command_assemble">Command</label>
+                        <input name="command_assemble" id="input_command_assemble" type="text" placeholder="command for assembling dataset" th:size="100"
+                               th:value="${result.dataset.assemblingCommand}">
+                    </fieldset>
+                </td>
+                <td>
+                    <button type="submit" class="pure-button pure-button-primary">Save command for assembling dataset</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
+          th:if="${ not result.dataset.editable and result.dataset.assemblingCommand!=null and result.dataset.assemblingCommand.length() &gt; 0 }"
+          th:action="@{/launchpad/dataset-run-assembling-commit}" accept-charset="UTF-8" id="dataset-run-assembling-form" name="f">
+        <table>
+            <tr>
+                <td width="600">
+                    <fieldset>
+                        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
+                        <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
+                        <label for="p_command_assemble">Assembling command</label>
+                        <p id="p_command_assemble" th:text="${result.dataset.assemblingCommand}">Assembling command</p>
+                    </fieldset>
+                </td>
+                <td>&nbsp;</td>
+                <td>
+                    <button type="submit" class="pure-button pure-button-primary">Run dataset assembling</button>
+                </td>
+            </tr>
+        </table>
+    </form>
+
+    <p>&nbsp;</p>
     <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
           th:action="@{/launchpad/dataset-upload-dataset-from-file}">
         <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
@@ -286,50 +331,6 @@
         };
     </script>
 
-
-    <p>&nbsp;</p>
-    <label>Raw dataset files</label>
-
-    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
-          th:if="${ result.dataset.editable}"
-          th:action="@{/launchpad/dataset-cmd-assemble-commit}" accept-charset="UTF-8" id="dataset-cmd-assemble-form" name="f">
-        <table class="pure-table pure-table-bordered" id="table-dataset-cmd-assemble" >
-            <tr>
-                <td>
-                    <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
-                    <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
-                    <fieldset>
-                        <label for="input_command_assemble">Command</label>
-                        <input name="command_assemble" id="input_command_assemble" type="text" placeholder="command for assembling dataset" th:size="100"
-                               th:value="${result.dataset.assemblingCommand}">
-                    </fieldset>
-                </td>
-                <td>
-                    <button type="submit" class="pure-button pure-button-primary">Save command for assembling dataset</button>
-                </td>
-            </tr>
-        </table>
-    </form>
-    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
-          th:if="${ not result.dataset.editable and result.dataset.assemblingCommand!=null and result.dataset.assemblingCommand.length() &gt; 0 }"
-          th:action="@{/launchpad/dataset-run-assembling-commit}" accept-charset="UTF-8" id="dataset-run-assembling-form" name="f">
-        <table>
-            <tr>
-                <td width="200">
-                    <fieldset>
-                        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
-                        <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
-                        <label for="p_command_assemble">Assembling command</label>
-                        <p id="p_command_assemble" th:text="${result.dataset.assemblingCommand}">Assembling command</p>
-                    </fieldset>
-                </td>
-                <td>&nbsp;</td>
-                <td>
-                    <button type="submit" class="pure-button pure-button-primary">Run dataset assembling</button>
-                </td>
-            </tr>
-        </table>
-    </form>
 
     <p>&nbsp;</p>
 
