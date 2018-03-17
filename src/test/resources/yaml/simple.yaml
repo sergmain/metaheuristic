@@ -6,5 +6,4 @@ dataset:
   labels:
     - file_04.txt
     - file_05.txt
-  output:
-    dataset_06.txt
+  output: dataset_06.txt

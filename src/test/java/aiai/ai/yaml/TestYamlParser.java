@@ -17,6 +17,7 @@
 
 package aiai.ai.yaml;
 
+import lombok.Data;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
@@ -51,10 +52,15 @@ public class TestYamlParser {
             Yaml yaml = new Yaml();
 
             Map<String, Map<String, List<String>>> yamlParsers = yaml.load(is);
+            Assert.assertThat(yamlParsers.keySet(), CoreMatchers.hasItems("dataset"));
+            Assert.assertThat(yamlParsers.get("dataset").keySet(), CoreMatchers.hasItems("input", "labels", "output"));
 
             List<String> files = yamlParsers.get("dataset").get("input");
+            Assert.assertEquals(3, files.size());
 
-            Assert.assertThat(yamlParsers.keySet(), CoreMatchers.hasItems("dataset", "input", "labels", "output"));
+            List<String> outputs = yamlParsers.get("dataset").get("output");
+            Assert.assertEquals(1, outputs.size());
         }
     }
+
 }
