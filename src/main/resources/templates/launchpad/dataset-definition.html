@@ -1,18 +1,19 @@
 <!--
-  ~ AiAi, Copyright (C) 2017-2018  Serge Maslyukov
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  /*AiAi, Copyright (C) 2017 - 2018, Serge Maslyukov
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
   -->
 
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
@@ -22,6 +23,11 @@
 >
 
     <!--/*@thymesVar id="result" type="aiai.ai.launchpad.dataset.DatasetsController.DatasetDefinition"*/-->
+
+    <p>&nbsp;</p>
+    <h2 class="widget-header">Dataset files</h2>
+    <p>Launchpad directory: <b><span th:text="${@environment.getProperty('aiai.launchpad.dir')}"></span></b></p>
+    <p>Current dataset directory: <b><span th:text="${result.datasetDirAsString}"></span></b></p>
 
     <p>&nbsp;</p>
     <h2 class="widget-header">Dataset options</h2>
@@ -65,6 +71,7 @@
         </table>
     </form>
 
+<!--
     <p>&nbsp;</p>
     <h2 class="widget-header">Groups and Columns</h2>
 
@@ -154,6 +161,7 @@
         </tr>
         </tbody>
     </table>
+-->
 
     <!-- ==================================== Feature section ==================================== -->
 
@@ -165,11 +173,9 @@
        th:href="${'/launchpad/dataset-group-add-new-feature/'+result.dataset.id}">Add new feature group</a>
     <p></p>
 
-<!--
     <div th:if='${result.dataset.datasetGroups.isEmpty()}'>
         <p>There isn't any feature group</p>
     </div>
--->
 
     <table class="pure-table pure-table-bordered" id="table-ds-feature-groups" th:fragment="table"
            th:if='${not result.dataset.datasetGroups.isEmpty()}'>
@@ -252,10 +258,6 @@
     </table>
 
     <!-- ==================================== Dataset files ==================================== -->
-
-    <p>&nbsp;</p>
-    <h2 class="widget-header">Dataset files</h2>
-    <p>Launchpad directory: <b><span th:text="${@environment.getProperty('aiai.launchpad.dir')}"></span></b>.</p>
 
     <p>&nbsp;</p>
     <label>Raw dataset files</label>

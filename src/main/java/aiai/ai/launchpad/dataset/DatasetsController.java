@@ -107,9 +107,14 @@ public class DatasetsController {
         if (!datasetOptional.isPresent()) {
             return "redirect:/launchpad/datasets";
         }
+        final Dataset dataset = datasetOptional.get();
 
-        final DatasetDefinition definition = new DatasetDefinition(datasetOptional.get(), launchpadDirAsString);
-        final Dataset dataset = definition.dataset;
+        final String path = String.format("<Launchpad directory>%cdatasets%c%03d", File.separatorChar, File.separatorChar, dataset.getId());
+        final File launchpadDir = toFile(launchpadDirAsString);
+        final File datasetDir = new File(launchpadDir, path);
+
+//        final DatasetDefinition definition = new DatasetDefinition(dataset, launchpadDirAsString, datasetDir.getPath());
+        final DatasetDefinition definition = new DatasetDefinition(dataset, launchpadDirAsString, path);
         definition.paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
 
 
@@ -715,10 +720,12 @@ public class DatasetsController {
         public Dataset dataset;
         public List<DatasetPath> paths = new ArrayList<>();
         public String launchpadDirAsString;
+        public String datasetDirAsString;
 
-        public DatasetDefinition(Dataset dataset, String launchpadDirAsString) {
+        public DatasetDefinition(Dataset dataset, String launchpadDirAsString, String datasetDirAsString) {
             this.dataset = dataset;
             this.launchpadDirAsString = launchpadDirAsString;
+            this.datasetDirAsString = datasetDirAsString;
         }
     }
 }
