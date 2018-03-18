@@ -18,7 +18,6 @@
 package aiai.ai.rest;
 
 import aiai.ai.AiApplication;
-import aiai.ai.beans.NewMessage;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.core.JsonService;

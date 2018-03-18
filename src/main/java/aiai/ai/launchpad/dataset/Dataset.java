@@ -17,6 +17,7 @@
 
 package aiai.ai.launchpad.dataset;
 
+import aiai.ai.beans.LogData;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -53,13 +54,18 @@ public class Dataset implements Serializable {
     private Integer version;
     @Column(name = "DESCRIPTION")
     private String description;
+
     @Column(name = "CMD_ASSEMBLE")
     private String assemblingCommand;
+
+    @Column(name = "DATASET_FILE")
+    private String datasetFile;
+
     @Column(name = "IS_EDITABLE")
     private boolean isEditable;
+
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL)
     private List<DatasetGroup> datasetGroups;
-
 
     public Dataset() {
     }

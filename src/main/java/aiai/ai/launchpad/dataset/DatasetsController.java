@@ -17,13 +17,10 @@
 
 package aiai.ai.launchpad.dataset;
 
-import aiai.ai.repositories.DatasetColumnRepository;
-import aiai.ai.repositories.DatasetGroupsRepository;
-import aiai.ai.repositories.DatasetPathRepository;
-import aiai.ai.repositories.DatasetsRepository;
+import aiai.ai.beans.LogData;
+import aiai.ai.repositories.*;
 import lombok.Data;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
@@ -60,12 +57,14 @@ public class DatasetsController {
     private DatasetGroupsRepository groupsRepository;
     private DatasetColumnRepository columnRepository;
     private DatasetPathRepository pathRepository;
+    private LogDataRepository logDataRepository;
 
-    public DatasetsController(DatasetsRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository) {
+    public DatasetsController(DatasetsRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, LogDataRepository logDataRepository) {
         this.repository = repository;
         this.groupsRepository = groupsRepository;
         this.columnRepository = columnRepository;
         this.pathRepository = pathRepository;
+        this.logDataRepository = logDataRepository;
     }
 
     private static File toFile(String launchpadDirAsString) {
@@ -442,7 +441,7 @@ public class DatasetsController {
         Dataset dataset = value.get();
 
         File yaml = createAssemblingYaml(dataset);
-        runAssembling(dataset.getAssemblingCommand(), yaml);
+        runAssembling(dataset, yaml);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
@@ -470,14 +469,13 @@ public class DatasetsController {
     }
 
 
-    private void runAssembling(String assemblingCommand, File yaml) {
+    private void runAssembling(Dataset dataset, File yaml) {
 
         // https://examples.javacodegeeks.com/core-java/lang/processbuilder/java-lang-processbuilder-example/
+        //
         // java -jar bin\app-assembly-dataset-1.0-SNAPSHOT.jar 6
-        // Arrays.asList("java", "-version")
         try {
-            List<String> cmd = Arrays.stream(assemblingCommand.split("\\s+")).collect(Collectors.toList());
-//            List<String> cmd = Arrays.asList(splitCmd);
+            List<String> cmd = Arrays.stream(dataset.getAssemblingCommand().split("\\s+")).collect(Collectors.toList());
             cmd.add(yaml.getPath());
 
             ProcessBuilder pb = new ProcessBuilder();
@@ -506,27 +504,16 @@ public class DatasetsController {
 
             System.out.println("any errors of assembling? " + (exitCode == 0 ? "No" : "Yes"));
             System.out.println(out);
-//            System.out.println(output(process.getInputStream()));
+            LogData logData = new LogData();
+            logData.setRefId(dataset.getId());
+            logData.setType(LogData.Type.ASSEMBLY);
+            logData.setLogData(out.toString());
+            logDataRepository.save(logData);
 
-
-/*
-            String line;
-            ProcessBuilder.redirectErrorStream(true);
-            Process p = Runtime.getRuntime().exec(assemblingCommand, null, toFile(launchpadDirAsString) );
-
-            try (BufferedReader input = new BufferedReader (new InputStreamReader(p.getInputStream()))) {
-                while ((line = input.readLine()) != null) {
-                    System.out.println(line);
-                }
-            }
-            System.out.println("Exit value: "+ p.exitValue() );
-*/
         }
         catch (Exception err) {
             err.printStackTrace();
         }
-
-        // throw new NotImplementedException("need to implement");
     }
 
     private File createAssemblingYaml(Dataset dataset) {

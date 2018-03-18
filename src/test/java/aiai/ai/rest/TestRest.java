@@ -19,7 +19,6 @@ package aiai.ai.rest;
 
 import aiai.ai.Consts;
 import aiai.ai.beans.InviteResult;
-import aiai.ai.beans.NewMessage;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;

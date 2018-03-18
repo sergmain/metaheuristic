@@ -1,5 +1,5 @@
 /*
- * AiAi, Copyright (C) 2017-2018  Serge Maslyukov
+ * AiAi, Copyright (C) 2017 - 2018, Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,12 +15,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.beans;
+package aiai.ai.repositories;
 
-import lombok.Data;
+import aiai.ai.beans.Account;
+import aiai.ai.beans.LogData;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-@Data
-public class NewMessage {
-    String t;
-    String id;
+import java.math.BigInteger;
+import java.util.List;
+
+/**
+ * User: Serg
+ * Date: 13.07.2017
+ * Time: 15:41
+ */
+@Repository
+public interface LogDataRepository extends CrudRepository<LogData, Long> {
+    List<LogData> findAllByLogType(int logType);
 }
