@@ -571,11 +571,11 @@ public class DatasetsController {
 /*
         dataset:
             raws:
-                - file_01.txt
-                - file_02.txt
-                - file_03.txt
+                - raws\file_01.txt
+                - raws\file_02.txt
+                - raws\file_03.txt
             output:
-                dataset_06.txt
+                dataset\dataset.txt
 */
 
         String s = "";

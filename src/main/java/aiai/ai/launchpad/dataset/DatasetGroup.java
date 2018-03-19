@@ -58,6 +58,9 @@ public class DatasetGroup implements Serializable {
     @Column(name = "CMD")
     private String command;
 
+    @Column(name = "FEATURE_FILE")
+    private String featureFile;
+
     @Column(name = "IS_ID_GROUP")
     private boolean isIdGroup;
 

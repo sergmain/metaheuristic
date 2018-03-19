@@ -25,7 +25,7 @@
     <!--/*@thymesVar id="result" type="aiai.ai.launchpad.dataset.DatasetsController.DatasetDefinition"*/-->
 
     <p>&nbsp;</p>
-    <h2 class="widget-header">Dataset files</h2>
+    <h2 class="widget-header">General info</h2>
     <p>Launchpad directory: <b><span th:text="${@environment.getProperty('aiai.launchpad.dir')}"></span></b></p>
     <p>Current dataset directory: <b><span th:text="${result.datasetDirAsString}"></span></b></p>
 
@@ -260,7 +260,8 @@
     <!-- ==================================== Dataset files ==================================== -->
 
     <p>&nbsp;</p>
-    <label>Raw and assembled dataset files</label>
+    <h2 class="widget-header">Raw and assembled dataset files</h2>
+
 
     <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
           th:if="${ result.dataset.editable}"
