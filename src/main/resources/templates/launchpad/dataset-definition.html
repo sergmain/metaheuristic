@@ -56,7 +56,7 @@
                     <fieldset>
 
                         <label for="description">Description</label>
-                        <input name="description" id="description" type="text" placeholder="description" th:field="*{description}">
+                        <input size="90" name="description" id="description" type="text" placeholder="description" th:field="*{description}">
                         <span class="pure-form-message">This is a required field.</span>
 
                     </fieldset>
@@ -211,7 +211,7 @@
                                 <input type="hidden" th:name="id" th:value="${g.id}"/>
                                 <input type="hidden" th:name="version" th:value="${g.version}"/>
                                 <fieldset>
-                                    <label for="command">Command</label>
+                                    <label for="command">Command for generate feature</label>
                                     <input name="command" id="command" type="text" placeholder="command" th:size="100" th:value="${g.command}">
                                 </fieldset>
                             </td>
@@ -223,7 +223,7 @@
                 </form>
 
                 <table class="pure-table pure-table-bordered" id="table-ds-feature-group-cols" th:fragment="table"
-                       th:if='${not result.dataset.datasetGroups.isEmpty()}'>
+                       th:if='${not g.datasetColumns.isEmpty()}'>
                     <thead>
                     <tr>
                         <th>#</th>
@@ -260,7 +260,7 @@
     <!-- ==================================== Dataset files ==================================== -->
 
     <p>&nbsp;</p>
-    <label>Raw dataset files</label>
+    <label>Raw and assembled dataset files</label>
 
     <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
           th:if="${ result.dataset.editable}"
@@ -271,7 +271,7 @@
                     <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
                     <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
                     <fieldset>
-                        <label for="input_command_assemble">Command</label>
+                        <label for="input_command_assemble">Command for assembling dataset</label>
                         <input name="command_assemble" id="input_command_assemble" type="text" placeholder="command for assembling dataset" th:size="100"
                                th:value="${result.dataset.assemblingCommand}">
                     </fieldset>
@@ -291,7 +291,7 @@
                     <fieldset>
                         <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
                         <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
-                        <label for="p_command_assemble">Assembling command</label>
+                        <label for="p_command_assemble">Command for assembling dataset</label>
                         <p id="p_command_assemble" th:text="${result.dataset.assemblingCommand}">Assembling command</p>
                     </fieldset>
                 </td>
@@ -301,12 +301,25 @@
                 </td>
             </tr>
         </table>
+
+        <table th:if="${ result.dataset.datasetFile!=null and result.dataset.datasetFile.length() &gt; 0 }">
+            <tr>
+                <td width="600">
+                    <fieldset>
+                        <label for="assembled_datatset">Assembled datatset file</label>
+                        <p id="assembled_datatset" th:text="${result.dataset.datasetFile}">Assembled datatset file</p>
+                    </fieldset>
+                </td>
+            </tr>
+        </table>
     </form>
 
-    <p>&nbsp;</p>
     <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-          th:action="@{/launchpad/dataset-upload-dataset-from-file}">
+          th:action="@{/launchpad/dataset-upload-dataset-from-file}"
+          th:if="${ result.dataset.editable}"
+    >
         <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
+        <p>&nbsp;</p>
         <table>
             <tr>
                 <td valign="top">

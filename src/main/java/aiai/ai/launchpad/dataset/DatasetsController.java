@@ -47,6 +47,9 @@ import java.util.stream.Collectors;
 @RequestMapping("/launchpad")
 public class DatasetsController {
 
+    public static final String ASSEMBLY_DATASET_YAML = "assembly-dataset.yaml";
+    public static final String DEFINITIONS_DIR = "definitions";
+
     @Value("${aiai.table.rows.limit}")
     private int limit;
 
@@ -109,7 +112,7 @@ public class DatasetsController {
         }
         final Dataset dataset = datasetOptional.get();
 
-        final String path = String.format("<Launchpad directory>%cdatasets%c%03d", File.separatorChar, File.separatorChar, dataset.getId());
+        final String path = String.format("<Launchpad directory>%c%s%c%03d", File.separatorChar, DEFINITIONS_DIR, File.separatorChar, dataset.getId());
         final File launchpadDir = toFile(launchpadDirAsString);
         final File datasetDir = new File(launchpadDir, path);
 
@@ -300,7 +303,7 @@ public class DatasetsController {
 
         for (int i = 0; i < groups.size() - 1; i++) {
             DatasetGroup group = groups.get(i);
-            if (column.getDatasetGroup().getId() == group.getId()) {
+            if (column.getDatasetGroup().getId().equals(group.getId())) {
                 DatasetGroup nextGroup = groups.get(i + 1);
                 column.setDatasetGroup(nextGroup);
                 break;
@@ -438,7 +441,7 @@ public class DatasetsController {
     }
 
     @PostMapping(value = "/dataset-run-assembling-commit")
-    public String runAssemblingOfDataset(Long id) {
+    public String runAssemblingOfDataset(Long id) throws IOException {
         final Optional<Dataset> value = repository.findById(id);
         if (!value.isPresent()) {
             return "redirect:/launchpad/datasets";
@@ -447,19 +450,28 @@ public class DatasetsController {
 
         File yaml = createAssemblingYaml(dataset);
         runAssembling(dataset, yaml);
+        linkeDatasetFile(dataset);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
+    private void linkeDatasetFile(Dataset dataset) {
+        final File launchpadDir = toFile(launchpadDirAsString);
+        final String path = String.format("%s%c%03d", DEFINITIONS_DIR, File.separatorChar, dataset.getId());
 
-    public static void main(String[] args) throws InterruptedException,
-            IOException {
-        ProcessBuilder pb = new ProcessBuilder("echo", "This is ProcessBuilder Example from JCG");
-        System.out.println("Run echo command");
-        Process process = pb.start();
-        int errCode = process.waitFor();
-        System.out.println("Echo command executed, any errors? " + (errCode == 0 ? "No" : "Yes"));
-        System.out.println("Echo Output:\n" + output(process.getInputStream()));
+        final File datasetDefDir = new File(launchpadDir, path);
+        if (!datasetDefDir.exists()) {
+            return;
+        }
+
+        String datasetFilename = String.format("%s%cdataset%cdataset.txt", path, File.separatorChar, File.separatorChar );
+
+        File datasetFile = new File(launchpadDir, datasetFilename);
+        if (!datasetFile.exists()) {
+            return;
+        }
+        dataset.setDatasetFile(datasetFilename);
+        repository.save(dataset);
     }
 
     private static String output(InputStream inputStream) throws IOException {
@@ -521,24 +533,40 @@ public class DatasetsController {
         }
     }
 
-    private File createAssemblingYaml(Dataset dataset) {
-        final String path = String.format("datasets%c%03d", File.separatorChar, dataset.getId());
-
+    private File createAssemblingYaml(Dataset dataset) throws IOException {
         final File launchpadDir = toFile(launchpadDirAsString);
-        final File datasetDir = new File(launchpadDir, path);
-        if (!datasetDir.exists()) {
-            boolean status = datasetDir.mkdirs();
+
+        final String path = String.format("%s%c%03d", DEFINITIONS_DIR, File.separatorChar, dataset.getId());
+        final File datasetDefDir = new File(launchpadDir, path);
+        if (!datasetDefDir.exists()) {
+            boolean status = datasetDefDir.mkdirs();
             if (!status) {
-                throw new IllegalStateException("Error create directory: " + datasetDir.getAbsolutePath());
+                throw new IllegalStateException("Error create directory: " + datasetDefDir.getAbsolutePath());
             }
         }
 
-        File yamlFile = new File(path, "assembly-dataset.yaml");
-        File yamlFileBak = new File(path, "assembly-dataset.yaml.bak");
+        File yamlFile = new File(datasetDefDir, ASSEMBLY_DATASET_YAML);
+        File yamlFileBak = new File(datasetDefDir, ASSEMBLY_DATASET_YAML+".bak");
         yamlFileBak.delete();
         if (yamlFile.exists()) {
             yamlFile.renameTo(yamlFileBak);
         }
+
+
+        File datasetDir = new File(datasetDefDir, "dataset");
+        if (!datasetDir.isDirectory()) {
+            throw new IllegalStateException("Not a directory: " + datasetDir.getCanonicalPath());
+        }
+
+        File datatsetFile = new File(datasetDir, "dataset.csv");
+        File datatsetFileBak = new File(datasetDir, "dataset.csv.bak");
+
+        datatsetFileBak.delete();
+        if (datatsetFile.exists()) {
+            datatsetFile.renameTo(datatsetFileBak);
+        }
+
+        List<DatasetPath> paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
 
 /*
         dataset:
@@ -550,14 +578,12 @@ public class DatasetsController {
                 dataset_06.txt
 */
 
-        List<DatasetPath> paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
-
         String s = "";
         s += "dataset:\n    raws:\n";
         for (DatasetPath datasetPath : paths) {
             s += "        - "+datasetPath.getPath()+'\n';
         }
-        s += "    output:\n        output.txt\n";
+        s += ("    output:\n        "+ String.format("%s%cdataset%cdataset.txt\n", path, File.separatorChar, File.separatorChar ));
 
         try  {
             FileUtils.write(yamlFile, s, "utf-8", false);
@@ -565,7 +591,7 @@ public class DatasetsController {
             throw new RuntimeException("error", e);
         }
 
-        return yamlFile;
+        return new File(path, ASSEMBLY_DATASET_YAML);
     }
 
 
@@ -602,7 +628,7 @@ public class DatasetsController {
         List<DatasetPath> paths = pathRepository.findByDataset(dataset);
         //noinspection ConstantConditions
         int pathNumber = paths.isEmpty() ? 1 : paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
-        final String path = String.format("datasets%c%03d%craws", File.separatorChar, dataset.getId(), File.separatorChar);
+        final String path = String.format("%s%c%03d%craws", DEFINITIONS_DIR, File.separatorChar, dataset.getId(), File.separatorChar);
 
         final File launchpadDir = toFile(launchpadDirAsString);
 
