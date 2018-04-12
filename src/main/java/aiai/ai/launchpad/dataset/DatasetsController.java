@@ -48,7 +48,9 @@ import java.util.stream.Collectors;
 public class DatasetsController {
 
     public static final String ASSEMBLY_DATASET_YAML = "assembly-dataset.yaml";
+    public static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";
     public static final String DEFINITIONS_DIR = "definitions";
+    public static final String FEATURES_DIR = "features";
 
     @Value("${aiai.table.rows.limit}")
     private int limit;
@@ -274,7 +276,7 @@ public class DatasetsController {
 
         DatasetGroup prevGroup = null;
         for (DatasetGroup group : groups) {
-            if (column.getDatasetGroup().getId() == group.getId()) {
+            if (column.getDatasetGroup().getId().equals(group.getId())) {
                 if (prevGroup == null) {
                     return "redirect:/launchpad/datasets";
                 }
@@ -376,6 +378,86 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
+    @GetMapping(value = "/dataset-produce-features/{id}")
+    public String produceFeatures(@PathVariable(name = "id") Long datasetId) {
+        final Optional<Dataset> value = repository.findById(datasetId);
+        if (!value.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        Dataset dataset = value.get();
+
+        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
+        for (DatasetGroup group : groups) {
+            produceFeature(dataset, group);
+        }
+
+        return "redirect:/launchpad/dataset-definition/" + datasetId;
+    }
+
+    private void produceFeature(Dataset dataset, DatasetGroup group) {
+        try {
+            File yaml = createYamlForFeature(dataset.getId(), group);
+        } catch (Exception err) {
+            err.printStackTrace();
+        }
+    }
+
+    private File createYamlForFeature(Long datasetId, DatasetGroup group) throws IOException {
+        final File launchpadDir = toFile(launchpadDirAsString);
+
+        final String path = String.format("%s%c%03d%c%s%c%03d", DEFINITIONS_DIR, File.separatorChar, datasetId, File.separatorChar, FEATURES_DIR, File.separatorChar, group.getId());
+        final File featureDir = new File(launchpadDir, path);
+        if (!featureDir.exists()) {
+            boolean status = featureDir.mkdirs();
+            if (!status) {
+                throw new IllegalStateException("Error create directory: " + featureDir.getAbsolutePath());
+            }
+        }
+
+        File yamlFile = new File(featureDir, PRODUCE_FEATURE_YAML);
+        File yamlFileBak = new File(featureDir, PRODUCE_FEATURE_YAML + ".bak");
+        yamlFileBak.delete();
+        if (yamlFile.exists()) {
+            yamlFile.renameTo(yamlFileBak);
+        }
+
+
+        File datasetDir = new File(featureDir, "features");
+        if (!datasetDir.isDirectory()) {
+            throw new IllegalStateException("Not a directory: " + datasetDir.getCanonicalPath());
+        }
+
+        File datatsetFile = new File(datasetDir, "dataset.csv");
+        File datatsetFileBak = new File(datasetDir, "dataset.csv.bak");
+
+        datatsetFileBak.delete();
+        if (datatsetFile.exists()) {
+            datatsetFile.renameTo(datatsetFileBak);
+        }
+
+/*
+        dataset:
+            input: definitions\002\dataset\dataset.txt
+            output: definitions\002\features\003\feature-003.txt
+*/
+
+        String s = "";
+        s += "dataset:\n    raws:\n";
+        for (DatasetPath datasetPath : paths) {
+            s += "        - " + datasetPath.getPath() + '\n';
+        }
+        s += ("    output:\n        " + String.format("%s%cdataset%cdataset.txt\n", path, File.separatorChar, File.separatorChar));
+
+        try {
+            FileUtils.write(yamlFile, s, "utf-8", false);
+        } catch (IOException e) {
+            throw new RuntimeException("error", e);
+        }
+
+        return new File(path, ASSEMBLY_DATASET_YAML);
+    }
+
+
     @PostMapping("/dataset-group-cmd-commit")
     public String groupCommandFormCommit(Long id, String command) {
         final Optional<DatasetGroup> value = groupsRepository.findById(id);
@@ -464,7 +546,7 @@ public class DatasetsController {
             return;
         }
 
-        String datasetFilename = String.format("%s%cdataset%cdataset.txt", path, File.separatorChar, File.separatorChar );
+        String datasetFilename = String.format("%s%cdataset%cdataset.txt", path, File.separatorChar, File.separatorChar);
 
         File datasetFile = new File(launchpadDir, datasetFilename);
         if (!datasetFile.exists()) {
@@ -527,8 +609,7 @@ public class DatasetsController {
             logData.setLogData(out.toString());
             logDataRepository.save(logData);
 
-        }
-        catch (Exception err) {
+        } catch (Exception err) {
             err.printStackTrace();
         }
     }
@@ -546,7 +627,7 @@ public class DatasetsController {
         }
 
         File yamlFile = new File(datasetDefDir, ASSEMBLY_DATASET_YAML);
-        File yamlFileBak = new File(datasetDefDir, ASSEMBLY_DATASET_YAML+".bak");
+        File yamlFileBak = new File(datasetDefDir, ASSEMBLY_DATASET_YAML + ".bak");
         yamlFileBak.delete();
         if (yamlFile.exists()) {
             yamlFile.renameTo(yamlFileBak);
@@ -571,21 +652,21 @@ public class DatasetsController {
 /*
         dataset:
             raws:
-                - raws\file_01.txt
-                - raws\file_02.txt
-                - raws\file_03.txt
+                - definitions\002\raws\file_01.txt
+                - definitions\002\raws\file_02.txt
+                - definitions\002\raws\file_03.txt
             output:
-                dataset\dataset.txt
+                definitions\002\dataset\dataset.txt
 */
 
         String s = "";
         s += "dataset:\n    raws:\n";
         for (DatasetPath datasetPath : paths) {
-            s += "        - "+datasetPath.getPath()+'\n';
+            s += "        - " + datasetPath.getPath() + '\n';
         }
-        s += ("    output:\n        "+ String.format("%s%cdataset%cdataset.txt\n", path, File.separatorChar, File.separatorChar ));
+        s += ("    output:\n        " + String.format("%s%cdataset%cdataset.txt\n", path, File.separatorChar, File.separatorChar));
 
-        try  {
+        try {
             FileUtils.write(yamlFile, s, "utf-8", false);
         } catch (IOException e) {
             throw new RuntimeException("error", e);
@@ -593,7 +674,6 @@ public class DatasetsController {
 
         return new File(path, ASSEMBLY_DATASET_YAML);
     }
-
 
     private static final Set<String> exts;
 
@@ -604,7 +684,7 @@ public class DatasetsController {
 
     private static boolean checkExtension(String filename) {
         int idx;
-        if ((idx=filename.lastIndexOf('.'))==-1) {
+        if ((idx = filename.lastIndexOf('.')) == -1) {
             throw new IllegalStateException("'.' wasn't found, bad filename: " + filename);
         }
         String ext = filename.substring(idx).toLowerCase();
