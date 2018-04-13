@@ -51,6 +51,7 @@ public class DatasetsController {
     public static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";
     public static final String DEFINITIONS_DIR = "definitions";
     public static final String FEATURES_DIR = "features";
+    public static final String DATASET_TXT = "dataset.txt";
 
     @Value("${aiai.table.rows.limit}")
     private int limit;
@@ -397,16 +398,35 @@ public class DatasetsController {
     private void produceFeature(Dataset dataset, DatasetGroup group) {
         try {
             File yaml = createYamlForFeature(dataset.getId(), group);
+            System.out.println("yaml file: " + yaml.getPath());
+            boolean isOk = runCommand(yaml, group.getCommand(), LogData.Type.FEATURE, group.getId());
+            group.setFeatureStatus(isOk ? DatasetGroup.FEATURE_STATUS.OK.value: DatasetGroup.FEATURE_STATUS.ERROR.value );
+            groupsRepository.save(group);
         } catch (Exception err) {
             err.printStackTrace();
         }
     }
 
-    private File createYamlForFeature(Long datasetId, DatasetGroup group) throws IOException {
+    private File createYamlForFeature(Long datasetId, DatasetGroup group) {
         final File launchpadDir = toFile(launchpadDirAsString);
 
-        final String path = String.format("%s%c%03d%c%s%c%03d", DEFINITIONS_DIR, File.separatorChar, datasetId, File.separatorChar, FEATURES_DIR, File.separatorChar, group.getId());
-        final File featureDir = new File(launchpadDir, path);
+        final String definitionPath = String.format("%s%c%03d", DEFINITIONS_DIR, File.separatorChar, datasetId);
+        final File definitionDir = new File(launchpadDir, definitionPath);
+        if (!definitionDir.exists()) {
+            boolean status = definitionDir.mkdirs();
+            if (!status) {
+                throw new IllegalStateException("Error create directory: " + definitionDir.getAbsolutePath());
+            }
+        }
+
+        final String datasetPath = String.format("%s%cdataset%c%s", definitionPath, File.separatorChar, File.separatorChar, DATASET_TXT);
+        final File datasetFile = new File(launchpadDir, datasetPath);
+        if (!datasetFile.exists()) {
+            throw new IllegalStateException("Dataset file doesn't exist: " + datasetFile.getAbsolutePath());
+        }
+
+        final String featurePath = String.format("%s%c%s%c%03d", definitionPath, File.separatorChar, FEATURES_DIR, File.separatorChar, group.getGroupNumber());
+        final File featureDir = new File(launchpadDir, featurePath);
         if (!featureDir.exists()) {
             boolean status = featureDir.mkdirs();
             if (!status) {
@@ -422,31 +442,25 @@ public class DatasetsController {
         }
 
 
-        File datasetDir = new File(featureDir, "features");
-        if (!datasetDir.isDirectory()) {
-            throw new IllegalStateException("Not a directory: " + datasetDir.getCanonicalPath());
-        }
+        final String featureFilename = String.format("%s%cfeature-%03d.txt", featurePath, File.separatorChar, group.getGroupNumber());
+        File featureFile = new File(launchpadDir, featureFilename);
+        File featureFileBak = new File(launchpadDir, featureFilename + ".bak");
 
-        File datatsetFile = new File(datasetDir, "dataset.csv");
-        File datatsetFileBak = new File(datasetDir, "dataset.csv.bak");
-
-        datatsetFileBak.delete();
-        if (datatsetFile.exists()) {
-            datatsetFile.renameTo(datatsetFileBak);
+        featureFileBak.delete();
+        if (featureFile.exists()) {
+            featureFile.renameTo(featureFileBak);
         }
 
 /*
         dataset:
-            input: definitions\002\dataset\dataset.txt
-            output: definitions\002\features\003\feature-003.txt
+            file: definitions\002\dataset\dataset.txt
+        feature
+            file: definitions\002\features\003\feature-003.txt
 */
 
         String s = "";
-        s += "dataset:\n    raws:\n";
-        for (DatasetPath datasetPath : paths) {
-            s += "        - " + datasetPath.getPath() + '\n';
-        }
-        s += ("    output:\n        " + String.format("%s%cdataset%cdataset.txt\n", path, File.separatorChar, File.separatorChar));
+        s += "dataset:\n    file: " +  datasetPath + '\n';
+        s += "feature:\n    file: " + featureFilename + '\n';
 
         try {
             FileUtils.write(yamlFile, s, "utf-8", false);
@@ -454,7 +468,7 @@ public class DatasetsController {
             throw new RuntimeException("error", e);
         }
 
-        return new File(path, ASSEMBLY_DATASET_YAML);
+        return new File(featurePath, PRODUCE_FEATURE_YAML);
     }
 
 
@@ -531,13 +545,13 @@ public class DatasetsController {
         Dataset dataset = value.get();
 
         File yaml = createAssemblingYaml(dataset);
-        runAssembling(dataset, yaml);
-        linkeDatasetFile(dataset);
+        runCommand(yaml, dataset.getAssemblingCommand(), LogData.Type.ASSEMBLY, dataset.getId());
+        updateDatasetInfo(dataset);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
-    private void linkeDatasetFile(Dataset dataset) {
+    private void updateDatasetInfo(Dataset dataset) {
         final File launchpadDir = toFile(launchpadDirAsString);
         final String path = String.format("%s%c%03d", DEFINITIONS_DIR, File.separatorChar, dataset.getId());
 
@@ -554,6 +568,12 @@ public class DatasetsController {
         }
         dataset.setDatasetFile(datasetFilename);
         repository.save(dataset);
+
+        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(dataset.getId());
+        for (DatasetGroup group : groups) {
+            group.setFeatureStatus(DatasetGroup.FEATURE_STATUS.OBSOLETE.value );
+        }
+        groupsRepository.saveAll(groups);
     }
 
     private static String output(InputStream inputStream) throws IOException {
@@ -568,13 +588,13 @@ public class DatasetsController {
     }
 
 
-    private void runAssembling(Dataset dataset, File yaml) {
+    private boolean runCommand(File yaml, String command, LogData.Type type, Long refId) {
 
         // https://examples.javacodegeeks.com/core-java/lang/processbuilder/java-lang-processbuilder-example/
         //
         // java -jar bin\app-assembly-dataset-1.0-SNAPSHOT.jar 6
         try {
-            List<String> cmd = Arrays.stream(dataset.getAssemblingCommand().split("\\s+")).collect(Collectors.toList());
+            List<String> cmd = Arrays.stream(command.split("\\s+")).collect(Collectors.toList());
             cmd.add(yaml.getPath());
 
             ProcessBuilder pb = new ProcessBuilder();
@@ -601,16 +621,19 @@ public class DatasetsController {
             final int exitCode = process.waitFor();
             reader.join();
 
-            System.out.println("any errors of assembling? " + (exitCode == 0 ? "No" : "Yes"));
+            System.out.println("Any errors of execution? " + (exitCode == 0 ? "No" : "Yes"));
             System.out.println(out);
             LogData logData = new LogData();
-            logData.setRefId(dataset.getId());
-            logData.setType(LogData.Type.ASSEMBLY);
+            logData.setRefId(refId);
+            logData.setType(type);
             logData.setLogData(out.toString());
             logDataRepository.save(logData);
 
+            return exitCode==0;
+
         } catch (Exception err) {
             err.printStackTrace();
+            return false;
         }
     }
 

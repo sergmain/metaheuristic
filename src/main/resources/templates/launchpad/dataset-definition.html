@@ -190,6 +190,7 @@
             <th>Type of group</th>
             <th th:if="${ result.dataset.editable}">Actions</th>
             <th>Columns</th>
+            <th>Status</th>
         </tr>
         </thead>
         <tbody>
@@ -258,6 +259,10 @@
                     </tbody>
                 </table>
             </td>
+            <td th:if="${ g.featureStatus==0}">NONE</td>
+            <td th:if="${ g.featureStatus==1}">OK</td>
+            <td th:if="${ g.featureStatus==2}">ERROR</td>
+            <td th:if="${ g.featureStatus==3}">OBSOLETE</td>
         </tr>
         </tbody>
     </table>
@@ -312,8 +317,8 @@
             <tr>
                 <td width="600">
                     <fieldset>
-                        <label for="assembled_datatset">Assembled datatset file</label>
-                        <p id="assembled_datatset" th:text="${result.dataset.datasetFile}">Assembled datatset file</p>
+                        <label for="assembled_dataset">Assembled dataset file</label>
+                        <p id="assembled_dataset" th:text="${result.dataset.datasetFile}">Assembled dataset file</p>
                     </fieldset>
                 </td>
             </tr>

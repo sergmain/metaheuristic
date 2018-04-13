@@ -44,6 +44,17 @@ import java.util.List;
 @EqualsAndHashCode(exclude = {"dataset", "datasetColumns"})
 public class DatasetGroup implements Serializable {
     private static final long serialVersionUID = -3161178396332333392L;
+
+    public enum FEATURE_STATUS {
+        NONE(0), OK(1), ERROR(2), OBSOLETE(3);
+
+        public final int value;
+
+        FEATURE_STATUS(int value) {
+            this.value = value;
+        }
+    }
+
     @Id
     @Column(name = "ID")
     @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_DATASET_GROUP")
@@ -69,6 +80,14 @@ public class DatasetGroup implements Serializable {
 
     @Column(name = "IS_LABEL")
     private boolean isLabel;
+
+    @Column(name = "IS_META")
+    private boolean isMeta;
+
+    @Column(name = "STATUS")
+    private int featureStatus;
+
+
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
     @JoinColumn(name = "DATASET_ID")
     private Dataset dataset;
