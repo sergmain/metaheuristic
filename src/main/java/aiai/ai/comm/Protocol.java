@@ -58,15 +58,15 @@ public class Protocol {
         }
     }
 
-    public static class RequestDatasets extends Command {
-        public RequestDatasets() {
-            this.setType(Type.RequestDatasets);
+    public static class RequestDefinitions extends Command {
+        public RequestDefinitions() {
+            this.setType(Type.RequestDefinitions);
         }
     }
 
     public static class RequestExperiment extends Command {
         public RequestExperiment() {
-            this.setType(Type.RequestDatasets);
+            this.setType(Type.RequestExperiment);
         }
     }
 

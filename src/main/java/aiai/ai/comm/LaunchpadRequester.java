@@ -166,12 +166,22 @@ public class LaunchpadRequester {
             ExchangeData responses = mapper.readValue(json, ExchangeData.class);
             for (Command command : responses.getCommands()) {
                 switch (command.getType()) {
+                    case Nop:
+                        break;
+                    case Ok:
+                        break;
                     case ReportStation:
                         break;
-                    case RequestDatasets:
+                    case RequestDefinitions:
                         break;
                     case AssignStationId:
                         System.out.println("New station Id: " + command.getResponse().get(CommConsts.STATION_ID));
+                        break;
+                    case RegisterInvite:
+                        break;
+                    case RegisterInviteResult:
+                        break;
+                    case RequestExperiment:
                         break;
                 }
             }

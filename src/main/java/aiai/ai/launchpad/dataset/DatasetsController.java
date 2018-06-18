@@ -395,6 +395,18 @@ public class DatasetsController {
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
+    @GetMapping(value = "/dataset-produce-feature/{id}")
+    public String produceFeature(@PathVariable(name = "id") Long groupId) {
+        final Optional<DatasetGroup> groupValue = groupsRepository.findById(groupId);
+        if (!groupValue.isPresent()) {
+            return "redirect:/launchpad/datasets";
+        }
+        DatasetGroup group = groupValue.get();
+        produceFeature(group.getDataset(), group);
+
+        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
+    }
+
     private void produceFeature(Dataset dataset, DatasetGroup group) {
         try {
             File yaml = createYamlForFeature(dataset.getId(), group);

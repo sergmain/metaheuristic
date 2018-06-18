@@ -38,7 +38,8 @@ public class ExchangeData {
     private Protocol.Nop nop;
     private Protocol.Ok ok;
     private Protocol.ReportStation reportStation;
-    private Protocol.RequestDatasets requestDatasets;
+    private Protocol.RequestDefinitions requestDefinitions;
+    private Protocol.RequestExperiment requestExperiment;
     private Protocol.AssignStationId assignStationId;
     private Protocol.RegisterInvite registerInvite;
     private Protocol.RegisterInviteResult registerInviteResult;
@@ -89,11 +90,11 @@ public class ExchangeData {
                 }
                 this.reportStation = (Protocol.ReportStation) command;
                 break;
-            case RequestDatasets:
-                if (this.requestDatasets != null) {
+            case RequestDefinitions:
+                if (this.requestDefinitions != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
-                this.requestDatasets = (Protocol.RequestDatasets) command;
+                this.requestDefinitions = (Protocol.RequestDefinitions) command;
                 break;
             case AssignStationId:
                 if (this.assignStationId != null) {
@@ -113,11 +114,17 @@ public class ExchangeData {
                 }
                 this.registerInviteResult = (Protocol.RegisterInviteResult) command;
                 break;
+            case RequestExperiment:
+                if (this.requestExperiment != null) {
+                    throw new IllegalStateException("Was already initialized");
+                }
+                this.requestExperiment = (Protocol.RequestExperiment) command;
+                break;
         }
     }
 
     public List<Command> getCommands() {
-        return asListOfNonNull(nop, ok, reportStation, requestDatasets, assignStationId, registerInvite, registerInviteResult);
+        return asListOfNonNull(nop, ok, reportStation, requestDefinitions, assignStationId, registerInvite, registerInviteResult);
     }
 
     @Override

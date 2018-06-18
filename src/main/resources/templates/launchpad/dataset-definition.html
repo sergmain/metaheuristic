@@ -224,6 +224,11 @@
                             <td th:if="${ result.dataset.editable}">
                                 <button type="submit" class="pure-button pure-button-primary">Save command</button>
                             </td>
+                            <td th:if="${ !result.dataset.editable}">
+                                <a class="pure-button pure-button-primary" href="#"
+                                   th:if="${ !result.dataset.editable}"
+                                   th:href="${'/launchpad/dataset-produce-feature/'+g.id}">Produce feature</a>
+                            </td>
                         </tr>
                     </table>
                 </form>

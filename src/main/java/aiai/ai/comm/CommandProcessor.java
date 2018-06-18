@@ -57,13 +57,15 @@ public class CommandProcessor {
                 break;
             case ReportStation:
                 break;
-            case RequestDatasets:
+            case RequestDefinitions:
                 break;
             case AssignStationId:
                 return getNewStationId(command);
             case RegisterInvite:
                 return processInvite((Protocol.RegisterInvite) command);
             case RegisterInviteResult:
+                break;
+            case RequestExperiment:
                 break;
         }
 
