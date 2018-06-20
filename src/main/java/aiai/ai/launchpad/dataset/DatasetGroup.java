@@ -81,7 +81,7 @@ public class DatasetGroup implements Serializable {
     @Column(name = "IS_LABEL")
     private boolean isLabel;
 
-    // TODO 2018-04-15 forgot for waht is that field
+    // TODO 2018-04-15 I forgot why I added that field
     @Column(name = "IS_META")
     private boolean isMeta;
 
