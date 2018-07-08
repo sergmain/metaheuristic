@@ -19,6 +19,7 @@ package aiai.ai.sec;
 
 import aiai.ai.Consts;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -90,6 +91,9 @@ public class MultiHttpSecurityConfig {
 
         final CsrfTokenRepository csrfTokenRepository;
 
+        @Value("${server.address:#{null}}")
+        private String serverAddress;
+
         @Autowired
         public SpringSecurityConfig(CsrfTokenRepository csrfTokenRepository) {
             this.csrfTokenRepository = csrfTokenRepository;
@@ -109,6 +113,7 @@ public class MultiHttpSecurityConfig {
                     .antMatchers("/manager/html").denyAll()
                     .antMatchers("/css/**", "/js/**", "/webjars/**").permitAll()
                     .antMatchers("/favicon.ico", "/", "/index", "/about", "/login", "/jssc", "/srv/**").permitAll()
+                    .antMatchers("/", "/index", "/jssc", "/error/**").permitAll()
                     .antMatchers("/example*").permitAll()
                     .antMatchers("/login").anonymous()
                     .antMatchers("/logout", "/launchpad/**", "/stations/**", "/station/**").authenticated()
@@ -129,6 +134,9 @@ public class MultiHttpSecurityConfig {
 //                    .deleteCookies(Consts.SESSIONID_NAME)
 //                    .invalidateHttpSession(true)
             ;
+            if (!"127.0.0.1".equals(serverAddress)) {
+                http.requiresChannel().antMatchers("/**").requiresSecure();
+            }
         }
 
     }
