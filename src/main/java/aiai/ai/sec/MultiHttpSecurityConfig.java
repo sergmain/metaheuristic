@@ -107,8 +107,6 @@ public class MultiHttpSecurityConfig {
                     .and()
                     .headers().frameOptions().sameOrigin()
                     .and()
-                    .rememberMe()
-                    .and()
                     .authorizeRequests()
                     .antMatchers("/manager/html").denyAll()
                     .antMatchers("/css/**", "/js/**", "/webjars/**").permitAll()

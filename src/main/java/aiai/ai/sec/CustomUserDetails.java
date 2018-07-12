@@ -45,6 +45,8 @@ public class CustomUserDetails implements UserDetailsService {
     @Value("${aiai.master-password}")
     private String masterPassword;
 
+    // q=1
+
     @Autowired
     public CustomUserDetails(AccountService accountService) {
         this.accountService = accountService;
