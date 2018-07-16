@@ -17,18 +17,16 @@
 
 package aiai.ai.launchpad.experiment;
 
+import aiai.ai.ControllerUtils;
 import aiai.ai.repositories.ExperimentRepository;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
 
 /**
  * User: Serg
@@ -39,9 +37,13 @@ import java.util.Optional;
 @RequestMapping("/launchpad")
 public class ExperimentsController {
 
+    @Data
+    public static class Result {
+        public Slice<Experiment> items;
+    }
+
     @Value("${aiai.table.rows.limit}")
     private int limit;
-
     private ExperimentRepository repository;
 
     public ExperimentsController(ExperimentRepository repository) {
@@ -50,7 +52,7 @@ public class ExperimentsController {
 
     @GetMapping("/experiments")
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
-        pageable = fixPageSize(pageable);
+        pageable = ControllerUtils.fixPageSize(limit, pageable);
         result.items = repository.findAll(pageable);
         return "/launchpad/experiments";
     }
@@ -58,20 +60,24 @@ public class ExperimentsController {
     // for AJAX
     @PostMapping("/experiments-part")
     public String getExperiments(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
-        pageable = fixPageSize(pageable);
+        pageable = ControllerUtils.fixPageSize(limit, pageable);
         result.items = repository.findAll(pageable);
         return "/launchpad/experiments :: table";
     }
 
     @GetMapping(value = "/experiment-add")
-    public String add(Model model) {
-        model.addAttribute("experiment", new Experiment());
+    public String add(@ModelAttribute("experiment") Experiment experiment) {
+        experiment.setSeed(1);
         return "/launchpad/experiment-form";
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
     public String edit(@PathVariable Long id, Model model) {
-        model.addAttribute("experiment", repository.findById(id));
+        Experiment experiment = repository.findById(id).orElse(null);
+        if (experiment == null) {
+            return "redirect:/launchpad/experiments";
+        }
+        model.addAttribute("experiment", experiment);
         return "/launchpad/experiment-form";
     }
 
@@ -83,11 +89,11 @@ public class ExperimentsController {
 
     @GetMapping("/experiment-delete/{id}")
     public String delete(@PathVariable Long id, Model model) {
-        final Optional<Experiment> value = repository.findById(id);
-        if (!value.isPresent()) {
+        Experiment experiment = repository.findById(id).orElse(null);
+        if (experiment == null) {
             return "redirect:/launchpad/experiments";
         }
-        model.addAttribute("experiment", value.get());
+        model.addAttribute("experiment", experiment);
         return "/launchpad/experiment-delete";
     }
 
@@ -97,15 +103,4 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiments";
     }
 
-    private Pageable fixPageSize(Pageable pageable) {
-        if (pageable.getPageSize() != limit) {
-            pageable = PageRequest.of(pageable.getPageNumber(), limit);
-        }
-        return pageable;
-    }
-
-    @Data
-    public static class Result {
-        public Slice<Experiment> items;
-    }
 }

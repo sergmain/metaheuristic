@@ -23,6 +23,9 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Delete Experiment</h1>
 
+        <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
+        <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
+
         <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.experiment.Experiment"*/-->
         <form class="form-horizontal" th:object="${experiment}">
             <div class="form-group">

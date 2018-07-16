@@ -23,6 +23,9 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New experiment</h1>
 
+        <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
+        <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
+
         <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.experiment.Experiment"*/-->
         <form class="pure-form pure-form-stacked" th:object="${experiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <input type="hidden" th:field="*{id}"/>
@@ -36,6 +39,18 @@
                 <label for="description">Description</label>
                 <input name="description" id="description" type="text" placeholder="description"  th:field="*{description}">
                 <span class="pure-form-message">This is a required field.</span>
+
+                <label for="seed">Seed</label>
+                <input name="seed" id="seed" type="text" placeholder="seed"  th:field="*{seed}">
+                <span class="pure-form-message">Default value will be used if not defined. Which is 1.</span>
+
+                <label for="epoch">Epoch</label>
+                <input name="epoch" id="epoch" type="text" placeholder="epoch"  th:field="*{epoch}">
+                <span class="pure-form-message">This is a required field.</span>
+                <span class="pure-form-message">Array of concrete values - [10,27,21]</span>
+                <span class="pure-form-message">Array defined in loop - range(10,30,10)</span>
+                <span class="pure-form-message">Array defined in loop - (10,30,10)</span>
+                <span class="pure-form-message">Concrete value - 10</span>
 
                 <table>
                     <tr>

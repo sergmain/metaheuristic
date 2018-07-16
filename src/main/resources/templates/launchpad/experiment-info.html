@@ -21,18 +21,23 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">New station record</h1>
+        <h1 class="widget-header">New experiment</h1>
 
         <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
         <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
-        <!--/*@thymesVar id="station" type="aiai.ai.launchpad.station.Station"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${station}" method="post" action="#" th:method="POST" th:action="@{/launchpad/station-form-commit}" accept-charset="UTF-8" id="station-form" name="f">
+        <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.experiment.Experiment"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${experiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <input type="hidden" th:field="*{version}"/>
             <fieldset>
-                <label for="ip">IP</label>
-                <input name="ip" id="ip" type="text" placeholder="IP address"  th:field="*{ip}" />
+
+                <label for="name">Name</label>
+                <input name="name" id="name" type="text" placeholder="name"  th:field="*{name}">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="description">Description</label>
+                <input name="description" id="description" type="text" placeholder="description"  th:field="*{description}">
                 <span class="pure-form-message">This is a required field.</span>
 
                 <label for="description">Description</label>
@@ -48,9 +53,9 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="stations.html" th:href="${'/launchpad/stations'}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">Cancel</a>
                             <!--
-                                                        <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/stations}" accept-charset="UTF-8" id="station-delete-cancel" name="f">
+                                                        <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/experiments}" accept-charset="UTF-8" id="experiment-delete-cancel" name="f">
                                                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                                                         </form>
                             -->
