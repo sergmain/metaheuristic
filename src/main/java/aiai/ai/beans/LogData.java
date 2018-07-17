@@ -26,15 +26,6 @@ import java.sql.Timestamp;
 
 @Entity
 @Table(name = "AIAI_LOG_DATA")
-@TableGenerator(
-        name = "TABLE_AIAI_LOG_DATA",
-        table = "AIAI_IDS",
-        pkColumnName = "sequence_name",
-        valueColumnName = "sequence_next_value",
-        pkColumnValue = "AIAI_LOG_DATA",
-        allocationSize = 1,
-        initialValue = 1
-)
 @Data
 @EqualsAndHashCode(of = {"id", "version"})
 public class LogData implements Serializable {
@@ -53,22 +44,11 @@ public class LogData implements Serializable {
         }
     }
 
-/*
-    CREATE TABLE AIAI_LOG_DATA (
-    ID          NUMERIC(10, 0) NOT NULL,
-    VERSION     NUMERIC(5, 0)  NOT NULL,
-    UPDATE_TS   TIMESTAMP DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
-    LOG_DATA         MEDIUMTEXT not null
-    );
-*/
-
     @Id
-    @Column(name = "ID")
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_LOG_DATA")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Version
-    @Column(name = "VERSION")
     private Integer version;
 
     @Column(name = "REF_ID")

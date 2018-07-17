@@ -18,7 +18,6 @@
 
 package aiai.ai.beans;
 
-import aiai.ai.beans.DatasetGroup;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -32,34 +31,28 @@ import java.io.Serializable;
  */
 @Entity
 @Table(name = "AIAI_LP_DATASET_COLUMN")
-@TableGenerator(
-        name = "TABLE_AIAI_DATASET_COLUMN",
-        table = "AIAI_IDS",
-        pkColumnName = "sequence_name",
-        valueColumnName = "sequence_next_value",
-        pkColumnValue = "AIAI_DATASET_COLUMN",
-        allocationSize = 1,
-        initialValue = 1
-)
 @Data
 @EqualsAndHashCode(exclude = {"datasetGroup"})
 public class DatasetColumn implements Serializable {
     private static final long serialVersionUID = -1823497750685166069L;
+
     @Id
-    @Column(name = "ID")
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_DATASET_COLUMN")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Version
-    @Column(name = "VERSION")
     private Integer version;
+
     @Column(name = "DESCRIPTION")
     private String description;
+
     @Column(name = "NAME")
     private String name;
-    //    @ManyToOne(cascade = CascadeType.PERSIST)
+
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
     @JoinColumn(name = "DATASET_GROUP_ID")
     private DatasetGroup datasetGroup;
+
     /**
      * last column in definition. is used in UI
      */

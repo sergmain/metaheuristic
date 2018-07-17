@@ -37,23 +37,14 @@ import java.util.StringTokenizer;
  */
 @Entity
 @Table(name = "AIAI_ACCOUNT")
-@TableGenerator(
-        name = "TABLE_AIAI_ACCOUNT",
-        table = "AIAI_IDS",
-        pkColumnName = "sequence_name",
-        valueColumnName = "sequence_next_value",
-        pkColumnValue = "AIAI_ACCOUNT",
-        allocationSize = 1,
-        initialValue = 1
-)
 @Data
 @EqualsAndHashCode(of = {"username", "password", "token"})
 public class Account implements UserDetails {
 
     @Id
-    @Column(name = "ID")
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_ACCOUNT")
-    private BigInteger id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
     /**
      * as UUID
      */

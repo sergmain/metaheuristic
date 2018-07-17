@@ -15,7 +15,6 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-
 package aiai.ai.beans;
 
 import lombok.Data;
@@ -30,33 +29,22 @@ import java.io.Serializable;
  */
 @Entity
 @Table(name = "AIAI_LP_STATION")
-@TableGenerator(
-        name = "TABLE_AIAI_STATION",
-        table = "AIAI_IDS",
-        pkColumnName = "sequence_name",
-        valueColumnName = "sequence_next_value",
-        pkColumnValue = "AIAI_STATION",
-        allocationSize = 1,
-        initialValue = 1
-)
 @Data
 public class Station implements Serializable {
     private static final long serialVersionUID = -6094247705164836600L;
-    @Version
-    @Column(name = "VERSION")
-    public Integer version;
+
     @Id
-    @Column(name = "ID")
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_STATION")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Version
+    private Integer version;
+
     @Column(name = "IP")
     private String ip;
+
     @Column(name = "DESCRIPTION")
     private String description;
-
-    public Station() {
-    }
-
 
 }
 

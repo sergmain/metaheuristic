@@ -32,15 +32,6 @@ import java.util.List;
  */
 @Entity
 @Table(name = "AIAI_LP_DATASET_GROUP")
-@TableGenerator(
-        name = "TABLE_AIAI_DATASET_GROUP",
-        table = "AIAI_IDS",
-        pkColumnName = "sequence_name",
-        valueColumnName = "sequence_next_value",
-        pkColumnValue = "AIAI_DATASET_GROUP",
-        allocationSize = 1,
-        initialValue = 1
-)
 @Data
 @EqualsAndHashCode(exclude = {"dataset", "datasetColumns"})
 public class DatasetGroup implements Serializable {
@@ -57,16 +48,18 @@ public class DatasetGroup implements Serializable {
     }
 
     @Id
-    @Column(name = "ID")
-    @GeneratedValue(strategy = GenerationType.TABLE, generator = "TABLE_AIAI_DATASET_GROUP")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     @Version
-    @Column(name = "VERSION")
     private Integer version;
+
     @Column(name = "GROUP_NUMBER")
     private int groupNumber;
+
     @Column(name = "DESCRIPTION")
     private String description;
+
     @Column(name = "CMD")
     private String command;
 
