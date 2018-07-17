@@ -23,7 +23,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New environment</h1>
 
-        <!--/*@thymesVar id="env" type="aiai.ai.station.Env"*/-->
+        <!--/*@thymesVar id="env" type="aiai.ai.beans.Env"*/-->
         <form class="pure-form pure-form-stacked" th:object="${env}" method="post" action="#" th:method="POST" th:action="@{/station/env-form-commit}" accept-charset="UTF-8" id="env-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <input type="hidden" th:field="*{version}"/>

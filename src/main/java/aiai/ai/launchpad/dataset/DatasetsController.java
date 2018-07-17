@@ -17,7 +17,7 @@
 
 package aiai.ai.launchpad.dataset;
 
-import aiai.ai.beans.LogData;
+import aiai.ai.beans.*;
 import aiai.ai.repositories.*;
 import lombok.Data;
 import org.apache.commons.io.FileUtils;

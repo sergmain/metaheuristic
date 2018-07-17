@@ -18,7 +18,7 @@
 package aiai.ai.comm;
 
 import aiai.ai.invite.InviteService;
-import aiai.ai.launchpad.station.Station;
+import aiai.ai.beans.Station;
 import aiai.ai.repositories.StationsRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

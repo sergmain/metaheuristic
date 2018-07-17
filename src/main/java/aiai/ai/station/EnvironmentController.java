@@ -17,6 +17,7 @@
 
 package aiai.ai.station;
 
+import aiai.ai.beans.Env;
 import aiai.ai.repositories.EnvironmentRepository;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;

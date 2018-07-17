@@ -17,7 +17,7 @@
 
 package aiai.ai.repositories;
 
-import aiai.ai.launchpad.dataset.DatasetColumn;
+import aiai.ai.beans.DatasetColumn;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

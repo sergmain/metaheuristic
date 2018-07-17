@@ -26,7 +26,7 @@
         <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
         <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
-        <!--/*@thymesVar id="column" type="aiai.ai.launchpad.dataset.DatasetColumn"*/-->
+        <!--/*@thymesVar id="column" type="aiai.ai.beans.DatasetColumn"*/-->
         <form class="pure-form pure-form-stacked" th:object="${column}" method="post" action="#" th:method="POST" th:action="@{/launchpad/dataset-column-add-commit}" accept-charset="UTF-8" id="dataset-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <input type="hidden" th:field="*{datasetGroup.id}" th:name="datasetGroupId"/>

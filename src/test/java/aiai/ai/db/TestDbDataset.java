@@ -18,7 +18,7 @@
 package aiai.ai.db;
 
 import aiai.ai.beans.LogData;
-import aiai.ai.launchpad.dataset.Dataset;
+import aiai.ai.beans.Dataset;
 import aiai.ai.repositories.DatasetsRepository;
 import aiai.ai.repositories.LogDataRepository;
 import org.junit.Assert;

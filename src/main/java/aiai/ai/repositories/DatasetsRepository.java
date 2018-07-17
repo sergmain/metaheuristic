@@ -17,7 +17,7 @@
 
 package aiai.ai.repositories;
 
-import aiai.ai.launchpad.dataset.Dataset;
+import aiai.ai.beans.Dataset;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.repository.CrudRepository;

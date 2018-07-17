@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.ControllerUtils;
+import aiai.ai.beans.Experiment;
 import aiai.ai.repositories.ExperimentRepository;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
