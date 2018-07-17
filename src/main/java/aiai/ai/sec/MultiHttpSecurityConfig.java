@@ -109,7 +109,7 @@ public class MultiHttpSecurityConfig {
                     .and()
                     .authorizeRequests()
                     .antMatchers("/manager/html").denyAll()
-                    .antMatchers("/css/**", "/js/**", "/webjars/**").permitAll()
+                    .antMatchers("/static/**/**", "/css/**", "/js/**", "/webjars/**").permitAll()
                     .antMatchers("/favicon.ico", "/", "/index", "/about", "/login", "/jssc", "/srv/**").permitAll()
                     .antMatchers("/", "/index", "/jssc", "/error/**").permitAll()
                     .antMatchers("/example*").permitAll()

@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <!--
-  ~ AiAi, Copyright (C) 2017-2018  Serge Maslyukov
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  -->
+  /*AiAi, Copyright (C) 2017 - 2018, Serge Maslyukov
 
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
+  -->
 <html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" class='page-background' lang="en">
 
 <head>
@@ -23,12 +23,6 @@
     <title>AiAi project</title>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-    <meta name="_csrf" th:attr="content=${_csrf.token}"/>
-    <meta name="_csrf_header" th:attr="content=${_csrf.headerName}"/>
-<!--
-    <meta th:if="${_csrf!=null}" name="_csrf" th:attr="content=${_csrf.token}"/>
-    <meta th:if="${_csrf!=null}" name="_csrf_header" th:attr="content=${_csrf.headerName}"/>
--->
     <meta http-equiv="cache-control" content="max-age=0" />
     <meta http-equiv="cache-control" content="no-cache" />
     <meta http-equiv="expires" content="0" />
@@ -36,7 +30,6 @@
     <meta http-equiv="pragma" content="no-cache" />
 
     <script src="/webjars/jquery/3.2.1/jquery.min.js"></script>
-    <script src="/static/js/my-scripts.js" th:src="@{/js/my-scripts.js}"></script>
 
     <link rel="stylesheet" type="text/css" media="all" href="/static/css/pure-mine.css" th:href="@{/css/pure-mine.css}"/>
     <link rel="stylesheet" type="text/css" media="all" href="/static/css/my-css.css" th:href="@{/css/my-css.css}"/>
@@ -45,7 +38,7 @@
     <link rel="stylesheet" type="text/css" media="all" href="/webjars/bootstrap/3.3.7/css/bootstrap.min.css"/>
 
 </head>
-<body class="pure-skin-mine" onload="focusLoginInput()">
+<body class="pure-skin-mine">
 
 
 <div class="mega"> <!-- Mega container div to hide contents of page until done loading -->
@@ -59,7 +52,7 @@
                 <div class="pure-u-11-12">
                     <div class="pure-g">
                         <div class="pure-u-1">
-                            <div th:replace="menu-fragment"></div>
+                            <div th:replace="menu-error-fragment"></div>
                         </div>
                     </div>
 
@@ -74,10 +67,6 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="pure-u-1-4">
-                            <div th:replace="login-fragment"></div>
                         </div>
                     </div>
 

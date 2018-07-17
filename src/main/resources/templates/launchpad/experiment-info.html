@@ -21,48 +21,24 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">New experiment</h1>
-
-        <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-        <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
+        <h1 class="widget-header">The experiment info</h1>
 
         <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.experiment.Experiment"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${experiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
-            <input type="hidden" th:field="*{id}"/>
-            <input type="hidden" th:field="*{version}"/>
-            <fieldset>
 
-                <label for="name">Name</label>
-                <input name="name" id="name" type="text" placeholder="name"  th:field="*{name}">
-                <span class="pure-form-message">This is a required field.</span>
+        <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table">
+            <tbody>
+            <tr><td>#Id</td><td  th:text="${experiment.id}">#Id</td></tr>
+            <!--<tr><td>Created on</td><td th:text="${#dates.formatISO(r.dataset.createdOn)}">CreatedOn</td></tr>-->
+            <tr><td>Name</td><td th:text="${experiment.name}">name</td></tr>
+            <tr><td>Description</td><td th:text="${experiment.description}">desc</td></tr>
+            <tr><td>Seed</td><td th:text="${experiment.seed}">seed</td></tr>
+            <tr><td>Epochs</td><td th:text="${experiment.epoch}">epoch</td></tr>
+            <tr><td>Number of epoch variants</td><td th:text="${experiment.epochVariant}">Epoch variants</td></tr>
+            </tbody>
+        </table>
+        <p>&nbsp;</p>
 
-                <label for="description">Description</label>
-                <input name="description" id="description" type="text" placeholder="description"  th:field="*{description}">
-                <span class="pure-form-message">This is a required field.</span>
+        <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">To list of experiments</a>
 
-                <label for="description">Description</label>
-                <input name="description" id="description" type="text" placeholder="description"  th:field="*{description}">
-                <span class="pure-form-message">This is a required field.</span>
-
-                <table>
-                    <tr>
-                        <td>
-                            <button type="submit" class="pure-button pure-button-primary">Save changes</button>
-                        </td>
-                        <td>
-                            &nbsp;
-                        </td>
-                        <td>
-                            <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">Cancel</a>
-                            <!--
-                                                        <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/experiments}" accept-charset="UTF-8" id="experiment-delete-cancel" name="f">
-                                                            <button type="submit" class="pure-button pure-button-primary">Cancel</button>
-                                                        </form>
-                            -->
-                        </td>
-                    </tr>
-                </table>
-            </fieldset>
-        </form>
     </div>
 </div>

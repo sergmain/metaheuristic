@@ -50,7 +50,7 @@ public class Experiment implements Serializable {
     private String epoch;
 
     @Column(name = "EPOCH_VARIANT")
-    private int epoch_variant;
+    private int epochVariant;
 
     @Column(name = "SEED")
     private int seed;
