@@ -84,7 +84,7 @@ public class DatasetsController {
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
         pageable = fixPageSize(pageable);
         result.items = repository.findAll(pageable);
-        return "/launchpad/datasets";
+        return "launchpad/datasets";
     }
 
     // for AJAX
@@ -92,19 +92,19 @@ public class DatasetsController {
     public String getDatasets(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
         pageable = fixPageSize(pageable);
         result.items = repository.findAll(pageable);
-        return "/launchpad/datasets :: table";
+        return "launchpad/datasets :: table";
     }
 
     @GetMapping(value = "/dataset-add")
     public String add(Model model) {
         model.addAttribute("dataset", new Dataset());
-        return "/launchpad/dataset-form";
+        return "launchpad/dataset-form";
     }
 
     @GetMapping(value = "/dataset-edit/{id}")
     public String edit(@PathVariable Long id, Model model) {
         model.addAttribute("dataset", repository.findById(id));
-        return "/launchpad/dataset-form";
+        return "launchpad/dataset-form";
     }
 
     @GetMapping(value = "/dataset-definition/{id}")
@@ -193,7 +193,7 @@ public class DatasetsController {
         }
 
         model.addAttribute("result", definition);
-        return "/launchpad/dataset-definition";
+        return "launchpad/dataset-definition";
     }
 
     @GetMapping(value = "/dataset-column-add/{id}")
@@ -206,7 +206,7 @@ public class DatasetsController {
         final DatasetColumn column = new DatasetColumn();
         column.setDatasetGroup(group);
         model.addAttribute("column", column);
-        return "/launchpad/dataset-column-form";
+        return "launchpad/dataset-column-form";
     }
 
     @PostMapping(value = "/dataset-column-add-commit")
@@ -231,7 +231,7 @@ public class DatasetsController {
         }
 
         model.addAttribute("column", optionalColumn.get());
-        return "/launchpad/dataset-column-form";
+        return "launchpad/dataset-column-form";
     }
 
     @PostMapping("/dataset-column-form-commit")
@@ -247,7 +247,7 @@ public class DatasetsController {
             return "redirect:/launchpad/datasets";
         }
         model.addAttribute("column", value.get());
-        return "/launchpad/dataset-column-delete";
+        return "launchpad/dataset-column-delete";
     }
 
     @PostMapping("/dataset-column-delete-commit")
@@ -823,7 +823,7 @@ public class DatasetsController {
             return "redirect:/launchpad/datasets";
         }
         model.addAttribute("dataset", value.get());
-        return "/launchpad/dataset-delete";
+        return "launchpad/dataset-delete";
     }
 
     @PostMapping("/dataset-delete-commit")

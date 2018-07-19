@@ -34,14 +34,14 @@ import java.util.*;
 @TestConfiguration
 public class SpringSecurityWebAuxTestConfig {
 
-    public static final BigInteger ADMIN_USER_ID = BigInteger.ONE;
-    public static final BigInteger USER_USER_ID = BigInteger.valueOf(2L);
+    private static final Long ADMIN_USER_ID = 1L;
+    private static final Long USER_USER_ID = 2L;
 
     public static class MyUserDetailsManager implements UserDetailsManager {
 
         private Map<String, Account> users = new HashMap<>();
 
-        public MyUserDetailsManager(Collection<Account> users) {
+        MyUserDetailsManager(Collection<Account> users) {
             for (Account user : users) {
                 this.users.put(user.getUsername(), user);
             }

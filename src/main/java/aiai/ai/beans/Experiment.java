@@ -19,9 +19,11 @@
 package aiai.ai.beans;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * User: Serg
@@ -31,8 +33,9 @@ import java.io.Serializable;
 @Entity
 @Table(name = "AIAI_LP_EXPERIMENT")
 @Data
+@EqualsAndHashCode(exclude = {"metadata"})
 public class Experiment implements Serializable {
-    private static final long serialVersionUID = 4139058273459149904L;
+    private static final long serialVersionUID = -3509391644278818781L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -56,5 +59,7 @@ public class Experiment implements Serializable {
     @Column(name = "SEED")
     private int seed;
 
+    @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
+    private List<ExperimentMetadata> metadata;
 
 }

@@ -52,7 +52,7 @@ public class StationsController {
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
         pageable = fixPageSize(pageable);
         result.items = repository.findAll(pageable);
-        return "/launchpad/stations";
+        return "launchpad/stations";
     }
 
     // for AJAX
@@ -60,19 +60,19 @@ public class StationsController {
     public String getStations(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
         pageable = fixPageSize(pageable);
         result.items = repository.findAll(pageable);
-        return "/launchpad/stations :: table";
+        return "launchpad/stations :: table";
     }
 
     @GetMapping(value = "/station-add")
     public String add(Model model) {
         model.addAttribute("station", new Station());
-        return "/launchpad/station-form";
+        return "launchpad/station-form";
     }
 
     @GetMapping(value = "/station-edit/{id}")
     public String edit(@PathVariable Long id, Model model) {
         model.addAttribute("station", repository.findById(id));
-        return "/launchpad/station-form";
+        return "launchpad/station-form";
     }
 
     @PostMapping("/station-form-commit")
@@ -89,7 +89,7 @@ public class StationsController {
         }
         model.addAttribute("station", value.get());
 //        model.addAttribute("station", repository.findById(id));
-        return "/launchpad/station-delete";
+        return "launchpad/station-delete";
     }
 
     @PostMapping("/station-delete-commit")

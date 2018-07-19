@@ -19,6 +19,8 @@ package aiai.ai.launchpad.experiment;
 
 import aiai.ai.ControllerUtils;
 import aiai.ai.beans.Experiment;
+import aiai.ai.beans.ExperimentMetadata;
+import aiai.ai.repositories.ExperimentMetadataRepository;
 import aiai.ai.repositories.ExperimentRepository;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +31,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import java.util.ArrayList;
 
 /**
  * User: Serg
@@ -47,16 +51,18 @@ public class ExperimentsController {
     @Value("${aiai.table.rows.limit}")
     private int limit;
     private ExperimentRepository experimentRepository;
+    private ExperimentMetadataRepository experimentMetadataRepository;
 
-    public ExperimentsController(ExperimentRepository experimentRepository) {
+    public ExperimentsController(ExperimentRepository experimentRepository, ExperimentMetadataRepository experimentMetadataRepository) {
         this.experimentRepository = experimentRepository;
+        this.experimentMetadataRepository = experimentMetadataRepository;
     }
 
     @GetMapping("/experiments")
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(limit, pageable);
         result.items = experimentRepository.findAll(pageable);
-        return "/launchpad/experiments";
+        return "launchpad/experiments";
     }
 
     // for AJAX
@@ -64,14 +70,15 @@ public class ExperimentsController {
     public String getExperiments(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(limit, pageable);
         result.items = experimentRepository.findAll(pageable);
-        return "/launchpad/experiments :: table";
+        return "launchpad/experiments :: table";
     }
 
     @GetMapping(value = "/experiment-add")
     public String add(@ModelAttribute("experiment") Experiment experiment) {
         experiment.setSeed(1);
-        return "/launchpad/experiment-form";
+        return "launchpad/experiment-form";
     }
+
 
     @GetMapping(value = "/experiment-info/{id}")
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes ) {
@@ -81,7 +88,7 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
         model.addAttribute("experiment", experiment);
-        return "/launchpad/experiment-info";
+        return "launchpad/experiment-info";
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
@@ -91,7 +98,36 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
         model.addAttribute("experiment", experiment);
-        return "/launchpad/experiment-form";
+        return "launchpad/experiment-form";
+    }
+
+    @PostMapping("/experiment-metadata-add-commit/{id}")
+    public String metadataAddCommit(@PathVariable Long id, String key, String value) {
+        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        if (experiment == null) {
+            return "redirect:/launchpad/experiments";
+        }
+        if (experiment.getMetadata()==null) {
+            experiment.setMetadata(new ArrayList<>());
+        }
+        ExperimentMetadata m = new ExperimentMetadata();
+        m.setExperiment(experiment);
+        m.setKey(key);
+        m.setValue(value);
+        experiment.getMetadata().add(m);
+
+        experimentRepository.save(experiment);
+        return "redirect:/launchpad/experiment-edit/"+id;
+    }
+
+    @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{id}")
+    public String metadataDeleteCommit(@PathVariable long experimentId, @PathVariable Long id) {
+        ExperimentMetadata metadata = experimentMetadataRepository.findById(id).orElse(null);
+        if (metadata == null || experimentId != metadata.getExperiment().getId()) {
+            return "redirect:/launchpad/experiment-edit/" + experimentId;
+        }
+        experimentMetadataRepository.deleteById(id);
+        return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 
     @PostMapping("/experiment-form-commit")
@@ -99,7 +135,7 @@ public class ExperimentsController {
         ExperimentUtils.EpochVariants epochVariants = ExperimentUtils.getEpochVariants(experiment.getEpoch());
         if (!epochVariants.status) {
             model.addAttribute("errorMessage", epochVariants.getError());
-            return "/launchpad/experiment-form";
+            return "launchpad/experiment-form";
         }
         experiment.setEpochVariant(epochVariants.getCount());
         experimentRepository.save(experiment);
@@ -113,7 +149,7 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
         model.addAttribute("experiment", experiment);
-        return "/launchpad/experiment-delete";
+        return "launchpad/experiment-delete";
     }
 
     @PostMapping("/experiment-delete-commit")

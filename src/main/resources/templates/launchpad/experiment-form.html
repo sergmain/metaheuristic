@@ -62,15 +62,41 @@
                         </td>
                         <td>
                             <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">Cancel</a>
-                            <!--
-                                                        <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/experiments}" accept-charset="UTF-8" id="experiment-delete-cancel" name="f">
-                                                            <button type="submit" class="pure-button pure-button-primary">Cancel</button>
-                                                        </form>
-                            -->
                         </td>
                     </tr>
                 </table>
             </fieldset>
         </form>
+        <p>&nbsp;</p>
+
+        <h1 class="widget-header">Metadata</h1>
+        <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-metadata-add-commit/'+experiment.id}" accept-charset="UTF-8" >
+            <fieldset>
+                <input placeholder="Key" name="key" type="text">
+                <input placeholder="Value" name="value" type="text" size="100">
+                <button class="pure-button pure-button-primary" type="submit">Add metadata</button>
+            </fieldset>
+        </form>
+        <p>&nbsp;</p>
+
+        <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+            <thead>
+            <tr>
+                <th width="150">Key</th>
+                <th width="600">Value</th>
+                <th colspan="1">&nbsp;</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="m : ${experiment.metadata}">
+                <td th:text="${m.key}">Experiment name</td>
+                <td th:text="${m.value}">Dataset description</td>
+                <!--<td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-metadata-edit/' + m.id}">Edit</a></td>-->
+                <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-metadata-delete-commit/' + experiment.id+'/'+ m.id}">Delete</a></td>
+            </tr>
+            </tbody>
+        </table>
+
     </div>
 </div>

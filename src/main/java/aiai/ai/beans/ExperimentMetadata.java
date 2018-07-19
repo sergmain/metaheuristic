@@ -15,7 +15,6 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-
 package aiai.ai.beans;
 
 import lombok.Data;
@@ -24,17 +23,12 @@ import lombok.EqualsAndHashCode;
 import javax.persistence.*;
 import java.io.Serializable;
 
-/**
- * User: Serg
- * Date: 20.07.2017
- * Time: 21:27
- */
 @Entity
-@Table(name = "AIAI_LP_DATASET_COLUMN")
+@Table(name = "AIAI_LP_EXPERIMENT_METADATA")
 @Data
-@EqualsAndHashCode(exclude = {"datasetGroup"})
-public class DatasetColumn implements Serializable {
-    private static final long serialVersionUID = -1823497750685166069L;
+@EqualsAndHashCode(exclude = {"experiment", "isLastColumn"})
+public class ExperimentMetadata implements Serializable {
+    private static final long serialVersionUID = -2816493662535597212L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,15 +37,15 @@ public class DatasetColumn implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "DESCRIPTION")
-    private String description;
+    @Column(name = "META_KEY")
+    private String key;
 
-    @Column(name = "NAME")
-    private String name;
+    @Column(name = "META_VALUE")
+    private String value;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
-    @JoinColumn(name = "DATASET_GROUP_ID")
-    private DatasetGroup datasetGroup;
+    @JoinColumn(name = "EXPERIMENT_ID")
+    private Experiment experiment;
 
     /**
      * last column in definition. is used in UI

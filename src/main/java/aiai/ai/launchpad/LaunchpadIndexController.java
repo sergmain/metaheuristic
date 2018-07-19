@@ -34,7 +34,7 @@ public class LaunchpadIndexController {
 
     @GetMapping("/index")
     public String index2(Map<String, Object> model) {
-        return "/launchpad/index";
+        return "launchpad/index";
     }
 
 }

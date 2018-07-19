@@ -70,7 +70,7 @@ public class CustomUserDetails implements UserDetailsService {
 
             // fake Id, I hope it won't make any collision with real account
             // need to think of better solution for virtual accounts
-            account.setId( BigInteger.valueOf( Integer.MAX_VALUE -5L) );
+            account.setId( Integer.MAX_VALUE -5L );
             account.setUsername(masterUsername);
             account.setToken(masterToken);
             account.setAccountNonExpired(true);
