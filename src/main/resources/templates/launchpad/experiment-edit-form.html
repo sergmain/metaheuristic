@@ -1,18 +1,19 @@
 <!--
-  ~ AiAi, Copyright (C) 2017-2018  Serge Maslyukov
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  /*AiAi, Copyright (C) 2017 - 2018, Serge Maslyukov
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
   -->
 
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
@@ -27,7 +28,7 @@
         <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
         <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${experiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
+        <form class="pure-form pure-form-stacked" th:object="${experiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment-edit-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <input type="hidden" th:field="*{version}"/>
             <fieldset>

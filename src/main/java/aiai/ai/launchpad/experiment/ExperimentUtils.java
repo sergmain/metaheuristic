@@ -29,19 +29,19 @@ import java.util.StringTokenizer;
 public class ExperimentUtils {
 
     private static final String RANGE = "range";
-    private static final EpochVariants ZERO_VARIANT = new EpochVariants(true, null, 0);
-    private static final EpochVariants ONE_VARIANT = new EpochVariants(true, null, 1);
+    private static final NumberOfVariants ZERO_VARIANT = new NumberOfVariants(true, null, 0);
+    private static final NumberOfVariants ONE_VARIANT = new NumberOfVariants(true, null, 1);
 
     @Data
     @AllArgsConstructor
     @EqualsAndHashCode
-    public static class EpochVariants {
+    public static class NumberOfVariants {
         boolean status;
         String error;
         int count;
     }
 
-    public static EpochVariants getEpochVariants(String epochs) {
+    public static NumberOfVariants getEpochVariants(String epochs) {
         if (StringUtils.isBlank(epochs)) {
             return ZERO_VARIANT;
         }
@@ -50,7 +50,7 @@ public class ExperimentUtils {
             try {
                 int temp = Integer.parseInt(s);
             } catch (NumberFormatException e) {
-                return new EpochVariants(false, "Wrong number format for string: " + s, 0);
+                return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
             }
             return ONE_VARIANT;
         }
@@ -62,11 +62,11 @@ public class ExperimentUtils {
                 try {
                     int temp = Integer.parseInt(token);
                 } catch (NumberFormatException e) {
-                    return new EpochVariants(false, "Wrong number format for string: " + s, 0);
+                    return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
                 }
                 count++;
             }
-            return new EpochVariants(true, null, count);
+            return new NumberOfVariants(true, null, count);
         }
         String s1 = s;
         if (s1.startsWith(RANGE)) {
@@ -83,18 +83,38 @@ public class ExperimentUtils {
                 end = Integer.parseInt(scanner.next().trim());
                 change = Integer.parseInt(scanner.next().trim());
             } catch (NumberFormatException | NoSuchElementException e) {
-                return new EpochVariants(false, "Wrong string format for string: " + s, 0);
+                return new NumberOfVariants(false, "Wrong string format for string: " + s, 0);
             }
 
             int count = 0;
             for (int i = start; i < end; i += change) {
                 count++;
                 if (count > 100) {
-                    return new EpochVariants(false, "Too many variants for string: " + s, 0);
+                    return new NumberOfVariants(false, "Too many variants for string: " + s, 0);
                 }
             }
-            return new EpochVariants(true, null, count);
+            return new NumberOfVariants(true, null, count);
         }
-        return new EpochVariants(false, "Wrong number format for string: " + s, 0);
+        return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
+    }
+
+    public static NumberOfVariants getStringNumberOfVariants(String metadata) {
+        if (StringUtils.isBlank(metadata)) {
+            return ZERO_VARIANT;
+        }
+
+        String s = metadata.trim().toLowerCase();
+        if (!StringUtils.startsWithAny(s, "[")) {
+            return ONE_VARIANT;
+        }
+        if (s.startsWith("[")) {
+            int count = 0;
+            for (StringTokenizer st = new StringTokenizer(s, "[,] "); st.hasMoreTokens(); ) {
+                String token = st.nextToken();
+                count++;
+            }
+            return new NumberOfVariants(true, null, count);
+        }
+        return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
     }
 }

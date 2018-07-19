@@ -25,22 +25,22 @@ public class TextExperimentUtils {
 
     @Test
     public void testCreatePath() {
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 0), ExperimentUtils.getEpochVariants("") );
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 0), ExperimentUtils.getEpochVariants(" ") );
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 0), ExperimentUtils.getEpochVariants(null) );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 0), ExperimentUtils.getEpochVariants("") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 0), ExperimentUtils.getEpochVariants(" ") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 0), ExperimentUtils.getEpochVariants(null) );
 
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 1), ExperimentUtils.getEpochVariants("10") );
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 1), ExperimentUtils.getEpochVariants(" 10 ") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 1), ExperimentUtils.getEpochVariants("10") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 1), ExperimentUtils.getEpochVariants(" 10 ") );
 
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 3), ExperimentUtils.getEpochVariants(" [ 10, 15, 37] ") );
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 2), ExperimentUtils.getEpochVariants(" [ 10, 15, ] ") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 3), ExperimentUtils.getEpochVariants(" [ 10, 15, 37] ") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 2), ExperimentUtils.getEpochVariants(" [ 10, 15, ] ") );
 
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 2), ExperimentUtils.getEpochVariants(" Range ( 10, 20, 5) ") );
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 3), ExperimentUtils.getEpochVariants(" Range ( 10, 21, 5) ") );
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 1), ExperimentUtils.getEpochVariants(" Range ( 10, 15, 5) ") );
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 2), ExperimentUtils.getEpochVariants(" Range ( 10, 16, 5) ") );
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 1), ExperimentUtils.getEpochVariants(" Range ( 10, 14, 5) ") );
-        Assert.assertEquals( new ExperimentUtils.EpochVariants(true, null, 0), ExperimentUtils.getEpochVariants(" Range ( 10, 10, 5) ") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 2), ExperimentUtils.getEpochVariants(" Range ( 10, 20, 5) ") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 3), ExperimentUtils.getEpochVariants(" Range ( 10, 21, 5) ") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 1), ExperimentUtils.getEpochVariants(" Range ( 10, 15, 5) ") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 2), ExperimentUtils.getEpochVariants(" Range ( 10, 16, 5) ") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 1), ExperimentUtils.getEpochVariants(" Range ( 10, 14, 5) ") );
+        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 0), ExperimentUtils.getEpochVariants(" Range ( 10, 10, 5) ") );
         Assert.assertFalse(ExperimentUtils.getEpochVariants(" Range ( 10, 14, ) ").isStatus());
         Assert.assertFalse(ExperimentUtils.getEpochVariants(" Range ( , 14, 10) ").isStatus());
         Assert.assertFalse(ExperimentUtils.getEpochVariants(" Range ( abc, 15, 3) ").isStatus());

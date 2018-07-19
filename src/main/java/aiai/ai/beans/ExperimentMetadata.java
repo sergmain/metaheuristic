@@ -26,7 +26,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "AIAI_LP_EXPERIMENT_METADATA")
 @Data
-@EqualsAndHashCode(exclude = {"experiment", "isLastColumn"})
+@EqualsAndHashCode(exclude = {"experiment", "variants"})
 public class ExperimentMetadata implements Serializable {
     private static final long serialVersionUID = -2816493662535597212L;
 
@@ -48,9 +48,9 @@ public class ExperimentMetadata implements Serializable {
     private Experiment experiment;
 
     /**
-     * last column in definition. is used in UI
+     * number of variants for this metadata
      */
     @Transient
-    private boolean isLastColumn;
+    private int variants;
 
 }

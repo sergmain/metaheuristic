@@ -23,6 +23,7 @@ import aiai.ai.beans.ExperimentMetadata;
 import aiai.ai.repositories.ExperimentMetadataRepository;
 import aiai.ai.repositories.ExperimentRepository;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -76,7 +77,7 @@ public class ExperimentsController {
     @GetMapping(value = "/experiment-add")
     public String add(@ModelAttribute("experiment") Experiment experiment) {
         experiment.setSeed(1);
-        return "launchpad/experiment-form";
+        return "launchpad/experiment-add-form";
     }
 
 
@@ -86,6 +87,13 @@ public class ExperimentsController {
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#81.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
+        }
+        for (ExperimentMetadata metadata : experiment.getMetadata()) {
+            if (StringUtils.isBlank(metadata.getValue())) {
+                continue;
+            }
+            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getStringNumberOfVariants(metadata.getValue());
+            metadata.setVariants( variants.status ?variants.count : 0 );
         }
         model.addAttribute("experiment", experiment);
         return "launchpad/experiment-info";
@@ -98,7 +106,7 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
         model.addAttribute("experiment", experiment);
-        return "launchpad/experiment-form";
+        return "launchpad/experiment-edit-form";
     }
 
     @PostMapping("/experiment-metadata-add-commit/{id}")
@@ -130,14 +138,23 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 
-    @PostMapping("/experiment-form-commit")
-    public String formCommit(Model model, Experiment experiment) {
-        ExperimentUtils.EpochVariants epochVariants = ExperimentUtils.getEpochVariants(experiment.getEpoch());
-        if (!epochVariants.status) {
-            model.addAttribute("errorMessage", epochVariants.getError());
-            return "launchpad/experiment-form";
+    @PostMapping("/experiment-add-form-commit")
+    public String addFormCommit(Model model, Experiment experiment) {
+        return processCommit(model, experiment,  "launchpad/experiment-add-form");
+    }
+
+    @PostMapping("/experiment-edit-form-commit")
+    public String editFormCommit(Model model, Experiment experiment) {
+        return processCommit(model, experiment,  "launchpad/experiment-edit-form");
+    }
+
+    private String processCommit(Model model, Experiment experiment, String target) {
+        ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getEpochVariants(experiment.getEpoch());
+        if (!numberOfVariants.status) {
+            model.addAttribute("errorMessage", numberOfVariants.getError());
+            return target;
         }
-        experiment.setEpochVariant(epochVariants.getCount());
+        experiment.setEpochVariant(numberOfVariants.getCount());
         experimentRepository.save(experiment);
         return "redirect:/launchpad/experiments";
     }

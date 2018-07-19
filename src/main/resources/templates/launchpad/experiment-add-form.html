@@ -1,0 +1,73 @@
+<!--
+  ~ AiAi, Copyright (C) 2017-2018  Serge Maslyukov
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  -->
+
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
+     layout:decorate="~{/layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">New experiment</h1>
+
+        <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
+        <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
+
+        <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${experiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment-add-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
+            <input type="hidden" th:field="*{id}"/>
+            <input type="hidden" th:field="*{version}"/>
+            <fieldset>
+
+                <label for="name">Name</label>
+                <input name="name" id="name" type="text" placeholder="name"  th:field="*{name}">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="description">Description</label>
+                <input name="description" id="description" type="text" placeholder="description"  th:field="*{description}">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="seed">Seed</label>
+                <input name="seed" id="seed" type="text" placeholder="seed"  th:field="*{seed}">
+                <span class="pure-form-message">Default value will be used if not defined. Which is 1.</span>
+
+                <label for="epoch">Epoch</label>
+                <input name="epoch" id="epoch" type="text" placeholder="epoch"  th:field="*{epoch}">
+                <span class="pure-form-message">This is a required field.</span>
+                <span class="pure-form-message">Array of concrete values - [10,27,21]</span>
+                <span class="pure-form-message">Array defined in loop - range(10,30,10)</span>
+                <span class="pure-form-message">Array defined in loop - (10,30,10)</span>
+                <span class="pure-form-message">Concrete value - 10</span>
+
+                <table>
+                    <tr>
+                        <td>
+                            <button type="submit" class="pure-button pure-button-primary">Save changes</button>
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td>
+                            <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">Cancel</a>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+        <p>&nbsp;</p>
+
+    </div>
+</div>
