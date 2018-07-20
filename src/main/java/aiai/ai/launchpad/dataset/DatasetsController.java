@@ -196,6 +196,36 @@ public class DatasetsController {
         return "launchpad/dataset-definition";
     }
 
+    @GetMapping(value = "/dataset-clone/{id}")
+    public String cloneDataset(@PathVariable(name = "id") Long datasetId, Model model) {
+        Dataset dataset = repository.findById(datasetId).orElse(null);
+        if (dataset==null) {
+            return "redirect:/launchpad/datasets";
+        }
+        Dataset ds = new Dataset();
+        ds.setDescription(dataset.getDescription());
+        ds.setAssemblingCommand(dataset.getAssemblingCommand());
+        ds.setEditable(dataset.isEditable());
+        List<DatasetGroup> dsg = new ArrayList<>();
+        ds.setDatasetGroups(dsg);
+        for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
+            DatasetGroup dg = new DatasetGroup();
+            dg.setGroupNumber(datasetGroup.getGroupNumber());
+            dg.setDescription(datasetGroup.getDescription());
+            dg.setCommand(datasetGroup.getCommand());
+            dg.setFeatureFile(datasetGroup.getFeatureFile());
+            dg.setIdGroup(datasetGroup.isIdGroup());
+            dg.setFeature(datasetGroup.isFeature());
+            dg.setLabel(datasetGroup.isLabel());
+            dg.setMeta(datasetGroup.isMeta());
+            dg.setFeatureStatus(datasetGroup.getFeatureStatus());
+            dsg.add(dg);
+        }
+        // TODO add copying of dataset files
+
+        return "redirect:/launchpad/datasets";
+    }
+
     @GetMapping(value = "/dataset-column-add/{id}")
     public String addColumn(@PathVariable(name = "id") Long datasetGroupId, Model model) {
         final Optional<DatasetGroup> value = groupsRepository.findById(datasetGroupId);
