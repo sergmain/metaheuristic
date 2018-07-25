@@ -1,14 +1,11 @@
 from datetime import datetime
 
+import gc
 import numpy
 import pandas
-from keras.models import load_model
-from sklearn.preprocessing import MinMaxScaler
 import sys
-from keras.metrics import top_k_categorical_accuracy
-import gc
 from keras import backend as K
-import json
+from sklearn.preprocessing import MinMaxScaler
 
 
 class Logger(object):
