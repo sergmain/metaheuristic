@@ -36,12 +36,12 @@ import java.util.List;
 public class ExchangeData {
 
     private Protocol.Nop nop;
-    private Protocol.Ok ok;
     private Protocol.ReportStation reportStation;
     private Protocol.RequestDefinitions requestDefinitions;
     private Protocol.RequestExperiment requestExperiment;
     private Protocol.RequestStationId requestStationId;
     private Protocol.AssignedStationId assignedStationId;
+    private Protocol.ReAssignStationId reAssignedStationId;
     private Protocol.RegisterInvite registerInvite;
     private Protocol.RegisterInviteResult registerInviteResult;
 
@@ -84,16 +84,7 @@ public class ExchangeData {
     public void setCommand(Command command) {
         switch (command.getType()) {
             case Nop:
-                if (this.nop != null) {
-                    throw new IllegalStateException("Was already initialized");
-                }
                 this.nop = (Protocol.Nop) command;
-                break;
-            case Ok:
-                if (this.ok != null) {
-                    throw new IllegalStateException("Was already initialized");
-                }
-                this.ok = (Protocol.Ok) command;
                 break;
             case ReportStation:
                 if (this.reportStation != null) {
@@ -115,6 +106,9 @@ public class ExchangeData {
                 break;
             case AssignedStationId:
                 this.assignedStationId = (Protocol.AssignedStationId) command;
+                break;
+            case ReAssignStationId:
+                this.reAssignedStationId = (Protocol.ReAssignStationId) command;
                 break;
             case RegisterInvite:
                 if (this.registerInvite != null) {
@@ -138,7 +132,7 @@ public class ExchangeData {
     }
 
     public List<Command> getCommands() {
-        return asListOfNonNull(nop, ok, reportStation, requestDefinitions, requestStationId, assignedStationId, registerInvite, registerInviteResult);
+        return asListOfNonNull(nop, reportStation, requestDefinitions, requestStationId, assignedStationId, reAssignedStationId, registerInvite, registerInviteResult);
     }
 
     @Override

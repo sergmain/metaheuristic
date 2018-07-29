@@ -37,15 +37,6 @@ public class Protocol {
         }
     }
 
-    /**
-     * another stub command, which is actually doing nothing
-     */
-    public static class Ok extends Command {
-        public Ok() {
-            this.setType(Type.Ok);
-        }
-    }
-
     public static class RequestStationId extends Command {
         public RequestStationId() {
             this.setType(Type.RequestStationId);
@@ -64,6 +55,25 @@ public class Protocol {
 
         public AssignedStationId() {
             this.setType(Type.AssignedStationId);
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class ReAssignStationId extends Command {
+        String stationId;
+
+        public ReAssignStationId(Long stationId) {
+            this(Long.toString(stationId));
+        }
+
+        public ReAssignStationId(String stationId) {
+            this.setType(Type.ReAssignStationId);
+            this.stationId = stationId;
+        }
+
+        public ReAssignStationId() {
+            this.setType(Type.ReAssignStationId);
         }
     }
 

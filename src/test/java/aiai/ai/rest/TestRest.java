@@ -124,7 +124,7 @@ public class TestRest {
     @Test
 //    @WithUserDetails("admin")
     public void testSimpleCommunicationWithServer() throws Exception {
-        ExchangeData dataReqest = new ExchangeData(new Protocol.Ok());
+        ExchangeData dataReqest = new ExchangeData(new Protocol.Nop());
         String jsonReqest = jsonService.getMapper().writeValueAsString(dataReqest);
         MvcResult result = mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
                 .content(jsonReqest))

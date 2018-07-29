@@ -47,6 +47,20 @@ public class StationService {
         stationMetadataRepository.save(m);
     }
 
+    public synchronized void changeStationId(String id){
+        Optional<StationMetadata> metaOptional = stationMetadataRepository.findByKey(StationConsts.STATION_ID);
+        if (metaOptional.isPresent()) {
+            StationMetadata metadata = metaOptional.get();
+            metadata.setValue(id);
+            stationMetadataRepository.save(metadata);
+            return;
+        }
+        StationMetadata m = new StationMetadata();
+        m.setKey(StationConsts.STATION_ID);
+        m.setValue(id);
+        stationMetadataRepository.save(m);
+    }
+
     private String getMeta(String key) {
         return stationMetadataRepository.findByKey(key).map(StationMetadata::getValue).orElse(null);
     }

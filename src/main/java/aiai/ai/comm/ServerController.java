@@ -17,13 +17,13 @@
 
 package aiai.ai.comm;
 
+import aiai.ai.beans.Station;
+import aiai.ai.repositories.StationsRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * User: Serg
@@ -35,16 +35,25 @@ public class ServerController {
 
     private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(new Protocol.Nop());
     private CommandProcessor commandProcessor;
+    private StationsRepository stationsRepository;
 
-    public ServerController(CommandProcessor commandProcessor) {
+    public ServerController(CommandProcessor commandProcessor, StationsRepository stationsRepository) {
         this.commandProcessor = commandProcessor;
+        this.stationsRepository = stationsRepository;
     }
 
     @PostMapping("/rest-anon/srv")
-    public ExchangeData postDatasets(@RequestBody ExchangeData data) {
+    public ExchangeData postDatasets(@RequestBody ExchangeData data, HttpServletRequest request) {
         System.out.println("received ExchangeData via POST: " + data);
         if (StringUtils.isBlank(data.getStationId())) {
             return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
+        }
+        if (stationsRepository.findById(Long.parseLong(data.getStationId())).orElse(null)==null) {
+            Station s = new Station();
+            s.setIp(request.getRemoteAddr());
+            s.setDescription("Id was ressigned from "+data.getStationId());
+            stationsRepository.save(s);
+            return new ExchangeData(new Protocol.ReAssignStationId(s.getId()));
         }
 
         List<Command> commands = data.getCommands();

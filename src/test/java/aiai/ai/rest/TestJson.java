@@ -45,14 +45,14 @@ public class TestJson {
     @Test
     public void testJsonExchangeData() throws IOException {
         System.out.println("testJsonExchangeData()");
-        String json = "{\"commands\":[{\"type\":\"Ok\",\"sysParams\":{\"test\":\"42\"}}],\"success\":true}";
+        String json = "{\"commands\":[{\"type\":\"Nop\",\"sysParams\":{\"test\":\"42\"}}],\"success\":true}";
 
         ExchangeData data = jsonService.getMapper().readValue(json, ExchangeData.class);
 
         Assert.assertNotNull(data.getCommands());
         Assert.assertEquals(1, data.getCommands().size());
         Command command = data.getCommands().get(0);
-        Assert.assertEquals(Command.Type.Ok, command.getType());
+        Assert.assertEquals(Command.Type.Nop, command.getType());
         Assert.assertNull(command.getSysParams());
     }
 

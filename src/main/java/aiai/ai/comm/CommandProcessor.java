@@ -56,8 +56,6 @@ public class CommandProcessor {
         switch (command.getType()) {
             case Nop:
                 break;
-            case Ok:
-                break;
             case ReportStation:
                 break;
             case RequestDefinitions:
@@ -66,6 +64,8 @@ public class CommandProcessor {
                 return getNewStationId((Protocol.RequestStationId)command);
             case AssignedStationId:
                 return storeStationId((Protocol.AssignedStationId)command);
+            case ReAssignStationId:
+                return reAssignStationId((Protocol.ReAssignStationId)command);
             case RegisterInvite:
                 return processInvite((Protocol.RegisterInvite) command);
             case RegisterInviteResult:
@@ -79,6 +79,12 @@ public class CommandProcessor {
     private Command storeStationId(Protocol.AssignedStationId command) {
         System.out.println("New station Id: " + command.getStationId());
         stationService.storeStationId(command.getStationId());
+        return new Protocol.Nop();
+    }
+
+    private Command reAssignStationId(Protocol.ReAssignStationId command) {
+        System.out.println("New station Id: " + command.getStationId());
+        stationService.changeStationId(command.getStationId());
         return new Protocol.Nop();
     }
 
