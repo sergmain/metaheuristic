@@ -39,6 +39,6 @@ public class Command {
     private Map<String, String> sysParams;
     private Map<String, String> response = new HashMap<>();
 
-    public enum Type {Nop, Ok, ReportStation, RequestDefinitions, AssignStationId, RegisterInvite, RegisterInviteResult, RequestExperiment}
+    public enum Type {Nop, Ok, ReportStation, RequestDefinitions, RequestStationId, AssignedStationId, RegisterInvite, RegisterInviteResult, RequestExperiment}
 
 }

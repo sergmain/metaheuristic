@@ -17,6 +17,7 @@
 
 package aiai.ai.comm;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -42,9 +43,16 @@ public class ServerController {
     @PostMapping("/rest-anon/srv")
     public ExchangeData postDatasets(@RequestBody ExchangeData data) {
         System.out.println("received ExchangeData via POST: " + data);
-        ExchangeData resultData = new ExchangeData();
+        if (StringUtils.isBlank(data.getStationId())) {
+            return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
+        }
+
         List<Command> commands = data.getCommands();
+        ExchangeData resultData = new ExchangeData();
         for (Command command : commands) {
+            if (data.getStationId()!=null && command instanceof Protocol.RequestStationId) {
+                continue;
+            }
             resultData.setCommand(commandProcessor.process(command));
         }
 
@@ -57,6 +65,10 @@ public class ServerController {
         return "Ok as string";
     }
 
+    /// 2018.07.29 should I restore this method???
+/*
+    public static final String IP = "ip";
+
     @PostMapping("/rest-anon/srv-str")
     public String postDataAsStr(String json, HttpServletRequest request) {
         System.out.println("received json via postDataAsStr(): " + json);
@@ -64,4 +76,5 @@ public class ServerController {
         sysParams.put(CommConsts.IP, request.getRemoteAddr());
         return commandProcessor.processAll(json, sysParams);
     }
+*/
 }

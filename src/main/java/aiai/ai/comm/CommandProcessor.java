@@ -20,6 +20,7 @@ package aiai.ai.comm;
 import aiai.ai.invite.InviteService;
 import aiai.ai.beans.Station;
 import aiai.ai.repositories.StationsRepository;
+import aiai.ai.station.StationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.stereotype.Service;
@@ -38,12 +39,14 @@ public class CommandProcessor {
     private static final String EMPTY_JSON = "[{}]";
 
     private StationsRepository stationsRepository;
+    private StationService stationService;
     private InviteService inviteService;
 
     private ObjectMapper mapper;
 
-    public CommandProcessor(StationsRepository stationsRepository, InviteService inviteService) {
+    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService) {
         this.stationsRepository = stationsRepository;
+        this.stationService = stationService;
         this.inviteService = inviteService;
         this.mapper = new ObjectMapper();
         this.mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
@@ -59,8 +62,10 @@ public class CommandProcessor {
                 break;
             case RequestDefinitions:
                 break;
-            case AssignStationId:
-                return getNewStationId(command);
+            case RequestStationId:
+                return getNewStationId((Protocol.RequestStationId)command);
+            case AssignedStationId:
+                return storeStationId((Protocol.AssignedStationId)command);
             case RegisterInvite:
                 return processInvite((Protocol.RegisterInvite) command);
             case RegisterInviteResult:
@@ -68,7 +73,12 @@ public class CommandProcessor {
             case RequestExperiment:
                 break;
         }
+        return new Protocol.Nop();
+    }
 
+    private Command storeStationId(Protocol.AssignedStationId command) {
+        System.out.println("New station Id: " + command.getStationId());
+        stationService.storeStationId(command.getStationId());
         return new Protocol.Nop();
     }
 
@@ -78,16 +88,11 @@ public class CommandProcessor {
         return result;
     }
 
-    private Command getNewStationId(Command command) {
-        Command response = new Protocol.AssignStationId();
-
+    private Command getNewStationId(Protocol.RequestStationId command) {
         final Station st = new Station();
-        st.setDescription(command.getParams().get(CommConsts.DESC));
-        st.setIp(command.getSysParams().get(CommConsts.IP));
         stationsRepository.save(st);
 
-        response.getResponse().put(CommConsts.STATION_ID, Long.toString(st.getId()));
-        return response;
+        return new Protocol.AssignedStationId(Long.toString(st.getId()));
     }
 
     public String processAll(String json, Map<String, String> sysParams) {
@@ -106,6 +111,10 @@ public class CommandProcessor {
             e.printStackTrace();
             return "error parsing the request json";
         }
+    }
+
+    public ExchangeData processExchangeData(ExchangeData data) {
+        return processExchangeData(null, data);
     }
 
     public ExchangeData processExchangeData(Map<String, String> sysParams, ExchangeData data) {

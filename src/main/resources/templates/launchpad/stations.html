@@ -107,12 +107,14 @@
         </tbody>
     </table>
 
-    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/srv/in-str}" accept-charset="UTF-8" id="station-form" name="f">
+    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/rest-anon/srv}" accept-charset="UTF-8" id="station-form" name="f">
         <fieldset>
             <label for="json">json</label>
             <input name="json" id="json" type="text" placeholder="json" value="[{}]"/>
             <span class="pure-form-message">This is a required field.</span>
 
+            <button class="pure-button pure-button-primary">Send</button>
+<!--
             <table>
                 <tr>
                     <td>
@@ -120,6 +122,7 @@
                     </td>
                 </tr>
             </table>
+-->
         </fieldset>
     </form>
 

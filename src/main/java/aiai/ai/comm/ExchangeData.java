@@ -40,13 +40,18 @@ public class ExchangeData {
     private Protocol.ReportStation reportStation;
     private Protocol.RequestDefinitions requestDefinitions;
     private Protocol.RequestExperiment requestExperiment;
-    private Protocol.AssignStationId assignStationId;
+    private Protocol.RequestStationId requestStationId;
+    private Protocol.AssignedStationId assignedStationId;
     private Protocol.RegisterInvite registerInvite;
     private Protocol.RegisterInviteResult registerInviteResult;
 
     @JsonProperty(value = "success")
     private boolean isSuccess = true;
     private String msg;
+
+    @JsonProperty(value = "station_id")
+    private String stationId;
+
 
     public ExchangeData() {
     }
@@ -68,6 +73,12 @@ public class ExchangeData {
             }
         }
         return list;
+    }
+
+    public void setCommands(List<Command> commands) {
+        for (Command command : commands) {
+            setCommand(command);
+        }
     }
 
     public void setCommand(Command command) {
@@ -96,11 +107,14 @@ public class ExchangeData {
                 }
                 this.requestDefinitions = (Protocol.RequestDefinitions) command;
                 break;
-            case AssignStationId:
-                if (this.assignStationId != null) {
+            case RequestStationId:
+                if (this.requestStationId != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
-                this.assignStationId = (Protocol.AssignStationId) command;
+                this.requestStationId = (Protocol.RequestStationId) command;
+                break;
+            case AssignedStationId:
+                this.assignedStationId = (Protocol.AssignedStationId) command;
                 break;
             case RegisterInvite:
                 if (this.registerInvite != null) {
@@ -124,7 +138,7 @@ public class ExchangeData {
     }
 
     public List<Command> getCommands() {
-        return asListOfNonNull(nop, ok, reportStation, requestDefinitions, assignStationId, registerInvite, registerInviteResult);
+        return asListOfNonNull(nop, ok, reportStation, requestDefinitions, requestStationId, assignedStationId, registerInvite, registerInviteResult);
     }
 
     @Override

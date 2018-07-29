@@ -46,9 +46,24 @@ public class Protocol {
         }
     }
 
-    public static class AssignStationId extends Command {
-        public AssignStationId() {
-            this.setType(Type.AssignStationId);
+    public static class RequestStationId extends Command {
+        public RequestStationId() {
+            this.setType(Type.RequestStationId);
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class AssignedStationId extends Command {
+        String stationId;
+
+        public AssignedStationId(String stationId) {
+            this.setType(Type.AssignedStationId);
+            this.stationId = stationId;
+        }
+
+        public AssignedStationId() {
+            this.setType(Type.AssignedStationId);
         }
     }
 

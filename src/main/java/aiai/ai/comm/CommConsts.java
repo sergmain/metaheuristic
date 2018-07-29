@@ -24,7 +24,5 @@ package aiai.ai.comm;
  */
 public class CommConsts {
 
-    public static final String IP = "ip";
     public static final String DESC = "desc";
-    public static final String STATION_ID = "stationId";
 }
