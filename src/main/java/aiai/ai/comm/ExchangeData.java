@@ -39,6 +39,7 @@ public class ExchangeData {
     private Protocol.ReportStation reportStation;
     private Protocol.RequestDefinitions requestDefinitions;
     private Protocol.RequestExperiment requestExperiment;
+    private Protocol.AssignedExperiment assignedExperiment;
     private Protocol.RequestStationId requestStationId;
     private Protocol.AssignedStationId assignedStationId;
     private Protocol.ReAssignStationId reAssignedStationId;
@@ -82,6 +83,7 @@ public class ExchangeData {
     }
 
     public void setCommand(Command command) {
+        command.setStationId(stationId);
         switch (command.getType()) {
             case Nop:
                 this.nop = (Protocol.Nop) command;
@@ -128,11 +130,21 @@ public class ExchangeData {
                 }
                 this.requestExperiment = (Protocol.RequestExperiment) command;
                 break;
+            case AssignedExperiment:
+                if (this.assignedExperiment != null) {
+                    throw new IllegalStateException("Was already initialized");
+                }
+                this.assignedExperiment = (Protocol.AssignedExperiment) command;
+                break;
         }
     }
 
     public List<Command> getCommands() {
-        return asListOfNonNull(nop, reportStation, requestDefinitions, requestStationId, assignedStationId, reAssignedStationId, registerInvite, registerInviteResult);
+        return asListOfNonNull(
+                nop, reportStation, requestDefinitions, requestStationId,
+                assignedStationId, reAssignedStationId, registerInvite,
+                registerInviteResult, requestExperiment, assignedExperiment
+        );
     }
 
     @Override

@@ -17,6 +17,7 @@
 
 package aiai.ai.comm;
 
+import aiai.ai.station.StationExperimentService;
 import aiai.ai.station.StationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -42,16 +44,26 @@ public class LaunchpadRequester {
 
     @Value("${aiai.station.launchpad.url}")
     private String launchpadUrl;
+    private String targetUrl;
+
+
     private final RestTemplate restTemplate;
 
     private final CommandProcessor commandProcessor;
+    private final StationExperimentService stationExperimentService;
     private StationService stationService;
 
     @Autowired
-    public LaunchpadRequester(CommandProcessor commandProcessor, StationService stationService) {
+    public LaunchpadRequester(CommandProcessor commandProcessor, StationExperimentService stationExperimentService, StationService stationService) {
         this.commandProcessor = commandProcessor;
+        this.stationExperimentService = stationExperimentService;
         this.stationService = stationService;
         this.restTemplate = new RestTemplate();
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        targetUrl = launchpadUrl + "/rest-anon/srv";
     }
 
     private final List<Command> commands = new ArrayList<>();
@@ -69,7 +81,7 @@ public class LaunchpadRequester {
     }
 
     /**
-     * this scheduler is runned at station side
+     * this scheduler is being runned at station side
      *
      * long fixedDelay()
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
@@ -77,14 +89,17 @@ public class LaunchpadRequester {
     @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
     public void fixedDelayTaskComplex() {
 
-        final String url = launchpadUrl + "/rest-anon/srv";
-
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         ExchangeData data = new ExchangeData();
-        data.setStationId(stationService.getStationId());
+        String stationId = stationService.getStationId();
+        data.setStationId(stationId);
+
+        if (!stationExperimentService.isActiveExperiment(stationId)) {
+            data.setCommand(new Protocol.RequestExperiment());
+        }
 
         List<Command> cmds;
         synchronized (commands) {
@@ -93,6 +108,9 @@ public class LaunchpadRequester {
         }
         data.setCommands(cmds);
 
+
+
+/*
         Protocol.Nop command = new Protocol.Nop();
         command.getParams().put("тест", "ИИИ");
         data.setCommand(command);
@@ -100,10 +118,11 @@ public class LaunchpadRequester {
         Protocol.RegisterInvite invite = new Protocol.RegisterInvite();
         invite.setInvite("invite-12345");
         data.setRegisterInvite(invite);
+*/
 
         HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
 
-        ResponseEntity<ExchangeData> response = restTemplate.exchange(url, HttpMethod.POST, request, ExchangeData.class);
+        ResponseEntity<ExchangeData> response = restTemplate.exchange(targetUrl, HttpMethod.POST, request, ExchangeData.class);
         ExchangeData result = response.getBody();
 
         addCommands(commandProcessor.processExchangeData(result).getCommands());

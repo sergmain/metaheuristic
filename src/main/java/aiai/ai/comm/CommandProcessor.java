@@ -19,6 +19,7 @@ package aiai.ai.comm;
 
 import aiai.ai.invite.InviteService;
 import aiai.ai.beans.Station;
+import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.repositories.StationsRepository;
 import aiai.ai.station.StationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -41,13 +42,15 @@ public class CommandProcessor {
     private StationsRepository stationsRepository;
     private StationService stationService;
     private InviteService inviteService;
+    private ExperimentService experimentService;
 
     private ObjectMapper mapper;
 
-    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService) {
+    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService) {
         this.stationsRepository = stationsRepository;
         this.stationService = stationService;
         this.inviteService = inviteService;
+        this.experimentService = experimentService;
         this.mapper = new ObjectMapper();
         this.mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
@@ -71,9 +74,21 @@ public class CommandProcessor {
             case RegisterInviteResult:
                 break;
             case RequestExperiment:
-                break;
+                return processRequestExperiment((Protocol.RequestExperiment) command);
+            case AssignedExperiment:
+                return processAssignedExperiment((Protocol.AssignedExperiment) command);
         }
         return new Protocol.Nop();
+    }
+
+    private Command processAssignedExperiment(Protocol.AssignedExperiment command) {
+        return null;
+    }
+
+    private Command processRequestExperiment(Protocol.RequestExperiment command) {
+        Protocol.AssignedExperiment r = new Protocol.AssignedExperiment();
+        r.setExperiment(experimentService.getExperimentAndAssignToStation(command.stationId));
+        return r;
     }
 
     private Command storeStationId(Protocol.AssignedStationId command) {

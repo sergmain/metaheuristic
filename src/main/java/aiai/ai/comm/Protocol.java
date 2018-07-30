@@ -17,9 +17,15 @@
 
 package aiai.ai.comm;
 
+import aiai.ai.beans.Dataset;
+import aiai.ai.beans.Experiment;
 import aiai.ai.beans.InviteResult;
+import aiai.ai.beans.Snippet;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Serg
@@ -40,6 +46,18 @@ public class Protocol {
     public static class RequestStationId extends Command {
         public RequestStationId() {
             this.setType(Type.RequestStationId);
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class AssignedExperiment extends Command {
+        Experiment experiment;
+        Long datasetId;
+        List<Snippet> snippets;
+
+        public AssignedExperiment() {
+            this.setType(Type.AssignedExperiment);
         }
     }
 

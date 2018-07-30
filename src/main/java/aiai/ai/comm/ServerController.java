@@ -68,12 +68,6 @@ public class ServerController {
         return resultData.getCommands().isEmpty() ? EXCHANGE_DATA_NOP : resultData;
     }
 
-    @GetMapping("/rest-anon/srv-str")
-    public String getDataAsStr(@RequestParam(required = false) String json) {
-        System.out.println("received json via getDataAsStr(): " + json);
-        return "Ok as string";
-    }
-
     /// 2018.07.29 should I restore this method???
 /*
     public static final String IP = "ip";

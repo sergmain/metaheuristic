@@ -33,12 +33,17 @@ import java.util.Map;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(value = {"sysParams"})
 public class Command {
+    public String stationId;
 
     private Type type;
     private Map<String, String> params = new HashMap<>();
     private Map<String, String> sysParams;
     private Map<String, String> response = new HashMap<>();
 
-    public enum Type {Nop, ReportStation, RequestDefinitions, RequestStationId, AssignedStationId, ReAssignStationId, RegisterInvite, RegisterInviteResult, RequestExperiment}
+    public enum Type {
+        Nop, ReportStation, RequestDefinitions, RequestStationId,
+        AssignedStationId, ReAssignStationId, RegisterInvite,
+        RegisterInviteResult, RequestExperiment, AssignedExperiment,
+    }
 
 }
