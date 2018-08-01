@@ -63,4 +63,17 @@ public class TestYamlParser {
         }
     }
 
+    @Test
+    public void loadSnippetsFromYaml() throws IOException {
+
+        try(InputStream is = TestYamlParser.class.getResourceAsStream("/snippets/snippet-01/snippets.yaml")) {
+
+            Yaml yaml = new Yaml();
+
+            List<Map<String, Map<String, String>>> cfg = yaml.load(is);
+            Assert.assertNotNull(cfg);
+            Assert.assertEquals(2, cfg.size());
+        }
+    }
+
 }

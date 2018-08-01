@@ -760,6 +760,9 @@ public class DatasetsController {
     public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId) {
 
         String originFilename = file.getOriginalFilename();
+        if (originFilename==null) {
+            return "redirect:/launchpad/dataset-definition/" + datasetId;
+        }
         if (!checkExtension(originFilename)) {
             throw new IllegalStateException("Not supported extension, filename: " + originFilename);
         }
