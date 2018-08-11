@@ -104,10 +104,23 @@ dataset:
         file: fit-model.py
         version: 1.0
 */
-            SnippetsConfig.SnippetConfig sc = config.snippets.get(0);
+            SnippetsConfig.SnippetConfig sc;
+            sc = config.snippets.get(0);
             Assert.assertEquals("aiai.fit.default.snippet", sc.name);
             Assert.assertEquals(SnippetsConfig.SnippetType.fit, sc.type);
             Assert.assertEquals("fit-model.py", sc.file);
+            Assert.assertEquals("1.0", sc.version);
+
+/*
+    - name: aiai.predict.default.snippet
+      version: 1.0
+      type: predict
+      file: predict-model.py
+*/
+            sc = config.snippets.get(1);
+            Assert.assertEquals("aiai.predict.default.snippet", sc.name);
+            Assert.assertEquals(SnippetsConfig.SnippetType.predict, sc.type);
+            Assert.assertEquals("predict-model.py", sc.file);
             Assert.assertEquals("1.0", sc.version);
         }
     }

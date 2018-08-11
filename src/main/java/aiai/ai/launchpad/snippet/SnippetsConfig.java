@@ -27,7 +27,7 @@ import java.util.List;
 @Data
 public class SnippetsConfig {
 
-    public enum SnippetType {fit, predict}
+    public enum SnippetType {fit, predict, custom}
 
     @Data
     public static class SnippetConfig {
