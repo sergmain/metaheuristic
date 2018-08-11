@@ -41,7 +41,7 @@ import java.util.Optional;
 public class StationsController {
 
     private final StationsRepository repository;
-    @Value("${aiai.table.rows.limit}")
+    @Value("${aiai.table.rows.limit:#{5}}")
     private int limit;
 
     public StationsController(StationsRepository repository) {

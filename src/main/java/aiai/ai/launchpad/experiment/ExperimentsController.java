@@ -49,7 +49,7 @@ public class ExperimentsController {
         public Slice<Experiment> items;
     }
 
-    @Value("${aiai.table.rows.limit}")
+    @Value("${aiai.table.rows.limit:#{5}}")
     private int limit;
     private ExperimentRepository experimentRepository;
     private ExperimentMetadataRepository experimentMetadataRepository;

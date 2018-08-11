@@ -40,7 +40,7 @@ import java.util.Optional;
 @RequestMapping("/station")
 public class EnvironmentController {
 
-    @Value("${aiai.table.rows.limit}")
+    @Value("${aiai.table.rows.limit:#{5}}")
     private int limit;
 
     private EnvironmentRepository repository;

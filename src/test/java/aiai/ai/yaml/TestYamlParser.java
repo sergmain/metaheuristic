@@ -17,11 +17,13 @@
 
 package aiai.ai.yaml;
 
+import aiai.ai.launchpad.snippet.SnippetsConfig;
 import lombok.Data;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Test;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,22 +46,45 @@ public class TestYamlParser {
         Assert.assertThat(yamlParsers.keySet(), CoreMatchers.hasItems("JYaml", "JvYaml", "YamlBeans", "SnakeYAML"));
     }
 
+    @Data
+    public static class DatasetConfig {
+        List<String> input;
+        List<String> labels;
+        String output;
+    }
+
+    @Data
+    public static class SampleYamlConfig {
+        DatasetConfig dataset;
+/*
+dataset:
+  input:
+    - file_01.txt
+    - file_02.txt
+    - file_03.txt
+  labels:
+    - file_04.txt
+    - file_05.txt
+  output: dataset_06.txt
+*/
+
+    }
+
     @Test
     public void loadYmlAsMapFromStream() throws IOException {
 
         try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/simple.yaml")) {
 
-            Yaml yaml = new Yaml();
+            Yaml yaml = new Yaml(new Constructor(SampleYamlConfig.class));
 
-            Map<String, Map<String, List<String>>> yamlParsers = yaml.load(is);
-            Assert.assertThat(yamlParsers.keySet(), CoreMatchers.hasItems("dataset"));
-            Assert.assertThat(yamlParsers.get("dataset").keySet(), CoreMatchers.hasItems("input", "labels", "output"));
+            SampleYamlConfig config = yaml.load(is);
+            Assert.assertNotNull(config.dataset);
+            Assert.assertNotNull(config.dataset.input);
+            Assert.assertNotNull(config.dataset.labels);
+            Assert.assertNotNull(config.dataset.output);
 
-            List<String> files = yamlParsers.get("dataset").get("input");
-            Assert.assertEquals(3, files.size());
-
-            List<String> outputs = yamlParsers.get("dataset").get("output");
-            Assert.assertEquals(1, outputs.size());
+            Assert.assertEquals(3, config.dataset.input.size());
+            Assert.assertEquals(2, config.dataset.labels.size());
         }
     }
 
@@ -68,12 +93,25 @@ public class TestYamlParser {
 
         try(InputStream is = TestYamlParser.class.getResourceAsStream("/snippets/snippet-01/snippets.yaml")) {
 
-            Yaml yaml = new Yaml();
+            SnippetsConfig config = SnippetsConfig.loadSnippetYaml(is);
 
-            List<Map<String, Map<String, String>>> cfg = yaml.load(is);
-            Assert.assertNotNull(cfg);
-            Assert.assertEquals(2, cfg.size());
+            Assert.assertNotNull(config);
+            Assert.assertNotNull(config.snippets);
+            Assert.assertEquals(2, config.snippets.size());
+/*
+        ns: aiai.fit.default.snippet
+        type: fit
+        file: fit-model.py
+        version: 1.0
+*/
+            SnippetsConfig.SnippetConfig sc = config.snippets.get(0);
+            Assert.assertEquals("aiai.fit.default.snippet", sc.name);
+            Assert.assertEquals(SnippetsConfig.SnippetType.fit, sc.type);
+            Assert.assertEquals("fit-model.py", sc.file);
+            Assert.assertEquals("1.0", sc.version);
         }
     }
+
+
 
 }

@@ -1,10 +1,11 @@
-- snippet:
-    type: fit
-    file: fit-model.py
-    version: 1.0
-- snippet:
-    type: predict
-    file: predict-model.py
-    version: 1.0
+snippets:
+    - name: aiai.fit.default.snippet
+      version: 1.0
+      type: fit
+      file: fit-model.py
+    - name: aiai.predict.default.snippet
+      version: 1.0
+      type: predict
+      file: predict-model.py
 
 

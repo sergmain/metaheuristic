@@ -32,7 +32,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.annotation.PostConstruct;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -53,11 +55,12 @@ public class DatasetsController {
     public static final String FEATURES_DIR = "features";
     public static final String DATASET_TXT = "dataset.txt";
 
-    @Value("${aiai.table.rows.limit}")
+    @Value("${aiai.table.rows.limit:#{5}}")
     private int limit;
 
     @Value("${aiai.launchpad.dir}")
     private String launchpadDirAsString;
+    private File launchpadDir;
 
     private DatasetsRepository repository;
     private DatasetGroupsRepository groupsRepository;
@@ -71,6 +74,11 @@ public class DatasetsController {
         this.columnRepository = columnRepository;
         this.pathRepository = pathRepository;
         this.logDataRepository = logDataRepository;
+    }
+
+    @PostConstruct
+    public void init() {
+        this.launchpadDir = toFile(launchpadDirAsString);
     }
 
     private static File toFile(String launchpadDirAsString) {
@@ -116,7 +124,6 @@ public class DatasetsController {
         final Dataset dataset = datasetOptional.get();
 
         final String path = String.format("<Launchpad directory>%c%s%c%03d", File.separatorChar, DEFINITIONS_DIR, File.separatorChar, dataset.getId());
-        final File launchpadDir = toFile(launchpadDirAsString);
         final File datasetDir = new File(launchpadDir, path);
 
 //        final DatasetDefinition definition = new DatasetDefinition(dataset, launchpadDirAsString, datasetDir.getPath());
@@ -130,7 +137,7 @@ public class DatasetsController {
             DatasetGroup group = dataset.getDatasetGroups().get(i);
             group.setAddColumn(true);
 /*
-    // TODO что это за кусок кода?
+    // TODO what is that? should I delete this?
             group.setAddColumn(false);
             if (i > 0) {
                 DatasetGroup groupPrev = dataset.getDatasetGroups().get(i - 1);
@@ -450,7 +457,6 @@ public class DatasetsController {
     }
 
     private File createYamlForFeature(Long datasetId, DatasetGroup group) {
-        final File launchpadDir = toFile(launchpadDirAsString);
 
         final String definitionPath = String.format("%s%c%03d", DEFINITIONS_DIR, File.separatorChar, datasetId);
         final File definitionDir = new File(launchpadDir, definitionPath);
@@ -594,7 +600,6 @@ public class DatasetsController {
     }
 
     private void updateDatasetInfo(Dataset dataset) {
-        final File launchpadDir = toFile(launchpadDirAsString);
         final String path = String.format("%s%c%03d", DEFINITIONS_DIR, File.separatorChar, dataset.getId());
 
         final File datasetDefDir = new File(launchpadDir, path);
@@ -641,8 +646,7 @@ public class DatasetsController {
 
             ProcessBuilder pb = new ProcessBuilder();
             pb.command(cmd);
-            File directory = toFile(launchpadDirAsString);
-            pb.directory(directory.getCanonicalFile());
+            pb.directory(launchpadDir.getCanonicalFile());
             pb.redirectErrorStream(true);
             final Process process = pb.start();
 
@@ -680,8 +684,6 @@ public class DatasetsController {
     }
 
     private File createAssemblingYaml(Dataset dataset) throws IOException {
-        final File launchpadDir = toFile(launchpadDirAsString);
-
         final String path = String.format("%s%c%03d", DEFINITIONS_DIR, File.separatorChar, dataset.getId());
         final File datasetDefDir = new File(launchpadDir, path);
         if (!datasetDefDir.exists()) {
@@ -778,8 +780,6 @@ public class DatasetsController {
         int pathNumber = paths.isEmpty() ? 1 : paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
         final String path = String.format("%s%c%03d%craws", DEFINITIONS_DIR, File.separatorChar, dataset.getId(), File.separatorChar);
 
-        final File launchpadDir = toFile(launchpadDirAsString);
-
         File datasetDir = new File(launchpadDir, path);
         if (!datasetDir.exists()) {
             boolean status = datasetDir.mkdirs();
@@ -812,7 +812,7 @@ public class DatasetsController {
     }
 
     private void createColumnsDefinition(Dataset dataset, InputStream is) throws IOException {
-        try (final InputStreamReader isr = new InputStreamReader(is, "UTF-8")) {
+        try (final InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8)) {
             try (BufferedReader br = new BufferedReader(isr)) {
                 String line = br.readLine();
                 DatasetGroup group = new DatasetGroup();

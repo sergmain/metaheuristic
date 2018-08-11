@@ -26,7 +26,7 @@ import java.io.Serializable;
 @Table(name = "AIAI_LP_SNIPPET")
 @Data
 public class Snippet implements Serializable {
-    private static final long serialVersionUID = -3393201397393532648L;
+    private static final long serialVersionUID = 4066977399166436522L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,6 +35,25 @@ public class Snippet implements Serializable {
     @Version
     private Integer version;
 
+    @Column(name = "NAME")
+    public String name;
+
+    @Column(name = "SNIPPET_TYPE")
+    public String type;
+
+    @Column(name = "SNIPPET_VERSION")
+    public String snippetVersion;
+
+    @Column(name = "FILENAME")
+    public String filename;
+
+    /**
+     * programm code, i.e. pyphon, js,...
+     */
+    @Column(name = "CODE")
     public String code;
+
+    @Column(name = "CHECKSUM")
+    public String checksum;
 
 }

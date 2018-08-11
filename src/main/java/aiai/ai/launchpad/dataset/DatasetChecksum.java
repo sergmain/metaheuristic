@@ -17,16 +17,14 @@
 
 package aiai.ai.launchpad.dataset;
 
+import aiai.ai.utils.Checksum;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * User: Serg
@@ -35,12 +33,6 @@ import java.util.Map;
  */
 public class DatasetChecksum {
 
-    private static ObjectMapper mapper;
-
-    static {
-        mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-    }
 
     public static String getChecksumAsJson(File file) {
 
@@ -69,10 +61,10 @@ public class DatasetChecksum {
             }
 */
             try (InputStream inputStream = new FileInputStream(file)) {
-                checksum.checksums.put(Type.SHA256, Type.SHA256.getChecksum(inputStream));
+                checksum.checksums.put(Checksum.Type.SHA256, Checksum.Type.SHA256.getChecksum(inputStream));
             }
             //noinspection UnnecessaryLocalVariable
-            String jsonAsString = mapper.writeValueAsString(checksum);
+            String jsonAsString = checksum.toJson();
             return jsonAsString;
         } catch (Exception e) {
             e.printStackTrace();
@@ -87,34 +79,9 @@ public class DatasetChecksum {
         System.out.println("checksums: " + json);
         System.out.println("checksums len: " + json.length());
 
-        Checksum checksum = mapper.readValue(json, Checksum.class);
+        Checksum checksum = Checksum.fromJson(json);
 
         System.out.println(checksum);
     }
 
-    public enum Type {
-        MD5, SHA256;
-
-        public String getChecksum(InputStream inputStream) throws IOException {
-            switch (this) {
-                case MD5:
-                    return DigestUtils.md5Hex(inputStream);
-                case SHA256:
-                    return DigestUtils.sha256Hex(inputStream);
-                default:
-                    throw new IllegalStateException("Not implemented: " + this);
-            }
-        }
-    }
-
-    public static class Checksum {
-        public Map<Type, String> checksums = new HashMap<>();
-
-        @Override
-        public String toString() {
-            return "Checksum{" +
-                    "checksums=" + checksums +
-                    '}';
-        }
-    }
 }
