@@ -17,7 +17,11 @@
  */
 package aiai.ai.launchpad.snippet;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
@@ -30,6 +34,17 @@ public class SnippetsConfig {
     public enum SnippetType {fit, predict, custom}
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SnippetConfigStatus {
+        public boolean isOk;
+        public String error;
+    }
+
+    public static final SnippetConfigStatus SNIPPET_CONFIG_STATUS_OK = new SnippetConfigStatus();
+
+    @Data
+    @ToString
     public static class SnippetConfig {
 /*
 - snippet:
@@ -43,10 +58,18 @@ public class SnippetsConfig {
         public String file;
         public String version;
 
+        public SnippetConfigStatus verify() {
+            if (StringUtils.isBlank(name) || type==null || StringUtils.isBlank(file) || StringUtils.isBlank(version)) {
+                return new SnippetConfigStatus(false, "A field is null or empty: " + this.toString());
+            }
+            if (name.indexOf(':')!=-1 || version.indexOf(':')!=-1) {
+                return new SnippetConfigStatus(false, "Fields 'name' and 'version' can't contain ':'" + this.toString());
+            }
+            return SNIPPET_CONFIG_STATUS_OK;
+        }
     }
 
     public List<SnippetConfig> snippets;
-
 
     public static SnippetsConfig loadSnippetYaml(InputStream is) {
 

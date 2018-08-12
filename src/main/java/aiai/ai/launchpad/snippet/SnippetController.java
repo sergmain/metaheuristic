@@ -86,6 +86,11 @@ public class SnippetController {
         try (InputStream is = new FileInputStream(yamlConfigFile)) {
             SnippetsConfig snippetsConfig = SnippetsConfig.loadSnippetYaml(is);
             for (SnippetsConfig.SnippetConfig snippetConfig : snippetsConfig.snippets) {
+                SnippetsConfig.SnippetConfigStatus status = snippetConfig.verify();
+                if (!status.isOk) {
+                    System.out.println(status.error);
+                    continue;
+                }
                 File file = new File(srcDir, snippetConfig.file);
                 if (!file.exists()) {
                     throw new IllegalStateException("File " + snippetConfig.file+" wasn't found in "+ srcDir.getAbsolutePath());
