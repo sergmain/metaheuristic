@@ -18,6 +18,7 @@
 
 package aiai.ai.beans;
 
+import aiai.ai.launchpad.snippet.SnippetType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -65,4 +66,27 @@ public class Experiment implements Serializable {
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
     private List<ExperimentSnippet> snippets;
 
+    public boolean hasFit() {
+        if (snippets==null || snippets.isEmpty()) {
+            return false;
+        }
+        for (ExperimentSnippet snippet : snippets) {
+            if (SnippetType.fit.toString().equals(snippet.getType())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasPredict() {
+        if (snippets==null || snippets.isEmpty()) {
+            return false;
+        }
+        for (ExperimentSnippet snippet : snippets) {
+            if (SnippetType.predict.toString().equals(snippet.getType())) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

@@ -40,6 +40,12 @@ public class ExperimentSnippet implements Serializable {
     @Column(name = "SNIPPET_CODE")
     private String snippetCode;
 
+    @Column(name = "SNIPPET_TYPE")
+    public String type;
+
+    @Column(name = "SNIPPET_ORDER")
+    private int order;
+
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
     @JoinColumn(name = "EXPERIMENT_ID")
     private Experiment experiment;

@@ -17,6 +17,7 @@
 
 package aiai.ai.yaml;
 
+import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.snippet.SnippetsConfig;
 import lombok.Data;
 import org.hamcrest.CoreMatchers;
@@ -107,7 +108,7 @@ dataset:
             SnippetsConfig.SnippetConfig sc;
             sc = config.snippets.get(0);
             Assert.assertEquals("aiai.fit.default.snippet", sc.name);
-            Assert.assertEquals(SnippetsConfig.SnippetType.fit, sc.type);
+            Assert.assertEquals(SnippetType.fit, sc.type);
             Assert.assertEquals("fit-model.py", sc.file);
             Assert.assertEquals("1.0", sc.version);
 
@@ -119,7 +120,7 @@ dataset:
 */
             sc = config.snippets.get(1);
             Assert.assertEquals("aiai.predict.default.snippet", sc.name);
-            Assert.assertEquals(SnippetsConfig.SnippetType.predict, sc.type);
+            Assert.assertEquals(SnippetType.predict, sc.type);
             Assert.assertEquals("predict-model.py", sc.file);
             Assert.assertEquals("1.0", sc.version);
         }

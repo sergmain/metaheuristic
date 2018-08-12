@@ -18,12 +18,11 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.ControllerUtils;
-import aiai.ai.beans.Experiment;
-import aiai.ai.beans.ExperimentMetadata;
-import aiai.ai.beans.ExperimentSnippet;
-import aiai.ai.beans.Snippet;
+import aiai.ai.beans.*;
+import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.repositories.ExperimentMetadataRepository;
 import aiai.ai.repositories.ExperimentRepository;
+import aiai.ai.repositories.ExperimentSnippetRepository;
 import aiai.ai.repositories.SnippetRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -38,6 +37,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -60,11 +60,13 @@ public class ExperimentsController {
     private final ExperimentRepository experimentRepository;
     private final ExperimentMetadataRepository experimentMetadataRepository;
     private final SnippetRepository snippetRepository;
+    private final ExperimentSnippetRepository experimentSnippetRepository;
 
-    public ExperimentsController(ExperimentRepository experimentRepository, ExperimentMetadataRepository experimentMetadataRepository, SnippetRepository snippetRepository) {
+    public ExperimentsController(ExperimentRepository experimentRepository, ExperimentMetadataRepository experimentMetadataRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository) {
         this.experimentRepository = experimentRepository;
         this.experimentMetadataRepository = experimentMetadataRepository;
         this.snippetRepository = snippetRepository;
+        this.experimentSnippetRepository = experimentSnippetRepository;
     }
 
     @Data
@@ -77,7 +79,7 @@ public class ExperimentsController {
     @Data
     public static class SnippetResult {
         public List<SnippetSelectOption> selectOptions = new ArrayList<>();
-        public List<Snippet> snippets = new ArrayList<>();
+        public List<ExperimentSnippet> snippets = new ArrayList<>();
     }
 
     @GetMapping("/experiments")
@@ -131,8 +133,15 @@ public class ExperimentsController {
         for (Snippet snippet : snippets) {
             boolean isExist=false;
             for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
+                if (SnippetType.fit.equals(experimentSnippet.type) && experiment.hasFit()) {
+                    continue;
+                }
+                if (SnippetType.predict.equals(experimentSnippet.type) && experiment.hasPredict()) {
+                    continue;
+                }
                 if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
-                    snippetResult.snippets.add(snippet);
+                    experimentSnippet.type = snippet.type;
+                    snippetResult.snippets.add(experimentSnippet);
                     isExist = true;
                     break;
                 }
@@ -141,6 +150,7 @@ public class ExperimentsController {
                 snippetResult.selectOptions.add( new SnippetSelectOption(snippet.getSnippetCode(), String.format("Type: %s; Code: %s:%s", snippet.getType(), snippet.getName(), snippet.getSnippetVersion())));
             }
         }
+        snippetResult.snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
 
         model.addAttribute("experiment", experiment);
         model.addAttribute("snippetResult", snippetResult);
@@ -176,8 +186,19 @@ public class ExperimentsController {
             experiment.setSnippets(new ArrayList<>());
         }
         ExperimentSnippet s = new ExperimentSnippet();
+
+        //noinspection ConstantConditions
+        List<ExperimentSnippet> snippets = experimentSnippetRepository.findByExperiment_Id(experiment.getId());
+        int order = snippets.isEmpty() ? 1 : snippets.stream().mapToInt(ExperimentSnippet::getOrder).max().getAsInt() + 1;
+        s.setOrder(order);
+
         s.setExperiment(experiment);
         s.setSnippetCode( code );
+
+        String name = code.substring(0, code.indexOf(':'));
+        String version = code.substring(code.indexOf(':')+1);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(name, version);
+        s.setType(snippet.getType());
         experiment.getSnippets().add(s);
 
         experimentRepository.save(experiment);
@@ -191,6 +212,16 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiment-edit/" + experimentId;
         }
         experimentMetadataRepository.deleteById(id);
+        return "redirect:/launchpad/experiment-edit/"+experimentId;
+    }
+
+    @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{id}")
+    public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable Long id) {
+        ExperimentSnippet snippet = experimentSnippetRepository.findById(id).orElse(null);
+        if (snippet == null || experimentId != snippet.getExperiment().getId()) {
+            return "redirect:/launchpad/experiment-edit/" + experimentId;
+        }
+        experimentSnippetRepository.deleteById(id);
         return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 

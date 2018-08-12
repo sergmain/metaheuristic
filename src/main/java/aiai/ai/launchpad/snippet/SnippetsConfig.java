@@ -31,8 +31,6 @@ import java.util.List;
 @Data
 public class SnippetsConfig {
 
-    public enum SnippetType {fit, predict, custom}
-
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -41,7 +39,7 @@ public class SnippetsConfig {
         public String error;
     }
 
-    public static final SnippetConfigStatus SNIPPET_CONFIG_STATUS_OK = new SnippetConfigStatus();
+    public static final SnippetConfigStatus SNIPPET_CONFIG_STATUS_OK = new SnippetConfigStatus(true, null);
 
     @Data
     @ToString
