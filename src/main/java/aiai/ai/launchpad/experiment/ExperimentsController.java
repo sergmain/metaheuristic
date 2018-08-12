@@ -133,12 +133,6 @@ public class ExperimentsController {
         for (Snippet snippet : snippets) {
             boolean isExist=false;
             for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
-                if (SnippetType.fit.equals(experimentSnippet.type) && experiment.hasFit()) {
-                    continue;
-                }
-                if (SnippetType.predict.equals(experimentSnippet.type) && experiment.hasPredict()) {
-                    continue;
-                }
                 if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
                     experimentSnippet.type = snippet.type;
                     snippetResult.snippets.add(experimentSnippet);
@@ -147,10 +141,17 @@ public class ExperimentsController {
                 }
             }
             if (!isExist) {
+                if (SnippetType.fit.equals(snippet.type) && experiment.hasFit()) {
+                    continue;
+                }
+                if (SnippetType.predict.equals(snippet.type) && experiment.hasPredict()) {
+                    continue;
+                }
                 snippetResult.selectOptions.add( new SnippetSelectOption(snippet.getSnippetCode(), String.format("Type: %s; Code: %s:%s", snippet.getType(), snippet.getName(), snippet.getSnippetVersion())));
             }
         }
-        snippetResult.snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
+//        snippetResult.snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
+        snippetResult.snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
 
         model.addAttribute("experiment", experiment);
         model.addAttribute("snippetResult", snippetResult);
