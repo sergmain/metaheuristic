@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +40,10 @@ public class Checksum {
 
     public enum Type {
         MD5, SHA256;
+
+        public String getChecksum(String data) throws IOException {
+            return getChecksum( IOUtils.toInputStream(data, "UTF-8"));
+        }
 
         public String getChecksum(InputStream inputStream) throws IOException {
             switch (this) {

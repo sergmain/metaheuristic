@@ -20,8 +20,12 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.ControllerUtils;
 import aiai.ai.beans.Experiment;
 import aiai.ai.beans.ExperimentMetadata;
+import aiai.ai.beans.ExperimentSnippet;
+import aiai.ai.beans.Snippet;
 import aiai.ai.repositories.ExperimentMetadataRepository;
 import aiai.ai.repositories.ExperimentRepository;
+import aiai.ai.repositories.SnippetRepository;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,6 +38,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: Serg
@@ -51,12 +56,28 @@ public class ExperimentsController {
 
     @Value("${aiai.table.rows.limit:#{5}}")
     private int limit;
-    private ExperimentRepository experimentRepository;
-    private ExperimentMetadataRepository experimentMetadataRepository;
 
-    public ExperimentsController(ExperimentRepository experimentRepository, ExperimentMetadataRepository experimentMetadataRepository) {
+    private final ExperimentRepository experimentRepository;
+    private final ExperimentMetadataRepository experimentMetadataRepository;
+    private final SnippetRepository snippetRepository;
+
+    public ExperimentsController(ExperimentRepository experimentRepository, ExperimentMetadataRepository experimentMetadataRepository, SnippetRepository snippetRepository) {
         this.experimentRepository = experimentRepository;
         this.experimentMetadataRepository = experimentMetadataRepository;
+        this.snippetRepository = snippetRepository;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class SnippetSelectOption {
+        String value;
+        String desc;
+    }
+
+    @Data
+    public static class SnippetResult {
+        public List<SnippetSelectOption> selectOptions = new ArrayList<>();
+        public List<Snippet> snippets = new ArrayList<>();
     }
 
     @GetMapping("/experiments")
@@ -105,7 +126,24 @@ public class ExperimentsController {
         if (experiment == null) {
             return "redirect:/launchpad/experiments";
         }
+        Iterable<Snippet> snippets = snippetRepository.findAll();
+        SnippetResult snippetResult = new SnippetResult();
+        for (Snippet snippet : snippets) {
+            boolean isExist=false;
+            for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
+                if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
+                    snippetResult.snippets.add(snippet);
+                    isExist = true;
+                    break;
+                }
+            }
+            if (!isExist) {
+                snippetResult.selectOptions.add( new SnippetSelectOption(snippet.getSnippetCode(), String.format("Type: %s; Code: %s:%s", snippet.getType(), snippet.getName(), snippet.getSnippetVersion())));
+            }
+        }
+
         model.addAttribute("experiment", experiment);
+        model.addAttribute("snippetResult", snippetResult);
         return "launchpad/experiment-edit-form";
     }
 
@@ -123,6 +161,24 @@ public class ExperimentsController {
         m.setKey(key);
         m.setValue(value);
         experiment.getMetadata().add(m);
+
+        experimentRepository.save(experiment);
+        return "redirect:/launchpad/experiment-edit/"+id;
+    }
+
+    @PostMapping("/experiment-snippet-add-commit/{id}")
+    public String snippetAddCommit(@PathVariable Long id, String code) {
+        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        if (experiment == null) {
+            return "redirect:/launchpad/experiments";
+        }
+        if (experiment.getSnippets()==null) {
+            experiment.setSnippets(new ArrayList<>());
+        }
+        ExperimentSnippet s = new ExperimentSnippet();
+        s.setExperiment(experiment);
+        s.setSnippetCode( code );
+        experiment.getSnippets().add(s);
 
         experimentRepository.save(experiment);
         return "redirect:/launchpad/experiment-edit/"+id;

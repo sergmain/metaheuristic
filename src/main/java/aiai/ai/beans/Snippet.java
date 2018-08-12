@@ -56,4 +56,7 @@ public class Snippet implements Serializable {
     @Column(name = "CHECKSUM")
     public String checksum;
 
+    public String getSnippetCode() {
+        return ""+ name + ':' + snippetVersion;
+    }
 }

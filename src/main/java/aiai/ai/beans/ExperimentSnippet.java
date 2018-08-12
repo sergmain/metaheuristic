@@ -15,7 +15,6 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-
 package aiai.ai.beans;
 
 import lombok.Data;
@@ -23,19 +22,13 @@ import lombok.EqualsAndHashCode;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.List;
 
-/**
- * User: Serg
- * Date: 13.07.2017
- * Time: 15:38
- */
 @Entity
-@Table(name = "AIAI_LP_EXPERIMENT")
+@Table(name = "AIAI_LP_EXPERIMENT_SNIPPET")
 @Data
-@EqualsAndHashCode(exclude = {"metadata"})
-public class Experiment implements Serializable {
-    private static final long serialVersionUID = -3509391644278818781L;
+@EqualsAndHashCode(exclude = {"experiment"})
+public class ExperimentSnippet implements Serializable {
+    private static final long serialVersionUID = -7027988813072979346L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,25 +37,11 @@ public class Experiment implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "NAME")
-    private String name;
+    @Column(name = "SNIPPET_CODE")
+    private String snippetCode;
 
-    @Column(name = "DESCRIPTION")
-    private String description;
-
-    @Column(name = "EPOCH")
-    private String epoch;
-
-    @Column(name = "EPOCH_VARIANT")
-    private int epochVariant;
-
-    @Column(name = "SEED")
-    private int seed;
-
-    @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
-    private List<ExperimentMetadata> metadata;
-
-    @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
-    private List<ExperimentSnippet> snippets;
+    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
+    @JoinColumn(name = "EXPERIMENT_ID")
+    private Experiment experiment;
 
 }

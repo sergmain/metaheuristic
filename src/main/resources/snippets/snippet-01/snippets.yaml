@@ -1,9 +1,9 @@
 snippets:
-    - name: aiai.fit.default.snippet
+    - name: aiai.fit.default.snippet-SNAPSHOT
       version: 1.0
       type: fit
       file: fit-model.py
-    - name: aiai.predict.default.snippet
+    - name: aiai.predict.default.snippet-SNAPSHOT
       version: 1.0
       type: predict
       file: predict-model.py

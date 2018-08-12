@@ -41,6 +41,10 @@ public class SnippetController {
     @SuppressWarnings("FieldCanBeLocal")
     private File launchpadDir;
 
+    @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
+    private boolean isReplaceSnapshot;
+
+    public static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 
     private final PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver;
     private final SnippetRepository snippetRepository;
@@ -70,6 +74,7 @@ public class SnippetController {
     }
 
     private static File toFile(String launchpadDirAsString) {
+        // special case for ./some-dir
         if (launchpadDirAsString.charAt(0) == '.' && (launchpadDirAsString.charAt(1) == '\\' || launchpadDirAsString.charAt(1) == '/')) {
             return new File(launchpadDirAsString.substring(2));
         }
@@ -95,14 +100,27 @@ public class SnippetController {
                 if (!file.exists()) {
                     throw new IllegalStateException("File " + snippetConfig.file+" wasn't found in "+ srcDir.getAbsolutePath());
                 }
-                String sum;
-                try (InputStream inputStream = new FileInputStream(file)) {
-                    sum = Checksum.Type.SHA256.getChecksum(inputStream);
+                String code;
+                try( InputStream inputStream = new FileInputStream(file)) {
+                    code = IOUtils.toString(inputStream, Charsets.UTF_8);;
                 }
+                String sum = Checksum.Type.SHA256.getChecksum(code);
+
                 Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
                 if (snippet!=null) {
                     if (!Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256).equals(sum)) {
-                        System.out.println(String.format("Checksum mismatch for snippet '%s:%s'", snippet.name, snippet.snippetVersion));
+                        if (isReplaceSnapshot && snippetConfig.name.endsWith(SNAPSHOT_SUFFIX)) {
+                            snippet.checksum = new Checksum(Checksum.Type.SHA256, sum).toJson();
+                            snippet.name = snippetConfig.name;
+                            snippet.snippetVersion = snippetConfig.version;
+                            snippet.type = snippetConfig.type.toString();
+                            snippet.filename = snippetConfig.file;
+                            snippet.code = code;
+                            snippetRepository.save(snippet);
+                        }
+                        else {
+                            System.out.println(String.format("Checksum mismatch for snippet '%s:%s'", snippet.name, snippet.snippetVersion));
+                        }
                     }
                 }
                 else {

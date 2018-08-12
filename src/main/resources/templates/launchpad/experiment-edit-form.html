@@ -70,6 +70,35 @@
         </form>
         <p>&nbsp;</p>
 
+
+        <!--/*@thymesVar id="snippetResult" type="aiai.ai.launchpad.experiment.ExperimentsController.SnippetResult"*/-->
+        <h1 class="widget-header">Snippets</h1>
+        <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-add-commit/'+experiment.id}" accept-charset="UTF-8" >
+            <select class="pure-input-medium" th:name="code">
+                <option  th:each="o : ${snippetResult.selectOptions}" th:value="${o.value}" th:text="${o.desc} "></option>
+            </select>
+            <button class="pure-button pure-button-primary" type="submit">Add snippet</button>
+        </form>
+        <p>&nbsp;</p>
+
+        <table class="pure-table pure-table-bordered" id="table-snippet" th:fragment="table-snippet">
+            <thead>
+            <tr>
+                <th width="150">Type</th>
+                <th width="600">Code</th>
+                <th colspan="1">&nbsp;</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="s : ${snippetResult.snippets}">
+                <td th:text="${s.type}">Snippet type</td>
+                <td th:text="${s.getSnippetCode()}">Dataset description</td>
+                <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-snippet-delete-commit/' + experiment.id+'/'+ s.id}">Delete</a></td>
+            </tr>
+            </tbody>
+        </table>
+
         <h1 class="widget-header">Metadata</h1>
         <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-metadata-add-commit/'+experiment.id}" accept-charset="UTF-8" >
             <fieldset>
@@ -80,7 +109,7 @@
         </form>
         <p>&nbsp;</p>
 
-        <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+        <table class="pure-table pure-table-bordered" id="table-metadata" th:fragment="table">
             <thead>
             <tr>
                 <th width="150">Key</th>
