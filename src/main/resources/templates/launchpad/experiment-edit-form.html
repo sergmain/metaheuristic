@@ -73,13 +73,14 @@
 
         <!--/*@thymesVar id="snippetResult" type="aiai.ai.launchpad.experiment.ExperimentsController.SnippetResult"*/-->
         <h1 class="widget-header">Snippets</h1>
-        <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-add-commit/'+experiment.id}" accept-charset="UTF-8" >
+        <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-add-commit/'+experiment.id}" accept-charset="UTF-8"
+              th:if="${!snippetResult.selectOptions.isEmpty()}">
             <select class="pure-input-medium" th:name="code">
                 <option  th:each="o : ${snippetResult.selectOptions}" th:value="${o.value}" th:text="${o.desc} "></option>
             </select>
             <button class="pure-button pure-button-primary" type="submit">Add snippet</button>
+            <p>&nbsp;</p>
         </form>
-        <p>&nbsp;</p>
 
         <table class="pure-table pure-table-bordered" id="table-snippet" th:fragment="table-snippet">
             <thead>
@@ -93,7 +94,7 @@
             <tbody>
             <tr th:each="s : ${snippetResult.snippets}">
                 <td th:text="${s.type}">Snippet type</td>
-                <td th:text="${s.getSnippetCode()}">Dataset description</td>
+                <td th:text="${s.getSnippetCode()}">Snippet code</td>
                 <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-snippet-delete-commit/' + experiment.id+'/'+ s.id}">Delete</a></td>
             </tr>
             </tbody>

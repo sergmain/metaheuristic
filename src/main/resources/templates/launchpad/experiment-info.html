@@ -28,7 +28,7 @@
         <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table">
             <tbody>
             <tr><td>#Id</td><td  th:text="${experiment.id}">#Id</td></tr>
-            <!--<tr><td>Created on</td><td th:text="${#dates.formatISO(r.dataset.createdOn)}">CreatedOn</td></tr>-->
+            <tr><td>Created on</td><td th:text="${#dates.formatISO(experiment.createdOn)}">CreatedOn</td></tr>
             <tr><td>Name</td><td th:text="${experiment.name}">name</td></tr>
             <tr><td>Description</td><td th:text="${experiment.description}">desc</td></tr>
             <tr><td>Seed</td><td th:text="${experiment.seed}">seed</td></tr>
@@ -36,8 +36,25 @@
             <tr><td>Number of epoch variants</td><td th:text="${experiment.epochVariant}">Epoch variants</td></tr>
             </tbody>
         </table>
-        <p>&nbsp;</p>
 
+        <p>&nbsp;</p>
+        <table class="pure-table pure-table-bordered" id="table-snippet" th:fragment="table-snippet">
+            <thead>
+            <tr>
+                <th width="150">Type</th>
+                <th width="600">Code</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="s : ${experiment.snippets}">
+                <td th:text="${s.type}">Snippet type</td>
+                <td th:text="${s.getSnippetCode()}">Snippet code</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <p>&nbsp;</p>
         <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
             <thead>
             <tr>
@@ -55,6 +72,16 @@
             </tr>
             </tbody>
         </table>
+
+        <p>&nbsp;</p>
+        <h1 class="widget-header">Progress of experiment</h1>
+        <div th:if="${experiment.launched}" th:text="${'Experiment is launched'}">
+        </div>
+        <div th:if="${!experiment.launched}">
+            <p>Experiment isn't launched</p>
+            <a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-start/' + experiment.id}">Launch</a>
+        </div>
+
 
         <p>&nbsp;</p>
         <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">To list of experiments</a>

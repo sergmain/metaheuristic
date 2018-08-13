@@ -60,6 +60,18 @@ public class Experiment implements Serializable {
     @Column(name = "SEED")
     private int seed;
 
+    @Column(name = "IS_STARTED")
+    private boolean isStarted;
+
+    @Column(name = "IS_LAUNCHED")
+    private boolean isLaunched;
+
+    @Column(name="CREATED_ON")
+    private long createdOn;
+
+    @Column(name="LAUNCHED_ON")
+    private Long launchedOn;
+
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
     private List<ExperimentMetadata> metadata;
 

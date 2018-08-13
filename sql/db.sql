@@ -104,7 +104,11 @@ CREATE TABLE AIAI_LP_EXPERIMENT (
   DESCRIPTION VARCHAR(250)  NOT NULL,
   EPOCH       VARCHAR(100)  NOT NULL,
   EPOCH_VARIANT tinyint(1),
-  SEED          INT(10)
+  SEED          INT(10),
+  IS_LAUNCHED   tinyint(1) not null default 0,
+  IS_STARTED    tinyint(1) not null default 0,
+  CREATED_ON   bigint not null,
+  LAUNCHED_ON   bigint not null
 );
 
 CREATE TABLE AIAI_S_ENV (

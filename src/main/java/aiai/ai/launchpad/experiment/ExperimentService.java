@@ -18,7 +18,11 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.beans.Experiment;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 @Service
 public class ExperimentService {
@@ -33,5 +37,17 @@ public class ExperimentService {
     public Experiment getExperimentAndAssignToStation(String stationId) {
 
         return null;
+    }
+
+    /**
+     * this scheduler is being runned at station side
+     *
+     * long fixedDelay()
+     * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
+     */
+    @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
+    public void fixedDelayExperimentParticleProducer() {
+        Set<String> particles = new LinkedHashSet<>();
+
     }
 }
