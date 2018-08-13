@@ -74,7 +74,7 @@ public class ExperimentUtils {
         for (Map.Entry<String, String> entry : entries) {
             NumberOfVariants ofVariants = getNumberOfVariants(entry.getValue());
             int originSize = allPaths.size();
-            if (originSize==0) {
+            if (originSize==0 && ofVariants.count>0) {
                 allPaths.add(new LinkedHashMap<>());
             }
             else {
@@ -85,7 +85,6 @@ public class ExperimentUtils {
                     }
                 }
             }
-            VariantProducer variantProducer = new VariantProducer(entry.getKey(), ofVariants);
             for (Map<String, Long> list : allPaths) {
                 for (Long value : ofVariants.values) {
                     if ( alreadyExists(allPaths, list, entry.getKey(), value)) {

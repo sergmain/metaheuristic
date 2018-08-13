@@ -55,6 +55,17 @@ public class ExperimentService {
 
         return null;
     }
+    public static String toYaml(Yaml yaml, Map<String, Long> producedMap) {
+        if (producedMap==null) {
+            return null;
+        }
+        String mapYaml;
+        mapYaml = yaml.dump(producedMap.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(
+                Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new))
+        );
+        return mapYaml;
+    }
+
 
     public static Map<String, String> toMap(List<ExperimentMetadata> experimentMetadatas) {
         return experimentMetadatas.stream().collect(Collectors.toMap(ExperimentMetadata::getKey, ExperimentMetadata::getValue, (a, b) -> b, HashMap::new));
@@ -83,17 +94,19 @@ public class ExperimentService {
                 particles.add(experimentSequence.getMeta());
             }
 
-            experiment.getMetadata();
+            Map<String, String> map = toMap(experiment.getMetadata());
+            List<Map<String, Long>> allPaths = ExperimentUtils.getAllPaths(map);
 
-            LinkedHashMap<String, String> map = new LinkedHashMap<>();
-            map.put("key 2", "value 2");
-            map.put("key 1", "value 1");
-            map.put("key 4", "value 4");
-            map.put("key 3", "value 3");
+            for (Map<String, Long> allPath : allPaths) {
+                String currParticle = toYaml(yaml, allPath);
+                if (particles.contains(currParticle)) {
+                    continue;
+                }
 
-            String mapYaml = yaml.dump(map.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(
-                    Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,(oldValue, newValue) -> oldValue, LinkedHashMap::new))
-            );
+//                ... add new ExperimentParticle
+            }
+
+
         }
 
     }

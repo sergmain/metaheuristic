@@ -17,6 +17,7 @@
  */
 package aiai.ai.core;
 
+import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.junit.Assert;
@@ -82,13 +83,13 @@ public class TextExperimentUtils {
         Map<String, String> map = new LinkedHashMap<>();
 
         map.put("key1", null);
-        thrown.expect(IllegalStateException.class);
         allPaths = ExperimentUtils.getAllPaths(map);
+        assertTrue(allPaths.isEmpty());
 
         map.clear();
         map.put("key1", "");
-        thrown.expect(IllegalStateException.class);
         allPaths = ExperimentUtils.getAllPaths(map);
+        assertTrue(allPaths.isEmpty());
 
 
         map.clear();
@@ -115,7 +116,7 @@ public class TextExperimentUtils {
         String mapYaml;
         Scanner scanner;
 
-        mapYaml = toYaml(path1);
+        mapYaml = ExperimentService.toYaml(yaml, path1);
         System.out.println(mapYaml);
 
         scanner = new Scanner(mapYaml);
@@ -136,7 +137,7 @@ public class TextExperimentUtils {
         }
         List<Map<String, Long>> allPaths = ExperimentUtils.getAllPaths(map);
 
-        return toYaml(allPaths.get(0));
+        return ExperimentService.toYaml(yaml, allPaths.get(0));
     }
 
     @Test
@@ -152,7 +153,7 @@ public class TextExperimentUtils {
         List<String> allYamls = new ArrayList<>();
         String currYaml;
         for (Map<String, Long> allPath : allPaths) {
-            currYaml = toYaml(allPath);
+            currYaml = ExperimentService.toYaml(yaml, allPath);
             allYamls.add(currYaml);
         }
         assertEquals(4, allYamls.size());
@@ -176,24 +177,13 @@ public class TextExperimentUtils {
         List<String> allYamls = new ArrayList<>();
         String currYaml;
         for (Map<String, Long> allPath : allPaths) {
-            currYaml = toYaml(allPath);
+            currYaml = ExperimentService.toYaml(yaml, allPath);
             allYamls.add(currYaml);
         }
         assertEquals(2, allYamls.size());
 
         assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","2"}, {"key3","30"}, {"key4","40"}, }) ) );
         assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","4"}, {"key3","30"}, {"key4","40"}, }) ) );
-    }
-
-    private String toYaml(Map<String, Long> producedMap) {
-        if (producedMap==null) {
-            return null;
-        }
-        String mapYaml;
-        mapYaml = yaml.dump(producedMap.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(
-                Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new))
-        );
-        return mapYaml;
     }
 
 }
