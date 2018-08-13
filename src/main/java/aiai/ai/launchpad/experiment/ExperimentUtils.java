@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.*;
 
@@ -61,72 +62,71 @@ public class ExperimentUtils {
         }
     }
 
-    private static class VariantProducer {
-        String metaKey;
-        String metaValues;
-        int idx=0;
-
-        boolean isCycle;
-
-        private VariantProducer nextVariantProducer;
-        NumberOfVariants ofVariants;
-
-        public VariantProducer(boolean isCycle, String metaKey, String metaValues) {
-            this.metaKey = metaKey;
-            this.metaValues = metaValues;
-            this.isCycle = isCycle;
-
-            ofVariants = getNumberOfVariants(metaValues);
-        }
-        public void registerNext(VariantProducer variantProducer) {
-            this.nextVariantProducer = variantProducer;
+    public static List<Map<String, Long>> getAllPaths(Map<String, String> experimentMetadatas) {
+        if (experimentMetadatas==null || experimentMetadatas.isEmpty()) {
+            return new ArrayList<>();
         }
 
-        public Map<String, Long> next(Map<String, Long> map) {
-            if (idx==ofVariants.values.size()) {
-                if (isCycle) {
-                    idx = 0;
-                }
-                else {
-                    return null;
+        List<Map<String, Long>> allPaths = new ArrayList<>();
+
+        List<Map.Entry<String, String>> entries = new ArrayList<>(experimentMetadatas.entrySet());
+
+        for (Map.Entry<String, String> entry : entries) {
+            NumberOfVariants ofVariants = getNumberOfVariants(entry.getValue());
+            int originSize = allPaths.size();
+            if (originSize==0) {
+                allPaths.add(new LinkedHashMap<>());
+            }
+            else {
+                for (int i = 0; i < ofVariants.count-1; i++) {
+                    for (int j = 0; j < originSize; j++) {
+                        Map<String, Long> elem = allPaths.get(j);
+                        allPaths.add(new LinkedHashMap<>(elem));
+                    }
                 }
             }
-            map.put(metaKey, ofVariants.values.get(idx++));
-            return nextVariantProducer!=null ? nextVariantProducer.next(map) : map;
+            VariantProducer variantProducer = new VariantProducer(entry.getKey(), ofVariants);
+            for (Map<String, Long> list : allPaths) {
+                for (Long value : ofVariants.values) {
+                    if ( alreadyExists(allPaths, list, entry.getKey(), value)) {
+                        continue;
+                    }
+                    list.put(entry.getKey(), value);
+                }
+            }
         }
+        return allPaths;
     }
 
-    /**
-     * Right now we support only java.util.Long type for variant
-     */
-    public static class MetaProducer {
-        private VariantProducer variantProducer = null;
-
-        public MetaProducer( Map<String, String> experimentMetadatas) {
-            if (experimentMetadatas==null || experimentMetadatas.isEmpty()) {
-                return;
-            }
-
-            List<Map.Entry<String, String>> entries = new ArrayList<>(experimentMetadatas.entrySet());
-
-            Map.Entry<String, String> entry = entries.get(0);
-            variantProducer = new VariantProducer(false, entry.getKey(), entry.getValue());
-
-            if (experimentMetadatas.size()==1) {
-                return;
-            }
-            VariantProducer whoPrev = variantProducer;
-            for (int i = 1; i < entries.size(); i++) {
-                entry = entries.get(i);
-                final VariantProducer variantProducer = new VariantProducer(true, entry.getKey(), entry.getValue());
-                whoPrev.registerNext(variantProducer);
-                whoPrev = variantProducer;
+    private static boolean alreadyExists(List<Map<String, Long>> allPaths, Map<String, Long> map, String key, Long value) {
+        Map<String, Long> newMap = new LinkedHashMap<>(map);
+        newMap.put(key, value);
+        for (Map<String, Long> allPath : allPaths) {
+            if (allPath.equals(newMap)) {
+                return true;
             }
         }
+        return false;
+    }
 
-        public Map<String, Long> next() {
-            Map<String, Long> map = new LinkedHashMap<>();
-            return variantProducer.next(map);
+
+    private static class VariantProducer {
+        int idx=0;
+
+        private NumberOfVariants ofVariants;
+
+        VariantProducer(String key, NumberOfVariants ofVariants) {
+            this.ofVariants = ofVariants;
+        }
+
+        public Long next() {
+            if (ofVariants.count==0) {
+                return null;
+            }
+            if (idx==ofVariants.values.size()) {
+                    idx = 0;
+            }
+            return ofVariants.values.get(idx++);
         }
     }
 

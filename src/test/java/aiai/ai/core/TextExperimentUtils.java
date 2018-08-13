@@ -18,9 +18,12 @@
 package aiai.ai.core;
 
 import aiai.ai.launchpad.experiment.ExperimentUtils;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
@@ -70,19 +73,32 @@ public class TextExperimentUtils {
 
     }
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Test
     public void testMetaProducer() {
+        List<Map<String, Long>> allPaths;
         Map<String, String> map = new LinkedHashMap<>();
-        map.put("key1", null);
-        ExperimentUtils.MetaProducer producer = new ExperimentUtils.MetaProducer(map);
 
-        assertNull(producer.next());
+        map.put("key1", null);
+        thrown.expect(IllegalStateException.class);
+        allPaths = ExperimentUtils.getAllPaths(map);
+
+        map.clear();
+        map.put("key1", "");
+        thrown.expect(IllegalStateException.class);
+        allPaths = ExperimentUtils.getAllPaths(map);
+
 
         map.clear();
         map.put("key1", "10");
-        producer = new ExperimentUtils.MetaProducer(map);
+        allPaths = ExperimentUtils.getAllPaths(map);
 
-        assertEquals(1, producer.next().size());
+        assertEquals(1, allPaths.size());
+        Map<String, Long> path = allPaths.get(0);
+        assertEquals(1, path.size());
+        assertEquals(10L, (long)path.get("key1"));
 
         map.clear();
         map.put("key3", "30");
@@ -90,15 +106,16 @@ public class TextExperimentUtils {
         map.put("key2", "20");
         map.put("key1", "10");
 
-        producer = new ExperimentUtils.MetaProducer(map);
-        Map<String, Long> producedMap = producer.next();
-        assertEquals(4, producedMap.size());
+        allPaths = ExperimentUtils.getAllPaths(map);
 
+        assertEquals(1, allPaths.size());
+        Map<String, Long> path1 = allPaths.get(0);
+        assertEquals(4, path1.size());
 
         String mapYaml;
         Scanner scanner;
 
-        mapYaml = toYaml(producedMap);
+        mapYaml = toYaml(path1);
         System.out.println(mapYaml);
 
         scanner = new Scanner(mapYaml);
@@ -117,9 +134,9 @@ public class TextExperimentUtils {
         for (String[] v : values) {
             map.put(v[0], v[1]);
         }
-        ExperimentUtils.MetaProducer producer = new ExperimentUtils.MetaProducer(map);
-        Map<String, Long> producedMap = producer.next();
-        return toYaml(producedMap);
+        List<Map<String, Long>> allPaths = ExperimentUtils.getAllPaths(map);
+
+        return toYaml(allPaths.get(0));
     }
 
     @Test
@@ -130,11 +147,12 @@ public class TextExperimentUtils {
         map.put("key2", "[2,4]");
         map.put("key1", "[11, 13]");
 
-        ExperimentUtils.MetaProducer producer = new ExperimentUtils.MetaProducer(map);
+        List<Map<String, Long>> allPaths = ExperimentUtils.getAllPaths(map);
 
         List<String> allYamls = new ArrayList<>();
         String currYaml;
-        while( (currYaml = toYaml(producer.next()))!=null ) {
+        for (Map<String, Long> allPath : allPaths) {
+            currYaml = toYaml(allPath);
             allYamls.add(currYaml);
         }
         assertEquals(4, allYamls.size());
@@ -143,6 +161,28 @@ public class TextExperimentUtils {
         assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","4"}, {"key3","30"}, {"key4","40"}, }) ) );
         assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","13"}, {"key2","2"}, {"key3","30"}, {"key4","40"}, }) ) );
         assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","13"}, {"key2","4"}, {"key3","30"}, {"key4","40"}, }) ) );
+    }
+
+    @Test
+    public void testMetaProducer_2() {
+        Map<String, String> map = new LinkedHashMap<>();
+        map.put("key3", "30");
+        map.put("key4", "40");
+        map.put("key2", "[2,4]");
+        map.put("key1", "[11]");
+
+        List<Map<String, Long>> allPaths = ExperimentUtils.getAllPaths(map);
+
+        List<String> allYamls = new ArrayList<>();
+        String currYaml;
+        for (Map<String, Long> allPath : allPaths) {
+            currYaml = toYaml(allPath);
+            allYamls.add(currYaml);
+        }
+        assertEquals(2, allYamls.size());
+
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","2"}, {"key3","30"}, {"key4","40"}, }) ) );
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","4"}, {"key3","30"}, {"key4","40"}, }) ) );
     }
 
     private String toYaml(Map<String, Long> producedMap) {
