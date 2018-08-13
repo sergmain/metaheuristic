@@ -60,6 +60,9 @@ public class Experiment implements Serializable {
     @Column(name = "SEED")
     private int seed;
 
+    @Column(name = "IS_ALL_SEQUENCE_PRODUCED")
+    private boolean isAllSequenceProduced;
+
     @Column(name = "IS_STARTED")
     private boolean isStarted;
 

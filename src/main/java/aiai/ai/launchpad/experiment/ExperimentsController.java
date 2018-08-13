@@ -115,7 +115,7 @@ public class ExperimentsController {
             if (StringUtils.isBlank(metadata.getValue())) {
                 continue;
             }
-            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getStringNumberOfVariants(metadata.getValue());
+            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(metadata.getValue());
             metadata.setVariants( variants.status ?variants.count : 0 );
         }
         model.addAttribute("experiment", experiment);
@@ -237,7 +237,7 @@ public class ExperimentsController {
     }
 
     private String processCommit(Model model, Experiment experiment, String target) {
-        ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getEpochVariants(experiment.getEpoch());
+        ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(experiment.getEpoch());
         if (!numberOfVariants.status) {
             model.addAttribute("errorMessage", numberOfVariants.getError());
             return target;

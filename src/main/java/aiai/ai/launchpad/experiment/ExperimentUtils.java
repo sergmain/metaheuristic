@@ -22,15 +22,12 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.NoSuchElementException;
-import java.util.Scanner;
-import java.util.StringTokenizer;
+import java.util.*;
 
 public class ExperimentUtils {
 
     private static final String RANGE = "range";
     private static final NumberOfVariants ZERO_VARIANT = new NumberOfVariants(true, null, 0);
-    private static final NumberOfVariants ONE_VARIANT = new NumberOfVariants(true, null, 1);
 
     @Data
     @AllArgsConstructor
@@ -39,34 +36,134 @@ public class ExperimentUtils {
         boolean status;
         String error;
         int count;
+        final List<Long> values = new ArrayList<>();
+
+        public static NumberOfVariants instanceOf(boolean status, String error, int count) {
+            return new NumberOfVariants(status, error, count);
+        }
+
+        public static NumberOfVariants instanceOf(boolean status, String error, int count,  final List<Long> values ) {
+            NumberOfVariants instance =  new NumberOfVariants(status, error, count);
+            instance.values.addAll(values);
+            return instance;
+        }
+
+        public static NumberOfVariants instanceOf(boolean status, String error, int count,  final Long[] values ) {
+            NumberOfVariants instance =  new NumberOfVariants(status, error, count);
+            instance.values.addAll(Arrays.asList(values));
+            return instance;
+        }
+
+        public static NumberOfVariants instanceOf(boolean status, String error, int count,  final Long value ) {
+            NumberOfVariants instance =  new NumberOfVariants(status, error, count);
+            instance.values.add(value);
+            return instance;
+        }
     }
 
-    public static NumberOfVariants getEpochVariants(String epochs) {
-        if (StringUtils.isBlank(epochs)) {
+    private static class VariantProducer {
+        String metaKey;
+        String metaValues;
+        int idx=0;
+
+        boolean isCycle;
+
+        private VariantProducer nextVariantProducer;
+        NumberOfVariants ofVariants;
+
+        public VariantProducer(boolean isCycle, String metaKey, String metaValues) {
+            this.metaKey = metaKey;
+            this.metaValues = metaValues;
+            this.isCycle = isCycle;
+
+            ofVariants = getNumberOfVariants(metaValues);
+        }
+        public void registerNext(VariantProducer variantProducer) {
+            this.nextVariantProducer = variantProducer;
+        }
+
+        public Map<String, Long> next(Map<String, Long> map) {
+            if (idx==ofVariants.values.size()) {
+                if (isCycle) {
+                    idx = 0;
+                }
+                else {
+                    return null;
+                }
+            }
+            map.put(metaKey, ofVariants.values.get(idx++));
+            return nextVariantProducer!=null ? nextVariantProducer.next(map) : map;
+        }
+    }
+
+    /**
+     * Right now we support only java.util.Long type for variant
+     */
+    public static class MetaProducer {
+        private VariantProducer variantProducer = null;
+
+        public MetaProducer( Map<String, String> experimentMetadatas) {
+            if (experimentMetadatas==null || experimentMetadatas.isEmpty()) {
+                return;
+            }
+
+            List<Map.Entry<String, String>> entries = new ArrayList<>(experimentMetadatas.entrySet());
+
+            Map.Entry<String, String> entry = entries.get(0);
+            variantProducer = new VariantProducer(false, entry.getKey(), entry.getValue());
+
+            if (experimentMetadatas.size()==1) {
+                return;
+            }
+            VariantProducer whoPrev = variantProducer;
+            for (int i = 1; i < entries.size(); i++) {
+                entry = entries.get(i);
+                final VariantProducer variantProducer = new VariantProducer(true, entry.getKey(), entry.getValue());
+                whoPrev.registerNext(variantProducer);
+                whoPrev = variantProducer;
+            }
+        }
+
+        public Map<String, Long> next() {
+            Map<String, Long> map = new LinkedHashMap<>();
+            return variantProducer.next(map);
+        }
+    }
+
+    public static NumberOfVariants getNumberOfVariants(String variantsAsStr) {
+        if (StringUtils.isBlank(variantsAsStr)) {
             return ZERO_VARIANT;
         }
-        String s = epochs.trim().toLowerCase();
+        String s = variantsAsStr.trim().toLowerCase();
         if (!StringUtils.startsWithAny(s, RANGE, "(", "[")) {
+            long temp;
             try {
-                int temp = Integer.parseInt(s);
+                temp = Long.parseLong(s);
             } catch (NumberFormatException e) {
                 return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
             }
-            return ONE_VARIANT;
+
+            final NumberOfVariants variants = new NumberOfVariants(true, null, 1);
+            variants.values.add(temp);
+            return variants;
         }
         if (s.startsWith("[")) {
             int count = 0;
+            final NumberOfVariants variants = new NumberOfVariants(true, null, 0);
             for (StringTokenizer st = new StringTokenizer(s, "[,] "); st.hasMoreTokens(); ) {
                 String token = st.nextToken();
 
+                long temp;
                 try {
-                    int temp = Integer.parseInt(token);
+                    temp = Long.parseLong(token);
                 } catch (NumberFormatException e) {
                     return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
                 }
+                variants.values.add(temp);
                 count++;
             }
-            return new NumberOfVariants(true, null, count);
+            variants.count = count;
+            return variants;
         }
         String s1 = s;
         if (s1.startsWith(RANGE)) {
@@ -87,33 +184,16 @@ public class ExperimentUtils {
             }
 
             int count = 0;
+            final NumberOfVariants variants = new NumberOfVariants(true, null, 0);
             for (int i = start; i < end; i += change) {
+                variants.values.add((long)i);
                 count++;
                 if (count > 100) {
                     return new NumberOfVariants(false, "Too many variants for string: " + s, 0);
                 }
             }
-            return new NumberOfVariants(true, null, count);
-        }
-        return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
-    }
-
-    public static NumberOfVariants getStringNumberOfVariants(String metadata) {
-        if (StringUtils.isBlank(metadata)) {
-            return ZERO_VARIANT;
-        }
-
-        String s = metadata.trim().toLowerCase();
-        if (!StringUtils.startsWithAny(s, "[")) {
-            return ONE_VARIANT;
-        }
-        if (s.startsWith("[")) {
-            int count = 0;
-            for (StringTokenizer st = new StringTokenizer(s, "[,] "); st.hasMoreTokens(); ) {
-                String token = st.nextToken();
-                count++;
-            }
-            return new NumberOfVariants(true, null, count);
+            variants.count = count;
+            return variants;
         }
         return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
     }

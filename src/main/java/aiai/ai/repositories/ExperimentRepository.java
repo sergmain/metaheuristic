@@ -24,6 +24,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
  * User: Serg
  * Date: 13.07.2017
@@ -35,4 +37,6 @@ public interface ExperimentRepository extends CrudRepository<Experiment, Long> {
 
     @Transactional(readOnly = true)
     Slice<Experiment> findAll(Pageable pageable);
+
+    List<Experiment> findByAllSequenceProducedIsFalse();
 }

@@ -19,36 +19,141 @@ package aiai.ai.core;
 
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
+
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.junit.Assert.*;
 
 public class TextExperimentUtils {
 
+    private Yaml yaml;
+    @Before
+    public void init() {
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setPrettyFlow(true);
+
+        yaml = new Yaml(options);
+    }
+
     @Test
     public void testCreatePath() {
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 0), ExperimentUtils.getEpochVariants("") );
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 0), ExperimentUtils.getEpochVariants(" ") );
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 0), ExperimentUtils.getEpochVariants(null) );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 0), ExperimentUtils.getNumberOfVariants("") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 0), ExperimentUtils.getNumberOfVariants(" ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 0), ExperimentUtils.getNumberOfVariants(null) );
 
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 1), ExperimentUtils.getEpochVariants("10") );
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 1), ExperimentUtils.getEpochVariants(" 10 ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, 10L), ExperimentUtils.getNumberOfVariants("10") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, 10L), ExperimentUtils.getNumberOfVariants(" 10 ") );
 
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 3), ExperimentUtils.getEpochVariants(" [ 10, 15, 37] ") );
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 2), ExperimentUtils.getEpochVariants(" [ 10, 15, ] ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 3, new Long[]{10L,15L,37L}), ExperimentUtils.getNumberOfVariants(" [ 10, 15, 37] ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 2, new Long[]{10L,15L}), ExperimentUtils.getNumberOfVariants(" [ 10, 15, ] ") );
 
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 2), ExperimentUtils.getEpochVariants(" Range ( 10, 20, 5) ") );
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 3), ExperimentUtils.getEpochVariants(" Range ( 10, 21, 5) ") );
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 1), ExperimentUtils.getEpochVariants(" Range ( 10, 15, 5) ") );
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 2), ExperimentUtils.getEpochVariants(" Range ( 10, 16, 5) ") );
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 1), ExperimentUtils.getEpochVariants(" Range ( 10, 14, 5) ") );
-        Assert.assertEquals( new ExperimentUtils.NumberOfVariants(true, null, 0), ExperimentUtils.getEpochVariants(" Range ( 10, 10, 5) ") );
-        Assert.assertFalse(ExperimentUtils.getEpochVariants(" Range ( 10, 14, ) ").isStatus());
-        Assert.assertFalse(ExperimentUtils.getEpochVariants(" Range ( , 14, 10) ").isStatus());
-        Assert.assertFalse(ExperimentUtils.getEpochVariants(" Range ( abc, 15, 3) ").isStatus());
-        Assert.assertFalse(ExperimentUtils.getEpochVariants(" Range ( 10, abc, 3) ").isStatus());
-        Assert.assertFalse(ExperimentUtils.getEpochVariants(" Range ( 10, 15, abc) ").isStatus());
-        Assert.assertFalse(ExperimentUtils.getEpochVariants(" abc ").isStatus());
-        Assert.assertFalse(ExperimentUtils.getEpochVariants(" [ 10, abc, 37] ").isStatus());
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 2, new Long[]{10L,15L}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 20, 5) ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 3, new Long[]{10L,15L, 20L}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 21, 5) ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, new Long[]{10L}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 15, 5) ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 2, new Long[]{10L,15L}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 16, 5) ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, new Long[]{10L}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 14, 5) ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 0), ExperimentUtils.getNumberOfVariants(" Range ( 10, 10, 5) ") );
 
+        assertFalse(ExperimentUtils.getNumberOfVariants(" Range ( 10, 14, ) ").isStatus());
+        assertFalse(ExperimentUtils.getNumberOfVariants(" Range ( , 14, 10) ").isStatus());
+        assertFalse(ExperimentUtils.getNumberOfVariants(" Range ( abc, 15, 3) ").isStatus());
+        assertFalse(ExperimentUtils.getNumberOfVariants(" Range ( 10, abc, 3) ").isStatus());
+        assertFalse(ExperimentUtils.getNumberOfVariants(" Range ( 10, 15, abc) ").isStatus());
+        assertFalse(ExperimentUtils.getNumberOfVariants(" abc ").isStatus());
+        assertFalse(ExperimentUtils.getNumberOfVariants(" [ 10, abc, 37] ").isStatus());
+
+    }
+
+    @Test
+    public void testMetaProducer() {
+        Map<String, String> map = new LinkedHashMap<>();
+        map.put("key1", null);
+        ExperimentUtils.MetaProducer producer = new ExperimentUtils.MetaProducer(map);
+
+        assertNull(producer.next());
+
+        map.clear();
+        map.put("key1", "10");
+        producer = new ExperimentUtils.MetaProducer(map);
+
+        assertEquals(1, producer.next().size());
+
+        map.clear();
+        map.put("key3", "30");
+        map.put("key4", "40");
+        map.put("key2", "20");
+        map.put("key1", "10");
+
+        producer = new ExperimentUtils.MetaProducer(map);
+        Map<String, Long> producedMap = producer.next();
+        assertEquals(4, producedMap.size());
+
+
+        String mapYaml;
+        Scanner scanner;
+
+        mapYaml = toYaml(producedMap);
+        System.out.println(mapYaml);
+
+        scanner = new Scanner(mapYaml);
+        scanner.useDelimiter("[\n]");
+
+        Assert.assertEquals("key1: 10", scanner.next());
+        Assert.assertEquals("key2: 20", scanner.next());
+        Assert.assertEquals("key3: 30", scanner.next());
+        Assert.assertEquals("key4: 40", scanner.next());
+
+    }
+
+
+    private String toSampleYaml(String[][] values) {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (String[] v : values) {
+            map.put(v[0], v[1]);
+        }
+        ExperimentUtils.MetaProducer producer = new ExperimentUtils.MetaProducer(map);
+        Map<String, Long> producedMap = producer.next();
+        return toYaml(producedMap);
+    }
+
+    @Test
+    public void testMetaProducer_1() {
+        Map<String, String> map = new LinkedHashMap<>();
+        map.put("key3", "30");
+        map.put("key4", "40");
+        map.put("key2", "[2,4]");
+        map.put("key1", "[11, 13]");
+
+        ExperimentUtils.MetaProducer producer = new ExperimentUtils.MetaProducer(map);
+
+        List<String> allYamls = new ArrayList<>();
+        String currYaml;
+        while( (currYaml = toYaml(producer.next()))!=null ) {
+            allYamls.add(currYaml);
+        }
+        assertEquals(4, allYamls.size());
+
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","2"}, {"key3","30"}, {"key4","40"}, }) ) );
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","4"}, {"key3","30"}, {"key4","40"}, }) ) );
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","13"}, {"key2","2"}, {"key3","30"}, {"key4","40"}, }) ) );
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","13"}, {"key2","4"}, {"key3","30"}, {"key4","40"}, }) ) );
+    }
+
+    private String toYaml(Map<String, Long> producedMap) {
+        if (producedMap==null) {
+            return null;
+        }
+        String mapYaml;
+        mapYaml = yaml.dump(producedMap.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(
+                Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new))
+        );
+        return mapYaml;
     }
 
 }

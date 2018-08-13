@@ -18,25 +18,46 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.beans.Experiment;
+import aiai.ai.beans.ExperimentMetadata;
+import aiai.ai.beans.ExperimentSequence;
+import aiai.ai.repositories.ExperimentRepository;
+import aiai.ai.repositories.ExperimentSequenceRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ExperimentService {
 
-    private final ExperimentsController experimentsController;
+    private final ExperimentRepository experimentRepository;
+    private final ExperimentSequenceRepository experimentSequenceRepository;
 
-    public ExperimentService(ExperimentsController experimentsController) {
-        this.experimentsController = experimentsController;
+    private final Yaml yaml;
+
+    public ExperimentService(ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository) {
+        this.experimentRepository = experimentRepository;
+        this.experimentSequenceRepository = experimentSequenceRepository;
+
+        final DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setPrettyFlow(true);
+
+        this.yaml = new Yaml(options);
+
     }
 
 
     public Experiment getExperimentAndAssignToStation(String stationId) {
 
         return null;
+    }
+
+    public static Map<String, String> toMap(List<ExperimentMetadata> experimentMetadatas) {
+        return experimentMetadatas.stream().collect(Collectors.toMap(ExperimentMetadata::getKey, ExperimentMetadata::getValue, (a, b) -> b, HashMap::new));
     }
 
     /**
@@ -47,7 +68,33 @@ public class ExperimentService {
      */
     @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
     public void fixedDelayExperimentParticleProducer() {
-        Set<String> particles = new LinkedHashSet<>();
+
+        for (Experiment experiment : experimentRepository.findByAllSequenceProducedIsFalse()) {
+
+            Set<String> particles = new LinkedHashSet<>();
+
+            for (ExperimentSequence experimentSequence : experimentSequenceRepository.findByExperiment_Id(experiment.getId())) {
+                if (particles.contains(experimentSequence.getMeta())) {
+                    // delete doubles records
+                    System.out.println("!!! Found doubles. ExperimentId: " + experiment.getId()+", meta: " + experimentSequence.getMeta());
+                    experimentSequenceRepository.delete(experimentSequence);
+                    continue;
+                }
+                particles.add(experimentSequence.getMeta());
+            }
+
+            experiment.getMetadata();
+
+            LinkedHashMap<String, String> map = new LinkedHashMap<>();
+            map.put("key 2", "value 2");
+            map.put("key 1", "value 1");
+            map.put("key 4", "value 4");
+            map.put("key 3", "value 3");
+
+            String mapYaml = yaml.dump(map.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(
+                    Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,(oldValue, newValue) -> oldValue, LinkedHashMap::new))
+            );
+        }
 
     }
 }
