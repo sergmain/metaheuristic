@@ -82,7 +82,7 @@ public class Experiment implements Serializable {
     @Column(name="LAUNCHED_ON")
     private Long launchedOn;
 
-    @Column(name = "NUMBER_OF_SEQUNCE")
+    @Column(name = "NUMBER_OF_SEQUENCE")
     private int numberOfSequence;
 
     // we need eager because of @Scheduled

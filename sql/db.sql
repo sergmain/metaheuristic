@@ -36,7 +36,6 @@ CREATE TABLE AIAI_LP_DATASET_GROUP (
   IS_FEATURE  tinyint(1) not null default 0,
   IS_LABEL    tinyint(1) not null default 0
   FEATURE_FILE         VARCHAR(250),
-  IS_META    tinyint(1) not null default 0,
   STATUS     tinyint(1) not null default 0
 );
 
@@ -114,7 +113,7 @@ CREATE TABLE AIAI_LP_EXPERIMENT (
   EPOCH       VARCHAR(100)  NOT NULL,
   EPOCH_VARIANT tinyint(1),
   SEED          INT(10),
-  NUMBER_OF_SEQUNCE          INT(10) not null default 0,
+  NUMBER_OF_SEQUENCE          INT(10) not null default 0,
   IS_ALL_SEQUENCE_PRODUCED   tinyint(1) not null default 0,
   IS_LAUNCHED   tinyint(1) not null default 0,
   IS_STARTED    tinyint(1) not null default 0,
