@@ -20,10 +20,14 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.beans.Experiment;
 import aiai.ai.beans.ExperimentHyperParams;
 import aiai.ai.beans.ExperimentSequence;
+import aiai.ai.beans.ExperimentSnippet;
 import aiai.ai.repositories.ExperimentRepository;
 import aiai.ai.repositories.ExperimentSequenceRepository;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
@@ -31,6 +35,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@EnableTransactionManagement
 public class ExperimentService {
 
     private final ExperimentRepository experimentRepository;
@@ -47,13 +52,20 @@ public class ExperimentService {
         options.setPrettyFlow(true);
 
         this.yamlProcessor = new Yaml(options);
-
     }
 
+    @Data
+    @AllArgsConstructor
+    public static class SimpleSnippet {
+        String type;
+        String code;
+    }
+
+    @Data
     public static class SequenceYaml {
         Long datasetId;
         Long experimentId;
-        List<String> snippets;
+        List<SimpleSnippet> snippets;
         Map<String, String> hyperParams;
     }
 
@@ -62,15 +74,19 @@ public class ExperimentService {
 
         return null;
     }
+
     public static String toYaml(Yaml yaml, ExperimentUtils.HyperParams hyperParams) {
         if (hyperParams==null) {
             return null;
         }
         String mapYaml;
-        mapYaml = yaml.dump(hyperParams.params.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(
-                Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new))
-        );
+        mapYaml = yaml.dump(sortHyperParams(hyperParams));
         return mapYaml;
+    }
+
+    private static LinkedHashMap<String, String> sortHyperParams(ExperimentUtils.HyperParams hyperParams) {
+        return hyperParams.params.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(
+                Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
     }
 
 
@@ -107,17 +123,24 @@ public class ExperimentService {
     public void fixedDelayExperimentSequencesProducer() {
 
         for (Experiment experiment : experimentRepository.findByIsLaunchedIsTrueAndIsAllSequenceProducedIsFalse()) {
-            
+            if (experiment.getDatasetId()==null) {
+                experiment.setLaunched(false);
+                experiment.setNumberOfSequence(0);
+                experiment.setAllSequenceProduced(false);
+                experimentRepository.save(experiment);
+                continue;
+            }
+
             Set<String> sequnces = new LinkedHashSet<>();
 
             for (ExperimentSequence experimentSequence : experimentSequenceRepository.findByExperimentId(experiment.getId())) {
-                if (sequnces.contains(experimentSequence.getHyperParams())) {
+                if (sequnces.contains(experimentSequence.getParams())) {
                     // delete doubles records
-                    System.out.println("!!! Found doubles. ExperimentId: " + experiment.getId()+", hyperParams: " + experimentSequence.getHyperParams());
+                    System.out.println("!!! Found doubles. ExperimentId: " + experiment.getId()+", hyperParams: " + experimentSequence.getParams());
                     experimentSequenceRepository.delete(experimentSequence);
                     continue;
                 }
-                sequnces.add(experimentSequence.getHyperParams());
+                sequnces.add(experimentSequence.getParams());
             }
 
             Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
@@ -130,15 +153,26 @@ public class ExperimentService {
             }
 
             for (ExperimentUtils.HyperParams hyperParams : allHyperParams) {
-                String currSequence = toYaml(yamlProcessor, hyperParams);
-                if (sequnces.contains(currSequence)) {
+                SequenceYaml yaml = new SequenceYaml();
+                yaml.hyperParams = sortHyperParams(hyperParams);
+                yaml.experimentId = experiment.getId();
+                yaml.datasetId = experiment.getDatasetId();
+
+                List<SimpleSnippet> snippets = new ArrayList<>();
+                for (ExperimentSnippet snippet : experiment.getSnippets()) {
+                    snippets.add(new SimpleSnippet(snippet.getType(), snippet.getSnippetCode()));
+                }
+                yaml.snippets = snippets;
+
+                String sequenceParams = yamlProcessor.dump(yaml);
+
+                if (sequnces.contains(sequenceParams)) {
                     continue;
                 }
 
-                String yaml = ExperimentService.toYaml(yamlProcessor, hyperParams);
                 ExperimentSequence sequence = new ExperimentSequence();
                 sequence.setExperimentId(experiment.getId());
-                sequence.setHyperParams(yaml);
+                sequence.setParams(sequenceParams);
                 experimentSequenceRepository.save(sequence);
             }
             experiment.setAllSequenceProduced(true);

@@ -22,6 +22,8 @@ import aiai.ai.launchpad.snippet.SnippetType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.hibernate.annotations.LazyCollection;
+import org.hibernate.annotations.LazyCollectionOption;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -83,9 +85,13 @@ public class Experiment implements Serializable {
     @Column(name = "NUMBER_OF_SEQUNCE")
     private int numberOfSequence;
 
-    @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    // we need eager because of @Scheduled
+
+    @LazyCollection(LazyCollectionOption.FALSE)
+    @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
     private List<ExperimentHyperParams> hyperParams;
 
+    @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
     private List<ExperimentSnippet> snippets;
 
