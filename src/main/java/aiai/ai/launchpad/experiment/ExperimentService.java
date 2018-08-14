@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.beans.Experiment;
-import aiai.ai.beans.ExperimentMetadata;
+import aiai.ai.beans.ExperimentHyperParams;
 import aiai.ai.beans.ExperimentSequence;
 import aiai.ai.repositories.ExperimentRepository;
 import aiai.ai.repositories.ExperimentSequenceRepository;
@@ -55,20 +55,39 @@ public class ExperimentService {
 
         return null;
     }
-    public static String toYaml(Yaml yaml, Map<String, Long> producedMap) {
-        if (producedMap==null) {
+    public static String toYaml(Yaml yaml, ExperimentUtils.HyperParams hyperParams) {
+        if (hyperParams==null) {
             return null;
         }
         String mapYaml;
-        mapYaml = yaml.dump(producedMap.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(
+        mapYaml = yaml.dump(hyperParams.params.entrySet().stream().sorted(Map.Entry.comparingByKey()).collect(
                 Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new))
         );
         return mapYaml;
     }
 
 
-    public static Map<String, String> toMap(List<ExperimentMetadata> experimentMetadatas) {
-        return experimentMetadatas.stream().collect(Collectors.toMap(ExperimentMetadata::getKey, ExperimentMetadata::getValue, (a, b) -> b, HashMap::new));
+    public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed, String epochs) {
+        List<ExperimentHyperParams> params = new ArrayList<>();
+        ExperimentHyperParams p1 = new ExperimentHyperParams();
+        p1.setKey("seed");
+        p1.setValues(Integer.toString(seed));
+        params.add(p1);
+
+        ExperimentHyperParams p2 = new ExperimentHyperParams();
+        p2.setKey("epoch");
+        p2.setValues(epochs);
+        params.add(p2);
+
+        for (ExperimentHyperParams param : experimentHyperParams) {
+            //noinspection UseBulkOperation
+            params.add(param);
+        }
+        return toMap(params);
+    }
+
+    public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams) {
+        return experimentHyperParams.stream().collect(Collectors.toMap(ExperimentHyperParams::getKey, ExperimentHyperParams::getValues, (a, b) -> b, HashMap::new));
     }
 
     /**
@@ -80,34 +99,37 @@ public class ExperimentService {
     @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
     public void fixedDelayExperimentParticleProducer() {
 
-        for (Experiment experiment : experimentRepository.findByAllSequenceProducedIsFalse()) {
-
+        for (Experiment experiment : experimentRepository.findByIsAllSequenceProducedIsTrue()) {
+            
             Set<String> particles = new LinkedHashSet<>();
 
-            for (ExperimentSequence experimentSequence : experimentSequenceRepository.findByExperiment_Id(experiment.getId())) {
-                if (particles.contains(experimentSequence.getMeta())) {
+            for (ExperimentSequence experimentSequence : experimentSequenceRepository.findByExperimentId(experiment.getId())) {
+                if (particles.contains(experimentSequence.getHyperParams())) {
                     // delete doubles records
-                    System.out.println("!!! Found doubles. ExperimentId: " + experiment.getId()+", meta: " + experimentSequence.getMeta());
+                    System.out.println("!!! Found doubles. ExperimentId: " + experiment.getId()+", hyperParams: " + experimentSequence.getHyperParams());
                     experimentSequenceRepository.delete(experimentSequence);
                     continue;
                 }
-                particles.add(experimentSequence.getMeta());
+                particles.add(experimentSequence.getHyperParams());
             }
 
-            Map<String, String> map = toMap(experiment.getMetadata());
-            List<Map<String, Long>> allPaths = ExperimentUtils.getAllPaths(map);
+            Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
+            List<ExperimentUtils.HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
-            for (Map<String, Long> allPath : allPaths) {
-                String currParticle = toYaml(yaml, allPath);
+            if (experiment.getNumberOfSequence()!=allHyperParams.size()) {
+                System.out.println(String.format(
+                        "!!! number of sequnce is different. experiment.getNumberOfSequence():  %d, allHyperParams.size(): %d",
+                        experiment.getNumberOfSequence(), allHyperParams.size()));
+            }
+
+            for (ExperimentUtils.HyperParams hyperParams : allHyperParams) {
+                String currParticle = toYaml(yaml, hyperParams);
                 if (particles.contains(currParticle)) {
                     continue;
                 }
 
 //                ... add new ExperimentParticle
             }
-
-
         }
-
     }
 }

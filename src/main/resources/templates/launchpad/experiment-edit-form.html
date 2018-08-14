@@ -120,9 +120,9 @@
             </thead>
 
             <tbody>
-            <tr th:each="m : ${experiment.metadata}">
-                <td th:text="${m.key}">Experiment name</td>
-                <td th:text="${m.value}">Dataset description</td>
+            <tr th:each="m : ${experiment.hyperParams}">
+                <td th:text="${m.key}">Hyper param key</td>
+                <td th:text="${m.values}">Hyper param values</td>
                 <!--<td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-metadata-edit/' + m.id}">Edit</a></td>-->
                 <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-metadata-delete-commit/' + experiment.id+'/'+ m.id}">Delete</a></td>
             </tr>

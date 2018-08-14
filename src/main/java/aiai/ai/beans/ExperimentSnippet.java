@@ -19,6 +19,7 @@ package aiai.ai.beans;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -27,6 +28,7 @@ import java.io.Serializable;
 @Table(name = "AIAI_LP_EXPERIMENT_SNIPPET")
 @Data
 @EqualsAndHashCode(exclude = {"experiment"})
+@ToString(exclude = {"experiment"})
 public class ExperimentSnippet implements Serializable {
     private static final long serialVersionUID = -7027988813072979346L;
 

@@ -20,7 +20,7 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.ControllerUtils;
 import aiai.ai.beans.*;
 import aiai.ai.launchpad.snippet.SnippetType;
-import aiai.ai.repositories.ExperimentMetadataRepository;
+import aiai.ai.repositories.ExperimentHyperParamsRepository;
 import aiai.ai.repositories.ExperimentRepository;
 import aiai.ai.repositories.ExperimentSnippetRepository;
 import aiai.ai.repositories.SnippetRepository;
@@ -39,6 +39,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: Serg
@@ -58,13 +59,13 @@ public class ExperimentsController {
     private int limit;
 
     private final ExperimentRepository experimentRepository;
-    private final ExperimentMetadataRepository experimentMetadataRepository;
+    private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
     private final SnippetRepository snippetRepository;
     private final ExperimentSnippetRepository experimentSnippetRepository;
 
-    public ExperimentsController(ExperimentRepository experimentRepository, ExperimentMetadataRepository experimentMetadataRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository) {
+    public ExperimentsController(ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository) {
         this.experimentRepository = experimentRepository;
-        this.experimentMetadataRepository = experimentMetadataRepository;
+        this.experimentHyperParamsRepository = experimentHyperParamsRepository;
         this.snippetRepository = snippetRepository;
         this.experimentSnippetRepository = experimentSnippetRepository;
     }
@@ -83,7 +84,7 @@ public class ExperimentsController {
     }
 
     @GetMapping("/experiments")
-    public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
+    public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
         pageable = ControllerUtils.fixPageSize(limit, pageable);
         result.items = experimentRepository.findAll(pageable);
         return "launchpad/experiments";
@@ -111,11 +112,11 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#81.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
         }
-        for (ExperimentMetadata metadata : experiment.getMetadata()) {
-            if (StringUtils.isBlank(metadata.getValue())) {
+        for (ExperimentHyperParams metadata : experiment.getHyperParams()) {
+            if (StringUtils.isBlank(metadata.getValues())) {
                 continue;
             }
-            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(metadata.getValue());
+            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(metadata.getValues());
             metadata.setVariants( variants.status ?variants.count : 0 );
         }
         model.addAttribute("experiment", experiment);
@@ -164,14 +165,14 @@ public class ExperimentsController {
         if (experiment == null) {
             return "redirect:/launchpad/experiments";
         }
-        if (experiment.getMetadata()==null) {
-            experiment.setMetadata(new ArrayList<>());
+        if (experiment.getHyperParams()==null) {
+            experiment.setHyperParams(new ArrayList<>());
         }
-        ExperimentMetadata m = new ExperimentMetadata();
+        ExperimentHyperParams m = new ExperimentHyperParams();
         m.setExperiment(experiment);
         m.setKey(key);
-        m.setValue(value);
-        experiment.getMetadata().add(m);
+        m.setValues(value);
+        experiment.getHyperParams().add(m);
 
         experimentRepository.save(experiment);
         return "redirect:/launchpad/experiment-edit/"+id;
@@ -189,7 +190,7 @@ public class ExperimentsController {
         ExperimentSnippet s = new ExperimentSnippet();
 
         //noinspection ConstantConditions
-        List<ExperimentSnippet> snippets = experimentSnippetRepository.findByExperiment_Id(experiment.getId());
+        List<ExperimentSnippet> snippets = experimentSnippetRepository.findByExperimentId(experiment.getId());
         int order = snippets.isEmpty() ? 1 : snippets.stream().mapToInt(ExperimentSnippet::getOrder).max().getAsInt() + 1;
         s.setOrder(order);
 
@@ -208,11 +209,11 @@ public class ExperimentsController {
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{id}")
     public String metadataDeleteCommit(@PathVariable long experimentId, @PathVariable Long id) {
-        ExperimentMetadata metadata = experimentMetadataRepository.findById(id).orElse(null);
-        if (metadata == null || experimentId != metadata.getExperiment().getId()) {
+        ExperimentHyperParams hyperParams = experimentHyperParamsRepository.findById(id).orElse(null);
+        if (hyperParams == null || experimentId != hyperParams.getExperiment().getId()) {
             return "redirect:/launchpad/experiment-edit/" + experimentId;
         }
-        experimentMetadataRepository.deleteById(id);
+        experimentHyperParamsRepository.deleteById(id);
         return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 
@@ -260,6 +261,28 @@ public class ExperimentsController {
     @PostMapping("/experiment-delete-commit")
     public String deleteCommit(Long id) {
         experimentRepository.deleteById(id);
+        return "redirect:/launchpad/experiments";
+    }
+
+    @GetMapping("/experiment-launch/{experimentId}")
+    public String launch(@PathVariable long experimentId,final RedirectAttributes redirectAttributes) {
+        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
+        if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#84.01 experiment wasn't found, experimentId: " + experimentId);
+            return "redirect:/launchpad/experiments";
+        }
+        if (experiment.isLaunched()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#84.02 experiment was already launched, experimentId: " + experimentId);
+            return "redirect:/launchpad/experiments";
+        }
+
+        Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
+        List<ExperimentUtils.HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+
+        experiment.setNumberOfSequence(allHyperParams.size());
+        experiment.setLaunched(true);
+        experimentRepository.save(experiment);
+
         return "redirect:/launchpad/experiments";
     }
 

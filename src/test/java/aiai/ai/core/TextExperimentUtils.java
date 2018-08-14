@@ -19,7 +19,6 @@ package aiai.ai.core;
 
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -29,7 +28,6 @@ import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -51,17 +49,17 @@ public class TextExperimentUtils {
         assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 0), ExperimentUtils.getNumberOfVariants(" ") );
         assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 0), ExperimentUtils.getNumberOfVariants(null) );
 
-        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, 10L), ExperimentUtils.getNumberOfVariants("10") );
-        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, 10L), ExperimentUtils.getNumberOfVariants(" 10 ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, "10"), ExperimentUtils.getNumberOfVariants("10") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, "10"), ExperimentUtils.getNumberOfVariants(" 10 ") );
 
-        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 3, new Long[]{10L,15L,37L}), ExperimentUtils.getNumberOfVariants(" [ 10, 15, 37] ") );
-        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 2, new Long[]{10L,15L}), ExperimentUtils.getNumberOfVariants(" [ 10, 15, ] ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 3, new String[]{"10","15","37"}), ExperimentUtils.getNumberOfVariants(" [ 10, 15, 37] ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 2, new String[]{"10","15"}), ExperimentUtils.getNumberOfVariants(" [ 10, 15, ] ") );
 
-        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 2, new Long[]{10L,15L}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 20, 5) ") );
-        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 3, new Long[]{10L,15L, 20L}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 21, 5) ") );
-        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, new Long[]{10L}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 15, 5) ") );
-        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 2, new Long[]{10L,15L}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 16, 5) ") );
-        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, new Long[]{10L}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 14, 5) ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 2, new String[]{"10","15"}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 20, 5) ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 3, new String[]{"10","15", "20"}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 21, 5) ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, new String[]{"10"}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 15, 5) ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 2, new String[]{"10","15"}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 16, 5) ") );
+        assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 1, new String[]{"10"}), ExperimentUtils.getNumberOfVariants(" Range ( 10, 14, 5) ") );
         assertEquals( ExperimentUtils.NumberOfVariants.instanceOf(true, null, 0), ExperimentUtils.getNumberOfVariants(" Range ( 10, 10, 5) ") );
 
         assertFalse(ExperimentUtils.getNumberOfVariants(" Range ( 10, 14, ) ").isStatus());
@@ -69,8 +67,9 @@ public class TextExperimentUtils {
         assertFalse(ExperimentUtils.getNumberOfVariants(" Range ( abc, 15, 3) ").isStatus());
         assertFalse(ExperimentUtils.getNumberOfVariants(" Range ( 10, abc, 3) ").isStatus());
         assertFalse(ExperimentUtils.getNumberOfVariants(" Range ( 10, 15, abc) ").isStatus());
-        assertFalse(ExperimentUtils.getNumberOfVariants(" abc ").isStatus());
-        assertFalse(ExperimentUtils.getNumberOfVariants(" [ 10, abc, 37] ").isStatus());
+
+        assertTrue(ExperimentUtils.getNumberOfVariants(" [ 10, abc, 37] ").isStatus());
+        assertTrue(ExperimentUtils.getNumberOfVariants(" abc ").isStatus());
 
     }
 
@@ -79,27 +78,27 @@ public class TextExperimentUtils {
 
     @Test
     public void testMetaProducer() {
-        List<Map<String, Long>> allPaths;
+        List<ExperimentUtils.HyperParams> allPaths;
         Map<String, String> map = new LinkedHashMap<>();
 
         map.put("key1", null);
-        allPaths = ExperimentUtils.getAllPaths(map);
+        allPaths = ExperimentUtils.getAllHyperParams(map);
         assertTrue(allPaths.isEmpty());
 
         map.clear();
         map.put("key1", "");
-        allPaths = ExperimentUtils.getAllPaths(map);
+        allPaths = ExperimentUtils.getAllHyperParams(map);
         assertTrue(allPaths.isEmpty());
 
 
         map.clear();
         map.put("key1", "10");
-        allPaths = ExperimentUtils.getAllPaths(map);
+        allPaths = ExperimentUtils.getAllHyperParams(map);
 
         assertEquals(1, allPaths.size());
-        Map<String, Long> path = allPaths.get(0);
-        assertEquals(1, path.size());
-        assertEquals(10L, (long)path.get("key1"));
+        ExperimentUtils.HyperParams path = allPaths.get(0);
+        assertEquals(1, path.params.size());
+        assertEquals("10", path.params.get("key1"));
 
         map.clear();
         map.put("key3", "30");
@@ -107,11 +106,11 @@ public class TextExperimentUtils {
         map.put("key2", "20");
         map.put("key1", "10");
 
-        allPaths = ExperimentUtils.getAllPaths(map);
+        allPaths = ExperimentUtils.getAllHyperParams(map);
 
         assertEquals(1, allPaths.size());
-        Map<String, Long> path1 = allPaths.get(0);
-        assertEquals(4, path1.size());
+        ExperimentUtils.HyperParams path1 = allPaths.get(0);
+        assertEquals(4, path1.params.size());
 
         String mapYaml;
         Scanner scanner;
@@ -122,38 +121,50 @@ public class TextExperimentUtils {
         scanner = new Scanner(mapYaml);
         scanner.useDelimiter("[\n]");
 
-        Assert.assertEquals("key1: 10", scanner.next());
-        Assert.assertEquals("key2: 20", scanner.next());
-        Assert.assertEquals("key3: 30", scanner.next());
-        Assert.assertEquals("key4: 40", scanner.next());
+        Assert.assertEquals("key1: '10'", scanner.next());
+        Assert.assertEquals("key2: '20'", scanner.next());
+        Assert.assertEquals("key3: '30'", scanner.next());
+        Assert.assertEquals("key4: '40'", scanner.next());
 
     }
 
+    @Test
+    public void testHyperParams() {
+        ExperimentUtils.HyperParams hp = new ExperimentUtils.HyperParams(new LinkedHashMap<>(), "abc");
+
+        ExperimentUtils.HyperParams hp1 = hp.asClone();
+
+        hp1.path += "123";
+
+        assertEquals("abc", hp.path);
+        assertEquals("abc123", hp1.path);
+
+    }
 
     private String toSampleYaml(String[][] values) {
         Map<String, String> map = new LinkedHashMap<>();
         for (String[] v : values) {
             map.put(v[0], v[1]);
         }
-        List<Map<String, Long>> allPaths = ExperimentUtils.getAllPaths(map);
+        List<ExperimentUtils.HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
 
         return ExperimentService.toYaml(yaml, allPaths.get(0));
     }
 
     @Test
-    public void testMetaProducer_1() {
+    public void testGetAllHyperParams_1() {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("key3", "30");
         map.put("key4", "40");
         map.put("key2", "[2,4]");
         map.put("key1", "[11, 13]");
 
-        List<Map<String, Long>> allPaths = ExperimentUtils.getAllPaths(map);
+        List<ExperimentUtils.HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
 
         List<String> allYamls = new ArrayList<>();
         String currYaml;
-        for (Map<String, Long> allPath : allPaths) {
-            currYaml = ExperimentService.toYaml(yaml, allPath);
+        for (ExperimentUtils.HyperParams hyperParams : allPaths) {
+            currYaml = ExperimentService.toYaml(yaml, hyperParams);
             allYamls.add(currYaml);
         }
         assertEquals(4, allYamls.size());
@@ -165,25 +176,95 @@ public class TextExperimentUtils {
     }
 
     @Test
-    public void testMetaProducer_2() {
+    public void testGetAllHyperParams_2() {
         Map<String, String> map = new LinkedHashMap<>();
         map.put("key3", "30");
         map.put("key4", "40");
         map.put("key2", "[2,4]");
         map.put("key1", "[11]");
 
-        List<Map<String, Long>> allPaths = ExperimentUtils.getAllPaths(map);
+        List<ExperimentUtils.HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
 
         List<String> allYamls = new ArrayList<>();
         String currYaml;
-        for (Map<String, Long> allPath : allPaths) {
-            currYaml = ExperimentService.toYaml(yaml, allPath);
+        for (ExperimentUtils.HyperParams hyperParams : allPaths) {
+            currYaml = ExperimentService.toYaml(yaml, hyperParams);
             allYamls.add(currYaml);
         }
         assertEquals(2, allYamls.size());
 
         assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","2"}, {"key3","30"}, {"key4","40"}, }) ) );
         assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","4"}, {"key3","30"}, {"key4","40"}, }) ) );
+    }
+
+    @Test
+    public void testGetAllHyperParams_3() {
+        Map<String, String> map = new LinkedHashMap<>();
+        map.put("key1", "[11]");
+        map.put("key2", "[LSTM, GRU]");
+
+        List<ExperimentUtils.HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
+
+        List<String> allYamls = new ArrayList<>();
+        String currYaml;
+        for (ExperimentUtils.HyperParams hyperParams : allPaths) {
+            currYaml = ExperimentService.toYaml(yaml, hyperParams);
+            allYamls.add(currYaml);
+        }
+        assertEquals(2, allYamls.size());
+
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","LSTM"} }) ) );
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","GRU"} }) ) );
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"key1","11"}, {"key2","GRU"} }) ) );
+
+        assertTrue(getYaml(allYamls, toSampleYaml(new String[][]{{"key1","11"}, {"key2","GRU"} }) ).contains("GRU") );
+        assertTrue(getYaml(allYamls, toSampleYaml(new String[][]{{"key1","11"}, {"key2","LSTM"} }) ).contains("LSTM") );
+
+    }
+
+    private static String getYaml( List<String> allYamls, String yaml) {
+        for (String allYaml : allYamls) {
+            if (allYaml.equals(yaml)) {
+                return yaml;
+            }
+        }
+        throw new IllegalStateException("not found " + yaml);
+    }
+
+    @Test
+    public void testEmptyList() {
+        Map<String, String> map = ExperimentService.toMap(new ArrayList<>(), 1337, "10");
+        List<ExperimentUtils.HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+        assertEquals(1, allHyperParams.size());
+
+        List<String> allYamls = new ArrayList<>();
+        String currYaml;
+        for (ExperimentUtils.HyperParams hyperParams : allHyperParams) {
+            currYaml = ExperimentService.toYaml(yaml, hyperParams);
+            allYamls.add(currYaml);
+        }
+        assertEquals(1, allYamls.size());
+
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"seed","1337"}, {"epoch","10"}}) ) );
+    }
+
+    @Test
+    public void testEmptyList_1() {
+        Map<String, String> map = ExperimentService.toMap(new ArrayList<>(), 1337, "[7, 11, 13]");
+        List<ExperimentUtils.HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+        assertEquals(3, allHyperParams.size());
+        List<String> allYamls = new ArrayList<>();
+
+        String currYaml;
+        for (ExperimentUtils.HyperParams hyperParams : allHyperParams) {
+            currYaml = ExperimentService.toYaml(yaml, hyperParams);
+            allYamls.add(currYaml);
+        }
+        assertEquals(3, allYamls.size());
+
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"seed","1337"}, {"epoch","7"}}) ) );
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"seed","1337"}, {"epoch","11"}}) ) );
+        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"seed","1337"}, {"epoch","13"}}) ) );
     }
 
 }

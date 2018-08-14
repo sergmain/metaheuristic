@@ -18,8 +18,6 @@
 
 package aiai.ai.repositories;
 
-import aiai.ai.beans.DatasetGroup;
-import aiai.ai.beans.ExperimentMetadata;
 import aiai.ai.beans.ExperimentSnippet;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
@@ -31,6 +29,6 @@ import java.util.List;
 public interface ExperimentSnippetRepository extends CrudRepository<ExperimentSnippet, Long> {
 
     @Transactional(readOnly = true)
-    List<ExperimentSnippet> findByExperiment_Id(Long experiimentId);
+    List<ExperimentSnippet> findByExperimentId(Long experiimentId);
 
 }

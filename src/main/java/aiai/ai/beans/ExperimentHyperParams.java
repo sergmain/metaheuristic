@@ -19,16 +19,18 @@ package aiai.ai.beans;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_LP_EXPERIMENT_SNIPPET")
+@Table(name = "AIAI_LP_EXPERIMENT_HYPER_PARAMS")
 @Data
-@EqualsAndHashCode(exclude = {"experiment"})
-public class ExperimentParticles implements Serializable {
-    private static final long serialVersionUID = -7027988813072979346L;
+@EqualsAndHashCode(exclude = {"experiment", "variants"})
+@ToString(exclude = {"experiment"})
+public class ExperimentHyperParams implements Serializable {
+    private static final long serialVersionUID = -2816493662535597212L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,17 +39,20 @@ public class ExperimentParticles implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "SNIPPET_CODE")
-    private String snippetCode;
+    @Column(name = "HYPER_PARAM_KEY")
+    private String key;
 
-    @Column(name = "SNIPPET_TYPE")
-    public String type;
-
-    @Column(name = "SNIPPET_ORDER")
-    private int order;
+    @Column(name = "HYPER_PARAM_VALUES")
+    private String values;
 
     @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
     @JoinColumn(name = "EXPERIMENT_ID")
     private Experiment experiment;
+
+    /**
+     * number of variants for this metadata
+     */
+    @Transient
+    private int variants;
 
 }

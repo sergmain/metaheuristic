@@ -21,6 +21,7 @@ package aiai.ai.beans;
 import aiai.ai.launchpad.snippet.SnippetType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -34,7 +35,8 @@ import java.util.List;
 @Entity
 @Table(name = "AIAI_LP_EXPERIMENT")
 @Data
-@EqualsAndHashCode(exclude = {"metadata"})
+@EqualsAndHashCode(exclude = {"hyperParams", "snippets"})
+@ToString(exclude = {"hyperParams", "snippets"})
 public class Experiment implements Serializable {
     private static final long serialVersionUID = -3509391644278818781L;
 
@@ -75,8 +77,11 @@ public class Experiment implements Serializable {
     @Column(name="LAUNCHED_ON")
     private Long launchedOn;
 
-    @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
-    private List<ExperimentMetadata> metadata;
+    @Column(name = "NUMBER_OF_SEQUNCE")
+    private int numberOfSequence;
+
+    @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    private List<ExperimentHyperParams> hyperParams;
 
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
     private List<ExperimentSnippet> snippets;

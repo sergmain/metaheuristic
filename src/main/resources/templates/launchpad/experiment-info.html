@@ -65,9 +65,9 @@
             </thead>
 
             <tbody>
-            <tr th:each="m : ${experiment.metadata}">
+            <tr th:each="m : ${experiment.hyperParams}">
                 <td th:text="${m.key}">Key</td>
-                <td th:text="${m.value}">Value</td>
+                <td th:text="${m.values}">Value</td>
                 <td th:text="${m.variants}">Variants</td>
             </tr>
             </tbody>
@@ -79,7 +79,7 @@
         </div>
         <div th:if="${!experiment.launched}">
             <p>Experiment isn't launched</p>
-            <a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-start/' + experiment.id}">Launch</a>
+            <a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-launch/' + experiment.id}">Launch</a>
         </div>
 
 

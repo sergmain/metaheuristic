@@ -39,7 +39,7 @@ public class ExperimentSequence implements Serializable {
     @Column(name = "EXPERIMENT_ID")
     private Long experimentId;
 
-    @Column(name = "META")
-    private String meta;
+    @Column(name = "HYPER_PARAMS")
+    private String hyperParams;
 
 }
