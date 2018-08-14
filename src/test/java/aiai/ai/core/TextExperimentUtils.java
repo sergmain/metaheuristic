@@ -19,6 +19,8 @@ package aiai.ai.core;
 
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
@@ -27,6 +29,7 @@ import org.junit.rules.ExpectedException;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
+import javax.persistence.Transient;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -265,6 +268,21 @@ public class TextExperimentUtils {
         assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"seed","1337"}, {"epoch","7"}}) ) );
         assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"seed","1337"}, {"epoch","11"}}) ) );
         assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"seed","1337"}, {"epoch","13"}}) ) );
+    }
+
+    @Data
+    @AllArgsConstructor
+    private static class TextToYaml {
+        public String aaa;
+
+        @Transient
+        public String bbb;
+    }
+
+    @Test
+    public void testTextToYaml_1() {
+        String s = yaml.dump( new TextToYaml("AAA-valuse", "BBB-value") );
+        assertFalse(s.contains("BBB-value"));
     }
 
 }

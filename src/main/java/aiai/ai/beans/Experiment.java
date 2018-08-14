@@ -47,6 +47,9 @@ public class Experiment implements Serializable {
     @Version
     private Integer version;
 
+    @Column(name = "DATASET_ID")
+    private Long datasetId;
+
     @Column(name = "NAME")
     private String name;
 

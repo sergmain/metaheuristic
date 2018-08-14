@@ -20,6 +20,7 @@ package aiai.ai.beans;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -33,6 +34,7 @@ import java.io.Serializable;
 @Table(name = "AIAI_LP_DATASET_COLUMN")
 @Data
 @EqualsAndHashCode(exclude = {"datasetGroup"})
+@ToString(exclude = {"datasetGroup"})
 public class DatasetColumn implements Serializable {
     private static final long serialVersionUID = -1823497750685166069L;
 

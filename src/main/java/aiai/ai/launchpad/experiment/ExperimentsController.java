@@ -20,10 +20,7 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.ControllerUtils;
 import aiai.ai.beans.*;
 import aiai.ai.launchpad.snippet.SnippetType;
-import aiai.ai.repositories.ExperimentHyperParamsRepository;
-import aiai.ai.repositories.ExperimentRepository;
-import aiai.ai.repositories.ExperimentSnippetRepository;
-import aiai.ai.repositories.SnippetRepository;
+import aiai.ai.repositories.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -36,10 +33,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * User: Serg
@@ -58,12 +52,14 @@ public class ExperimentsController {
     @Value("${aiai.table.rows.limit:#{5}}")
     private int limit;
 
+    private final DatasetsRepository datasetRepository;
     private final ExperimentRepository experimentRepository;
     private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
     private final SnippetRepository snippetRepository;
     private final ExperimentSnippetRepository experimentSnippetRepository;
 
-    public ExperimentsController(ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository) {
+    public ExperimentsController(DatasetsRepository datasetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository) {
+        this.datasetRepository = datasetRepository;
         this.experimentRepository = experimentRepository;
         this.experimentHyperParamsRepository = experimentHyperParamsRepository;
         this.snippetRepository = snippetRepository;
@@ -72,16 +68,24 @@ public class ExperimentsController {
 
     @Data
     @AllArgsConstructor
-    public static class SnippetSelectOption {
+    public static class SimpleSelectOption {
         String value;
         String desc;
     }
 
     @Data
     public static class SnippetResult {
-        public List<SnippetSelectOption> selectOptions = new ArrayList<>();
+        public List<SimpleSelectOption> selectOptions = new ArrayList<>();
         public List<ExperimentSnippet> snippets = new ArrayList<>();
     }
+
+    @Data
+    public static class ExperimentResult {
+        public Experiment experiment;
+        public Dataset dataset;
+        public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
+    }
+
 
     @GetMapping("/experiments")
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
@@ -104,7 +108,6 @@ public class ExperimentsController {
         return "launchpad/experiment-add-form";
     }
 
-
     @GetMapping(value = "/experiment-info/{id}")
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes ) {
         Experiment experiment = experimentRepository.findById(id).orElse(null);
@@ -112,14 +115,29 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#81.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
         }
-        for (ExperimentHyperParams metadata : experiment.getHyperParams()) {
-            if (StringUtils.isBlank(metadata.getValues())) {
+        for (ExperimentHyperParams hyperParams : experiment.getHyperParams()) {
+            if (StringUtils.isBlank(hyperParams.getValues())) {
                 continue;
             }
-            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(metadata.getValues());
-            metadata.setVariants( variants.status ?variants.count : 0 );
+            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParams.getValues());
+            hyperParams.setVariants( variants.status ?variants.count : 0 );
         }
-        model.addAttribute("experiment", experiment);
+        if (experiment.getDatasetId()==null) {
+            model.addAttribute("infoMessages", Collections.singleton("Launch is disabled, dataset isn't assigned"));
+        }
+
+        ExperimentResult experimentResult = new ExperimentResult();
+        Dataset dataset = null;
+        if (experiment.getDatasetId()!=null) {
+            dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
+            if (dataset == null) {
+                experiment.setDatasetId(null);
+                experimentRepository.save(experiment);
+            }
+        }
+        experimentResult.experiment = experiment;
+        experimentResult.dataset = dataset;
+        model.addAttribute("experimentResult", experimentResult);
         return "launchpad/experiment-info";
     }
 
@@ -148,15 +166,67 @@ public class ExperimentsController {
                 if (SnippetType.predict.equals(snippet.type) && experiment.hasPredict()) {
                     continue;
                 }
-                snippetResult.selectOptions.add( new SnippetSelectOption(snippet.getSnippetCode(), String.format("Type: %s; Code: %s:%s", snippet.getType(), snippet.getName(), snippet.getSnippetVersion())));
+                snippetResult.selectOptions.add( new SimpleSelectOption(snippet.getSnippetCode(), String.format("Type: %s; Code: %s:%s", snippet.getType(), snippet.getName(), snippet.getSnippetVersion())));
             }
         }
-//        snippetResult.snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
         snippetResult.snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
 
-        model.addAttribute("experiment", experiment);
+        ExperimentResult experimentResult = new ExperimentResult();
+        Dataset dataset = null;
+        if (experiment.getDatasetId()!=null) {
+            dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
+            if (dataset == null) {
+                experiment.setDatasetId(null);
+                experimentRepository.save(experiment);
+            }
+        }
+        if (dataset==null) {
+            for (Dataset ds : datasetRepository.findAll()) {
+                experimentResult.allDatasetOptions.add(new SimpleSelectOption(ds.getId().toString(), String.format("Id: %d; %s", ds.getId(), ds.getName())));
+            }
+        }
+        experimentResult.experiment = experiment;
+        experimentResult.dataset = dataset;
+        model.addAttribute("experimentResult", experimentResult);
         model.addAttribute("snippetResult", snippetResult);
         return "launchpad/experiment-edit-form";
+    }
+
+    @PostMapping("/experiment-dataset-assign-commit/{id}")
+    public String datasetAddCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes ) {
+        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#87.01 experiment wasn't found, experimentId: " + id);
+            return "redirect:/launchpad/experiments";
+        }
+        if (experiment.getDatasetId()!=null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#87.02 Dataset is already assigned to this experiment, experimentId: " + id);
+            return "redirect:/launchpad/experiment-edit/"+id;
+        }
+        Dataset dataset = datasetRepository.findById(Long.parseLong(code)).orElse(null);
+        if (dataset==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#87.03 Wrong datasetId: "+code+", experimentId: " + id);
+            return "redirect:/launchpad/experiment-edit/"+id;
+        }
+
+        experiment.setDatasetId(dataset.getId());
+        experimentRepository.save(experiment);
+        return "redirect:/launchpad/experiment-edit/"+id;
+    }
+
+    @GetMapping("/experiment-dataset-unassign-commit/{id}")
+    public String datasetAddCommit(@PathVariable Long id, final RedirectAttributes redirectAttributes ) {
+        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#88.01 experiment wasn't found, experimentId: " + id);
+            return "redirect:/launchpad/experiments";
+        }
+        if (experiment.getDatasetId()==null) {
+            return "redirect:/launchpad/experiment-edit/"+id;
+        }
+        experiment.setDatasetId(null);
+        experimentRepository.save(experiment);
+        return "redirect:/launchpad/experiment-edit/"+id;
     }
 
     @PostMapping("/experiment-metadata-add-commit/{id}")
@@ -265,7 +335,7 @@ public class ExperimentsController {
     }
 
     @GetMapping("/experiment-launch/{experimentId}")
-    public String launch(@PathVariable long experimentId,final RedirectAttributes redirectAttributes) {
+    public String launch(@PathVariable long experimentId,final RedirectAttributes redirectAttributes, Model model) {
         Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#84.01 experiment wasn't found, experimentId: " + experimentId);
@@ -276,11 +346,17 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
 
+        if (experiment.getDatasetId()==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#84.03 dataset wasn't assigned, experimentId: " + experimentId);
+            return "redirect:/launchpad/experiments";
+        }
+
         Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
         List<ExperimentUtils.HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
         experiment.setNumberOfSequence(allHyperParams.size());
         experiment.setLaunched(true);
+        experiment.setLaunchedOn(System.currentTimeMillis());
         experimentRepository.save(experiment);
 
         return "redirect:/launchpad/experiments";

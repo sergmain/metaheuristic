@@ -36,7 +36,7 @@ public class ExperimentService {
     private final ExperimentRepository experimentRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
 
-    private final Yaml yaml;
+    private final Yaml yamlProcessor;
 
     public ExperimentService(ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository) {
         this.experimentRepository = experimentRepository;
@@ -46,8 +46,15 @@ public class ExperimentService {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        this.yaml = new Yaml(options);
+        this.yamlProcessor = new Yaml(options);
 
+    }
+
+    public static class SequenceYaml {
+        Long datasetId;
+        Long experimentId;
+        List<String> snippets;
+        Map<String, String> hyperParams;
     }
 
 
@@ -123,13 +130,19 @@ public class ExperimentService {
             }
 
             for (ExperimentUtils.HyperParams hyperParams : allHyperParams) {
-                String currSequence = toYaml(yaml, hyperParams);
+                String currSequence = toYaml(yamlProcessor, hyperParams);
                 if (sequnces.contains(currSequence)) {
                     continue;
                 }
 
-//                ... add new ExperimentSequence
+                String yaml = ExperimentService.toYaml(yamlProcessor, hyperParams);
+                ExperimentSequence sequence = new ExperimentSequence();
+                sequence.setExperimentId(experiment.getId());
+                sequence.setHyperParams(yaml);
+                experimentSequenceRepository.save(sequence);
             }
+            experiment.setAllSequenceProduced(true);
+            experimentRepository.save(experiment);
         }
     }
 }

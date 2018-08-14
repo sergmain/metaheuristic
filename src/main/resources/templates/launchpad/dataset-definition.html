@@ -56,11 +56,14 @@
                     <input type="hidden" th:field="*{id}"/>
                     <input type="hidden" th:field="*{version}"/>
                     <fieldset>
-
+                        <label for="name">Name</label>
+                        <input size="90" name="name" id="name" type="text" placeholder="name" th:field="*{name}">
+                        <span class="pure-form-message">This is a required field.</span>
+                    </fieldset>
+                    <fieldset>
                         <label for="description">Description</label>
                         <input size="90" name="description" id="description" type="text" placeholder="description" th:field="*{description}">
                         <span class="pure-form-message">This is a required field.</span>
-
                     </fieldset>
                 </td>
                 <td width="20">

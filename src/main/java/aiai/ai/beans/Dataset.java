@@ -20,6 +20,7 @@ package aiai.ai.beans;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -43,6 +44,9 @@ public class Dataset implements Serializable {
 
     @Version
     private Integer version;
+
+    @Column(name = "NAME")
+    private String name;
 
     @Column(name = "DESCRIPTION")
     private String description;

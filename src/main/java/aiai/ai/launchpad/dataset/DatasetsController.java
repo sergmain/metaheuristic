@@ -224,7 +224,6 @@ public class DatasetsController {
             dg.setIdGroup(datasetGroup.isIdGroup());
             dg.setFeature(datasetGroup.isFeature());
             dg.setLabel(datasetGroup.isLabel());
-            dg.setMeta(datasetGroup.isMeta());
             dg.setFeatureStatus(datasetGroup.getFeatureStatus());
             dsg.add(dg);
         }

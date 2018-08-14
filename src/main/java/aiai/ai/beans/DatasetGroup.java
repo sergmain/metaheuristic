@@ -20,6 +20,7 @@ package aiai.ai.beans;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -34,6 +35,7 @@ import java.util.List;
 @Table(name = "AIAI_LP_DATASET_GROUP")
 @Data
 @EqualsAndHashCode(exclude = {"dataset", "datasetColumns"})
+@ToString(exclude = {"dataset"})
 public class DatasetGroup implements Serializable {
     private static final long serialVersionUID = -3161178396332333392L;
 
@@ -74,10 +76,6 @@ public class DatasetGroup implements Serializable {
 
     @Column(name = "IS_LABEL")
     private boolean isLabel;
-
-    // TODO 2018-04-15 I forgot why I added that field
-    @Column(name = "IS_META")
-    private boolean isMeta;
 
     @Column(name = "STATUS")
     private int featureStatus;
