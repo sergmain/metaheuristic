@@ -97,20 +97,20 @@ public class ExperimentService {
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
     @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
-    public void fixedDelayExperimentParticleProducer() {
+    public void fixedDelayExperimentSequencesProducer() {
 
-        for (Experiment experiment : experimentRepository.findByIsAllSequenceProducedIsTrue()) {
+        for (Experiment experiment : experimentRepository.findByIsLaunchedIsTrueAndIsAllSequenceProducedIsFalse()) {
             
-            Set<String> particles = new LinkedHashSet<>();
+            Set<String> sequnces = new LinkedHashSet<>();
 
             for (ExperimentSequence experimentSequence : experimentSequenceRepository.findByExperimentId(experiment.getId())) {
-                if (particles.contains(experimentSequence.getHyperParams())) {
+                if (sequnces.contains(experimentSequence.getHyperParams())) {
                     // delete doubles records
                     System.out.println("!!! Found doubles. ExperimentId: " + experiment.getId()+", hyperParams: " + experimentSequence.getHyperParams());
                     experimentSequenceRepository.delete(experimentSequence);
                     continue;
                 }
-                particles.add(experimentSequence.getHyperParams());
+                sequnces.add(experimentSequence.getHyperParams());
             }
 
             Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
@@ -123,12 +123,12 @@ public class ExperimentService {
             }
 
             for (ExperimentUtils.HyperParams hyperParams : allHyperParams) {
-                String currParticle = toYaml(yaml, hyperParams);
-                if (particles.contains(currParticle)) {
+                String currSequence = toYaml(yaml, hyperParams);
+                if (sequnces.contains(currSequence)) {
                     continue;
                 }
 
-//                ... add new ExperimentParticle
+//                ... add new ExperimentSequence
             }
         }
     }
