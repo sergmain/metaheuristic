@@ -39,6 +39,17 @@ import java.util.LinkedHashMap;
 public class TestJson {
 
     @Test
+    public void testStationId() throws IOException {
+        ExchangeData ed = new ExchangeData();
+        final Protocol.AssignedStationId cmd = new Protocol.AssignedStationId();
+        cmd.setAssignedStationId("42");
+        ed.setSuccess(true);
+        ed.setCommand(cmd);
+        String asJson = JsonUtils.toJson(ed);
+        Assert.assertTrue(asJson.contains("42"));
+    }
+
+    @Test
     public void testDontSerializeSysParams() throws IOException {
         ExchangeData ed = new ExchangeData();
         final Protocol.Nop nop = new Protocol.Nop();

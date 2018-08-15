@@ -37,8 +37,8 @@ public class StationService {
     }
 
     public synchronized void storeStationId(String id){
-        Optional<StationMetadata> meta = stationMetadataRepository.findByKey(StationConsts.STATION_ID);
-        if (meta.isPresent()) {
+        StationMetadata meta = stationMetadataRepository.findByKey(StationConsts.STATION_ID).orElse(null);
+        if (meta!=null) {
             return;
         }
         StationMetadata m = new StationMetadata();
@@ -48,9 +48,8 @@ public class StationService {
     }
 
     public synchronized void changeStationId(String id){
-        Optional<StationMetadata> metaOptional = stationMetadataRepository.findByKey(StationConsts.STATION_ID);
-        if (metaOptional.isPresent()) {
-            StationMetadata metadata = metaOptional.get();
+        StationMetadata metadata = stationMetadataRepository.findByKey(StationConsts.STATION_ID).orElse(null);
+        if (metadata!=null) {
             metadata.setValue(id);
             stationMetadataRepository.save(metadata);
             return;

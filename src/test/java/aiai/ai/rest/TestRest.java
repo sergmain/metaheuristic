@@ -176,4 +176,28 @@ public class TestRest {
         stationsRepository.delete(s);
     }
 
+    @Test
+    public void testEmptyStationId() throws Exception {
+        ExchangeData dataReqest = new ExchangeData(new Protocol.RegisterInvite("invite-123"));
+        String jsonReqest = JsonUtils.toJson(dataReqest);
+        MvcResult result = mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
+                .content(jsonReqest))
+                .andExpect(status().isOk())
+                .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
+
+        String json = result.getResponse().getContentAsString();
+        ExchangeData data = JsonUtils.getExchangeData(json);
+        Assert.assertNotNull(data);
+        Assert.assertTrue(data.isSuccess());
+        Assert.assertEquals(1, data.getCommands().size());
+        Command command = data.getCommands().get(0);
+        Assert.assertEquals(Command.Type.AssignedStationId, command.getType());
+        Protocol.AssignedStationId assignedStationId = (Protocol.AssignedStationId)command;
+        Assert.assertNotNull(assignedStationId.getAssignedStationId());
+
+        final long id = Long.parseLong(assignedStationId.getAssignedStationId());
+        stationsRepository.deleteById(id);
+        Assert.assertNull(stationsRepository.findById(id).orElse(null));
+    }
+
 }

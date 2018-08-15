@@ -81,7 +81,7 @@ public class LaunchpadRequester {
     }
 
     /**
-     * this scheduler is being runned at station side
+     * this scheduler is being run at the station side
      *
      * long fixedDelay()
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
@@ -98,7 +98,7 @@ public class LaunchpadRequester {
         data.setStationId(stationId);
 
         if (!stationExperimentService.isActiveExperiment(stationId)) {
-            data.setCommand(new Protocol.RequestExperiment());
+            data.setCommand(new Protocol.RequestExperimentSequence());
         }
 
         List<Command> cmds;
@@ -108,20 +108,7 @@ public class LaunchpadRequester {
         }
         data.setCommands(cmds);
 
-
-
-/*
-        Protocol.Nop command = new Protocol.Nop();
-        command.getParams().put("тест", "ИИИ");
-        data.setCommand(command);
-        data.setCommand(new Protocol.RequestStationId());
-        Protocol.RegisterInvite invite = new Protocol.RegisterInvite();
-        invite.setInvite("invite-12345");
-        data.setRegisterInvite(invite);
-*/
-
         HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
-
         ResponseEntity<ExchangeData> response = restTemplate.exchange(targetUrl, HttpMethod.POST, request, ExchangeData.class);
         ExchangeData result = response.getBody();
 

@@ -37,8 +37,8 @@ public class ExchangeData {
 
     private Protocol.Nop nop;
     private Protocol.ReportStation reportStation;
-    private Protocol.RequestExperiment requestExperiment;
-    private Protocol.AssignedExperiment assignedExperiment;
+    private Protocol.RequestExperimentSequence requestExperimentSequence;
+    private Protocol.AssignedExperimentSequence assignedExperimentSequence;
     private Protocol.RequestStationId requestStationId;
     private Protocol.AssignedStationId assignedStationId;
     private Protocol.ReAssignStationId reAssignedStationId;
@@ -117,17 +117,17 @@ public class ExchangeData {
                 }
                 this.registerInviteResult = (Protocol.RegisterInviteResult) command;
                 break;
-            case RequestExperiment:
-                if (this.requestExperiment != null) {
+            case RequestExperimentSequence:
+                if (this.requestExperimentSequence != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
-                this.requestExperiment = (Protocol.RequestExperiment) command;
+                this.requestExperimentSequence = (Protocol.RequestExperimentSequence) command;
                 break;
-            case AssignedExperiment:
-                if (this.assignedExperiment != null) {
+            case AssignedExperimentSequence:
+                if (this.assignedExperimentSequence != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
-                this.assignedExperiment = (Protocol.AssignedExperiment) command;
+                this.assignedExperimentSequence = (Protocol.AssignedExperimentSequence) command;
                 break;
         }
     }
@@ -136,7 +136,7 @@ public class ExchangeData {
         return asListOfNonNull(
                 nop, reportStation, requestStationId,
                 assignedStationId, reAssignedStationId, registerInvite,
-                registerInviteResult, requestExperiment, assignedExperiment
+                registerInviteResult, requestExperimentSequence, assignedExperimentSequence
         );
     }
 

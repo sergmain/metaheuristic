@@ -17,10 +17,14 @@
  */
 package aiai.ai.beans;
 
+import aiai.ai.core.JsonUtils;
+import aiai.ai.launchpad.experiment.ExperimentService;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
+import java.io.IOException;
 import java.io.Serializable;
 
 @Entity
@@ -42,4 +46,12 @@ public class ExperimentSequence implements Serializable {
     @Column(name = "PARAMS")
     private String params;
 
+    @Column(name = "STATION_ID")
+    private Long stationId;
+
+    @Column(name="ASSIGNED_ON")
+    private long assignedOn;
+
+    @Column(name="IS_COMPLETED")
+    private long isCompleted;
 }

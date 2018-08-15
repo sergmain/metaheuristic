@@ -41,10 +41,10 @@ public class TestCommands {
                 return new Protocol.RegisterInvite();
             case RegisterInviteResult:
                 return new Protocol.RegisterInviteResult();
-            case RequestExperiment:
-                return new Protocol.RequestExperiment();
-            case AssignedExperiment:
-                return new Protocol.AssignedExperiment();
+            case RequestExperimentSequence:
+                return new Protocol.RequestExperimentSequence();
+            case AssignedExperimentSequence:
+                return new Protocol.AssignedExperimentSequence();
             default:
                 throw new IllegalStateException("unknown command type: " + type);
         }

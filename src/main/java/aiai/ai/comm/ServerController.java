@@ -82,7 +82,7 @@ public class ServerController {
 */
 
     /**
-     * This endpoint only for testing security. Do not delete
+     * This endpoint is only for testing security. Do not delete
      * @return String
      */
     @GetMapping("/rest-anon/test")
@@ -91,7 +91,7 @@ public class ServerController {
     }
 
     /**
-     * This endpoint only for testing security. Do not delete
+     * This endpoint is only for testing security. Do not delete
      * @return String
      */
     @GetMapping("/rest-auth/test")

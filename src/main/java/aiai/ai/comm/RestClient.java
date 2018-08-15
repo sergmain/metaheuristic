@@ -34,6 +34,9 @@ import org.springframework.web.client.RestTemplate;
 @Component
 public class RestClient {
 
+
+    // TODO !!!! 2018-08-15 Should I delete this class?
+
     @Value("${aiai.station.launchpad.url}")
     private String launchpadUrl;
 

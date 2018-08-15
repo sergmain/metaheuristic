@@ -17,14 +17,18 @@
  */
 package aiai.ai.launchpad.experiment;
 
+import aiai.ai.Consts;
 import aiai.ai.beans.Experiment;
 import aiai.ai.beans.ExperimentHyperParams;
 import aiai.ai.beans.ExperimentSequence;
 import aiai.ai.beans.ExperimentSnippet;
+import aiai.ai.comm.Protocol;
 import aiai.ai.repositories.ExperimentRepository;
 import aiai.ai.repositories.ExperimentSequenceRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -70,9 +74,26 @@ public class ExperimentService {
     }
 
 
-    public Experiment getExperimentAndAssignToStation(String stationId) {
+    public synchronized List<Protocol.AssignedExperimentSequence.SimpleSequence> getSequncesAndAssignToStation(long stationId) {
 
-        return null;
+        List<ExperimentSequence> seqAssigned = experimentSequenceRepository.findAllByStationIdIsNotNullAndIsCompletedIsFalse();
+        if (!seqAssigned.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Slice<ExperimentSequence> seqs = experimentSequenceRepository.findAllByStationIdIsNull(PageRequest.of(0, 10));
+        List<Protocol.AssignedExperimentSequence.SimpleSequence> result = new ArrayList<>(11);
+        for (ExperimentSequence seq : seqs) {
+            Protocol.AssignedExperimentSequence.SimpleSequence ss = new Protocol.AssignedExperimentSequence.SimpleSequence();
+            ss.setExperimentSequenceId(seq.getId());
+            ss.setParams(seq.getParams());
+
+            seq.setAssignedOn(System.currentTimeMillis());
+            seq.setStationId(stationId);;
+            result.add(ss);
+        }
+        experimentSequenceRepository.saveAll(seqs);
+        return result;
     }
 
     public static String toYaml(Yaml yaml, ExperimentUtils.HyperParams hyperParams) {
@@ -89,16 +110,15 @@ public class ExperimentService {
                 Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (oldValue, newValue) -> oldValue, LinkedHashMap::new));
     }
 
-
     public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed, String epochs) {
         List<ExperimentHyperParams> params = new ArrayList<>();
         ExperimentHyperParams p1 = new ExperimentHyperParams();
-        p1.setKey("seed");
+        p1.setKey(Consts.SEED);
         p1.setValues(Integer.toString(seed));
         params.add(p1);
 
         ExperimentHyperParams p2 = new ExperimentHyperParams();
-        p2.setKey("epoch");
+        p2.setKey(Consts.EPOCH);
         p2.setValues(epochs);
         params.add(p2);
 

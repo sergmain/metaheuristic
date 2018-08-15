@@ -15,28 +15,15 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-
 package aiai.ai.repositories;
 
-import aiai.ai.beans.Experiment;
-import aiai.ai.beans.ExperimentSequence;
-import aiai.ai.beans.ExperimentSnippet;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
+import aiai.ai.beans.StationExperimentSequence;
+import aiai.ai.beans.StationMetadata;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Optional;
 
 @Component
-public interface ExperimentSequenceRepository extends CrudRepository<ExperimentSequence, Long> {
-
-    @Transactional(readOnly = true)
-    List<ExperimentSequence> findByExperimentId(Long experiimentId);
-
-    Slice<ExperimentSequence> findAllByStationIdIsNull(Pageable pageable);
-
-    List<ExperimentSequence> findAllByStationIdIsNotNullAndIsCompletedIsFalse();
-
+public interface StationExperimentSequenceRepository extends CrudRepository<StationExperimentSequence, Long> {
 }

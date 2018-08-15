@@ -27,4 +27,7 @@ public class Consts {
     public static final String SERVER_REST_URL = "/rest-anon/srv";
 
     public static final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(), MediaType.APPLICATION_JSON.getSubtype(), Charset.forName("utf8"));
+
+    public static final String SEED = "seed";
+    public static final String EPOCH = "epoch";
 }

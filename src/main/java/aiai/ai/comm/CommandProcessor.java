@@ -17,9 +17,11 @@
 
 package aiai.ai.comm;
 
+import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.invite.InviteService;
 import aiai.ai.beans.Station;
 import aiai.ai.launchpad.experiment.ExperimentService;
+import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.repositories.StationsRepository;
 import aiai.ai.station.StationService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,18 +41,20 @@ public class CommandProcessor {
 
     private static final String EMPTY_JSON = "[{}]";
 
-    private StationsRepository stationsRepository;
-    private StationService stationService;
-    private InviteService inviteService;
-    private ExperimentService experimentService;
+    private final StationsRepository stationsRepository;
+    private final StationService stationService;
+    private final InviteService inviteService;
+    private final ExperimentService experimentService;
+    private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
 
-    private ObjectMapper mapper;
+    private final ObjectMapper mapper;
 
-    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService) {
+    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
         this.stationsRepository = stationsRepository;
         this.stationService = stationService;
         this.inviteService = inviteService;
         this.experimentService = experimentService;
+        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
         this.mapper = new ObjectMapper();
         this.mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
@@ -71,24 +75,39 @@ public class CommandProcessor {
                 return processInvite((Protocol.RegisterInvite) command);
             case RegisterInviteResult:
                 break;
-            case RequestExperiment:
-                return processRequestExperiment((Protocol.RequestExperiment) command);
-            case AssignedExperiment:
-                return processAssignedExperiment((Protocol.AssignedExperiment) command);
+            case RequestExperimentSequence:
+                return processRequestExperimentSequence((Protocol.RequestExperimentSequence) command);
+            case AssignedExperimentSequence:
+                return processAssignedExperimentSequence((Protocol.AssignedExperimentSequence) command);
             default:
                 System.out.println("There is new command which isn't processed: " + command.getType());
         }
         return new Protocol.Nop();
     }
 
-    private Command processAssignedExperiment(Protocol.AssignedExperiment command) {
-        return null;
+    private Command processAssignedExperimentSequence(Protocol.AssignedExperimentSequence command) {
+        for (Protocol.AssignedExperimentSequence.SimpleSequence sequence : command.sequences) {
+            StationExperimentSequence seq = new StationExperimentSequence();
+            seq.setCreatedOn(System.currentTimeMillis());
+            seq.setParams(sequence.params);
+            seq.setExperimentSequenceId(sequence.getExperimentSequenceId());
+            stationExperimentSequenceRepository.save(seq);
+        }
+        return new Protocol.Nop();
     }
 
-    private Command processRequestExperiment(Protocol.RequestExperiment command) {
-        Protocol.AssignedExperiment r = new Protocol.AssignedExperiment();
-        r.setExperiment(experimentService.getExperimentAndAssignToStation(command.stationId));
+    private Command processRequestExperimentSequence(Protocol.RequestExperimentSequence command) {
+        checkStationId(command);
+        Protocol.AssignedExperimentSequence r = new Protocol.AssignedExperimentSequence();
+        r.sequences = experimentService.getSequncesAndAssignToStation(Long.parseLong(command.getStationId()));
         return r;
+    }
+
+    private void checkStationId(Command command) {
+        if (command.getStationId()==null) {
+            // we throw ISE cos all checks have to be made early
+            throw new IllegalStateException("stationId is null");
+        }
     }
 
     private Command storeStationId(Protocol.AssignedStationId command) {

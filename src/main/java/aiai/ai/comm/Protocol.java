@@ -17,14 +17,10 @@
 
 package aiai.ai.comm;
 
-import aiai.ai.beans.Dataset;
-import aiai.ai.beans.Experiment;
 import aiai.ai.beans.InviteResult;
-import aiai.ai.beans.Snippet;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -52,24 +48,28 @@ public class Protocol {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class AssignedExperiment extends Command {
-        Experiment experiment;
-        Long datasetId;
-        List<Snippet> snippets;
+    public static class AssignedExperimentSequence extends Command {
 
-        public AssignedExperiment() {
-            this.setType(Type.AssignedExperiment);
+        @Data
+        public static class SimpleSequence {
+            String params;
+            Long experimentSequenceId;
+        }
+        List<SimpleSequence> sequences;
+
+        public AssignedExperimentSequence() {
+            this.setType(Type.AssignedExperimentSequence);
         }
     }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class AssignedStationId extends Command {
-        String stationId;
+        public String assignedStationId;
 
-        public AssignedStationId(String stationId) {
+        public AssignedStationId(String assignedStationId) {
             this.setType(Type.AssignedStationId);
-            this.stationId = stationId;
+            this.assignedStationId = assignedStationId;
         }
 
         public AssignedStationId() {
@@ -102,9 +102,9 @@ public class Protocol {
         }
     }
 
-    public static class RequestExperiment extends Command {
-        public RequestExperiment() {
-            this.setType(Type.RequestExperiment);
+    public static class RequestExperimentSequence extends Command {
+        public RequestExperimentSequence() {
+            this.setType(Type.RequestExperimentSequence);
         }
     }
 
