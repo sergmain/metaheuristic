@@ -32,8 +32,7 @@ import java.util.Optional;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-//@Import({SpringSecurityWebAuxTestConfig.class, AuthenticationProviderForTests.class, TestRest.JsonTestController.class})
-public class TestDbDataset {
+public class TestControllers {
 
 
     @Autowired
@@ -51,6 +50,7 @@ public class TestDbDataset {
         Dataset ds = new Dataset();
         ds.setDescription("Dataset for testing");
         ds.setEditable(false);
+        ds.setName("ds #42");
 
         Dataset newDataset= datasetsRepository.save(ds);
         Assert.assertNotNull(newDataset);
@@ -70,25 +70,23 @@ public class TestDbDataset {
     @Test
     public void testLogData(){
 
-        Optional<LogData> logDataOptional = logDataRepository.findById(-1L);
-        Assert.assertFalse(logDataOptional.isPresent());
+        LogData logData = logDataRepository.findById(-1L).orElse(null);
+        Assert.assertNull(logData);
 
-        LogData logData = new LogData();
-        logData.setLogData("This is log data");
-        logData.setType(LogData.Type.ASSEMBLY);
-
-        LogData newlogData = logDataRepository.save(logData);
+        LogData logData1 = new LogData();
+        logData1.setLogData("This is log data");
+        logData1.setType(LogData.Type.ASSEMBLY);
+        logData1.setRefId(42L);
+        LogData newlogData = logDataRepository.save(logData1);
         Assert.assertNotNull(newlogData);
 
-        logDataOptional = logDataRepository.findById(newlogData.getId());
-        Assert.assertTrue(logDataOptional.isPresent());
-
-        LogData datasetWithLogs = logDataOptional.get();
+        LogData datasetWithLogs = logDataRepository.findById(newlogData.getId()).orElse(null);
+        Assert.assertNotNull(datasetWithLogs);
 
         logDataRepository.delete(datasetWithLogs);
 
-        logDataOptional = logDataRepository.findById(newlogData.getId());
-        Assert.assertFalse(logDataOptional.isPresent());
+        logData1 = logDataRepository.findById(newlogData.getId()).orElse(null);
+        Assert.assertNull(logData1);
 
     }
 }

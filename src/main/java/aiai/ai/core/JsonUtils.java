@@ -24,27 +24,30 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
-@Service
-public class JsonService {
+public class JsonUtils {
 
-    private ObjectMapper mapper;
-
-    public JsonService() {
-        this.mapper = new ObjectMapper();
-        this.mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+    private static ObjectMapper mapper;
+    static {
+        mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
-    public ObjectMapper getMapper() {
+    public static ObjectMapper getMapper() {
         return mapper;
     }
 
-    public ExchangeData getExchangeData(String json) {
-        try {
+    public static ExchangeData getExchangeData(String json) throws IOException {
+//        try {
             //noinspection UnnecessaryLocalVariable
             ExchangeData data = mapper.readValue(json, ExchangeData.class);
             return data;
-        } catch (IOException e) {
-            return null;
-        }
+//        } catch (IOException e) {
+//            return null;
+//        }
+    }
+
+    public static String toJson(ExchangeData data) throws IOException {
+        String json = mapper.writeValueAsString(data);
+        return json;
     }
 }

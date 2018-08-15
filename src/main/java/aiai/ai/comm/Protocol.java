@@ -37,6 +37,7 @@ public class Protocol {
     /**
      * stub command, which is actually doing nothing
      */
+    @EqualsAndHashCode(callSuper = false)
     public static class Nop extends Command {
         public Nop() {
             this.setType(Type.Nop);
@@ -98,12 +99,6 @@ public class Protocol {
     public static class ReportStation extends Command {
         public ReportStation() {
             this.setType(Type.ReportStation);
-        }
-    }
-
-    public static class RequestDefinitions extends Command {
-        public RequestDefinitions() {
-            this.setType(Type.RequestDefinitions);
         }
     }
 

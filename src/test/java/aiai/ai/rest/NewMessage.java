@@ -17,9 +17,11 @@
 
 package aiai.ai.rest;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 class NewMessage {
     String t;
     String id;

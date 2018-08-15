@@ -80,4 +80,24 @@ public class ServerController {
         return commandProcessor.processAll(json, sysParams);
     }
 */
+
+    /**
+     * This endpoint only for testing security. Do not delete
+     * @return String
+     */
+    @GetMapping("/rest-anon/test")
+    public String getMessage_1() {
+        return "Ok";
+    }
+
+    /**
+     * This endpoint only for testing security. Do not delete
+     * @return String
+     */
+    @GetMapping("/rest-auth/test")
+    public String getMessage_2() {
+        return "Ok";
+    }
+
+
 }

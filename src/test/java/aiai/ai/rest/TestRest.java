@@ -19,10 +19,12 @@ package aiai.ai.rest;
 
 import aiai.ai.Consts;
 import aiai.ai.beans.InviteResult;
+import aiai.ai.beans.Station;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
-import aiai.ai.core.JsonService;
+import aiai.ai.core.JsonUtils;
+import aiai.ai.repositories.StationsRepository;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,29 +56,30 @@ public class TestRest {
 
     private MockMvc mockMvc;
 
-    @Autowired
-    private JsonService jsonService;
-
     @RestController
     public static class JsonTestController {
 
         // This isn't test
-        // see testNearMessages()
+        // see testNearMessages() below
         @GetMapping("/rest-anon/test/message")
         public NewMessage getMessage() {
-            NewMessage m = new NewMessage();
-            m.setId("42");
-            m.setT("test msg");
-            return m;
+            return new NewMessage("42", "test msg");
         }
     }
+
+    @Autowired
+    private StationsRepository stationsRepository;
 
     // тестируем, что сообщения маршалятся в json
     @Test
     public void testNearMessages() throws Exception {
-        MvcResult result = mockMvc.perform(get("/rest-anon/test/message"))
-                .andExpect(status().isOk()).andReturn();
+        MvcResult result = mockMvc.perform(get("/rest-anon/test/message")).andExpect(status().isOk()).andReturn();
         String content = result.getResponse().getContentAsString();
+
+        NewMessage m = new NewMessage("42", "test msg");
+
+        String json = JsonUtils.getMapper().writeValueAsString(m);
+        Assert.assertEquals(json, content);
         System.out.println(content);
     }
 
@@ -125,7 +128,7 @@ public class TestRest {
 //    @WithUserDetails("admin")
     public void testSimpleCommunicationWithServer() throws Exception {
         ExchangeData dataReqest = new ExchangeData(new Protocol.Nop());
-        String jsonReqest = jsonService.getMapper().writeValueAsString(dataReqest);
+        String jsonReqest = JsonUtils.toJson(dataReqest);
         MvcResult result = mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
                 .content(jsonReqest))
                 .andExpect(status().isOk())
@@ -133,7 +136,7 @@ public class TestRest {
 
         String json = result.getResponse().getContentAsString();
         System.out.println("json = " + json);
-        ExchangeData data = jsonService.getMapper().readValue(json, ExchangeData.class);
+        ExchangeData data = JsonUtils.getExchangeData(json);
 
         Assert.assertNotNull(data);
         Assert.assertTrue(data.isSuccess());
@@ -144,7 +147,11 @@ public class TestRest {
 //    @WithUserDetails("admin")
     public void testRegisterInvite() throws Exception {
         ExchangeData dataReqest = new ExchangeData(new Protocol.RegisterInvite("invite-123"));
-        String jsonReqest = jsonService.getMapper().writeValueAsString(dataReqest);
+        Station s = new Station();
+        stationsRepository.save(s);
+
+        dataReqest.setStationId(s.getId().toString());
+        String jsonReqest = JsonUtils.toJson(dataReqest);
         MvcResult result = mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
                 .content(jsonReqest))
                 .andExpect(status().isOk())
@@ -152,7 +159,7 @@ public class TestRest {
 
         String json = result.getResponse().getContentAsString();
         System.out.println("json = " + json);
-        ExchangeData data = jsonService.getMapper().readValue(json, ExchangeData.class);
+        ExchangeData data = JsonUtils.getExchangeData(json);
 
         Assert.assertNotNull(data);
         Assert.assertTrue(data.isSuccess());
@@ -166,6 +173,7 @@ public class TestRest {
         Assert.assertNotNull(inviteResult.getToken());
         Assert.assertNotNull(inviteResult.getPassword());
 
+        stationsRepository.delete(s);
     }
 
 }

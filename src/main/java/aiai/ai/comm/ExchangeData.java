@@ -37,7 +37,6 @@ public class ExchangeData {
 
     private Protocol.Nop nop;
     private Protocol.ReportStation reportStation;
-    private Protocol.RequestDefinitions requestDefinitions;
     private Protocol.RequestExperiment requestExperiment;
     private Protocol.AssignedExperiment assignedExperiment;
     private Protocol.RequestStationId requestStationId;
@@ -94,12 +93,6 @@ public class ExchangeData {
                 }
                 this.reportStation = (Protocol.ReportStation) command;
                 break;
-            case RequestDefinitions:
-                if (this.requestDefinitions != null) {
-                    throw new IllegalStateException("Was already initialized");
-                }
-                this.requestDefinitions = (Protocol.RequestDefinitions) command;
-                break;
             case RequestStationId:
                 if (this.requestStationId != null) {
                     throw new IllegalStateException("Was already initialized");
@@ -141,7 +134,7 @@ public class ExchangeData {
 
     public List<Command> getCommands() {
         return asListOfNonNull(
-                nop, reportStation, requestDefinitions, requestStationId,
+                nop, reportStation, requestStationId,
                 assignedStationId, reAssignedStationId, registerInvite,
                 registerInviteResult, requestExperiment, assignedExperiment
         );

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,7 +33,7 @@ import java.util.Map;
 @Data
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @JsonIgnoreProperties(value = {"sysParams"})
-public class Command {
+public class Command implements Serializable {
     public String stationId;
 
     private Type type;
@@ -41,9 +42,15 @@ public class Command {
     private Map<String, String> response = new HashMap<>();
 
     public enum Type {
-        Nop, ReportStation, RequestDefinitions, RequestStationId,
-        AssignedStationId, ReAssignStationId, RegisterInvite,
-        RegisterInviteResult, RequestExperiment, AssignedExperiment,
+        Nop /* nop operation */,
+        ReportStation /*  */,
+        RequestStationId /*  */,
+        AssignedStationId /*  */,
+        ReAssignStationId /*  */,
+        RegisterInvite /*  */,
+        RegisterInviteResult /*  */,
+        RequestExperiment /*  */,
+        AssignedExperiment /*  */,
     }
 
 }

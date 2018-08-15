@@ -61,14 +61,12 @@ public class CommandProcessor {
                 break;
             case ReportStation:
                 break;
-            case RequestDefinitions:
-                break;
             case RequestStationId:
-                return getNewStationId((Protocol.RequestStationId)command);
+                return getNewStationId((Protocol.RequestStationId) command);
             case AssignedStationId:
-                return storeStationId((Protocol.AssignedStationId)command);
+                return storeStationId((Protocol.AssignedStationId) command);
             case ReAssignStationId:
-                return reAssignStationId((Protocol.ReAssignStationId)command);
+                return reAssignStationId((Protocol.ReAssignStationId) command);
             case RegisterInvite:
                 return processInvite((Protocol.RegisterInvite) command);
             case RegisterInviteResult:
@@ -77,6 +75,8 @@ public class CommandProcessor {
                 return processRequestExperiment((Protocol.RequestExperiment) command);
             case AssignedExperiment:
                 return processAssignedExperiment((Protocol.AssignedExperiment) command);
+            default:
+                System.out.println("There is new command which isn't processed: " + command.getType());
         }
         return new Protocol.Nop();
     }

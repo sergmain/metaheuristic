@@ -57,7 +57,7 @@ public class TestYamlMarshaller {
         Assert.assertEquals("key 2: value 2", scanner.next());
         Assert.assertEquals("key 1: 1.0", scanner.next());
         Assert.assertEquals("key 4: value 4", scanner.next());
-        Assert.assertEquals("key 3: value 3", scanner.next());
+        Assert.assertEquals("key 3: 12345678987634763924672346987326498.0", scanner.next());
 
 
     }

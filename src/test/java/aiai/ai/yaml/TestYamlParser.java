@@ -92,13 +92,13 @@ dataset:
     @Test
     public void loadSnippetsFromYaml() throws IOException {
 
-        try(InputStream is = TestYamlParser.class.getResourceAsStream("/snippets/snippet-01/snippets.yaml")) {
+        try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/snippets-test.yaml")) {
 
             SnippetsConfig config = SnippetsConfig.loadSnippetYaml(is);
 
             Assert.assertNotNull(config);
             Assert.assertNotNull(config.snippets);
-            Assert.assertEquals(2, config.snippets.size());
+            Assert.assertEquals(3, config.snippets.size());
 /*
         ns: aiai.fit.default.snippet
         type: fit
@@ -107,7 +107,7 @@ dataset:
 */
             SnippetsConfig.SnippetConfig sc;
             sc = config.snippets.get(0);
-            Assert.assertEquals("aiai.fit.default.snippet", sc.name);
+            Assert.assertEquals("aiai.fit.default.snippet-SNAPSHOT", sc.name);
             Assert.assertEquals(SnippetType.fit, sc.type);
             Assert.assertEquals("fit-model.py", sc.file);
             Assert.assertEquals("1.0", sc.version);
@@ -119,7 +119,7 @@ dataset:
       file: predict-model.py
 */
             sc = config.snippets.get(1);
-            Assert.assertEquals("aiai.predict.default.snippet", sc.name);
+            Assert.assertEquals("aiai.predict.default.snippet-SNAPSHOT", sc.name);
             Assert.assertEquals(SnippetType.predict, sc.type);
             Assert.assertEquals("predict-model.py", sc.file);
             Assert.assertEquals("1.0", sc.version);

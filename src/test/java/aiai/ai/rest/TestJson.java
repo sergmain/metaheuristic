@@ -20,7 +20,8 @@ package aiai.ai.rest;
 import aiai.ai.AiApplication;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.ExchangeData;
-import aiai.ai.core.JsonService;
+import aiai.ai.comm.Protocol;
+import aiai.ai.core.JsonUtils;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.junit.Assert;
 import org.junit.Rule;
@@ -33,27 +34,40 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest(classes = AiApplication.class )
-@WebAppConfiguration
 public class TestJson {
 
-    @Autowired
-    private JsonService jsonService;
+    @Test
+    public void testDontSerializeSysParams() throws IOException {
+        ExchangeData ed = new ExchangeData();
+        final Protocol.Nop nop = new Protocol.Nop();
+        nop.setSysParams( new LinkedHashMap<>());
+        nop.getSysParams().put("test", "42");
+        nop.getParams().put("key", "13");
+        ed.setSuccess(true);
+        ed.setCommand(nop);
+        String asJson = JsonUtils.toJson(ed);
+
+        Assert.assertTrue(asJson.contains("13"));
+        Assert.assertFalse(asJson.contains("42"));
+    }
 
     @Test
     public void testJsonExchangeData() throws IOException {
         System.out.println("testJsonExchangeData()");
-        String json = "{\"commands\":[{\"type\":\"Nop\",\"sysParams\":{\"test\":\"42\"}}],\"success\":true}";
+        String json = "{\"nop\":{\"type\":\"Nop\",\"params\":{\"key\":\"13\"},\"sysParams\":{\"key42\":\"42\"}},\"success\":true}";
 
-        ExchangeData data = jsonService.getMapper().readValue(json, ExchangeData.class);
+        ExchangeData data = JsonUtils.getExchangeData(json);
 
         Assert.assertNotNull(data.getCommands());
         Assert.assertEquals(1, data.getCommands().size());
         Command command = data.getCommands().get(0);
         Assert.assertEquals(Command.Type.Nop, command.getType());
         Assert.assertNull(command.getSysParams());
+        Assert.assertNotNull(command.getParams());
+        Assert.assertEquals(1, command.getParams().size());
+        Assert.assertEquals("13", command.getParams().get("key"));
     }
 
     @Rule
@@ -65,6 +79,6 @@ public class TestJson {
         String json = "";
 
         thrown.expect(MismatchedInputException.class);
-        jsonService.getMapper().readValue(json, NewMessage.class);
+        JsonUtils.getMapper().readValue(json, NewMessage.class);
     }
 }
