@@ -65,12 +65,16 @@ public class ExchangeData {
         this.msg = msg;
     }
 
-    static List<Command> asListOfNonNull(Command... commands) {
+    static List<Command> asListOfNonNull(boolean isExcludeNop, Command... commands) {
         List<Command> list = new ArrayList<>();
         for (Command command : commands) {
-            if (command != null) {
-                list.add(command);
+            if (command==null) {
+                continue;
             }
+            if (isExcludeNop && command.getType()== Command.Type.Nop) {
+                continue;
+            }
+            list.add(command);
         }
         return list;
     }
@@ -133,11 +137,18 @@ public class ExchangeData {
     }
 
     public List<Command> getCommands() {
-        return asListOfNonNull(
-                nop, reportStation, requestStationId,
+        return getCommands(false);
+    }
+
+    public List<Command> getCommands(boolean isExcludeNop) {
+        return asListOfNonNull(isExcludeNop, nop, reportStation, requestStationId,
                 assignedStationId, reAssignedStationId, registerInvite,
-                registerInviteResult, requestExperimentSequence, assignedExperimentSequence
-        );
+                registerInviteResult, requestExperimentSequence, assignedExperimentSequence);
+    }
+
+    public boolean isNothingTodo() {
+        final List<Command> commands = getCommands(true);
+        return commands.isEmpty();
     }
 
     @Override

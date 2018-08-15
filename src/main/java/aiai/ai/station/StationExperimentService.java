@@ -17,16 +17,27 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.Consts;
+import aiai.ai.beans.StationExperimentSequence;
+import aiai.ai.repositories.StationExperimentSequenceRepository;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class StationExperimentService {
 
-    public boolean isActiveExperiment(String stationId) {
+    private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
+
+    public StationExperimentService(StationExperimentSequenceRepository stationExperimentSequenceRepository) {
+        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
+    }
+
+    public boolean isNeedNewExperimentSequence(String stationId) {
         if (stationId==null) {
             return false;
         }
-
-        return true;
+        List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull(Consts.PAGE_REQUEST_1_REC);
+        return seqs.isEmpty();
     }
 }

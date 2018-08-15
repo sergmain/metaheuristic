@@ -76,8 +76,8 @@ public class ExperimentService {
 
     public synchronized List<Protocol.AssignedExperimentSequence.SimpleSequence> getSequncesAndAssignToStation(long stationId) {
 
-        List<ExperimentSequence> seqAssigned = experimentSequenceRepository.findAllByStationIdIsNotNullAndIsCompletedIsFalse();
-        if (!seqAssigned.isEmpty()) {
+        ExperimentSequence sequence = experimentSequenceRepository.findTop1ByStationIdIsNotNullAndIsCompletedIsFalse();
+        if (sequence!=null) {
             return new ArrayList<>();
         }
 

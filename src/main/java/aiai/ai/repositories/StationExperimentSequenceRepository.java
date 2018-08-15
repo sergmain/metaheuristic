@@ -19,11 +19,15 @@ package aiai.ai.repositories;
 
 import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.beans.StationMetadata;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
 public interface StationExperimentSequenceRepository extends CrudRepository<StationExperimentSequence, Long> {
+
+    List<StationExperimentSequence> findAllByFinishedOnIsNull(Pageable pageable);
 }

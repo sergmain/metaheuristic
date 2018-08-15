@@ -37,6 +37,6 @@ public interface ExperimentSequenceRepository extends CrudRepository<ExperimentS
 
     Slice<ExperimentSequence> findAllByStationIdIsNull(Pageable pageable);
 
-    List<ExperimentSequence> findAllByStationIdIsNotNullAndIsCompletedIsFalse();
+    ExperimentSequence findTop1ByStationIdIsNotNullAndIsCompletedIsFalse();
 
 }

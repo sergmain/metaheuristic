@@ -17,6 +17,7 @@
 
 package aiai.ai;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 
 import java.nio.charset.Charset;
@@ -30,4 +31,6 @@ public class Consts {
 
     public static final String SEED = "seed";
     public static final String EPOCH = "epoch";
+
+    public static final PageRequest PAGE_REQUEST_1_REC = PageRequest.of(0, 1);
 }

@@ -95,9 +95,13 @@ public class LaunchpadRequester {
 
         ExchangeData data = new ExchangeData();
         String stationId = stationService.getStationId();
+        if (stationId==null) {
+            data.setCommand(new Protocol.RequestStationId());
+        }
         data.setStationId(stationId);
 
-        if (!stationExperimentService.isActiveExperiment(stationId)) {
+        final boolean b = stationExperimentService.isNeedNewExperimentSequence(stationId);
+        if (b) {
             data.setCommand(new Protocol.RequestExperimentSequence());
         }
 
@@ -107,6 +111,9 @@ public class LaunchpadRequester {
             commands.clear();
         }
         data.setCommands(cmds);
+        if (data.isNothingTodo()) {
+            return;
+        }
 
         HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
         ResponseEntity<ExchangeData> response = restTemplate.exchange(targetUrl, HttpMethod.POST, request, ExchangeData.class);

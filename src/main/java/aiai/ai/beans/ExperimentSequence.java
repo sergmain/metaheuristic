@@ -50,8 +50,8 @@ public class ExperimentSequence implements Serializable {
     private Long stationId;
 
     @Column(name="ASSIGNED_ON")
-    private long assignedOn;
+    private Long assignedOn;
 
     @Column(name="IS_COMPLETED")
-    private long isCompleted;
+    private boolean isCompleted;
 }

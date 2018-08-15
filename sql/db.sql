@@ -138,7 +138,8 @@ CREATE TABLE AIAI_S_EXPERIMENT_SEQUENCE (
   EXPERIMENT_SEQUENCE_ID          NUMERIC(10, 0) NOT NULL,
   VERSION      NUMERIC(5, 0)  NOT NULL,
   CREATED_ON   bigint not null,
-  LAUNCHED_ON  bigint not null,
+  LAUNCHED_ON  bigint,
+  FINISHED_ON  bigint,
   PARAMS       MEDIUMTEXT not null
 );
 

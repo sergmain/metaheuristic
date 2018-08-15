@@ -56,6 +56,10 @@ public class ServerController {
             return new ExchangeData(new Protocol.ReAssignStationId(s.getId()));
         }
 
+        if (data.isNothingTodo()) {
+            return EXCHANGE_DATA_NOP;
+        }
+
         List<Command> commands = data.getCommands();
         ExchangeData resultData = new ExchangeData();
         for (Command command : commands) {
