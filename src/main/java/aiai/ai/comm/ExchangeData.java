@@ -17,6 +17,7 @@
 
 package aiai.ai.comm;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -65,6 +66,7 @@ public class ExchangeData {
         this.msg = msg;
     }
 
+    @JsonIgnore
     static List<Command> asListOfNonNull(boolean isExcludeNop, Command... commands) {
         List<Command> list = new ArrayList<>();
         for (Command command : commands) {
@@ -79,12 +81,14 @@ public class ExchangeData {
         return list;
     }
 
+    @JsonIgnore
     public void setCommands(List<Command> commands) {
         for (Command command : commands) {
             setCommand(command);
         }
     }
 
+    @JsonIgnore
     public void setCommand(Command command) {
         command.setStationId(stationId);
         switch (command.getType()) {
@@ -136,16 +140,19 @@ public class ExchangeData {
         }
     }
 
+    @JsonIgnore
     public List<Command> getCommands() {
         return getCommands(false);
     }
 
+    @JsonIgnore
     public List<Command> getCommands(boolean isExcludeNop) {
         return asListOfNonNull(isExcludeNop, nop, reportStation, requestStationId,
                 assignedStationId, reAssignedStationId, registerInvite,
                 registerInviteResult, requestExperimentSequence, assignedExperimentSequence);
     }
 
+    @JsonIgnore
     public boolean isNothingTodo() {
         final List<Command> commands = getCommands(true);
         return commands.isEmpty();

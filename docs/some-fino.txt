@@ -1,2 +1,18 @@
 yaml parser:
     https://bitbucket.org/asomov/snakeyaml
+
+
+=======================
+
+Python, On localhost, how do I pick a free port number?
+    https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number
+
+
+Java, Killing a process using Java
+    https://stackoverflow.com/questions/6356340/killing-a-process-using-java
+
+Java, Killing a java.lang.Process not killing subprocess()
+    https://stackoverflow.com/questions/42683393/killing-a-java-lang-process-not-killing-subprocess
+
+Java, How to Terminate a Process Normally Created using ProcessBuilder
+    https://stackoverflow.com/questions/27942679/how-to-terminate-a-process-normally-created-using-processbuilder
