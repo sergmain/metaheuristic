@@ -17,6 +17,7 @@
 
 package aiai.ai.launchpad.dataset;
 
+import aiai.ai.Consts;
 import aiai.ai.beans.*;
 import aiai.ai.repositories.*;
 import lombok.Data;
@@ -51,9 +52,6 @@ public class DatasetsController {
 
     public static final String ASSEMBLY_DATASET_YAML = "assembly-dataset.yaml";
     public static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";
-    public static final String DEFINITIONS_DIR = "definitions";
-    public static final String FEATURES_DIR = "features";
-    public static final String DATASET_TXT = "dataset.txt";
 
     @Value("${aiai.table.rows.limit:#{5}}")
     private int limit;
@@ -123,7 +121,8 @@ public class DatasetsController {
         }
         final Dataset dataset = datasetOptional.get();
 
-        final String path = String.format("<Launchpad directory>%c%s%c%03d", File.separatorChar, DEFINITIONS_DIR, File.separatorChar, dataset.getId());
+        // TODO 2018-08-19 What is that? for what?
+        final String path = String.format("<Launchpad directory>%c%s%c%03d", File.separatorChar, Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId());
         final File datasetDir = new File(launchpadDir, path);
 
 //        final DatasetDefinition definition = new DatasetDefinition(dataset, launchpadDirAsString, datasetDir.getPath());
@@ -457,7 +456,7 @@ public class DatasetsController {
 
     private File createYamlForFeature(Long datasetId, DatasetGroup group) {
 
-        final String definitionPath = String.format("%s%c%03d", DEFINITIONS_DIR, File.separatorChar, datasetId);
+        final String definitionPath = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, datasetId);
         final File definitionDir = new File(launchpadDir, definitionPath);
         if (!definitionDir.exists()) {
             boolean status = definitionDir.mkdirs();
@@ -466,13 +465,13 @@ public class DatasetsController {
             }
         }
 
-        final String datasetPath = String.format("%s%cdataset%c%s", definitionPath, File.separatorChar, File.separatorChar, DATASET_TXT);
+        final String datasetPath = String.format("%s%cdataset%c%s", definitionPath, File.separatorChar, File.separatorChar, Consts.DATASET_TXT);
         final File datasetFile = new File(launchpadDir, datasetPath);
         if (!datasetFile.exists()) {
             throw new IllegalStateException("Dataset file doesn't exist: " + datasetFile.getAbsolutePath());
         }
 
-        final String featurePath = String.format("%s%c%s%c%03d", definitionPath, File.separatorChar, FEATURES_DIR, File.separatorChar, group.getGroupNumber());
+        final String featurePath = String.format("%s%c%s%c%03d", definitionPath, File.separatorChar, Consts.FEATURES_DIR, File.separatorChar, group.getGroupNumber());
         final File featureDir = new File(launchpadDir, featurePath);
         if (!featureDir.exists()) {
             boolean status = featureDir.mkdirs();
@@ -599,7 +598,7 @@ public class DatasetsController {
     }
 
     private void updateDatasetInfo(Dataset dataset) {
-        final String path = String.format("%s%c%03d", DEFINITIONS_DIR, File.separatorChar, dataset.getId());
+        final String path = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId());
 
         final File datasetDefDir = new File(launchpadDir, path);
         if (!datasetDefDir.exists()) {
@@ -683,7 +682,7 @@ public class DatasetsController {
     }
 
     private File createAssemblingYaml(Dataset dataset) throws IOException {
-        final String path = String.format("%s%c%03d", DEFINITIONS_DIR, File.separatorChar, dataset.getId());
+        final String path = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId());
         final File datasetDefDir = new File(launchpadDir, path);
         if (!datasetDefDir.exists()) {
             boolean status = datasetDefDir.mkdirs();
@@ -777,7 +776,7 @@ public class DatasetsController {
         List<DatasetPath> paths = pathRepository.findByDataset(dataset);
         //noinspection ConstantConditions
         int pathNumber = paths.isEmpty() ? 1 : paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
-        final String path = String.format("%s%c%03d%craws", DEFINITIONS_DIR, File.separatorChar, dataset.getId(), File.separatorChar);
+        final String path = String.format("%s%c%03d%craws", Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId(), File.separatorChar);
 
         File datasetDir = new File(launchpadDir, path);
         if (!datasetDir.exists()) {

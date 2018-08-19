@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.List;
 @Data
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(value = {"commands"})
+@ToString
 public class ExchangeData {
 
     private Protocol.Nop nop;
@@ -48,11 +50,9 @@ public class ExchangeData {
 
     @JsonProperty(value = "success")
     private boolean isSuccess = true;
-    private String msg;
 
     @JsonProperty(value = "station_id")
     private String stationId;
-
 
     public ExchangeData() {
     }
@@ -61,13 +61,8 @@ public class ExchangeData {
         setCommand(command);
     }
 
-    public ExchangeData(boolean isSuccess, String msg) {
-        this.isSuccess = isSuccess;
-        this.msg = msg;
-    }
-
     @JsonIgnore
-    static List<Command> asListOfNonNull(boolean isExcludeNop, Command... commands) {
+    private static List<Command> asListOfNonNull(boolean isExcludeNop, Command... commands) {
         List<Command> list = new ArrayList<>();
         for (Command command : commands) {
             if (command==null) {
@@ -82,7 +77,7 @@ public class ExchangeData {
     }
 
     @JsonIgnore
-    public void setCommands(List<Command> commands) {
+    void setCommands(List<Command> commands) {
         for (Command command : commands) {
             setCommand(command);
         }
@@ -156,12 +151,5 @@ public class ExchangeData {
     public boolean isNothingTodo() {
         final List<Command> commands = getCommands(true);
         return commands.isEmpty();
-    }
-
-    @Override
-    public String toString() {
-        return "ExchangeData{" +
-                "commands=" + getCommands() +
-                '}';
     }
 }

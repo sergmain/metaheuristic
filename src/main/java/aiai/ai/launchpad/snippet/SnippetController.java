@@ -36,9 +36,13 @@ import java.io.InputStream;
 @Controller
 public class SnippetController {
 
+/*
     @Value("${aiai.launchpad.dir}")
-    private String launchpadDirAsString;
+    private String launchpadDirAs1String;
     @SuppressWarnings("FieldCanBeLocal")
+    private File launchpadDir;
+*/
+    @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.launchpad.dir' )) }")
     private File launchpadDir;
 
     @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
@@ -56,7 +60,7 @@ public class SnippetController {
 
     @PostConstruct
     public void init() throws IOException {
-        this.launchpadDir = toFile(launchpadDirAsString);
+//        this.launchpadDir = toFile(launchpadDirAsString);
 
         File customSnippets = new File(launchpadDir, "snippets");
         if (customSnippets.exists()) {
@@ -71,14 +75,6 @@ public class SnippetController {
             System.out.println(resource);
             loadSnippetsFromDir(resource.getFile());
         }
-    }
-
-    private static File toFile(String launchpadDirAsString) {
-        // special case for ./some-dir
-        if (launchpadDirAsString.charAt(0) == '.' && (launchpadDirAsString.charAt(1) == '\\' || launchpadDirAsString.charAt(1) == '/')) {
-            return new File(launchpadDirAsString.substring(2));
-        }
-        return new File(launchpadDirAsString);
     }
 
     private void loadSnippetsFromDir(File srcDir) throws IOException {

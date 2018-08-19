@@ -25,6 +25,8 @@ import org.springframework.http.*;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
@@ -111,17 +113,26 @@ public class LaunchpadRequester {
             commands.clear();
         }
         data.setCommands(cmds);
+/*
+        // 2018-08-19 we should pull new tasks from server constantly
+        // so, do we have to delete this?
         if (data.isNothingTodo()) {
             return;
         }
+*/
 
-        HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
-        ResponseEntity<ExchangeData> response = restTemplate.exchange(targetUrl, HttpMethod.POST, request, ExchangeData.class);
-        ExchangeData result = response.getBody();
+        try {
+            HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
+            ResponseEntity<ExchangeData> response = restTemplate.exchange(targetUrl, HttpMethod.POST, request, ExchangeData.class);
+            ExchangeData result = response.getBody();
 
-        addCommands(commandProcessor.processExchangeData(result).getCommands());
+            addCommands(commandProcessor.processExchangeData(result).getCommands());
 
-        System.out.println(new Date() + " This runs in a fixed delay (Complex), result: " + result);
+            System.out.println(new Date() + " This runs in a fixed delay (Complex), result: " + result);
+        } catch (RestClientException e) {
+            System.out.println("Error accessing url: " + targetUrl);
+            e.printStackTrace();
+        }
     }
 }
 

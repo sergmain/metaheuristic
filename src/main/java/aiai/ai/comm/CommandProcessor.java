@@ -92,6 +92,8 @@ public class CommandProcessor {
             seq.setParams(sequence.params);
             seq.setExperimentSequenceId(sequence.getExperimentSequenceId());
             stationExperimentSequenceRepository.save(seq);
+
+
         }
         return new Protocol.Nop();
     }

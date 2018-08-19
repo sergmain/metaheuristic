@@ -33,4 +33,7 @@ public class Consts {
     public static final String EPOCH = "epoch";
 
     public static final PageRequest PAGE_REQUEST_1_REC = PageRequest.of(0, 1);
+    public static final String DEFINITIONS_DIR = "definitions";
+    public static final String FEATURES_DIR = "features";
+    public static final String DATASET_TXT = "dataset.";
 }

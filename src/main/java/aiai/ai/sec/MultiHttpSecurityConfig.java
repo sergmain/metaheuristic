@@ -86,6 +86,22 @@ public class MultiHttpSecurityConfig {
     }
 
     @Configuration
+    @Order(3)
+    public class PayloadSecurityConfig extends WebSecurityConfigurerAdapter {
+
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+
+            http
+                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                    .and()
+                    .antMatcher("/payload/**").authorizeRequests().anyRequest().anonymous()
+                    .and()
+                    .csrf().disable();
+        }
+    }
+
+    @Configuration
     @Order
     public static class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
