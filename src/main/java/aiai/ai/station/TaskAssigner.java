@@ -17,16 +17,21 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.beans.Snippet;
 import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.station.actors.DownloadDatasetActor;
+import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.tasks.DownloadDatasetTask;
+import aiai.ai.station.tasks.DownloadSnippetTask;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @EnableScheduling
@@ -34,25 +39,35 @@ public class TaskAssigner {
 
     private final ExperimentService experimentService;
     private final DownloadDatasetActor downloadDatasetActor;
+    private final DownloadSnippetActor downloadSnippetActor;
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
 
     @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
     public void scheduleTask() {
-
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
             final ExperimentService.SequenceYaml sequenceYaml = experimentService.toSequenceYaml(seq.getParams());
             createDownloadDatasetTask(sequenceYaml.getDatasetId());
+            for (ExperimentService.SimpleSnippet snippet : sequenceYaml.getSnippets()) {
+                createDownloadSnippetTask(snippet);
+            }
+
+
         }
     }
 
-    public TaskAssigner(ExperimentService experimentService, DownloadDatasetActor downloadDatasetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
+    public TaskAssigner(ExperimentService experimentService, DownloadDatasetActor downloadDatasetActor, DownloadSnippetActor downloadSnippetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
         this.experimentService = experimentService;
         this.downloadDatasetActor = downloadDatasetActor;
+        this.downloadSnippetActor = downloadSnippetActor;
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
     }
 
     public void createDownloadDatasetTask(long datasetId) {
         downloadDatasetActor.add(new DownloadDatasetTask(datasetId));
+    }
+
+    public void createDownloadSnippetTask(ExperimentService.SimpleSnippet snippet) {
+        downloadSnippetActor.add(new DownloadSnippetTask(snippet.code, snippet.filename, snippet.checksum));
     }
 }

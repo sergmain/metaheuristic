@@ -30,6 +30,8 @@ import java.util.List;
  */
 public class Protocol {
 
+    public static final Protocol.Nop NOP = new Nop();
+
     /**
      * stub command, which is actually doing nothing
      */

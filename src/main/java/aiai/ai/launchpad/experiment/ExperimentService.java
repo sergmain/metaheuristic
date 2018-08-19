@@ -18,14 +18,12 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Consts;
-import aiai.ai.beans.Experiment;
-import aiai.ai.beans.ExperimentHyperParams;
-import aiai.ai.beans.ExperimentSequence;
-import aiai.ai.beans.ExperimentSnippet;
+import aiai.ai.beans.*;
 import aiai.ai.comm.Protocol;
-import aiai.ai.launchpad.snippet.SnippetsConfig;
+import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.ExperimentRepository;
 import aiai.ai.repositories.ExperimentSequenceRepository;
+import aiai.ai.repositories.SnippetRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -48,12 +46,14 @@ public class ExperimentService {
 
     private final ExperimentRepository experimentRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
+    private final SnippetRepository snippetRepository;
 
     private final Yaml yamlSequenceYaml;
 
-    public ExperimentService(ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository) {
+    public ExperimentService(ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, SnippetRepository snippetRepository) {
         this.experimentRepository = experimentRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
+        this.snippetRepository = snippetRepository;
 
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -66,8 +66,10 @@ public class ExperimentService {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class SimpleSnippet {
-        String type;
-        String code;
+        public String type;
+        public String code;
+        public String filename;
+        public String checksum;
     }
 
     @Data
@@ -185,6 +187,8 @@ public class ExperimentService {
                         experiment.getNumberOfSequence(), allHyperParams.size()));
             }
 
+
+            Map<String, Snippet> localCache = new HashMap<>();
             for (ExperimentUtils.HyperParams hyperParams : allHyperParams) {
                 SequenceYaml yaml = new SequenceYaml();
                 yaml.hyperParams = sortHyperParams(hyperParams);
@@ -192,8 +196,14 @@ public class ExperimentService {
                 yaml.datasetId = experiment.getDatasetId();
 
                 List<SimpleSnippet> snippets = new ArrayList<>();
-                for (ExperimentSnippet snippet : experiment.getSnippets()) {
-                    snippets.add(new SimpleSnippet(snippet.getType(), snippet.getSnippetCode()));
+                for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
+                    SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
+                    Snippet snippet = localCache.putIfAbsent(experimentSnippet.getSnippetCode(), snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version));
+                    if (snippet==null) {
+                        System.out.println("Snippet wasn't found for code: " + experimentSnippet.getSnippetCode());
+                        continue;
+                    }
+                    snippets.add(new SimpleSnippet(experimentSnippet.getType(), experimentSnippet.getSnippetCode(), snippet.getFilename(), snippet.checksum));
                 }
                 yaml.snippets = snippets;
 

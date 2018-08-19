@@ -105,7 +105,7 @@ public class SnippetController {
                 Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
                 if (snippet!=null) {
                     if (!Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256).equals(sum)) {
-                        if (isReplaceSnapshot && snippetConfig.name.endsWith(SNAPSHOT_SUFFIX)) {
+                        if (isReplaceSnapshot && snippetConfig.version.endsWith(SNAPSHOT_SUFFIX)) {
                             snippet.checksum = new Checksum(Checksum.Type.SHA256, sum).toJson();
                             snippet.name = snippetConfig.name;
                             snippet.snippetVersion = snippetConfig.version;

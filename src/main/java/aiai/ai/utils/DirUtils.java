@@ -15,15 +15,21 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.station.tasks;
+package aiai.ai.utils;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import java.io.File;
 
-@Data
-@AllArgsConstructor
-public class DownloadSnippetTask implements StationTask {
-    public String snippetCode;
-    public String filename;
-    public String checksum;
+public class DirUtils {
+
+    public static File createDir(File baseDir, String subDir) {
+        File currDir = new File(baseDir, subDir);
+        if (!currDir.exists()) {
+            boolean isOk = currDir.mkdirs();
+            if (!isOk) {
+                System.out.println("Can't make all directories for path: " + currDir.getAbsolutePath());
+                return null;
+            }
+        }
+        return currDir;
+    }
 }

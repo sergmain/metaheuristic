@@ -20,6 +20,7 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.ControllerUtils;
 import aiai.ai.beans.*;
 import aiai.ai.launchpad.snippet.SnippetType;
+import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -267,9 +268,9 @@ public class ExperimentsController {
         s.setExperiment(experiment);
         s.setSnippetCode( code );
 
-        String name = code.substring(0, code.indexOf(':'));
-        String version = code.substring(code.indexOf(':')+1);
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(name, version);
+        SnippetVersion snippetVersion = SnippetVersion.from(code);
+
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         s.setType(snippet.getType());
         experiment.getSnippets().add(s);
 

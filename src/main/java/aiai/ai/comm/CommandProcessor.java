@@ -17,19 +17,15 @@
 
 package aiai.ai.comm;
 
+import aiai.ai.beans.Station;
 import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.invite.InviteService;
-import aiai.ai.beans.Station;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.repositories.StationsRepository;
 import aiai.ai.station.StationService;
-import aiai.ai.station.TaskAssigner;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -47,16 +43,12 @@ public class CommandProcessor {
     private final ExperimentService experimentService;
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
 
-    private final ObjectMapper mapper;
-
     public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
         this.stationsRepository = stationsRepository;
         this.stationService = stationService;
         this.inviteService = inviteService;
         this.experimentService = experimentService;
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
-        this.mapper = new ObjectMapper();
-        this.mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
     public Command process(Command command) {
@@ -82,10 +74,13 @@ public class CommandProcessor {
             default:
                 System.out.println("There is new command which isn't processed: " + command.getType());
         }
-        return new Protocol.Nop();
+        return Protocol.NOP;
     }
 
     private Command processAssignedExperimentSequence(Protocol.AssignedExperimentSequence command) {
+        if (command.sequences==null) {
+            return Protocol.NOP;
+        }
         for (Protocol.AssignedExperimentSequence.SimpleSequence sequence : command.sequences) {
             StationExperimentSequence seq = new StationExperimentSequence();
             seq.setCreatedOn(System.currentTimeMillis());
@@ -93,7 +88,7 @@ public class CommandProcessor {
             seq.setExperimentSequenceId(sequence.getExperimentSequenceId());
             stationExperimentSequenceRepository.save(seq);
         }
-        return new Protocol.Nop();
+        return Protocol.NOP;
     }
 
     private Command processRequestExperimentSequence(Protocol.RequestExperimentSequence command) {
@@ -113,13 +108,13 @@ public class CommandProcessor {
     private Command storeStationId(Protocol.AssignedStationId command) {
         System.out.println("New station Id: " + command.getStationId());
         stationService.storeStationId(command.getStationId());
-        return new Protocol.Nop();
+        return Protocol.NOP;
     }
 
     private Command reAssignStationId(Protocol.ReAssignStationId command) {
         System.out.println("New station Id: " + command.getStationId());
         stationService.changeStationId(command.getStationId());
-        return new Protocol.Nop();
+        return Protocol.NOP;
     }
 
     private Command processInvite(Protocol.RegisterInvite command) {
@@ -133,24 +128,6 @@ public class CommandProcessor {
         stationsRepository.save(st);
 
         return new Protocol.AssignedStationId(Long.toString(st.getId()));
-    }
-
-    public String processAll(String json, Map<String, String> sysParams) {
-        try {
-            ExchangeData data = mapper.readValue(json, ExchangeData.class);
-            System.out.println(data);
-
-            ExchangeData exchangeData = processExchangeData(sysParams, data);
-
-            //noinspection UnnecessaryLocalVariable
-            String responseAsJson = mapper.writeValueAsString(exchangeData);
-            return responseAsJson;
-
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            return "error parsing the request json";
-        }
     }
 
     public ExchangeData processExchangeData(ExchangeData data) {

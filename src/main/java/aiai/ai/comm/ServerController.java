@@ -33,7 +33,7 @@ import java.util.List;
 @RestController
 public class ServerController {
 
-    private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(new Protocol.Nop());
+    private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
     private CommandProcessor commandProcessor;
     private StationsRepository stationsRepository;
 

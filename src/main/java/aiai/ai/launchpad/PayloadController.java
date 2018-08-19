@@ -18,7 +18,10 @@
 
 package aiai.ai.launchpad;
 
+import aiai.ai.beans.Snippet;
 import aiai.ai.launchpad.dataset.DatasetUtils;
+import aiai.ai.launchpad.snippet.SnippetVersion;
+import aiai.ai.repositories.SnippetRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.PathResource;
 import org.springframework.http.HttpEntity;
@@ -34,11 +37,17 @@ import java.io.File;
 @RequestMapping("/payload")
 public class PayloadController {
 
+    private  final SnippetRepository snippetRepository;
+
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.launchpad.dir' )) }")
     private File launchpadDir;
 
+    public PayloadController(SnippetRepository snippetRepository) {
+        this.snippetRepository = snippetRepository;
+    }
+
     @GetMapping("/dataset/{id}")
-    public HttpEntity<PathResource> dataset(@PathVariable("id") Long datasetId) {
+    public HttpEntity<PathResource> datasets(@PathVariable("id") Long datasetId) {
 
         final File datasetFile = DatasetUtils.getDatasetFile(launchpadDir, datasetId);
 
@@ -48,6 +57,18 @@ public class PayloadController {
         header.setContentLength(datasetFile.length());
 
         return new HttpEntity<>(new PathResource(datasetFile.toPath()), header);
+    }
+
+    @GetMapping("/snippet/{name}")
+    public HttpEntity<String> snippets(@PathVariable("name") String snippetName) {
+
+        SnippetVersion snippetVersion = SnippetVersion.from(snippetName);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentLength(snippet.code.length());
+
+        return new HttpEntity<>(snippet.code, header);
     }
 
 }

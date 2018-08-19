@@ -15,15 +15,19 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.station.tasks;
+package aiai.ai.launchpad.snippet;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
-@AllArgsConstructor
-public class DownloadSnippetTask implements StationTask {
-    public String snippetCode;
-    public String filename;
-    public String checksum;
+public class SnippetVersion {
+    public String name;
+    public String version;
+
+    public static SnippetVersion from(String s) {
+        SnippetVersion snippetVersion = new SnippetVersion();
+        snippetVersion.name = s.substring(0, s.indexOf(':'));
+        snippetVersion.version = s.substring(s.indexOf(':')+1);
+        return snippetVersion;
+    }
 }
