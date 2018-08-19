@@ -24,6 +24,7 @@ import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.repositories.StationsRepository;
 import aiai.ai.station.StationService;
+import aiai.ai.station.TaskAssigner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.stereotype.Service;
@@ -39,7 +40,6 @@ import java.util.Map;
 @Service
 public class CommandProcessor {
 
-    private static final String EMPTY_JSON = "[{}]";
 
     private final StationsRepository stationsRepository;
     private final StationService stationService;
@@ -92,8 +92,6 @@ public class CommandProcessor {
             seq.setParams(sequence.params);
             seq.setExperimentSequenceId(sequence.getExperimentSequenceId());
             stationExperimentSequenceRepository.save(seq);
-
-
         }
         return new Protocol.Nop();
     }

@@ -23,10 +23,12 @@ import aiai.ai.beans.ExperimentHyperParams;
 import aiai.ai.beans.ExperimentSequence;
 import aiai.ai.beans.ExperimentSnippet;
 import aiai.ai.comm.Protocol;
+import aiai.ai.launchpad.snippet.SnippetsConfig;
 import aiai.ai.repositories.ExperimentRepository;
 import aiai.ai.repositories.ExperimentSequenceRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,6 +36,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.representer.Representer;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,7 +49,7 @@ public class ExperimentService {
     private final ExperimentRepository experimentRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
 
-    private final Yaml yamlProcessor;
+    private final Yaml yamlSequenceYaml;
 
     public ExperimentService(ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository) {
         this.experimentRepository = experimentRepository;
@@ -55,11 +59,12 @@ public class ExperimentService {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        this.yamlProcessor = new Yaml(options);
+        this.yamlSequenceYaml = new Yaml(new Constructor(SequenceYaml.class), new Representer(), options);
     }
 
     @Data
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class SimpleSnippet {
         String type;
         String code;
@@ -129,6 +134,14 @@ public class ExperimentService {
         return toMap(params);
     }
 
+    public String toString(SequenceYaml sequenceYaml) {
+        return yamlSequenceYaml.dump(sequenceYaml);
+    }
+
+    public SequenceYaml toSequenceYaml(String s) {
+        return yamlSequenceYaml.load(s);
+    }
+
     public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams) {
         return experimentHyperParams.stream().collect(Collectors.toMap(ExperimentHyperParams::getKey, ExperimentHyperParams::getValues, (a, b) -> b, HashMap::new));
     }
@@ -184,7 +197,7 @@ public class ExperimentService {
                 }
                 yaml.snippets = snippets;
 
-                String sequenceParams = yamlProcessor.dump(yaml);
+                String sequenceParams = toString(yaml);
 
                 if (sequnces.contains(sequenceParams)) {
                     continue;

@@ -17,9 +17,11 @@
  */
 package aiai.ai.station.tasks;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class DownloadDatasetTask implements StationTask{
 
     public long datasetId;

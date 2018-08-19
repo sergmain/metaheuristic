@@ -45,7 +45,7 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
         return srvUrl + "/payload/dataset";
     }
 
-    @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-dataset-task.timeout'), 3, 20, 5) }")
+    @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-dataset-task.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelayTaskComplex() {
 
         File dsDir = checkEvironment();
@@ -56,18 +56,28 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
         
         DownloadDatasetTask task;
         while((task = poll())!=null) {
-            if (preparedMap.get(task.getDatasetId())) {
+            if (Boolean.TRUE.equals(preparedMap.get(task.getDatasetId()))) {
                 continue;
             }
 
             File currDir = new File(dsDir, String.format("%03d", task.getDatasetId()));
-            boolean isOk = currDir.mkdirs();
-            if (!isOk) {
-                System.out.println("Can't make all directories for path: " + currDir.getAbsolutePath());
-                return;
+            if (!currDir.exists()) {
+                boolean isOk = currDir.mkdirs();
+                if (!isOk) {
+                    System.out.println("Can't make all directories for path: " + currDir.getAbsolutePath());
+                    return;
+                }
             }
 
             File currFile = new File(currDir, String.format("dataset-%03d", task.getDatasetId()));
+            if (currFile.exists()) {
+                if (currFile.length() == 0) {
+                    currFile.delete();
+                }
+                else {
+                    continue;
+                }
+            }
             try {
                 Request.Get(targetUrl+'/'+task.getDatasetId()).execute().saveContent(currFile);
             } catch (IOException e) {

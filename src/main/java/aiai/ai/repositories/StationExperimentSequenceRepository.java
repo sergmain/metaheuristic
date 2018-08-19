@@ -29,5 +29,7 @@ import java.util.Optional;
 @Component
 public interface StationExperimentSequenceRepository extends CrudRepository<StationExperimentSequence, Long> {
 
+    List<StationExperimentSequence> findAllByFinishedOnIsNull();
+
     List<StationExperimentSequence> findAllByFinishedOnIsNull(Pageable pageable);
 }

@@ -17,15 +17,42 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.beans.StationExperimentSequence;
+import aiai.ai.launchpad.experiment.ExperimentService;
+import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.station.actors.DownloadDatasetActor;
+import aiai.ai.station.tasks.DownloadDatasetTask;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
+@EnableScheduling
 public class TaskAssigner {
 
+    private final ExperimentService experimentService;
     private final DownloadDatasetActor downloadDatasetActor;
+    private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
 
-    public TaskAssigner(DownloadDatasetActor downloadDatasetActor) {
+    @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
+    public void scheduleTask() {
+
+        List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
+        for (StationExperimentSequence seq : seqs) {
+            final ExperimentService.SequenceYaml sequenceYaml = experimentService.toSequenceYaml(seq.getParams());
+            createDownloadDatasetTask(sequenceYaml.getDatasetId());
+        }
+    }
+
+    public TaskAssigner(ExperimentService experimentService, DownloadDatasetActor downloadDatasetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
+        this.experimentService = experimentService;
         this.downloadDatasetActor = downloadDatasetActor;
+        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
+    }
+
+    public void createDownloadDatasetTask(long datasetId) {
+        downloadDatasetActor.add(new DownloadDatasetTask(datasetId));
     }
 }

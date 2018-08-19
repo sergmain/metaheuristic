@@ -77,7 +77,7 @@ public class ExchangeData {
     }
 
     @JsonIgnore
-    void setCommands(List<Command> commands) {
+    public void setCommands(List<Command> commands) {
         for (Command command : commands) {
             setCommand(command);
         }

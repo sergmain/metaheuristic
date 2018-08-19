@@ -54,26 +54,4 @@ public class StationExperimentSequence implements Serializable {
     @Column(name="PARAMS")
     private String params;
 
-    @Transient
-    private ExperimentService.SequenceYaml yaml = null;
-
-    @Transient
-    private Integer yamlVersion = null;
-
-    public ExperimentService.SequenceYaml getParamsAsSequenceYaml() {
-        try {
-            if (StringUtils.isBlank(params)) {
-                return null;
-            }
-            if (yaml!=null && yamlVersion!=null && yamlVersion.equals(version)) {
-                return yaml;
-            }
-            yamlVersion = version;
-            yaml = JsonUtils.getMapper().readValue(params, ExperimentService.SequenceYaml.class);
-            return yaml;
-        } catch (IOException e) {
-            throw new RuntimeException("error", e);
-        }
-    }
-
 }
