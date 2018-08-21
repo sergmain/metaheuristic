@@ -51,8 +51,6 @@ public class TaskAssigner {
             for (ExperimentService.SimpleSnippet snippet : sequenceYaml.getSnippets()) {
                 createDownloadSnippetTask(snippet);
             }
-
-
         }
     }
 
@@ -63,11 +61,11 @@ public class TaskAssigner {
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
     }
 
-    public void createDownloadDatasetTask(long datasetId) {
+    private void createDownloadDatasetTask(long datasetId) {
         downloadDatasetActor.add(new DownloadDatasetTask(datasetId));
     }
 
-    public void createDownloadSnippetTask(ExperimentService.SimpleSnippet snippet) {
+    private void createDownloadSnippetTask(ExperimentService.SimpleSnippet snippet) {
         downloadSnippetActor.add(new DownloadSnippetTask(snippet.code, snippet.filename, snippet.checksum));
     }
 }

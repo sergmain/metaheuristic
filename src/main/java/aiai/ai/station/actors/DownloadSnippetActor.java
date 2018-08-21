@@ -18,6 +18,7 @@
 package aiai.ai.station.actors;
 
 import aiai.ai.launchpad.snippet.SnippetVersion;
+import aiai.ai.station.StationSnippetUtils;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.DirUtils;
 import org.apache.http.client.fluent.Request;
@@ -62,28 +63,12 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 continue;
             }
 
-            SnippetVersion snippetVersion = SnippetVersion.from(task.snippetCode);
-            File currDir = DirUtils.createDir(snippetDir, snippetVersion.name);
-            if (currDir == null) {
+            StationSnippetUtils.SnippetFile snippetFile = StationSnippetUtils.getSnippetFile(stationDir, task.getSnippetCode(), task.filename);
+            if (snippetFile.isError) {
                 return;
-            }
-
-            File versionDir = DirUtils.createDir(currDir, snippetVersion.version);
-            if (versionDir == null) {
-                return;
-            }
-
-            File currFile = new File(versionDir, task.filename );
-            if (currFile.exists()) {
-                if (currFile.length() == 0) {
-                    currFile.delete();
-                }
-                else {
-                    continue;
-                }
             }
             try {
-                Request.Get(targetUrl+'/'+task.snippetCode).execute().saveContent(currFile);
+                Request.Get(targetUrl+'/'+task.snippetCode).execute().saveContent(snippetFile.file);
             } catch (IOException e) {
                 e.printStackTrace();
             }

@@ -17,6 +17,7 @@
  */
 package aiai.ai.station.actors;
 
+import aiai.ai.station.StationDatasetUtils;
 import aiai.ai.station.tasks.DownloadDatasetTask;
 import org.apache.http.client.fluent.Request;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,38 +49,22 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
     @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-dataset-task.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelayTaskComplex() {
 
-        File dsDir = checkEvironment();
+        File dsDir = StationDatasetUtils.checkEvironment(stationDir);
         if (dsDir==null) {
-            System.out.println("Station enviroment is broken. See log for more information");
             return;
         }
-        
+
         DownloadDatasetTask task;
         while((task = poll())!=null) {
             if (Boolean.TRUE.equals(preparedMap.get(task.getDatasetId()))) {
                 continue;
             }
-
-            File currDir = new File(dsDir, String.format("%03d", task.getDatasetId()));
-            if (!currDir.exists()) {
-                boolean isOk = currDir.mkdirs();
-                if (!isOk) {
-                    System.out.println("Can't make all directories for path: " + currDir.getAbsolutePath());
-                    return;
-                }
-            }
-
-            File currFile = new File(currDir, String.format("dataset-%03d", task.getDatasetId()));
-            if (currFile.exists()) {
-                if (currFile.length() == 0) {
-                    currFile.delete();
-                }
-                else {
-                    continue;
-                }
+            StationDatasetUtils.DatasetFile datasetFile = StationDatasetUtils.getDatasetFile(dsDir, task.datasetId);
+            if (datasetFile.isError) {
+                return;
             }
             try {
-                Request.Get(targetUrl+'/'+task.getDatasetId()).execute().saveContent(currFile);
+                Request.Get(targetUrl+'/'+task.getDatasetId()).execute().saveContent(datasetFile.file);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -88,15 +73,4 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
         }
     }
 
-    private File checkEvironment() {
-        File dsDir = new File(stationDir, "dataset");
-        if (!dsDir.exists()) {
-            boolean isOk = dsDir.mkdirs();
-            if (!isOk) {
-                System.out.println("Can't make all directories for path: " + dsDir.getAbsolutePath());
-                return null;
-            }
-        }
-        return dsDir;
-    }
 }

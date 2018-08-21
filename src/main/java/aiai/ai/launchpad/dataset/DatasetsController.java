@@ -19,6 +19,7 @@ package aiai.ai.launchpad.dataset;
 
 import aiai.ai.Consts;
 import aiai.ai.beans.*;
+import aiai.ai.core.ProcessService;
 import aiai.ai.repositories.*;
 import lombok.Data;
 import org.apache.commons.io.FileUtils;
@@ -60,18 +61,18 @@ public class DatasetsController {
     private String launchpadDirAsString;
     private File launchpadDir;
 
-    private DatasetsRepository repository;
-    private DatasetGroupsRepository groupsRepository;
-    private DatasetColumnRepository columnRepository;
-    private DatasetPathRepository pathRepository;
-    private LogDataRepository logDataRepository;
+    private final DatasetsRepository repository;
+    private final DatasetGroupsRepository groupsRepository;
+    private final DatasetColumnRepository columnRepository;
+    private final DatasetPathRepository pathRepository;
+    private final ProcessService processService;
 
-    public DatasetsController(DatasetsRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, LogDataRepository logDataRepository) {
+    public DatasetsController(DatasetsRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService) {
         this.repository = repository;
         this.groupsRepository = groupsRepository;
         this.columnRepository = columnRepository;
         this.pathRepository = pathRepository;
-        this.logDataRepository = logDataRepository;
+        this.processService = processService;
     }
 
     @PostConstruct
@@ -632,7 +633,6 @@ public class DatasetsController {
         return sb.toString();
     }
 
-
     private boolean runCommand(File yaml, String command, LogData.Type type, Long refId) {
 
         // https://examples.javacodegeeks.com/core-java/lang/processbuilder/java-lang-processbuilder-example/
@@ -641,39 +641,9 @@ public class DatasetsController {
         try {
             List<String> cmd = Arrays.stream(command.split("\\s+")).collect(Collectors.toList());
             cmd.add(yaml.getPath());
+            final File execDir = launchpadDir.getCanonicalFile();
 
-            ProcessBuilder pb = new ProcessBuilder();
-            pb.command(cmd);
-            pb.directory(launchpadDir.getCanonicalFile());
-            pb.redirectErrorStream(true);
-            final Process process = pb.start();
-
-            final StringBuilder out = new StringBuilder();
-            final Thread reader = new Thread(() -> {
-                try {
-                    final InputStream is = process.getInputStream();
-                    int c;
-                    while ((c = is.read()) != -1) {
-                        out.append((char) c);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            });
-            reader.start();
-
-            final int exitCode = process.waitFor();
-            reader.join();
-
-            System.out.println("Any errors of execution? " + (exitCode == 0 ? "No" : "Yes"));
-            System.out.println(out);
-            LogData logData = new LogData();
-            logData.setRefId(refId);
-            logData.setType(type);
-            logData.setLogData(out.toString());
-            logDataRepository.save(logData);
-
-            return exitCode==0;
+            return processService.execCommand(type, refId, cmd, execDir);
 
         } catch (Exception err) {
             err.printStackTrace();

@@ -21,6 +21,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 
 import java.nio.charset.Charset;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public class Consts {
     public static final String SESSIONID_NAME = "JSESSIONID";
@@ -36,4 +39,6 @@ public class Consts {
     public static final String DEFINITIONS_DIR = "definitions";
     public static final String FEATURES_DIR = "features";
     public static final String DATASET_TXT = "dataset.";
+
+    public static final Map<String, String> EMPTY_UNMODIFIABLE_MAP = Collections.unmodifiableMap(new HashMap<>(0));
 }

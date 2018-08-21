@@ -17,10 +17,10 @@
  */
 package aiai.ai.launchpad.experiment;
 
+import aiai.ai.Consts;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -133,20 +133,9 @@ public class ExperimentUtils {
         return allHyperParams;
     }
 
-    public static final Map<String, String> EMPTY_UNMODIFIABLE_MAP = Collections.unmodifiableMap(Collections.EMPTY_MAP);
-
     private static boolean alreadyExists(List<HyperParams> allPaths, HyperParams hyper, String key, String value) {
         String path = hyper.path + ',' + key+':'+value;
-        return allPaths.contains(new HyperParams(EMPTY_UNMODIFIABLE_MAP, path));
-/*
-
-        for (HyperParams allPath : allPaths) {
-            if (allPath.path.equals(path)) {
-                return true;
-            }
-        }
-        return false;
-*/
+        return allPaths.contains(new HyperParams(Consts.EMPTY_UNMODIFIABLE_MAP, path));
     }
 
     public static NumberOfVariants getNumberOfVariants(String variantsAsStr) {
@@ -155,15 +144,6 @@ public class ExperimentUtils {
         }
         String s = variantsAsStr.trim();
         if ( s.charAt(0)!='(' && s.charAt(0)!='[' && !StringUtils.startsWithIgnoreCase(s.toLowerCase(), RANGE)) {
-/*
-            long temp;
-            try {
-                temp = Long.parseLong(s);
-            } catch (NumberFormatException e) {
-                return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
-            }
-*/
-
             final NumberOfVariants variants = new NumberOfVariants(true, null, 1);
             variants.values.add(s);
             return variants;
@@ -173,15 +153,6 @@ public class ExperimentUtils {
             final NumberOfVariants variants = new NumberOfVariants(true, null, 0);
             for (StringTokenizer st = new StringTokenizer(s, "[,] "); st.hasMoreTokens(); ) {
                 String token = st.nextToken();
-
-/*
-                long temp;
-                try {
-                    temp = Long.parseLong(token);
-                } catch (NumberFormatException e) {
-                    return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
-                }
-*/
                 variants.values.add(token);
                 count++;
             }

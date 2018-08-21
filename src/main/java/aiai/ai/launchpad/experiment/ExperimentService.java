@@ -20,6 +20,7 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.Consts;
 import aiai.ai.beans.*;
 import aiai.ai.comm.Protocol;
+import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.ExperimentRepository;
 import aiai.ai.repositories.ExperimentSequenceRepository;
@@ -66,7 +67,7 @@ public class ExperimentService {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class SimpleSnippet {
-        public String type;
+        public SnippetType type;
         public String code;
         public String filename;
         public String checksum;
@@ -203,7 +204,7 @@ public class ExperimentService {
                         System.out.println("Snippet wasn't found for code: " + experimentSnippet.getSnippetCode());
                         continue;
                     }
-                    snippets.add(new SimpleSnippet(experimentSnippet.getType(), experimentSnippet.getSnippetCode(), snippet.getFilename(), snippet.checksum));
+                    snippets.add(new SimpleSnippet(SnippetType.valueOf(experimentSnippet.getType()), experimentSnippet.getSnippetCode(), snippet.getFilename(), snippet.checksum));
                 }
                 yaml.snippets = snippets;
 
@@ -218,6 +219,7 @@ public class ExperimentService {
                 sequence.setParams(sequenceParams);
                 experimentSequenceRepository.save(sequence);
             }
+            experiment.setNumberOfSequence(allHyperParams.size());
             experiment.setAllSequenceProduced(true);
             experimentRepository.save(experiment);
         }
