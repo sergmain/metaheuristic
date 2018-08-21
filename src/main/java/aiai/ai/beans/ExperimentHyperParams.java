@@ -45,7 +45,7 @@ public class ExperimentHyperParams implements Serializable {
     @Column(name = "HYPER_PARAM_VALUES")
     private String values;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "EXPERIMENT_ID")
     private Experiment experiment;
 

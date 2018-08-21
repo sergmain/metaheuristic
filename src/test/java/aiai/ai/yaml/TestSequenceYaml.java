@@ -51,8 +51,8 @@ public class TestSequenceYaml {
         map.put("key2", "#1");
         seq.setHyperParams(map);
         List<ExperimentService.SimpleSnippet> list = new ArrayList<>();
-        list.add(new ExperimentService.SimpleSnippet(SnippetType.fit.toString(), "123", "file.txt", "112233"));
-        list.add(new ExperimentService.SimpleSnippet(SnippetType.predict.toString(), "456", "file.txt", "112233"));
+        list.add(new ExperimentService.SimpleSnippet(SnippetType.fit, "123", "file.txt", "112233"));
+        list.add(new ExperimentService.SimpleSnippet(SnippetType.predict, "456", "file.txt", "112233"));
         seq.setSnippets(list);
 
         String s = experimentService.toString(seq);

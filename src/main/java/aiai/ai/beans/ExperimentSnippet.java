@@ -48,7 +48,7 @@ public class ExperimentSnippet implements Serializable {
     @Column(name = "SNIPPET_ORDER")
     private int order;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "EXPERIMENT_ID")
     private Experiment experiment;
 

@@ -55,9 +55,10 @@ public class SnippetsConfig {
         public SnippetType type;
         public String file;
         public String version;
+        public String env;
 
         public SnippetConfigStatus verify() {
-            if (StringUtils.isBlank(name) || type==null || StringUtils.isBlank(file) || StringUtils.isBlank(version)) {
+            if (StringUtils.isBlank(name) || type==null || StringUtils.isBlank(file) || StringUtils.isBlank(version) || StringUtils.isBlank(env)) {
                 return new SnippetConfigStatus(false, "A field is null or empty: " + this.toString());
             }
             if (name.indexOf(':')!=-1 || version.indexOf(':')!=-1) {

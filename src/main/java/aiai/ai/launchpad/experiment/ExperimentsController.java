@@ -170,7 +170,7 @@ public class ExperimentsController {
                 snippetResult.selectOptions.add( new SimpleSelectOption(snippet.getSnippetCode(), String.format("Type: %s; Code: %s:%s", snippet.getType(), snippet.getName(), snippet.getSnippetVersion())));
             }
         }
-        snippetResult.snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
+        sortSnippets(snippetResult.snippets);
 
         ExperimentResult experimentResult = new ExperimentResult();
         Dataset dataset = null;
@@ -191,6 +191,10 @@ public class ExperimentsController {
         model.addAttribute("experimentResult", experimentResult);
         model.addAttribute("snippetResult", snippetResult);
         return "launchpad/experiment-edit-form";
+    }
+
+    public static void sortSnippets(List<ExperimentSnippet> snippets) {
+        snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
     }
 
     @PostMapping("/experiment-dataset-assign-commit/{id}")

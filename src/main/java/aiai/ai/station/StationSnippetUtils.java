@@ -32,34 +32,34 @@ public class StationSnippetUtils {
 
     public static SnippetFile getSnippetFile(File snippetDir, String snippetCode, String filename) {
 
-        SnippetFile datasetFile = new SnippetFile();
+        SnippetFile snippetFile = new SnippetFile();
         SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
         File currDir = DirUtils.createDir(snippetDir, snippetVersion.name);
         if (currDir == null) {
-            datasetFile.isError = true;
-            return datasetFile;
+            snippetFile.isError = true;
+            return snippetFile;
         }
 
         File versionDir = DirUtils.createDir(currDir, snippetVersion.version);
         if (versionDir == null) {
-            datasetFile.isError = true;
-            return datasetFile;
+            snippetFile.isError = true;
+            return snippetFile;
         }
 
-        File currFile = new File(versionDir, filename );
-        if (currFile.exists()) {
-            if (currFile.length() == 0) {
-                currFile.delete();
+        snippetFile.file = new File(versionDir, filename );
+        if (snippetFile.file.exists()) {
+            if (snippetFile.file.length() == 0) {
+                snippetFile.file.delete();
             }
             else {
-                datasetFile.isContent = true;
+                snippetFile.isContent = true;
             }
         }
-        return datasetFile;
+        return snippetFile;
     }
 
     public static File checkEvironment(File stationDir) {
-        File dsDir = new File(stationDir, "dataset");
+        File dsDir = new File(stationDir, "snippet");
         if (!dsDir.exists()) {
             boolean isOk = dsDir.mkdirs();
             if (!isOk) {

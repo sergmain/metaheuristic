@@ -62,6 +62,11 @@ public class SequenceProcessor {
             return;
         }
 
+        File snippetDir = StationSnippetUtils.checkEvironment(stationDir);
+        if (snippetDir==null) {
+            return;
+        }
+
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
             final ExperimentService.SequenceYaml sequenceYaml = experimentService.toSequenceYaml(seq.getParams());
@@ -75,7 +80,7 @@ public class SequenceProcessor {
             for (ExperimentService.SimpleSnippet snippet : sequenceYaml.getSnippets()) {
                 StationSnippetUtils.SnippetFile snippetFile = isSnippetsReady.get(snippet.code);
                 if (snippetFile==null) {
-                    snippetFile = StationSnippetUtils.getSnippetFile(stationDir, snippet.getCode(), snippet.filename);
+                    snippetFile = StationSnippetUtils.getSnippetFile(snippetDir, snippet.getCode(), snippet.filename);
                     if (snippetFile.isError || !snippetFile.isContent) {
                         return;
                     }
@@ -94,7 +99,7 @@ public class SequenceProcessor {
                     cmd.add(snippetFile.file.getPath());
 
                     final File execDir = paramFile.getParentFile();
-                    processService.execCommand(snippet.type==SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
+//                    processService.execCommand(snippet.type==SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
 
                 } catch (Exception err) {
                     err.printStackTrace();

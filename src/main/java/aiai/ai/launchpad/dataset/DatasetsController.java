@@ -699,7 +699,7 @@ public class DatasetsController {
         for (DatasetPath datasetPath : paths) {
             s += "        - " + datasetPath.getPath() + '\n';
         }
-        s += ("    output:\n        " + String.format("%s%cdataset%cdataset.txt\n", path, File.separatorChar, File.separatorChar));
+        s += ("    output:\n        " + String.format("%s%cdataset%cdataset\n", path, File.separatorChar, File.separatorChar));
 
         try {
             FileUtils.write(yamlFile, s, "utf-8", false);

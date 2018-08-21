@@ -19,10 +19,13 @@ package aiai.ai.yaml;
 
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.snippet.SnippetsConfig;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import lombok.Data;
 import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
@@ -30,6 +33,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+
+import static org.junit.Assert.*;
 
 public class TestYamlParser {
 
@@ -44,7 +49,7 @@ public class TestYamlParser {
 
         Map<String, String> yamlParsers = yaml.load(yamlAsString);
 
-        Assert.assertThat(yamlParsers.keySet(), CoreMatchers.hasItems("JYaml", "JvYaml", "YamlBeans", "SnakeYAML"));
+        assertThat(yamlParsers.keySet(), CoreMatchers.hasItems("JYaml", "JvYaml", "YamlBeans", "SnakeYAML"));
     }
 
     @Data
@@ -71,6 +76,24 @@ dataset:
 
     }
 
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
+    @Test
+    public void loadSnippetYamlWithError_01() throws IOException {
+
+        try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/snippets-test-error.yaml")) {
+
+            SnippetsConfig config = SnippetsConfig.loadSnippetYaml(is);
+            assertNotNull(config);
+            assertNotNull(config.getSnippets());
+            assertEquals(1, config.getSnippets().size());
+            SnippetsConfig.SnippetConfig snippet = config.getSnippets().get(0);
+            SnippetsConfig.SnippetConfigStatus status = snippet.verify();
+            assertFalse(status.isOk);
+        }
+    }
+
     @Test
     public void loadYmlAsMapFromStream() throws IOException {
 
@@ -79,13 +102,13 @@ dataset:
             Yaml yaml = new Yaml(new Constructor(SampleYamlConfig.class));
 
             SampleYamlConfig config = yaml.load(is);
-            Assert.assertNotNull(config.dataset);
-            Assert.assertNotNull(config.dataset.input);
-            Assert.assertNotNull(config.dataset.labels);
-            Assert.assertNotNull(config.dataset.output);
+            assertNotNull(config.dataset);
+            assertNotNull(config.dataset.input);
+            assertNotNull(config.dataset.labels);
+            assertNotNull(config.dataset.output);
 
-            Assert.assertEquals(3, config.dataset.input.size());
-            Assert.assertEquals(2, config.dataset.labels.size());
+            assertEquals(3, config.dataset.input.size());
+            assertEquals(2, config.dataset.labels.size());
         }
     }
 
@@ -96,33 +119,24 @@ dataset:
 
             SnippetsConfig config = SnippetsConfig.loadSnippetYaml(is);
 
-            Assert.assertNotNull(config);
-            Assert.assertNotNull(config.snippets);
-            Assert.assertEquals(3, config.snippets.size());
-/*
-        ns: aiai.fit.default.snippet
-        type: fit
-        file: fit-model.py
-        version: 1.0
-*/
+            assertNotNull(config);
+            assertNotNull(config.snippets);
+            assertEquals(3, config.snippets.size());
+
             SnippetsConfig.SnippetConfig sc;
             sc = config.snippets.get(0);
-            Assert.assertEquals("aiai.fit.default.snippet-SNAPSHOT", sc.name);
-            Assert.assertEquals(SnippetType.fit, sc.type);
-            Assert.assertEquals("fit-model.py", sc.file);
-            Assert.assertEquals("1.0", sc.version);
+            assertEquals("aiai.fit.default.snippet", sc.name);
+            assertEquals(SnippetType.fit, sc.type);
+            assertEquals("fit-model.py", sc.file);
+            assertEquals("1.0-SNAPSHOT", sc.version);
+            assertEquals("python-3", sc.env);
 
-/*
-    - name: aiai.predict.default.snippet
-      version: 1.0
-      type: predict
-      file: predict-model.py
-*/
             sc = config.snippets.get(1);
-            Assert.assertEquals("aiai.predict.default.snippet-SNAPSHOT", sc.name);
-            Assert.assertEquals(SnippetType.predict, sc.type);
-            Assert.assertEquals("predict-model.py", sc.file);
-            Assert.assertEquals("1.0", sc.version);
+            assertEquals("aiai.predict.default.snippet", sc.name);
+            assertEquals(SnippetType.predict, sc.type);
+            assertEquals("predict-model.py", sc.file);
+            assertEquals("1.0-SNAPSHOT", sc.version);
+            assertEquals("python-3", sc.env);
         }
     }
 

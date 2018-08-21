@@ -17,7 +17,6 @@
  */
 package aiai.ai.station.actors;
 
-import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.station.StationSnippetUtils;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.DirUtils;
@@ -63,7 +62,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 continue;
             }
 
-            StationSnippetUtils.SnippetFile snippetFile = StationSnippetUtils.getSnippetFile(stationDir, task.getSnippetCode(), task.filename);
+            StationSnippetUtils.SnippetFile snippetFile = StationSnippetUtils.getSnippetFile(snippetDir, task.getSnippetCode(), task.filename);
             if (snippetFile.isError) {
                 return;
             }
