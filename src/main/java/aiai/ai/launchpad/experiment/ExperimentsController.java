@@ -128,14 +128,7 @@ public class ExperimentsController {
         }
 
         ExperimentResult experimentResult = new ExperimentResult();
-        Dataset dataset = null;
-        if (experiment.getDatasetId()!=null) {
-            dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
-            if (dataset == null) {
-                experiment.setDatasetId(null);
-                experimentRepository.save(experiment);
-            }
-        }
+        Dataset dataset = getDatasetAndCheck(experiment);
         experimentResult.experiment = experiment;
         experimentResult.dataset = dataset;
         model.addAttribute("experimentResult", experimentResult);
@@ -173,14 +166,7 @@ public class ExperimentsController {
         }
 
         ExperimentResult experimentResult = new ExperimentResult();
-        Dataset dataset = null;
-        if (experiment.getDatasetId()!=null) {
-            dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
-            if (dataset == null) {
-                experiment.setDatasetId(null);
-                experimentRepository.save(experiment);
-            }
-        }
+        Dataset dataset = getDatasetAndCheck(experiment);
         if (dataset==null) {
             for (Dataset ds : datasetRepository.findAll()) {
                 experimentResult.allDatasetOptions.add(new SimpleSelectOption(ds.getId().toString(), String.format("Id: %d; %s", ds.getId(), ds.getName())));
@@ -191,6 +177,18 @@ public class ExperimentsController {
         model.addAttribute("experimentResult", experimentResult);
         model.addAttribute("snippetResult", snippetResult);
         return "launchpad/experiment-edit-form";
+    }
+
+    private Dataset getDatasetAndCheck(Experiment experiment) {
+        Dataset dataset = null;
+        if (experiment.getDatasetId()!=null) {
+            dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
+            if (dataset == null) {
+                experiment.setDatasetId(null);
+                experimentRepository.save(experiment);
+            }
+        }
+        return dataset;
     }
 
     public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
