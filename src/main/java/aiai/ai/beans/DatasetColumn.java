@@ -51,7 +51,8 @@ public class DatasetColumn implements Serializable {
     @Column(name = "NAME")
     private String name;
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
+//    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DATASET_GROUP_ID")
     private DatasetGroup datasetGroup;
 

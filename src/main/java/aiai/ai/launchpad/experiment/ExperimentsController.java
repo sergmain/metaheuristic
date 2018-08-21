@@ -150,6 +150,7 @@ public class ExperimentsController {
         }
         Iterable<Snippet> snippets = snippetRepository.findAll();
         SnippetResult snippetResult = new SnippetResult();
+        experiment.sortSnippetsByOrder();
         for (Snippet snippet : snippets) {
             boolean isExist=false;
             for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
@@ -170,7 +171,6 @@ public class ExperimentsController {
                 snippetResult.selectOptions.add( new SimpleSelectOption(snippet.getSnippetCode(), String.format("Type: %s; Code: %s:%s", snippet.getType(), snippet.getName(), snippet.getSnippetVersion())));
             }
         }
-        sortSnippets(snippetResult.snippets);
 
         ExperimentResult experimentResult = new ExperimentResult();
         Dataset dataset = null;
@@ -193,7 +193,7 @@ public class ExperimentsController {
         return "launchpad/experiment-edit-form";
     }
 
-    public static void sortSnippets(List<ExperimentSnippet> snippets) {
+    public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
         snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
     }
 
@@ -263,12 +263,6 @@ public class ExperimentsController {
             experiment.setSnippets(new ArrayList<>());
         }
         ExperimentSnippet s = new ExperimentSnippet();
-
-        //noinspection ConstantConditions
-        List<ExperimentSnippet> snippets = experimentSnippetRepository.findByExperimentId(experiment.getId());
-        int order = snippets.isEmpty() ? 1 : snippets.stream().mapToInt(ExperimentSnippet::getOrder).max().getAsInt() + 1;
-        s.setOrder(order);
-
         s.setExperiment(experiment);
         s.setSnippetCode( code );
 
@@ -277,6 +271,12 @@ public class ExperimentsController {
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         s.setType(snippet.getType());
         experiment.getSnippets().add(s);
+
+        sortSnippetsByType(experiment.getSnippets());
+        int order = 1;
+        for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
+            experimentSnippet.setOrder(order++);
+        }
 
         experimentRepository.save(experiment);
         return "redirect:/launchpad/experiment-edit/"+id;

@@ -81,7 +81,8 @@ public class DatasetGroup implements Serializable {
     private int featureStatus;
 
 
-    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
+//    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DATASET_ID")
     private Dataset dataset;
     @OneToMany(mappedBy = "datasetGroup", cascade = CascadeType.ALL)

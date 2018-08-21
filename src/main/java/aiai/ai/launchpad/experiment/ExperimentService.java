@@ -197,6 +197,7 @@ public class ExperimentService {
                 yaml.datasetId = experiment.getDatasetId();
 
                 List<SimpleSnippet> snippets = new ArrayList<>();
+                experiment.sortSnippetsByOrder();
                 for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                     SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                     Snippet snippet = localCache.putIfAbsent(experimentSnippet.getSnippetCode(), snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version));

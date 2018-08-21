@@ -27,6 +27,7 @@ import org.hibernate.annotations.LazyCollectionOption;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -94,6 +95,11 @@ public class Experiment implements Serializable {
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
     private List<ExperimentSnippet> snippets;
+
+    public void sortSnippetsByOrder() {
+        snippets.sort(Comparator.comparing(ExperimentSnippet::getOrder));
+    }
+
 
     public boolean hasFit() {
         if (snippets==null || snippets.isEmpty()) {

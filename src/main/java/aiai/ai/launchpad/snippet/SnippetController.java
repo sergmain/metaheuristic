@@ -112,6 +112,7 @@ public class SnippetController {
                             snippet.type = snippetConfig.type.toString();
                             snippet.filename = snippetConfig.file;
                             snippet.code = code;
+                            snippet.env = snippetConfig.env;
                             snippetRepository.save(snippet);
                         }
                         else {
@@ -129,6 +130,7 @@ public class SnippetController {
                     try( InputStream inputStream = new FileInputStream(file)) {
                         snippet.code = IOUtils.toString(inputStream, Charsets.UTF_8);;
                     }
+                    snippet.env = snippetConfig.env;
                     snippetRepository.save(snippet);
                 }
             }
