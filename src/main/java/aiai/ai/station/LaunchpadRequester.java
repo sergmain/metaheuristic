@@ -23,8 +23,8 @@ import aiai.ai.comm.Command;
 import aiai.ai.comm.CommandProcessor;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -35,7 +35,6 @@ import org.springframework.web.client.RestTemplate;
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -45,6 +44,7 @@ import java.util.List;
  */
 @Service
 @EnableScheduling
+@Slf4j
 public class LaunchpadRequester {
 
     private String targetUrl;
@@ -68,12 +68,21 @@ public class LaunchpadRequester {
 
     @PostConstruct
     public void postConstruct() {
-        if (globals.isStationEnabled) {
-            targetUrl = globals.launchpadUrl + "/rest-anon/srv";
+        if (!globals.isStationEnabled) {
+            return;
         }
+        targetUrl = globals.launchpadUrl + "/rest-anon/srv";
+        String env = stationService.getEnv();
+        addCommand(new Protocol.ReportStationEnv(env));
     }
 
     private final List<Command> commands = new ArrayList<>();
+
+    private void addCommand(Command cmd) {
+        synchronized (commands) {
+            commands.add(cmd);
+        }
+    }
 
     private void addCommands(List<Command> cmds) {
         synchronized (commands) {
@@ -88,7 +97,7 @@ public class LaunchpadRequester {
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
     @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.request-launchpad.timeout'), 3, 20, 10)*1000 }")
-    public void fixedDelayTaskComplex() {
+    public void fixedDelay() {
         if (!globals.isStationEnabled) {
             return;
         }
@@ -123,8 +132,9 @@ public class LaunchpadRequester {
             ExchangeData result = response.getBody();
 
             addCommands(commandProcessor.processExchangeData(result).getCommands());
-
-            System.out.println(new Date() + " This runs in a fixed delay (Complex), result: " + result);
+            if (log.isDebugEnabled()) {
+                log.debug("fixedDelay(), " + result);
+            }
         } catch (RestClientException e) {
             System.out.println("Error accessing url: " + targetUrl);
             e.printStackTrace();

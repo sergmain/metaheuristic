@@ -58,7 +58,7 @@ public class StationService {
 
     @PostConstruct
     public void init() {
-        final File file = new File(globals.stationDir, "env.xml");
+        final File file = new File(globals.stationDir, "env.yaml");
         if (!file.exists()) {
             System.out.println("Station's config file 'env.xml' doesn't exist.");
             return;

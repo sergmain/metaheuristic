@@ -43,8 +43,8 @@ public class TestSequenceYaml {
         map.put("key2", "#1");
         seq.setHyperParams(map);
         List<SimpleSnippet> list = new ArrayList<>();
-        list.add(new SimpleSnippet(SnippetType.fit, "123", "file.txt", "112233"));
-        list.add(new SimpleSnippet(SnippetType.predict, "456", "file.txt", "112233"));
+        list.add(new SimpleSnippet(SnippetType.fit, "123", "file.txt", "112233", "python.exe"));
+        list.add(new SimpleSnippet(SnippetType.predict, "456", "file.txt", "112233", "python.exe"));
         seq.setSnippets(list);
 
         String s = SequenceYamlUtils.toString(seq);

@@ -23,39 +23,55 @@ import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.utils.DirUtils;
+import aiai.ai.yaml.env.EnvYaml;
+import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleSnippet;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 @Service
 @EnableScheduling
+@Slf4j
 public class SequenceProcessor {
 
     private final Globals globals;
 
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
     private final ProcessService processService;
+    private final StationService stationService;
 
     private Map<Long, Boolean> isDatasetReady = new HashMap<>();
     private Map<String, StationSnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
-    public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService) {
+    public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService, StationService stationService) {
         this.globals = globals;
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
         this.processService = processService;
+        this.stationService = stationService;
+    }
+
+    @PostConstruct
+    public void init() {
     }
 
     @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
     public void scheduleProcessor() {
         if (!globals.isStationEnabled) {
+            return;
+        }
+        EnvYaml envYaml = EnvYamlUtils.toEnvYaml(stationService.getEnv());
+        if (envYaml==null) {
+            log.warn("env.yaml wasn't found or empty. path: " + globals.stationDir +"/env.yaml");
             return;
         }
 
@@ -93,6 +109,12 @@ public class SequenceProcessor {
                 if (paramFile==null) {
                     continue;
                 }
+                String intepreter = envYaml.getEnvs().get(snippet.env);
+                if (intepreter==null) {
+                    log.warn("Can't precess sequence, interpreter wan't found for env: " + snippet.env);
+                    continue;
+                }
+
                 // all resources are prepared, go
                 System.out.println("!!!!! all resources are prepared, go !!!! ");
 

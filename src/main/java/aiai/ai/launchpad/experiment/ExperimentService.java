@@ -159,7 +159,7 @@ public class ExperimentService {
                         System.out.println("Snippet wasn't found for code: " + experimentSnippet.getSnippetCode());
                         continue;
                     }
-                    snippets.add(new SimpleSnippet(SnippetType.valueOf(experimentSnippet.getType()), experimentSnippet.getSnippetCode(), snippet.getFilename(), snippet.checksum));
+                    snippets.add(new SimpleSnippet(SnippetType.valueOf(experimentSnippet.getType()), experimentSnippet.getSnippetCode(), snippet.getFilename(), snippet.checksum, snippet.env));
                 }
                 yaml.snippets = snippets;
 

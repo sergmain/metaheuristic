@@ -30,4 +30,5 @@ public class SimpleSnippet {
     public String code;
     public String filename;
     public String checksum;
+    public String env;
 }

@@ -42,6 +42,9 @@ public class EnvYamlUtils {
     }
 
     public static EnvYaml toEnvYaml(String s) {
+        if (s==null) {
+            return null;
+        }
         return yaml.load(s);
     }
 

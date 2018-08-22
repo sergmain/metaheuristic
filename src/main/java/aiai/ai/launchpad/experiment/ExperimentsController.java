@@ -291,6 +291,46 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 
+    @GetMapping("/experiment-metadata-default-add-commit/{experimentId}")
+    public String metadataDefaultAddCommit(@PathVariable long experimentId) {
+        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
+        if (experiment == null) {
+            return "redirect:/launchpad/experiments";
+        }
+        if (experiment.getHyperParams()==null) {
+            experiment.setHyperParams(new ArrayList<>());
+        }
+
+        add(experiment, "RNN", "[LSTM, GRU, SimpleRNN]");
+        add(experiment, "activation", "[elu, linear, softsign, relu, tanh, sigmoid, hard_sigmoid, softplus]");
+        add(experiment, "optimizer", "[sgd, nadam, adagrad, adadelta, rmsprop, adam, adamax]");
+        add(experiment, "batch_size", "[20, 40, 60]");
+        add(experiment, "time_steps", "[5, 40, 60]");
+
+        experimentRepository.save(experiment);
+        return "redirect:/launchpad/experiment-edit/"+experimentId;
+    }
+
+    private void add(Experiment experiment, String key, String value) {
+        ExperimentHyperParams param = getParams(experiment, key, value);
+        List<ExperimentHyperParams> params = experiment.getHyperParams();
+        for (ExperimentHyperParams p1 : params) {
+            if (p1.getKey().equals(param.getKey())) {
+                p1.setValues(param.getValues());
+                return;
+            }
+        }
+        params.add(param);
+    }
+
+    private ExperimentHyperParams getParams(Experiment experiment, String key, String value) {
+        ExperimentHyperParams params = new ExperimentHyperParams();
+        params.setExperiment(experiment);
+        params.setKey(key);
+        params.setValues(value);
+        return params;
+    }
+
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{id}")
     public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable Long id) {
         ExperimentSnippet snippet = experimentSnippetRepository.findById(id).orElse(null);

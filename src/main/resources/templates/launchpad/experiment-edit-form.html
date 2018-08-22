@@ -133,6 +133,9 @@
         </table>
 
         <h1 class="widget-header">Metadata</h1>
+        <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/experiment-metadata-default-add-commit/' + experimentResult.experiment.id}">Fill with default metadatas</a>
+        <p>&nbsp;</p>
+
         <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-metadata-add-commit/'+experimentResult.experiment.id}" accept-charset="UTF-8" >
             <fieldset>
                 <input placeholder="Key" name="key" type="text">
@@ -140,7 +143,6 @@
                 <button class="pure-button pure-button-primary" type="submit">Add metadata</button>
             </fieldset>
         </form>
-        <p>&nbsp;</p>
 
         <table class="pure-table pure-table-bordered" id="table-metadata" th:fragment="table">
             <thead>
@@ -160,8 +162,9 @@
             </tr>
             </tbody>
         </table>
-
         <p>&nbsp;</p>
+
+        <h1 class="widget-header">Back</h1>
         <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">To list of experiments</a>
     </div>
 </div>
