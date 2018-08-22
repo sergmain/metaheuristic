@@ -25,6 +25,8 @@ import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.repositories.LogDataRepository;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.utils.DirUtils;
+import aiai.ai.yaml.console.ConsoleOutput;
+import aiai.ai.yaml.console.ConsoleOutputUtils;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.sequence.SequenceYaml;
@@ -106,6 +108,7 @@ public class SequenceProcessor {
                 finishAndWriteToLog(seq, "Broken sequence. List of snippets is empty.");
                 continue;
             }
+/*
             // right now we handle only 1 or 2 snippets. Support of bigger number of snippets in the sequence will be added later
             else if (sequenceYaml.snippets.size() == 2) {
                 if ( sequenceYaml.snippets.get(0).type == SnippetType.fit && sequenceYaml.snippets.get(0).type == SnippetType.predict) {
@@ -114,9 +117,10 @@ public class SequenceProcessor {
                 }
             }
             else if (sequenceYaml.snippets.size()>2) {
-                finishAndWriteToLog(seq, "Number of snippets in the sequence if too long, size: " + sequenceYaml.snippets.size());
+                finishAndWriteToLog(seq, "Number of snippets in the sequence if too high, size: " + sequenceYaml.snippets.size());
                 continue;
             }
+*/
             seq.setLaunchedOn(System.currentTimeMillis());
             seq = stationExperimentSequenceRepository.save(seq);
             for (SimpleSnippet snippet : sequenceYaml.getSnippets()) {
@@ -127,6 +131,10 @@ public class SequenceProcessor {
                         return;
                     }
                     isSnippetsReady.put(snippet.code, snippetFile);
+                }
+                ConsoleOutput consoleOutput =  ConsoleOutputUtils.toConsoleOutput(seq.getConsoleOutput());
+                if (isThisSnippetCompleted(snippet, consoleOutput)) {
+                    continue;
                 }
 
                 final File paramFile = prepareParamFile(seq.getExperimentSequenceId(), snippet.getType(), seq.getParams());
@@ -148,20 +156,54 @@ public class SequenceProcessor {
                     cmd.add(datasetFile.file.getAbsolutePath());
 
                     final File execDir = paramFile.getParentFile();
-                    processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
+                    ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
+                    updateConsoleOutput(seq.getId(), snippet.order, result.console);
+
                 } catch (Exception err) {
                     log.error("Error exec process " + intepreter, err);
                 }
             }
-            log.info("update finishedOn");
-            StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seq.getId()).orElse(null);
-            if (seqTemp == null) {
-                log.error("StationExperimentSequence wasn't found for Id " + seq.getId());
-            } else {
-                seqTemp.setFinishedOn(System.currentTimeMillis());
-                stationExperimentSequenceRepository.save(seqTemp);
-            }
+            updateFinishedOn(seq.getId(), sequenceYaml);
         }
+    }
+
+    private void updateFinishedOn(Long seqId, SequenceYaml sequenceYaml) {
+        log.info("update finishedOn");
+        StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
+        if (seqTemp == null) {
+            log.error("StationExperimentSequence wasn't found for Id " + seqId);
+        } else {
+
+            ConsoleOutput consoleOutput = ConsoleOutputUtils.toConsoleOutput(seqTemp.getConsoleOutput());
+            if (sequenceYaml.getSnippets().size()!=consoleOutput.getOutputs().size()) {
+                log.warn("Don't mark this experimentSequence as finshed because not all snippets was processed");
+                return;
+            }
+
+            seqTemp.setFinishedOn(System.currentTimeMillis());
+            stationExperimentSequenceRepository.save(seqTemp);
+        }
+    }
+
+    private void updateConsoleOutput(Long seqId, int snippetOrder, String output) {
+        log.info("update finishedOn");
+        StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
+        if (seqTemp == null) {
+            log.error("StationExperimentSequence wasn't found for Id " + seqId);
+        } else {
+            ConsoleOutput consoleOutput = ConsoleOutputUtils.toConsoleOutput(seqTemp.getConsoleOutput());
+            consoleOutput.getOutputs().put(snippetOrder, output);
+            String yaml = ConsoleOutputUtils.toString(consoleOutput);
+            seqTemp.setConsoleOutput(yaml);
+            stationExperimentSequenceRepository.save(seqTemp);
+        }
+    }
+
+    private boolean isThisSnippetCompleted(SimpleSnippet snippet, ConsoleOutput consoleOutput) {
+        if (consoleOutput==null) {
+            return false;
+        }
+        return consoleOutput.outputs.get(snippet.order)!=null;
     }
 
     private void finishAndWriteToLog(StationExperimentSequence seq, String es) {

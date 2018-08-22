@@ -19,6 +19,8 @@ package aiai.ai.core;
 
 import aiai.ai.beans.LogData;
 import aiai.ai.repositories.LogDataRepository;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -29,13 +31,21 @@ import java.util.List;
 @Service
 public class ProcessService {
 
+    @Data
+    @AllArgsConstructor
+    public static class Result {
+        public boolean isOk;
+        public int exitCode;
+        public String console;
+    }
+
     private final LogDataRepository logDataRepository;
 
     public ProcessService(LogDataRepository logDataRepository) {
         this.logDataRepository = logDataRepository;
     }
 
-    public boolean execCommand(LogData.Type type, Long refId, List<String> cmd, File execDir) throws IOException, InterruptedException {
+    public Result execCommand(LogData.Type type, Long refId, List<String> cmd, File execDir) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder();
         pb.command(cmd);
         pb.directory(execDir);
@@ -64,10 +74,11 @@ public class ProcessService {
         LogData logData = new LogData();
         logData.setRefId(refId);
         logData.setType(type);
-        logData.setLogData(out.toString());
+        final String console = out.toString();
+        logData.setLogData(console);
         logDataRepository.save(logData);
 
-        return exitCode==0;
+        return new Result(exitCode==0, exitCode, console);
     }
 
 

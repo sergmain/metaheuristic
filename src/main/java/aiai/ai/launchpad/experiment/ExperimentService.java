@@ -142,7 +142,6 @@ public class ExperimentService {
                         experiment.getNumberOfSequence(), allHyperParams.size()));
             }
 
-
             Map<String, Snippet> localCache = new HashMap<>();
             for (HyperParams hyperParams : allHyperParams) {
                 SequenceYaml yaml = new SequenceYaml();
@@ -159,7 +158,14 @@ public class ExperimentService {
                         System.out.println("Snippet wasn't found for code: " + experimentSnippet.getSnippetCode());
                         continue;
                     }
-                    snippets.add(new SimpleSnippet(SnippetType.valueOf(experimentSnippet.getType()), experimentSnippet.getSnippetCode(), snippet.getFilename(), snippet.checksum, snippet.env));
+                    snippets.add(new SimpleSnippet(
+                            SnippetType.valueOf(experimentSnippet.getType()),
+                            experimentSnippet.getSnippetCode(),
+                            snippet.getFilename(),
+                            snippet.checksum,
+                            snippet.env,
+                            experimentSnippet.getOrder()
+                            ));
                 }
                 yaml.snippets = snippets;
 

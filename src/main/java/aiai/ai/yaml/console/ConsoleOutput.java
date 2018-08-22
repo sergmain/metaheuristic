@@ -15,21 +15,13 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.sequence;
+package aiai.ai.yaml.console;
 
-import aiai.ai.launchpad.snippet.SnippetType;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.LinkedHashMap;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class SimpleSnippet {
-    public SnippetType type;
-    public String code;
-    public String filename;
-    public String checksum;
-    public String env;
-    public int order;
+public class ConsoleOutput {
+    public LinkedHashMap<Integer, String> outputs = new LinkedHashMap<>();
 }
