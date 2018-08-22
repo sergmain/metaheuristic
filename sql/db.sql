@@ -143,7 +143,7 @@ CREATE TABLE AIAI_S_EXPERIMENT_SEQUENCE (
   LAUNCHED_ON  bigint,
   FINISHED_ON  bigint,
   PARAMS       MEDIUMTEXT not null,
-  EXEC_STATUS       MEDIUMTEXT
-
+  IS_REPORTED  tinyint(1) not null default 0,
+  IS_DELIVERED  tinyint(1) not null default 0
 );
 

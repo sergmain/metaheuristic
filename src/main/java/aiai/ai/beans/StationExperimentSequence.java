@@ -54,4 +54,11 @@ public class StationExperimentSequence implements Serializable {
     @Column(name="PARAMS")
     private String params;
 
+    @Column(name = "IS_REPORTED")
+    private boolean isReported;
+
+    @Column(name = "IS_DELIVERED")
+    private boolean isDelivered;
+
+
 }

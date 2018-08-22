@@ -22,6 +22,7 @@ import aiai.ai.Globals;
 import aiai.ai.beans.Snippet;
 import aiai.ai.repositories.SnippetRepository;
 import aiai.ai.utils.Checksum;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.Resource;
@@ -35,6 +36,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @Controller
+@Slf4j
 public class SnippetController {
 
     private final Globals globals;
@@ -52,10 +54,16 @@ public class SnippetController {
     public void init() throws IOException {
         File customSnippets = new File(globals.launchpadDir, "snippets");
         if (customSnippets.exists()) {
-            loadSnippetsFromDir(customSnippets);
+            final File[] dirs = customSnippets.listFiles(File::isDirectory);
+            if (dirs!=null) {
+                for (File dir : dirs) {
+                    log.info("Load snippets from: " + dir.getPath());
+                    loadSnippetsFromDir(dir);
+                }
+            }
         }
         else {
-            System.out.println("Directory with custom snippets wasn't found");
+            log.info("Directory with custom snippets doesn't exist, " + customSnippets.getPath());
         }
 
         Resource[] resources  = pathMatchingResourcePatternResolver.getResources("classpath:snippets/*");

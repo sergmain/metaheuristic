@@ -55,7 +55,4 @@ public class ExperimentSequence implements Serializable {
     @Column(name="IS_COMPLETED")
     private boolean isCompleted;
 
-    @Column(name = "EXEC_STATUS")
-    private String execStatus;
-
 }

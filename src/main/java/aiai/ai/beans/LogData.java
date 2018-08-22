@@ -35,7 +35,7 @@ public class LogData implements Serializable {
         this.logType = type.typeNumber;
     }
 
-    public enum Type{ ASSEMBLY(1), FEATURE(2), FIT(3), PREDICT(4);
+    public enum Type{ ASSEMBLY(1), FEATURE(2), FIT(3), PREDICT(4), SEQUENCE(5);
 
         public int typeNumber;
 

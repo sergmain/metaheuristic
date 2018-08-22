@@ -19,6 +19,7 @@ package aiai.ai.comm;
 
 import aiai.ai.beans.Station;
 import aiai.ai.repositories.StationsRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,6 +32,7 @@ import java.util.List;
  * Time: 19:19
  */
 @RestController
+@Slf4j
 public class ServerController {
 
     private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
@@ -44,7 +46,9 @@ public class ServerController {
 
     @PostMapping("/rest-anon/srv")
     public ExchangeData postDatasets(@RequestBody ExchangeData data, HttpServletRequest request) {
-        System.out.println("received ExchangeData via POST: " + data);
+        if (log.isInfoEnabled()) {
+            log.info("postDatasets() " + data);
+        }
         if (StringUtils.isBlank(data.getStationId())) {
             return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
         }
@@ -71,19 +75,6 @@ public class ServerController {
 
         return resultData.getCommands().isEmpty() ? EXCHANGE_DATA_NOP : resultData;
     }
-
-    /// 2018.07.29 should I restore this method???
-/*
-    public static final String IP = "ip";
-
-    @PostMapping("/rest-anon/srv-str")
-    public String postDataAsStr(String json, HttpServletRequest request) {
-        System.out.println("received json via postDataAsStr(): " + json);
-        Map<String, String> sysParams = new HashMap<>();
-        sysParams.put(CommConsts.IP, request.getRemoteAddr());
-        return commandProcessor.processAll(json, sysParams);
-    }
-*/
 
     /**
      * This endpoint is only for testing security. Do not delete

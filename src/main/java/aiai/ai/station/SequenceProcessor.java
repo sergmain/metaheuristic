@@ -18,9 +18,11 @@
 package aiai.ai.station;
 
 import aiai.ai.Globals;
+import aiai.ai.beans.LogData;
 import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.snippet.SnippetType;
+import aiai.ai.repositories.LogDataRepository;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.utils.DirUtils;
 import aiai.ai.yaml.env.EnvYaml;
@@ -49,15 +51,17 @@ public class SequenceProcessor {
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
     private final ProcessService processService;
     private final StationService stationService;
+    private final LogDataRepository logDataRepository;
 
-    private Map<Long, Boolean> isDatasetReady = new HashMap<>();
+    private Map<Long, StationDatasetUtils.DatasetFile> isDatasetReady = new HashMap<>();
     private Map<String, StationSnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
-    public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService, StationService stationService) {
+    public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService, StationService stationService, LogDataRepository logDataRepository) {
         this.globals = globals;
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
         this.processService = processService;
         this.stationService = stationService;
+        this.logDataRepository = logDataRepository;
     }
 
     @PostConstruct
@@ -70,34 +74,54 @@ public class SequenceProcessor {
             return;
         }
         EnvYaml envYaml = EnvYamlUtils.toEnvYaml(stationService.getEnv());
-        if (envYaml==null) {
-            log.warn("env.yaml wasn't found or empty. path: " + globals.stationDir +"/env.yaml");
+        if (envYaml == null) {
+            log.warn("env.yaml wasn't found or empty. path: " + globals.stationDir + "/env.yaml");
             return;
         }
 
         File dsDir = StationDatasetUtils.checkEvironment(globals.stationDir);
-        if (dsDir==null) {
+        if (dsDir == null) {
             return;
         }
 
         File snippetDir = StationSnippetUtils.checkEvironment(globals.stationDir);
-        if (snippetDir==null) {
+        if (snippetDir == null) {
             return;
         }
 
+        StationDatasetUtils.DatasetFile datasetFile;
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
             final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
-            if (!isDatasetReady.getOrDefault(sequenceYaml.getDatasetId(), false)) {
-                StationDatasetUtils.DatasetFile datasetFile = StationDatasetUtils.getDatasetFile(dsDir, sequenceYaml.getDatasetId());
+            datasetFile = isDatasetReady.get(sequenceYaml.getDatasetId());
+            if (datasetFile == null) {
+                datasetFile = StationDatasetUtils.getDatasetFile(dsDir, sequenceYaml.getDatasetId());
                 if (datasetFile.isError || !datasetFile.isContent) {
                     continue;
                 }
-                isDatasetReady.put(sequenceYaml.getDatasetId(), true);
+                isDatasetReady.put(sequenceYaml.getDatasetId(), datasetFile);
             }
+
+            if (sequenceYaml.snippets.isEmpty()) {
+                finishAndWriteToLog(seq, "Broken sequence. List of snippets is empty.");
+                continue;
+            }
+            // right now we handle only 1 or 2 snippets. Support of bigger number of snippets in the sequence will be added later
+            else if (sequenceYaml.snippets.size() == 2) {
+                if ( sequenceYaml.snippets.get(0).type == SnippetType.fit && sequenceYaml.snippets.get(0).type == SnippetType.predict) {
+                    finishAndWriteToLog(seq, "Check of order of snippets was failed");
+                    continue;
+                }
+            }
+            else if (sequenceYaml.snippets.size()>2) {
+                finishAndWriteToLog(seq, "Number of snippets in the sequence if too long, size: " + sequenceYaml.snippets.size());
+                continue;
+            }
+            seq.setLaunchedOn(System.currentTimeMillis());
+            seq = stationExperimentSequenceRepository.save(seq);
             for (SimpleSnippet snippet : sequenceYaml.getSnippets()) {
                 StationSnippetUtils.SnippetFile snippetFile = isSnippetsReady.get(snippet.code);
-                if (snippetFile==null) {
+                if (snippetFile == null) {
                     snippetFile = StationSnippetUtils.getSnippetFile(snippetDir, snippet.getCode(), snippet.filename);
                     if (snippetFile.isError || !snippetFile.isContent) {
                         return;
@@ -106,47 +130,55 @@ public class SequenceProcessor {
                 }
 
                 final File paramFile = prepareParamFile(seq.getExperimentSequenceId(), snippet.getType(), seq.getParams());
-                if (paramFile==null) {
+                if (paramFile == null) {
                     continue;
                 }
                 String intepreter = envYaml.getEnvs().get(snippet.env);
-                if (intepreter==null) {
+                if (intepreter == null) {
                     log.warn("Can't precess sequence, interpreter wan't found for env: " + snippet.env);
                     continue;
                 }
 
-                // all resources are prepared, go
-                System.out.println("!!!!! all resources are prepared, go !!!! ");
+                System.out.println("!!! all system are checked, lift off !!! ");
 
                 try {
                     List<String> cmd = new ArrayList<>();
-                    cmd.add(snippetFile.file.getPath());
+                    cmd.add(intepreter);
+                    cmd.add(snippetFile.file.getAbsolutePath());
+                    cmd.add(datasetFile.file.getAbsolutePath());
 
                     final File execDir = paramFile.getParentFile();
-//                    processService.execCommand(snippet.type==SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
-
+                    processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
                 } catch (Exception err) {
-                    err.printStackTrace();
+                    log.error("Error exec process " + intepreter, err);
                 }
+            }
+            log.info("update finishedOn");
+            StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seq.getId()).orElse(null);
+            if (seqTemp == null) {
+                log.error("StationExperimentSequence wasn't found for Id " + seq.getId());
+            } else {
+                seqTemp.setFinishedOn(System.currentTimeMillis());
+                stationExperimentSequenceRepository.save(seqTemp);
             }
         }
     }
 
-    public static File checkEvironment(File stationDir) {
-        File seqDir = new File(stationDir, "sequence");
-        if (!seqDir.exists()) {
-            boolean isOk = seqDir.mkdirs();
-            if (!isOk) {
-                System.out.println("Can't make all directories for path: " + seqDir.getAbsolutePath());
-                return null;
-            }
-        }
-        return seqDir;
+    private void finishAndWriteToLog(StationExperimentSequence seq, String es) {
+        log.warn(es);
+        seq.setLaunchedOn(System.currentTimeMillis());
+        seq.setFinishedOn(System.currentTimeMillis());
+        stationExperimentSequenceRepository.save(seq);
+        LogData logData = new LogData();
+        logData.setRefId(seq.getId());
+        logData.setType(LogData.Type.SEQUENCE);
+        logData.setLogData(es);
+        logDataRepository.save(logData);
     }
 
     private File prepareParamFile(Long experimentSequenceId, SnippetType type, String params) {
         File seqDir = checkEvironment(globals.stationDir);
-        if (seqDir==null) {
+        if (seqDir == null) {
             return null;
         }
 
@@ -164,7 +196,7 @@ public class SequenceProcessor {
             return null;
         }
 
-        File paramFile = new File(snippetTypeDir, "params.yaml" );
+        File paramFile = new File(snippetTypeDir, "params.yaml");
         if (paramFile.exists()) {
             paramFile.delete();
         }
@@ -175,5 +207,17 @@ public class SequenceProcessor {
             return null;
         }
         return paramFile;
+    }
+
+    public static File checkEvironment(File stationDir) {
+        File seqDir = new File(stationDir, "sequence");
+        if (!seqDir.exists()) {
+            boolean isOk = seqDir.mkdirs();
+            if (!isOk) {
+                System.out.println("Can't make all directories for path: " + seqDir.getAbsolutePath());
+                return null;
+            }
+        }
+        return seqDir;
     }
 }
