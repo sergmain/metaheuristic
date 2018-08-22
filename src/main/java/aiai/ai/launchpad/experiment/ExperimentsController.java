@@ -22,6 +22,7 @@ import aiai.ai.beans.*;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.*;
+import aiai.ai.yaml.hyper_params.HyperParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -355,7 +356,7 @@ public class ExperimentsController {
         }
 
         Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
-        List<ExperimentUtils.HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+        List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
         experiment.setNumberOfSequence(allHyperParams.size());
         experiment.setLaunched(true);

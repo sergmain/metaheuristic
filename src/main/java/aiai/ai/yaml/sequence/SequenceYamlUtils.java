@@ -15,38 +15,32 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.station.yaml;
+package aiai.ai.yaml.sequence;
 
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.InputStream;
+public class SequenceYamlUtils {
 
-public class EnvYamlUtils {
-
-    private static Yaml yaml;
+    private static Yaml yamlSequenceYaml;
 
     static {
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        yaml = new Yaml(new Constructor(EnvYaml.class), new Representer(), options);
-
+        yamlSequenceYaml = new Yaml(new Constructor(SequenceYaml.class), new Representer(), options);
     }
 
-    public static String toString(EnvYaml envYaml) {
-        return yaml.dump(envYaml);
+    public static String toString(SequenceYaml sequenceYaml) {
+        return yamlSequenceYaml.dump(sequenceYaml);
     }
 
-    public static EnvYaml toEnvYaml(String s) {
-        return yaml.load(s);
+    public static SequenceYaml toSequenceYaml(String s) {
+        return yamlSequenceYaml.load(s);
     }
 
-    public static EnvYaml toEnvYaml(InputStream is) {
-        return yaml.load(is);
-    }
 
 }

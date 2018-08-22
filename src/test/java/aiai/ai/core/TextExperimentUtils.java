@@ -19,6 +19,8 @@ package aiai.ai.core;
 
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
+import aiai.ai.yaml.hyper_params.HyperParams;
+import aiai.ai.yaml.hyper_params.HyperParamsUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.junit.Assert;
@@ -29,7 +31,6 @@ import org.junit.rules.ExpectedException;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 
-import javax.persistence.Transient;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -81,7 +82,7 @@ public class TextExperimentUtils {
 
     @Test
     public void testMetaProducer() {
-        List<ExperimentUtils.HyperParams> allPaths;
+        List<HyperParams> allPaths;
         Map<String, String> map = new LinkedHashMap<>();
 
         map.put("key1", null);
@@ -99,7 +100,7 @@ public class TextExperimentUtils {
         allPaths = ExperimentUtils.getAllHyperParams(map);
 
         assertEquals(1, allPaths.size());
-        ExperimentUtils.HyperParams path = allPaths.get(0);
+        HyperParams path = allPaths.get(0);
         assertEquals(1, path.params.size());
         assertEquals("10", path.params.get("key1"));
 
@@ -112,13 +113,13 @@ public class TextExperimentUtils {
         allPaths = ExperimentUtils.getAllHyperParams(map);
 
         assertEquals(1, allPaths.size());
-        ExperimentUtils.HyperParams path1 = allPaths.get(0);
+        HyperParams path1 = allPaths.get(0);
         assertEquals(4, path1.params.size());
 
         String mapYaml;
         Scanner scanner;
 
-        mapYaml = ExperimentService.toYaml(yaml, path1);
+        mapYaml = HyperParamsUtils.toYaml(path1);
         System.out.println(mapYaml);
 
         scanner = new Scanner(mapYaml);
@@ -133,9 +134,9 @@ public class TextExperimentUtils {
 
     @Test
     public void testHyperParams() {
-        ExperimentUtils.HyperParams hp = new ExperimentUtils.HyperParams(new LinkedHashMap<>(), "abc");
+        HyperParams hp = new HyperParams(new LinkedHashMap<>(), "abc");
 
-        ExperimentUtils.HyperParams hp1 = hp.asClone();
+        HyperParams hp1 = hp.asClone();
 
         hp1.path += "123";
 
@@ -149,9 +150,9 @@ public class TextExperimentUtils {
         for (String[] v : values) {
             map.put(v[0], v[1]);
         }
-        List<ExperimentUtils.HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
+        List<HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
 
-        return ExperimentService.toYaml(yaml, allPaths.get(0));
+        return HyperParamsUtils.toYaml(allPaths.get(0));
     }
 
     @Test
@@ -162,12 +163,12 @@ public class TextExperimentUtils {
         map.put("key2", "[2,4]");
         map.put("key1", "[11, 13]");
 
-        List<ExperimentUtils.HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
+        List<HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
 
         List<String> allYamls = new ArrayList<>();
         String currYaml;
-        for (ExperimentUtils.HyperParams hyperParams : allPaths) {
-            currYaml = ExperimentService.toYaml(yaml, hyperParams);
+        for (HyperParams hyperParams : allPaths) {
+            currYaml = HyperParamsUtils.toYaml(hyperParams);
             allYamls.add(currYaml);
         }
         assertEquals(4, allYamls.size());
@@ -186,12 +187,12 @@ public class TextExperimentUtils {
         map.put("key2", "[2,4]");
         map.put("key1", "[11]");
 
-        List<ExperimentUtils.HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
+        List<HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
 
         List<String> allYamls = new ArrayList<>();
         String currYaml;
-        for (ExperimentUtils.HyperParams hyperParams : allPaths) {
-            currYaml = ExperimentService.toYaml(yaml, hyperParams);
+        for (HyperParams hyperParams : allPaths) {
+            currYaml = HyperParamsUtils.toYaml(hyperParams);
             allYamls.add(currYaml);
         }
         assertEquals(2, allYamls.size());
@@ -206,12 +207,12 @@ public class TextExperimentUtils {
         map.put("key1", "[11]");
         map.put("key2", "[LSTM, GRU]");
 
-        List<ExperimentUtils.HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
+        List<HyperParams> allPaths = ExperimentUtils.getAllHyperParams(map);
 
         List<String> allYamls = new ArrayList<>();
         String currYaml;
-        for (ExperimentUtils.HyperParams hyperParams : allPaths) {
-            currYaml = ExperimentService.toYaml(yaml, hyperParams);
+        for (HyperParams hyperParams : allPaths) {
+            currYaml = HyperParamsUtils.toYaml(hyperParams);
             allYamls.add(currYaml);
         }
         assertEquals(2, allYamls.size());
@@ -237,13 +238,13 @@ public class TextExperimentUtils {
     @Test
     public void testEmptyList() {
         Map<String, String> map = ExperimentService.toMap(new ArrayList<>(), 1337, "10");
-        List<ExperimentUtils.HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+        List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
         assertEquals(1, allHyperParams.size());
 
         List<String> allYamls = new ArrayList<>();
         String currYaml;
-        for (ExperimentUtils.HyperParams hyperParams : allHyperParams) {
-            currYaml = ExperimentService.toYaml(yaml, hyperParams);
+        for (HyperParams hyperParams : allHyperParams) {
+            currYaml = HyperParamsUtils.toYaml(hyperParams);
             allYamls.add(currYaml);
         }
         assertEquals(1, allYamls.size());
@@ -254,13 +255,13 @@ public class TextExperimentUtils {
     @Test
     public void testEmptyList_1() {
         Map<String, String> map = ExperimentService.toMap(new ArrayList<>(), 1337, "[7, 11, 13]");
-        List<ExperimentUtils.HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+        List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
         assertEquals(3, allHyperParams.size());
         List<String> allYamls = new ArrayList<>();
 
         String currYaml;
-        for (ExperimentUtils.HyperParams hyperParams : allHyperParams) {
-            currYaml = ExperimentService.toYaml(yaml, hyperParams);
+        for (HyperParams hyperParams : allHyperParams) {
+            currYaml = HyperParamsUtils.toYaml(hyperParams);
             allYamls.add(currYaml);
         }
         assertEquals(3, allYamls.size());

@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Consts;
+import aiai.ai.yaml.hyper_params.HyperParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -59,41 +60,6 @@ public class ExperimentUtils {
             NumberOfVariants instance =  new NumberOfVariants(status, error, count);
             instance.values.add(value);
             return instance;
-        }
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class HyperParams {
-        public Map<String, String> params = new LinkedHashMap<>();
-        public String path;
-
-        public HyperParams() {
-            this.path = "";
-        }
-
-        public HyperParams asClone() {
-            return new HyperParams(new LinkedHashMap<>(params), path);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            HyperParams that = (HyperParams) o;
-
-            return path.equals(that.path);
-        }
-
-        @Override
-        public int hashCode() {
-            return path.hashCode();
-        }
-
-        void put(String key, String value) {
-            params.put(key, value);
-            path = path + ',' + key+':'+value;
         }
     }
 

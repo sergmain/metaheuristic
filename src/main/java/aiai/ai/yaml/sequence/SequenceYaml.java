@@ -15,20 +15,17 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.station.yaml;
+package aiai.ai.yaml.sequence;
 
-import aiai.ai.launchpad.snippet.SnippetsConfig;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
 
-import java.io.InputStream;
-import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 @Data
-@NoArgsConstructor
-public class EnvYaml {
-    Map<String, String> envs = new LinkedHashMap<>();
+public class SequenceYaml {
+    public Long datasetId;
+    public Long experimentId;
+    public List<SimpleSnippet> snippets;
+    public Map<String, String> hyperParams;
 }

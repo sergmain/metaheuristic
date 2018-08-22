@@ -36,7 +36,7 @@ public class TestEnvProperty {
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-dataset-task.timeout'), 1, 10, 5) }")
     private int envProperty;
 
-    @Value("#{ T(aiai.ai.core.TestEnvProperty).getFile(environment.getProperty('aiai.station.download-dataset-task.timeout'), \"pom.xml\" )}")
+    @Value("#{ T(aiai.ai.core.TestEnvProperty).getFile(environment.getProperty('aiai.station.download-dataset-task.timeout'), \"aaa.xml\" )}")
     private File file1;
 
     @Value("#{ T(aiai.ai.core.TestEnvProperty).getFile(environment.getProperty('aiai.station.download-dataset-task.timeout'), \"pom.xml\" )}")

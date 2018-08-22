@@ -17,8 +17,8 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.station.yaml.EnvYaml;
-import aiai.ai.station.yaml.EnvYamlUtils;
+import aiai.ai.yaml.env.EnvYaml;
+import aiai.ai.yaml.env.EnvYamlUtils;
 import org.junit.Test;
 
 import java.io.IOException;

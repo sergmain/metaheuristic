@@ -17,48 +17,40 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.beans.StationExperimentSequence;
-import aiai.ai.core.JsonUtils;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.snippet.SnippetType;
+import aiai.ai.yaml.sequence.SequenceYaml;
+import aiai.ai.yaml.sequence.SequenceYamlUtils;
+import aiai.ai.yaml.sequence.SimpleSnippet;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
 
-import java.math.BigDecimal;
 import java.util.*;
-import java.util.stream.Collectors;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
 public class TestSequenceYaml {
-
-    @Autowired
-    private ExperimentService experimentService;
 
     @Test
     public void testSequenceYaml() {
-        ExperimentService.SequenceYaml seq = new ExperimentService.SequenceYaml();
+        SequenceYaml seq = new SequenceYaml();
         seq.setDatasetId(1L);
         seq.setExperimentId(2L);
         Map<String, String> map = new HashMap<>();
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.setHyperParams(map);
-        List<ExperimentService.SimpleSnippet> list = new ArrayList<>();
-        list.add(new ExperimentService.SimpleSnippet(SnippetType.fit, "123", "file.txt", "112233"));
-        list.add(new ExperimentService.SimpleSnippet(SnippetType.predict, "456", "file.txt", "112233"));
+        List<SimpleSnippet> list = new ArrayList<>();
+        list.add(new SimpleSnippet(SnippetType.fit, "123", "file.txt", "112233"));
+        list.add(new SimpleSnippet(SnippetType.predict, "456", "file.txt", "112233"));
         seq.setSnippets(list);
 
-        String s = experimentService.toString(seq);
+        String s = SequenceYamlUtils.toString(seq);
 
 
-        ExperimentService.SequenceYaml seq1 = experimentService.toSequenceYaml(s);
+        SequenceYaml seq1 = SequenceYamlUtils.toSequenceYaml(s);
         Assert.assertEquals(seq, seq1);
     }
 }

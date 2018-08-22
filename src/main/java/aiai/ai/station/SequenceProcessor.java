@@ -17,13 +17,15 @@
  */
 package aiai.ai.station;
 
-import aiai.ai.beans.LogData;
 import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.utils.DirUtils;
+import aiai.ai.yaml.sequence.SequenceYaml;
+import aiai.ai.yaml.sequence.SequenceYamlUtils;
+import aiai.ai.yaml.sequence.SimpleSnippet;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -41,15 +43,13 @@ public class SequenceProcessor {
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
     private File stationDir;
 
-    private final ExperimentService experimentService;
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
     private final ProcessService processService;
 
     private Map<Long, Boolean> isDatasetReady = new HashMap<>();
     private Map<String, StationSnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
-    public SequenceProcessor(ExperimentService experimentService, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService) {
-        this.experimentService = experimentService;
+    public SequenceProcessor(StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService) {
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
         this.processService = processService;
     }
@@ -69,7 +69,7 @@ public class SequenceProcessor {
 
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
-            final ExperimentService.SequenceYaml sequenceYaml = experimentService.toSequenceYaml(seq.getParams());
+            final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
             if (!isDatasetReady.getOrDefault(sequenceYaml.getDatasetId(), false)) {
                 StationDatasetUtils.DatasetFile datasetFile = StationDatasetUtils.getDatasetFile(dsDir, sequenceYaml.getDatasetId());
                 if (datasetFile.isError || !datasetFile.isContent) {
@@ -77,7 +77,7 @@ public class SequenceProcessor {
                 }
                 isDatasetReady.put(sequenceYaml.getDatasetId(), true);
             }
-            for (ExperimentService.SimpleSnippet snippet : sequenceYaml.getSnippets()) {
+            for (SimpleSnippet snippet : sequenceYaml.getSnippets()) {
                 StationSnippetUtils.SnippetFile snippetFile = isSnippetsReady.get(snippet.code);
                 if (snippetFile==null) {
                     snippetFile = StationSnippetUtils.getSnippetFile(snippetDir, snippet.getCode(), snippet.filename);
