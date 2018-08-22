@@ -71,9 +71,24 @@ public class CommandProcessor {
                 return processRequestExperimentSequence((Protocol.RequestExperimentSequence) command);
             case AssignedExperimentSequence:
                 return processAssignedExperimentSequence((Protocol.AssignedExperimentSequence) command);
+            case ReportStationEnv:
+                return processReportStationEnv((Protocol.ReportStationEnv) command);
             default:
                 System.out.println("There is new command which isn't processed: " + command.getType());
         }
+        return Protocol.NOP;
+    }
+
+    private Command processReportStationEnv(Protocol.ReportStationEnv command) {
+        checkStationId(command);
+        final long stationId = Long.parseLong(command.getStationId());
+        Station station = stationsRepository.findById(stationId).orElse(null);
+        if (station==null) {
+            // we throw ISE cos all checks have to be made early
+            throw new IllegalStateException("Staion wasn't found for stationId: " + stationId );
+        }
+        station.setEnv( command.env);
+        stationsRepository.save(station);
         return Protocol.NOP;
     }
 
@@ -108,13 +123,19 @@ public class CommandProcessor {
     private Command storeStationId(Protocol.AssignedStationId command) {
         System.out.println("New station Id: " + command.getStationId());
         stationService.storeStationId(command.getStationId());
-        return Protocol.NOP;
+        return createReportStationEnvCommand();
     }
 
     private Command reAssignStationId(Protocol.ReAssignStationId command) {
         System.out.println("New station Id: " + command.getStationId());
         stationService.changeStationId(command.getStationId());
-        return Protocol.NOP;
+
+        return createReportStationEnvCommand();
+    }
+
+    private Command createReportStationEnvCommand() {
+        String env = stationService.getEnv();
+        return env==null ? Protocol.NOP : new Protocol.ReportStationEnv(env);
     }
 
     private Command processInvite(Protocol.RegisterInvite command) {

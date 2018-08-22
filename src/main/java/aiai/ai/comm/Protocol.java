@@ -42,6 +42,7 @@ public class Protocol {
         }
     }
 
+    @EqualsAndHashCode(callSuper = false)
     public static class RequestStationId extends Command {
         public RequestStationId() {
             this.setType(Type.RequestStationId);
@@ -76,6 +77,21 @@ public class Protocol {
 
         public AssignedStationId() {
             this.setType(Type.AssignedStationId);
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class ReportStationEnv extends Command {
+        public String env;
+
+        public ReportStationEnv(String env) {
+            this.setType(Type.ReportStationEnv);
+            this.env = env;
+        }
+
+        public ReportStationEnv() {
+            this.setType(Type.ReportStationEnv);
         }
     }
 

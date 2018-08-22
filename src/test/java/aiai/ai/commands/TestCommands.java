@@ -45,6 +45,8 @@ public class TestCommands {
                 return new Protocol.RequestExperimentSequence();
             case AssignedExperimentSequence:
                 return new Protocol.AssignedExperimentSequence();
+            case ReportStationEnv:
+                return new Protocol.ReportStationEnv();
             default:
                 throw new IllegalStateException("unknown command type: " + type);
         }

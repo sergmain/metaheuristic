@@ -51,6 +51,7 @@ public class Command implements Serializable {
         RegisterInviteResult /*  */,
         RequestExperimentSequence /*  */,
         AssignedExperimentSequence /*  */,
+        ReportStationEnv /* returned after processing AssignedStationId and ReAssignStationId */,
     }
 
 }

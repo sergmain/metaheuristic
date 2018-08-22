@@ -46,5 +46,8 @@ public class Station implements Serializable {
     @Column(name = "DESCRIPTION")
     private String description;
 
+    @Column(name = "ENV")
+    private String env;
+
 }
 
