@@ -17,6 +17,7 @@
  */
 package aiai.ai.station.actors;
 
+import aiai.ai.Globals;
 import aiai.ai.station.StationDatasetUtils;
 import aiai.ai.station.tasks.DownloadDatasetTask;
 import org.apache.http.client.fluent.Request;
@@ -25,6 +26,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -34,22 +36,30 @@ import java.util.Map;
 @EnableScheduling
 public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask> {
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
-    private File stationDir;
+    private final Globals globals;
 
-    @Value("#{ T(aiai.ai.station.actors.DownloadDatasetActor).fullUrl( environment.getProperty('aiai.station.launchpad.url' )) }")
     private String targetUrl;
 
     private final Map<Long, Boolean> preparedMap = new LinkedHashMap<>();
 
-    public static String fullUrl(String srvUrl) {
-        return srvUrl + "/payload/dataset";
+    public DownloadDatasetActor(Globals globals) {
+        this.globals = globals;
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        if (globals.isStationEnabled) {
+            targetUrl = globals.launchpadUrl + "/payload/dataset";
+        }
     }
 
     @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-dataset-task.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelayTaskComplex() {
+        if (!globals.isStationEnabled) {
+            return;
+        }
 
-        File dsDir = StationDatasetUtils.checkEvironment(stationDir);
+        File dsDir = StationDatasetUtils.checkEvironment(globals.stationDir);
         if (dsDir==null) {
             return;
         }

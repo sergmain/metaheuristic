@@ -22,7 +22,7 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.InputStream;
+import java.io.*;
 
 public class EnvYamlUtils {
 
@@ -47,6 +47,15 @@ public class EnvYamlUtils {
 
     public static EnvYaml toEnvYaml(InputStream is) {
         return yaml.load(is);
+    }
+
+    public static EnvYaml toEnvYaml(File file) {
+        try(FileInputStream fis =  new FileInputStream(file)) {
+            return yaml.load(fis);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
+        }
     }
 
 }

@@ -17,9 +17,9 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.Globals;
 import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.core.ProcessService;
-import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.utils.DirUtils;
@@ -27,7 +27,6 @@ import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleSnippet;
 import org.apache.commons.io.FileUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -40,8 +39,7 @@ import java.util.*;
 @EnableScheduling
 public class SequenceProcessor {
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
-    private File stationDir;
+    private final Globals globals;
 
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
     private final ProcessService processService;
@@ -49,20 +47,24 @@ public class SequenceProcessor {
     private Map<Long, Boolean> isDatasetReady = new HashMap<>();
     private Map<String, StationSnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
-    public SequenceProcessor(StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService) {
+    public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService) {
+        this.globals = globals;
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
         this.processService = processService;
     }
 
     @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
     public void scheduleProcessor() {
+        if (!globals.isStationEnabled) {
+            return;
+        }
 
-        File dsDir = StationDatasetUtils.checkEvironment(stationDir);
+        File dsDir = StationDatasetUtils.checkEvironment(globals.stationDir);
         if (dsDir==null) {
             return;
         }
 
-        File snippetDir = StationSnippetUtils.checkEvironment(stationDir);
+        File snippetDir = StationSnippetUtils.checkEvironment(globals.stationDir);
         if (snippetDir==null) {
             return;
         }
@@ -121,7 +123,7 @@ public class SequenceProcessor {
     }
 
     private File prepareParamFile(Long experimentSequenceId, SnippetType type, String params) {
-        File seqDir = checkEvironment(stationDir);
+        File seqDir = checkEvironment(globals.stationDir);
         if (seqDir==null) {
             return null;
         }

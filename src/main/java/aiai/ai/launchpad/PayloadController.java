@@ -18,11 +18,11 @@
 
 package aiai.ai.launchpad;
 
+import aiai.ai.Globals;
 import aiai.ai.beans.Snippet;
 import aiai.ai.launchpad.dataset.DatasetUtils;
 import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.SnippetRepository;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.PathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -39,17 +39,17 @@ public class PayloadController {
 
     private  final SnippetRepository snippetRepository;
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.launchpad.dir' )) }")
-    private File launchpadDir;
+    private final Globals globals;
 
-    public PayloadController(SnippetRepository snippetRepository) {
+    public PayloadController(SnippetRepository snippetRepository, Globals globals) {
         this.snippetRepository = snippetRepository;
+        this.globals = globals;
     }
 
     @GetMapping("/dataset/{id}")
     public HttpEntity<PathResource> datasets(@PathVariable("id") Long datasetId) {
 
-        final File datasetFile = DatasetUtils.getDatasetFile(launchpadDir, datasetId);
+        final File datasetFile = DatasetUtils.getDatasetFile(globals.launchpadDir, datasetId);
 
         HttpHeaders header = new HttpHeaders();
 //        header.setContentType(MediaType.APPLICATION_PDF);

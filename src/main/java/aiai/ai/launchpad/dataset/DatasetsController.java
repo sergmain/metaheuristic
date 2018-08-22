@@ -18,10 +18,12 @@
 package aiai.ai.launchpad.dataset;
 
 import aiai.ai.Consts;
+import aiai.ai.Globals;
 import aiai.ai.beans.*;
 import aiai.ai.core.ProcessService;
 import aiai.ai.repositories.*;
 import lombok.Data;
+import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -57,9 +59,7 @@ public class DatasetsController {
     @Value("${aiai.table.rows.limit:#{5}}")
     private int limit;
 
-    @Value("${aiai.launchpad.dir}")
-    private String launchpadDirAsString;
-    private File launchpadDir;
+    private final Globals globals;
 
     private final DatasetsRepository repository;
     private final DatasetGroupsRepository groupsRepository;
@@ -67,17 +67,13 @@ public class DatasetsController {
     private final DatasetPathRepository pathRepository;
     private final ProcessService processService;
 
-    public DatasetsController(DatasetsRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService) {
+    public DatasetsController(Globals globals, DatasetsRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService) {
+        this.globals = globals;
         this.repository = repository;
         this.groupsRepository = groupsRepository;
         this.columnRepository = columnRepository;
         this.pathRepository = pathRepository;
         this.processService = processService;
-    }
-
-    @PostConstruct
-    public void init() {
-        this.launchpadDir = toFile(launchpadDirAsString);
     }
 
     private static File toFile(String launchpadDirAsString) {
@@ -122,45 +118,17 @@ public class DatasetsController {
         }
         final Dataset dataset = datasetOptional.get();
 
-        // TODO 2018-08-19 What is that? for what?
+        // path variable is for informing user about directory structure
         final String path = String.format("<Launchpad directory>%c%s%c%03d", File.separatorChar, Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId());
-        final File datasetDir = new File(launchpadDir, path);
 
-//        final DatasetDefinition definition = new DatasetDefinition(dataset, launchpadDirAsString, datasetDir.getPath());
-        final DatasetDefinition definition = new DatasetDefinition(dataset, launchpadDirAsString, path);
+        final DatasetDefinition definition = new DatasetDefinition(dataset, globals.launchpadDir.getPath(), path);
         definition.paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
-
 
         // fix conditions for UI
         final int groupSize = dataset.getDatasetGroups().size();
         for (int i = 0; i < groupSize; i++) {
             DatasetGroup group = dataset.getDatasetGroups().get(i);
             group.setAddColumn(true);
-/*
-    // TODO what is that? should I delete this?
-            group.setAddColumn(false);
-            if (i > 0) {
-                DatasetGroup groupPrev = dataset.getDatasetGroups().get(i - 1);
-                if (groupPrev.getDatasetColumns().isEmpty()) {
-                    break;
-                }
-            }
-
-            if (groupSize == 1) {
-                group.setAddColumn(true);
-                continue;
-            }
-            if (i == groupSize - 1) {
-                group.setAddColumn(true);
-                continue;
-            }
-            DatasetGroup groupNext = dataset.getDatasetGroups().get(i + 1);
-            if (groupNext.getDatasetColumns().isEmpty()) {
-                group.setAddColumn(true);
-                //noinspection UnnecessaryContinue
-                continue;
-            }
-*/
         }
 
         // ugly but it works
@@ -458,7 +426,7 @@ public class DatasetsController {
     private File createYamlForFeature(Long datasetId, DatasetGroup group) {
 
         final String definitionPath = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, datasetId);
-        final File definitionDir = new File(launchpadDir, definitionPath);
+        final File definitionDir = new File(globals.launchpadDir, definitionPath);
         if (!definitionDir.exists()) {
             boolean status = definitionDir.mkdirs();
             if (!status) {
@@ -467,13 +435,13 @@ public class DatasetsController {
         }
 
         final String datasetPath = String.format("%s%cdataset%c%s", definitionPath, File.separatorChar, File.separatorChar, Consts.DATASET_TXT);
-        final File datasetFile = new File(launchpadDir, datasetPath);
+        final File datasetFile = new File(globals.launchpadDir, datasetPath);
         if (!datasetFile.exists()) {
             throw new IllegalStateException("Dataset file doesn't exist: " + datasetFile.getAbsolutePath());
         }
 
         final String featurePath = String.format("%s%c%s%c%03d", definitionPath, File.separatorChar, Consts.FEATURES_DIR, File.separatorChar, group.getGroupNumber());
-        final File featureDir = new File(launchpadDir, featurePath);
+        final File featureDir = new File(globals.launchpadDir, featurePath);
         if (!featureDir.exists()) {
             boolean status = featureDir.mkdirs();
             if (!status) {
@@ -490,8 +458,8 @@ public class DatasetsController {
 
 
         final String featureFilename = String.format("%s%cfeature-%03d.txt", featurePath, File.separatorChar, group.getGroupNumber());
-        File featureFile = new File(launchpadDir, featureFilename);
-        File featureFileBak = new File(launchpadDir, featureFilename + ".bak");
+        File featureFile = new File(globals.launchpadDir, featureFilename);
+        File featureFileBak = new File(globals.launchpadDir, featureFilename + ".bak");
 
         featureFileBak.delete();
         if (featureFile.exists()) {
@@ -510,7 +478,7 @@ public class DatasetsController {
         s += "feature:\n    file: " + featureFilename + '\n';
 
         try {
-            FileUtils.write(yamlFile, s, "utf-8", false);
+            FileUtils.write(yamlFile, s, Charsets.UTF_8, false);
         } catch (IOException e) {
             throw new RuntimeException("error", e);
         }
@@ -601,14 +569,14 @@ public class DatasetsController {
     private void updateDatasetInfo(Dataset dataset) {
         final String path = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId());
 
-        final File datasetDefDir = new File(launchpadDir, path);
+        final File datasetDefDir = new File(globals.launchpadDir, path);
         if (!datasetDefDir.exists()) {
             return;
         }
 
         String datasetFilename = String.format("%s%cdataset%cdataset.txt", path, File.separatorChar, File.separatorChar);
 
-        File datasetFile = new File(launchpadDir, datasetFilename);
+        File datasetFile = new File(globals.launchpadDir, datasetFilename);
         if (!datasetFile.exists()) {
             return;
         }
@@ -641,7 +609,7 @@ public class DatasetsController {
         try {
             List<String> cmd = Arrays.stream(command.split("\\s+")).collect(Collectors.toList());
             cmd.add(yaml.getPath());
-            final File execDir = launchpadDir.getCanonicalFile();
+            final File execDir = globals.launchpadDir.getCanonicalFile();
 
             return processService.execCommand(type, refId, cmd, execDir);
 
@@ -653,7 +621,7 @@ public class DatasetsController {
 
     private File createAssemblingYaml(Dataset dataset) throws IOException {
         final String path = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId());
-        final File datasetDefDir = new File(launchpadDir, path);
+        final File datasetDefDir = new File(globals.launchpadDir, path);
         if (!datasetDefDir.exists()) {
             boolean status = datasetDefDir.mkdirs();
             if (!status) {
@@ -702,7 +670,7 @@ public class DatasetsController {
         s += ("    output:\n        " + String.format("%s%cdataset%cdataset\n", path, File.separatorChar, File.separatorChar));
 
         try {
-            FileUtils.write(yamlFile, s, "utf-8", false);
+            FileUtils.write(yamlFile, s, Charsets.UTF_8, false);
         } catch (IOException e) {
             throw new RuntimeException("error", e);
         }
@@ -748,7 +716,7 @@ public class DatasetsController {
         int pathNumber = paths.isEmpty() ? 1 : paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
         final String path = String.format("%s%c%03d%craws", Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId(), File.separatorChar);
 
-        File datasetDir = new File(launchpadDir, path);
+        File datasetDir = new File(globals.launchpadDir, path);
         if (!datasetDir.exists()) {
             boolean status = datasetDir.mkdirs();
             if (!status) {

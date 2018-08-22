@@ -18,19 +18,17 @@
 
 package aiai.ai.station;
 
+import aiai.ai.Globals;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.CommandProcessor;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
-import aiai.ai.station.StationExperimentService;
-import aiai.ai.station.StationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
@@ -49,10 +47,9 @@ import java.util.List;
 @EnableScheduling
 public class LaunchpadRequester {
 
-    @Value("${aiai.station.launchpad.url}")
-    private String launchpadUrl;
     private String targetUrl;
 
+    private final Globals globals;
 
     private final RestTemplate restTemplate;
 
@@ -61,7 +58,8 @@ public class LaunchpadRequester {
     private StationService stationService;
 
     @Autowired
-    public LaunchpadRequester(CommandProcessor commandProcessor, StationExperimentService stationExperimentService, StationService stationService) {
+    public LaunchpadRequester(Globals globals, CommandProcessor commandProcessor, StationExperimentService stationExperimentService, StationService stationService) {
+        this.globals = globals;
         this.commandProcessor = commandProcessor;
         this.stationExperimentService = stationExperimentService;
         this.stationService = stationService;
@@ -70,18 +68,14 @@ public class LaunchpadRequester {
 
     @PostConstruct
     public void postConstruct() {
-        targetUrl = launchpadUrl + "/rest-anon/srv";
+        if (globals.isStationEnabled) {
+            targetUrl = globals.launchpadUrl + "/rest-anon/srv";
+        }
     }
 
     private final List<Command> commands = new ArrayList<>();
 
-    public void addCommand(Command command) {
-        synchronized (commands) {
-            commands.add(command);
-        }
-    }
-
-    public void addCommands(List<Command> cmds) {
+    private void addCommands(List<Command> cmds) {
         synchronized (commands) {
             commands.addAll(cmds);
         }
@@ -93,8 +87,11 @@ public class LaunchpadRequester {
      * long fixedDelay()
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
-    @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
+    @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.request-launchpad.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelayTaskComplex() {
+        if (!globals.isStationEnabled) {
+            return;
+        }
 
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -118,14 +115,8 @@ public class LaunchpadRequester {
             commands.clear();
         }
         data.setCommands(cmds);
-/*
-        // 2018-08-19 we should pull new tasks from server constantly
-        // so, do we have to delete this?
-        if (data.isNothingTodo()) {
-            return;
-        }
-*/
 
+        // we have to pull new tasks from server constantly
         try {
             HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
             ResponseEntity<ExchangeData> response = restTemplate.exchange(targetUrl, HttpMethod.POST, request, ExchangeData.class);

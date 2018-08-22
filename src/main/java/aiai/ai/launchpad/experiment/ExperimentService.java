@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Consts;
+import aiai.ai.Globals;
 import aiai.ai.beans.*;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.snippet.SnippetType;
@@ -42,11 +43,13 @@ import java.util.stream.Collectors;
 @EnableTransactionManagement
 public class ExperimentService {
 
+    private final Globals globals;
     private final ExperimentRepository experimentRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
     private final SnippetRepository snippetRepository;
 
-    public ExperimentService(ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, SnippetRepository snippetRepository) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, SnippetRepository snippetRepository) {
+        this.globals = globals;
         this.experimentRepository = experimentRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
         this.snippetRepository = snippetRepository;
@@ -98,13 +101,16 @@ public class ExperimentService {
     }
 
     /**
-     * this scheduler is being runned at station side
+     * this scheduler is being runned at launchpad side
      *
      * long fixedDelay()
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
-    @Scheduled(fixedDelayString = "#{ new Integer(environment.getProperty('aiai.station.request.launchpad.timeout')) > 10 ? new Integer(environment.getProperty('aiai.station.request.launchpad.timeout'))*1000 : 10000 }")
+    @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.create-sequence.timeout'), 10, 20, 10)*1000 }")
     public void fixedDelayExperimentSequencesProducer() {
+        if (!globals.isLaunchpadEnabled) {
+            return;
+        }
 
         for (Experiment experiment : experimentRepository.findByIsLaunchedIsTrueAndIsAllSequenceProducedIsFalse()) {
             if (experiment.getDatasetId()==null) {

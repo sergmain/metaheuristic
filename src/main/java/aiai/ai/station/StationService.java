@@ -17,19 +17,26 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.Globals;
 import aiai.ai.beans.StationMetadata;
 import aiai.ai.repositories.StationMetadataRepository;
+import org.apache.commons.codec.Charsets;
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.util.Optional;
+import java.io.File;
+import java.io.IOException;
 
 @Service
 public class StationService {
 
-    private StationMetadataRepository stationMetadataRepository;
+    private final Globals globals;
 
-    public StationService(StationMetadataRepository stationMetadataRepository) {
+    private final StationMetadataRepository stationMetadataRepository;
+
+    public StationService(Globals globals, StationMetadataRepository stationMetadataRepository) {
+        this.globals = globals;
         this.stationMetadataRepository = stationMetadataRepository;
     }
 
@@ -37,44 +44,47 @@ public class StationService {
         return getMeta(StationConsts.STATION_ID);
     }
 
+    public void setStationId(String stationId) {
+        storeOrReplace(StationConsts.STATION_ID, stationId);
+    }
+
     public String getEnv() {
         return getMeta(StationConsts.ENV);
     }
 
+    public void setEnv(String stationId) {
+        storeOrReplace(StationConsts.ENV, stationId);
+    }
+
     @PostConstruct
-    public void postInit() {
-        
-    }
-
-    private static final Object syncObj = new Object();
-    public void storeStationId(String id){
-        synchronized (syncObj) {
-            StationMetadata meta = stationMetadataRepository.findByKey(StationConsts.STATION_ID).orElse(null);
-            if (meta != null) {
-                return;
-            }
-            StationMetadata m = new StationMetadata();
-            m.setKey(StationConsts.STATION_ID);
-            m.setValue(id);
-            stationMetadataRepository.save(m);
+    public void init() {
+        final File file = new File(globals.stationDir, "env.xml");
+        if (!file.exists()) {
+            System.out.println("Station's config file 'env.xml' doesn't exist.");
+            return;
         }
-    }
-
-    public void changeStationId(String id){
-        synchronized (syncObj) {
-            StationMetadata metadata = stationMetadataRepository.findByKey(StationConsts.STATION_ID).orElse(null);
-            if (metadata != null) {
-                metadata.setValue(id);
-                stationMetadataRepository.save(metadata);
-                return;
-            }
-            StationMetadata m = new StationMetadata();
-            m.setKey(StationConsts.STATION_ID);
-            m.setValue(id);
-            stationMetadataRepository.save(m);
+        try {
+            String env = FileUtils.readFileToString(file, Charsets.UTF_8);
+            setEnv(env);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
         }
+
     }
 
+    private synchronized void storeOrReplace(String key, String value) {
+        StationMetadata metadata = stationMetadataRepository.findByKey(key).orElse(null);
+        if (metadata != null) {
+            metadata.setValue(value);
+            stationMetadataRepository.save(metadata);
+            return;
+        }
+        StationMetadata m = new StationMetadata();
+        m.setKey(key);
+        m.setValue(value);
+        stationMetadataRepository.save(m);
+    }
 
 
     private String getMeta(String key) {

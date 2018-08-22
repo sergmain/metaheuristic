@@ -17,12 +17,13 @@
  */
 package aiai.ai.launchpad.snippet;
 
+import aiai.ai.Consts;
+import aiai.ai.Globals;
 import aiai.ai.beans.Snippet;
 import aiai.ai.repositories.SnippetRepository;
 import aiai.ai.utils.Checksum;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.IOUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Controller;
@@ -36,33 +37,20 @@ import java.io.InputStream;
 @Controller
 public class SnippetController {
 
-/*
-    @Value("${aiai.launchpad.dir}")
-    private String launchpadDirAs1String;
-    @SuppressWarnings("FieldCanBeLocal")
-    private File launchpadDir;
-*/
-    @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.launchpad.dir' )) }")
-    private File launchpadDir;
-
-    @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
-    private boolean isReplaceSnapshot;
-
-    public static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
+    private final Globals globals;
 
     private final PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver;
     private final SnippetRepository snippetRepository;
 
-    public SnippetController(SnippetRepository snippetRepository) {
+    public SnippetController(Globals globals, SnippetRepository snippetRepository) {
+        this.globals = globals;
         this.snippetRepository = snippetRepository;
         this.pathMatchingResourcePatternResolver = new PathMatchingResourcePatternResolver();
     }
 
     @PostConstruct
     public void init() throws IOException {
-//        this.launchpadDir = toFile(launchpadDirAsString);
-
-        File customSnippets = new File(launchpadDir, "snippets");
+        File customSnippets = new File(globals.launchpadDir, "snippets");
         if (customSnippets.exists()) {
             loadSnippetsFromDir(customSnippets);
         }
@@ -105,7 +93,7 @@ public class SnippetController {
                 Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
                 if (snippet!=null) {
                     if (!Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256).equals(sum)) {
-                        if (isReplaceSnapshot && snippetConfig.version.endsWith(SNAPSHOT_SUFFIX)) {
+                        if (globals.isReplaceSnapshot && snippetConfig.version.endsWith(Consts.SNAPSHOT_SUFFIX)) {
                             snippet.checksum = new Checksum(Checksum.Type.SHA256, sum).toJson();
                             snippet.name = snippetConfig.name;
                             snippet.snippetVersion = snippetConfig.version;

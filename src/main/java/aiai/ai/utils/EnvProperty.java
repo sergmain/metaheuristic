@@ -48,6 +48,10 @@ public class EnvProperty {
     }
 
     public static File toFile(String dirAsString) {
+        if (dirAsString==null) {
+            return null;
+        }
+
         // special case for ./some-dir
         if (dirAsString.charAt(0) == '.' && (dirAsString.charAt(1) == '\\' || dirAsString.charAt(1) == '/')) {
             return new File(dirAsString.substring(2));

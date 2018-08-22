@@ -17,8 +17,8 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.Globals;
 import aiai.ai.beans.StationExperimentSequence;
-import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.station.actors.DownloadDatasetActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
@@ -37,12 +37,17 @@ import java.util.List;
 @EnableScheduling
 public class TaskAssigner {
 
+    private final Globals globals;
     private final DownloadDatasetActor downloadDatasetActor;
     private final DownloadSnippetActor downloadSnippetActor;
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
 
     @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
     public void scheduleTask() {
+        if (!globals.isStationEnabled) {
+            return;
+        }
+
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
             final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
@@ -53,7 +58,8 @@ public class TaskAssigner {
         }
     }
 
-    public TaskAssigner(DownloadDatasetActor downloadDatasetActor, DownloadSnippetActor downloadSnippetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
+    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadSnippetActor downloadSnippetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
+        this.globals = globals;
         this.downloadDatasetActor = downloadDatasetActor;
         this.downloadSnippetActor = downloadSnippetActor;
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;

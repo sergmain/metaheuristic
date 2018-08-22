@@ -122,13 +122,13 @@ public class CommandProcessor {
 
     private Command storeStationId(Protocol.AssignedStationId command) {
         System.out.println("New station Id: " + command.getStationId());
-        stationService.storeStationId(command.getStationId());
+        stationService.setStationId(command.getStationId());
         return createReportStationEnvCommand();
     }
 
     private Command reAssignStationId(Protocol.ReAssignStationId command) {
         System.out.println("New station Id: " + command.getStationId());
-        stationService.changeStationId(command.getStationId());
+        stationService.setStationId(command.getStationId());
 
         return createReportStationEnvCommand();
     }

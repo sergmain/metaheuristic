@@ -20,6 +20,7 @@ package aiai.ai.utils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -42,7 +43,7 @@ public class Checksum {
         MD5, SHA256;
 
         public String getChecksum(String data) throws IOException {
-            return getChecksum( IOUtils.toInputStream(data, "UTF-8"));
+            return getChecksum( IOUtils.toInputStream(data, Charsets.UTF_8));
         }
 
         public String getChecksum(InputStream inputStream) throws IOException {

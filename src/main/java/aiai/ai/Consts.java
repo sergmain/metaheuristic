@@ -41,4 +41,6 @@ public class Consts {
     public static final String DATASET_TXT = "dataset.";
 
     public static final Map<String, String> EMPTY_UNMODIFIABLE_MAP = Collections.unmodifiableMap(new HashMap<>(0));
+
+    public static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 }

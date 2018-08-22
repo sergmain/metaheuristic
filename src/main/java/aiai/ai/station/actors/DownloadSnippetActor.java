@@ -17,6 +17,7 @@
  */
 package aiai.ai.station.actors;
 
+import aiai.ai.Globals;
 import aiai.ai.station.StationSnippetUtils;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.DirUtils;
@@ -26,6 +27,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -35,20 +37,28 @@ import java.util.Map;
 @EnableScheduling
 public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask> {
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
-    private File stationDir;
+    private final Globals globals;
 
-    @Value("#{ T(aiai.ai.station.actors.DownloadSnippetActor).fullUrl( environment.getProperty('aiai.station.launchpad.url' )) }")
     private String targetUrl;
 
     private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
 
-    public static String fullUrl(String srvUrl) {
-        return srvUrl + "/payload/snippet";
+    public DownloadSnippetActor(Globals globals) {
+        this.globals = globals;
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        if (globals.isStationEnabled) {
+            targetUrl = globals.launchpadUrl + "/payload/snippet";
+        }
     }
 
     @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-snippet-task.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelayTaskComplex() {
+        if (!globals.isStationEnabled) {
+            return;
+        }
 
         File snippetDir = checkEvironment();
         if (snippetDir==null) {
@@ -77,7 +87,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
     }
 
     private File checkEvironment() {
-        File dsDir = DirUtils.createDir(stationDir, "snippet");
+        File dsDir = DirUtils.createDir(globals.stationDir, "snippet");
         return dsDir;
     }
 }
