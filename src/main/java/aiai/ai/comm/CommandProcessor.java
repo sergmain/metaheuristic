@@ -97,6 +97,7 @@ public class CommandProcessor {
             return Protocol.NOP_ARRAY;
         }
         final Protocol.ReportResultDelivering cmd1 = new Protocol.ReportResultDelivering(experimentService.storeAllResults(command.getResults()));
+        // right now, sending new sequences with ReportResultDelivering doesn't work well.
 //        final Protocol.AssignedExperimentSequence r = getAssignedExperimentSequence(command.getStationId(), Math.min(MAX_SEQUENSE_POOL_SIZE, command.getResults().size()));
 
         return new Command[]{cmd1};

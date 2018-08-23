@@ -26,6 +26,7 @@ import java.util.Map;
 public class SequenceYaml {
     public Long datasetId;
     public Long experimentId;
+    public List<Long> featureIds;
     public List<SimpleSnippet> snippets;
     public Map<String, String> hyperParams;
 }

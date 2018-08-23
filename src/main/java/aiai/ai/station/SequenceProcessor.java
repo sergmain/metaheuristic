@@ -111,6 +111,12 @@ public class SequenceProcessor {
                 finishAndWriteToLog(seq, "Broken sequence. List of snippets is empty.");
                 continue;
             }
+
+            File artifactDir = prepareSequenceDir(seq.getExperimentSequenceId(), "artifacts");
+            if (artifactDir == null) {
+                continue;
+            }
+
             seq.setLaunchedOn(System.currentTimeMillis());
             seq = stationExperimentSequenceRepository.save(seq);
             for (SimpleSnippet snippet : sequenceYaml.getSnippets()) {
@@ -148,6 +154,7 @@ public class SequenceProcessor {
                     cmd.add(intepreter);
                     cmd.add(snippetFile.file.getAbsolutePath());
                     cmd.add(datasetFile.file.getAbsolutePath());
+                    cmd.add(artifactDir.getAbsolutePath());
 
                     final File execDir = paramFile.getParentFile();
                     ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
@@ -228,17 +235,7 @@ public class SequenceProcessor {
     }
 
     private File prepareParamFile(Long experimentSequenceId, SnippetType type, String params) {
-        File seqDir = DirUtils.createDir(globals.stationDir, "sequence");
-        if (seqDir == null) {
-            return null;
-        }
-
-        File currDir = DirUtils.createDir(seqDir, String.format("%05d", experimentSequenceId));
-        if (currDir==null) {
-            return null;
-        }
-
-        File snippetTypeDir = DirUtils.createDir(currDir, type.toString());
+        File snippetTypeDir = prepareSequenceDir(experimentSequenceId, type.toString());
         if (snippetTypeDir == null) {
             return null;
         }
@@ -254,6 +251,24 @@ public class SequenceProcessor {
             return null;
         }
         return paramFile;
+    }
+
+    private File prepareSequenceDir(Long experimentSequenceId, String snippetType) {
+        File seqDir = DirUtils.createDir(globals.stationDir, "sequence");
+        if (seqDir == null) {
+            return null;
+        }
+
+        File currDir = DirUtils.createDir(seqDir, String.format("%06d", experimentSequenceId));
+        if (currDir==null) {
+            return null;
+        }
+
+        File snippetTypeDir = DirUtils.createDir(currDir, snippetType);
+        if (snippetTypeDir == null) {
+            return null;
+        }
+        return snippetTypeDir;
     }
 
 }

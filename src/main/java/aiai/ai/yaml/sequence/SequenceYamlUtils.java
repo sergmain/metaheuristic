@@ -17,9 +17,11 @@
  */
 package aiai.ai.yaml.sequence;
 
+import aiai.ai.yaml.hyper_params.HyperParams;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
 public class SequenceYamlUtils {
@@ -31,7 +33,10 @@ public class SequenceYamlUtils {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        yamlSequenceYaml = new Yaml(new Constructor(SequenceYaml.class), new Representer(), options);
+        Representer representer = new Representer();
+        representer.addClassTag(SequenceYaml.class, Tag.MAP);
+
+        yamlSequenceYaml = new Yaml(new Constructor(SequenceYaml.class), representer, options);
     }
 
     public static String toString(SequenceYaml sequenceYaml) {

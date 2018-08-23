@@ -384,12 +384,11 @@ public class DatasetsController {
     }
 
     @GetMapping(value = "/dataset-produce-features/{id}")
-    public String produceFeatures(@PathVariable(name = "id") Long datasetId) {
-        final Optional<Dataset> value = repository.findById(datasetId);
-        if (!value.isPresent()) {
+    public String produceFeaturesForDataset(@PathVariable(name = "id") Long datasetId) {
+        final Dataset dataset = repository.findById(datasetId).orElse(null);
+        if (dataset==null) {
             return "redirect:/launchpad/datasets";
         }
-        Dataset dataset = value.get();
 
         List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
         for (DatasetGroup group : groups) {
@@ -400,14 +399,12 @@ public class DatasetsController {
     }
 
     @GetMapping(value = "/dataset-produce-feature/{id}")
-    public String produceFeature(@PathVariable(name = "id") Long groupId) {
-        final Optional<DatasetGroup> groupValue = groupsRepository.findById(groupId);
-        if (!groupValue.isPresent()) {
+    public String produceFeatureForGroup(@PathVariable(name = "id") Long groupId) {
+        final DatasetGroup group = groupsRepository.findById(groupId).orElse(null);
+        if (group==null) {
             return "redirect:/launchpad/datasets";
         }
-        DatasetGroup group = groupValue.get();
         produceFeature(group.getDataset(), group);
-
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
 
@@ -457,7 +454,7 @@ public class DatasetsController {
         }
 
 
-        final String featureFilename = String.format("%s%cfeature-%03d.txt", featurePath, File.separatorChar, group.getGroupNumber());
+        final String featureFilename = String.format("%s%cfeature-%03d.", featurePath, File.separatorChar, group.getGroupNumber());
         File featureFile = new File(globals.launchpadDir, featureFilename);
         File featureFileBak = new File(globals.launchpadDir, featureFilename + ".bak");
 

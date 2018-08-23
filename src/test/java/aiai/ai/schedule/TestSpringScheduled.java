@@ -39,20 +39,20 @@ public class TestSpringScheduled {
     private static int loops = 0;
 
     @Component
-    @EnableScheduling
+//    @EnableScheduling
     public static class ScheduleService1 {
 
-        @Scheduled(fixedDelay = 1_000)
+//        @Scheduled(fixedDelay = 1_000)
         public void fixedDelay_1() {
             System.out.println("fixedDelay_1");
         }
     }
 
     @Component
-    @EnableScheduling
+//    @EnableScheduling
     public static class ScheduleService2 {
 
-        @Scheduled(fixedDelay = 1_000)
+//        @Scheduled(fixedDelay = 1_000)
         public void fixedDelay_2() throws InterruptedException {
             System.out.println("fixedDelay_2");
             Thread.sleep(5_000);

@@ -1,6 +1,8 @@
 yaml parser:
     https://bitbucket.org/asomov/snakeyaml
 
+online yaml parser
+    https://yaml-online-parser.appspot.com/
 
 =======================
 

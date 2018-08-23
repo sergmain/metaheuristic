@@ -47,16 +47,25 @@ public class PayloadController {
     }
 
     @GetMapping("/dataset/{id}")
-    public HttpEntity<PathResource> datasets(@PathVariable("id") Long datasetId) {
+    public HttpEntity<PathResource> datasets(@PathVariable("id") long datasetId) {
 
         final File datasetFile = DatasetUtils.getDatasetFile(globals.launchpadDir, datasetId);
 
         HttpHeaders header = new HttpHeaders();
-//        header.setContentType(MediaType.APPLICATION_PDF);
-//        header.set(HttpHeaders.CONTENT_DISPOSITION,"attachment; filename=" + fileName.replace(" ", "_"));
         header.setContentLength(datasetFile.length());
 
         return new HttpEntity<>(new PathResource(datasetFile.toPath()), header);
+    }
+
+    @GetMapping("/feature/{datasetId}/{featureId}")
+    public HttpEntity<PathResource> feature(@PathVariable("datasetId") long datasetId, @PathVariable("featureId") long featureId) {
+
+        final File featureFile = DatasetUtils.getFeatureFile(globals.launchpadDir, datasetId, featureId);
+
+        HttpHeaders header = new HttpHeaders();
+        header.setContentLength(featureFile.length());
+
+        return new HttpEntity<>(new PathResource(featureFile.toPath()), header);
     }
 
     @GetMapping("/snippet/{name}")
