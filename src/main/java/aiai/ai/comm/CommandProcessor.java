@@ -97,9 +97,9 @@ public class CommandProcessor {
             return Protocol.NOP_ARRAY;
         }
         final Protocol.ReportResultDelivering cmd1 = new Protocol.ReportResultDelivering(experimentService.storeAllResults(command.getResults()));
-        final Protocol.AssignedExperimentSequence r = getAssignedExperimentSequence(command.getStationId(), Math.min(MAX_SEQUENSE_POOL_SIZE, command.getResults().size()));
+//        final Protocol.AssignedExperimentSequence r = getAssignedExperimentSequence(command.getStationId(), Math.min(MAX_SEQUENSE_POOL_SIZE, command.getResults().size()));
 
-        return new Command[]{cmd1, r};
+        return new Command[]{cmd1};
     }
 
     private Command[] processReportStationEnv(Protocol.ReportStationEnv command) {
