@@ -57,13 +57,13 @@ public class SnippetController {
             final File[] dirs = customSnippets.listFiles(File::isDirectory);
             if (dirs!=null) {
                 for (File dir : dirs) {
-                    log.info("Load snippets from: " + dir.getPath());
+                    log.info("Load snippets from: {}", dir.getPath());
                     loadSnippetsFromDir(dir);
                 }
             }
         }
         else {
-            log.info("Directory with custom snippets doesn't exist, " + customSnippets.getPath());
+            log.info("Directory with custom snippets doesn't exist, {}", customSnippets.getPath());
         }
 
         Resource[] resources  = pathMatchingResourcePatternResolver.getResources("classpath:snippets/*");
@@ -76,7 +76,7 @@ public class SnippetController {
     private void loadSnippetsFromDir(File srcDir) throws IOException {
         File yamlConfigFile = new File(srcDir, "snippets.yaml");
         if (!yamlConfigFile.exists()) {
-            System.out.println("File 'snippets.yaml' wasn't found in dir "+ srcDir.getAbsolutePath());
+            log.info("File 'snippets.yaml' wasn't found in dir {}", srcDir.getAbsolutePath());
             return;
         }
 
@@ -112,7 +112,7 @@ public class SnippetController {
                             snippetRepository.save(snippet);
                         }
                         else {
-                            System.out.println(String.format("Checksum mismatch for snippet '%s:%s'", snippet.name, snippet.snippetVersion));
+                            log.warn("Checksum mismatch for snippet '{}:{}'", snippet.name, snippet.snippetVersion);
                         }
                     }
                 }

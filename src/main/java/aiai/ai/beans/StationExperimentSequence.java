@@ -60,8 +60,8 @@ public class StationExperimentSequence implements Serializable {
     @Column(name = "IS_DELIVERED")
     private boolean isDelivered;
 
-    @Column(name="CONSOLE_OUTPUT")
-    private String consoleOutput;
+    @Column(name="SNIPPET_EXEC_RESULTS")
+    private String snippetExecResults;
 
 
 }

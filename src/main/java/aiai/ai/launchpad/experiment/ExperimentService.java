@@ -30,6 +30,7 @@ import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleSnippet;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 
 @Service
 @EnableTransactionManagement
+@Slf4j
 public class ExperimentService {
 
     private final Globals globals;
@@ -75,6 +77,21 @@ public class ExperimentService {
         }
         experimentSequenceRepository.saveAll(seqs);
         return result;
+    }
+
+    public void storeAllResults(List<SimpleSequenceExecResult> results) {
+        List<ExperimentSequence> list = new ArrayList<>();
+        for (SimpleSequenceExecResult result : results) {
+            ExperimentSequence seq = experimentSequenceRepository.findById(result.sequenceId).orElse(null);
+            if (seq==null) {
+                log.warn("Can't find ExperimentSequence for Id: {}", result.sequenceId);
+                continue;
+            }
+            seq.setSnippetExecResults(result.getResult());
+            seq.setCompleted(true);
+            list.add(seq);
+        }
+        experimentSequenceRepository.saveAll(list);
     }
 
     public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed, String epochs) {
@@ -153,9 +170,16 @@ public class ExperimentService {
                 experiment.sortSnippetsByOrder();
                 for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                     SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                    Snippet snippet = localCache.putIfAbsent(experimentSnippet.getSnippetCode(), snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version));
+                    Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
                     if (snippet==null) {
-                        System.out.println("Snippet wasn't found for code: " + experimentSnippet.getSnippetCode());
+                        snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                        if (snippet!=null) {
+                            localCache.put(experimentSnippet.getSnippetCode(), snippet);
+                        }
+                    }
+//                    Snippet snippet = localCache.putIfAbsent(experimentSnippet.getSnippetCode(), snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version));
+                    if (snippet==null) {
+                        log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
                         continue;
                     }
                     snippets.add(new SimpleSnippet(

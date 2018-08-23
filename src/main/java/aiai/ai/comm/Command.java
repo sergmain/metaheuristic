@@ -52,6 +52,7 @@ public class Command implements Serializable {
         RequestExperimentSequence /*  */,
         AssignedExperimentSequence /*  */,
         ReportStationEnv /* returned after processing AssignedStationId and ReAssignStationId */,
+        ReportSequenceProcessingResult /* returned result of processing sequence at station */,
     }
 
 }

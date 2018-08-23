@@ -48,6 +48,7 @@ public class ExchangeData {
     private Protocol.RegisterInvite registerInvite;
     private Protocol.RegisterInviteResult registerInviteResult;
     private Protocol.ReportStationEnv reportStationEnv;
+    private Protocol.ReportSequenceProcessingResult reportSequenceProcessingResult;
 
     @JsonProperty(value = "success")
     private boolean isSuccess = true;
@@ -60,28 +61,6 @@ public class ExchangeData {
 
     public ExchangeData(Command command) {
         setCommand(command);
-    }
-
-    @JsonIgnore
-    private static List<Command> asListOfNonNull(boolean isExcludeNop, Command... commands) {
-        List<Command> list = new ArrayList<>();
-        for (Command command : commands) {
-            if (command==null) {
-                continue;
-            }
-            if (isExcludeNop && command.getType()== Command.Type.Nop) {
-                continue;
-            }
-            list.add(command);
-        }
-        return list;
-    }
-
-    @JsonIgnore
-    public void setCommands(List<Command> commands) {
-        for (Command command : commands) {
-            setCommand(command);
-        }
     }
 
     @JsonIgnore
@@ -139,6 +118,12 @@ public class ExchangeData {
                 }
                 this.reportStationEnv = (Protocol.ReportStationEnv) command;
                 break;
+            case ReportSequenceProcessingResult:
+                if (this.reportSequenceProcessingResult != null) {
+                    throw new IllegalStateException("Was already initialized");
+                }
+                this.reportSequenceProcessingResult = (Protocol.ReportSequenceProcessingResult) command;
+                break;
         }
     }
 
@@ -148,15 +133,38 @@ public class ExchangeData {
     }
 
     @JsonIgnore
+    public void setCommands(List<Command> commands) {
+        for (Command command : commands) {
+            setCommand(command);
+        }
+    }
+
+    @JsonIgnore
     public List<Command> getCommands(boolean isExcludeNop) {
         return asListOfNonNull(isExcludeNop, nop, reportStation, requestStationId,
                 assignedStationId, reAssignedStationId, registerInvite,
-                registerInviteResult, requestExperimentSequence, assignedExperimentSequence, reportStationEnv);
+                registerInviteResult, requestExperimentSequence, assignedExperimentSequence, reportStationEnv,
+                reportSequenceProcessingResult);
     }
 
     @JsonIgnore
     public boolean isNothingTodo() {
         final List<Command> commands = getCommands(true);
         return commands.isEmpty();
+    }
+
+    @JsonIgnore
+    private static List<Command> asListOfNonNull(boolean isExcludeNop, Command... commands) {
+        List<Command> list = new ArrayList<>();
+        for (Command command : commands) {
+            if (command == null) {
+                continue;
+            }
+            if (isExcludeNop && command.getType() == Command.Type.Nop) {
+                continue;
+            }
+            list.add(command);
+        }
+        return list;
     }
 }

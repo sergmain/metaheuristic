@@ -18,9 +18,11 @@
 package aiai.ai.comm;
 
 import aiai.ai.beans.InviteResult;
+import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -148,6 +150,16 @@ public class Protocol {
 
         public RegisterInviteResult() {
             this.setType(Type.RegisterInviteResult);
+        }
+    }
+
+    @EqualsAndHashCode(callSuper = false)
+    @Data
+    public static class ReportSequenceProcessingResult extends Command {
+        private List<SimpleSequenceExecResult> results = new ArrayList<>();
+
+        public ReportSequenceProcessingResult() {
+            this.setType(Type.ReportSequenceProcessingResult);
         }
     }
 

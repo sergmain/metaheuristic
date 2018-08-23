@@ -33,6 +33,12 @@ public class StationExperimentService {
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
     }
 
+    public List<StationExperimentSequence> getForReporting() {
+        List<StationExperimentSequence> list = stationExperimentSequenceRepository.findAllByFinishedOnIsNotNullAndIsReportedIsFalse();
+        return list;
+    }
+
+
     public boolean isNeedNewExperimentSequence(String stationId) {
         if (stationId==null) {
             return false;

@@ -17,29 +17,31 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.console.ConsoleOutput;
-import aiai.ai.yaml.console.ConsoleOutputUtils;
+import aiai.ai.core.ProcessService;
+import aiai.ai.yaml.console.SnippetExec;
+import aiai.ai.yaml.console.SnippetExecUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class TestConsoleOutput {
+public class TestSnippetExec {
 
 
     @Test
     public void testEmptyString() {
-        Assert.assertNull(ConsoleOutputUtils.toConsoleOutput(""));
-        Assert.assertNull(ConsoleOutputUtils.toConsoleOutput((String) null));
+        Assert.assertNull(SnippetExecUtils.toSnippetExec(""));
+        Assert.assertNull(SnippetExecUtils.toSnippetExec((String) null));
     }
 
     @Test
     public void testMarshaling() {
-        ConsoleOutput output = new ConsoleOutput();
-        output.outputs.put(1, "output#1");
-        output.outputs.put(2, "output#2");
+        SnippetExec output = new SnippetExec();
+        output.execs.put(1, new ProcessService.Result(true, 0, "output#1"));
+        output.execs.put(2, new ProcessService.Result(true, 0, "output#2"));
 
-        String yaml = ConsoleOutputUtils.toString(output);
+        String yaml = SnippetExecUtils.toString(output);
+        Assert.assertFalse(yaml.contains("isOk"));
 
-        ConsoleOutput output1 = ConsoleOutputUtils.toConsoleOutput(yaml);
+        SnippetExec output1 = SnippetExecUtils.toSnippetExec(yaml);
 
         Assert.assertEquals(output, output1);
     }

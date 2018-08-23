@@ -55,4 +55,7 @@ public class ExperimentSequence implements Serializable {
     @Column(name="IS_COMPLETED")
     private boolean isCompleted;
 
+    @Column(name="SNIPPET_EXEC_RESULTS")
+    private String snippetExecResults;
+
 }

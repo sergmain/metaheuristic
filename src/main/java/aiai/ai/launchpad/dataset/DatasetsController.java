@@ -611,7 +611,7 @@ public class DatasetsController {
             cmd.add(yaml.getPath());
             final File execDir = globals.launchpadDir.getCanonicalFile();
 
-            return processService.execCommand(type, refId, cmd, execDir).isOk;
+            return processService.execCommand(type, refId, cmd, execDir).isOk();
 
         } catch (Exception err) {
             err.printStackTrace();

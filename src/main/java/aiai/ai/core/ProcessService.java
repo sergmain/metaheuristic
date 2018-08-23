@@ -21,6 +21,7 @@ import aiai.ai.beans.LogData;
 import aiai.ai.repositories.LogDataRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -33,8 +34,9 @@ public class ProcessService {
 
     @Data
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class Result {
-        public boolean isOk;
+        private boolean isOk;
         public int exitCode;
         public String console;
     }
@@ -70,7 +72,7 @@ public class ProcessService {
         reader.join();
 
         System.out.println("Any errors of execution? " + (exitCode == 0 ? "No" : "Yes"));
-        System.out.println(out);
+//        System.out.println(out);
         LogData logData = new LogData();
         logData.setRefId(refId);
         logData.setType(type);

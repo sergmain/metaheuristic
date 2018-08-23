@@ -19,10 +19,12 @@
 package aiai.ai.station;
 
 import aiai.ai.Globals;
+import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.CommandProcessor;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
+import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -113,10 +115,8 @@ public class LaunchpadRequester {
         }
         data.setStationId(stationId);
 
-        final boolean b = stationExperimentService.isNeedNewExperimentSequence(stationId);
-        if (b) {
-            data.setCommand(new Protocol.RequestExperimentSequence());
-        }
+        needNewExperimentSequence(data, stationId);
+        reportSequenceProcessingResult(data);
 
         List<Command> cmds;
         synchronized (commands) {
@@ -132,12 +132,26 @@ public class LaunchpadRequester {
             ExchangeData result = response.getBody();
 
             addCommands(commandProcessor.processExchangeData(result).getCommands());
-            if (log.isDebugEnabled()) {
-                log.debug("fixedDelay(), " + result);
-            }
+            log.debug("fixedDelay(), {}", result);
         } catch (RestClientException e) {
             System.out.println("Error accessing url: " + targetUrl);
             e.printStackTrace();
+        }
+    }
+
+    private void reportSequenceProcessingResult(ExchangeData data) {
+        final List<StationExperimentSequence> list = stationExperimentService.getForReporting();
+        final Protocol.ReportSequenceProcessingResult command = new Protocol.ReportSequenceProcessingResult();
+        for (StationExperimentSequence seq : list) {
+            command.getResults().add(new SimpleSequenceExecResult(seq.getExperimentSequenceId(), seq.getSnippetExecResults()));
+        }
+        data.setCommand(command);
+    }
+
+    private void needNewExperimentSequence(ExchangeData data, String stationId) {
+        final boolean b = stationExperimentService.isNeedNewExperimentSequence(stationId);
+        if (b) {
+            data.setCommand(new Protocol.RequestExperimentSequence());
         }
     }
 }

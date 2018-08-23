@@ -89,7 +89,8 @@ CREATE TABLE AIAI_LP_EXPERIMENT_SEQUENCE (
   PARAMS          MEDIUMTEXT not null,
   STATION_ID          NUMERIC(10, 0),
   ASSIGNED_ON   bigint,
-  IS_COMPLETED  tinyint(1) not null default 0
+  IS_COMPLETED  tinyint(1) not null default 0,
+  SNIPPET_EXEC_RESULTS       MEDIUMTEXT
 );
 
 CREATE TABLE AIAI_LP_SNIPPET (
@@ -145,7 +146,7 @@ CREATE TABLE AIAI_S_EXPERIMENT_SEQUENCE (
   PARAMS       MEDIUMTEXT not null,
   IS_REPORTED  tinyint(1) not null default 0,
   IS_DELIVERED  tinyint(1) not null default 0,
-  CONSOLE_OUTPUT       MEDIUMTEXT
+  SNIPPET_EXEC_RESULTS       MEDIUMTEXT
 
 );
 

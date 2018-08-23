@@ -17,7 +17,6 @@
  */
 package aiai.ai.yaml.console;
 
-import aiai.ai.yaml.env.EnvYaml;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -28,7 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class ConsoleOutputUtils {
+public class SnippetExecUtils {
 
     private static Yaml yaml;
 
@@ -37,26 +36,26 @@ public class ConsoleOutputUtils {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        yaml = new Yaml(new Constructor(ConsoleOutput.class), new Representer(), options);
+        yaml = new Yaml(new Constructor(SnippetExec.class), new Representer(), options);
 
     }
 
-    public static String toString(ConsoleOutput consoleOutput) {
-        return yaml.dump(consoleOutput);
+    public static String toString(SnippetExec snippetExec) {
+        return yaml.dump(snippetExec);
     }
 
-    public static ConsoleOutput toConsoleOutput(String s) {
+    public static SnippetExec toSnippetExec(String s) {
         if (s==null) {
             return null;
         }
         return yaml.load(s);
     }
 
-    public static ConsoleOutput toConsoleOutput(InputStream is) {
+    public static SnippetExec toSnippetExec(InputStream is) {
         return yaml.load(is);
     }
 
-    public static ConsoleOutput toConsoleOutput(File file) {
+    public static SnippetExec toSnippetExec(File file) {
         try(FileInputStream fis =  new FileInputStream(file)) {
             return yaml.load(fis);
         } catch (IOException e) {

@@ -25,8 +25,8 @@ import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.repositories.LogDataRepository;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.utils.DirUtils;
-import aiai.ai.yaml.console.ConsoleOutput;
-import aiai.ai.yaml.console.ConsoleOutputUtils;
+import aiai.ai.yaml.console.SnippetExec;
+import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.sequence.SequenceYaml;
@@ -77,7 +77,7 @@ public class SequenceProcessor {
         }
         EnvYaml envYaml = EnvYamlUtils.toEnvYaml(stationService.getEnv());
         if (envYaml == null) {
-            log.warn("env.yaml wasn't found or empty. path: " + globals.stationDir + "/env.yaml");
+            log.warn("env.yaml wasn't found or empty. path: {}/env.yaml", globals.stationDir );
             return;
         }
 
@@ -132,8 +132,12 @@ public class SequenceProcessor {
                     }
                     isSnippetsReady.put(snippet.code, snippetFile);
                 }
-                ConsoleOutput consoleOutput =  ConsoleOutputUtils.toConsoleOutput(seq.getConsoleOutput());
-                if (isThisSnippetCompleted(snippet, consoleOutput)) {
+                SnippetExec snippetExec =  SnippetExecUtils.toSnippetExec(seq.getSnippetExecResults());
+                if (isThisSnippetCompletedWithError(snippet, snippetExec)) {
+                    // stop processing this sequence
+                    break;
+                }
+                if (isThisSnippetCompleted(snippet, snippetExec)) {
                     continue;
                 }
 
@@ -143,7 +147,7 @@ public class SequenceProcessor {
                 }
                 String intepreter = envYaml.getEnvs().get(snippet.env);
                 if (intepreter == null) {
-                    log.warn("Can't precess sequence, interpreter wan't found for env: " + snippet.env);
+                    log.warn("Can't process sequence, interpreter wasn't found for env: {}", snippet.env);
                     continue;
                 }
 
@@ -157,7 +161,10 @@ public class SequenceProcessor {
 
                     final File execDir = paramFile.getParentFile();
                     ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
-                    updateConsoleOutput(seq.getId(), snippet.order, result.console);
+                    updateConsoleOutput(seq.getId(), snippet.order, result);
+                    if (!result.isOk()) {
+                        break;
+                    }
 
                 } catch (Exception err) {
                     log.error("Error exec process " + intepreter, err);
@@ -168,42 +175,54 @@ public class SequenceProcessor {
     }
 
     private void updateFinishedOn(Long seqId, SequenceYaml sequenceYaml) {
-        log.info("update finishedOn");
+        log.info("update 'finishedOn'");
         StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
         if (seqTemp == null) {
             log.error("StationExperimentSequence wasn't found for Id " + seqId);
         } else {
-
-            ConsoleOutput consoleOutput = ConsoleOutputUtils.toConsoleOutput(seqTemp.getConsoleOutput());
-            if (sequenceYaml.getSnippets().size()!=consoleOutput.getOutputs().size()) {
-                log.warn("Don't mark this experimentSequence as finshed because not all snippets was processed");
-                return;
+            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
+            final int execSize = snippetExec.getExecs().size();
+            if (sequenceYaml.getSnippets().size() != execSize) {
+                if (snippetExec.getExecs().get(execSize).isOk()) {
+                    log.warn("Don't mark this experimentSequence as finished because not all snippets were processed");
+                    return;
+                }
             }
-
             seqTemp.setFinishedOn(System.currentTimeMillis());
             stationExperimentSequenceRepository.save(seqTemp);
         }
     }
 
-    private void updateConsoleOutput(Long seqId, int snippetOrder, String output) {
+    private void updateConsoleOutput(Long seqId, int snippetOrder, ProcessService.Result result) {
         log.info("update finishedOn");
         StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
         if (seqTemp == null) {
             log.error("StationExperimentSequence wasn't found for Id " + seqId);
         } else {
-            ConsoleOutput consoleOutput = ConsoleOutputUtils.toConsoleOutput(seqTemp.getConsoleOutput());
-            consoleOutput.getOutputs().put(snippetOrder, output);
-            String yaml = ConsoleOutputUtils.toString(consoleOutput);
-            seqTemp.setConsoleOutput(yaml);
+            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
+            if (snippetExec==null) {
+                snippetExec = new SnippetExec();
+            }
+            snippetExec.getExecs().put(snippetOrder, result);
+            String yaml = SnippetExecUtils.toString(snippetExec);
+            seqTemp.setSnippetExecResults(yaml);
             stationExperimentSequenceRepository.save(seqTemp);
         }
     }
 
-    private boolean isThisSnippetCompleted(SimpleSnippet snippet, ConsoleOutput consoleOutput) {
-        if (consoleOutput==null) {
+    private boolean isThisSnippetCompleted(SimpleSnippet snippet, SnippetExec snippetExec) {
+        if (snippetExec ==null) {
             return false;
         }
-        return consoleOutput.outputs.get(snippet.order)!=null;
+        return snippetExec.execs.get(snippet.order)!=null;
+    }
+
+    private boolean isThisSnippetCompletedWithError(SimpleSnippet snippet, SnippetExec snippetExec) {
+        if (snippetExec ==null) {
+            return false;
+        }
+        final ProcessService.Result result = snippetExec.execs.get(snippet.order);
+        return result!=null && !result.isOk();
     }
 
     private void finishAndWriteToLog(StationExperimentSequence seq, String es) {

@@ -24,6 +24,7 @@ import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.repositories.StationsRepository;
 import aiai.ai.station.StationService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -34,6 +35,7 @@ import java.util.Map;
  * Time: 19:48
  */
 @Service
+@Slf4j
 public class CommandProcessor {
 
 
@@ -73,9 +75,16 @@ public class CommandProcessor {
                 return processAssignedExperimentSequence((Protocol.AssignedExperimentSequence) command);
             case ReportStationEnv:
                 return processReportStationEnv((Protocol.ReportStationEnv) command);
+            case ReportSequenceProcessingResult:
+                return processReportSequenceProcessingResult((Protocol.ReportSequenceProcessingResult) command);
             default:
                 System.out.println("There is new command which isn't processed: " + command.getType());
         }
+        return Protocol.NOP;
+    }
+
+    private Command processReportSequenceProcessingResult(Protocol.ReportSequenceProcessingResult command) {
+        experimentService.storeAllResults(command.getResults());
         return Protocol.NOP;
     }
 
