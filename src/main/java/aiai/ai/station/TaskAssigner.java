@@ -42,8 +42,11 @@ public class TaskAssigner {
     private final DownloadSnippetActor downloadSnippetActor;
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
 
-    @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
+    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
     public void scheduleTask() {
+        if (globals.isUnitTesting) {
+            return;
+        }
         if (!globals.isStationEnabled) {
             return;
         }

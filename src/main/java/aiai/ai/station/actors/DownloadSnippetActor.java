@@ -53,8 +53,11 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
         }
     }
 
-    @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-snippet-task.timeout'), 3, 20, 10)*1000 }")
+    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-snippet-task.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelayTaskComplex() {
+        if (globals.isUnitTesting) {
+            return;
+        }
         if (!globals.isStationEnabled) {
             return;
         }

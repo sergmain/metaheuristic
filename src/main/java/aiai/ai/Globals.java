@@ -40,6 +40,7 @@ public class Globals {
 
     public boolean isStationEnabled = true;
     public boolean isLaunchpadEnabled = true;
+    public boolean isUnitTesting = false;
 
     @PostConstruct
     public void init() {

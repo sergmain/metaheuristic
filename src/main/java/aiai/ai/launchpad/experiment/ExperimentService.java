@@ -33,6 +33,7 @@ import aiai.ai.yaml.sequence.SimpleSnippet;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
@@ -41,6 +42,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@EnableScheduling
 @EnableTransactionManagement
 @Slf4j
 public class ExperimentService {
@@ -126,8 +128,11 @@ public class ExperimentService {
      * long fixedDelay()
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
-    @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.create-sequence.timeout'), 10, 20, 10)*1000 }")
+    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.create-sequence.timeout'), 10, 20, 10)*1000 }")
     public void fixedDelayExperimentSequencesProducer() {
+        if (globals.isUnitTesting) {
+            return;
+        }
         if (!globals.isLaunchpadEnabled) {
             return;
         }

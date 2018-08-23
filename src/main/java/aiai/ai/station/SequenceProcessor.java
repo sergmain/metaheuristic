@@ -70,8 +70,11 @@ public class SequenceProcessor {
     public void init() {
     }
 
-    @Scheduled(fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
+    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
     public void scheduleProcessor() {
+        if (globals.isUnitTesting) {
+            return;
+        }
         if (!globals.isStationEnabled) {
             return;
         }
@@ -162,7 +165,7 @@ public class SequenceProcessor {
     }
 
     private void storeExecResult(Long seqId, int snippetOrder, ProcessService.Result result) {
-        log.info("storeExecResult({}, {)", seqId, snippetOrder);
+        log.info("storeExecResult({}, {})", seqId, snippetOrder);
         StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
         if (seqTemp == null) {
             log.error("StationExperimentSequence wasn't found for Id " + seqId);
