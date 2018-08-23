@@ -68,7 +68,7 @@ public class ServerController {
             if (data.getStationId()!=null && command instanceof Protocol.RequestStationId) {
                 continue;
             }
-            resultData.setCommand(commandProcessor.process(command));
+            resultData.setCommands(commandProcessor.process(command));
         }
 
         return resultData.getCommands().isEmpty() ? EXCHANGE_DATA_NOP : resultData;

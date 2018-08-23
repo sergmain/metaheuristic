@@ -59,15 +59,15 @@ public class ExperimentService {
         this.snippetRepository = snippetRepository;
     }
 
-    public synchronized List<Protocol.AssignedExperimentSequence.SimpleSequence> getSequncesAndAssignToStation(long stationId) {
+    public synchronized List<Protocol.AssignedExperimentSequence.SimpleSequence> getSequncesAndAssignToStation(long stationId, int recordNumber) {
 
         ExperimentSequence sequence = experimentSequenceRepository.findTop1ByStationIdIsNotNullAndIsCompletedIsFalse();
         if (sequence!=null) {
             return new ArrayList<>();
         }
 
-        Slice<ExperimentSequence> seqs = experimentSequenceRepository.findAllByStationIdIsNull(PageRequest.of(0, 10));
-        List<Protocol.AssignedExperimentSequence.SimpleSequence> result = new ArrayList<>(11);
+        Slice<ExperimentSequence> seqs = experimentSequenceRepository.findAllByStationIdIsNull(PageRequest.of(0, recordNumber));
+        List<Protocol.AssignedExperimentSequence.SimpleSequence> result = new ArrayList<>(recordNumber+1);
         for (ExperimentSequence seq : seqs) {
             Protocol.AssignedExperimentSequence.SimpleSequence ss = new Protocol.AssignedExperimentSequence.SimpleSequence();
             ss.setExperimentSequenceId(seq.getId());

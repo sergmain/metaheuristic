@@ -60,6 +60,10 @@ public class ExchangeData {
     public ExchangeData() {
     }
 
+    public ExchangeData(Command[] commands) {
+        setCommands(commands);
+    }
+
     public ExchangeData(Command command) {
         setCommand(command);
     }
@@ -108,8 +112,9 @@ public class ExchangeData {
                 this.requestExperimentSequence = (Protocol.RequestExperimentSequence) command;
                 break;
             case AssignedExperimentSequence:
-                if (this.assignedExperimentSequence != null) {
-                    throw new IllegalStateException("Was already initialized");
+                if (this.assignedExperimentSequence != null && this.assignedExperimentSequence.getSequences()!=null) {
+                    this.assignedExperimentSequence.getSequences().addAll( ((Protocol.AssignedExperimentSequence) command).getSequences());
+                    break;
                 }
                 this.assignedExperimentSequence = (Protocol.AssignedExperimentSequence) command;
                 break;
@@ -141,6 +146,13 @@ public class ExchangeData {
 
     @JsonIgnore
     public void setCommands(List<Command> commands) {
+        for (Command command : commands) {
+            setCommand(command);
+        }
+    }
+
+    @JsonIgnore
+    public void setCommands(Command[] commands) {
         for (Command command : commands) {
             setCommand(command);
         }

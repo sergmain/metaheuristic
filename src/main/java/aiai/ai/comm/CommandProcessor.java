@@ -27,6 +27,7 @@ import aiai.ai.station.StationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,6 +40,7 @@ import java.util.Map;
 public class CommandProcessor {
 
 
+    public static final int MAX_SEQUENSE_POOL_SIZE = 10;
     private final StationsRepository stationsRepository;
     private final StationService stationService;
     private final InviteService inviteService;
@@ -53,7 +55,7 @@ public class CommandProcessor {
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
     }
 
-    public Command process(Command command) {
+    public Command[] process(Command command) {
         switch (command.getType()) {
             case Nop:
                 break;
@@ -82,22 +84,25 @@ public class CommandProcessor {
             default:
                 System.out.println("There is new command which isn't processed: " + command.getType());
         }
-        return Protocol.NOP;
+        return Protocol.NOP_ARRAY;
     }
 
-    private Command processReportResultDelivering(Protocol.ReportResultDelivering command) {
+    private Command[] processReportResultDelivering(Protocol.ReportResultDelivering command) {
         stationService.markAsDelivered(command.getIds());
-        return Protocol.NOP;
+        return Protocol.NOP_ARRAY;
     }
 
-    private Command processReportSequenceProcessingResult(Protocol.ReportSequenceProcessingResult command) {
+    private Command[] processReportSequenceProcessingResult(Protocol.ReportSequenceProcessingResult command) {
         if (command.getResults().isEmpty()) {
-            return Protocol.NOP;
+            return Protocol.NOP_ARRAY;
         }
-        return new Protocol.ReportResultDelivering(experimentService.storeAllResults(command.getResults()));
+        final Protocol.ReportResultDelivering cmd1 = new Protocol.ReportResultDelivering(experimentService.storeAllResults(command.getResults()));
+        final Protocol.AssignedExperimentSequence r = getAssignedExperimentSequence(command.getStationId(), Math.min(MAX_SEQUENSE_POOL_SIZE, command.getResults().size()));
+
+        return new Command[]{cmd1, r};
     }
 
-    private Command processReportStationEnv(Protocol.ReportStationEnv command) {
+    private Command[] processReportStationEnv(Protocol.ReportStationEnv command) {
         checkStationId(command);
         final long stationId = Long.parseLong(command.getStationId());
         Station station = stationsRepository.findById(stationId).orElse(null);
@@ -107,12 +112,12 @@ public class CommandProcessor {
         }
         station.setEnv( command.env);
         stationsRepository.save(station);
-        return Protocol.NOP;
+        return Protocol.NOP_ARRAY;
     }
 
-    private Command processAssignedExperimentSequence(Protocol.AssignedExperimentSequence command) {
+    private Command[] processAssignedExperimentSequence(Protocol.AssignedExperimentSequence command) {
         if (command.sequences==null) {
-            return Protocol.NOP;
+            return Protocol.NOP_ARRAY;
         }
         for (Protocol.AssignedExperimentSequence.SimpleSequence sequence : command.sequences) {
             StationExperimentSequence seq = new StationExperimentSequence();
@@ -121,13 +126,18 @@ public class CommandProcessor {
             seq.setExperimentSequenceId(sequence.getExperimentSequenceId());
             stationExperimentSequenceRepository.save(seq);
         }
-        return Protocol.NOP;
+        return Protocol.NOP_ARRAY;
     }
 
-    private Command processRequestExperimentSequence(Protocol.RequestExperimentSequence command) {
+    private Command[] processRequestExperimentSequence(Protocol.RequestExperimentSequence command) {
         checkStationId(command);
+        Protocol.AssignedExperimentSequence r = getAssignedExperimentSequence(command.getStationId(), MAX_SEQUENSE_POOL_SIZE);
+        return Protocol.asArray(r);
+    }
+
+    private synchronized Protocol.AssignedExperimentSequence getAssignedExperimentSequence(String stationId, int recordNumber) {
         Protocol.AssignedExperimentSequence r = new Protocol.AssignedExperimentSequence();
-        r.sequences = experimentService.getSequncesAndAssignToStation(Long.parseLong(command.getStationId()));
+        r.sequences = experimentService.getSequncesAndAssignToStation(Long.parseLong(stationId), recordNumber);
         return r;
     }
 
@@ -138,17 +148,17 @@ public class CommandProcessor {
         }
     }
 
-    private Command storeStationId(Protocol.AssignedStationId command) {
+    private Command[] storeStationId(Protocol.AssignedStationId command) {
         System.out.println("New station Id: " + command.getStationId());
         stationService.setStationId(command.getStationId());
-        return createReportStationEnvCommand();
+        return Protocol.asArray(createReportStationEnvCommand());
     }
 
-    private Command reAssignStationId(Protocol.ReAssignStationId command) {
+    private Command[] reAssignStationId(Protocol.ReAssignStationId command) {
         System.out.println("New station Id: " + command.getStationId());
         stationService.setStationId(command.getStationId());
 
-        return createReportStationEnvCommand();
+        return Protocol.asArray(createReportStationEnvCommand());
     }
 
     private Command createReportStationEnvCommand() {
@@ -156,17 +166,17 @@ public class CommandProcessor {
         return env==null ? Protocol.NOP : new Protocol.ReportStationEnv(env);
     }
 
-    private Command processInvite(Protocol.RegisterInvite command) {
+    private Command[] processInvite(Protocol.RegisterInvite command) {
         Protocol.RegisterInviteResult result = new Protocol.RegisterInviteResult();
         result.setInviteResult(inviteService.processInvite(command.getInvite()));
-        return result;
+        return Protocol.asArray(result);
     }
 
-    private Command getNewStationId(Protocol.RequestStationId command) {
+    private Command[] getNewStationId(Protocol.RequestStationId command) {
         final Station st = new Station();
         stationsRepository.save(st);
 
-        return new Protocol.AssignedStationId(Long.toString(st.getId()));
+        return Protocol.asArray(new Protocol.AssignedStationId(Long.toString(st.getId())));
     }
 
     public ExchangeData processExchangeData(ExchangeData data) {
@@ -176,8 +186,11 @@ public class CommandProcessor {
     public ExchangeData processExchangeData(Map<String, String> sysParams, ExchangeData data) {
         ExchangeData responses = new ExchangeData();
         for (Command command : data.getCommands()) {
+            if (command.getType()== Command.Type.Nop) {
+                continue;
+            }
             command.setSysParams(sysParams);
-            responses.setCommand(process(command));
+            responses.setCommands(process(command));
         }
         return responses;
     }

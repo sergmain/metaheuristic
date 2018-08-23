@@ -33,6 +33,7 @@ import java.util.List;
 public class Protocol {
 
     public static final Protocol.Nop NOP = new Nop();
+    public static final Command[] NOP_ARRAY = new Nop[]{NOP};
 
     /**
      * stub command, which is actually doing nothing
@@ -179,4 +180,7 @@ public class Protocol {
     }
 
 
+    static Command[] asArray(Command cmd) {
+        return new Command[]{cmd};
+    }
 }
