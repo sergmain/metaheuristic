@@ -38,6 +38,9 @@ public class StationExperimentService {
         return list;
     }
 
+    public void saveReported(List<StationExperimentSequence> list) {
+        stationExperimentSequenceRepository.saveAll(list);
+    }
 
     public boolean isNeedNewExperimentSequence(String stationId) {
         if (stationId==null) {

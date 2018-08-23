@@ -77,15 +77,24 @@ public class CommandProcessor {
                 return processReportStationEnv((Protocol.ReportStationEnv) command);
             case ReportSequenceProcessingResult:
                 return processReportSequenceProcessingResult((Protocol.ReportSequenceProcessingResult) command);
+            case ReportResultDelivering:
+                return processReportResultDelivering((Protocol.ReportResultDelivering) command);
             default:
                 System.out.println("There is new command which isn't processed: " + command.getType());
         }
         return Protocol.NOP;
     }
 
-    private Command processReportSequenceProcessingResult(Protocol.ReportSequenceProcessingResult command) {
-        experimentService.storeAllResults(command.getResults());
+    private Command processReportResultDelivering(Protocol.ReportResultDelivering command) {
+        stationService.markAsDelivered(command.getIds());
         return Protocol.NOP;
+    }
+
+    private Command processReportSequenceProcessingResult(Protocol.ReportSequenceProcessingResult command) {
+        if (command.getResults().isEmpty()) {
+            return Protocol.NOP;
+        }
+        return new Protocol.ReportResultDelivering(experimentService.storeAllResults(command.getResults()));
     }
 
     private Command processReportStationEnv(Protocol.ReportStationEnv command) {

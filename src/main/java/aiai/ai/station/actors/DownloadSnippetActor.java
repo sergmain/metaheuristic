@@ -22,7 +22,6 @@ import aiai.ai.station.StationSnippetUtils;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.DirUtils;
 import org.apache.http.client.fluent.Request;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -60,7 +59,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             return;
         }
 
-        File snippetDir = checkEvironment();
+        File snippetDir = DirUtils.createDir(globals.stationDir, "snippet");
         if (snippetDir==null) {
             System.out.println("Station enviroment is broken. See log for more information");
             return;
@@ -86,8 +85,4 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
         }
     }
 
-    private File checkEvironment() {
-        File dsDir = DirUtils.createDir(globals.stationDir, "snippet");
-        return dsDir;
-    }
 }

@@ -79,9 +79,11 @@ public class ExperimentService {
         return result;
     }
 
-    public void storeAllResults(List<SimpleSequenceExecResult> results) {
+    public List<Long> storeAllResults(List<SimpleSequenceExecResult> results) {
         List<ExperimentSequence> list = new ArrayList<>();
+        List<Long> ids = new ArrayList<>();
         for (SimpleSequenceExecResult result : results) {
+            ids.add(result.sequenceId);
             ExperimentSequence seq = experimentSequenceRepository.findById(result.sequenceId).orElse(null);
             if (seq==null) {
                 log.warn("Can't find ExperimentSequence for Id: {}", result.sequenceId);
@@ -92,6 +94,7 @@ public class ExperimentService {
             list.add(seq);
         }
         experimentSequenceRepository.saveAll(list);
+        return ids;
     }
 
     public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed, String epochs) {

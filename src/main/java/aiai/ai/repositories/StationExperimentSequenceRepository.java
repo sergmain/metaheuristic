@@ -33,4 +33,6 @@ public interface StationExperimentSequenceRepository extends CrudRepository<Stat
 
     List<StationExperimentSequence> findAllByFinishedOnIsNull(Pageable pageable);
     List<StationExperimentSequence> findAllByFinishedOnIsNotNullAndIsReportedIsFalse();
+
+    StationExperimentSequence findByExperimentSequenceId(long id);
 }

@@ -141,10 +141,15 @@ public class LaunchpadRequester {
 
     private void reportSequenceProcessingResult(ExchangeData data) {
         final List<StationExperimentSequence> list = stationExperimentService.getForReporting();
+        if (list.isEmpty()) {
+            return;
+        }
         final Protocol.ReportSequenceProcessingResult command = new Protocol.ReportSequenceProcessingResult();
         for (StationExperimentSequence seq : list) {
             command.getResults().add(new SimpleSequenceExecResult(seq.getExperimentSequenceId(), seq.getSnippetExecResults()));
+            seq.setReported(true);
         }
+        stationExperimentService.saveReported(list);
         data.setCommand(command);
     }
 

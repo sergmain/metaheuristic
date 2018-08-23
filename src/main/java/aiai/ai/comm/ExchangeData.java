@@ -49,6 +49,7 @@ public class ExchangeData {
     private Protocol.RegisterInviteResult registerInviteResult;
     private Protocol.ReportStationEnv reportStationEnv;
     private Protocol.ReportSequenceProcessingResult reportSequenceProcessingResult;
+    private Protocol.ReportResultDelivering reportResultDelivering;
 
     @JsonProperty(value = "success")
     private boolean isSuccess = true;
@@ -124,6 +125,12 @@ public class ExchangeData {
                 }
                 this.reportSequenceProcessingResult = (Protocol.ReportSequenceProcessingResult) command;
                 break;
+            case ReportResultDelivering:
+                if (this.reportResultDelivering != null) {
+                    throw new IllegalStateException("Was already initialized");
+                }
+                this.reportResultDelivering = (Protocol.ReportResultDelivering) command;
+                break;
         }
     }
 
@@ -144,7 +151,7 @@ public class ExchangeData {
         return asListOfNonNull(isExcludeNop, nop, reportStation, requestStationId,
                 assignedStationId, reAssignedStationId, registerInvite,
                 registerInviteResult, requestExperimentSequence, assignedExperimentSequence, reportStationEnv,
-                reportSequenceProcessingResult);
+                reportSequenceProcessingResult, reportResultDelivering);
     }
 
     @JsonIgnore

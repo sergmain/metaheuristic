@@ -163,5 +163,20 @@ public class Protocol {
         }
     }
 
+    @EqualsAndHashCode(callSuper = false)
+    @Data
+    public static class ReportResultDelivering extends Command {
+        private List<Long> ids = new ArrayList<>();
+
+        public ReportResultDelivering() {
+            this.setType(Type.ReportResultDelivering);
+        }
+
+        public ReportResultDelivering(List<Long> ids) {
+            this.setType(Type.ReportResultDelivering);
+            this.ids.addAll(ids);
+        }
+    }
+
 
 }

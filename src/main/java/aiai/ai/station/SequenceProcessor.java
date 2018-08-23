@@ -108,19 +108,6 @@ public class SequenceProcessor {
                 finishAndWriteToLog(seq, "Broken sequence. List of snippets is empty.");
                 continue;
             }
-/*
-            // right now we handle only 1 or 2 snippets. Support of bigger number of snippets in the sequence will be added later
-            else if (sequenceYaml.snippets.size() == 2) {
-                if ( sequenceYaml.snippets.get(0).type == SnippetType.fit && sequenceYaml.snippets.get(0).type == SnippetType.predict) {
-                    finishAndWriteToLog(seq, "Check of order of snippets was failed");
-                    continue;
-                }
-            }
-            else if (sequenceYaml.snippets.size()>2) {
-                finishAndWriteToLog(seq, "Number of snippets in the sequence if too high, size: " + sequenceYaml.snippets.size());
-                continue;
-            }
-*/
             seq.setLaunchedOn(System.currentTimeMillis());
             seq = stationExperimentSequenceRepository.save(seq);
             for (SimpleSnippet snippet : sequenceYaml.getSnippets()) {
@@ -161,7 +148,7 @@ public class SequenceProcessor {
 
                     final File execDir = paramFile.getParentFile();
                     ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
-                    updateConsoleOutput(seq.getId(), snippet.order, result);
+                    storeExecResult(seq.getId(), snippet.order, result);
                     if (!result.isOk()) {
                         break;
                     }
@@ -170,12 +157,29 @@ public class SequenceProcessor {
                     log.error("Error exec process " + intepreter, err);
                 }
             }
-            updateFinishedOn(seq.getId(), sequenceYaml);
+            markAsFinished(seq.getId(), sequenceYaml);
         }
     }
 
-    private void updateFinishedOn(Long seqId, SequenceYaml sequenceYaml) {
-        log.info("update 'finishedOn'");
+    private void storeExecResult(Long seqId, int snippetOrder, ProcessService.Result result) {
+        log.info("storeExecResult({}, {)", seqId, snippetOrder);
+        StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
+        if (seqTemp == null) {
+            log.error("StationExperimentSequence wasn't found for Id " + seqId);
+        } else {
+            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
+            if (snippetExec==null) {
+                snippetExec = new SnippetExec();
+            }
+            snippetExec.getExecs().put(snippetOrder, result);
+            String yaml = SnippetExecUtils.toString(snippetExec);
+            seqTemp.setSnippetExecResults(yaml);
+            stationExperimentSequenceRepository.save(seqTemp);
+        }
+    }
+
+    private void markAsFinished(Long seqId, SequenceYaml sequenceYaml) {
+        log.info("markAsFinished({})", seqId);
         StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
         if (seqTemp == null) {
             log.error("StationExperimentSequence wasn't found for Id " + seqId);
@@ -189,23 +193,6 @@ public class SequenceProcessor {
                 }
             }
             seqTemp.setFinishedOn(System.currentTimeMillis());
-            stationExperimentSequenceRepository.save(seqTemp);
-        }
-    }
-
-    private void updateConsoleOutput(Long seqId, int snippetOrder, ProcessService.Result result) {
-        log.info("update finishedOn");
-        StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
-        if (seqTemp == null) {
-            log.error("StationExperimentSequence wasn't found for Id " + seqId);
-        } else {
-            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
-            if (snippetExec==null) {
-                snippetExec = new SnippetExec();
-            }
-            snippetExec.getExecs().put(snippetOrder, result);
-            String yaml = SnippetExecUtils.toString(snippetExec);
-            seqTemp.setSnippetExecResults(yaml);
             stationExperimentSequenceRepository.save(seqTemp);
         }
     }
@@ -238,18 +225,14 @@ public class SequenceProcessor {
     }
 
     private File prepareParamFile(Long experimentSequenceId, SnippetType type, String params) {
-        File seqDir = checkEvironment(globals.stationDir);
+        File seqDir = DirUtils.createDir(globals.stationDir, "sequence");
         if (seqDir == null) {
             return null;
         }
 
-        File currDir = new File(seqDir, String.format("%05d", experimentSequenceId));
-        if (!currDir.exists()) {
-            boolean isOk = currDir.mkdirs();
-            if (!isOk) {
-                System.out.println("Can't make all directories for path: " + currDir.getAbsolutePath());
-                return null;
-            }
+        File currDir = DirUtils.createDir(seqDir, String.format("%05d", experimentSequenceId));
+        if (currDir==null) {
+            return null;
         }
 
         File snippetTypeDir = DirUtils.createDir(currDir, type.toString());
@@ -270,15 +253,4 @@ public class SequenceProcessor {
         return paramFile;
     }
 
-    public static File checkEvironment(File stationDir) {
-        File seqDir = new File(stationDir, "sequence");
-        if (!seqDir.exists()) {
-            boolean isOk = seqDir.mkdirs();
-            if (!isOk) {
-                System.out.println("Can't make all directories for path: " + seqDir.getAbsolutePath());
-                return null;
-            }
-        }
-        return seqDir;
-    }
 }

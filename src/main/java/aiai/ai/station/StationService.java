@@ -18,7 +18,9 @@
 package aiai.ai.station;
 
 import aiai.ai.Globals;
+import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.beans.StationMetadata;
+import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.repositories.StationMetadataRepository;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -27,6 +29,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class StationService {
@@ -34,10 +38,12 @@ public class StationService {
     private final Globals globals;
 
     private final StationMetadataRepository stationMetadataRepository;
+    private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
 
-    public StationService(Globals globals, StationMetadataRepository stationMetadataRepository) {
+    public StationService(Globals globals, StationMetadataRepository stationMetadataRepository, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
         this.globals = globals;
         this.stationMetadataRepository = stationMetadataRepository;
+        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
     }
 
     public String getStationId() {
@@ -71,6 +77,19 @@ public class StationService {
             throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
         }
 
+    }
+
+    public void markAsDelivered(List<Long> ids) {
+        List<StationExperimentSequence> list = new ArrayList<>();
+        for (Long id : ids) {
+            StationExperimentSequence seq = stationExperimentSequenceRepository.findByExperimentSequenceId(id);
+            if(seq==null) {
+                continue;
+            }
+            seq.setDelivered(true);
+            list.add(seq);
+        }
+        stationExperimentSequenceRepository.saveAll(list);
     }
 
     private synchronized void storeOrReplace(String key, String value) {

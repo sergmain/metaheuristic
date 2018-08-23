@@ -46,7 +46,7 @@ public class ServerController {
 
     @PostMapping("/rest-anon/srv")
     public ExchangeData postDatasets(@RequestBody ExchangeData data, HttpServletRequest request) {
-        log.info("postDatasets(),  {}", data);
+        log.debug("postDatasets(),  {}", data);
         if (StringUtils.isBlank(data.getStationId())) {
             return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
         }
