@@ -17,6 +17,7 @@
  */
 package aiai.ai;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -24,6 +25,7 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 
 @Component
+@Slf4j
 public class Globals {
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
@@ -35,6 +37,9 @@ public class Globals {
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.launchpad.dir' )) }")
     public File launchpadDir;
 
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.thread-number'), 1, 4, 2) }")
+    public int threadNumber;
+
     @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
     public boolean isReplaceSnapshot;
 
@@ -45,12 +50,12 @@ public class Globals {
     @PostConstruct
     public void init() {
         if (stationDir==null || launchpadUrl==null) {
-            System.out.println("station is disabled, stationDir: "+ stationDir+", launchpadUrl: " + launchpadUrl);
+            log.info("station is disabled, stationDir: {}, launchpadUrl: {}", stationDir, launchpadUrl);
             isStationEnabled = false;
         }
 
         if (launchpadDir==null) {
-            System.out.println("Launchpad is disabled, launchpadDir: " + launchpadDir);
+            log.info("Launchpad is disabled, launchpadDir: {}", launchpadDir);
             isLaunchpadEnabled = false;
         }
 

@@ -18,6 +18,7 @@
 package aiai.ai;
 
 import nz.net.ultraq.thymeleaf.LayoutDialect;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -36,30 +37,37 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableTransactionManagement
 public class Config {
 
+    private final Globals globals;
+
+    public Config(Globals globals) {
+        this.globals = globals;
+    }
+
     @Bean
     public LayoutDialect layoutDialect() {
         return new LayoutDialect();
     }
 
-    @Bean
-    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
-        ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-        threadPoolTaskScheduler.setPoolSize(2);
-        return threadPoolTaskScheduler;
-    }
-
+/*
+    TODO 20018-08-24 If everything will be fine, then delete this inner class
     @Configuration
     public static class SchedulingConfigurerConfiguration implements SchedulingConfigurer {
 
         @Override
         public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-/*
             ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
             taskScheduler.setPoolSize(100);
             taskScheduler.initialize();
             taskRegistrar.setTaskScheduler(taskScheduler);
-*/
         }
+    }
+*/
+
+    @Bean
+    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+        ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+        threadPoolTaskScheduler.setPoolSize(globals.threadNumber);
+        return threadPoolTaskScheduler;
     }
 
 
