@@ -123,7 +123,7 @@ public class ExperimentService {
     }
 
     /**
-     * this scheduler is being runned at launchpad side
+     * this scheduler is being run at launchpad side
      *
      * long fixedDelay()
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
