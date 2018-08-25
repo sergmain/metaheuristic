@@ -30,6 +30,6 @@ import java.util.List;
 public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFeature, Long> {
 
     @Transactional(readOnly = true)
-    List<ExperimentFeature> findByExperimentId(Long experiimentId);
+    List<ExperimentFeature> findByExperimentId(Long experimentId);
 
 }
