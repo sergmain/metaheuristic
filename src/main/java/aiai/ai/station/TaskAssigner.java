@@ -21,8 +21,10 @@ import aiai.ai.Globals;
 import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.station.actors.DownloadDatasetActor;
+import aiai.ai.station.actors.DownloadFeatureActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.tasks.DownloadDatasetTask;
+import aiai.ai.station.tasks.DownloadFeatureTask;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
@@ -39,6 +41,7 @@ public class TaskAssigner {
 
     private final Globals globals;
     private final DownloadDatasetActor downloadDatasetActor;
+    private final DownloadFeatureActor downloadFeatureActor;
     private final DownloadSnippetActor downloadSnippetActor;
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
 
@@ -55,21 +58,29 @@ public class TaskAssigner {
         for (StationExperimentSequence seq : seqs) {
             final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
             createDownloadDatasetTask(sequenceYaml.getDatasetId());
+            for (Long featureId : sequenceYaml.featureIds) {
+                createDownloadFeatureTask(sequenceYaml.getDatasetId(), featureId);
+            }
             for (SimpleSnippet snippet : sequenceYaml.getSnippets()) {
                 createDownloadSnippetTask(snippet);
             }
         }
     }
 
-    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadSnippetActor downloadSnippetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
+    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
         this.globals = globals;
         this.downloadDatasetActor = downloadDatasetActor;
+        this.downloadFeatureActor = downloadFeatureActor;
         this.downloadSnippetActor = downloadSnippetActor;
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
     }
 
     private void createDownloadDatasetTask(long datasetId) {
         downloadDatasetActor.add(new DownloadDatasetTask(datasetId));
+    }
+
+    private void createDownloadFeatureTask(long datasetId, long featureId) {
+        downloadFeatureActor.add(new DownloadFeatureTask(datasetId, featureId));
     }
 
     private void createDownloadSnippetTask(SimpleSnippet snippet) {

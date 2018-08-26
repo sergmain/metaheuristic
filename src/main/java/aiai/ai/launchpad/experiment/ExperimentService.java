@@ -230,9 +230,7 @@ public class ExperimentService {
                 totalVariants += allHyperParams.size();
 
                 if (experiment.getNumberOfSequence()!=allHyperParams.size()) {
-                    System.out.println(String.format(
-                            "!!! number of sequnce is different. experiment.getNumberOfSequence():  %d, allHyperParams.size(): %d",
-                            experiment.getNumberOfSequence(), allHyperParams.size()));
+                    log.warn("!!! number of sequnce is different. experiment.getNumberOfSequence(): {}, allHyperParams.size(): {}", experiment.getNumberOfSequence(), allHyperParams.size());
                 }
 
                 final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());

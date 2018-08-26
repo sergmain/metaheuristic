@@ -20,7 +20,9 @@ package aiai.ai.station.actors;
 import aiai.ai.Globals;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationDatasetUtils;
+import aiai.ai.station.StationFeatureUtils;
 import aiai.ai.station.tasks.DownloadDatasetTask;
+import aiai.ai.station.tasks.DownloadFeatureTask;
 import org.apache.http.client.fluent.Request;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,26 +36,24 @@ import java.util.Map;
 
 @Service
 @EnableScheduling
-public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask> {
+public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask> {
 
     private final Globals globals;
-
+    private final Map<Long, Boolean> preparedMap = new LinkedHashMap<>();
     private String targetUrl;
 
-    private final Map<Long, Boolean> preparedMap = new LinkedHashMap<>();
-
-    public DownloadDatasetActor(Globals globals) {
+    public DownloadFeatureActor(Globals globals) {
         this.globals = globals;
     }
 
     @PostConstruct
     public void postConstruct() {
         if (globals.isStationEnabled) {
-            targetUrl = globals.launchpadUrl + "/payload/dataset";
+            targetUrl = globals.launchpadUrl + "/payload/feature";
         }
     }
 
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-dataset-task.timeout'), 3, 20, 10)*1000 }")
+    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-feature-task.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelayTaskComplex() {
         if (globals.isUnitTesting) {
             return;
@@ -63,22 +63,23 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
         }
 
         File dsDir = StationDatasetUtils.checkEvironment(globals.stationDir);
-        if (dsDir==null) {
+        if (dsDir == null) {
             return;
         }
 
-        DownloadDatasetTask task;
-        while((task = poll())!=null) {
-            if (Boolean.TRUE.equals(preparedMap.get(task.getDatasetId()))) {
+        DownloadFeatureTask task;
+        while ((task = poll()) != null) {
+            if (Boolean.TRUE.equals(preparedMap.get(task.getFeatureId()))) {
                 continue;
             }
-            AssetFile assetFile = StationDatasetUtils.prepareDatasetFile(dsDir, task.datasetId);
+            AssetFile assetFile = StationFeatureUtils.prepareFeatureFile(dsDir, task.datasetId, task.datasetId);
             if (assetFile.isError) {
                 return;
             }
             try {
-                Request.Get(targetUrl+'/'+task.getDatasetId()).execute().saveContent(assetFile.file);
-            } catch (IOException e) {
+                Request.Get(targetUrl + '/' + task.getDatasetId()).execute().saveContent(assetFile.file);
+            }
+            catch (IOException e) {
                 e.printStackTrace();
             }
 

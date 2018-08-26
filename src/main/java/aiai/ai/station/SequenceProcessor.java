@@ -56,7 +56,7 @@ public class SequenceProcessor {
     private final StationService stationService;
     private final LogDataRepository logDataRepository;
 
-    private Map<Long, StationDatasetUtils.DatasetFile> isDatasetReady = new HashMap<>();
+    private Map<Long, AssetFile> isDatasetReady = new HashMap<>();
     private Map<String, StationSnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
     public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService, StationService stationService, LogDataRepository logDataRepository) {
@@ -95,13 +95,13 @@ public class SequenceProcessor {
             return;
         }
 
-        StationDatasetUtils.DatasetFile datasetFile;
+        AssetFile datasetFile;
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
             final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
             datasetFile = isDatasetReady.get(sequenceYaml.getDatasetId());
             if (datasetFile == null) {
-                datasetFile = StationDatasetUtils.getDatasetFile(dsDir, sequenceYaml.getDatasetId());
+                datasetFile = StationDatasetUtils.prepareDatasetFile(dsDir, sequenceYaml.getDatasetId());
                 if (datasetFile.isError || !datasetFile.isContent) {
                     continue;
                 }

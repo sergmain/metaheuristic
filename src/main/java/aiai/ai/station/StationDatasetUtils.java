@@ -21,15 +21,9 @@ import java.io.File;
 
 public class StationDatasetUtils {
 
-    public static class DatasetFile {
-        public File file;
-        public boolean isError;
-        public boolean isContent;
-    }
+    public static AssetFile prepareDatasetFile(File dsDir, long datasetId) {
 
-    public static DatasetFile getDatasetFile(File dsDir, long datasetId) {
-
-        DatasetFile datasetFile = new DatasetFile();
+        AssetFile datasetFile = new AssetFile();
 
         File currDir = new File(dsDir, String.format("%03d", datasetId));
         if (!currDir.exists()) {
