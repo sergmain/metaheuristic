@@ -34,6 +34,7 @@ import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleSnippet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -194,9 +195,14 @@ public class SequenceProcessor {
         if (seqTemp == null) {
             log.error("StationExperimentSequence wasn't found for Id " + seqId);
         } else {
+            if (StringUtils.isBlank(seqTemp.getSnippetExecResults())) {
+                seqTemp.setSnippetExecResults(SnippetExecUtils.toString(new SnippetExec()));
+                stationExperimentSequenceRepository.save(seqTemp);
+            }
             SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
             final int execSize = snippetExec.getExecs().size();
             if (sequenceYaml.getSnippets().size() != execSize) {
+                // if last exec Ok?
                 if (snippetExec.getExecs().get(execSize).isOk()) {
                     log.warn("Don't mark this experimentSequence as finished because not all snippets were processed");
                     return;

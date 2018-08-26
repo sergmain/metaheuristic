@@ -65,10 +65,10 @@ public class ExperimentService {
     public synchronized List<Protocol.AssignedExperimentSequence.SimpleSequence> getSequncesAndAssignToStation(long stationId, int recordNumber) {
 
         // check and mark all completed features
-        List<ExperimentFeature> fs = experimentFeatureRepository.findAllByIsFinishedIsFalseAndIsInProgressIsTrue();
+        List<ExperimentFeature> fs = experimentFeatureRepository.findAllForLaunchedExperiments();
         for (ExperimentFeature feature : fs) {
             if (experimentSequenceRepository.findTop1ByIsCompletedIsFalseAndFeatureId(feature.getId())==null) {
-                feature.setInProgress(true);
+                feature.setFinished(true);
                 experimentFeatureRepository.save(feature);
             }
         }
@@ -168,7 +168,7 @@ public class ExperimentService {
             return;
         }
 
-        for (Experiment experiment : experimentRepository.findByIsLaunchedIsTrueAndIsAllSequenceProducedIsFalse()) {
+        for (final Experiment experiment : experimentRepository.findByIsLaunchedIsTrueAndIsAllSequenceProducedIsFalse()) {
             if (experiment.getDatasetId()==null) {
                 experiment.setLaunched(false);
                 experiment.setNumberOfSequence(0);
@@ -188,6 +188,8 @@ public class ExperimentService {
 
             int totalVariants = 0;
 
+            final List<ExperimentFeature> list = experimentFeatureRepository.findByExperimentId(experiment.getId());
+
             List<Long> ids = new ArrayList<>();
             for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
                 ids.add(datasetGroup.getId());
@@ -197,6 +199,9 @@ public class ExperimentService {
                 permutation.printCombination(ids, i+1,
                         data -> {
                             final String idsAsStr = String.valueOf(data);
+                            if (isExist(list, idsAsStr)) {
+                                return true;
+                            }
                             final ExperimentFeature feature = new ExperimentFeature();
                             feature.setExperimentId(experiment.getId());;
                             feature.setFeatureIds(idsAsStr);
@@ -284,5 +289,14 @@ public class ExperimentService {
             experiment.setAllSequenceProduced(true);
             experimentRepository.save(experiment);
         }
+    }
+
+    private boolean isExist(List<ExperimentFeature> features, String f) {
+        for (ExperimentFeature feature : features) {
+            if (feature.getFeatureIds().equals(f)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

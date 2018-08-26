@@ -24,13 +24,8 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 @Component
-//@Transactional
 public interface StationMetadataRepository extends CrudRepository<StationMetadata, Long> {
 
     Optional<StationMetadata> findByKey(String key);
 
-//    @Transactional(readOnly = true)
-//    Slice<Station> findAll(Pageable pageable);
-//
-//    Station findByIp(String Ip);
 }

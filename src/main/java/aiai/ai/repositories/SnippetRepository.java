@@ -26,6 +26,5 @@ import java.util.Optional;
 @Repository
 public interface SnippetRepository extends CrudRepository<Snippet, Long> {
 
-//    Optional<Snippet> findByNameAndSnippetVersion(String name, String snippetVersion);
     Snippet findByNameAndSnippetVersion(String name, String snippetVersion);
 }

@@ -19,9 +19,12 @@
 package aiai.ai.launchpad;
 
 import aiai.ai.Globals;
+import aiai.ai.beans.DatasetGroup;
 import aiai.ai.beans.Snippet;
 import aiai.ai.launchpad.dataset.DatasetUtils;
 import aiai.ai.launchpad.snippet.SnippetVersion;
+import aiai.ai.repositories.DatasetGroupsRepository;
+import aiai.ai.repositories.DatasetRepository;
 import aiai.ai.repositories.SnippetRepository;
 import org.springframework.core.io.PathResource;
 import org.springframework.http.HttpEntity;
@@ -38,11 +41,13 @@ import java.io.File;
 public class PayloadController {
 
     private  final SnippetRepository snippetRepository;
+    private  final DatasetGroupsRepository datasetGroupsRepository;
 
     private final Globals globals;
 
-    public PayloadController(SnippetRepository snippetRepository, Globals globals) {
+    public PayloadController(SnippetRepository snippetRepository, DatasetGroupsRepository datasetGroupsRepository, Globals globals) {
         this.snippetRepository = snippetRepository;
+        this.datasetGroupsRepository = datasetGroupsRepository;
         this.globals = globals;
     }
 
@@ -57,10 +62,16 @@ public class PayloadController {
         return new HttpEntity<>(new PathResource(datasetFile.toPath()), header);
     }
 
-    @GetMapping("/feature/{datasetId}/{featureId}")
-    public HttpEntity<PathResource> feature(@PathVariable("datasetId") long datasetId, @PathVariable("featureId") long featureId) {
+    @GetMapping("/feature/{featureId}")
+    public HttpEntity<PathResource> feature(@PathVariable("featureId") long featureId) {
 
-        final File featureFile = DatasetUtils.getFeatureFile(globals.launchpadDir, datasetId, featureId);
+        DatasetGroup datasetGroup = datasetGroupsRepository.findById(featureId).orElse(null);
+        if (datasetGroup==null) {
+            // TODO or better to throw exception, or return 501/404 hhtp code?
+            return null;
+        }
+
+        final File featureFile = DatasetUtils.getFeatureFile(globals.launchpadDir, datasetGroup.getDataset().getId(), featureId);
 
         HttpHeaders header = new HttpHeaders();
         header.setContentLength(featureFile.length());

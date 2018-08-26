@@ -63,5 +63,4 @@ public class StationExperimentSequence implements Serializable {
     @Column(name="SNIPPET_EXEC_RESULTS")
     private String snippetExecResults;
 
-
 }
