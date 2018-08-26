@@ -21,8 +21,10 @@ package aiai.ai.repositories;
 import aiai.ai.beans.Experiment;
 import aiai.ai.beans.ExperimentSequence;
 import aiai.ai.beans.ExperimentSnippet;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,8 +37,19 @@ public interface ExperimentSequenceRepository extends CrudRepository<ExperimentS
     @Transactional(readOnly = true)
     List<ExperimentSequence> findByExperimentIdAndFeatureId(long experiimentId, long featureId);
 
-    Slice<ExperimentSequence> findAllByStationIdIsNull(Pageable pageable);
+    @Transactional(readOnly = true)
+    Slice<ExperimentSequence> findAllByStationIdIsNullAndFeatureId(Pageable pageable, long featureId);
 
-    ExperimentSequence findTop1ByStationIdIsNotNullAndIsCompletedIsFalse();
+/*
+    @Transactional(readOnly = true)
+    @Query("SELECT r FROM ExperimentSequence r " +
+            "where r.stationId is not null and r.completed=false and numberOfCopies<:maxCopies and r.id  ")
+    ExperimentSequence findTop1ByStationIdIsNotNullAndIsCompletedIsFalse(Pageable limit);
+*/
+    @Transactional(readOnly = true)
+    ExperimentSequence findTop1ByStationIdIsNotNullAndIsCompletedIsFalseAndFeatureId(Long featureId);
+
+    @Transactional(readOnly = true)
+    ExperimentSequence findTop1ByIsCompletedIsFalseAndFeatureId(Long featureId);
 
 }

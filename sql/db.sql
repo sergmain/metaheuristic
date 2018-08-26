@@ -79,7 +79,6 @@ CREATE TABLE AIAI_LP_EXPERIMENT_FEATURE (
   EXPERIMENT_ID          NUMERIC(10, 0) NOT NULL,
   VERSION     NUMERIC(5, 0)  NOT NULL,
   FEATURE_IDS  MEDIUMTEXT not null,
-  IS_PRODUCED    tinyint(1) not null default 0,
   IS_IN_PROGRESS    tinyint(1) not null default 0,
   IS_FINISHED    tinyint(1) not null default 0
 );

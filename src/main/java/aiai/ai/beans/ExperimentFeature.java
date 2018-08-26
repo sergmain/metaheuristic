@@ -40,8 +40,8 @@ public class ExperimentFeature implements Serializable {
     @Column(name = "FEATURE_IDS")
     private String featureIds;
 
-    @Column(name="IS_PRODUCED")
-    private boolean isProduced;
+    @Column(name="IS_IN_PROGRESS")
+    private boolean isInProgress;
 
     @Column(name="IS_FINISHED")
     private boolean isFinished;

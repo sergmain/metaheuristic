@@ -20,6 +20,7 @@ package aiai.ai.repositories;
 
 import aiai.ai.beans.ExperimentFeature;
 import aiai.ai.beans.ExperimentSnippet;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,5 +32,17 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
 
     @Transactional(readOnly = true)
     List<ExperimentFeature> findByExperimentId(Long experimentId);
+
+    // continue process the same feature
+    @Transactional(readOnly = true)
+    List<ExperimentFeature> findAllByIsFinishedIsFalseAndIsInProgressIsTrue();
+
+    // continue process the same feature
+    @Transactional(readOnly = true)
+    ExperimentFeature findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
+
+    // find new feature for processing
+    @Transactional(readOnly = true)
+    ExperimentFeature findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse();
 
 }

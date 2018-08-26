@@ -64,12 +64,38 @@ public class ExperimentService {
 
     public synchronized List<Protocol.AssignedExperimentSequence.SimpleSequence> getSequncesAndAssignToStation(long stationId, int recordNumber) {
 
-        ExperimentSequence sequence = experimentSequenceRepository.findTop1ByStationIdIsNotNullAndIsCompletedIsFalse();
+        // check and mark all completed features
+        List<ExperimentFeature> fs = experimentFeatureRepository.findAllByIsFinishedIsFalseAndIsInProgressIsTrue();
+        for (ExperimentFeature feature : fs) {
+            if (experimentSequenceRepository.findTop1ByIsCompletedIsFalseAndFeatureId(feature.getId())==null) {
+                feature.setInProgress(true);
+                experimentFeatureRepository.save(feature);
+            }
+        }
+
+        // main part, prepare new batch of sequences for station
+
+        ExperimentFeature feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
+        if (feature==null) {
+            feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse();
+        }
+
+        if (feature==null) {
+            return null;
+        }
+
+        ExperimentSequence sequence = experimentSequenceRepository.findTop1ByStationIdIsNotNullAndIsCompletedIsFalseAndFeatureId(feature.getId());
         if (sequence!=null) {
             return new ArrayList<>();
         }
 
-        Slice<ExperimentSequence> seqs = experimentSequenceRepository.findAllByStationIdIsNull(PageRequest.of(0, recordNumber));
+        sequence = experimentSequenceRepository.findTop1ByStationIdIsNotNullAndIsCompletedIsFalseAndFeatureId(feature.getId());
+        if (sequence!=null) {
+            return new ArrayList<>();
+        }
+
+
+        Slice<ExperimentSequence> seqs = experimentSequenceRepository.findAllByStationIdIsNullAndFeatureId(PageRequest.of(0, recordNumber), feature.getId());
         List<Protocol.AssignedExperimentSequence.SimpleSequence> result = new ArrayList<>(recordNumber+1);
         for (ExperimentSequence seq : seqs) {
             Protocol.AssignedExperimentSequence.SimpleSequence ss = new Protocol.AssignedExperimentSequence.SimpleSequence();
@@ -81,7 +107,9 @@ public class ExperimentService {
             result.add(ss);
         }
         experimentSequenceRepository.saveAll(seqs);
+
         return result;
+
     }
 
     public List<Long> storeAllResults(List<SimpleSequenceExecResult> results) {
@@ -224,7 +252,6 @@ public class ExperimentService {
                                 localCache.put(experimentSnippet.getSnippetCode(), snippet);
                             }
                         }
-//                    Snippet snippet = localCache.putIfAbsent(experimentSnippet.getSnippetCode(), snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version));
                         if (snippet==null) {
                             log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
                             continue;
@@ -249,6 +276,7 @@ public class ExperimentService {
                     ExperimentSequence sequence = new ExperimentSequence();
                     sequence.setExperimentId(experiment.getId());
                     sequence.setParams(sequenceParams);
+                    sequence.setFeatureId(feature.getId());
                     experimentSequenceRepository.save(sequence);
                 }
             }
