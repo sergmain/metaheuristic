@@ -22,6 +22,7 @@ import aiai.ai.repositories.LogDataRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -30,6 +31,7 @@ import java.io.InputStream;
 import java.util.List;
 
 @Service
+@Slf4j
 public class ProcessService {
 
     @Data
@@ -39,6 +41,10 @@ public class ProcessService {
         private boolean isOk;
         public int exitCode;
         public String console;
+    }
+
+    private static class StreamHolder {
+        private InputStream is;
     }
 
     private final LogDataRepository logDataRepository;
@@ -55,21 +61,36 @@ public class ProcessService {
         final Process process = pb.start();
 
         final StringBuilder out = new StringBuilder();
-        final Thread reader = new Thread(() -> {
-            try {
-                final InputStream is = process.getInputStream();
-                int c;
-                while ((c = is.read()) != -1) {
-                    out.append((char) c);
+        final StreamHolder streamHolder = new StreamHolder();
+        int exitCode;
+        try {
+            final Thread reader = new Thread(() -> {
+                try {
+                    streamHolder.is = process.getInputStream();
+                    int c;
+                    while ((c = streamHolder.is.read()) != -1) {
+                        out.append((char) c);
+                    }
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        reader.start();
+                catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            reader.start();
 
-        final int exitCode = process.waitFor();
-        reader.join();
+            exitCode = process.waitFor();
+            reader.join();
+        }
+        finally {
+            try {
+                if (streamHolder.is!=null) {
+                    streamHolder.is.close();
+                }
+            }
+            catch(Throwable th) {
+                log.warn("Error with closing InputStream", th);
+            }
+        }
 
         System.out.println("Any errors of execution? " + (exitCode == 0 ? "No" : "Yes"));
 //        System.out.println(out);

@@ -60,7 +60,10 @@ public class Dataset implements Serializable {
     @Column(name = "IS_EDITABLE")
     private boolean isEditable;
 
-    @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL)
+    @Column(name = "IS_LOCKED")
+    private boolean isLocked;
+
+    @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
     private List<DatasetGroup> datasetGroups;
 
     public Dataset() {

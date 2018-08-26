@@ -36,7 +36,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.annotation.PostConstruct;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
@@ -61,13 +60,13 @@ public class DatasetsController {
 
     private final Globals globals;
 
-    private final DatasetsRepository repository;
+    private final DatasetRepository repository;
     private final DatasetGroupsRepository groupsRepository;
     private final DatasetColumnRepository columnRepository;
     private final DatasetPathRepository pathRepository;
     private final ProcessService processService;
 
-    public DatasetsController(Globals globals, DatasetsRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService) {
+    public DatasetsController(Globals globals, DatasetRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService) {
         this.globals = globals;
         this.repository = repository;
         this.groupsRepository = groupsRepository;

@@ -43,6 +43,9 @@ public class ExperimentSequence implements Serializable {
     @Column(name = "EXPERIMENT_ID")
     private Long experimentId;
 
+    @Column(name = "FEATURE_ID")
+    private Long featureId;
+
     @Column(name = "PARAMS")
     private String params;
 

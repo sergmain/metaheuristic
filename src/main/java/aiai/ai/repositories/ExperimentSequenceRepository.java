@@ -33,7 +33,7 @@ import java.util.List;
 public interface ExperimentSequenceRepository extends CrudRepository<ExperimentSequence, Long> {
 
     @Transactional(readOnly = true)
-    List<ExperimentSequence> findByExperimentId(Long experiimentId);
+    List<ExperimentSequence> findByExperimentIdAndFeatureId(long experiimentId, long featureId);
 
     Slice<ExperimentSequence> findAllByStationIdIsNull(Pageable pageable);
 

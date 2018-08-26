@@ -23,9 +23,8 @@ import aiai.ai.beans.*;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.snippet.SnippetVersion;
-import aiai.ai.repositories.ExperimentRepository;
-import aiai.ai.repositories.ExperimentSequenceRepository;
-import aiai.ai.repositories.SnippetRepository;
+import aiai.ai.repositories.*;
+import aiai.ai.utils.permutation.Permutation;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
@@ -50,13 +49,17 @@ public class ExperimentService {
     private final Globals globals;
     private final ExperimentRepository experimentRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
+    private final ExperimentFeatureRepository experimentFeatureRepository;
     private final SnippetRepository snippetRepository;
+    private final DatasetRepository datasetRepository;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, SnippetRepository snippetRepository) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, DatasetRepository datasetRepository) {
         this.globals = globals;
         this.experimentRepository = experimentRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
+        this.experimentFeatureRepository = experimentFeatureRepository;
         this.snippetRepository = snippetRepository;
+        this.datasetRepository = datasetRepository;
     }
 
     public synchronized List<Protocol.AssignedExperimentSequence.SimpleSequence> getSequncesAndAssignToStation(long stationId, int recordNumber) {
@@ -146,73 +149,110 @@ public class ExperimentService {
                 continue;
             }
 
-            Set<String> sequnces = new LinkedHashSet<>();
-
-            for (ExperimentSequence experimentSequence : experimentSequenceRepository.findByExperimentId(experiment.getId())) {
-                if (sequnces.contains(experimentSequence.getParams())) {
-                    // delete doubles records
-                    System.out.println("!!! Found doubles. ExperimentId: " + experiment.getId()+", hyperParams: " + experimentSequence.getParams());
-                    experimentSequenceRepository.delete(experimentSequence);
-                    continue;
-                }
-                sequnces.add(experimentSequence.getParams());
+            Dataset dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
+            if (dataset == null) {
+                experiment.setDatasetId(null);
+                experiment.setNumberOfSequence(0);
+                experiment.setAllSequenceProduced(false);
+                experimentRepository.save(experiment);
+                continue;
             }
 
-            Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
-            List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+            int totalVariants = 0;
 
-            if (experiment.getNumberOfSequence()!=allHyperParams.size()) {
-                System.out.println(String.format(
-                        "!!! number of sequnce is different. experiment.getNumberOfSequence():  %d, allHyperParams.size(): %d",
-                        experiment.getNumberOfSequence(), allHyperParams.size()));
+            List<Long> ids = new ArrayList<>();
+            for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
+                ids.add(datasetGroup.getId());
             }
-
-            Map<String, Snippet> localCache = new HashMap<>();
-            for (HyperParams hyperParams : allHyperParams) {
-                SequenceYaml yaml = new SequenceYaml();
-                yaml.setHyperParams( hyperParams.toSortedMap() );
-                yaml.setExperimentId( experiment.getId() );
-                yaml.setDatasetId( experiment.getDatasetId() );
-
-                List<SimpleSnippet> snippets = new ArrayList<>();
-                experiment.sortSnippetsByOrder();
-                for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
-                    SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                    Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
-                    if (snippet==null) {
-                        snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
-                        if (snippet!=null) {
-                            localCache.put(experimentSnippet.getSnippetCode(), snippet);
+            Permutation<Long> permutation = new Permutation<>();
+            for (int i = 0; i < ids.size(); i++) {
+                permutation.printCombination(ids, i+1,
+                        data -> {
+                            final String idsAsStr = String.valueOf(data);
+                            final ExperimentFeature feature = new ExperimentFeature();
+                            feature.setExperimentId(experiment.getId());;
+                            feature.setFeatureIds(idsAsStr);
+                            experimentFeatureRepository.save(feature);
+                            return true;
                         }
-                    }
-//                    Snippet snippet = localCache.putIfAbsent(experimentSnippet.getSnippetCode(), snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version));
-                    if (snippet==null) {
-                        log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
+                );
+            }
+
+            List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
+            for (ExperimentFeature feature : features) {
+                Set<String> sequnces = new LinkedHashSet<>();
+
+                for (ExperimentSequence experimentSequence : experimentSequenceRepository.findByExperimentIdAndFeatureId(experiment.getId(), feature.getId())) {
+                    if (sequnces.contains(experimentSequence.getParams())) {
+                        // delete doubles records
+                        log.warn("!!! Found doubles. ExperimentId: {}, featureId: {}, hyperParams: {}", experiment.getId(), feature.getId(), experimentSequence.getParams());
+                        experimentSequenceRepository.delete(experimentSequence);
                         continue;
                     }
-                    snippets.add(new SimpleSnippet(
-                            SnippetType.valueOf(experimentSnippet.getType()),
-                            experimentSnippet.getSnippetCode(),
-                            snippet.getFilename(),
-                            snippet.checksum,
-                            snippet.env,
-                            experimentSnippet.getOrder()
-                            ));
-                }
-                yaml.snippets = snippets;
-
-                String sequenceParams = SequenceYamlUtils.toString(yaml);
-
-                if (sequnces.contains(sequenceParams)) {
-                    continue;
+                    sequnces.add(experimentSequence.getParams());
                 }
 
-                ExperimentSequence sequence = new ExperimentSequence();
-                sequence.setExperimentId(experiment.getId());
-                sequence.setParams(sequenceParams);
-                experimentSequenceRepository.save(sequence);
+                final Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
+                final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+                totalVariants += allHyperParams.size();
+
+                if (experiment.getNumberOfSequence()!=allHyperParams.size()) {
+                    System.out.println(String.format(
+                            "!!! number of sequnce is different. experiment.getNumberOfSequence():  %d, allHyperParams.size(): %d",
+                            experiment.getNumberOfSequence(), allHyperParams.size()));
+                }
+
+                final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
+                final List<Long> featureIds = Collections.unmodifiableList(ofVariants.values.stream().map(Long::valueOf).collect(Collectors.toList()));
+
+                Map<String, Snippet> localCache = new HashMap<>();
+                for (HyperParams hyperParams : allHyperParams) {
+                    SequenceYaml yaml = new SequenceYaml();
+                    yaml.setHyperParams( hyperParams.toSortedMap() );
+                    yaml.setExperimentId( experiment.getId() );
+                    yaml.setDatasetId( experiment.getDatasetId() );
+                    yaml.setFeatureIds( featureIds ) ;
+
+                    final List<SimpleSnippet> snippets = new ArrayList<>();
+                    experiment.sortSnippetsByOrder();
+                    for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
+                        final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
+                        Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
+                        if (snippet==null) {
+                            snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                            if (snippet!=null) {
+                                localCache.put(experimentSnippet.getSnippetCode(), snippet);
+                            }
+                        }
+//                    Snippet snippet = localCache.putIfAbsent(experimentSnippet.getSnippetCode(), snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version));
+                        if (snippet==null) {
+                            log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
+                            continue;
+                        }
+                        snippets.add(new SimpleSnippet(
+                                SnippetType.valueOf(experimentSnippet.getType()),
+                                experimentSnippet.getSnippetCode(),
+                                snippet.getFilename(),
+                                snippet.checksum,
+                                snippet.env,
+                                experimentSnippet.getOrder()
+                        ));
+                    }
+                    yaml.snippets = snippets;
+
+                    String sequenceParams = SequenceYamlUtils.toString(yaml);
+
+                    if (sequnces.contains(sequenceParams)) {
+                        continue;
+                    }
+
+                    ExperimentSequence sequence = new ExperimentSequence();
+                    sequence.setExperimentId(experiment.getId());
+                    sequence.setParams(sequenceParams);
+                    experimentSequenceRepository.save(sequence);
+                }
             }
-            experiment.setNumberOfSequence(allHyperParams.size());
+            experiment.setNumberOfSequence(totalVariants);
             experiment.setAllSequenceProduced(true);
             experimentRepository.save(experiment);
         }

@@ -31,7 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Component
 @Transactional
-public interface DatasetsRepository extends CrudRepository<Dataset, Long> {
+public interface DatasetRepository extends CrudRepository<Dataset, Long> {
 
     @Transactional(readOnly = true)
     Slice<Dataset> findAll(Pageable pageable);

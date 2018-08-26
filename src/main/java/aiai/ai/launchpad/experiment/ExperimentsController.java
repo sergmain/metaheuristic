@@ -22,7 +22,6 @@ import aiai.ai.beans.*;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.*;
-import aiai.ai.yaml.hyper_params.HyperParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -54,18 +53,22 @@ public class ExperimentsController {
     @Value("${aiai.table.rows.limit:#{5}}")
     private int limit;
 
-    private final DatasetsRepository datasetRepository;
+    private final DatasetRepository datasetRepository;
+    private final DatasetGroupsRepository datasetGroupsRepository;
     private final ExperimentRepository experimentRepository;
     private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
     private final SnippetRepository snippetRepository;
     private final ExperimentSnippetRepository experimentSnippetRepository;
+    private final ExperimentFeatureRepository experimentFeatureRepository;
 
-    public ExperimentsController(DatasetsRepository datasetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository) {
+    public ExperimentsController(DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository) {
         this.datasetRepository = datasetRepository;
+        this.datasetGroupsRepository = datasetGroupsRepository;
         this.experimentRepository = experimentRepository;
         this.experimentHyperParamsRepository = experimentHyperParamsRepository;
         this.snippetRepository = snippetRepository;
         this.experimentSnippetRepository = experimentSnippetRepository;
+        this.experimentFeatureRepository = experimentFeatureRepository;
     }
 
     @Data
@@ -394,11 +397,15 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#84.03 dataset wasn't assigned, experimentId: " + experimentId);
             return "redirect:/launchpad/experiments";
         }
+        Dataset dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
+        if (dataset == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#84.04 experiment has broken link to dataset. Need to reassign a dataset.");
+            return "redirect:/launchpad/experiments";
+        }
+        dataset.setLocked(false);
+        dataset.setEditable(false);
+        datasetRepository.save(dataset);
 
-        Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
-        List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
-
-        experiment.setNumberOfSequence(allHyperParams.size());
         experiment.setLaunched(true);
         experiment.setLaunchedOn(System.currentTimeMillis());
         experimentRepository.save(experiment);
