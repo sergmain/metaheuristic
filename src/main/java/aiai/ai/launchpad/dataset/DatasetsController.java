@@ -436,7 +436,7 @@ public class DatasetsController {
             throw new IllegalStateException("Dataset file doesn't exist: " + datasetFile.getAbsolutePath());
         }
 
-        final String featurePath = String.format("%s%c%s%c%03d", definitionPath, File.separatorChar, Consts.FEATURES_DIR, File.separatorChar, group.getGroupNumber());
+        final String featurePath = String.format("%s%c%s%c%03d", definitionPath, File.separatorChar, Consts.FEATURE_DIR, File.separatorChar, group.getId());
         final File featureDir = new File(globals.launchpadDir, featurePath);
         if (!featureDir.exists()) {
             boolean status = featureDir.mkdirs();
@@ -453,7 +453,7 @@ public class DatasetsController {
         }
 
 
-        final String featureFilename = String.format("%s%cfeature-%03d.", featurePath, File.separatorChar, group.getGroupNumber());
+        final String featureFilename = String.format("%s%cfeature-%03d.", featurePath, File.separatorChar, group.getId());
         File featureFile = new File(globals.launchpadDir, featureFilename);
         File featureFileBak = new File(globals.launchpadDir, featureFilename + ".bak");
 

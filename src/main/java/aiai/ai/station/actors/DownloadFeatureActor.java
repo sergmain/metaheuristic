@@ -62,8 +62,8 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
             return;
         }
 
-        File dsDir = StationDatasetUtils.checkEvironment(globals.stationDir);
-        if (dsDir == null) {
+        File stationDir = StationDatasetUtils.checkEvironment(globals.stationDir);
+        if (stationDir == null) {
             return;
         }
 
@@ -72,12 +72,12 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
             if (Boolean.TRUE.equals(preparedMap.get(task.getFeatureId()))) {
                 continue;
             }
-            AssetFile assetFile = StationFeatureUtils.prepareFeatureFile(dsDir, task.datasetId, task.featureId);
+            AssetFile assetFile = StationFeatureUtils.prepareFeatureFile(stationDir, task.datasetId, task.featureId);
             if (assetFile.isError) {
                 return;
             }
             try {
-                Request.Get(targetUrl + '/' + task.getDatasetId()).execute().saveContent(assetFile.file);
+                Request.Get(targetUrl + '/' + task.getFeatureId()).execute().saveContent(assetFile.file);
             }
             catch (IOException e) {
                 e.printStackTrace();

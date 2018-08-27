@@ -41,23 +41,17 @@ public class DatasetUtils {
     }
 
     public static File getFeatureFile(File launchpadDir, long datasetId, long featureId) {
-        final String definitionPath = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, datasetId);
+        final String featurePath = String.format("%s%c%03d%cfeature%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, datasetId, File.separatorChar, File.separatorChar, featureId);
 
-        final File definitionDir = DirUtils.createDir(launchpadDir, definitionPath);
-        if (definitionDir==null || !definitionDir.exists()) {
-            throw new IllegalStateException("Error create directory: " + definitionPath);
-        }
-
-        final String featureNumner = String.format("%03d", featureId);
-        final File featureDir = DirUtils.createDir(definitionDir, featureNumner);
+        final File featureDir = DirUtils.createDir(launchpadDir, featurePath);
         if (featureDir==null || !featureDir.exists()) {
-            throw new IllegalStateException("Error create feature dir: " + featureNumner);
+            throw new IllegalStateException("Error create directory: " + featurePath);
         }
 
         final String featureFilename = String.format(Consts.FEATURE_FILE_MASK, featureId);
         final File datasetFile = new File(featureDir, featureFilename);
         if (!datasetFile.exists()) {
-            throw new IllegalStateException("Dataset file doesn't exist: " + datasetFile.getAbsolutePath());
+            throw new IllegalStateException("Feature file doesn't exist: " + datasetFile.getAbsolutePath());
         }
         return datasetFile;
     }

@@ -25,24 +25,18 @@ import java.io.File;
 @Slf4j
 public class StationFeatureUtils {
 
-    public static AssetFile prepareFeatureFile(File dsDir, long datasetId, long featureId) {
+    public static AssetFile prepareFeatureFile(File stationDir, long datasetId, long featureId) {
 
         final AssetFile assetFile = new AssetFile();
 
-        final String subDir = String.format("%03d", datasetId);
-        final File currDir = DirUtils.createDir(dsDir, subDir);
-        if (currDir==null) {
-            assetFile.isError = true;
-            return assetFile;
-        }
-
-        File featureDir = DirUtils.createDir(currDir, "feature");
+        final String featurePath = String.format("%03d%cfeature%c", datasetId, File.separatorChar, File.separatorChar);
+        final File featureDir = DirUtils.createDir(stationDir, featurePath);
         if (featureDir==null) {
             assetFile.isError = true;
             return assetFile;
         }
 
-        assetFile.file = new File(featureDir, String.format("feature-%04d", featureId));
+        assetFile.file = new File(featureDir, String.format("feature-%04d.txt", featureId));
         if (assetFile.file.exists()) {
             if (assetFile.file.length() == 0) {
                 assetFile.file.delete();
