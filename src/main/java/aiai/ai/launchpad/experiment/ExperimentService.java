@@ -32,6 +32,7 @@ import aiai.ai.yaml.sequence.SimpleSnippet;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -237,6 +238,7 @@ public class ExperimentService {
                 final List<Long> featureIds = Collections.unmodifiableList(ofVariants.values.stream().map(Long::valueOf).collect(Collectors.toList()));
 
                 Map<String, Snippet> localCache = new HashMap<>();
+                boolean isNew = false;
                 for (HyperParams hyperParams : allHyperParams) {
                     SequenceYaml yaml = new SequenceYaml();
                     yaml.setHyperParams( hyperParams.toSortedMap() );
@@ -281,6 +283,29 @@ public class ExperimentService {
                     sequence.setParams(sequenceParams);
                     sequence.setFeatureId(feature.getId());
                     experimentSequenceRepository.save(sequence);
+                    isNew = true;
+                }
+                if (isNew) {
+                    boolean isOk = false;
+                    for (int i = 0; i <3; i++) {
+                        try {
+                            ExperimentFeature f = experimentFeatureRepository.findById(feature.getId()).orElse(null);
+                            if (f==null) {
+                                log.warn("Unxpected behaviour, feature with id {} wasn't found", feature.getId());
+                                break;
+                            }
+                            f.setFinished(false);
+                            experimentFeatureRepository.save(f);
+                            isOk = true;
+                            break;
+                        }
+                        catch (ObjectOptimisticLockingFailureException e) {
+                            log.info("Feature record was changed. {}", e.getMessage());
+                        }
+                    }
+                    if (!isOk) {
+                        log.warn("The new sequences were produced but feature wasn't changed");
+                    }
                 }
             }
             experiment.setNumberOfSequence(totalVariants);

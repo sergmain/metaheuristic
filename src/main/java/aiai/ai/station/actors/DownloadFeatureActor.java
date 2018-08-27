@@ -72,7 +72,7 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
             if (Boolean.TRUE.equals(preparedMap.get(task.getFeatureId()))) {
                 continue;
             }
-            AssetFile assetFile = StationFeatureUtils.prepareFeatureFile(dsDir, task.datasetId, task.datasetId);
+            AssetFile assetFile = StationFeatureUtils.prepareFeatureFile(dsDir, task.datasetId, task.featureId);
             if (assetFile.isError) {
                 return;
             }

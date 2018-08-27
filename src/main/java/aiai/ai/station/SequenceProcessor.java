@@ -148,7 +148,7 @@ public class SequenceProcessor {
                     continue;
                 }
 
-                System.out.println("!!! all system are checked, lift off !!! ");
+                log.info("!!! all system are checked, lift off !!! ");
 
                 try {
                     List<String> cmd = new ArrayList<>();

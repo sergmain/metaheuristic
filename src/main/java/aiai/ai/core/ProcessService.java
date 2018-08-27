@@ -92,8 +92,8 @@ public class ProcessService {
             }
         }
 
-        System.out.println("Any errors of execution? " + (exitCode == 0 ? "No" : "Yes"));
-//        System.out.println(out);
+        log.info("Any errors of execution? {}", (exitCode == 0 ? "No" : "Yes"));
+        log.debug("Console output: {}",out);
         LogData logData = new LogData();
         logData.setRefId(refId);
         logData.setType(type);
