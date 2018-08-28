@@ -21,6 +21,7 @@ import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
+import aiai.ai.yaml.sequence.SimpleDataset;
 import aiai.ai.yaml.sequence.SimpleSnippet;
 import org.junit.Assert;
 import org.junit.Test;
@@ -36,7 +37,7 @@ public class TestSequenceYaml {
     @Test
     public void testSequenceYaml() {
         SequenceYaml seq = new SequenceYaml();
-        seq.setDatasetId(1L);
+        seq.dataset = SimpleDataset.of(1L);
         seq.setExperimentId(2L);
         Map<String, String> map = new HashMap<>();
         map.put("key1", "#1");

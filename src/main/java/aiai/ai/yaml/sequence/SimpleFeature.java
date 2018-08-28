@@ -19,16 +19,14 @@ package aiai.ai.yaml.sequence;
 
 import lombok.Data;
 
-import java.util.List;
-import java.util.Map;
-
 @Data
-public class SequenceYaml {
-    public Long experimentId;
-    public SimpleDataset dataset;
-    public List<SimpleFeature> features;
-    public List<SimpleSnippet> snippets;
-    public Map<String, String> hyperParams;
+public class SimpleFeature {
+    public long id;
+    public String path;
 
-    public String artifactPath;
+    public static SimpleFeature of(String id) {
+        SimpleFeature sf = new SimpleFeature();
+        sf.id = Long.parseLong(id);
+        return sf;
+    }
 }

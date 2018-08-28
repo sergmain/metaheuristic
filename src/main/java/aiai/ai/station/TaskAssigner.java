@@ -28,6 +28,7 @@ import aiai.ai.station.tasks.DownloadFeatureTask;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
+import aiai.ai.yaml.sequence.SimpleFeature;
 import aiai.ai.yaml.sequence.SimpleSnippet;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -57,9 +58,9 @@ public class TaskAssigner {
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
             final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
-            createDownloadDatasetTask(sequenceYaml.getDatasetId());
-            for (Long featureId : sequenceYaml.featureIds) {
-                createDownloadFeatureTask(sequenceYaml.getDatasetId(), featureId);
+            createDownloadDatasetTask(sequenceYaml.dataset.id);
+            for (SimpleFeature simpleFeature : sequenceYaml.features) {
+                createDownloadFeatureTask(sequenceYaml.dataset.id, simpleFeature.id);
             }
             for (SimpleSnippet snippet : sequenceYaml.getSnippets()) {
                 createDownloadSnippetTask(snippet);

@@ -17,8 +17,13 @@
  */
 package aiai.ai.station;
 
+import lombok.Data;
+import lombok.ToString;
+
 import java.io.File;
 
+@ToString
+@Data
 public class AssetFile {
     public File file;
     public boolean isError;

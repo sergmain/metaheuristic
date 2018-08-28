@@ -21,11 +21,11 @@ import java.io.File;
 
 public class StationDatasetUtils {
 
-    public static AssetFile prepareDatasetFile(File dsDir, long datasetId) {
+    public static AssetFile prepareDatasetFile(File stationDir, long datasetId) {
 
         AssetFile datasetFile = new AssetFile();
 
-        File currDir = new File(dsDir, String.format("%03d", datasetId));
+        File currDir = new File(stationDir, String.format("%03d", datasetId));
         if (!currDir.exists()) {
             boolean isOk = currDir.mkdirs();
             if (!isOk) {

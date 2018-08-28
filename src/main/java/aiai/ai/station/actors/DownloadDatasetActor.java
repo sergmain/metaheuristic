@@ -62,8 +62,8 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
             return;
         }
 
-        File dsDir = StationDatasetUtils.checkEvironment(globals.stationDir);
-        if (dsDir==null) {
+        File stationDir = StationDatasetUtils.checkEvironment(globals.stationDir);
+        if (stationDir==null) {
             return;
         }
 
@@ -72,7 +72,7 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
             if (Boolean.TRUE.equals(preparedMap.get(task.getDatasetId()))) {
                 continue;
             }
-            AssetFile assetFile = StationDatasetUtils.prepareDatasetFile(dsDir, task.datasetId);
+            AssetFile assetFile = StationDatasetUtils.prepareDatasetFile(stationDir, task.datasetId);
             if (assetFile.isError) {
                 return;
             }

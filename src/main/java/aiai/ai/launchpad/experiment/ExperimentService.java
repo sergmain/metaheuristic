@@ -26,9 +26,7 @@ import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.*;
 import aiai.ai.utils.permutation.Permutation;
 import aiai.ai.yaml.hyper_params.HyperParams;
-import aiai.ai.yaml.sequence.SequenceYaml;
-import aiai.ai.yaml.sequence.SequenceYamlUtils;
-import aiai.ai.yaml.sequence.SimpleSnippet;
+import aiai.ai.yaml.sequence.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -235,7 +233,7 @@ public class ExperimentService {
                 }
 
                 final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
-                final List<Long> featureIds = Collections.unmodifiableList(ofVariants.values.stream().map(Long::valueOf).collect(Collectors.toList()));
+                final List<SimpleFeature> simpleFeatures = Collections.unmodifiableList(ofVariants.values.stream().map(SimpleFeature::of).collect(Collectors.toList()));
 
                 Map<String, Snippet> localCache = new HashMap<>();
                 boolean isNew = false;
@@ -243,8 +241,8 @@ public class ExperimentService {
                     SequenceYaml yaml = new SequenceYaml();
                     yaml.setHyperParams( hyperParams.toSortedMap() );
                     yaml.setExperimentId( experiment.getId() );
-                    yaml.setDatasetId( experiment.getDatasetId() );
-                    yaml.setFeatureIds( featureIds ) ;
+                    yaml.setDataset( SimpleDataset.of(experiment.getDatasetId() ));
+                    yaml.setFeatures( simpleFeatures ); ;
 
                     final List<SimpleSnippet> snippets = new ArrayList<>();
                     experiment.sortSnippetsByOrder();
