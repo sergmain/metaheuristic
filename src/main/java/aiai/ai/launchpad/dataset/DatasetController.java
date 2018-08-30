@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
  */
 @Controller
 @RequestMapping("/launchpad")
-public class DatasetsController {
+public class DatasetController {
 
     public static final String ASSEMBLY_DATASET_YAML = "assembly-dataset.yaml";
     public static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";
@@ -66,7 +66,7 @@ public class DatasetsController {
     private final DatasetPathRepository pathRepository;
     private final ProcessService processService;
 
-    public DatasetsController(Globals globals, DatasetRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService) {
+    public DatasetController(Globals globals, DatasetRepository repository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService) {
         this.globals = globals;
         this.repository = repository;
         this.groupsRepository = groupsRepository;
@@ -771,6 +771,7 @@ public class DatasetsController {
 
     @PostMapping("/dataset-form-commit")
     public String datasetFormCommit(Dataset dataset) {
+        dataset.setEditable(true);
         repository.save(dataset);
         return "redirect:/launchpad/datasets";
     }

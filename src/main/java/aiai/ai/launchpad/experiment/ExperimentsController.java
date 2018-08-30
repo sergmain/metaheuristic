@@ -89,8 +89,8 @@ public class ExperimentsController {
         public Experiment experiment;
         public Dataset dataset;
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
+        List<ExperimentFeature> features = new ArrayList<>();
     }
-
 
     @GetMapping("/experiments")
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {

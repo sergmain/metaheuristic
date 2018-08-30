@@ -25,7 +25,7 @@
     <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
     <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
-    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.dataset.DatasetsController.DatasetDefinition"*/-->
+    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.dataset.DatasetController.DatasetDefinition"*/-->
     <p>&nbsp;</p>
     <h2 class="widget-header">General info</h2>
     <p th:if="${result.dataset.locked}" >Dataset is locked. The editing is disabled</p>
@@ -204,12 +204,14 @@
         </thead>
         <tbody>
         <tr th:each="g,gIterStatus : ${result.dataset.datasetGroups}" th:if="${g.isFeature()}">
-            <td><p th:text="${'Group Id' + g.id}">#Id</p></td>
+            <td><p th:text="${'' + g.id}">#Id</p></td>
             <td><p th:text="${'Group #' + g.groupNumber}">#Id</p></td>
             <td><p>Feature</p></td>
             <td th:if="${ result.dataset.editable}">
+<!--
                 <a class="pure-button pure-button-primary" href="dataset-column-form.html" th:href="${'/launchpad/dataset-column-add/' + g.id}"
                    th:if='${g.isAddColumn()}'>Add column</a>
+-->
                 <a class="pure-button pure-button-primary" href="#"
                    th:href="${'/launchpad/dataset-delete-group/' + g.id}" th:if='${g.datasetColumns.isEmpty()}'>Delete
                     group</a>
