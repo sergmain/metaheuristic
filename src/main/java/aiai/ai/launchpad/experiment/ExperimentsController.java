@@ -89,7 +89,7 @@ public class ExperimentsController {
         public Experiment experiment;
         public Dataset dataset;
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
-        List<ExperimentFeature> features = new ArrayList<>();
+        public List<ExperimentFeature> features;
     }
 
     @GetMapping("/experiments")
@@ -135,6 +135,8 @@ public class ExperimentsController {
         Dataset dataset = getDatasetAndCheck(experiment);
         experimentResult.experiment = experiment;
         experimentResult.dataset = dataset;
+        experimentResult.features = experimentFeatureRepository.findByExperimentId(experiment.getId());
+
         model.addAttribute("experimentResult", experimentResult);
         return "launchpad/experiment-info";
     }

@@ -38,16 +38,16 @@ public class ExperimentFeature implements Serializable {
     private Integer version;
 
     @Column(name = "FEATURE_IDS")
-    private String featureIds;
+    public String featureIds;
 
-    @Column(name="IS_IN_PROGRESS")
-    private boolean isInProgress;
+    @Column(name = "IS_IN_PROGRESS")
+    public boolean isInProgress;
 
-    @Column(name="IS_FINISHED")
-    private boolean isFinished;
+    @Column(name = "IS_FINISHED")
+    public boolean isFinished;
 
     @Column(name = "EXPERIMENT_ID")
-    private Long experimentId;
+    public Long experimentId;
 
 
 }

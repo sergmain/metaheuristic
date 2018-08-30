@@ -90,7 +90,7 @@
             </tr>
             </thead>
 
-            <tbody>
+            <tbody>Command for generating feature
             <tr th:each="m : ${experimentResult.experiment.hyperParams}">
                 <td th:text="${m.key}">Key</td>
                 <td th:text="${m.values}">Value</td>
@@ -98,8 +98,8 @@
             </tr>
             </tbody>
         </table>
-
         <p>&nbsp;</p>
+
         <h1 class="widget-header">Progress of experiment</h1>
         <div th:if="${experimentResult.experiment.launched}" th:text="${'Experiment is launched'}">
         </div>
@@ -109,9 +109,46 @@
             <a th:if="${!experimentResult.experiment.launched and experimentResult.experiment.datasetId!=null}"
                class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-launch/' + experimentResult.experiment.id}">Launch</a>
         </div>
-
-
         <p>&nbsp;</p>
+
+        <h1 class="widget-header">Dataset groups</h1>
+        <table class="pure-table pure-table-bordered" id="table-group" th:fragment="table-group">
+            <thead>
+            <tr>
+                <th width="150">Id</th>
+                <th width="600">Command for generating feature</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="g : ${experimentResult.dataset.datasetGroups}">
+                <td th:text="${g.id}">Group Id</td>
+                <td th:text="${g.command}">Command</td>
+            </tr>
+            </tbody>
+        </table>
+        <p>&nbsp;</p>
+
+        <h1 class="widget-header">Features</h1>
+        <table class="pure-table pure-table-bordered" id="table-feature" th:fragment="table-feature">
+            <thead>
+            <tr>
+                <th width="150">Id</th>
+                <th width="300">Command for generating feature</th>
+                <th width="150">Is finished?</th>
+            </tr>
+            </thead>
+
+            <tbody>
+            <tr th:each="f : ${experimentResult.features}">
+                <td th:text="${f.id}">Feature Id</td>
+                <td th:text="${f.featureIds}">Ids</td>
+                <td th:text="${f.finished}">Is finished?</td>
+            </tr>
+            </tbody>
+        </table>
+        <p>&nbsp;</p>
+
         <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">To list of experiments</a>
 
     </div>
