@@ -21,10 +21,13 @@ import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.beans.*;
 import aiai.ai.comm.Protocol;
+import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.*;
 import aiai.ai.utils.permutation.Permutation;
+import aiai.ai.yaml.console.SnippetExec;
+import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.sequence.*;
 import lombok.extern.slf4j.Slf4j;
@@ -67,6 +70,9 @@ public class ExperimentService {
         List<ExperimentFeature> fs = experimentFeatureRepository.findAllForLaunchedExperiments();
         for (ExperimentFeature feature : fs) {
             if (experimentSequenceRepository.findTop1ByIsCompletedIsFalseAndFeatureId(feature.getId())==null) {
+
+                feature.setAnyGoodResults(....);
+
                 feature.setFinished(true);
                 experimentFeatureRepository.save(feature);
             }
@@ -121,6 +127,24 @@ public class ExperimentService {
                 log.warn("Can't find ExperimentSequence for Id: {}", result.sequenceId);
                 continue;
             }
+
+            Experiment experiment = experimentRepository.findById(seq.getId()).orElse(null);
+            if (experiment==null) {
+                log.warn("Can't find Experiment for Id: {}", seq.getId());
+                continue;
+            }
+
+            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seq.getSnippetExecResults());
+            experiment.getSnippets().sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
+            boolean isAllOk = true;
+            for (ExperimentSnippet snippet : experiment.getSnippets()) {
+                ProcessService.Result r = snippetExec.getExecs().get(snippet.getOrder());
+                if (r==null || !r.isOk()) {
+                    isAllOk = false;
+                    break;
+                }
+            }
+            seq.setAllSnippetsOk(isAllOk);
             seq.setSnippetExecResults(result.getResult());
             seq.setCompleted(true);
             list.add(seq);

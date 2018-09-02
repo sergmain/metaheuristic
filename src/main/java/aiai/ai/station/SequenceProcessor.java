@@ -219,17 +219,19 @@ public class SequenceProcessor {
                 seqTemp.setSnippetExecResults(SnippetExecUtils.toString(new SnippetExec()));
                 stationExperimentSequenceRepository.save(seqTemp);
             }
-            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
-            final int execSize = snippetExec.getExecs().size();
-            if (sequenceYaml.getSnippets().size() != execSize) {
-                // if last exec Ok?
-                if (snippetExec.getExecs().get(execSize).isOk()) {
-                    log.warn("Don't mark this experimentSequence as finished because not all snippets were processed");
-                    return;
+            else {
+                SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
+                final int execSize = snippetExec.getExecs().size();
+                if (sequenceYaml.getSnippets().size() != execSize) {
+                    // if last exec Ok?
+                    if (snippetExec.getExecs().get(execSize).isOk()) {
+                        log.warn("Don't mark this experimentSequence as finished because not all snippets were processed");
+                        return;
+                    }
                 }
+                seqTemp.setFinishedOn(System.currentTimeMillis());
+                stationExperimentSequenceRepository.save(seqTemp);
             }
-            seqTemp.setFinishedOn(System.currentTimeMillis());
-            stationExperimentSequenceRepository.save(seqTemp);
         }
     }
 
