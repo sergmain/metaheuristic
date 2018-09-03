@@ -68,10 +68,14 @@ public class ExperimentService {
 
         // check and mark all completed features
         List<ExperimentFeature> fs = experimentFeatureRepository.findAllForLaunchedExperiments();
+        boolean isContinue = true;
         for (ExperimentFeature feature : fs) {
             if (experimentSequenceRepository.findTop1ByIsCompletedIsFalseAndFeatureId(feature.getId())==null) {
 
-                feature.setAnyGoodResults(....);
+                // 'good results' meaning that at least one sequence was finished without system error (all snippets returned exit code 0)
+                feature.setAnyGoodResults( experimentSequenceRepository.findTop1ByIsAllSnippetsOkIsTrueAndFeatureId(feature.getId())!=null );
+
+                isContinue = !feature.isAnyGoodResults();
 
                 feature.setFinished(true);
                 experimentFeatureRepository.save(feature);
@@ -80,15 +84,20 @@ public class ExperimentService {
 
         // main part, prepare new batch of sequences for station
 
+
+        // is there any feature which was started(in progress) and not finished yet?
         ExperimentFeature feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
         if (feature==null) {
+            // is there any feature which wasn't started and not finished yet?
             feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse();
         }
 
+        // there isn't any feature to process
         if (feature==null) {
             return null;
         }
 
+        //
         ExperimentSequence sequence = experimentSequenceRepository.findTop1ByStationIdIsNotNullAndIsCompletedIsFalseAndFeatureId(feature.getId());
         if (sequence!=null) {
             return new ArrayList<>();
