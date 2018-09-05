@@ -64,6 +64,8 @@ public class ExperimentService {
         this.datasetRepository = datasetRepository;
     }
 
+    private static final List<Protocol.AssignedExperimentSequence.SimpleSequence> EMPTY_FEATURES = Collections.unmodifiableList(new ArrayList<>());
+
     public synchronized List<Protocol.AssignedExperimentSequence.SimpleSequence> getSequncesAndAssignToStation(long stationId, int recordNumber) {
 
         // check and mark all completed features
@@ -86,28 +88,26 @@ public class ExperimentService {
 
 
         // is there any feature which was started(in progress) and not finished yet?
-        ExperimentFeature feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
-        if (feature==null) {
+//        ExperimentFeature feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
+        List<ExperimentFeature> features = experimentSequenceRepository.findAnyStartedButNotFinished(Consts.PAGE_REQUEST_1_REC, stationId);
+        ExperimentFeature feature;
+        if (features == null || features.isEmpty()) {
             // is there any feature which wasn't started and not finished yet?
             feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse();
+        } else {
+            feature = features.get(0);
         }
 
         // there isn't any feature to process
         if (feature==null) {
-            return null;
+            return EMPTY_FEATURES;
         }
 
         //
-        ExperimentSequence sequence = experimentSequenceRepository.findTop1ByStationIdIsNotNullAndIsCompletedIsFalseAndFeatureId(feature.getId());
+        ExperimentSequence sequence = experimentSequenceRepository.findTop1ByStationIdAndIsCompletedIsFalseAndFeatureId(stationId, feature.getId());
         if (sequence!=null) {
-            return new ArrayList<>();
+            return EMPTY_FEATURES;
         }
-
-        sequence = experimentSequenceRepository.findTop1ByStationIdIsNotNullAndIsCompletedIsFalseAndFeatureId(feature.getId());
-        if (sequence!=null) {
-            return new ArrayList<>();
-        }
-
 
         Slice<ExperimentSequence> seqs = experimentSequenceRepository.findAllByStationIdIsNullAndFeatureId(PageRequest.of(0, recordNumber), feature.getId());
         List<Protocol.AssignedExperimentSequence.SimpleSequence> result = new ArrayList<>(recordNumber+1);
@@ -119,6 +119,10 @@ public class ExperimentService {
             seq.setAssignedOn(System.currentTimeMillis());
             seq.setStationId(stationId);
             result.add(ss);
+        }
+        if (!feature.isInProgress) {
+            feature.setInProgress(true);
+            experimentFeatureRepository.save(feature);
         }
         experimentSequenceRepository.saveAll(seqs);
 
@@ -218,130 +222,143 @@ public class ExperimentService {
                 continue;
             }
 
-            int totalVariants = 0;
+            produceFeaturePermutations(dataset, experiment);
 
-            final List<ExperimentFeature> list = experimentFeatureRepository.findByExperimentId(experiment.getId());
+            produceSequences(experiment);
+        }
+    }
 
-            List<Long> ids = new ArrayList<>();
-            for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
-                ids.add(datasetGroup.getId());
-            }
-            Permutation<Long> permutation = new Permutation<>();
-            for (int i = 0; i < ids.size(); i++) {
-                permutation.printCombination(ids, i+1,
-                        data -> {
-                            final String idsAsStr = String.valueOf(data);
-                            if (isExist(list, idsAsStr)) {
-                                return true;
-                            }
-                            final ExperimentFeature feature = new ExperimentFeature();
-                            feature.setExperimentId(experiment.getId());;
-                            feature.setFeatureIds(idsAsStr);
-                            experimentFeatureRepository.save(feature);
-                            return true;
-                        }
-                );
-            }
+    public void produceSequences(Experiment experiment) {
+        int totalVariants = 0;
 
-            List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
-            for (ExperimentFeature feature : features) {
-                Set<String> sequnces = new LinkedHashSet<>();
+        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
+        for (ExperimentFeature feature : features) {
+            Set<String> sequnces = new LinkedHashSet<>();
 
-                for (ExperimentSequence experimentSequence : experimentSequenceRepository.findByExperimentIdAndFeatureId(experiment.getId(), feature.getId())) {
-                    if (sequnces.contains(experimentSequence.getParams())) {
-                        // delete doubles records
-                        log.warn("!!! Found doubles. ExperimentId: {}, featureId: {}, hyperParams: {}", experiment.getId(), feature.getId(), experimentSequence.getParams());
-                        experimentSequenceRepository.delete(experimentSequence);
-                        continue;
-                    }
-                    sequnces.add(experimentSequence.getParams());
+            for (ExperimentSequence experimentSequence : experimentSequenceRepository.findByExperimentIdAndFeatureId(experiment.getId(), feature.getId())) {
+                if (sequnces.contains(experimentSequence.getParams())) {
+                    // delete doubles records
+                    log.warn("!!! Found doubles. ExperimentId: {}, featureId: {}, hyperParams: {}", experiment.getId(), feature.getId(), experimentSequence.getParams());
+                    experimentSequenceRepository.delete(experimentSequence);
+                    continue;
                 }
+                sequnces.add(experimentSequence.getParams());
+            }
 
-                final Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
-                final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
-                totalVariants += allHyperParams.size();
+            final Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
+            final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+            totalVariants += allHyperParams.size();
 
-                if (experiment.getNumberOfSequence()!=allHyperParams.size()) {
+            if (experiment.getNumberOfSequence()!=allHyperParams.size()) {
+                if (experiment.getNumberOfSequence()==0) {
                     log.warn("!!! number of sequnce is different. experiment.getNumberOfSequence(): {}, allHyperParams.size(): {}", experiment.getNumberOfSequence(), allHyperParams.size());
                 }
-
-                final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
-                final List<SimpleFeature> simpleFeatures = Collections.unmodifiableList(ofVariants.values.stream().map(SimpleFeature::of).collect(Collectors.toList()));
-
-                Map<String, Snippet> localCache = new HashMap<>();
-                boolean isNew = false;
-                for (HyperParams hyperParams : allHyperParams) {
-                    SequenceYaml yaml = new SequenceYaml();
-                    yaml.setHyperParams( hyperParams.toSortedMap() );
-                    yaml.setExperimentId( experiment.getId() );
-                    yaml.setDataset( SimpleDataset.of(experiment.getDatasetId() ));
-                    yaml.setFeatures( simpleFeatures ); ;
-
-                    final List<SimpleSnippet> snippets = new ArrayList<>();
-                    experiment.sortSnippetsByOrder();
-                    for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
-                        final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                        Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
-                        if (snippet==null) {
-                            snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
-                            if (snippet!=null) {
-                                localCache.put(experimentSnippet.getSnippetCode(), snippet);
-                            }
-                        }
-                        if (snippet==null) {
-                            log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
-                            continue;
-                        }
-                        snippets.add(new SimpleSnippet(
-                                SnippetType.valueOf(experimentSnippet.getType()),
-                                experimentSnippet.getSnippetCode(),
-                                snippet.getFilename(),
-                                snippet.checksum,
-                                snippet.env,
-                                experimentSnippet.getOrder()
-                        ));
-                    }
-                    yaml.snippets = snippets;
-
-                    String sequenceParams = SequenceYamlUtils.toString(yaml);
-
-                    if (sequnces.contains(sequenceParams)) {
-                        continue;
-                    }
-
-                    ExperimentSequence sequence = new ExperimentSequence();
-                    sequence.setExperimentId(experiment.getId());
-                    sequence.setParams(sequenceParams);
-                    sequence.setFeatureId(feature.getId());
-                    experimentSequenceRepository.save(sequence);
-                    isNew = true;
-                }
-                if (isNew) {
-                    boolean isOk = false;
-                    for (int i = 0; i <3; i++) {
-                        try {
-                            ExperimentFeature f = experimentFeatureRepository.findById(feature.getId()).orElse(null);
-                            if (f==null) {
-                                log.warn("Unxpected behaviour, feature with id {} wasn't found", feature.getId());
-                                break;
-                            }
-                            f.setFinished(false);
-                            experimentFeatureRepository.save(f);
-                            isOk = true;
-                            break;
-                        }
-                        catch (ObjectOptimisticLockingFailureException e) {
-                            log.info("Feature record was changed. {}", e.getMessage());
-                        }
-                    }
-                    if (!isOk) {
-                        log.warn("The new sequences were produced but feature wasn't changed");
-                    }
+                else {
+                    log.warn("!!! number of sequnce is different. experiment.getNumberOfSequence(): {}, allHyperParams.size(): {}", experiment.getNumberOfSequence(), allHyperParams.size());
                 }
             }
-            experiment.setNumberOfSequence(totalVariants);
-            experiment.setAllSequenceProduced(true);
-            experimentRepository.save(experiment);
+
+            final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
+            final List<SimpleFeature> simpleFeatures = Collections.unmodifiableList(ofVariants.values.stream().map(SimpleFeature::of).collect(Collectors.toList()));
+
+            Map<String, Snippet> localCache = new HashMap<>();
+            boolean isNew = false;
+            for (HyperParams hyperParams : allHyperParams) {
+                SequenceYaml yaml = new SequenceYaml();
+                yaml.setHyperParams( hyperParams.toSortedMap() );
+                yaml.setExperimentId( experiment.getId() );
+                yaml.setDataset( SimpleDataset.of(experiment.getDatasetId() ));
+                yaml.setFeatures( simpleFeatures ); ;
+
+                final List<SimpleSnippet> snippets = new ArrayList<>();
+                experiment.sortSnippetsByOrder();
+                for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
+                    final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
+                    Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
+                    if (snippet==null) {
+                        snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                        if (snippet!=null) {
+                            localCache.put(experimentSnippet.getSnippetCode(), snippet);
+                        }
+                    }
+                    if (snippet==null) {
+                        log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
+                        continue;
+                    }
+                    snippets.add(new SimpleSnippet(
+                            SnippetType.valueOf(experimentSnippet.getType()),
+                            experimentSnippet.getSnippetCode(),
+                            snippet.getFilename(),
+                            snippet.checksum,
+                            snippet.env,
+                            experimentSnippet.getOrder()
+                    ));
+                }
+                yaml.snippets = snippets;
+
+                String sequenceParams = SequenceYamlUtils.toString(yaml);
+
+                if (sequnces.contains(sequenceParams)) {
+                    continue;
+                }
+
+                ExperimentSequence sequence = new ExperimentSequence();
+                sequence.setExperimentId(experiment.getId());
+                sequence.setParams(sequenceParams);
+                sequence.setFeatureId(feature.getId());
+                experimentSequenceRepository.save(sequence);
+                isNew = true;
+            }
+            if (isNew) {
+                boolean isOk = false;
+                for (int i = 0; i <3; i++) {
+                    try {
+                        ExperimentFeature f = experimentFeatureRepository.findById(feature.getId()).orElse(null);
+                        if (f==null) {
+                            log.warn("Unxpected behaviour, feature with id {} wasn't found", feature.getId());
+                            break;
+                        }
+                        f.setFinished(false);
+                        experimentFeatureRepository.save(f);
+                        isOk = true;
+                        break;
+                    }
+                    catch (ObjectOptimisticLockingFailureException e) {
+                        log.info("Feature record was changed. {}", e.getMessage());
+                    }
+                }
+                if (!isOk) {
+                    log.warn("The new sequences were produced but feature wasn't changed");
+                }
+            }
+        }
+        experiment.setNumberOfSequence(totalVariants);
+        experiment.setAllSequenceProduced(true);
+        experimentRepository.save(experiment);
+    }
+
+    public void produceFeaturePermutations(Dataset dataset, Experiment experiment) {
+        final List<ExperimentFeature> list = experimentFeatureRepository.findByExperimentId(experiment.getId());
+
+        List<Long> ids = new ArrayList<>();
+        for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
+            ids.add(datasetGroup.getId());
+        }
+        Permutation<Long> permutation = new Permutation<>();
+        for (int i = 0; i < ids.size(); i++) {
+            permutation.printCombination(ids, i+1,
+                    data -> {
+                        final String idsAsStr = String.valueOf(data);
+                        if (isExist(list, idsAsStr)) {
+                            return true;
+                        }
+                        final ExperimentFeature feature = new ExperimentFeature();
+                        feature.setExperimentId(experiment.getId());;
+                        feature.setFeatureIds(idsAsStr);
+                        experimentFeatureRepository.save(feature);
+                        return true;
+                    }
+            );
         }
     }
 

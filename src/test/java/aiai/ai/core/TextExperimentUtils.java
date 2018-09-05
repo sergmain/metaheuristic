@@ -77,6 +77,20 @@ public class TextExperimentUtils {
 
     }
 
+    @Test
+    public void testGetAllHyperParams() {
+
+        Map<String, String> map = new HashMap<>();
+        map.put("aaa", "[7, 13]");
+        map.put("batches", "[20, 40]");
+        map.put("RNN", "[LSTM]");
+        map.put("seed", "1337");
+        map.put("epoch", "10");
+
+        List<HyperParams> params = ExperimentUtils.getAllHyperParams(map);
+        assertEquals(4, params.size());
+    }
+
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 

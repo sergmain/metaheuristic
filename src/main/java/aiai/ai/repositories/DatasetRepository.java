@@ -35,17 +35,4 @@ public interface DatasetRepository extends CrudRepository<Dataset, Long> {
 
     @Transactional(readOnly = true)
     Slice<Dataset> findAll(Pageable pageable);
-
-/*
-
-    @Transactional(rollbackFor = {Throwable.class})
-    List<Dataset> findByLastname(String lastname, Sort sort);
-
-    List<Dataset> findByLastname(String lastname, Pageable pageable);
-
-    Long deleteByLastname(String lastname);
-
-    List<Dataset> removeByLastname(String lastname);
-
-*/
 }

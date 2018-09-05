@@ -50,4 +50,7 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
     List<ExperimentFeature> findAllForLaunchedExperiments();
 
 
+    @Transactional
+    void deleteByExperimentId(long experimentId);
+
 }

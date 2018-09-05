@@ -35,7 +35,7 @@ public class ExperimentUtils {
     @AllArgsConstructor
     @EqualsAndHashCode
     public static class NumberOfVariants {
-        boolean status;
+        public boolean status;
         String error;
         int count;
         final List<String> values = new ArrayList<>();
@@ -76,7 +76,7 @@ public class ExperimentUtils {
             NumberOfVariants ofVariants = getNumberOfVariants(entry.getValue());
             int originSize = allHyperParams.size();
             if (originSize==0 && ofVariants.count>0) {
-                allHyperParams.add(new HyperParams());
+                addInstances(allHyperParams, ofVariants.count);
             }
             else {
                 for (int i = 0; i < ofVariants.count-1; i++) {
@@ -97,6 +97,12 @@ public class ExperimentUtils {
             }
         }
         return allHyperParams;
+    }
+
+    private static void addInstances(List<HyperParams> allHyperParams, int count) {
+        for (int i = 0; i < count; i++) {
+            allHyperParams.add(new HyperParams());
+        }
     }
 
     private static boolean alreadyExists(List<HyperParams> allPaths, HyperParams hyper, String key, String value) {

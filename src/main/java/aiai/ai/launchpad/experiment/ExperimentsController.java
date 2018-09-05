@@ -404,7 +404,7 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#84.04 experiment has broken link to dataset. Need to reassign a dataset.");
             return "redirect:/launchpad/experiments";
         }
-        dataset.setLocked(false);
+        dataset.setLocked(true);
         dataset.setEditable(false);
         datasetRepository.save(dataset);
 

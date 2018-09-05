@@ -19,6 +19,7 @@
 package aiai.ai.repositories;
 
 import aiai.ai.beans.Experiment;
+import aiai.ai.beans.ExperimentFeature;
 import aiai.ai.beans.ExperimentSequence;
 import aiai.ai.beans.ExperimentSnippet;
 import org.springframework.data.domain.PageRequest;
@@ -47,12 +48,20 @@ public interface ExperimentSequenceRepository extends CrudRepository<ExperimentS
     ExperimentSequence findTop1ByStationIdIsNotNullAndIsCompletedIsFalse(Pageable limit);
 */
     @Transactional(readOnly = true)
-    ExperimentSequence findTop1ByStationIdIsNotNullAndIsCompletedIsFalseAndFeatureId(Long featureId);
+    ExperimentSequence findTop1ByStationIdAndIsCompletedIsFalseAndFeatureId(long stationId, long featureId);
 
     @Transactional(readOnly = true)
     ExperimentSequence findTop1ByIsCompletedIsFalseAndFeatureId(Long featureId);
 
     @Transactional(readOnly = true)
     ExperimentSequence findTop1ByIsAllSnippetsOkIsTrueAndFeatureId(Long featureId);
+
+    @Transactional
+    void deleteByExperimentId(long experimentId);
+
+    @Transactional(readOnly = true)
+    @Query("SELECT f FROM ExperimentSequence s, ExperimentFeature f where s.stationId=:stationId and s.featureId=f.id and f.isFinished=false and f.isInProgress=true")
+//    ExperimentFeature findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
+    List<ExperimentFeature> findAnyStartedButNotFinished(Pageable limit, long stationId);
 
 }
