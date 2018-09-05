@@ -20,7 +20,6 @@ package aiai.ai.service;
 import aiai.ai.Globals;
 import aiai.ai.beans.*;
 import aiai.ai.comm.CommandProcessor;
-import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
@@ -38,7 +37,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.PostConstruct;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -212,6 +213,15 @@ public class TestFeature {
 
             // produce artifacts - features, sequences,...
             experimentService.produceFeaturePermutations(dataset, experiment);
+
+            List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
+            assertNotNull(features);
+            assertEquals(EXPECTED_FEATURE_PERMUTATIONS_NUMBER, features.size());
+            for (ExperimentFeature feature : features) {
+                assertFalse(feature.isFinished);
+            }
+
+            // produce sequences
             experimentService.produceSequences(experiment);
 
             // some global final check
@@ -223,7 +233,6 @@ public class TestFeature {
             th.printStackTrace();
             isCorrectInit = false;
         }
-
     }
 
     @After
@@ -254,33 +263,46 @@ public class TestFeature {
     public void testFeatureComplition() {
         assertTrue(isCorrectInit);
 
-        List<Protocol.AssignedExperimentSequence.SimpleSequence> sequences = experimentService.getSequncesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
+        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
         assertNotNull(sequences);
-        assertFalse(sequences.isEmpty());
+        assertNotNull(sequences.getFeature());
+        assertNotNull(sequences.getSimpleSequences());
+        assertEquals(CommandProcessor.MAX_SEQUENSE_POOL_SIZE, sequences.getSimpleSequences().size());
+        assertTrue(sequences.getFeature().isInProgress);
 
-        Set<Long> ids = new HashSet<>();
-        for (Protocol.AssignedExperimentSequence.SimpleSequence sequence : sequences) {
-            ids.add(Objects.requireNonNull(experimentSequenceRepository.findById(sequence.getExperimentSequenceId()).orElse(null)).getFeatureId());
-        }
-        assertEquals(1, ids.size());
-        final Long id = ids.toArray(new Long[0])[0];
-        final ExperimentFeature f1 = experimentFeatureRepository.findById(id).orElse(null);
-        assertNotNull(f1);
-        assertTrue(f1.isInProgress);
 
-        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
-        assertNotNull(features);
-        assertEquals(EXPECTED_FEATURE_PERMUTATIONS_NUMBER, features.size());
-        for (ExperimentFeature feature : features) {
-            assertFalse(feature.isFinished);
-        }
-
-        // this station already got sequnces, so don't provide any new
-        sequences = experimentService.getSequncesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
+        // this station already got sequences, so don't provide any new
+        sequences = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
         assertNotNull(sequences);
-        assertTrue(sequences.isEmpty());
+        // sequences is empty cos we still didn't finish those sequences
+        assertTrue(sequences.getSimpleSequences().isEmpty());
+
+        finishCurrent();
+
+        ExperimentService.SequencesAndAssignToStationResult sequences1 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
+        assertNotNull(sequences1);
+        assertNotNull(sequences1.getFeature());
+        assertNotNull(sequences1.getSimpleSequences());
+        assertEquals(2, sequences1.getSimpleSequences().size());
+        assertTrue(sequences1.getFeature().isInProgress);
+
+        finishCurrent();
+
+        ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
+/*
+        assertNotNull(sequences2);
+        assertNotNull(sequences2.getFeature());
+        assertNotNull(sequences2.getSimpleSequences());
+        assertEquals(2, sequences2.getSimpleSequences().size());
+        assertTrue(sequences2.getFeature().isInProgress);
+*/
+
+        System.out.println();
 
 
+    }
+
+    private void finishCurrent() {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<SimpleSequenceExecResult> results = new ArrayList<>();
         List<ExperimentSequence> experimentSequences = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
@@ -295,27 +317,7 @@ public class TestFeature {
         }
 
         experimentService.storeAllResults(results);
-
-        experimentService.produceFeaturePermutations(dataset, experiment);
-        experimentService.produceSequences(experiment);
-
-
-        System.out.println();
-
-
     }
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 }

@@ -22,6 +22,7 @@ import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.beans.StationMetadata;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.repositories.StationMetadataRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 public class StationService {
 
     private final Globals globals;
@@ -66,7 +68,7 @@ public class StationService {
     public void init() {
         final File file = new File(globals.stationDir, "env.yaml");
         if (!file.exists()) {
-            System.out.println("Station's config file 'env.xml' doesn't exist.");
+            log.warn("Station's config file doesn't exist: {}", file.getPath());
             return;
         }
         try {

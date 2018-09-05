@@ -80,8 +80,8 @@ CREATE TABLE AIAI_LP_EXPERIMENT_FEATURE (
   VERSION     NUMERIC(5, 0)  NOT NULL,
   FEATURE_IDS   VARCHAR(512) not null,
   IS_IN_PROGRESS    tinyint(1) not null default 0,
-  IS_FINISHED    tinyint(1) not null default 0
-  IS_ANY_GOOD_RESULTS  tinyint(1) not null default 0
+  IS_FINISHED   tinyint(1) not null default 0
+  EXEC_STATUS  tinyint(1) not null default 0
 );
 
 CREATE UNIQUE INDEX AIAI_LP_EXPERIMENT_FEATURE_UNQ_IDX

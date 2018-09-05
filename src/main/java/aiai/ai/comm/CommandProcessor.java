@@ -27,7 +27,6 @@ import aiai.ai.station.StationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -138,7 +137,8 @@ public class CommandProcessor {
 
     private synchronized Protocol.AssignedExperimentSequence getAssignedExperimentSequence(String stationId, int recordNumber) {
         Protocol.AssignedExperimentSequence r = new Protocol.AssignedExperimentSequence();
-        r.sequences = experimentService.getSequncesAndAssignToStation(Long.parseLong(stationId), recordNumber);
+        ExperimentService.SequencesAndAssignToStationResult result = experimentService.getSequencesAndAssignToStation(Long.parseLong(stationId), recordNumber);
+        r.sequences = result.getSimpleSequences();
         return r;
     }
 

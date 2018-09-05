@@ -22,6 +22,7 @@ import aiai.ai.Globals;
 import aiai.ai.beans.*;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.*;
@@ -30,6 +31,9 @@ import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.sequence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
@@ -64,9 +68,19 @@ public class ExperimentService {
         this.datasetRepository = datasetRepository;
     }
 
-    private static final List<Protocol.AssignedExperimentSequence.SimpleSequence> EMPTY_FEATURES = Collections.unmodifiableList(new ArrayList<>());
+    private static final List<Protocol.AssignedExperimentSequence.SimpleSequence> EMPTY_SIMPLE_SEQUENCES = Collections.unmodifiableList(new ArrayList<>());
 
-    public synchronized List<Protocol.AssignedExperimentSequence.SimpleSequence> getSequncesAndAssignToStation(long stationId, int recordNumber) {
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SequencesAndAssignToStationResult {
+        ExperimentFeature feature;
+        List<Protocol.AssignedExperimentSequence.SimpleSequence> simpleSequences;
+    }
+
+    public static final SequencesAndAssignToStationResult EMPTY_RESULT = new SequencesAndAssignToStationResult(null, EMPTY_SIMPLE_SEQUENCES);
+
+    public synchronized SequencesAndAssignToStationResult getSequencesAndAssignToStation(long stationId, int recordNumber) {
 
         // check and mark all completed features
         List<ExperimentFeature> fs = experimentFeatureRepository.findAllForLaunchedExperiments();
@@ -75,13 +89,18 @@ public class ExperimentService {
             if (experimentSequenceRepository.findTop1ByIsCompletedIsFalseAndFeatureId(feature.getId())==null) {
 
                 // 'good results' meaning that at least one sequence was finished without system error (all snippets returned exit code 0)
-                feature.setAnyGoodResults( experimentSequenceRepository.findTop1ByIsAllSnippetsOkIsTrueAndFeatureId(feature.getId())!=null );
+                feature.setExecStatus(
+                        experimentSequenceRepository.findTop1ByIsAllSnippetsOkIsTrueAndFeatureId(feature.getId())!=null
+                                ? FeatureExecStatus.ok.code
+                                : FeatureExecStatus.error.code
+                );
 
-                isContinue = !feature.isAnyGoodResults();
+                isContinue = feature.getExecStatus()!=FeatureExecStatus.ok.code;
 
                 feature.setFinished(true);
                 experimentFeatureRepository.save(feature);
             }
+
         }
 
         // main part, prepare new batch of sequences for station
@@ -100,13 +119,13 @@ public class ExperimentService {
 
         // there isn't any feature to process
         if (feature==null) {
-            return EMPTY_FEATURES;
+            return EMPTY_RESULT;
         }
 
         //
         ExperimentSequence sequence = experimentSequenceRepository.findTop1ByStationIdAndIsCompletedIsFalseAndFeatureId(stationId, feature.getId());
         if (sequence!=null) {
-            return EMPTY_FEATURES;
+            return EMPTY_RESULT;
         }
 
         Slice<ExperimentSequence> seqs = experimentSequenceRepository.findAllByStationIdIsNullAndFeatureId(PageRequest.of(0, recordNumber), feature.getId());
@@ -126,7 +145,7 @@ public class ExperimentService {
         }
         experimentSequenceRepository.saveAll(seqs);
 
-        return result;
+        return new SequencesAndAssignToStationResult(feature, result);
 
     }
 

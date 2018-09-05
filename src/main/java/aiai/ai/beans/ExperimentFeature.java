@@ -46,8 +46,8 @@ public class ExperimentFeature implements Serializable {
     @Column(name = "IS_FINISHED")
     public boolean isFinished;
 
-    @Column(name = "IS_ANY_GOOD_RESULTS")
-    public boolean isAnyGoodResults;
+    @Column(name = "EXEC_STATUS")
+    public int execStatus;
 
     @Column(name = "EXPERIMENT_ID")
     public Long experimentId;
