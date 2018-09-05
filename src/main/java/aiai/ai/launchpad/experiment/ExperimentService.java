@@ -141,13 +141,13 @@ public class ExperimentService {
                 continue;
             }
 
-            Experiment experiment = experimentRepository.findById(seq.getId()).orElse(null);
+            Experiment experiment = experimentRepository.findById(seq.getExperimentId()).orElse(null);
             if (experiment==null) {
                 log.warn("Can't find Experiment for Id: {}", seq.getId());
                 continue;
             }
 
-            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seq.getSnippetExecResults());
+            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(result.getResult());
             experiment.getSnippets().sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
             boolean isAllOk = true;
             for (ExperimentSnippet snippet : experiment.getSnippets()) {
@@ -231,6 +231,8 @@ public class ExperimentService {
     public void produceSequences(Experiment experiment) {
         int totalVariants = 0;
 
+        experiment.sortSnippetsByOrder();
+
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         for (ExperimentFeature feature : features) {
             Set<String> sequnces = new LinkedHashSet<>();
@@ -249,15 +251,6 @@ public class ExperimentService {
             final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
             totalVariants += allHyperParams.size();
 
-            if (experiment.getNumberOfSequence()!=allHyperParams.size()) {
-                if (experiment.getNumberOfSequence()==0) {
-                    log.warn("!!! number of sequnce is different. experiment.getNumberOfSequence(): {}, allHyperParams.size(): {}", experiment.getNumberOfSequence(), allHyperParams.size());
-                }
-                else {
-                    log.warn("!!! number of sequnce is different. experiment.getNumberOfSequence(): {}, allHyperParams.size(): {}", experiment.getNumberOfSequence(), allHyperParams.size());
-                }
-            }
-
             final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
             final List<SimpleFeature> simpleFeatures = Collections.unmodifiableList(ofVariants.values.stream().map(SimpleFeature::of).collect(Collectors.toList()));
 
@@ -271,7 +264,6 @@ public class ExperimentService {
                 yaml.setFeatures( simpleFeatures ); ;
 
                 final List<SimpleSnippet> snippets = new ArrayList<>();
-                experiment.sortSnippetsByOrder();
                 for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                     Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
@@ -332,9 +324,17 @@ public class ExperimentService {
                 }
             }
         }
-        experiment.setNumberOfSequence(totalVariants);
-        experiment.setAllSequenceProduced(true);
-        experimentRepository.save(experiment);
+        if (experiment.getNumberOfSequence() != totalVariants && experiment.getNumberOfSequence() != 0) {
+            log.warn("! Number of sequnece is different. experiment.getNumberOfSequence(): {}, totalVariants: {}", experiment.getNumberOfSequence(), totalVariants);
+        }
+        Experiment experimentTemp = experimentRepository.findById(experiment.getId()).orElse(null);
+        if (experimentTemp==null) {
+            log.warn("Experiment for id {} doesn't exist anymore", experiment.getId());
+            return;
+        }
+        experimentTemp.setNumberOfSequence(totalVariants);
+        experimentTemp.setAllSequenceProduced(true);
+        experimentRepository.save(experimentTemp);
     }
 
     public void produceFeaturePermutations(Dataset dataset, Experiment experiment) {

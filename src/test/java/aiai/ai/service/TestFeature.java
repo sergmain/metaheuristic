@@ -21,10 +21,14 @@ import aiai.ai.Globals;
 import aiai.ai.beans.*;
 import aiai.ai.comm.CommandProcessor;
 import aiai.ai.comm.Protocol;
+import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
+import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.repositories.*;
+import aiai.ai.yaml.console.SnippetExec;
+import aiai.ai.yaml.console.SnippetExecUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,6 +49,7 @@ public class TestFeature {
     public static final String TEST_FIT_SNIPPET = "test.fit.snippet";
     public static final String SNIPPET_VERSION_1_0 = "1.0";
     public static final String TEST_PREDICT_SNIPPET = "test.predict.snippet";
+    public static final int EXPECTED_FEATURE_PERMUTATIONS_NUMBER = 7;
     @Autowired
     public Globals globals;
 
@@ -164,7 +169,7 @@ public class TestFeature {
             experiment.setEpochVariant(numberOfVariants.getCount());
             experiment.setName("Test experiment.");
             experiment.setDescription("Test experiment. Must be deleted automatically.");
-            experiment.setSeed(1337);
+            experiment.setSeed(42);
             experiment.setLaunched(true);
             experiment.setLaunchedOn(System.currentTimeMillis());
             experiment.setAllSequenceProduced(false);
@@ -210,7 +215,7 @@ public class TestFeature {
             experimentService.produceSequences(experiment);
 
             // some global final check
-            assertEquals(7, experimentFeatureRepository.findByExperimentId(experiment.getId()).size());
+            assertEquals(EXPECTED_FEATURE_PERMUTATIONS_NUMBER, experimentFeatureRepository.findByExperimentId(experiment.getId()).size());
 
             System.out.println("Was inited correctly");
         }
@@ -265,10 +270,38 @@ public class TestFeature {
 
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         assertNotNull(features);
-        assertEquals(7, features.size());
+        assertEquals(EXPECTED_FEATURE_PERMUTATIONS_NUMBER, features.size());
         for (ExperimentFeature feature : features) {
             assertFalse(feature.isFinished);
         }
+
+        // this station already got sequnces, so don't provide any new
+        sequences = experimentService.getSequncesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
+        assertNotNull(sequences);
+        assertTrue(sequences.isEmpty());
+
+
+        // lets report about sequences that all finished with error (errorCode!=0)
+        List<SimpleSequenceExecResult> results = new ArrayList<>();
+        List<ExperimentSequence> experimentSequences = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
+        for (ExperimentSequence experimentSequence : experimentSequences) {
+            ProcessService.Result result = new ProcessService.Result(false, -1, "This is sample console output");
+            SnippetExec snippetExec = new SnippetExec();
+            snippetExec.getExecs().put(1, result);
+            String yaml = SnippetExecUtils.toString(snippetExec);
+
+            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(experimentSequence.getId(), yaml);
+            results.add(sser);
+        }
+
+        experimentService.storeAllResults(results);
+
+        experimentService.produceFeaturePermutations(dataset, experiment);
+        experimentService.produceSequences(experiment);
+
+
+        System.out.println();
+
 
     }
 

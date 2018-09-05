@@ -64,4 +64,8 @@ public interface ExperimentSequenceRepository extends CrudRepository<ExperimentS
 //    ExperimentFeature findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
     List<ExperimentFeature> findAnyStartedButNotFinished(Pageable limit, long stationId);
 
+    @Transactional(readOnly = true)
+    List<ExperimentSequence> findByStationIdAndIsCompletedIsFalse(Long stationId);
+
+
 }
