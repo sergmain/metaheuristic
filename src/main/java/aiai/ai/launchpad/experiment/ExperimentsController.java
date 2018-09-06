@@ -25,6 +25,7 @@ import aiai.ai.repositories.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -50,7 +51,8 @@ public class ExperimentsController {
         public Slice<Experiment> items;
     }
 
-    @Value("${aiai.table.rows.limit:#{5}}")
+//    @Value("${aiai.table.rows.limit:#{5}}")
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.table.rows.limit'), 5, 30, 5) }")
     private int limit;
 
     private final DatasetRepository datasetRepository;
@@ -393,11 +395,44 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiments";
     }
 
+    @PostMapping("/experiment-clone-commit")
+    public String cloneCommit(Long id, final RedirectAttributes redirectAttributes) {
+        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#83.02 experiment wasn't found, experimentId: " + id);
+            return "redirect:/launchpad/experiments";
+        }
+        Experiment trg = new Experiment();
+        BeanUtils.copyProperties(experiment, trg);
+        trg.setId(null);
+        trg.setVersion(null);
+        trg.setName( "Copy #2, " +experiment.getName());
+        trg.setDescription( "Copy #2, " +experiment.getDescription());
+        trg.setAllSequenceProduced(false);
+        trg.setLaunchedOn(null);
+        trg.setLaunched(false);
+        List<ExperimentSnippet> snippets = experiment.getSnippets();
+        trg.getSnippets().clear();
+        for (ExperimentSnippet snippet : snippets) {
+            ExperimentSnippet trgSnippet = new ExperimentSnippet();
+            BeanUtils.copyProperties(snippet, trgSnippet);
+            trgSnippet.setId(null);
+            trgSnippet.setVersion(null);
+            trgSnippet.setExperiment(trg);
+            trg.getSnippets().add(trgSnippet);
+            experimentSnippetRepository.save(trgSnippet);
+        }
+
+        experimentRepository.save(trg);
+
+        return "redirect:/launchpad/experiments";
+    }
+
     @GetMapping("/experiment-launch/{experimentId}")
     public String launch(@PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#84.01 experiment wasn't found, experimentId: " + experimentId);
+            redirectAttributes.addFlashAttribute("errorMessage", "#84BeanUtils.01 experiment wasn't found, experimentId: " + experimentId);
             return "redirect:/launchpad/experiments";
         }
         if (experiment.isLaunched()) {
