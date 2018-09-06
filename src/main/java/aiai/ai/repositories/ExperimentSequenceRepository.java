@@ -54,7 +54,7 @@ public interface ExperimentSequenceRepository extends CrudRepository<ExperimentS
     ExperimentSequence findTop1ByIsCompletedIsFalseAndFeatureId(Long featureId);
 
     @Transactional(readOnly = true)
-    ExperimentSequence findTop1ByIsAllSnippetsOkIsTrueAndFeatureId(Long featureId);
+    ExperimentSequence findTop1ByIsAllSnippetsOkIsTrueAndFeatureId(long featureId);
 
     @Transactional
     void deleteByExperimentId(long experimentId);

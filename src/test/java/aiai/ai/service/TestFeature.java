@@ -24,6 +24,7 @@ import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
+import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.repositories.*;
 import aiai.ai.yaml.console.SnippetExec;
@@ -40,6 +41,7 @@ import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static org.junit.Assert.*;
 
@@ -281,25 +283,36 @@ public class TestFeature {
 
         ExperimentService.SequencesAndAssignToStationResult sequences1 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
         assertNotNull(sequences1);
-        assertNotNull(sequences1.getFeature());
+        final ExperimentFeature feature = sequences1.getFeature();
+        assertNotNull(feature);
         assertNotNull(sequences1.getSimpleSequences());
         assertEquals(2, sequences1.getSimpleSequences().size());
-        assertTrue(sequences1.getFeature().isInProgress);
+        assertTrue(feature.isInProgress);
 
         finishCurrent();
 
-        ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
-/*
-        assertNotNull(sequences2);
-        assertNotNull(sequences2.getFeature());
-        assertNotNull(sequences2.getSimpleSequences());
-        assertEquals(2, sequences2.getSimpleSequences().size());
-        assertTrue(sequences2.getFeature().isInProgress);
-*/
+        checkForCorrectFinishing(feature);
+        // 2 more times for checking that state didn't change while next requests
+        checkForCorrectFinishing(feature);
+        checkForCorrectFinishing(feature);
 
         System.out.println();
 
 
+    }
+
+    private void checkForCorrectFinishing(ExperimentFeature sequences1Feature) {
+        ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
+        assertNotNull(sequences2);
+        assertTrue(sequences2.getSimpleSequences().isEmpty());
+        assertNull(sequences2.getFeature());
+
+
+        ExperimentFeature feature = experimentFeatureRepository.findById(sequences1Feature.getId()).orElse(null);
+        assertNotNull(feature);
+        assertTrue(feature.isFinished);
+        assertFalse(feature.isInProgress);
+        assertEquals(FeatureExecStatus.error.code, feature.execStatus);
     }
 
     private void finishCurrent() {

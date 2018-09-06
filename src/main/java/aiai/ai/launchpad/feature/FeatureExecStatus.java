@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.feature;
 
 public enum FeatureExecStatus {
-    unknown(0), ok(1), error(1);
+    unknown(0), ok(1), error(2);
 
     public int code;
 

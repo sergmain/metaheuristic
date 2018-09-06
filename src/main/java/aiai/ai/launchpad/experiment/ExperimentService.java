@@ -84,8 +84,26 @@ public class ExperimentService {
 
         // check and mark all completed features
         List<ExperimentFeature> fs = experimentFeatureRepository.findAllForLaunchedExperiments();
+        Set<Long> idsForError = new HashSet<>();
+        Set<Long> idsForOk = new HashSet<>();
         boolean isContinue = true;
         for (ExperimentFeature feature : fs) {
+            // collect all experiment which has feature with FeatureExecStatus.error
+            if (feature.getExecStatus()==FeatureExecStatus.error.code) {
+                idsForOk.remove(feature.getExperimentId());
+                idsForError.add(feature.getExperimentId());
+            }
+
+            // skip this feature from follow processing if it was finished
+            if (feature.isFinished) {
+                continue;
+            }
+
+            // collect this experiment if it wasn't marked as erorr before
+            if (!idsForError.contains(feature.getExperimentId())) {
+                idsForOk.add(feature.getExperimentId());
+            }
+
             if (experimentSequenceRepository.findTop1ByIsCompletedIsFalseAndFeatureId(feature.getId())==null) {
 
                 // 'good results' meaning that at least one sequence was finished without system error (all snippets returned exit code 0)
@@ -95,19 +113,29 @@ public class ExperimentService {
                                 : FeatureExecStatus.error.code
                 );
 
-                isContinue = feature.getExecStatus()!=FeatureExecStatus.ok.code;
+                isContinue = feature.getExecStatus()==FeatureExecStatus.ok.code;
 
                 feature.setFinished(true);
+                feature.setInProgress(false);
                 experimentFeatureRepository.save(feature);
+                break;
             }
 
         }
 
+        // check that there isn't feature with FeatureExecStatus.error
+        if (!isContinue) {
+            return EMPTY_RESULT;
+        }
+
+        // check for case when there is feature with FeatureExecStatus.error and there is only one experiment (which has feature with FeatureExecStatus.error)
+        if (idsForOk.isEmpty()) {
+            return EMPTY_RESULT;
+        }
+
         // main part, prepare new batch of sequences for station
 
-
         // is there any feature which was started(in progress) and not finished yet?
-//        ExperimentFeature feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
         List<ExperimentFeature> features = experimentSequenceRepository.findAnyStartedButNotFinished(Consts.PAGE_REQUEST_1_REC, stationId);
         ExperimentFeature feature;
         if (features == null || features.isEmpty()) {

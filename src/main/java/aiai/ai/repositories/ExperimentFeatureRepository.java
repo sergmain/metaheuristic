@@ -47,6 +47,10 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
 
     @Transactional(readOnly = true)
     @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and e.isLaunched=true and f.isFinished=false ")
+    List<ExperimentFeature> findAllForLaunchedExperimentsAndNotFinishedFeatures();
+
+    @Transactional(readOnly = true)
+    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and e.isLaunched=true")
     List<ExperimentFeature> findAllForLaunchedExperiments();
 
 
