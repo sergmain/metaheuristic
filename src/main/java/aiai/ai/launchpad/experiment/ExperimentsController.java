@@ -60,8 +60,9 @@ public class ExperimentsController {
     private final SnippetRepository snippetRepository;
     private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
+    private final ExperimentSequenceRepository experimentSequenceRepository;
 
-    public ExperimentsController(DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository) {
+    public ExperimentsController(DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository) {
         this.datasetRepository = datasetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
         this.experimentRepository = experimentRepository;
@@ -69,6 +70,7 @@ public class ExperimentsController {
         this.snippetRepository = snippetRepository;
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
+        this.experimentSequenceRepository = experimentSequenceRepository;
     }
 
     @Data
@@ -378,13 +380,21 @@ public class ExperimentsController {
     }
 
     @PostMapping("/experiment-delete-commit")
-    public String deleteCommit(Long id) {
+    public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
+        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#83.01 experiment wasn't found, experimentId: " + id);
+            return "redirect:/launchpad/experiments";
+        }
+        experimentSnippetRepository.deleteByExperimentId(id);
+        experimentSequenceRepository.deleteByExperimentId(id);
+        experimentFeatureRepository.deleteByExperimentId(id);
         experimentRepository.deleteById(id);
         return "redirect:/launchpad/experiments";
     }
 
     @GetMapping("/experiment-launch/{experimentId}")
-    public String launch(@PathVariable long experimentId,final RedirectAttributes redirectAttributes, Model model) {
+    public String launch(@PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#84.01 experiment wasn't found, experimentId: " + experimentId);

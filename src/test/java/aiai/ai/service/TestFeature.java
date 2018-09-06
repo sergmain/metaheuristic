@@ -32,63 +32,57 @@ import aiai.ai.yaml.console.SnippetExecUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 import static org.junit.Assert.*;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class TestFeature {
+public abstract class TestFeature {
 
-    public static final String TEST_FIT_SNIPPET = "test.fit.snippet";
-    public static final String SNIPPET_VERSION_1_0 = "1.0";
-    public static final String TEST_PREDICT_SNIPPET = "test.predict.snippet";
-    public static final int EXPECTED_FEATURE_PERMUTATIONS_NUMBER = 7;
-    @Autowired
-    public Globals globals;
+    private static final String TEST_FIT_SNIPPET = "test.fit.snippet";
+    private static final String SNIPPET_VERSION_1_0 = "1.0";
+    private static final String TEST_PREDICT_SNIPPET = "test.predict.snippet";
+    private static final int EXPECTED_FEATURE_PERMUTATIONS_NUMBER = 7;
 
     @Autowired
-    public ExperimentService experimentService;
+    protected Globals globals;
 
     @Autowired
-    public ExperimentRepository experimentRepository;
+    protected ExperimentService experimentService;
 
     @Autowired
-    public ExperimentFeatureRepository experimentFeatureRepository;
+    protected ExperimentRepository experimentRepository;
 
     @Autowired
-    public DatasetRepository datasetRepository;
+    protected ExperimentFeatureRepository experimentFeatureRepository;
 
     @Autowired
-    public StationsRepository stationsRepository;
+    protected DatasetRepository datasetRepository;
 
     @Autowired
-    public SnippetRepository snippetRepository;
+    protected StationsRepository stationsRepository;
 
     @Autowired
-    private ExperimentSequenceRepository experimentSequenceRepository;
+    protected SnippetRepository snippetRepository;
+
+    @Autowired
+    protected ExperimentSequenceRepository experimentSequenceRepository;
+
+    Station station = null;
+    private Dataset dataset = null;
+    private Experiment experiment = null;
+    private Snippet fitSnippet = null;
+    private Snippet predictSnippet = null;
+    boolean isCorrectInit = true;
 
     @PostConstruct
     public void preapre_1() {
         globals.isUnitTesting = true;
     }
-
-    private Station station=null;
-    private Dataset dataset=null;
-    private Experiment experiment=null;
-    private Snippet fitSnippet=null;
-    private Snippet predictSnippet=null;
-
-    private boolean isCorrectInit = true;
 
     @Before
     public void before() {
@@ -104,7 +98,7 @@ public class TestFeature {
 
             // Prepare snippets
             fitSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_FIT_SNIPPET, SNIPPET_VERSION_1_0);
-            if (fitSnippet==null) {
+            if (fitSnippet == null) {
                 fitSnippet = new Snippet();
                 fitSnippet.setName(TEST_FIT_SNIPPET);
                 fitSnippet.setSnippetVersion(SNIPPET_VERSION_1_0);
@@ -117,7 +111,7 @@ public class TestFeature {
             }
 
             predictSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_PREDICT_SNIPPET, SNIPPET_VERSION_1_0);
-            if (predictSnippet==null) {
+            if (predictSnippet == null) {
                 predictSnippet = new Snippet();
                 predictSnippet.setName(TEST_PREDICT_SNIPPET);
                 predictSnippet.setSnippetVersion(SNIPPET_VERSION_1_0);
@@ -240,21 +234,21 @@ public class TestFeature {
     @After
     public void after() {
 
-        if (experiment!=null) {
+        if (experiment != null) {
             experimentSequenceRepository.deleteByExperimentId(experiment.getId());
             experimentFeatureRepository.deleteByExperimentId(experiment.getId());
             experimentRepository.deleteById(experiment.getId());
         }
-        if (dataset!=null) {
+        if (dataset != null) {
             datasetRepository.deleteById(dataset.getId());
         }
-        if (station!=null) {
+        if (station != null) {
             stationsRepository.deleteById(station.getId());
         }
-        if (predictSnippet!=null) {
+        if (predictSnippet != null) {
             snippetRepository.deleteById(predictSnippet.getId());
         }
-        if (fitSnippet!=null) {
+        if (fitSnippet != null) {
             snippetRepository.deleteById(fitSnippet.getId());
         }
 
@@ -262,24 +256,18 @@ public class TestFeature {
     }
 
     @Test
-    public void testFeatureComplition() {
+    public void testFeatureCompletionWithAllError() {
         assertTrue(isCorrectInit);
 
-        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
-        assertNotNull(sequences);
-        assertNotNull(sequences.getFeature());
-        assertNotNull(sequences.getSimpleSequences());
-        assertEquals(CommandProcessor.MAX_SEQUENSE_POOL_SIZE, sequences.getSimpleSequences().size());
-        assertTrue(sequences.getFeature().isInProgress);
-
+        checkForCorrectFinishing_with10sequences();
 
         // this station already got sequences, so don't provide any new
-        sequences = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
+        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
         assertNotNull(sequences);
         // sequences is empty cos we still didn't finish those sequences
         assertTrue(sequences.getSimpleSequences().isEmpty());
 
-        finishCurrent();
+        finishCurrentWithError();
 
         ExperimentService.SequencesAndAssignToStationResult sequences1 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
         assertNotNull(sequences1);
@@ -289,19 +277,18 @@ public class TestFeature {
         assertEquals(2, sequences1.getSimpleSequences().size());
         assertTrue(feature.isInProgress);
 
-        finishCurrent();
+        finishCurrentWithError();
 
-        checkForCorrectFinishing(feature);
+        checkForCorrectFinishing_withEmpty(feature);
         // 2 more times for checking that state didn't change while next requests
-        checkForCorrectFinishing(feature);
-        checkForCorrectFinishing(feature);
+        checkForCorrectFinishing_withEmpty(feature);
+        checkForCorrectFinishing_withEmpty(feature);
 
         System.out.println();
 
-
     }
 
-    private void checkForCorrectFinishing(ExperimentFeature sequences1Feature) {
+    protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
         ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
         assertNotNull(sequences2);
         assertTrue(sequences2.getSimpleSequences().isEmpty());
@@ -315,7 +302,21 @@ public class TestFeature {
         assertEquals(FeatureExecStatus.error.code, feature.execStatus);
     }
 
-    private void finishCurrent() {
+    protected void checkForCorrectFinishing_with10sequences() {
+        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
+        assertNotNull(sequences);
+        assertNotNull(sequences.getFeature());
+        assertNotNull(sequences.getSimpleSequences());
+        assertEquals(CommandProcessor.MAX_SEQUENSE_POOL_SIZE, sequences.getSimpleSequences().size());
+        assertTrue(sequences.getFeature().isInProgress);
+
+        ExperimentFeature feature = experimentFeatureRepository.findById(sequences.getFeature().getId()).orElse(null);
+        assertNotNull(feature);
+        assertFalse(feature.isFinished);
+        assertTrue(feature.isInProgress);
+    }
+
+    protected void finishCurrentWithError() {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<SimpleSequenceExecResult> results = new ArrayList<>();
         List<ExperimentSequence> experimentSequences = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
@@ -323,6 +324,23 @@ public class TestFeature {
             ProcessService.Result result = new ProcessService.Result(false, -1, "This is sample console output");
             SnippetExec snippetExec = new SnippetExec();
             snippetExec.getExecs().put(1, result);
+            String yaml = SnippetExecUtils.toString(snippetExec);
+
+            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(experimentSequence.getId(), yaml);
+            results.add(sser);
+        }
+
+        experimentService.storeAllResults(results);
+    }
+
+    protected void finishCurrentWithOk() {
+        // lets report about sequences that all finished with error (errorCode!=0)
+        List<SimpleSequenceExecResult> results = new ArrayList<>();
+        List<ExperimentSequence> experimentSequences = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
+        for (ExperimentSequence experimentSequence : experimentSequences) {
+            SnippetExec snippetExec = new SnippetExec();
+            snippetExec.getExecs().put(1, new ProcessService.Result(true, 0, "This is sample console output. fit"));
+            snippetExec.getExecs().put(2, new ProcessService.Result(true, 0, "This is sample console output. predict"));
             String yaml = SnippetExecUtils.toString(snippetExec);
 
             SimpleSequenceExecResult sser = new SimpleSequenceExecResult(experimentSequence.getId(), yaml);

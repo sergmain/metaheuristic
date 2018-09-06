@@ -31,4 +31,8 @@ public interface ExperimentSnippetRepository extends CrudRepository<ExperimentSn
     @Transactional(readOnly = true)
     List<ExperimentSnippet> findByExperimentId(Long experiimentId);
 
+    @Transactional
+    void deleteByExperimentId(long experimentId);
+
+
 }

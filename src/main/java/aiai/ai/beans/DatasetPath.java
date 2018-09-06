@@ -62,7 +62,6 @@ public class DatasetPath implements Serializable {
     @Column(name = "IS_VALID")
     private boolean isValid;
 
-//    @ManyToOne(cascade = {CascadeType.PERSIST, CascadeType.DETACH, CascadeType.MERGE, CascadeType.REFRESH})
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DATASET_ID")
     private Dataset dataset;

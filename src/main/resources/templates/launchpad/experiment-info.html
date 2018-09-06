@@ -46,9 +46,9 @@
         <table th:if="${experimentResult.dataset!=null}" class="pure-table pure-table-bordered" id="table-datasets">
             <thead>
             <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Description</th>
+                <th width="50">Id</th>
+                <th width="150">Name</th>
+                <th width="550">Description</th>
             </tr>
             </thead>
             <tbody>
@@ -85,8 +85,8 @@
             <thead>
             <tr>
                 <th width="150">Key</th>
-                <th width="600">Value</th>
-                <th width="50">Variants</th>
+                <th width="450">Value</th>
+                <th width="150">Variants</th>
             </tr>
             </thead>
 
@@ -111,12 +111,12 @@
         </div>
         <p>&nbsp;</p>
 
-        <h1 class="widget-header">Dataset groups</h1>
+        <h1 class="widget-header">Dataset features</h1>
         <table class="pure-table pure-table-bordered" id="table-group" th:fragment="table-group">
             <thead>
             <tr>
-                <th width="150">Id</th>
-                <th width="600">Command for generating feature</th>
+                <th width="50">Id</th>
+                <th width="700">Command for generating feature</th>
             </tr>
             </thead>
 
@@ -133,9 +133,11 @@
         <table class="pure-table pure-table-bordered" id="table-feature" th:fragment="table-feature">
             <thead>
             <tr>
-                <th width="150">Id</th>
-                <th width="300">Command for generating feature</th>
-                <th width="150">Is finished?</th>
+                <th width="50">Id</th>
+                <th width="400">Set of features</th>
+                <th width="100">Is in progress?</th>
+                <th width="100">Is finished?</th>
+                <th width="100">Exec status</th>
             </tr>
             </thead>
 
@@ -143,7 +145,9 @@
             <tr th:each="f : ${experimentResult.features}">
                 <td th:text="${f.id}">Feature Id</td>
                 <td th:text="${f.featureIds}">Ids</td>
+                <td th:text="${f.inProgress}">Is InProgress?</td>
                 <td th:text="${f.finished}">Is finished?</td>
+                <td th:text="${f.execStatusAsString()}">Exec status</td>
             </tr>
             </tbody>
         </table>

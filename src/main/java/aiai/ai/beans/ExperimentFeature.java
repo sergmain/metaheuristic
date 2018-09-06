@@ -52,5 +52,17 @@ public class ExperimentFeature implements Serializable {
     @Column(name = "EXPERIMENT_ID")
     public Long experimentId;
 
+    public String execStatusAsString() {
+        switch(execStatus) {
+            case 0:
+                return "Unknown";
+            case 1:
+                return "Ok";
+            case 2:
+                return "All are errors";
+            default:
+                return "Status is wrong";
+        }
+    }
 
 }
