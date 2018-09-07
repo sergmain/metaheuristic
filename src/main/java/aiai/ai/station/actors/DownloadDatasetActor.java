@@ -21,6 +21,7 @@ import aiai.ai.Globals;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationDatasetUtils;
 import aiai.ai.station.tasks.DownloadDatasetTask;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.fluent.Request;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,6 +35,7 @@ import java.util.Map;
 
 @Service
 @EnableScheduling
+@Slf4j
 public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask> {
 
     private final Globals globals;
@@ -54,7 +56,8 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-dataset-task.timeout'), 3, 20, 10)*1000 }")
-    public void fixedDelayTaskComplex() {
+    public void fixedDelay() {
+        log.info("DownloadDatasetActor.fixedDelay()");
         if (globals.isUnitTesting) {
             return;
         }

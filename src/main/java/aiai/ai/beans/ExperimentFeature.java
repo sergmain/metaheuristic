@@ -60,6 +60,8 @@ public class ExperimentFeature implements Serializable {
                 return "Ok";
             case 2:
                 return "All are errors";
+            case 3:
+                return "No sequenses";
             default:
                 return "Status is wrong";
         }

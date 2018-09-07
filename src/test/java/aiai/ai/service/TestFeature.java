@@ -255,39 +255,6 @@ public abstract class TestFeature {
         System.out.println("Was finished correctly");
     }
 
-    @Test
-    public void testFeatureCompletionWithAllError() {
-        assertTrue(isCorrectInit);
-
-        checkForCorrectFinishing_with10sequences();
-
-        // this station already got sequences, so don't provide any new
-        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
-        assertNotNull(sequences);
-        // sequences is empty cos we still didn't finish those sequences
-        assertTrue(sequences.getSimpleSequences().isEmpty());
-
-        finishCurrentWithError();
-
-        ExperimentService.SequencesAndAssignToStationResult sequences1 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
-        assertNotNull(sequences1);
-        final ExperimentFeature feature = sequences1.getFeature();
-        assertNotNull(feature);
-        assertNotNull(sequences1.getSimpleSequences());
-        assertEquals(2, sequences1.getSimpleSequences().size());
-        assertTrue(feature.isInProgress);
-
-        finishCurrentWithError();
-
-        checkForCorrectFinishing_withEmpty(feature);
-        // 2 more times for checking that state didn't change while next requests
-        checkForCorrectFinishing_withEmpty(feature);
-        checkForCorrectFinishing_withEmpty(feature);
-
-        System.out.println();
-
-    }
-
     protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
         ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
         assertNotNull(sequences2);

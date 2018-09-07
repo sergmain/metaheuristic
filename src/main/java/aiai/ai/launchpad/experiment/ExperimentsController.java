@@ -157,7 +157,7 @@ public class ExperimentsController {
         Dataset dataset = getDatasetAndCheck(experiment);
         experimentResult.dataset = dataset;
         experimentResult.features = experimentFeatureRepository.findByExperimentId(experiment.getId());
-        experimentResult.features.sort( (ExperimentFeature o1, ExperimentFeature o2) -> (Boolean.compare(o1.isFinished, o2.isFinished)));
+        experimentResult.features.sort( (ExperimentFeature o1, ExperimentFeature o2) -> (Boolean.compare(o2.isFinished, o1.isFinished)));
 
 
         model.addAttribute("experiment", experiment);

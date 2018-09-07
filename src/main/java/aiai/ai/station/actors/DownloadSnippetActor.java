@@ -21,6 +21,7 @@ import aiai.ai.Globals;
 import aiai.ai.station.StationSnippetUtils;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.DirUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.fluent.Request;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -34,6 +35,7 @@ import java.util.Map;
 
 @Service
 @EnableScheduling
+@Slf4j
 public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask> {
 
     private final Globals globals;
@@ -54,7 +56,8 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-snippet-task.timeout'), 3, 20, 10)*1000 }")
-    public void fixedDelayTaskComplex() {
+    public void fixedDelay() {
+        log.info("DownloadSnippetActor.fixedDelay()");
         if (globals.isUnitTesting) {
             return;
         }

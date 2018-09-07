@@ -80,14 +80,23 @@ public class ExperimentService {
 
     public static final SequencesAndAssignToStationResult EMPTY_RESULT = new SequencesAndAssignToStationResult(null, EMPTY_SIMPLE_SEQUENCES);
 
+    // for implementing cache later
+    public Experiment findById(long id) {
+        return experimentRepository.findById(id).orElse(null);
+    }
+
     public synchronized SequencesAndAssignToStationResult getSequencesAndAssignToStation(long stationId, int recordNumber) {
 
         // check and mark all completed features
         List<ExperimentFeature> fs = experimentFeatureRepository.findAllForLaunchedExperiments();
         Set<Long> idsForError = new HashSet<>();
         Set<Long> idsForOk = new HashSet<>();
-        boolean isContinue = true;
+        Boolean isContinue = null;
         for (ExperimentFeature feature : fs) {
+            final Experiment e = findById(feature.experimentId);
+            if (!e.isAllSequenceProduced() || !e.isFeatureProduced()) {
+                continue;
+            }
             // collect all experiment which has feature with FeatureExecStatus.error
             if (feature.getExecStatus()==FeatureExecStatus.error.code) {
                 idsForOk.remove(feature.getExperimentId());
@@ -96,6 +105,14 @@ public class ExperimentService {
 
             // skip this feature from follow processing if it was finished
             if (feature.isFinished) {
+                continue;
+            }
+
+            if (experimentSequenceRepository.findTop1ByFeatureId(feature.getId())==null) {
+                feature.setExecStatus(FeatureExecStatus.empty.code);
+                feature.setFinished(true);
+                feature.setInProgress(false);
+                experimentFeatureRepository.save(feature);
                 continue;
             }
 
@@ -113,18 +130,19 @@ public class ExperimentService {
                                 : FeatureExecStatus.error.code
                 );
 
-                isContinue = feature.getExecStatus()==FeatureExecStatus.ok.code;
+                if (isContinue==null || !isContinue) {
+                    isContinue = feature.getExecStatus() == FeatureExecStatus.ok.code;
+                }
 
                 feature.setFinished(true);
                 feature.setInProgress(false);
                 experimentFeatureRepository.save(feature);
-                break;
             }
 
         }
 
         // check that there isn't feature with FeatureExecStatus.error
-        if (!isContinue) {
+        if (Boolean.FALSE.equals(isContinue)) {
             return EMPTY_RESULT;
         }
 
@@ -244,6 +262,7 @@ public class ExperimentService {
      */
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.create-sequence.timeout'), 10, 20, 10)*1000 }")
     public void fixedDelayExperimentSequencesProducer() {
+        log.info("ExperimentService.fixedDelayExperimentSequencesProducer()");
         if (globals.isUnitTesting) {
             return;
         }

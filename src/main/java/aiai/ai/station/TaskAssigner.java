@@ -30,6 +30,7 @@ import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleFeature;
 import aiai.ai.yaml.sequence.SimpleSnippet;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import java.util.List;
 
 @Service
 @EnableScheduling
+@Slf4j
 public class TaskAssigner {
 
     private final Globals globals;
@@ -47,7 +49,9 @@ public class TaskAssigner {
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
-    public void scheduleTask() {
+    public void fixedDelay() {
+        log.info("TaskAssigner.fixedDelay()");
+
         if (globals.isUnitTesting) {
             return;
         }

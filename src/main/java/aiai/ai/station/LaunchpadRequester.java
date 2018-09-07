@@ -102,6 +102,7 @@ public class LaunchpadRequester {
      */
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.request-launchpad.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelay() {
+        log.info("LaunchpadRequester.fixedDelay()");
         if (globals.isUnitTesting) {
             return;
         }

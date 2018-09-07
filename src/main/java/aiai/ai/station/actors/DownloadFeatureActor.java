@@ -23,6 +23,7 @@ import aiai.ai.station.StationDatasetUtils;
 import aiai.ai.station.StationFeatureUtils;
 import aiai.ai.station.tasks.DownloadDatasetTask;
 import aiai.ai.station.tasks.DownloadFeatureTask;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.fluent.Request;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -36,6 +37,7 @@ import java.util.Map;
 
 @Service
 @EnableScheduling
+@Slf4j
 public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask> {
 
     private final Globals globals;
@@ -54,7 +56,8 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-feature-task.timeout'), 3, 20, 10)*1000 }")
-    public void fixedDelayTaskComplex() {
+    public void fixedDelay() {
+        log.info("DownloadSnippetActor.fixedDelay()");
         if (globals.isUnitTesting) {
             return;
         }
