@@ -1,0 +1,116 @@
+<!--
+  /*AiAi, Copyright (C) 2017 - 2018, Serge Maslyukov
+
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+  */
+  -->
+
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
+     layout:decorate="~{/layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+     sec:authorize="isAuthenticated()"
+>
+
+    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.experiment.ExperimentsController.SequencesResult"*/-->
+    <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
+    <!--/*@thymesVar id="feature" type="aiai.ai.beans.ExperimentFeature"*/-->
+    <script th:inline="javascript">
+        var table = function (html) {
+            $('#table').html(html).find('.ajax-elem').each(function () {
+                $(this).click(function () {
+                    $.post($(this).attr('href'), table);
+                    return false;
+                });
+            });
+        };
+
+        $(function () {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+
+            $(document).ajaxSend(function (e, xhr, options) {
+                xhr.setRequestHeader(header, token);
+            });
+            // is this the right usage?
+            $.post('/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]], table);
+        });
+
+    </script>
+
+
+
+    <h1 class="widget-header">The experiment info</h1>
+
+    <h1 class="widget-header">General info</h1>
+    <table class="pure-table pure-table-bordered" id="feature-table" >
+        <tbody>
+        <tr><td>#Id</td><td  th:text="${feature.id}">#Id</td></tr>
+        <tr><td>Feature ids</td><td th:text="${feature.featureIds}">featureIds</td></tr>
+        <tr><td>Is in progress?</td><td th:text="${feature.isInProgress}">isInProgress</td></tr>
+        <tr><td>Is in finished?</td><td th:text="${feature.isFinished}">isFinished</td></tr>
+        <tr><td>Exec status</td><td th:text="${feature.execStatusAsString()}">Exec status</td></tr>
+        </tbody>
+    </table>
+    <p>&nbsp;</p>
+
+    <h1 class="widget-header">Sequences</h1>
+    <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+        <thead>
+        <tr>
+            <th>Sequence Id</th>
+            <th>Is completed?</th>
+            <th>Is all snippets Ok?</th>
+            <th colspan="1">&nbsp;</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <tr th:each="s : ${result.sequences}" valign="top">
+            <td th:text="${s.id}">Sequence Id</td>
+            <td th:text="${s.isCompleted}">isCompleted</td>
+            <td th:text="${s.isAllSnippetsOk}">isAllSnippetsOk</td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-info/' + s.id}">Info</a></td>
+        </tr>
+        <tr>
+            <td colspan="3">
+                <div>
+                    <ul class='pagination pagination-centered'>
+                        <li class="table-nav-padding">
+                            <span th:if='${result.sequences.first}' class="table-nav-button">« First</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.sequences.first}'
+                               th:href="@{/launchpad/experiment-feature-progress-part(page=0,size=${result.sequences.pageable.pageSize})}">« First</a>
+                        </li>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.sequences.hasPrevious()}' class="table-nav-button">←</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.sequences.hasPrevious()}'
+                               th:href="@{/launchpad/experiment-feature-progress-part(page=${result.sequences.pageable.pageNumber - 1},size=${result.sequences.pageable.pageSize})}" title='Go to previous page'>←</a>
+                        </li>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.sequences.hasNext()}' class="table-nav-button">→</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.sequences.hasNext()}'
+                               th:href='@{/launchpad/experiment-feature-progress-part(page=${result.sequences.pageable.pageNumber + 1},size=${result.sequences.pageable.pageSize})}' title='Go to next page'>→</a>
+                        </li>
+                    </ul>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p>&nbsp;</p>
+
+    <a class="pure-button pure-button-primary" href="experiment-info.html" th:href="${'/launchpad/experiment-info/' + experiment.id }">To experiment info</a>
+
+
+</div>

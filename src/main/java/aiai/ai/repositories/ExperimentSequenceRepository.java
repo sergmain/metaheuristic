@@ -36,6 +36,12 @@ import java.util.List;
 public interface ExperimentSequenceRepository extends CrudRepository<ExperimentSequence, Long> {
 
     @Transactional(readOnly = true)
+    Slice<ExperimentSequence> findAll(Pageable pageable);
+
+    @Transactional(readOnly = true)
+    Slice<ExperimentSequence> findByIsCompletedIsTrueAndFeatureId(Pageable pageable, long featureId);
+
+    @Transactional(readOnly = true)
     List<ExperimentSequence> findByExperimentIdAndFeatureId(long experiimentId, long featureId);
 
     @Transactional(readOnly = true)

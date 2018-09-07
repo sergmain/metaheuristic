@@ -30,6 +30,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
@@ -53,6 +55,11 @@ public class ExperimentsController {
     @Data
     public static class Result {
         public Slice<Experiment> items;
+    }
+
+    @Data
+    public static class SequencesResult {
+        public Slice<ExperimentSequence> sequences;
     }
 
 //    @Value("${aiai.table.rows.limit:#{5}}")
@@ -128,6 +135,45 @@ public class ExperimentsController {
         result.items = experimentRepository.findAll(pageable);
         return "launchpad/experiments :: table";
     }
+
+    @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}")
+    public String getSequncesPart(@ModelAttribute(name = "result") SequencesResult result,
+                                  @PathVariable Long experimentId, @PathVariable Long featureId, @PageableDefault(size = 30) Pageable pageable) {
+        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
+        if (experiment == null) {
+            result.sequences = Page.empty();
+        }
+        else {
+            pageable = ControllerUtils.fixPageSize(30, pageable);
+            result.sequences = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(pageable, featureId);
+        }
+        return "launchpad/experiment-feature-progress :: table";
+    }
+
+    @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
+    public String getSequences(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, final RedirectAttributes redirectAttributes ) {
+        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
+        if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#80.01 experiment wasn't found, experimentId: " + experimentId);
+            return "redirect:/launchpad/experiments";
+        }
+
+        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
+        if (feature == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#80.02 feature wasn't found, featureId: " + featureId);
+            return "redirect:/launchpad/experiments";
+        }
+
+        SequencesResult result = new SequencesResult();
+        result.sequences = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 30), featureId);
+
+        model.addAttribute("result", result);
+        model.addAttribute("experiment", experiment);
+        model.addAttribute("feature", feature);
+        return "launchpad/experiment-feature-progress";
+    }
+
+
 
     @GetMapping(value = "/experiment-add")
     public String add(@ModelAttribute("experiment") Experiment experiment) {

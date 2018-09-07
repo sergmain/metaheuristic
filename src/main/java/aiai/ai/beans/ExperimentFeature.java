@@ -32,10 +32,10 @@ public class ExperimentFeature implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public Long id;
 
     @Version
-    private Integer version;
+    public Integer version;
 
     @Column(name = "FEATURE_IDS")
     public String featureIds;

@@ -20,7 +20,7 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
 
-<script>
+    <script>
         var table = function (html) {
             $('#table').html(html).find('.ajax-elem').each(function () {
                 $(this).click(function () {
@@ -34,7 +34,7 @@
             var token = $("meta[name='_csrf']").attr("content");
             var header = $("meta[name='_csrf_header']").attr("content");
 
-            $(document).ajaxSend(function(e, xhr, options) {
+            $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
             // is this the right usage?
@@ -65,13 +65,34 @@
             <td>
                 <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table-experiment">
                     <tbody>
-                    <tr><td>#Id</td><td  th:text="${r.id}">#Id</td></tr>
-                    <tr><td>Created on</td><td th:text="${#dates.formatISO(r.createdOn)}">CreatedOn</td></tr>
-                    <tr><td>Is launched</td><td th:text="${r.launched ? 'Yes' : ' No'}">Is launched?</td></tr>
-                    <tr><td>Launched on</td><td th:text="${r.launched ? #dates.formatISO(r.createdOn) : 'not launched yet'}">Launched on</td></tr>
-                    <tr><td>Is started</td><td th:text="${r.started ? 'Yes' : ' No'}">Is started?</td></tr>
-                    <tr><td>Name</td><td th:text="${r.name}">name</td></tr>
-                    <tr><td>Description</td><td th:text="${r.description}">description</td></tr>
+                    <tr>
+                        <td>#Id</td>
+                        <td th:text="${r.id}">#Id</td>
+                    </tr>
+                    <tr>
+                        <td>Created on</td>
+                        <td th:text="${#dates.formatISO(r.createdOn)}">CreatedOn</td>
+                    </tr>
+                    <tr>
+                        <td>Is launched</td>
+                        <td th:text="${r.launched ? 'Yes' : ' No'}">Is launched?</td>
+                    </tr>
+                    <tr>
+                        <td>Launched on</td>
+                        <td th:text="${r.launched ? #dates.formatISO(r.createdOn) : 'not launched yet'}">Launched on</td>
+                    </tr>
+                    <tr>
+                        <td>Is started</td>
+                        <td th:text="${r.started ? 'Yes' : ' No'}">Is started?</td>
+                    </tr>
+                    <tr>
+                        <td>Name</td>
+                        <td th:text="${r.name}">name</td>
+                    </tr>
+                    <tr>
+                        <td>Description</td>
+                        <td th:text="${r.description}">description</td>
+                    </tr>
                     </tbody>
                 </table>
             </td>

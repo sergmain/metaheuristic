@@ -41,27 +41,27 @@ public class ExperimentSequence implements Serializable {
     private Integer version;
 
     @Column(name = "EXPERIMENT_ID")
-    private Long experimentId;
+    public Long experimentId;
 
     @Column(name = "FEATURE_ID")
-    private Long featureId;
+    public Long featureId;
 
     @Column(name = "PARAMS")
-    private String params;
+    public String params;
 
     @Column(name = "STATION_ID")
-    private Long stationId;
+    public Long stationId;
 
-    @Column(name="ASSIGNED_ON")
-    private Long assignedOn;
+    @Column(name = "ASSIGNED_ON")
+    public Long assignedOn;
 
-    @Column(name="IS_COMPLETED")
-    private boolean isCompleted;
+    @Column(name = "IS_COMPLETED")
+    public boolean isCompleted;
 
-    @Column(name="IS_ALL_SNIPPETS_OK")
-    private boolean isAllSnippetsOk;
+    @Column(name = "IS_ALL_SNIPPETS_OK")
+    public boolean isAllSnippetsOk;
 
-    @Column(name="SNIPPET_EXEC_RESULTS")
-    private String snippetExecResults;
+    @Column(name = "SNIPPET_EXEC_RESULTS")
+    public String snippetExecResults;
 
 }

@@ -141,16 +141,18 @@
                 <th width="100">Is in progress?</th>
                 <th width="100">Is finished?</th>
                 <th width="100">Exec status</th>
+                <th width="100"></th>
             </tr>
             </thead>
 
             <tbody>
-            <tr th:each="f : ${experimentResult.features}">
+            <tr th:each="f : ${experimentResult.features}" >
                 <td th:text="${f.id}">Feature Id</td>
                 <td th:text="${f.featureIds}">Ids</td>
                 <td th:text="${f.inProgress}">Is InProgress?</td>
                 <td th:text="${f.finished}">Is finished?</td>
                 <td th:text="${f.execStatusAsString()}">Exec status</td>
+                <td><a th:if="${f.isFinished or f.isInProgress}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-feature-progress/'+ experiment.id + '/' + f.id}">Info</a></td>
             </tr>
             </tbody>
         </table>
