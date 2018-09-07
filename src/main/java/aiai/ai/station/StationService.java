@@ -20,6 +20,7 @@ package aiai.ai.station;
 import aiai.ai.Globals;
 import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.beans.StationMetadata;
+import aiai.ai.comm.Protocol;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.repositories.StationMetadataRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -78,7 +79,20 @@ public class StationService {
             e.printStackTrace();
             throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
         }
+    }
 
+    public void createSequence(Protocol.AssignedExperimentSequence.SimpleSequence sequence) {
+        StationExperimentSequence seq = stationExperimentSequenceRepository.findByExperimentSequenceId(sequence.getExperimentSequenceId());
+        // this can happen when launchpad's db was completely reinitialized  but station's db wasn't
+        if (seq!=null) {
+            stationExperimentSequenceRepository.delete(seq);
+        }
+
+        seq = new StationExperimentSequence();
+        seq.setCreatedOn(System.currentTimeMillis());
+        seq.setParams(sequence.params);
+        seq.setExperimentSequenceId(sequence.getExperimentSequenceId());
+        stationExperimentSequenceRepository.save(seq);
     }
 
     public void markAsDelivered(List<Long> ids) {

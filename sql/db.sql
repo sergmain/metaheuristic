@@ -60,6 +60,7 @@ CREATE TABLE AIAI_LP_EXPERIMENT (
   SEED          INT(10),
   NUMBER_OF_SEQUENCE          INT(10) not null default 0,
   IS_ALL_SEQUENCE_PRODUCED   tinyint(1) not null default 0,
+  IS_FEATURE_PRODUCED   tinyint(1) not null default 0,
   IS_LAUNCHED   tinyint(1) not null default 0,
   IS_STARTED    tinyint(1) not null default 0,
   CREATED_ON   bigint not null,
@@ -168,6 +169,7 @@ CREATE TABLE AIAI_S_EXPERIMENT_SEQUENCE (
   IS_REPORTED  tinyint(1) not null default 0,
   IS_DELIVERED  tinyint(1) not null default 0,
   SNIPPET_EXEC_RESULTS  MEDIUMTEXT
-
 );
 
+CREATE UNIQUE INDEX AIAI_S_EXPERIMENT_SEQUENCE_UNQ_IDX
+  ON AIAI_S_EXPERIMENT_SEQUENCE (EXPERIMENT_SEQUENCE_ID);

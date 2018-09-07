@@ -58,8 +58,8 @@ public class Protocol {
 
         @Data
         public static class SimpleSequence {
-            String params;
-            Long experimentSequenceId;
+            public String params;
+            public Long experimentSequenceId;
         }
         List<SimpleSequence> sequences;
 

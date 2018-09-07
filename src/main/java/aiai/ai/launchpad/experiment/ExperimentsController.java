@@ -22,8 +22,11 @@ import aiai.ai.beans.*;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.*;
+import aiai.ai.utils.StrUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -44,6 +47,7 @@ import java.util.*;
  */
 @Controller
 @RequestMapping("/launchpad")
+@Slf4j
 public class ExperimentsController {
 
     @Data
@@ -90,10 +94,24 @@ public class ExperimentsController {
 
     @Data
     public static class ExperimentResult {
-        public Experiment experiment;
         public Dataset dataset;
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeature> features;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SimpleExperiment {
+        public String name;
+        public String description;
+        public int seed;
+        public String epoch;
+        public long id;
+
+        public static SimpleExperiment to(Experiment e) {
+            return new SimpleExperiment(e.getName(), e.getDescription(), e.getSeed(), e.getEpoch(), e.getId());
+        }
     }
 
     @GetMapping("/experiments")
@@ -137,10 +155,12 @@ public class ExperimentsController {
 
         ExperimentResult experimentResult = new ExperimentResult();
         Dataset dataset = getDatasetAndCheck(experiment);
-        experimentResult.experiment = experiment;
         experimentResult.dataset = dataset;
         experimentResult.features = experimentFeatureRepository.findByExperimentId(experiment.getId());
+        experimentResult.features.sort( (ExperimentFeature o1, ExperimentFeature o2) -> (Boolean.compare(o1.isFinished, o2.isFinished)));
 
+
+        model.addAttribute("experiment", experiment);
         model.addAttribute("experimentResult", experimentResult);
         return "launchpad/experiment-info";
     }
@@ -182,8 +202,9 @@ public class ExperimentsController {
                 experimentResult.allDatasetOptions.add(new SimpleSelectOption(ds.getId().toString(), String.format("Id: %d; %s", ds.getId(), ds.getName())));
             }
         }
-        experimentResult.experiment = experiment;
         experimentResult.dataset = dataset;
+        model.addAttribute("experiment", experiment);
+        model.addAttribute("simpleExperiment", SimpleExperiment.to(experiment));
         model.addAttribute("experimentResult", experimentResult);
         model.addAttribute("snippetResult", snippetResult);
         return "launchpad/experiment-edit-form";
@@ -194,11 +215,42 @@ public class ExperimentsController {
         if (experiment.getDatasetId()!=null) {
             dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
             if (dataset == null) {
+                log.warn("dataset wasn't found for id {}", experiment.getDatasetId());
                 experiment.setDatasetId(null);
                 experimentRepository.save(experiment);
             }
         }
         return dataset;
+    }
+
+    @PostMapping("/experiment-add-form-commit")
+    public String addFormCommit(Model model, Experiment experiment) {
+        return processCommit(model, experiment,  "launchpad/experiment-add-form");
+    }
+
+    @PostMapping("/experiment-edit-form-commit")
+    public String editFormCommit(Model model, SimpleExperiment simpleExperiment, final RedirectAttributes redirectAttributes) {
+        Experiment experiment = experimentRepository.findById(simpleExperiment.id).orElse(null);
+        if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#81.01 experiment wasn't found, experimentId: " + simpleExperiment.id);
+            return "redirect:/launchpad/experiments";
+        }
+        experiment.setName(simpleExperiment.getName());
+        experiment.setDescription(simpleExperiment.getDescription());
+        experiment.setSeed(simpleExperiment.getSeed());
+        experiment.setEpoch(simpleExperiment.getEpoch());
+        return processCommit(model, experiment,  "launchpad/experiment-edit-form");
+    }
+
+    private String processCommit(Model model, Experiment experiment, String target) {
+        ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(experiment.getEpoch());
+        if (!numberOfVariants.status) {
+            model.addAttribute("errorMessage", numberOfVariants.getError());
+            return target;
+        }
+        experiment.setEpochVariant(numberOfVariants.getCount());
+        experimentRepository.save(experiment);
+        return "redirect:/launchpad/experiments";
     }
 
     public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
@@ -350,27 +402,6 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 
-    @PostMapping("/experiment-add-form-commit")
-    public String addFormCommit(Model model, Experiment experiment) {
-        return processCommit(model, experiment,  "launchpad/experiment-add-form");
-    }
-
-    @PostMapping("/experiment-edit-form-commit")
-    public String editFormCommit(Model model, Experiment experiment) {
-        return processCommit(model, experiment,  "launchpad/experiment-edit-form");
-    }
-
-    private String processCommit(Model model, Experiment experiment, String target) {
-        ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(experiment.getEpoch());
-        if (!numberOfVariants.status) {
-            model.addAttribute("errorMessage", numberOfVariants.getError());
-            return target;
-        }
-        experiment.setEpochVariant(numberOfVariants.getCount());
-        experimentRepository.save(experiment);
-        return "redirect:/launchpad/experiments";
-    }
-
     @GetMapping("/experiment-delete/{id}")
     public String delete(@PathVariable Long id, Model model) {
         Experiment experiment = experimentRepository.findById(id).orElse(null);
@@ -406,13 +437,18 @@ public class ExperimentsController {
         BeanUtils.copyProperties(experiment, trg);
         trg.setId(null);
         trg.setVersion(null);
-        trg.setName( "Copy #2, " +experiment.getName());
-        trg.setDescription( "Copy #2, " +experiment.getDescription());
+        trg.setName( StrUtils.incCopyNumber(experiment.getName()) );
+        trg.setDescription( StrUtils.incCopyNumber( experiment.getDescription()) );
         trg.setAllSequenceProduced(false);
+        trg.setFeatureProduced(false);
         trg.setLaunchedOn(null);
         trg.setLaunched(false);
         List<ExperimentSnippet> snippets = experiment.getSnippets();
-        trg.getSnippets().clear();
+        trg.setSnippets(new ArrayList<>());
+        List<ExperimentHyperParams> params = experiment.getHyperParams();
+        trg.setHyperParams(new ArrayList<>());
+        experimentRepository.save(trg);
+
         for (ExperimentSnippet snippet : snippets) {
             ExperimentSnippet trgSnippet = new ExperimentSnippet();
             BeanUtils.copyProperties(snippet, trgSnippet);
@@ -422,8 +458,15 @@ public class ExperimentsController {
             trg.getSnippets().add(trgSnippet);
             experimentSnippetRepository.save(trgSnippet);
         }
-
-        experimentRepository.save(trg);
+        for (ExperimentHyperParams params1 : params) {
+            ExperimentHyperParams trgParam = new ExperimentHyperParams();
+            BeanUtils.copyProperties(params1, trgParam);
+            trgParam.setId(null);
+            trgParam.setVersion(null);
+            trgParam.setExperiment(trg);
+            trg.getHyperParams().add(trgParam);
+            experimentHyperParamsRepository.save(trgParam);
+        }
 
         return "redirect:/launchpad/experiments";
     }

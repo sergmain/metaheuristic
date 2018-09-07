@@ -22,6 +22,7 @@ import lombok.Data;
 @Data
 public class SimpleFeature {
     public long id;
+    // it's initialized at station side
     public String path;
 
     public static SimpleFeature of(String id) {

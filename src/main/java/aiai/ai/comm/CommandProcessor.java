@@ -18,10 +18,8 @@
 package aiai.ai.comm;
 
 import aiai.ai.beans.Station;
-import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.invite.InviteService;
 import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.repositories.StationsRepository;
 import aiai.ai.station.StationService;
 import lombok.extern.slf4j.Slf4j;
@@ -44,14 +42,12 @@ public class CommandProcessor {
     private final StationService stationService;
     private final InviteService inviteService;
     private final ExperimentService experimentService;
-    private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
 
-    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
+    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService) {
         this.stationsRepository = stationsRepository;
         this.stationService = stationService;
         this.inviteService = inviteService;
         this.experimentService = experimentService;
-        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
     }
 
     public Command[] process(Command command) {
@@ -120,11 +116,7 @@ public class CommandProcessor {
             return Protocol.NOP_ARRAY;
         }
         for (Protocol.AssignedExperimentSequence.SimpleSequence sequence : command.sequences) {
-            StationExperimentSequence seq = new StationExperimentSequence();
-            seq.setCreatedOn(System.currentTimeMillis());
-            seq.setParams(sequence.params);
-            seq.setExperimentSequenceId(sequence.getExperimentSequenceId());
-            stationExperimentSequenceRepository.save(seq);
+            stationService.createSequence(sequence);
         }
         return Protocol.NOP_ARRAY;
     }

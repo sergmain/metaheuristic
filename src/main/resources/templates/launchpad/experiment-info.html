@@ -27,16 +27,17 @@
         <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
 
         <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ExperimentResult"*/-->
+        <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
         <h1 class="widget-header">General info</h1>
         <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table">
             <tbody>
-            <tr><td>#Id</td><td  th:text="${experimentResult.experiment.id}">#Id</td></tr>
-            <tr><td>Created on</td><td th:text="${#dates.formatISO(experimentResult.experiment.createdOn)}">CreatedOn</td></tr>
-            <tr><td>Name</td><td th:text="${experimentResult.experiment.name}">name</td></tr>
-            <tr><td>Description</td><td th:text="${experimentResult.experiment.description}">desc</td></tr>
-            <tr><td>Seed</td><td th:text="${experimentResult.experiment.seed}">seed</td></tr>
-            <tr><td>Epochs</td><td th:text="${experimentResult.experiment.epoch}">epoch</td></tr>
-            <tr><td>Number of epoch variants</td><td th:text="${experimentResult.experiment.epochVariant}">Epoch variants</td></tr>
+            <tr><td>#Id</td><td  th:text="${experiment.id}">#Id</td></tr>
+            <tr><td>Created on</td><td th:text="${#dates.formatISO(experiment.createdOn)}">CreatedOn</td></tr>
+            <tr><td>Name</td><td th:text="${experiment.name}">name</td></tr>
+            <tr><td>Description</td><td th:text="${experiment.description}">desc</td></tr>
+            <tr><td>Seed</td><td th:text="${experiment.seed}">seed</td></tr>
+            <tr><td>Epochs</td><td th:text="${experiment.epoch}">epoch</td></tr>
+            <tr><td>Number of epoch variants</td><td th:text="${experiment.epochVariant}">Epoch variants</td></tr>
             </tbody>
         </table>
         <p>&nbsp;</p>
@@ -72,7 +73,7 @@
             </thead>
 
             <tbody>
-            <tr th:each="s : ${experimentResult.experiment.snippets}">
+            <tr th:each="s : ${experiment.snippets}">
                 <td th:text="${s.type}">Snippet type</td>
                 <td th:text="${s.getSnippetCode()}">Snippet code</td>
             </tr>
@@ -91,7 +92,7 @@
             </thead>
 
             <tbody>Command for generating feature
-            <tr th:each="m : ${experimentResult.experiment.hyperParams}">
+            <tr th:each="m : ${experiment.hyperParams}">
                 <td th:text="${m.key}">Key</td>
                 <td th:text="${m.values}">Value</td>
                 <td th:text="${m.variants}">Variants</td>
@@ -101,18 +102,18 @@
         <p>&nbsp;</p>
 
         <h1 class="widget-header">Progress of experiment</h1>
-        <div th:if="${experimentResult.experiment.launched}" th:text="${'Experiment is launched'}">
+        <div th:if="${experiment.launched}" th:text="${'Experiment is launched'}">
         </div>
-        <div th:if="${!experimentResult.experiment.launched}">
+        <div th:if="${!experiment.launched and experimentResult.dataset!=null}">
             <p>Experiment isn't launched</p>
             <p>&nbsp;</p>
-            <a th:if="${!experimentResult.experiment.launched and experimentResult.experiment.datasetId!=null}"
-               class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-launch/' + experimentResult.experiment.id}">Launch</a>
+            <a th:if="${!experiment.launched and experiment.datasetId!=null}"
+               class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-launch/' + experiment.id}">Launch</a>
         </div>
         <p>&nbsp;</p>
 
         <h1 class="widget-header">Dataset features</h1>
-        <table class="pure-table pure-table-bordered" id="table-group" th:fragment="table-group">
+        <table class="pure-table pure-table-bordered" id="table-group" th:fragment="table-group" th:if="${experimentResult.dataset!=null}">
             <thead>
             <tr>
                 <th width="50">Id</th>
@@ -127,6 +128,8 @@
             </tr>
             </tbody>
         </table>
+        <p th:if="${experimentResult.dataset==null}">Dataset isn't assigned</p>
+
         <p>&nbsp;</p>
 
         <h1 class="widget-header">Features</h1>

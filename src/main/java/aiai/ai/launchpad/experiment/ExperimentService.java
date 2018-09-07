@@ -407,6 +407,8 @@ public class ExperimentService {
                     }
             );
         }
+        experiment.setFeatureProduced(true);
+        experimentRepository.save(experiment);
     }
 
     private boolean isExist(List<ExperimentFeature> features, String f) {

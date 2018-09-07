@@ -15,25 +15,18 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.sequence;
+package aiai.ai.utils;
 
-import lombok.Data;
-import lombok.ToString;
+import org.junit.Test;
 
-@Data
-@ToString
-public class SimpleDataset {
-    public long id;
-    // it's initialized at station side
-    public String path;
+import static org.junit.Assert.assertEquals;
 
-    public static SimpleDataset of(String id) {
-        return of(Long.parseLong(id));
-    }
+public class TestIncCopyNumber {
 
-    public static SimpleDataset of(long id) {
-        SimpleDataset sd = new SimpleDataset();
-        sd.id = id;
-        return sd;
+    @Test
+    public void testIncNumber() {
+        assertEquals("Copy #2, aaa", StrUtils.incCopyNumber("aaa"));
+        assertEquals("Copy #3, aaa", StrUtils.incCopyNumber("Copy #2, aaa"));
+        assertEquals("Copy #2, aaa", StrUtils.incCopyNumber("Copy #aa2, aaa"));
     }
 }

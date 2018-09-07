@@ -161,7 +161,7 @@ public class SequenceProcessor {
 
                     final File execDir = paramFile.getParentFile();
                     ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
-                    storeExecResult(seq.getId(), snippet.order, result);
+                    storeExecResult(seq.getId(), snippet.order, result, sequenceYaml.experimentId);
                     if (!result.isOk()) {
                         break;
                     }
@@ -192,8 +192,8 @@ public class SequenceProcessor {
         }
     }
 
-    private void storeExecResult(Long seqId, int snippetOrder, ProcessService.Result result) {
-        log.info("storeExecResult({}, {})", seqId, snippetOrder);
+    private void storeExecResult(Long seqId, int snippetOrder, ProcessService.Result result, long experimentId) {
+        log.info("storeExecResult(experimentId: {}, seqId: {}, snippetOrder{})", experimentId, seqId, snippetOrder);
         StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
         if (seqTemp == null) {
             log.error("StationExperimentSequence wasn't found for Id " + seqId);
