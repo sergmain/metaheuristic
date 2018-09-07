@@ -26,7 +26,9 @@
     <!--/*@thymesVar id="result" type="aiai.ai.launchpad.experiment.ExperimentsController.SequencesResult"*/-->
     <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
     <!--/*@thymesVar id="feature" type="aiai.ai.beans.ExperimentFeature"*/-->
-    <script th:inline="javascript">
+
+    <!--<script th:inline="javascript">-->
+    <script>
         var table = function (html) {
             $('#table').html(html).find('.ajax-elem').each(function () {
                 $(this).click(function () {
@@ -44,7 +46,8 @@
                 xhr.setRequestHeader(header, token);
             });
             // is this the right usage?
-            $.post('/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]], table);
+            // $.post('/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]], table);
+            $.post('/launchpad/experiment-feature-progress-part/35/169', table);
         });
 
     </script>

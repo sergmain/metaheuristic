@@ -138,13 +138,13 @@ public class ExperimentsController {
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}")
     public String getSequncesPart(@ModelAttribute(name = "result") SequencesResult result,
-                                  @PathVariable Long experimentId, @PathVariable Long featureId, @PageableDefault(size = 30) Pageable pageable) {
+                                  @PathVariable Long experimentId, @PathVariable Long featureId, @PageableDefault(size = 10) Pageable pageable) {
         Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
         if (experiment == null) {
             result.sequences = Page.empty();
         }
         else {
-            pageable = ControllerUtils.fixPageSize(30, pageable);
+            pageable = ControllerUtils.fixPageSize(10, pageable);
             result.sequences = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(pageable, featureId);
         }
         return "launchpad/experiment-feature-progress :: table";
@@ -165,7 +165,7 @@ public class ExperimentsController {
         }
 
         SequencesResult result = new SequencesResult();
-        result.sequences = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 30), featureId);
+        result.sequences = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), featureId);
 
         model.addAttribute("result", result);
         model.addAttribute("experiment", experiment);
