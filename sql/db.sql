@@ -111,6 +111,7 @@ CREATE TABLE AIAI_LP_EXPERIMENT_SEQUENCE (
   STATION_ID          NUMERIC(10, 0),
   ASSIGNED_ON   bigint,
   IS_COMPLETED  tinyint(1) not null default 0,
+  COMPLETED_ON   bigint,
   SNIPPET_EXEC_RESULTS  MEDIUMTEXT,
   IS_ALL_SNIPPETS_OK  tinyint(1) not null default 0
 );

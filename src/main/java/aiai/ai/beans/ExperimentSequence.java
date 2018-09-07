@@ -55,6 +55,9 @@ public class ExperimentSequence implements Serializable {
     @Column(name = "ASSIGNED_ON")
     public Long assignedOn;
 
+    @Column(name = "COMPLETED_ON")
+    public Long completedOn;
+
     @Column(name = "IS_COMPLETED")
     public boolean isCompleted;
 

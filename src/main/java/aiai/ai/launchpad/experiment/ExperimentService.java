@@ -225,6 +225,7 @@ public class ExperimentService {
             seq.setAllSnippetsOk(isAllOk);
             seq.setSnippetExecResults(result.getResult());
             seq.setCompleted(true);
+            seq.setCompletedOn(System.currentTimeMillis());
             list.add(seq);
         }
         experimentSequenceRepository.saveAll(list);
