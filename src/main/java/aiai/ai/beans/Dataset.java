@@ -20,6 +20,7 @@ package aiai.ai.beans;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.*;
@@ -35,6 +36,7 @@ import java.util.List;
 @Table(name = "AIAI_LP_DATASET")
 @Data
 @EqualsAndHashCode(exclude = {"datasetGroups"})
+@NoArgsConstructor
 public class Dataset implements Serializable {
     private static final long serialVersionUID = -1972306380977162458L;
 
@@ -65,7 +67,4 @@ public class Dataset implements Serializable {
 
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
     private List<DatasetGroup> datasetGroups;
-
-    public Dataset() {
-    }
 }

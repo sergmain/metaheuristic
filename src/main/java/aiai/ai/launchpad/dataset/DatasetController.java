@@ -23,6 +23,7 @@ import aiai.ai.beans.*;
 import aiai.ai.core.ProcessService;
 import aiai.ai.repositories.*;
 import aiai.ai.utils.ControllerUtils;
+import aiai.ai.utils.DirUtils;
 import aiai.ai.utils.StrUtils;
 import lombok.Data;
 import org.apache.commons.codec.Charsets;
@@ -30,7 +31,6 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
@@ -194,6 +194,8 @@ public class DatasetController {
             dg.setDataset(ds);
             groupsRepository.save(dg);
         }
+
+        // TODO !!! 2018.09.08 add here process of copying DatasetPath from source dataset to target
 
         return "redirect:/launchpad/datasets";
     }
@@ -632,8 +634,8 @@ public class DatasetController {
         }
 
 
-        File datasetDir = new File(datasetDefDir, "dataset");
-        if (!datasetDir.isDirectory()) {
+        File datasetDir = DirUtils.createDir(datasetDefDir, "dataset");
+        if (datasetDir==null || !datasetDir.isDirectory()) {
             throw new IllegalStateException("Not a directory: " + datasetDir.getCanonicalPath());
         }
 

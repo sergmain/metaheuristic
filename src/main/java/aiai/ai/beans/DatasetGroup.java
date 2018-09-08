@@ -20,6 +20,7 @@ package aiai.ai.beans;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.*;
@@ -36,6 +37,7 @@ import java.util.List;
 @Data
 @EqualsAndHashCode(exclude = {"dataset", "datasetColumns"})
 @ToString(exclude = {"dataset"})
+@NoArgsConstructor
 public class DatasetGroup implements Serializable {
     private static final long serialVersionUID = -3161178396332333392L;
 
@@ -92,9 +94,6 @@ public class DatasetGroup implements Serializable {
      */
     @Transient
     private boolean isAddColumn;
-
-    public DatasetGroup() {
-    }
 
     public DatasetGroup(int groupNumber) {
         this.groupNumber = groupNumber;

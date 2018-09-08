@@ -77,7 +77,6 @@ public class ExperimentsController {
         public final List<SimpleConsoleOuput> items = new ArrayList<>();
     }
 
-//    @Value("${aiai.table.rows.limit:#{5}}")
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.table.rows.limit'), 5, 30, 5) }")
     private int limit;
 
