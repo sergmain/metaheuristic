@@ -68,7 +68,15 @@
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-edit/' + r.id}">Edit</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-delete/' + r.id}">Delete</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-definition/' + r.id}">Details</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-clone/' + r.id}">Clone</a></td>
+            <td>
+                <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/launchpad/dataset-clone-commit}"
+                      accept-charset="UTF-8"
+                      id="dataset-clone-commit"
+                      name="f">
+                    <input type="hidden" name="id" th:value="${r.id}"/>
+                    <button type="submit" class="pure-button pure-button-primary">Clone</button>
+                </form>
+            </td>
         </tr>
         <tr>
             <td colspan="7">

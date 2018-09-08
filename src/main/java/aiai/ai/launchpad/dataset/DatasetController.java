@@ -22,10 +22,13 @@ import aiai.ai.Globals;
 import aiai.ai.beans.*;
 import aiai.ai.core.ProcessService;
 import aiai.ai.repositories.*;
+import aiai.ai.utils.ControllerUtils;
+import aiai.ai.utils.StrUtils;
 import lombok.Data;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -78,7 +81,7 @@ public class DatasetController {
 
     @GetMapping("/datasets")
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
-        pageable = fixPageSize(pageable);
+        pageable = ControllerUtils.fixPageSize(limit, pageable);
         result.items = datasetRepository.findAll(pageable);
         return "launchpad/datasets";
     }
@@ -86,7 +89,7 @@ public class DatasetController {
     // for AJAX
     @PostMapping("/datasets-part")
     public String getDatasets(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
-        pageable = fixPageSize(pageable);
+        pageable = ControllerUtils.fixPageSize(limit, pageable);
         result.items = datasetRepository.findAll(pageable);
         return "launchpad/datasets :: table";
     }
@@ -164,32 +167,33 @@ public class DatasetController {
         return "launchpad/dataset-definition";
     }
 
-    @GetMapping(value = "/dataset-clone/{id}")
-    public String cloneDataset(@PathVariable(name = "id") Long datasetId, Model model, final RedirectAttributes redirectAttributes) {
-        Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
+    @PostMapping(value = "/dataset-clone-commit")
+    public String cloneDataset(Long id, final RedirectAttributes redirectAttributes) {
+        Dataset dataset = datasetRepository.findById(id).orElse(null);
         if (dataset==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#87.01 experiment wasn't found, datasetId: " + datasetId);
+            redirectAttributes.addFlashAttribute("errorMessage", "#50.01 dataset wasn't found, datasetId: " + id);
             return "redirect:/launchpad/datasets";
         }
         Dataset ds = new Dataset();
-        ds.setDescription(dataset.getDescription());
+        ds.setName(StrUtils.incCopyNumber(dataset.getName()));
+        ds.setDescription(StrUtils.incCopyNumber(dataset.getDescription()));
         ds.setAssemblingCommand(dataset.getAssemblingCommand());
-        ds.setEditable(dataset.isEditable());
-        List<DatasetGroup> dsg = new ArrayList<>();
-        ds.setDatasetGroups(dsg);
+        ds.setEditable(true);
+        ds.setLocked(false);
+        ds.setDatasetGroups(new ArrayList<>());
+        datasetRepository.save(ds);
+
         for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
             DatasetGroup dg = new DatasetGroup();
-            dg.setGroupNumber(datasetGroup.getGroupNumber());
-            dg.setDescription(datasetGroup.getDescription());
-            dg.setCommand(datasetGroup.getCommand());
-            dg.setFeatureFile(datasetGroup.getFeatureFile());
-            dg.setIdGroup(datasetGroup.isIdGroup());
-            dg.setFeature(datasetGroup.isFeature());
-            dg.setLabel(datasetGroup.isLabel());
-            dg.setFeatureStatus(datasetGroup.getFeatureStatus());
-            dsg.add(dg);
+            BeanUtils.copyProperties(datasetGroup, dg);
+            dg.setId(null);
+            dg.setVersion(null);
+            // 2018.09.08, right now, we don't use GroupColumn beans
+            dg.setDatasetColumns(new ArrayList<>());
+            dg.setFeatureStatus(DatasetGroup.FEATURE_STATUS.NONE.value);
+            dg.setDataset(ds);
+            groupsRepository.save(dg);
         }
-        // TODO add copying of dataset files
 
         return "redirect:/launchpad/datasets";
     }
@@ -808,13 +812,6 @@ public class DatasetController {
         Dataset dataset = path.getDataset();
         pathRepository.delete(path);
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
-    }
-
-    private Pageable fixPageSize(Pageable pageable) {
-        if (pageable.getPageSize() != limit) {
-            pageable = PageRequest.of(pageable.getPageNumber(), limit);
-        }
-        return pageable;
     }
 
     @Data
