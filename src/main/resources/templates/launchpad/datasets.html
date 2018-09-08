@@ -37,13 +37,15 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            // is this the right usage?
             $.post('/launchpad/datasets-part', table);
         });
 
     </script>
 
     <h1 class="widget-header">Datasets</h1>
+
+    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
+    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
     <a class="pure-button pure-button-primary" href="dataset-form.html" th:href="@{/launchpad/dataset-add}">Add new record</a>
     <p></p>

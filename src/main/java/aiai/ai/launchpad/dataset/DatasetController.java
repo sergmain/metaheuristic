@@ -53,10 +53,9 @@ import java.util.stream.Collectors;
 @RequestMapping("/launchpad")
 public class DatasetController {
 
-    public static final String ASSEMBLY_DATASET_YAML = "assembly-dataset.yaml";
-    public static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";
+    private static final String ASSEMBLY_DATASET_YAML = "assembly-dataset.yaml";
+    private static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";
 
-//    @Value("${aiai.table.rows.limit:#{5}}")
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.table.rows.limit'), 5, 30, 5) }")
     private int limit;
 
@@ -78,7 +77,7 @@ public class DatasetController {
     }
 
     @GetMapping("/datasets")
-    public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
+    public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
         pageable = fixPageSize(pageable);
         result.items = datasetRepository.findAll(pageable);
         return "launchpad/datasets";
@@ -166,9 +165,10 @@ public class DatasetController {
     }
 
     @GetMapping(value = "/dataset-clone/{id}")
-    public String cloneDataset(@PathVariable(name = "id") Long datasetId, Model model) {
+    public String cloneDataset(@PathVariable(name = "id") Long datasetId, Model model, final RedirectAttributes redirectAttributes) {
         Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
         if (dataset==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#87.01 experiment wasn't found, datasetId: " + datasetId);
             return "redirect:/launchpad/datasets";
         }
         Dataset ds = new Dataset();

@@ -37,7 +37,6 @@
             $(document).ajaxSend(function(e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            // is this the right usage?
             $.post('/station/envs-part', table);
         });
 

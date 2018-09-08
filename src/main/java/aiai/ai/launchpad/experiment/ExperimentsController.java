@@ -384,7 +384,7 @@ public class ExperimentsController {
     }
 
     @PostMapping("/experiment-metadata-add-commit/{id}")
-    public String metadataAddCommit(@PathVariable Long id, String key, String value) {
+    public String metadataAddCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentRepository.findById(id).orElse(null);
         if (experiment == null) {
             return "redirect:/launchpad/experiments";
@@ -392,6 +392,12 @@ public class ExperimentsController {
         if (experiment.getHyperParams()==null) {
             experiment.setHyperParams(new ArrayList<>());
         }
+        boolean isExist = experiment.getHyperParams().stream().map(ExperimentHyperParams::getKey).anyMatch(key::equals);
+        if (isExist) {
+            redirectAttributes.addFlashAttribute("errorMessage", String.format("Hyper parameter %s already exist",key) );
+            return "redirect:/launchpad/experiment-edit/"+id;
+        }
+
         ExperimentHyperParams m = new ExperimentHyperParams();
         m.setExperiment(experiment);
         m.setKey(key);

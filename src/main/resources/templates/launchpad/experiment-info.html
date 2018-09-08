@@ -19,8 +19,9 @@
      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
      layout:decorate="~{/layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+     sec:authorize="isAuthenticated()"
 >
-    <div sec:authorize="isAuthenticated()">
+
         <h1 class="widget-header">The experiment info</h1>
 
         <!--/*@thymesVar id="infoMessages" type="java.util.List"*/-->
@@ -160,5 +161,5 @@
 
         <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">To list of experiments</a>
 
-    </div>
+
 </div>
