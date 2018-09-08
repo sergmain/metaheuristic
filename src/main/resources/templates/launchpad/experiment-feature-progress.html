@@ -1,21 +1,3 @@
-<!--
-  /*AiAi, Copyright (C) 2017 - 2018, Serge Maslyukov
-
-  This program is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation, either version 3 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  */
-  -->
-
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
      layout:decorate="~{/layout-launchpad}"
@@ -27,10 +9,9 @@
     <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
     <!--/*@thymesVar id="feature" type="aiai.ai.beans.ExperimentFeature"*/-->
 
-    <!--<script th:inline="javascript">-->
     <script>
         var table = function (html) {
-            $('#table').html(html).find('.ajax-elem').each(function () {
+            $('#fragment-table').html(html).find('.ajax-elem').each(function () {
                 $(this).click(function () {
                     $.post($(this).attr('href'), table);
                     return false;
@@ -46,8 +27,7 @@
                 xhr.setRequestHeader(header, token);
             });
             // is this the right usage?
-            // $.post('/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]], table);
-            $.post('/launchpad/experiment-feature-progress-part/35/169', table);
+            $.post('/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]], table);
         });
 
     </script>
@@ -57,7 +37,7 @@
     <h1 class="widget-header">The experiment info</h1>
 
     <h1 class="widget-header">General info</h1>
-    <table class="pure-table pure-table-bordered" id="feature-table" >
+    <table class="pure-table pure-table-bordered">
         <tbody>
         <tr><td>#Id</td><td  th:text="${feature.id}">#Id</td></tr>
         <tr><td>Feature ids</td><td th:text="${feature.featureIds}">featureIds</td></tr>
@@ -69,7 +49,7 @@
     <p>&nbsp;</p>
 
     <h1 class="widget-header">Sequences</h1>
-    <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+    <table class="pure-table pure-table-bordered" id="fragment-table" th:fragment="fragment-table">
         <thead>
         <tr>
             <th>Sequence Id</th>
@@ -82,7 +62,7 @@
         </thead>
 
         <tbody>
-        <tr th:each="s : ${result.sequences}" valign="top">
+        <tr th:each="s : ${result.items}" valign="top">
             <td th:text="${s.id}">Sequence Id</td>
             <td th:text="${s.isCompleted}">isCompleted</td>
             <td th:text="${s.isAllSnippetsOk}">isAllSnippetsOk</td>
@@ -92,22 +72,22 @@
         </tr>
         <tr>
             <td colspan="6">
-                <div>
+                <div th:if="${feature!=null and experiment!=null}">
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">
-                            <span th:if='${result.sequences.first}' class="table-nav-button">« First</span>
-                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.sequences.first}'
-                               th:href="@{/launchpad/experiment-feature-progress-part(page=0,size=${result.sequences.pageable.pageSize})}">« First</a>
+                            <span th:if='${result.items.first}' class="table-nav-button">« First</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
+                               th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
-                            <span th:if='${not result.sequences.hasPrevious()}' class="table-nav-button">←</span>
-                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.sequences.hasPrevious()}'
-                               th:href="@{/launchpad/experiment-feature-progress-part(page=${result.sequences.pageable.pageNumber - 1},size=${result.sequences.pageable.pageSize})}" title='Go to previous page'>←</a>
+                            <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
+                               th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
-                            <span th:if='${not result.sequences.hasNext()}' class="table-nav-button">→</span>
-                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.sequences.hasNext()}'
-                               th:href='@{/launchpad/experiment-feature-progress-part(page=${result.sequences.pageable.pageNumber + 1},size=${result.sequences.pageable.pageSize})}' title='Go to next page'>→</a>
+                            <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
+                               th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>

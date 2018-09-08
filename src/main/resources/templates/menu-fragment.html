@@ -1,20 +1,3 @@
-<!--
-  ~ AiAi, Copyright (C) 2017-2018  Serge Maslyukov
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  -->
-
 <div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4">
     <a class="pure-menu-heading">Aiai project</a>
     <ul>
@@ -29,9 +12,6 @@
         </li>
         <li th:if="${#bools.isTrue(@environment.getProperty('aiai.station.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/station/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="station/index.html" th:href="@{/station/index}">Station</a>
-        </li>
-        <li th:attr="class=${#httpServletRequest.requestURI=='/example'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="example/example.html" th:href="@{/example/example}">Example</a>
         </li>
         <li sec:authorize="isAnonymous()" th:attr="class=${#httpServletRequest.requestURI=='/login'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="/login" th:href="@{/login}">Sign in</a>

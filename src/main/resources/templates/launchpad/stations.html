@@ -1,21 +1,4 @@
-<!--
-  ~ AiAi, Copyright (C) 2017-2018  Serge Maslyukov
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  -->
-
-<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+<div xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" layout:fragment="content"
      layout:decorate="~{/layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
@@ -34,7 +17,7 @@
             var token = $("meta[name='_csrf']").attr("content");
             var header = $("meta[name='_csrf_header']").attr("content");
 
-            $(document).ajaxSend(function(e, xhr, options) {
+            $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
             // is this the right usage?
@@ -73,33 +56,21 @@
             <td colspan="5">
                 <div>
                     <ul class='pagination pagination-centered'>
-                        <!--<li th:class="${result.items.first}?'disabled':''">-->
                         <li class="table-nav-padding">
                             <span th:if='${result.items.first}' class="table-nav-button">« First</span>
-                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}' th:href="@{/launchpad/stations-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
+                               th:href="@{/launchpad/stations-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
                         </li>
-                        <!--<li th:class="${result.items.hasPrevious()}? '' : 'disabled'">-->
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
-                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}' th:href="@{/launchpad/stations-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
+                               th:href="@{/launchpad/stations-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
-                        <!--
-                                        <li th:each='item : ${result.items}' th:class="${item.current}? 'active' : ''">
-                                            <span th:if='${item.current}' th:text='${item.number}'>1</span>
-                                            <a th:if='${not item.current}' th:href='@{/launchpad/stations(page=${item.number - 1},size=${page.items.pageable.pageSize})}'><span th:text='${item.number}'>1</span></a>
-                                        </li>
-                        -->
-                        <!--<li th:class="${result.items.hasNext()}? '' : 'disabled'">-->
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
-                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}' th:href='@{/launchpad/stations-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
+                               th:href='@{/launchpad/stations-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
-                        <!--
-                                        <li th:class="${page.lastPage}? 'disabled' : ''">
-                                            <span th:if='${page.lastPage}'>Last →</span>
-                                            <a th:if='${not page.lastPage}' th:href='@{/launchpad/stations(page=${page.items.pageable.totalPages - 1},size=${page.items.pageable.pageSize})}'>Last →</a>
-                                        </li>
-                        -->
                     </ul>
                 </div>
             </td>

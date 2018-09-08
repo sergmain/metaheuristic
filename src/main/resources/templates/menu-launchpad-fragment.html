@@ -1,20 +1,3 @@
-<!--
-  ~ AiAi, Copyright (C) 2017-2018  Serge Maslyukov
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  -->
-
 <div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
      sec:authorize="isAuthenticated()"
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
@@ -22,16 +5,16 @@
     <a class="pure-menu-heading">Launchpad</a>
     <ul>
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="/launchpad/index.html" th:href="@{/launchpad/index}">Launchpad index</a>
+            <a class="pure-menu-link" href="launchpad/index.html" th:href="@{/launchpad/index}">Launchpad index</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/stations'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="/launchpad/stations.html" th:href="@{/launchpad/stations}">Stations</a>
+            <a class="pure-menu-link" href="launchpad/stations.html" th:href="@{/launchpad/stations}">Stations</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/datasets' || #httpServletRequest.requestURI.startsWith('/launchpad/dataset-definition')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="/launchpad/datasets.html" th:href="@{/launchpad/datasets}">Datasets</a>
+            <a class="pure-menu-link" href="launchpad/datasets.html" th:href="@{/launchpad/datasets}">Datasets</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/experiments'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="/launchpad/experiments.html" th:href="@{/launchpad/experiments}">Experiments</a>
+            <a class="pure-menu-link" href="launchpad/experiments.html" th:href="@{/launchpad/experiments}">Experiments</a>
         </li>
     </ul>
 </div>

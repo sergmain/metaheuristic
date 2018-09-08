@@ -128,7 +128,6 @@ public class MultiHttpSecurityConfig {
                     .antMatchers("/static/**/**", "/css/**", "/js/**", "/webjars/**").permitAll()
                     .antMatchers("/favicon.ico", "/", "/index", "/about", "/login", "/jssc", "/srv/**").permitAll()
                     .antMatchers("/", "/index", "/jssc", "/error/**").permitAll()
-                    .antMatchers("/example*").permitAll()
                     .antMatchers("/login").anonymous()
                     .antMatchers("/logout", "/launchpad/**", "/station/**").authenticated()
                     .antMatchers("/admin/**").hasAnyRole("ADMIN")

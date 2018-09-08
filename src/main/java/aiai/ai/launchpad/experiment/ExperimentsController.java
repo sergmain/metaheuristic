@@ -59,7 +59,7 @@ public class ExperimentsController {
 
     @Data
     public static class SequencesResult {
-        public Slice<ExperimentSequence> sequences;
+        public Slice<ExperimentSequence> items;
     }
 
 //    @Value("${aiai.table.rows.limit:#{5}}")
@@ -137,17 +137,23 @@ public class ExperimentsController {
     }
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}")
-    public String getSequncesPart(@ModelAttribute(name = "result") SequencesResult result,
-                                  @PathVariable Long experimentId, @PathVariable Long featureId, @PageableDefault(size = 10) Pageable pageable) {
+    public String getSequncesPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PageableDefault(size = 10) Pageable pageable) {
+        SequencesResult result = new SequencesResult();
         Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
-        if (experiment == null) {
-            result.sequences = Page.empty();
+        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
+        if (experiment == null || feature==null) {
+            result.items = Page.empty();
         }
         else {
             pageable = ControllerUtils.fixPageSize(10, pageable);
-            result.sequences = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(pageable, featureId);
+            result.items = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(pageable, featureId);
         }
-        return "launchpad/experiment-feature-progress :: table";
+
+        model.addAttribute("result", result);
+        model.addAttribute("experiment", experiment);
+        model.addAttribute("feature", feature);
+
+        return "launchpad/experiment-feature-progress :: fragment-table";
     }
 
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
@@ -165,7 +171,7 @@ public class ExperimentsController {
         }
 
         SequencesResult result = new SequencesResult();
-        result.sequences = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), featureId);
+        result.items = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), featureId);
 
         model.addAttribute("result", result);
         model.addAttribute("experiment", experiment);
