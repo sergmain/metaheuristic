@@ -52,11 +52,10 @@
     <table class="pure-table pure-table-bordered" id="fragment-table" th:fragment="fragment-table">
         <thead>
         <tr>
-            <th>Sequence Id</th>
+            <th>Id</th>
             <th>Is completed?</th>
             <th>Is all snippets Ok?</th>
-            <th>Assigned on</th>
-            <th>Completed on</th>
+            <th>Date</th>
             <th colspan="1">&nbsp;</th>
         </tr>
         </thead>
@@ -66,8 +65,12 @@
             <td th:text="${s.id}">Sequence Id</td>
             <td th:text="${s.isCompleted}">isCompleted</td>
             <td th:text="${s.isAllSnippetsOk}">isAllSnippetsOk</td>
-            <td th:text="${#dates.formatISO(s.assignedOn)}">assigned on>
-            <td th:text="${#dates.formatISO(s.completedOn)}">completed on>
+            <td>
+                <table>
+                    <tr><td th:text="${'assigned: ' + #dates.format(s.assignedOn, 'dd-MMM-yy HH24:mm')}">assigned on></tr>
+                    <tr><td th:text="${'completed: ' + #dates.format(s.completedOn, 'dd-MMM-yy HH24:mm')}">completed on></tr>
+                </table>
+            </td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-info/' + s.id}">Info</a></td>
         </tr>
         <tr>
