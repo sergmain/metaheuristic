@@ -100,7 +100,7 @@ public class Experiment implements Serializable {
     private List<ExperimentSnippet> snippets;
 
     public void sortSnippetsByOrder() {
-        snippets.sort(Comparator.comparing(ExperimentSnippet::getOrder));
+        snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
     }
 
 

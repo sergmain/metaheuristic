@@ -17,12 +17,15 @@
 
 package aiai.ai.launchpad.experiment;
 
+import aiai.ai.core.ProcessService;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.beans.*;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.*;
 import aiai.ai.utils.StrUtils;
+import aiai.ai.yaml.console.SnippetExec;
+import aiai.ai.yaml.console.SnippetExecUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -62,6 +65,18 @@ public class ExperimentsController {
         public Slice<ExperimentSequence> items;
     }
 
+    @Data
+    public static class ConsoleResult {
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class SimpleConsoleOuput {
+            public int order;
+            public String console;
+        }
+        public final List<SimpleConsoleOuput> items = new ArrayList<>();
+    }
+
 //    @Value("${aiai.table.rows.limit:#{5}}")
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.table.rows.limit'), 5, 30, 5) }")
     private int limit;
@@ -97,6 +112,10 @@ public class ExperimentsController {
     public static class SnippetResult {
         public List<SimpleSelectOption> selectOptions = new ArrayList<>();
         public List<ExperimentSnippet> snippets = new ArrayList<>();
+
+        public void sortSnippetsByOrder() {
+            snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
+        }
     }
 
     @Data
@@ -152,8 +171,24 @@ public class ExperimentsController {
         model.addAttribute("result", result);
         model.addAttribute("experiment", experiment);
         model.addAttribute("feature", feature);
+        model.addAttribute("consoleResult", new ConsoleResult());
 
         return "launchpad/experiment-feature-progress :: fragment-table";
+    }
+
+    @PostMapping("/experiment-feature-progress-console-part/{id}")
+    public String getSequncesConsolePart(Model model, @PathVariable(name="id") Long sequenceId) {
+        ConsoleResult result = new ConsoleResult();
+        ExperimentSequence sequence = experimentSequenceRepository.findById(sequenceId).orElse(null);
+        if (sequence!=null) {
+            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(sequence.getSnippetExecResults());
+            for (Map.Entry<Integer, ProcessService.Result> entry : snippetExec.getExecs().entrySet()) {
+                result.items.add( new ConsoleResult.SimpleConsoleOuput(entry.getKey(), entry.getValue().console));
+            }
+        }
+        model.addAttribute("consoleResult", result);
+
+        return "launchpad/experiment-feature-progress :: fragment-console-table";
     }
 
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
@@ -176,6 +211,7 @@ public class ExperimentsController {
         model.addAttribute("result", result);
         model.addAttribute("experiment", experiment);
         model.addAttribute("feature", feature);
+        model.addAttribute("consoleResult", new ConsoleResult());
         return "launchpad/experiment-feature-progress";
     }
 
@@ -255,6 +291,7 @@ public class ExperimentsController {
             }
         }
         experimentResult.dataset = dataset;
+        snippetResult.sortSnippetsByOrder();
         model.addAttribute("experiment", experiment);
         model.addAttribute("simpleExperiment", SimpleExperiment.to(experiment));
         model.addAttribute("experimentResult", experimentResult);
