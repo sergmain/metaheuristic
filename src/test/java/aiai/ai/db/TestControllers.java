@@ -75,7 +75,7 @@ public class TestControllers {
 
         LogData logData1 = new LogData();
         logData1.setLogData("This is log data");
-        logData1.setType(LogData.Type.ASSEMBLY);
+        logData1.setType(LogData.Type.ASSEMBLING);
         logData1.setRefId(42L);
         LogData newlogData = logDataRepository.save(logData1);
         Assert.assertNotNull(newlogData);

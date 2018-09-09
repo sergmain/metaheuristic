@@ -15,19 +15,25 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.env;
+package aiai.ai.yaml.config;
 
+import aiai.ai.yaml.console.SnippetExec;
+import aiai.ai.yaml.sequence.SequenceYaml;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Because of xxx.class can't use generics (or don't have enough time to find out how)
  */
-public class EnvYamlUtils {
+public class DatasetPreparingConfigUtils {
 
     private static Yaml yaml;
 
@@ -36,26 +42,28 @@ public class EnvYamlUtils {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        yaml = new Yaml(new Constructor(EnvYaml.class), new Representer(), options);
+        Representer representer = new Representer();
+        representer.addClassTag(DatasetPreparingConfig.class, Tag.MAP);
 
+        yaml = new Yaml(new Constructor(DatasetPreparingConfig.class), representer, options);
     }
 
-    public static String toString(EnvYaml envYaml) {
-        return yaml.dump(envYaml);
+    public static String toString(DatasetPreparingConfig config) {
+        return yaml.dump(config);
     }
 
-    public static EnvYaml toEnvYaml(String s) {
+    public static DatasetPreparingConfig to(String s) {
         if (s==null) {
             return null;
         }
         return yaml.load(s);
     }
 
-    public static EnvYaml toEnvYaml(InputStream is) {
+    public static DatasetPreparingConfig to(InputStream is) {
         return yaml.load(is);
     }
 
-    public static EnvYaml toEnvYaml(File file) {
+    public static DatasetPreparingConfig to(File file) {
         try(FileInputStream fis =  new FileInputStream(file)) {
             return yaml.load(fis);
         } catch (IOException e) {

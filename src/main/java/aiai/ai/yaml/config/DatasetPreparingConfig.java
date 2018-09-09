@@ -15,24 +15,18 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.utils;
+package aiai.ai.yaml.config;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
-@Slf4j
-public class DirUtils {
-
-    public static File createDir(File baseDir, String subDir) {
-        File currDir = new File(baseDir, subDir);
-        if (!currDir.exists()) {
-            boolean isOk = currDir.mkdirs();
-            if (!isOk) {
-                log.error("Can't make all directories for path: {}", currDir.getAbsolutePath());
-                return null;
-            }
-        }
-        return currDir;
-    }
+@Data
+@NoArgsConstructor
+public class DatasetPreparingConfig {
+    public List<String> parts = new ArrayList<>();
+    public String rawFile;
+    public String datasetFile;
 }

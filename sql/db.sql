@@ -23,8 +23,12 @@ CREATE TABLE AIAI_LP_DATASET (
   DESCRIPTION VARCHAR(250) NOT NULL,
   IS_EDITABLE   tinyint(1) not null default 1,
   CMD_ASSEMBLE         VARCHAR(250),
+  CMD_PRODUCE         VARCHAR(250),
   DATASET_FILE         VARCHAR(250),
-  IS_LOCKED   tinyint(1) not null default 0
+  RAW_FILE         VARCHAR(250),
+  IS_LOCKED   tinyint(1) not null default 0,
+  RAW_ASSEMBLING_STATUS   tinyint(1) not null default 0,
+  DATASET_PRODUCING_STATUS   tinyint(1) not null default 0
 );
 
 CREATE TABLE AIAI_LP_DATASET_GROUP (

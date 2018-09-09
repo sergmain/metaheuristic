@@ -56,14 +56,26 @@ public class Dataset implements Serializable {
     @Column(name = "CMD_ASSEMBLE")
     private String assemblingCommand;
 
+    @Column(name = "CMD_PRODUCE")
+    private String producingCommand;
+
     @Column(name = "DATASET_FILE")
     private String datasetFile;
+
+    @Column(name = "RAW_FILE")
+    private String rawFile;
 
     @Column(name = "IS_EDITABLE")
     private boolean isEditable;
 
     @Column(name = "IS_LOCKED")
     private boolean isLocked;
+
+    @Column(name = "RAW_ASSEMBLING_STATUS")
+    private int rawAssemblingStatus;
+
+    @Column(name = "DATASET_PRODUCING_STATUS")
+    private int datasetProducingStatus;
 
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
     private List<DatasetGroup> datasetGroups;

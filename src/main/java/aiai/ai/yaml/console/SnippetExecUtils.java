@@ -27,6 +27,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+/**
+ * Because of xxx.class can't use generics (or don't have enough time to find out how)
+ */
 public class SnippetExecUtils {
 
     private static Yaml yaml;

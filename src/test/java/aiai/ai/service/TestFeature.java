@@ -20,6 +20,7 @@ package aiai.ai.service;
 import aiai.ai.Globals;
 import aiai.ai.beans.*;
 import aiai.ai.comm.CommandProcessor;
+import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
@@ -31,7 +32,6 @@ import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
@@ -134,21 +134,21 @@ public abstract class TestFeature {
             dg1.setGroupNumber(1);
             dg1.setCommand("Test cmd #1. Must be deleted automatically");
             dg1.setFeature(true);
-            dg1.setFeatureStatus(DatasetGroup.FEATURE_STATUS.OK.value);
+            dg1.setFeatureStatus(ArtifactStatus.OK.value);
             dg1.setDataset(dataset);
 
             DatasetGroup dg2 = new DatasetGroup();
             dg2.setGroupNumber(2);
             dg2.setCommand("Test cmd #2. Must be deleted automatically");
             dg2.setFeature(true);
-            dg2.setFeatureStatus(DatasetGroup.FEATURE_STATUS.OK.value);
+            dg2.setFeatureStatus(ArtifactStatus.OK.value);
             dg2.setDataset(dataset);
 
             DatasetGroup dg3 = new DatasetGroup();
             dg3.setGroupNumber(3);
             dg3.setCommand("Test cmd #3. Must be deleted automatically");
             dg3.setFeature(true);
-            dg3.setFeatureStatus(DatasetGroup.FEATURE_STATUS.OK.value);
+            dg3.setFeatureStatus(ArtifactStatus.OK.value);
             dg3.setDataset(dataset);
 
             dataset.setDatasetGroups(Arrays.asList(dg1, dg2, dg3));

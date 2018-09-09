@@ -15,24 +15,30 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.utils;
+package aiai.ai.core;
 
-import lombok.extern.slf4j.Slf4j;
+public enum ArtifactStatus {
 
-import java.io.File;
+    NONE(0), OK(1), ERROR(2), OBSOLETE(3);
 
-@Slf4j
-public class DirUtils {
+    public final int value;
 
-    public static File createDir(File baseDir, String subDir) {
-        File currDir = new File(baseDir, subDir);
-        if (!currDir.exists()) {
-            boolean isOk = currDir.mkdirs();
-            if (!isOk) {
-                log.error("Can't make all directories for path: {}", currDir.getAbsolutePath());
-                return null;
-            }
+    ArtifactStatus(int value) {
+        this.value = value;
+    }
+
+    public static String byValue(int value) {
+        switch(value) {
+            case 0:
+                return NONE.toString();
+            case 1:
+                return OK.toString();
+            case 2:
+                return ERROR.toString();
+            case 3:
+                return OBSOLETE.toString();
+            default:
+                throw new IllegalStateException("unknow value: " + value);
         }
-        return currDir;
     }
 }
