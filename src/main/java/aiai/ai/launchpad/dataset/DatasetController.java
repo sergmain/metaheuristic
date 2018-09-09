@@ -388,34 +388,35 @@ public class DatasetController {
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
-    @GetMapping(value = "/dataset-produce-features/{id}")
-    public String produceFeaturesForDataset(@PathVariable(name = "id") Long datasetId) {
+    @GetMapping(value = "/dataset-produce-all-features/{id}")
+    public String produceFeaturesForDataset(@PathVariable(name = "id") Long datasetId, final RedirectAttributes redirectAttributes) {
         final Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
         if (dataset==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#50.11 dataset wasn't found, datasetId: " + datasetId);
             return "redirect:/launchpad/datasets";
         }
 
-        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
-        for (DatasetGroup group : groups) {
-            produceFeature(dataset, group);
+        for (DatasetGroup group : dataset.getDatasetGroups()) {
+            produceFeature(group);
         }
 
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
     @GetMapping(value = "/dataset-produce-feature/{id}")
-    public String produceFeatureForGroup(@PathVariable(name = "id") Long groupId) {
+    public String produceFeatureForGroup(@PathVariable(name = "id") Long groupId, final RedirectAttributes redirectAttributes) {
         final DatasetGroup group = groupsRepository.findById(groupId).orElse(null);
         if (group==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#50.12 datasetGroup wasn't found, groupId: " + groupId);
             return "redirect:/launchpad/datasets";
         }
-        produceFeature(group.getDataset(), group);
+        produceFeature(group);
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
 
-    private void produceFeature(Dataset dataset, DatasetGroup group) {
+    private void produceFeature(DatasetGroup group) {
         try {
-            File yaml = createYamlForFeature(dataset.getId(), group);
+            File yaml = createYamlForFeature(group);
             System.out.println("yaml file: " + yaml.getPath());
             boolean isOk = runCommand(yaml, group.getCommand(), LogData.Type.FEATURE, group.getId());
             group.setFeatureStatus(isOk ? ArtifactStatus.OK.value: ArtifactStatus.ERROR.value );
@@ -425,7 +426,9 @@ public class DatasetController {
         }
     }
 
-    private File createYamlForFeature(Long datasetId, DatasetGroup group) {
+    private File createYamlForFeature(DatasetGroup group) {
+
+        long datasetId = group.getDataset().getId();
 
         final String definitionPath = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, datasetId);
         final File definitionDir = new File(globals.launchpadDir, definitionPath);
@@ -436,10 +439,10 @@ public class DatasetController {
             }
         }
 
-        final String datasetPath = String.format("%s%cdataset%c%s", definitionPath, File.separatorChar, File.separatorChar, Consts.DATASET_FILE_NAME);
-        final File datasetFile = new File(globals.launchpadDir, datasetPath);
-        if (!datasetFile.exists()) {
-            throw new IllegalStateException("Dataset file doesn't exist: " + datasetFile.getAbsolutePath());
+        final String datasetPath = group.getDataset().asRawFilePath();
+        final File rawFile = new File(globals.launchpadDir, datasetPath);
+        if (!rawFile.exists()) {
+            throw new IllegalStateException("Raw file doesn't exist: " + rawFile.getAbsolutePath());
         }
 
         final String featurePath = String.format("%s%c%s%c%03d", definitionPath, File.separatorChar, Consts.FEATURE_DIR, File.separatorChar, group.getId());
@@ -468,16 +471,9 @@ public class DatasetController {
             featureFile.renameTo(featureFileBak);
         }
 
-/*
-        dataset:
-            file: definitions\002\dataset\dataset.txt
-        feature
-            file: definitions\002\features\003\feature-003.txt
-*/
-
         String s = "";
-        s += "dataset:\n    file: " +  datasetPath + '\n';
-        s += "feature:\n    file: " + featureFilename + '\n';
+        s += "rawFile: " +  datasetPath + '\n';
+        s += "featureFile: " + featureFilename + '\n';
 
         try {
             FileUtils.write(yamlFile, s, Charsets.UTF_8, false);
