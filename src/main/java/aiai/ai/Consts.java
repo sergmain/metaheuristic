@@ -36,12 +36,14 @@ public class Consts {
     public static final String EPOCH = "epoch";
 
     public static final PageRequest PAGE_REQUEST_1_REC = PageRequest.of(0, 1);
-    public static final String DEFINITIONS_DIR = "definitions";
-    public static final String FEATURE_DIR = "feature";
-    public static final String DATASET_TXT = "dataset.";
-    public static final String FEATURE_FILE_MASK = "feature-%03d.txt";
 
     public static final Map<String, String> EMPTY_UNMODIFIABLE_MAP = Collections.unmodifiableMap(new HashMap<>(0));
 
     public static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
+
+    public static final String DEFINITIONS_DIR = "definitions";
+    public static final String FEATURE_DIR = "feature";
+    public static final String RAW_FILE_NAME = "raw-file.";
+    public static final String DATASET_FILE_NAME = "dataset.";
+    public static final String FEATURE_FILE_MASK = "feature-%03d.txt";
 }

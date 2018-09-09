@@ -29,6 +29,7 @@ import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.config.DatasetPreparingConfig;
 import aiai.ai.yaml.config.DatasetPreparingConfigUtils;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -57,11 +58,11 @@ import java.util.stream.Collectors;
  */
 @Controller
 @RequestMapping("/launchpad")
+@Slf4j
 public class DatasetController {
 
     private static final String CONFIG_YAML = "config.yaml";
     private static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";
-    public static final String RAW_FILE_NAME = "raw-file.";
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.table.rows.limit'), 5, 30, 5) }")
     private int limit;
@@ -435,7 +436,7 @@ public class DatasetController {
             }
         }
 
-        final String datasetPath = String.format("%s%cdataset%c%s", definitionPath, File.separatorChar, File.separatorChar, Consts.DATASET_TXT);
+        final String datasetPath = String.format("%s%cdataset%c%s", definitionPath, File.separatorChar, File.separatorChar, Consts.DATASET_FILE_NAME);
         final File datasetFile = new File(globals.launchpadDir, datasetPath);
         if (!datasetFile.exists()) {
             throw new IllegalStateException("Dataset file doesn't exist: " + datasetFile.getAbsolutePath());
@@ -528,11 +529,10 @@ public class DatasetController {
 
     @PostMapping(value = "/dataset-is-editable-commit")
     public String setHeaderForDataset(Long id, boolean editable) {
-        final Optional<Dataset> value = datasetRepository.findById(id);
-        if (!value.isPresent()) {
+        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        if (dataset==null) {
             return "redirect:/launchpad/datasets";
         }
-        Dataset dataset = value.get();
         dataset.setEditable(editable);
         datasetRepository.save(dataset);
 
@@ -540,13 +540,28 @@ public class DatasetController {
     }
 
     @PostMapping(value = "/dataset-cmd-assemble-commit")
-    public String setHeaderForDataset(Long id, @RequestParam(name = "command_assemble") String assemblingCommand) {
-        final Optional<Dataset> value = datasetRepository.findById(id);
-        if (!value.isPresent()) {
+    public String setCmdForRaw(Long id, @RequestParam(name = "command_assemble") String assemblingCommand) {
+        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        if (dataset==null) {
             return "redirect:/launchpad/datasets";
         }
-        Dataset dataset = value.get();
         dataset.setAssemblingCommand(assemblingCommand);
+        dataset.setRawAssemblingStatus(ArtifactStatus.OBSOLETE.value);
+        datasetRepository.save(dataset);
+
+        obsoleteDatasetGroups(dataset);
+
+        return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+    }
+
+    @PostMapping(value = "/dataset-cmd-produce-dataset-commit")
+    public String setCmdForDataset(Long id, @RequestParam(name = "command_produce") String cmd) {
+        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        if (dataset==null) {
+            return "redirect:/launchpad/datasets";
+        }
+        dataset.setProducingCommand(cmd);
+        dataset.setDatasetProducingStatus(ArtifactStatus.OBSOLETE.value);
         datasetRepository.save(dataset);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
@@ -559,30 +574,39 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         File yaml = createConfigYaml(dataset);
-        runCommand(yaml, dataset.getAssemblingCommand(), LogData.Type.ASSEMBLING, dataset.getId());
-        updateInfoWithRaw(dataset);
+        boolean isOk = runCommand(yaml, dataset.getAssemblingCommand(), LogData.Type.ASSEMBLING, dataset.getId());
+        updateInfoWithRaw(dataset, isOk);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
-    private void updateInfoWithRaw(Dataset dataset) {
-        final String path = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId());
-
-        final File datasetDefDir = new File(globals.launchpadDir, path);
-        if (!datasetDefDir.exists()) {
-            return;
+    @PostMapping(value = "/dataset-run-producing-commit")
+    public String runProducingOfDatasetFile(Long id) throws IOException {
+        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        if (dataset==null) {
+            return "redirect:/launchpad/datasets";
         }
+        File yaml = createConfigYaml(dataset);
+        boolean isOk = runCommand(yaml, dataset.getProducingCommand(), LogData.Type.PRODUCING, dataset.getId());
+        updateInfoWithDataset(dataset, isOk);
 
-        String rawFilename = String.format("%s%c%s", path, File.separatorChar, RAW_FILE_NAME);
+        return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+    }
 
-        File datasetFile = new File(globals.launchpadDir, rawFilename);
+    private void updateInfoWithRaw(Dataset dataset, boolean isOk) {
+        final String path = dataset.asRawFilePath();
+        final File datasetFile = new File(globals.launchpadDir, path);
         if (!datasetFile.exists()) {
             return;
         }
-        dataset.setRawFile(rawFilename);
         dataset.setDatasetProducingStatus(ArtifactStatus.OBSOLETE.value);
+        dataset.setRawAssemblingStatus(isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value);
         datasetRepository.save(dataset);
 
+        obsoleteDatasetGroups(dataset);
+    }
+
+    private void obsoleteDatasetGroups(Dataset dataset) {
         List<DatasetGroup> groups = groupsRepository.findByDataset_Id(dataset.getId());
         for (DatasetGroup group : groups) {
             group.setFeatureStatus(ArtifactStatus.OBSOLETE.value );
@@ -590,28 +614,15 @@ public class DatasetController {
         groupsRepository.saveAll(groups);
     }
 
-    private void updateInfoWithDataset(Dataset dataset) {
-        final String path = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId());
-
-        final File datasetDefDir = new File(globals.launchpadDir, path);
-        if (!datasetDefDir.exists()) {
-            return;
-        }
-
-        String datasetFilename = String.format("%s%cdataset%cdataset.", path, File.separatorChar, File.separatorChar);
-
-        File datasetFile = new File(globals.launchpadDir, datasetFilename);
+    private void updateInfoWithDataset(Dataset dataset, boolean isOk) {
+        final String path = dataset.asDatasetFilePath();
+        File datasetFile = new File(globals.launchpadDir, path);
         if (!datasetFile.exists()) {
+            log.error("Dataset file doesn't exist: {}", datasetFile.getPath());
             return;
         }
-        dataset.setDatasetFile(datasetFilename);
+        dataset.setDatasetProducingStatus(isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value);
         datasetRepository.save(dataset);
-
-        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(dataset.getId());
-        for (DatasetGroup group : groups) {
-            group.setFeatureStatus(ArtifactStatus.OBSOLETE.value );
-        }
-        groupsRepository.saveAll(groups);
     }
 
     private boolean runCommand(File yaml, String command, LogData.Type type, Long refId) {
@@ -654,7 +665,7 @@ public class DatasetController {
         if (datasetDir==null) {
             throw new IllegalStateException("Can't create target dir");
         }
-        if (datasetDir.isDirectory()) {
+        if (!datasetDir.isDirectory()) {
             throw new IllegalStateException("Not a directory: " + datasetDir.getCanonicalPath());
         }
 
@@ -672,8 +683,8 @@ public class DatasetController {
         for (DatasetPath datasetPath : paths) {
             config.parts.add(datasetPath.getPath());
         }
-        config.datasetFile = String.format("%s%cdataset%cdataset", path, File.separatorChar, File.separatorChar);
-        config.rawFile = String.format("%s%c%s", path, File.separatorChar, RAW_FILE_NAME);
+        config.datasetFile = String.format("%s%cdataset%c%s", path, File.separatorChar, File.separatorChar, Consts.DATASET_FILE_NAME);
+        config.rawFile = String.format("%s%c%s", path, File.separatorChar, Consts.RAW_FILE_NAME);
 
         try {
             FileUtils.write(yamlFile, DatasetPreparingConfigUtils.toString(config), Charsets.UTF_8, false);

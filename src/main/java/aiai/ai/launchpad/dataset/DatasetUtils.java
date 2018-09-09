@@ -32,7 +32,7 @@ public class DatasetUtils {
             throw new IllegalStateException("Error create directory: " + definitionPath);
         }
 
-        final String datasetPath = String.format("%s%cdataset%c%s", definitionPath, File.separatorChar, File.separatorChar, Consts.DATASET_TXT);
+        final String datasetPath = String.format("%s%cdataset%c%s", definitionPath, File.separatorChar, File.separatorChar, Consts.DATASET_FILE_NAME);
         final File datasetFile = new File(launchpadDir, datasetPath);
         if (!datasetFile.exists()) {
             throw new IllegalStateException("Dataset file doesn't exist: " + datasetFile.getAbsolutePath());

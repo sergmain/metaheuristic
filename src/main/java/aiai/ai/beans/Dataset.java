@@ -18,12 +18,13 @@
 
 package aiai.ai.beans;
 
+import aiai.ai.Consts;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import javax.persistence.*;
+import java.io.File;
 import java.io.Serializable;
 import java.util.List;
 
@@ -59,12 +60,6 @@ public class Dataset implements Serializable {
     @Column(name = "CMD_PRODUCE")
     private String producingCommand;
 
-    @Column(name = "DATASET_FILE")
-    private String datasetFile;
-
-    @Column(name = "RAW_FILE")
-    private String rawFile;
-
     @Column(name = "IS_EDITABLE")
     private boolean isEditable;
 
@@ -79,4 +74,20 @@ public class Dataset implements Serializable {
 
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
     private List<DatasetGroup> datasetGroups;
+
+    public String asRawFilePath() {
+        //noinspection UnnecessaryLocalVariable
+        String rawFilePath = String.format("%s%c%03d%c%s", Consts.DEFINITIONS_DIR, File.separatorChar, id, File.separatorChar, Consts.RAW_FILE_NAME);
+        return  rawFilePath;
+    }
+
+    public String asDatasetFilePath() {
+        //noinspection UnnecessaryLocalVariable
+        String datasetFilePath = String.format("%s%c%03d%cdataset%c%s", Consts.DEFINITIONS_DIR, File.separatorChar, id, File.separatorChar, File.separatorChar, Consts.DATASET_FILE_NAME);
+        return  datasetFilePath;
+
+
+    }
+
+
 }

@@ -301,12 +301,20 @@
             </tr>
         </table>
 
-        <table th:if="${ result.dataset.datasetFile!=null and result.dataset.datasetFile.length() &gt; 0 }">
+        <table>
             <tr>
-                <td width="600">
+                <td>
                     <fieldset>
-                        <label for="produced_dataset">Produced dataset file</label>
-                        <p id="produced_dataset" th:text="${result.dataset.datasetFile}">Produce dataset file</p>
+                        <label for="produced_dataset">Dataset file</label>
+                        <p id="produced_dataset" th:text="${result.dataset.asDatasetFilePath()}">dataset file path</p>
+                    </fieldset>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <fieldset>
+                        <label for="produced_dataset_status">Dataset file status</label>
+                        <p id="produced_dataset_status" th:text="${T(aiai.ai.core.ArtifactStatus).byValue(result.dataset.datasetProducingStatus)}">Status</p>
                     </fieldset>
                 </td>
             </tr>
@@ -360,12 +368,20 @@
             </tr>
         </table>
 
-        <table th:if="${ result.dataset.rawFile!=null and result.dataset.rawFile.length() &gt; 0 }">
+        <table>
             <tr>
-                <td width="600">
+                <td>
                     <fieldset>
-                        <label for="assembled_dataset">Produced raw file file</label>
-                        <p id="assembled_dataset" th:text="${result.dataset.rawFile}">Produce raw file</p>
+                        <label for="assembled_dataset">Raw file</label>
+                        <p id="assembled_dataset" th:text="${result.dataset.asRawFilePath()}">Raw file</p>
+                    </fieldset>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <fieldset>
+                        <label for="raw_file_status">Raw file status</label>
+                        <p id="raw_file_status" th:text="${T(aiai.ai.core.ArtifactStatus).byValue(result.dataset.rawAssemblingStatus)}">Status</p>
                     </fieldset>
                 </td>
             </tr>
