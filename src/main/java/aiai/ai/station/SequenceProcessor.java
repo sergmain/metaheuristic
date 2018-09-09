@@ -58,6 +58,7 @@ public class SequenceProcessor {
     private final LogDataRepository logDataRepository;
 
     private Map<Long, AssetFile> isDatasetReady = new HashMap<>();
+    private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
     private Map<String, StationSnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
     public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService, StationService stationService, LogDataRepository logDataRepository) {
@@ -87,8 +88,8 @@ public class SequenceProcessor {
             return;
         }
 
-        File stationDir = StationDatasetUtils.checkEvironment(globals.stationDir);
-        if (stationDir == null) {
+        File stationDatasetDir = StationDatasetUtils.checkAndCreateDatasetDir(globals.stationDir);
+        if (stationDatasetDir == null) {
             return;
         }
 
@@ -97,30 +98,53 @@ public class SequenceProcessor {
             return;
         }
 
-        AssetFile datasetFile;
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
             final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
-            datasetFile = isDatasetReady.get(sequenceYaml.dataset.id);
+            AssetFile datasetFile = isDatasetReady.get(sequenceYaml.dataset.id);
             if (datasetFile == null) {
-                datasetFile = StationDatasetUtils.prepareDatasetFile(stationDir, sequenceYaml.dataset.id);
+                datasetFile = StationDatasetUtils.prepareDatasetFile(stationDatasetDir, sequenceYaml.dataset.id);
+                // is this dataset prepared?
                 if (datasetFile.isError || !datasetFile.isContent) {
+                    log.info("Dataset #{} hasn't been prepared yet", sequenceYaml.dataset.id);
                     continue;
                 }
                 isDatasetReady.put(sequenceYaml.dataset.id, datasetFile);
             }
 
             if (sequenceYaml.snippets.isEmpty()) {
-                finishAndWriteToLog(seq, "Broken sequence. List of snippets is empty.");
+                finishAndWriteToLog(seq, "Broken sequence. List of snippets is empty");
                 continue;
             }
 
             File artifactDir = prepareSequenceDir(seq.getExperimentSequenceId(), "artifacts");
             if (artifactDir == null) {
+                finishAndWriteToLog(seq, "Error of configuring of environment. 'artifacts' directory wasn't created, sequence can't be processed.");
                 continue;
             }
+
+            boolean isFeatureOk = true;
+            for (SimpleFeature feature : sequenceYaml.features) {
+                AssetFile assetFile= isFeatureReady.get(feature.id);
+                if (assetFile == null) {
+                    assetFile = StationFeatureUtils.prepareFeatureFile(stationDatasetDir, sequenceYaml.dataset.id, feature.id);
+                    // is this feature prepared?
+                    if (assetFile.isError || !assetFile.isContent) {
+                        isFeatureOk = false;
+                        continue;
+                    }
+                    isFeatureReady.put(sequenceYaml.dataset.id, assetFile);
+                }
+            }
+            if (!isFeatureOk) {
+                log.info("Features haven't been prepared yet");
+                continue;
+            }
+
+            // at this point dataset and all features have to be downloaded from server
+
             sequenceYaml.artifactPath = artifactDir.getAbsolutePath();
-            initAllPaths(stationDir, sequenceYaml);
+            initAllPaths(stationDatasetDir, sequenceYaml);
             final String params = SequenceYamlUtils.toString(sequenceYaml);
 
             seq.setLaunchedOn(System.currentTimeMillis());
@@ -136,7 +160,7 @@ public class SequenceProcessor {
                 }
                 SnippetExec snippetExec =  SnippetExecUtils.toSnippetExec(seq.getSnippetExecResults());
                 if (isThisSnippetCompletedWithError(snippet, snippetExec)) {
-                    // stop processing this sequence
+                    // stop processing this sequence because last snippet was finished with an error
                     break;
                 }
                 if (isThisSnippetCompleted(snippet, snippetExec)) {
@@ -145,12 +169,12 @@ public class SequenceProcessor {
 
                 final File paramFile = prepareParamFile(seq.getExperimentSequenceId(), snippet.getType(), params);
                 if (paramFile == null) {
-                    continue;
+                    break;
                 }
                 String intepreter = envYaml.getEnvs().get(snippet.env);
                 if (intepreter == null) {
                     log.warn("Can't process sequence, interpreter wasn't found for env: {}", snippet.env);
-                    continue;
+                    break;
                 }
 
                 log.info("!!! all system are checked, lift off !!! ");
@@ -171,12 +195,12 @@ public class SequenceProcessor {
                     log.error("Error exec process " + intepreter, err);
                 }
             }
-            markAsFinished(seq.getId(), sequenceYaml);
+            markAsFinishedIfAllOk(seq.getId(), sequenceYaml);
         }
     }
 
-    private void initAllPaths(File stationDir, SequenceYaml sequenceYaml) {
-        final AssetFile datasetAssetFile = StationDatasetUtils.prepareDatasetFile(stationDir, sequenceYaml.dataset.id);
+    private void initAllPaths(File stationDatasetDir, SequenceYaml sequenceYaml) {
+        final AssetFile datasetAssetFile = StationDatasetUtils.prepareDatasetFile(stationDatasetDir, sequenceYaml.dataset.id);
         if (datasetAssetFile.isError || !datasetAssetFile.isContent ) {
             log.warn("Dataset file wasn't found. {}", datasetAssetFile);
             return;
@@ -184,7 +208,7 @@ public class SequenceProcessor {
         sequenceYaml.dataset.path = datasetAssetFile.file.getAbsolutePath();
 
         for (SimpleFeature feature : sequenceYaml.features) {
-            AssetFile featureAssetFile = StationFeatureUtils.prepareFeatureFile(stationDir, sequenceYaml.dataset.id, feature.id);
+            AssetFile featureAssetFile = StationFeatureUtils.prepareFeatureFile(stationDatasetDir, sequenceYaml.dataset.id, feature.id);
             if (featureAssetFile.isError || !featureAssetFile.isContent ) {
                 log.warn("Feature file wasn't found. {}", featureAssetFile);
                 return;
@@ -210,7 +234,7 @@ public class SequenceProcessor {
         }
     }
 
-    private void markAsFinished(Long seqId, SequenceYaml sequenceYaml) {
+    private void markAsFinishedIfAllOk(Long seqId, SequenceYaml sequenceYaml) {
         log.info("markAsFinished({})", seqId);
         StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
         if (seqTemp == null) {
@@ -255,6 +279,7 @@ public class SequenceProcessor {
         log.warn(es);
         seq.setLaunchedOn(System.currentTimeMillis());
         seq.setFinishedOn(System.currentTimeMillis());
+        seq.setSnippetExecResults(es);
         stationExperimentSequenceRepository.save(seq);
         LogData logData = new LogData();
         logData.setRefId(seq.getId());

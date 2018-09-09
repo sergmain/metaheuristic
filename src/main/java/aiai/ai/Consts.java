@@ -43,7 +43,9 @@ public class Consts {
 
     public static final String DEFINITIONS_DIR = "definitions";
     public static final String FEATURE_DIR = "feature";
-    public static final String RAW_FILE_NAME = "raw-file.";
-    public static final String DATASET_FILE_NAME = "dataset.";
-    public static final String FEATURE_FILE_MASK = "feature-%03d.txt";
+
+    public static final String RAW_FILE_NAME = "raw-file.txt";
+    public static final String DATASET_FILE_NAME = "dataset.txt";
+    public static final String DATASET_FILE_MASK = "dataset-%04d.txt";
+    public static final String FEATURE_FILE_MASK = "feature-%04d.txt";
 }

@@ -60,6 +60,9 @@ public class StationExperimentSequence implements Serializable {
     @Column(name = "IS_DELIVERED")
     private boolean isDelivered;
 
+    @Column(name = "IS_ASSET_PREPARED")
+    private boolean isAssetPrepared;
+
     @Column(name="SNIPPET_EXEC_RESULTS")
     private String snippetExecResults;
 

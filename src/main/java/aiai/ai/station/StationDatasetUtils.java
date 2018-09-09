@@ -17,15 +17,17 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.Consts;
+
 import java.io.File;
 
 public class StationDatasetUtils {
 
-    public static AssetFile prepareDatasetFile(File stationDir, long datasetId) {
+    public static AssetFile prepareDatasetFile(File stationDatasetDir, long datasetId) {
 
         AssetFile datasetFile = new AssetFile();
 
-        File currDir = new File(stationDir, String.format("%03d", datasetId));
+        File currDir = new File(stationDatasetDir, String.format("%03d", datasetId));
         if (!currDir.exists()) {
             boolean isOk = currDir.mkdirs();
             if (!isOk) {
@@ -34,7 +36,7 @@ public class StationDatasetUtils {
             }
         }
 
-        datasetFile.file = new File(currDir, String.format("dataset-%03d", datasetId));
+        datasetFile.file = new File(currDir, String.format(Consts.DATASET_FILE_MASK, datasetId));
         if (datasetFile.file.exists()) {
             if (datasetFile.file.length() == 0) {
                 datasetFile.file.delete();
@@ -46,7 +48,7 @@ public class StationDatasetUtils {
         return datasetFile;
     }
 
-    public static File checkEvironment(File stationDir) {
+    public static File checkAndCreateDatasetDir(File stationDir) {
         File dsDir = new File(stationDir, "dataset");
         if (!dsDir.exists()) {
             boolean isOk = dsDir.mkdirs();

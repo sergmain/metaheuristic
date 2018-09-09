@@ -65,7 +65,7 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
             return;
         }
 
-        File stationDir = StationDatasetUtils.checkEvironment(globals.stationDir);
+        File stationDir = StationDatasetUtils.checkAndCreateDatasetDir(globals.stationDir);
         if (stationDir==null) {
             return;
         }
@@ -77,6 +77,7 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
             }
             AssetFile assetFile = StationDatasetUtils.prepareDatasetFile(stationDir, task.datasetId);
             if (assetFile.isError) {
+                log.warn("Problem with asset file {}", assetFile);
                 return;
             }
             try {

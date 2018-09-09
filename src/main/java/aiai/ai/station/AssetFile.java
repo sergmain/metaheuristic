@@ -28,4 +28,5 @@ public class AssetFile {
     public File file;
     public boolean isError;
     public boolean isContent;
+    public boolean isExist;
 }

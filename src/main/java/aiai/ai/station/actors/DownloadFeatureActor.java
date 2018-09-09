@@ -21,7 +21,6 @@ import aiai.ai.Globals;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationDatasetUtils;
 import aiai.ai.station.StationFeatureUtils;
-import aiai.ai.station.tasks.DownloadDatasetTask;
 import aiai.ai.station.tasks.DownloadFeatureTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.fluent.Request;
@@ -65,7 +64,7 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
             return;
         }
 
-        File stationDir = StationDatasetUtils.checkEvironment(globals.stationDir);
+        File stationDir = StationDatasetUtils.checkAndCreateDatasetDir(globals.stationDir);
         if (stationDir == null) {
             return;
         }

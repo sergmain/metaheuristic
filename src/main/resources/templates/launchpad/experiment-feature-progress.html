@@ -82,8 +82,8 @@
                         <td th:text="${s.isAllSnippetsOk}">isAllSnippetsOk</td>
                         <td>
                             <table>
-                                <tr><td th:text="${'assigned: ' + #dates.format(s.assignedOn, 'dd-MMM-yy HH24:mm')}">assigned on></tr>
-                                <tr><td th:text="${'completed: ' + #dates.format(s.completedOn, 'dd-MMM-yy HH24:mm')}">completed on></tr>
+                                <tr><td th:text="${'assigned: ' + #dates.format(s.assignedOn, 'dd-MMM-yy HH:mm')}">assigned on></tr>
+                                <tr><td th:text="${'completed: ' + #dates.format(s.completedOn, 'dd-MMM-yy HH:mm')}">completed on></tr>
                             </table>
                         </td>
                         <td>

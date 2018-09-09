@@ -17,6 +17,7 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.Consts;
 import aiai.ai.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,12 +32,13 @@ public class StationFeatureUtils {
 
         final String featurePath = String.format("%03d%cfeature%c", datasetId, File.separatorChar, File.separatorChar);
         final File featureDir = DirUtils.createDir(stationDir, featurePath);
+        assetFile.isExist = featureDir!=null && featureDir.exists();
         if (featureDir==null) {
             assetFile.isError = true;
             return assetFile;
         }
 
-        assetFile.file = new File(featureDir, String.format("feature-%04d.txt", featureId));
+        assetFile.file = new File(featureDir, String.format(Consts.FEATURE_FILE_MASK, featureId));
         if (assetFile.file.exists()) {
             if (assetFile.file.length() == 0) {
                 assetFile.file.delete();

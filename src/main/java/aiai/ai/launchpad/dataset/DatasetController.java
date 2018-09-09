@@ -462,7 +462,7 @@ public class DatasetController {
         }
 
 
-        final String featureFilename = String.format("%s%cfeature-%03d.", featurePath, File.separatorChar, group.getId());
+        final String featureFilename = String.format("%s%c"+ Consts.FEATURE_FILE_MASK, featurePath, File.separatorChar, group.getId());
         File featureFile = new File(globals.launchpadDir, featureFilename);
         File featureFileBak = new File(globals.launchpadDir, featureFilename + ".bak");
 
