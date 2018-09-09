@@ -24,10 +24,16 @@ public abstract class AbstractTaskQueue<T> {
     private final LinkedList<T> QUEUE = new LinkedList<>();
 
     public void add(T t){
-        QUEUE.add(t);
+        synchronized (QUEUE) {
+            if (!QUEUE.contains(t)) {
+                QUEUE.add(t);
+            }
+        }
     }
 
     public T poll() {
-        return QUEUE.pollLast();
+        synchronized (QUEUE) {
+            return QUEUE.pollLast();
+        }
     }
 }

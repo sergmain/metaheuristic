@@ -418,7 +418,8 @@ public class DatasetController {
         try {
             File yaml = createYamlForFeature(group);
             System.out.println("yaml file: " + yaml.getPath());
-            boolean isOk = runCommand(yaml, group.getCommand(), LogData.Type.FEATURE, group.getId());
+            final ProcessService.Result result = runCommand(yaml, group.getCommand(), LogData.Type.FEATURE, group.getId());
+            boolean isOk = result.isOk();
             group.setFeatureStatus(isOk ? ArtifactStatus.OK.value: ArtifactStatus.ERROR.value );
             groupsRepository.save(group);
         } catch (Exception err) {
@@ -570,7 +571,8 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         File yaml = createConfigYaml(dataset);
-        boolean isOk = runCommand(yaml, dataset.getAssemblingCommand(), LogData.Type.ASSEMBLING, dataset.getId());
+        final ProcessService.Result result = runCommand(yaml, dataset.getAssemblingCommand(), LogData.Type.ASSEMBLING, dataset.getId());
+        boolean isOk = result.isOk();
         updateInfoWithRaw(dataset, isOk);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
@@ -583,7 +585,8 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         File yaml = createConfigYaml(dataset);
-        boolean isOk = runCommand(yaml, dataset.getProducingCommand(), LogData.Type.PRODUCING, dataset.getId());
+        final ProcessService.Result result = runCommand(yaml, dataset.getProducingCommand(), LogData.Type.PRODUCING, dataset.getId());
+        boolean isOk = result.isOk();
         updateInfoWithDataset(dataset, isOk);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
@@ -613,15 +616,16 @@ public class DatasetController {
     private void updateInfoWithDataset(Dataset dataset, boolean isOk) {
         final String path = dataset.asDatasetFilePath();
         File datasetFile = new File(globals.launchpadDir, path);
+        int status = isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value;
         if (!datasetFile.exists()) {
             log.error("Dataset file doesn't exist: {}", datasetFile.getPath());
-            return;
+            status = ArtifactStatus.ERROR.value;
         }
-        dataset.setDatasetProducingStatus(isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value);
+        dataset.setDatasetProducingStatus(status);
         datasetRepository.save(dataset);
     }
 
-    private boolean runCommand(File yaml, String command, LogData.Type type, Long refId) {
+    private ProcessService.Result runCommand(File yaml, String command, LogData.Type type, Long refId) {
 
         // https://examples.javacodegeeks.com/core-java/lang/processbuilder/java-lang-processbuilder-example/
         //
@@ -631,11 +635,11 @@ public class DatasetController {
             cmd.add(yaml.getPath());
             final File execDir = globals.launchpadDir.getCanonicalFile();
 
-            return processService.execCommand(type, refId, cmd, execDir).isOk();
+            return processService.execCommand(type, refId, cmd, execDir);
 
-        } catch (Exception err) {
-            err.printStackTrace();
-            return false;
+        } catch (Exception e) {
+            log.error("Error", e);
+            return new ProcessService.Result(false, -1, e.getMessage());
         }
     }
 

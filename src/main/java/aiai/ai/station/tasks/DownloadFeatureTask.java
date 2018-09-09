@@ -19,9 +19,11 @@ package aiai.ai.station.tasks;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
 @AllArgsConstructor
+@EqualsAndHashCode
 public class DownloadFeatureTask implements StationTask{
 
     public long datasetId;

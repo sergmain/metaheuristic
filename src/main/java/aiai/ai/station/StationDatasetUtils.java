@@ -18,9 +18,11 @@
 package aiai.ai.station;
 
 import aiai.ai.Consts;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 
+@Slf4j
 public class StationDatasetUtils {
 
     public static AssetFile prepareDatasetFile(File stationDatasetDir, long datasetId) {
@@ -31,7 +33,7 @@ public class StationDatasetUtils {
         if (!currDir.exists()) {
             boolean isOk = currDir.mkdirs();
             if (!isOk) {
-                System.out.println("Can't make all directories for path: " + currDir.getAbsolutePath());
+                log.error("Can't make all directories for path: {}", currDir);
                 datasetFile.isError = true;
             }
         }

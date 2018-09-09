@@ -19,9 +19,11 @@ package aiai.ai.station.tasks;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
 @AllArgsConstructor
+@EqualsAndHashCode
 public class DownloadSnippetTask implements StationTask {
     public String snippetCode;
     public String filename;
