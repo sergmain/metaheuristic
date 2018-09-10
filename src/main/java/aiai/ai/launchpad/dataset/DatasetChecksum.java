@@ -18,12 +18,9 @@
 package aiai.ai.launchpad.dataset;
 
 import aiai.ai.utils.Checksum;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -40,20 +37,6 @@ public class DatasetChecksum {
 
             String s;
             Checksum checksum = new Checksum();
-/*
-            // actually not working. need more investigation
-            String jsonAsString;
-            PipedInputStream in = new PipedInputStream();
-            PipedOutputStream pos = new PipedOutputStream(in);
-            try (
-                    InputStream inputStream = new FileInputStream(file);
-                    TeeInputStream tis = new TeeInputStream(inputStream, pos, false)
-            ) {
-                checksum.checksums.put(Type.MD5, Type.MD5.getChecksum(tis));
-                checksum.checksums.put(Type.SHA256, Type.SHA256.getChecksum(in));
-            }
-*/
-
             // C! don't use more that one type of checksum
 /*
             try( InputStream inputStream = new FileInputStream(file)) {
@@ -72,7 +55,7 @@ public class DatasetChecksum {
         }
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         File file = new File("pom.xml");
 
         final String json = getChecksumAsJson(file);

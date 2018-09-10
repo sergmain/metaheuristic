@@ -26,6 +26,8 @@ import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.DatasetGroupsRepository;
 import aiai.ai.repositories.DatasetRepository;
 import aiai.ai.repositories.SnippetRepository;
+import aiai.ai.utils.Checksum;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.PathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -34,10 +36,14 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
+import java.io.IOException;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/payload")
+@Slf4j
 public class PayloadController {
 
     private  final SnippetRepository snippetRepository;
@@ -56,10 +62,7 @@ public class PayloadController {
 
         final File datasetFile = DatasetUtils.getDatasetFile(globals.launchpadDir, datasetId);
 
-        HttpHeaders header = new HttpHeaders();
-        header.setContentLength(datasetFile.length());
-
-        return new HttpEntity<>(new PathResource(datasetFile.toPath()), header);
+        return new HttpEntity<>(new PathResource(datasetFile.toPath()), getHeader(datasetFile.length()) );
     }
 
     @GetMapping("/feature/{featureId}")
@@ -73,22 +76,53 @@ public class PayloadController {
 
         final File featureFile = DatasetUtils.getFeatureFile(globals.launchpadDir, datasetGroup.getDataset().getId(), featureId);
 
-        HttpHeaders header = new HttpHeaders();
-        header.setContentLength(featureFile.length());
-
-        return new HttpEntity<>(new PathResource(featureFile.toPath()), header);
+        return new HttpEntity<>(new PathResource(featureFile.toPath()), getHeader(featureFile.length()));
     }
 
     @GetMapping("/snippet/{name}")
-    public HttpEntity<String> snippets(@PathVariable("name") String snippetName) {
+    public HttpEntity<String> snippets(HttpServletResponse response, @PathVariable("name") String snippetName) throws IOException {
 
         SnippetVersion snippetVersion = SnippetVersion.from(snippetName);
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        if (snippet==null) {
+            log.info("Snippet wan't found for name {}", snippetName);
+            response.sendError(HttpServletResponse.SC_GONE);
+            return new HttpEntity<>("", getHeader(0));
+        }
 
-        HttpHeaders header = new HttpHeaders();
-        header.setContentLength(snippet.code.length());
+        if (snippet.getChecksum()==null) {
+            log.info("Checksum for snippet {} wan't found", snippetName);
+            response.sendError(HttpServletResponse.SC_GONE);
+            return new HttpEntity<>("", getHeader(0));
+        }
 
-        return new HttpEntity<>(snippet.code, header);
+        Checksum checksum = Checksum.fromJson(snippet.getChecksum());
+        for (Map.Entry<Checksum.Type, String> entry : checksum.checksums.entrySet()) {
+            String sum = entry.getKey().getChecksum(snippet.getCode());
+            if (sum.equals(entry.getValue())) {
+                log.info("Snippet {}, checksum is Ok", snippet.getSnippetCode());
+            }
+            else {
+                log.error("Snippet {}, checksum is wrong, expected: {}, actual: {}", snippet.getSnippetCode(), entry.getValue(), sum );
+                response.sendError(HttpServletResponse.SC_CONFLICT);
+                return new HttpEntity<>("", getHeader(0));
+            }
+        }
+
+        final int length = snippet.getCode().length();
+        log.info("Send snippet {}, length: {}", snippet.getSnippetCode(), length);
+
+        return new HttpEntity<>(snippet.getCode(), getHeader(length) );
     }
 
+    private static HttpHeaders getHeader(long length) {
+        HttpHeaders header = new HttpHeaders();
+        // TODO 2018-09-10, must be number of bytes, not chars, maybe better way is to switch to binary output of files?
+//        header.setContentLength(length);
+        header.setCacheControl("max-age=0");
+        header.setExpires(0);
+        header.setPragma("no-cache");
+
+        return header;
+    }
 }

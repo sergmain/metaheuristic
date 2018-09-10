@@ -116,6 +116,10 @@
                     </tr>
                     </tbody>
                 </table>
+                <p>&nbsp;</p>
+
+                <a class="pure-button pure-button-primary" href="experiment-info.html" th:href="${'/launchpad/experiment-info/' + experiment.id }">To experiment info</a>
+
             </td>
             <td width="20">&nbsp;</td>
             <td>
@@ -125,16 +129,12 @@
                     <div  th:remove="tag" th:each="c : ${consoleResult.items}" >
                         <tr><td th:text="${'#'+c.order}">Order number</td></tr>
                         <tr><td><pre th:text="${c.console}">console output</pre></td></tr>
-                        <!--<tr><td th:text="${#strings.replace(#strings.escapeXml(c.console),'&#10;','&lt;br&gt;')}">console output</td></tr>-->
                     </div>
                     </tbody>
                 </table>
             </td>
         </tr>
     </table>
-    <p>&nbsp;</p>
-
-    <a class="pure-button pure-button-primary" href="experiment-info.html" th:href="${'/launchpad/experiment-info/' + experiment.id }">To experiment info</a>
 
 
 </div>
