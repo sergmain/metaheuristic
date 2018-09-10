@@ -80,12 +80,11 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
             }
             try {
                 Request.Get(targetUrl + '/' + task.getFeatureId()).execute().saveContent(assetFile.file);
+                preparedMap.put(task.getDatasetId(), true);
             }
             catch (IOException e) {
                 e.printStackTrace();
             }
-
-            preparedMap.put(task.getDatasetId(), true);
         }
     }
 
