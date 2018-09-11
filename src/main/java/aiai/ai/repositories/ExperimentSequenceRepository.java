@@ -48,6 +48,9 @@ public interface ExperimentSequenceRepository extends CrudRepository<ExperimentS
     Slice<ExperimentSequence> findAllByStationIdIsNullAndFeatureId(Pageable pageable, long featureId);
 
     @Transactional(readOnly = true)
+    Slice<ExperimentSequence> findAllByStationIdIsNullAndFeatureIdAndExperimentId(Pageable pageable, long featureId, long experimentId);
+
+    @Transactional(readOnly = true)
     ExperimentSequence findTop1ByStationIdAndIsCompletedIsFalseAndFeatureId(long stationId, long featureId);
 
     @Transactional(readOnly = true)
@@ -63,8 +66,9 @@ public interface ExperimentSequenceRepository extends CrudRepository<ExperimentS
     void deleteByExperimentId(long experimentId);
 
     @Transactional(readOnly = true)
-    @Query("SELECT f FROM ExperimentSequence s, ExperimentFeature f where s.stationId=:stationId and s.featureId=f.id and f.isFinished=false and f.isInProgress=true")
-    List<ExperimentFeature> findAnyStartedButNotFinished(Pageable limit, long stationId);
+    @Query("SELECT f FROM ExperimentSequence s, ExperimentFeature f, Experiment e  where s.stationId=:stationId and s.featureId=f.id and f.experimentId=e.id and  " +
+            "f.isFinished=false and f.isInProgress=true and e.isLaunched=true and e.execState=:state")
+    List<ExperimentFeature> findAnyStartedButNotFinished(Pageable limit, long stationId, int state);
 
     @Transactional(readOnly = true)
     List<ExperimentSequence> findByStationIdAndIsCompletedIsFalse(Long stationId);

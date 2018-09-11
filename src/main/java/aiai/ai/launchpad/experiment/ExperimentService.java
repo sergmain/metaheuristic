@@ -166,7 +166,7 @@ public class ExperimentService {
         // main part, prepare new batch of sequences for station
 
         // is there any feature which was started(in progress) and not finished yet?
-        List<ExperimentFeature> features = experimentSequenceRepository.findAnyStartedButNotFinished(Consts.PAGE_REQUEST_1_REC, stationId);
+        List<ExperimentFeature> features = experimentSequenceRepository.findAnyStartedButNotFinished(Consts.PAGE_REQUEST_1_REC, stationId, Enums.ExperimentExecState.STARTED.code);
         ExperimentFeature feature;
         if (features == null || features.isEmpty()) {
             // is there any feature which wasn't started and not finished yet?
@@ -186,7 +186,13 @@ public class ExperimentService {
             return EMPTY_RESULT;
         }
 
-        Slice<ExperimentSequence> seqs = experimentSequenceRepository.findAllByStationIdIsNullAndFeatureId(PageRequest.of(0, recordNumber), feature.getId());
+        Slice<ExperimentSequence> seqs;
+        if (experimentId!=null) {
+            seqs = experimentSequenceRepository.findAllByStationIdIsNullAndFeatureIdAndExperimentId(PageRequest.of(0, recordNumber), feature.getId(), experimentId);
+        }
+        else {
+            seqs = experimentSequenceRepository.findAllByStationIdIsNullAndFeatureId(PageRequest.of(0, recordNumber), feature.getId());
+        }
         List<Protocol.AssignedExperimentSequence.SimpleSequence> result = new ArrayList<>(recordNumber+1);
         for (ExperimentSequence seq : seqs) {
             Protocol.AssignedExperimentSequence.SimpleSequence ss = new Protocol.AssignedExperimentSequence.SimpleSequence();
