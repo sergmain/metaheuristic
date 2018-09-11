@@ -17,14 +17,21 @@
 
 package aiai.ai.comm;
 
+import aiai.ai.Enums;
+import aiai.ai.beans.Experiment;
 import aiai.ai.beans.Station;
+import aiai.ai.repositories.ExperimentRepository;
 import aiai.ai.repositories.StationsRepository;
+import aiai.ai.yaml.sequence.SimpleFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * User: Serg
@@ -36,12 +43,14 @@ import java.util.List;
 public class ServerController {
 
     private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
-    private CommandProcessor commandProcessor;
-    private StationsRepository stationsRepository;
+    private final CommandProcessor commandProcessor;
+    private final StationsRepository stationsRepository;
+    private final ExperimentRepository experimentRepository;
 
-    public ServerController(CommandProcessor commandProcessor, StationsRepository stationsRepository) {
+    public ServerController(CommandProcessor commandProcessor, StationsRepository stationsRepository, ExperimentRepository experimentRepository) {
         this.commandProcessor = commandProcessor;
         this.stationsRepository = stationsRepository;
+        this.experimentRepository = experimentRepository;
     }
 
     @PostMapping("/rest-anon/srv")
@@ -58,12 +67,16 @@ public class ServerController {
             return new ExchangeData(new Protocol.ReAssignStationId(s.getId()));
         }
 
+        ExchangeData resultData = new ExchangeData();
+        resultData.setCommand(new Protocol.ExperimentStatus(experimentRepository.findAll().stream().map(ServerController::to).collect(Collectors.toList())));
+/*
+        2018.09.11 now we send statuses of experiments with every iteration
         if (data.isNothingTodo()) {
             return EXCHANGE_DATA_NOP;
         }
+*/
 
         List<Command> commands = data.getCommands();
-        ExchangeData resultData = new ExchangeData();
         for (Command command : commands) {
             if (data.getStationId()!=null && command instanceof Protocol.RequestStationId) {
                 continue;
@@ -92,5 +105,7 @@ public class ServerController {
         return "Ok";
     }
 
-
+    private static Protocol.ExperimentStatus.SimpleStatus to(Experiment experiment) {
+        return new Protocol.ExperimentStatus.SimpleStatus(experiment.getId(), Enums.ExperimentExecState.toState(experiment.getExecState()));
+    }
 }

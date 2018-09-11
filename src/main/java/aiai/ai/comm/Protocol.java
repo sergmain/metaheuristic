@@ -17,10 +17,13 @@
 
 package aiai.ai.comm;
 
+import aiai.ai.Enums;
 import aiai.ai.beans.InviteResult;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,6 +52,29 @@ public class Protocol {
     public static class RequestStationId extends Command {
         public RequestStationId() {
             this.setType(Type.RequestStationId);
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class ExperimentStatus extends Command {
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class SimpleStatus {
+            public long experimentId;
+            public Enums.ExperimentExecState state;
+        }
+        List<SimpleStatus> statuses;
+
+        public ExperimentStatus(List<SimpleStatus> statuses) {
+            this.setType(Type.ExperimentStatus);
+            this.statuses = statuses;
+        }
+
+        public ExperimentStatus() {
+            this.setType(Type.ExperimentStatus);
         }
     }
 

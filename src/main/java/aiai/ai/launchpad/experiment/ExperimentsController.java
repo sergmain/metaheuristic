@@ -574,7 +574,7 @@ public class ExperimentsController {
         }
         if (experiment.isLaunched()) {
             redirectAttributes.addFlashAttribute("errorMessage", "#84.02 experiment was already launched, experimentId: " + experimentId);
-            return "redirect:/launchpad/experiments";
+            return "redirect:/launchpad/experiment-info/"+experimentId;
         }
 
         if (experiment.getDatasetId()==null) {
@@ -605,11 +605,6 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#85.01 experiment wasn't found, experimentId: " + experimentId);
             return "redirect:/launchpad/experiments";
         }
-        if (experiment.isLaunched()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#85.02 experiment was already launched, experimentId: " + experimentId);
-            return "redirect:/launchpad/experiments";
-        }
-
         if (experiment.getDatasetId()==null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#85.03 dataset wasn't assigned, experimentId: " + experimentId);
             return "redirect:/launchpad/experiments";
@@ -618,7 +613,7 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#85.04 Experiment wasn't started yet, experimentId: " + experimentId);
             return "redirect:/launchpad/experiment-info/"+experimentId;
         }
-        Enums.ExperimentExecState execState = Enums.ExperimentExecState.valueOf(state);
+        Enums.ExperimentExecState execState = Enums.ExperimentExecState.valueOf(state.toUpperCase());
 
         if ((execState==Enums.ExperimentExecState.STARTED && experiment.getExecState()==Enums.ExperimentExecState.STARTED.code) ||
                 (execState==Enums.ExperimentExecState.STOPPED && experiment.getExecState()==Enums.ExperimentExecState.STOPPED.code)) {

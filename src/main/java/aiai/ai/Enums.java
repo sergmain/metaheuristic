@@ -26,17 +26,22 @@ public final class Enums {
             this.code = code;
         }
 
-        public static String from(int code) {
+        public static ExperimentExecState toState(int code) {
             switch(code) {
                 case 0:
-                    return NONE.toString();
+                    return NONE;
                 case 1:
-                    return STARTED.toString();
+                    return STARTED;
                 case 2:
-                    return STARTED.toString();
+                    return STOPPED;
                 default:
-                    return "Unknown";
+                    return null;
             }
+        }
+
+        public static String from(int code) {
+            ExperimentExecState state = toState(code);
+            return state==null ? "Unknown" : state.toString();
         }
     }
 }

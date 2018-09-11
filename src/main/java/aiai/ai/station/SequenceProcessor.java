@@ -17,9 +17,11 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.beans.LogData;
 import aiai.ai.beans.StationExperimentSequence;
+import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.repositories.LogDataRepository;
@@ -61,6 +63,36 @@ public class SequenceProcessor {
     private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
     private Map<String, StationSnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
+    private static class CurrentExecState {
+        private final Map<Long, Enums.ExperimentExecState> experimentState = new HashMap<>();
+        private boolean isInit = false;
+
+        private void register(List<Protocol.ExperimentStatus.SimpleStatus> statuses) {
+            synchronized(experimentState) {
+                for (Protocol.ExperimentStatus.SimpleStatus status : statuses) {
+                    experimentState.put(status.experimentId, status.state);
+                }
+                isInit = true;
+            }
+        }
+
+        private Enums.ExperimentExecState getState(long experimentId) {
+            synchronized(experimentState) {
+                if (!isInit) {
+                    return null;
+                }
+                return experimentState.get(experimentId);
+            }
+        }
+
+        private boolean isStarted(long experimentId) {
+            final Enums.ExperimentExecState state = getState(experimentId);
+            return state!=null && state== Enums.ExperimentExecState.STARTED;
+        }
+    }
+
+    private final CurrentExecState STATE = new CurrentExecState();
+
     public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService, StationService stationService, LogDataRepository logDataRepository) {
         this.globals = globals;
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
@@ -84,7 +116,7 @@ public class SequenceProcessor {
         }
         EnvYaml envYaml = EnvYamlUtils.toEnvYaml(stationService.getEnv());
         if (envYaml == null) {
-            log.warn("env.yaml wasn't found or empty. path: {}/env.yaml", globals.stationDir );
+            log.warn("env.yaml wasn't found or empty. path: {}{}env.yaml", globals.stationDir, File.separatorChar );
             return;
         }
 
@@ -101,6 +133,9 @@ public class SequenceProcessor {
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
             final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
+            if (!STATE.isStarted(sequenceYaml.experimentId)) {
+                continue;
+            }
             AssetFile datasetFile = isDatasetReady.get(sequenceYaml.dataset.id);
             if (datasetFile == null) {
                 datasetFile = StationDatasetUtils.prepareDatasetFile(stationDatasetDir, sequenceYaml.dataset.id);
@@ -313,4 +348,7 @@ public class SequenceProcessor {
         return snippetTypeDir;
     }
 
+    public void processExperimentStatus(List<Protocol.ExperimentStatus.SimpleStatus> statuses) {
+        STATE.register(statuses);
+    }
 }

@@ -38,6 +38,9 @@ public interface ExperimentRepository extends CrudRepository<Experiment, Long> {
     @Transactional(readOnly = true)
     Slice<Experiment> findAll(Pageable pageable);
 
+    @Transactional(readOnly = true)
+    List<Experiment> findAll();
+
     @Transactional
     List<Experiment> findByIsLaunchedIsTrueAndIsAllSequenceProducedIsFalse();
 }

@@ -61,6 +61,10 @@ public class TaskAssigner {
 
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
+            if (seq.getParams().length()==0) {
+                System.out.println("!!!!Hmmm");
+                continue;
+            }
             final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
             createDownloadDatasetTask(sequenceYaml.dataset.id);
             for (SimpleFeature simpleFeature : sequenceYaml.features) {

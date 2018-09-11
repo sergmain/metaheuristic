@@ -21,6 +21,7 @@ import aiai.ai.beans.Station;
 import aiai.ai.invite.InviteService;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.repositories.StationsRepository;
+import aiai.ai.station.SequenceProcessor;
 import aiai.ai.station.StationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,12 +43,14 @@ public class CommandProcessor {
     private final StationService stationService;
     private final InviteService inviteService;
     private final ExperimentService experimentService;
+    private final SequenceProcessor sequenceProcessor;
 
-    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService) {
+    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService, SequenceProcessor sequenceProcessor) {
         this.stationsRepository = stationsRepository;
         this.stationService = stationService;
         this.inviteService = inviteService;
         this.experimentService = experimentService;
+        this.sequenceProcessor = sequenceProcessor;
     }
 
     public Command[] process(Command command) {
@@ -76,9 +79,17 @@ public class CommandProcessor {
                 return processReportSequenceProcessingResult((Protocol.ReportSequenceProcessingResult) command);
             case ReportResultDelivering:
                 return processReportResultDelivering((Protocol.ReportResultDelivering) command);
+            case ExperimentStatus:
+                // processing on station side
+                return processExperimentStatus((Protocol.ExperimentStatus) command);
             default:
                 System.out.println("There is new command which isn't processed: " + command.getType());
         }
+        return Protocol.NOP_ARRAY;
+    }
+
+    private Command[] processExperimentStatus(Protocol.ExperimentStatus command) {
+        sequenceProcessor.processExperimentStatus(command.statuses);
         return Protocol.NOP_ARRAY;
     }
 
