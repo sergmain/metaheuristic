@@ -140,7 +140,7 @@ public class CommandProcessor {
 
     private synchronized Protocol.AssignedExperimentSequence getAssignedExperimentSequence(String stationId, int recordNumber) {
         Protocol.AssignedExperimentSequence r = new Protocol.AssignedExperimentSequence();
-        ExperimentService.SequencesAndAssignToStationResult result = experimentService.getSequencesAndAssignToStation(Long.parseLong(stationId), recordNumber);
+        ExperimentService.SequencesAndAssignToStationResult result = experimentService.getSequencesAndAssignToStation(Long.parseLong(stationId), recordNumber, null);
         r.sequences = result.getSimpleSequences();
         return r;
     }

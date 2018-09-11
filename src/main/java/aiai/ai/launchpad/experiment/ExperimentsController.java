@@ -313,7 +313,7 @@ public class ExperimentsController {
 
     @PostMapping("/experiment-add-form-commit")
     public String addFormCommit(Model model, Experiment experiment) {
-        return processCommit(model, experiment,  "launchpad/experiment-add-form");
+        return processCommit(model, experiment,  "launchpad/experiment-add-form", "redirect:/launchpad/experiments");
     }
 
     @PostMapping("/experiment-edit-form-commit")
@@ -327,18 +327,18 @@ public class ExperimentsController {
         experiment.setDescription(simpleExperiment.getDescription());
         experiment.setSeed(simpleExperiment.getSeed());
         experiment.setEpoch(simpleExperiment.getEpoch());
-        return processCommit(model, experiment,  "launchpad/experiment-edit-form");
+        return processCommit(model, experiment,  "launchpad/experiment-edit-form", "redirect:/launchpad/experiment-edit/"+experiment.getId());
     }
 
-    private String processCommit(Model model, Experiment experiment, String target) {
+    private String processCommit(Model model, Experiment experiment, String errorTarget, String normalTarget) {
         ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(experiment.getEpoch());
         if (!numberOfVariants.status) {
             model.addAttribute("errorMessage", numberOfVariants.getError());
-            return target;
+            return errorTarget;
         }
         experiment.setEpochVariant(numberOfVariants.getCount());
         experimentRepository.save(experiment);
-        return "redirect:/launchpad/experiments";
+        return normalTarget;
     }
 
     public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {

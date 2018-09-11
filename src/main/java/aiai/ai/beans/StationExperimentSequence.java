@@ -51,6 +51,9 @@ public class StationExperimentSequence implements Serializable {
     @Column(name="FINISHED_ON")
     private Long finishedOn;
 
+    @Column(name="REPORTED_ON")
+    private Long reportedOn;
+
     @Column(name="PARAMS")
     private String params;
 

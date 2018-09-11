@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Consts;
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.beans.*;
 import aiai.ai.comm.Protocol;
@@ -85,10 +86,21 @@ public class ExperimentService {
         return experimentRepository.findById(id).orElse(null);
     }
 
-    public synchronized SequencesAndAssignToStationResult getSequencesAndAssignToStation(long stationId, int recordNumber) {
+    public synchronized SequencesAndAssignToStationResult getSequencesAndAssignToStation(long stationId, int recordNumber, Long experimentId) {
 
         // check and mark all completed features
-        List<ExperimentFeature> fs = experimentFeatureRepository.findAllForLaunchedExperiments();
+        List<ExperimentFeature> fsTemp = experimentFeatureRepository.findAllForLaunchedExperiments( Enums.ExperimentExecState.STARTED.code);
+        List<ExperimentFeature> fs = new ArrayList<>();
+        if (experimentId!=null) {
+            for (ExperimentFeature feature : fsTemp) {
+                if (feature.experimentId.equals(experimentId)) {
+                    fs.add(feature);
+                }
+            }
+        }
+        else {
+            fs = fsTemp;
+        }
         Set<Long> idsForError = new HashSet<>();
         Set<Long> idsForOk = new HashSet<>();
         Boolean isContinue = null;

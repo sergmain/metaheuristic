@@ -154,6 +154,7 @@ public class LaunchpadRequester {
         for (StationExperimentSequence seq : list) {
             command.getResults().add(new SimpleSequenceExecResult(seq.getExperimentSequenceId(), seq.getSnippetExecResults()));
             seq.setReported(true);
+            seq.setReportedOn(System.currentTimeMillis());
         }
         stationExperimentService.saveReported(list);
         data.setCommand(command);

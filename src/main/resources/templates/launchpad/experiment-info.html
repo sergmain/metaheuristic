@@ -25,7 +25,7 @@
         </thead>
         <tbody>
         <tr>
-            <td th:text="${experiment.launched and experimentResult.dataset!=null ? 'Experiment is launched' : 'Experiment isn\\t launched'}"></td>
+            <td th:text="${experiment.launched and experimentResult.dataset!=null ? 'Experiment is launched' : 'Experiment isn''t launched'}"></td>
             <td th:text="${T(aiai.ai.Enums.ExperimentExecState).from(experiment.execState)}">exec state</td>
             <td>
                 <a th:if="${!experiment.launched and experiment.datasetId!=null}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-launch/' + experiment.id}">Launch</a>

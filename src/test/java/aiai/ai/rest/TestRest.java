@@ -163,10 +163,10 @@ public class TestRest {
 
         Assert.assertNotNull(data);
         Assert.assertTrue(data.isSuccess());
-        Assert.assertEquals(1, data.getCommands().size());
-        Command command = data.getCommands().get(0);
-        Assert.assertEquals(Command.Type.RegisterInviteResult, command.getType());
-        Protocol.RegisterInviteResult registerInviteResult = (Protocol.RegisterInviteResult)command;
+        // 2 - because we add current state of all experiments to all responses
+        Assert.assertEquals(2, data.getCommands().size());
+        Protocol.RegisterInviteResult registerInviteResult = data.getRegisterInviteResult();
+        Assert.assertNotNull(registerInviteResult);
         InviteResult inviteResult = registerInviteResult.getInviteResult();
         Assert.assertNotNull(inviteResult);
         Assert.assertNotNull(inviteResult.getUsername());

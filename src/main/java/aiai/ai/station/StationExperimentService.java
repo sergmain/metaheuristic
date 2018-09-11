@@ -22,6 +22,7 @@ import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -34,8 +35,14 @@ public class StationExperimentService {
     }
 
     public List<StationExperimentSequence> getForReporting() {
-        List<StationExperimentSequence> list = stationExperimentSequenceRepository.findAllByFinishedOnIsNotNullAndIsReportedIsFalse();
-        return list;
+        List<StationExperimentSequence> list = stationExperimentSequenceRepository.findAllByFinishedOnIsNotNull();
+        List<StationExperimentSequence> result = new ArrayList<>();
+        for (StationExperimentSequence seq : list) {
+            if (!seq.isReported() || (seq.isReported() && !seq.isDelivered() && (seq.getReportedOn()==null || (System.currentTimeMillis() - seq.getReportedOn())>60_000)) ) {
+                result.add(seq);
+            }
+        }
+        return result;
     }
 
     public void saveReported(List<StationExperimentSequence> list) {

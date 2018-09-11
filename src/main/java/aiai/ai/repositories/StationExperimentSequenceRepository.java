@@ -30,8 +30,9 @@ import java.util.Optional;
 public interface StationExperimentSequenceRepository extends CrudRepository<StationExperimentSequence, Long> {
 
     List<StationExperimentSequence> findAllByFinishedOnIsNull();
-
     List<StationExperimentSequence> findAllByFinishedOnIsNull(Pageable pageable);
+
+    List<StationExperimentSequence> findAllByFinishedOnIsNotNull();
     List<StationExperimentSequence> findAllByFinishedOnIsNotNullAndIsReportedIsFalse();
 
     StationExperimentSequence findByExperimentSequenceId(long id);

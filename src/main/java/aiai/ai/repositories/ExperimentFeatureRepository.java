@@ -18,6 +18,7 @@
 
 package aiai.ai.repositories;
 
+import aiai.ai.Enums;
 import aiai.ai.beans.ExperimentFeature;
 import aiai.ai.beans.ExperimentSnippet;
 import org.springframework.data.jpa.repository.Query;
@@ -50,8 +51,8 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
     List<ExperimentFeature> findAllForLaunchedExperimentsAndNotFinishedFeatures();
 
     @Transactional(readOnly = true)
-    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and e.isLaunched=true")
-    List<ExperimentFeature> findAllForLaunchedExperiments();
+    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and e.isLaunched=true and e.execState=:state")
+    List<ExperimentFeature> findAllForLaunchedExperiments(int state);
 
 
     @Transactional

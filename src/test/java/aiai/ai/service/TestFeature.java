@@ -17,6 +17,7 @@
  */
 package aiai.ai.service;
 
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.beans.*;
 import aiai.ai.comm.CommandProcessor;
@@ -74,7 +75,7 @@ public abstract class TestFeature {
 
     Station station = null;
     private Dataset dataset = null;
-    private Experiment experiment = null;
+    protected Experiment experiment = null;
     private Snippet fitSnippet = null;
     private Snippet predictSnippet = null;
     boolean isCorrectInit = true;
@@ -167,6 +168,7 @@ public abstract class TestFeature {
             experiment.setName("Test experiment.");
             experiment.setDescription("Test experiment. Must be deleted automatically.");
             experiment.setSeed(42);
+            experiment.setExecState(Enums.ExperimentExecState.STARTED.code);
             experiment.setLaunched(true);
             experiment.setLaunchedOn(System.currentTimeMillis());
             experiment.setAllSequenceProduced(false);
@@ -256,7 +258,8 @@ public abstract class TestFeature {
     }
 
     protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
-        ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
+        assertEquals(sequences1Feature.experimentId, experiment.getId());
+        ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, experiment.getId());
         assertNotNull(sequences2);
         assertTrue(sequences2.getSimpleSequences().isEmpty());
         assertNull(sequences2.getFeature());
@@ -269,8 +272,8 @@ public abstract class TestFeature {
         assertEquals(FeatureExecStatus.error.code, feature.execStatus);
     }
 
-    protected void checkForCorrectFinishing_with10sequences() {
-        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
+    protected void checkCurrentState_with10sequences() {
+        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, experiment.getId());
         assertNotNull(sequences);
         assertNotNull(sequences.getFeature());
         assertNotNull(sequences.getSimpleSequences());
@@ -283,10 +286,13 @@ public abstract class TestFeature {
         assertTrue(feature.isInProgress);
     }
 
-    protected void finishCurrentWithError() {
+    protected void finishCurrentWithError(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<SimpleSequenceExecResult> results = new ArrayList<>();
         List<ExperimentSequence> experimentSequences = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
+        if (expectedSeqs!=0) {
+            assertEquals(expectedSeqs, experimentSequences.size());
+        }
         for (ExperimentSequence experimentSequence : experimentSequences) {
             ProcessService.Result result = new ProcessService.Result(false, -1, "This is sample console output");
             SnippetExec snippetExec = new SnippetExec();
@@ -300,10 +306,13 @@ public abstract class TestFeature {
         experimentService.storeAllResults(results);
     }
 
-    protected void finishCurrentWithOk() {
+    protected void finishCurrentWithOk(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<SimpleSequenceExecResult> results = new ArrayList<>();
         List<ExperimentSequence> experimentSequences = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
+        if (expectedSeqs!=0) {
+            assertEquals(expectedSeqs, experimentSequences.size());
+        }
         for (ExperimentSequence experimentSequence : experimentSequences) {
             SnippetExec snippetExec = new SnippetExec();
             snippetExec.getExecs().put(1, new ProcessService.Result(true, 0, "This is sample console output. fit"));
