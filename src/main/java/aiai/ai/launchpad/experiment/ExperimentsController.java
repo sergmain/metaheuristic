@@ -17,6 +17,7 @@
 
 package aiai.ai.launchpad.experiment;
 
+import aiai.ai.Enums;
 import aiai.ai.core.ProcessService;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.beans.*;
@@ -215,7 +216,6 @@ public class ExperimentsController {
     }
 
 
-
     @GetMapping(value = "/experiment-add")
     public String add(@ModelAttribute("experiment") Experiment experiment) {
         experiment.setSeed(1);
@@ -223,10 +223,10 @@ public class ExperimentsController {
     }
 
     @GetMapping(value = "/experiment-info/{id}")
-    public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes ) {
+    public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
         Experiment experiment = experimentRepository.findById(id).orElse(null);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#81.01 experiment wasn't found, experimentId: " + id);
+            redirectAttributes.addFlashAttribute("errorMessage", "#82.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
         }
         for (ExperimentHyperParams hyperParams : experiment.getHyperParams()) {
@@ -569,7 +569,7 @@ public class ExperimentsController {
     public String launch(@PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#84BeanUtils.01 experiment wasn't found, experimentId: " + experimentId);
+            redirectAttributes.addFlashAttribute("errorMessage", "#84.01 experiment wasn't found, experimentId: " + experimentId);
             return "redirect:/launchpad/experiments";
         }
         if (experiment.isLaunched()) {
@@ -592,9 +592,44 @@ public class ExperimentsController {
 
         experiment.setLaunched(true);
         experiment.setLaunchedOn(System.currentTimeMillis());
+        experiment.setExecState(Enums.ExperimentExecState.STARTED.code);
         experimentRepository.save(experiment);
 
-        return "redirect:/launchpad/experiments";
+        return "redirect:/launchpad/experiment-info/"+experimentId;
+    }
+
+    @GetMapping("/experiment-target-exec-state/{state}/{experimentId}")
+    public String stop(@PathVariable String state, @PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
+        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
+        if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#85.01 experiment wasn't found, experimentId: " + experimentId);
+            return "redirect:/launchpad/experiments";
+        }
+        if (experiment.isLaunched()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#85.02 experiment was already launched, experimentId: " + experimentId);
+            return "redirect:/launchpad/experiments";
+        }
+
+        if (experiment.getDatasetId()==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#85.03 dataset wasn't assigned, experimentId: " + experimentId);
+            return "redirect:/launchpad/experiments";
+        }
+        if(!experiment.isLaunched()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#85.04 Experiment wasn't started yet, experimentId: " + experimentId);
+            return "redirect:/launchpad/experiment-info/"+experimentId;
+        }
+        Enums.ExperimentExecState execState = Enums.ExperimentExecState.valueOf(state);
+
+        if ((execState==Enums.ExperimentExecState.STARTED && experiment.getExecState()==Enums.ExperimentExecState.STARTED.code) ||
+                (execState==Enums.ExperimentExecState.STOPPED && experiment.getExecState()==Enums.ExperimentExecState.STOPPED.code)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#85.05 Experiment is already in target state: " + execState.toString());
+            return "redirect:/launchpad/experiment-info/"+experimentId;
+
+        }
+        experiment.setExecState(execState.code);
+        experimentRepository.save(experiment);
+
+        return "redirect:/launchpad/experiment-info/"+experimentId;
     }
 
 }

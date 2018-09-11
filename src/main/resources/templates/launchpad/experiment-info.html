@@ -1,20 +1,3 @@
-<!--
-  ~ AiAi, Copyright (C) 2017-2018  Serge Maslyukov
-  ~
-  ~ This program is free software: you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  ~ GNU General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with this program.  If not, see <https://www.gnu.org/licenses/>.
-  -->
-
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
      layout:decorate="~{/layout-launchpad}"
@@ -24,10 +7,39 @@
 
         <h1 class="widget-header">The experiment info</h1>
 
-        <!--/*@thymesVar id="infoMessages" type="java.util.List"*/-->
-        <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
+    <!--/*@thymesVar id="infoMessages" type="java.util.List"*/-->
+    <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
 
-        <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ExperimentResult"*/-->
+    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
+    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
+
+
+    <h1 class="widget-header">Progress of experiment</h1>
+    <table class="pure-table pure-table-bordered" >
+        <thead>
+        <tr>
+            <th width="150">Is launched</th>
+            <th width="150">Exec state</th>
+            <th>&nbsp;</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <td th:text="${experiment.launched and experimentResult.dataset!=null ? 'Experiment is launched' : 'Experiment isn\\t launched'}"></td>
+            <td th:text="${T(aiai.ai.Enums.ExperimentExecState).from(experiment.execState)}">exec state</td>
+            <td>
+                <a th:if="${!experiment.launched and experiment.datasetId!=null}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-launch/' + experiment.id}">Launch</a>
+                <a th:if="${experiment.launched and experiment.execState==1}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-target-exec-state/stopped/' + experiment.id}">Stop</a>
+                <a th:if="${experiment.launched and experiment.execState==2}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-target-exec-state/started/' + experiment.id}">Start</a>
+            </td>
+        </tr>
+    </table>
+
+
+    <p>&nbsp;</p>
+
+
+    <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ExperimentResult"*/-->
         <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
         <h1 class="widget-header">General info</h1>
         <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table">
@@ -100,17 +112,6 @@
             </tr>
             </tbody>
         </table>
-        <p>&nbsp;</p>
-
-        <h1 class="widget-header">Progress of experiment</h1>
-        <div th:if="${experiment.launched}" th:text="${'Experiment is launched'}">
-        </div>
-        <div th:if="${!experiment.launched and experimentResult.dataset!=null}">
-            <p>Experiment isn't launched</p>
-            <p>&nbsp;</p>
-            <a th:if="${!experiment.launched and experiment.datasetId!=null}"
-               class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-launch/' + experiment.id}">Launch</a>
-        </div>
         <p>&nbsp;</p>
 
         <h1 class="widget-header">Dataset features</h1>

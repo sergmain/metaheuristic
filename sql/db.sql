@@ -64,7 +64,7 @@ CREATE TABLE AIAI_LP_EXPERIMENT (
   IS_ALL_SEQUENCE_PRODUCED   tinyint(1) not null default 0,
   IS_FEATURE_PRODUCED   tinyint(1) not null default 0,
   IS_LAUNCHED   tinyint(1) not null default 0,
-  IS_STARTED    tinyint(1) not null default 0,
+  EXEC_STATE        tinyint(1) not null default 0,
   CREATED_ON   bigint not null,
   LAUNCHED_ON   bigint not null
 );

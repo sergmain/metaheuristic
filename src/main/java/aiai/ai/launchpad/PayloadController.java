@@ -28,6 +28,8 @@ import aiai.ai.repositories.DatasetRepository;
 import aiai.ai.repositories.SnippetRepository;
 import aiai.ai.utils.Checksum;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.PathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -66,14 +68,14 @@ public class PayloadController {
     }
 
     @GetMapping("/feature/{featureId}")
-    public HttpEntity<PathResource> feature(@PathVariable("featureId") long featureId) {
+    public HttpEntity<AbstractResource> feature(HttpServletResponse response, @PathVariable("featureId") long featureId) throws IOException {
 
         DatasetGroup datasetGroup = datasetGroupsRepository.findById(featureId).orElse(null);
         if (datasetGroup==null) {
-            // TODO or better to throw exception, or return 501/404 hhtp code?
-            return null;
+            log.info("Feature wan't found for id {}", featureId);
+            response.sendError(HttpServletResponse.SC_GONE);
+            return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
         }
-
         final File featureFile = DatasetUtils.getFeatureFile(globals.launchpadDir, datasetGroup.getDataset().getId(), featureId);
 
         return new HttpEntity<>(new PathResource(featureFile.toPath()), getHeader(featureFile.length()));

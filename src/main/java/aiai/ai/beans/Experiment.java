@@ -74,8 +74,8 @@ public class Experiment implements Serializable {
     @Column(name = "IS_FEATURE_PRODUCED")
     private boolean isFeatureProduced;
 
-    @Column(name = "IS_STARTED")
-    private boolean isStarted;
+    @Column(name = "EXEC_STATE")
+    private int execState;
 
     @Column(name = "IS_LAUNCHED")
     private boolean isLaunched;
