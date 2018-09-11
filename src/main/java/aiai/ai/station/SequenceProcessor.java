@@ -63,7 +63,7 @@ public class SequenceProcessor {
     private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
     private Map<String, StationSnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
-    private static class CurrentExecState {
+    static class CurrentExecState {
         private final Map<Long, Enums.ExperimentExecState> experimentState = new HashMap<>();
         private boolean isInit = false;
 
@@ -85,13 +85,13 @@ public class SequenceProcessor {
             }
         }
 
-        private boolean isStarted(long experimentId) {
+        boolean isStarted(long experimentId) {
             final Enums.ExperimentExecState state = getState(experimentId);
             return state!=null && state== Enums.ExperimentExecState.STARTED;
         }
     }
 
-    private final CurrentExecState STATE = new CurrentExecState();
+    final CurrentExecState STATE = new CurrentExecState();
 
     public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService, StationService stationService, LogDataRepository logDataRepository) {
         this.globals = globals;

@@ -17,9 +17,10 @@
  */
 package aiai.ai.station;
 
-import aiai.ai.Consts;
 import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
+import aiai.ai.yaml.sequence.SequenceYaml;
+import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -29,9 +30,11 @@ import java.util.List;
 public class StationExperimentService {
 
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
+    private final SequenceProcessor sequenceProcessor;
 
-    public StationExperimentService(StationExperimentSequenceRepository stationExperimentSequenceRepository) {
+    public StationExperimentService(StationExperimentSequenceRepository stationExperimentSequenceRepository, SequenceProcessor sequenceProcessor) {
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
+        this.sequenceProcessor = sequenceProcessor;
     }
 
     public List<StationExperimentSequence> getForReporting() {
@@ -53,7 +56,14 @@ public class StationExperimentService {
         if (stationId==null) {
             return false;
         }
-        List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull(Consts.PAGE_REQUEST_1_REC);
-        return seqs.isEmpty();
+        List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
+        for (StationExperimentSequence seq : seqs) {
+            final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
+            if (sequenceProcessor.STATE.isStarted(sequenceYaml.experimentId)) {
+                return false;
+            }
+
+        }
+        return true;
     }
 }
