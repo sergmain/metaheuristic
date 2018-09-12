@@ -30,7 +30,7 @@ public class StationFeatureUtils {
 
         final AssetFile assetFile = new AssetFile();
 
-        final String featurePath = String.format("%03d%cfeature%c", datasetId, File.separatorChar, File.separatorChar);
+        final String featurePath = String.format("%06d%cfeature%c", datasetId, File.separatorChar, File.separatorChar);
         final File featureDir = DirUtils.createDir(stationDir, featurePath);
         assetFile.isExist = featureDir!=null && featureDir.exists();
         if (featureDir==null) {

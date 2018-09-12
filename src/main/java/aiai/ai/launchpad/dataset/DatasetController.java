@@ -64,7 +64,7 @@ public class DatasetController {
     private static final String CONFIG_YAML = "config.yaml";
     private static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.table.rows.limit'), 5, 30, 5) }")
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.dataset-table-rows.limit'), 5, 100, 20) }")
     private int limit;
 
     private final Globals globals;
@@ -112,15 +112,15 @@ public class DatasetController {
     }
 
     @GetMapping(value = "/dataset-definition/{id}")
-    public String toDatasetDefinition(@PathVariable(name = "id") Long datasetId, Model model) {
-        final Optional<Dataset> datasetOptional = datasetRepository.findById(datasetId);
-        if (!datasetOptional.isPresent()) {
+    public String toDatasetDefinition(@PathVariable(name = "id") Long datasetId, Model model, @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes) {
+        Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
+        if (dataset==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#74.01 dataset wasn't found, datasetId: " + datasetId);
             return "redirect:/launchpad/datasets";
         }
-        final Dataset dataset = datasetOptional.get();
 
         // path variable is for informing user about directory structure
-        final String path = String.format("<Launchpad directory>%c%s%c%03d", File.separatorChar, Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId());
+        final String path = String.format("<Launchpad directory>%c%s%c%06d", File.separatorChar, Consts.DATASET_DIR, File.separatorChar, dataset.getId());
 
         final DatasetDefinition definition = new DatasetDefinition(dataset, globals.launchpadDir.getPath(), path);
         definition.paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
@@ -183,6 +183,7 @@ public class DatasetController {
         ds.setName(StrUtils.incCopyNumber(dataset.getName()));
         ds.setDescription(StrUtils.incCopyNumber(dataset.getDescription()));
         ds.setAssemblingCommand(dataset.getAssemblingCommand());
+        ds.setProducingCommand(dataset.getProducingCommand());
         ds.setEditable(true);
         ds.setLocked(false);
         ds.setDatasetGroups(new ArrayList<>());
@@ -200,7 +201,16 @@ public class DatasetController {
             groupsRepository.save(dg);
         }
 
-        // TODO !!! 2018.09.08 add here process of copying DatasetPath from source dataset to target
+        for (DatasetPath path : pathRepository.findByDataset(dataset)) {
+            try (FileInputStream fis = new FileInputStream( new File(globals.launchpadDir, path.getPath()))) {
+                storeNewPartOfRawFile(new File(path.getPath()).getName(), ds, fis, false);
+            }
+            catch (IOException e) {
+                log.error("Error while copying part of raw file: " + path.getPath(), e);
+                redirectAttributes.addFlashAttribute("errorMessage", "#50.02 Error while copying part of raw file: " + e.toString());
+                return "redirect:/launchpad/datasets";
+            }
+        }
 
         return "redirect:/launchpad/datasets";
     }
@@ -431,7 +441,7 @@ public class DatasetController {
 
         long datasetId = group.getDataset().getId();
 
-        final String definitionPath = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, datasetId);
+        final String definitionPath = String.format("%s%c%06d", Consts.DATASET_DIR, File.separatorChar, datasetId);
         final File definitionDir = new File(globals.launchpadDir, definitionPath);
         if (!definitionDir.exists()) {
             boolean status = definitionDir.mkdirs();
@@ -446,7 +456,7 @@ public class DatasetController {
             throw new IllegalStateException("Raw file doesn't exist: " + rawFile.getAbsolutePath());
         }
 
-        final String featurePath = String.format("%s%c%s%c%03d", definitionPath, File.separatorChar, Consts.FEATURE_DIR, File.separatorChar, group.getId());
+        final String featurePath = String.format("%s%c%s%c%06d", definitionPath, File.separatorChar, Consts.FEATURE_DIR, File.separatorChar, group.getId());
         final File featureDir = new File(globals.launchpadDir, featurePath);
         if (!featureDir.exists()) {
             boolean status = featureDir.mkdirs();
@@ -525,7 +535,7 @@ public class DatasetController {
     }
 
     @PostMapping(value = "/dataset-is-editable-commit")
-    public String setHeaderForDataset(Long id, boolean editable) {
+    public String isEditable(Long id, boolean editable) {
         Dataset dataset = datasetRepository.findById(id).orElse(null);
         if (dataset==null) {
             return "redirect:/launchpad/datasets";
@@ -534,6 +544,19 @@ public class DatasetController {
         datasetRepository.save(dataset);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+    }
+
+    @PostMapping(value = "/dataset-group-is-required-commit")
+    public String isRequired(Long id, boolean required, final RedirectAttributes redirectAttributes) {
+        DatasetGroup group = groupsRepository.findById(id).orElse(null);
+        if (group==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#71.01 feature wasn't found, id: " + id);
+            return "redirect:/launchpad/datasets";
+        }
+        group.setRequired(required);
+        groupsRepository.save(group);
+
+        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
 
     @PostMapping(value = "/dataset-cmd-assemble-commit")
@@ -644,7 +667,7 @@ public class DatasetController {
     }
 
     private File createConfigYaml(Dataset dataset) throws IOException {
-        final String path = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId());
+        final String path = String.format("%s%c%06d", Consts.DATASET_DIR, File.separatorChar, dataset.getId());
         final File datasetDefDir = new File(globals.launchpadDir, path);
         if (!datasetDefDir.exists()) {
             boolean status = datasetDefDir.mkdirs();
@@ -711,26 +734,37 @@ public class DatasetController {
     }
 
     @PostMapping(value = "/dataset-upload-part-raw-from-file")
-    public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId) {
+    public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId, final RedirectAttributes redirectAttributes) {
 
         String originFilename = file.getOriginalFilename();
         if (originFilename==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#72.01 name of uploaded file is null");
             return "redirect:/launchpad/dataset-definition/" + datasetId;
         }
         if (!checkExtension(originFilename)) {
             throw new IllegalStateException("Not supported extension, filename: " + originFilename);
         }
 
-        Optional<Dataset> optionalDataset = datasetRepository.findById(datasetId);
-        if (!optionalDataset.isPresent()) {
+        Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
+        if (dataset==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#72.02 dataset wasn't found for id "+ datasetId);
             return "redirect:/launchpad/dataset-definition/" + datasetId;
         }
-        Dataset dataset = optionalDataset.get();
 
+        try (InputStream is = file.getInputStream()) {
+            storeNewPartOfRawFile(originFilename, dataset, is, true);
+        } catch (IOException e) {
+            throw new RuntimeException("error", e);
+        }
+
+        return "redirect:/launchpad/dataset-definition/" + datasetId;
+    }
+
+    private void storeNewPartOfRawFile(String originFilename, Dataset dataset, InputStream is, boolean isUsePrefix) throws IOException {
         List<DatasetPath> paths = pathRepository.findByDataset(dataset);
         //noinspection ConstantConditions
         int pathNumber = paths.isEmpty() ? 1 : paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
-        final String path = String.format("%s%c%03d%craws", Consts.DEFINITIONS_DIR, File.separatorChar, dataset.getId(), File.separatorChar);
+        final String path = String.format("%s%c%06d%craws", Consts.DATASET_DIR, File.separatorChar, dataset.getId(), File.separatorChar);
 
         File datasetDir = new File(globals.launchpadDir, path);
         if (!datasetDir.exists()) {
@@ -741,12 +775,14 @@ public class DatasetController {
         }
 
         File datasetFile;
-        try (InputStream is = file.getInputStream()) {
+
+        if (isUsePrefix) {
             datasetFile = new File(datasetDir, String.format("raw-%d-%s", pathNumber, originFilename));
-            FileUtils.copyInputStreamToFile(is, datasetFile);
-        } catch (IOException e) {
-            throw new RuntimeException("error", e);
         }
+        else {
+            datasetFile = new File(datasetDir, originFilename);
+        }
+        FileUtils.copyInputStreamToFile(is, datasetFile);
 
         DatasetPath dp = new DatasetPath();
         String pathToDataset = path + File.separatorChar + datasetFile.getName();
@@ -759,8 +795,6 @@ public class DatasetController {
         dp.setRegisterTs(new Timestamp(System.currentTimeMillis()));
 
         pathRepository.save(dp);
-
-        return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
     private void createColumnsDefinition(Dataset dataset, InputStream is) throws IOException {
@@ -803,12 +837,13 @@ public class DatasetController {
     }
 
     @GetMapping("/dataset-delete/{id}")
-    public String delete(@PathVariable Long id, Model model) {
-        final Optional<Dataset> value = datasetRepository.findById(id);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
+    public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
+        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        if (dataset == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#81.01 dataset wasn't found, datasetId: " + id);
+            return "redirect:/launchpad/experiments";
         }
-        model.addAttribute("dataset", value.get());
+        model.addAttribute("dataset", dataset);
         return "launchpad/dataset-delete";
     }
 
@@ -819,6 +854,7 @@ public class DatasetController {
             redirectAttributes.addFlashAttribute("errorMessage", "#82.01 dataset wasn't found, datasetId: " + id);
             return "redirect:/launchpad/experiments";
         }
+        pathRepository.deleteByDataset(dataset);
         datasetRepository.deleteById(id);
         return "redirect:/launchpad/datasets";
     }

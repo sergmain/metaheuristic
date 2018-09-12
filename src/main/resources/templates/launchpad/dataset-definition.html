@@ -177,6 +177,7 @@
             <th>Group Id</th>
             <th>Group number</th>
             <th>Type of group</th>
+            <th>Is required</th>
             <th th:if="${ result.dataset.editable}">Actions</th>
             <th>Columns</th>
             <th>Status</th>
@@ -187,6 +188,17 @@
             <td><p th:text="${'' + g.id}">#Id</p></td>
             <td><p th:text="${'Group #' + g.groupNumber}">#Id</p></td>
             <td><p>Feature</p></td>
+            <td>
+                <p th:remove="tag" th:if="${ !result.dataset.editable}" th:text="${g.required ? 'Yes' : 'No'}">Is required</p>
+                <form th:if="${result.dataset.editable}" class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
+                      th:action="@{/launchpad/dataset-group-is-required-commit}"
+                      accept-charset="UTF-8" th:id="${'dataset-group-is-required-form-'+g.id}" name="f">
+                    <input type="hidden" th:name="id" th:value="${g.id}"/>
+                    <input name="required" type="checkbox" placeholder="checkbox"
+                                                                    th:checked="${g.required}"
+                                                                    th:onclick="${ 'document.getElementById(''dataset-group-is-required-form-'+g.id+''').submit();'}">
+                </form>
+            </td>
             <td th:if="${ result.dataset.editable}">
 <!--
                 <a class="pure-button pure-button-primary" href="dataset-column-form.html" th:href="${'/launchpad/dataset-column-add/' + g.id}"

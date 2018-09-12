@@ -38,7 +38,8 @@ CREATE TABLE AIAI_LP_DATASET_GROUP (
   CMD         VARCHAR(250),
   IS_ID_GROUP tinyint(1) not null default 0,
   IS_FEATURE  tinyint(1) not null default 0,
-  IS_LABEL    tinyint(1) not null default 0
+  IS_LABEL    tinyint(1) not null default 0,
+  IS_REQUIRED tinyint(1) not null default 0,
   FEATURE_FILE         VARCHAR(250),
   STATUS     tinyint(1) not null default 0
 );

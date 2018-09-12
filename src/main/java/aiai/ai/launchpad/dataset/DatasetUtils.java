@@ -25,7 +25,7 @@ import java.io.File;
 public class DatasetUtils {
 
     public static File getDatasetFile(File launchpadDir, long datasetId) {
-        final String definitionPath = String.format("%s%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, datasetId);
+        final String definitionPath = String.format("%s%c%06d", Consts.DATASET_DIR, File.separatorChar, datasetId);
 
         final File definitionDir = DirUtils.createDir(launchpadDir, definitionPath);
         if (definitionDir==null || !definitionDir.exists()) {
@@ -41,7 +41,7 @@ public class DatasetUtils {
     }
 
     public static File getFeatureFile(File launchpadDir, long datasetId, long featureId) {
-        final String featurePath = String.format("%s%c%03d%cfeature%c%03d", Consts.DEFINITIONS_DIR, File.separatorChar, datasetId, File.separatorChar, File.separatorChar, featureId);
+        final String featurePath = String.format("%s%c%06d%cfeature%c%06d", Consts.DATASET_DIR, File.separatorChar, datasetId, File.separatorChar, File.separatorChar, featureId);
 
         final File featureDir = DirUtils.createDir(launchpadDir, featurePath);
         if (featureDir==null || !featureDir.exists()) {

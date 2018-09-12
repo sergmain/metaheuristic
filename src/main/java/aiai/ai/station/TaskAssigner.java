@@ -31,14 +31,12 @@ import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleFeature;
 import aiai.ai.yaml.sequence.SimpleSnippet;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
-@EnableScheduling
 @Slf4j
 public class TaskAssigner {
 
@@ -47,8 +45,8 @@ public class TaskAssigner {
     private final DownloadFeatureActor downloadFeatureActor;
     private final DownloadSnippetActor downloadSnippetActor;
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
+    private final SequenceYamlUtils sequenceYamlUtils;
 
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelay() {
         log.info("TaskAssigner.fixedDelay()");
 
@@ -61,11 +59,17 @@ public class TaskAssigner {
 
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
-            if (seq.getParams().length()==0) {
-                System.out.println("!!!!Hmmm");
+            if (StringUtils.isBlank(seq.getParams())) {
+                // strange behaviour. this field is required in DB and can't be null
+                // is this bug in mysql or it's a spring's data bug with MEDIUMTEXT fields?
+                log.warn("Params for sequence {} is blank", seq.getId());
                 continue;
             }
-            final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
+            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
+            if (sequenceYaml.dataset==null) {
+                log.warn("sequenceYaml.dataset is null\n{}", seq.getParams());
+                continue;
+            }
             createDownloadDatasetTask(sequenceYaml.dataset.id);
             for (SimpleFeature simpleFeature : sequenceYaml.features) {
                 createDownloadFeatureTask(sequenceYaml.dataset.id, simpleFeature.id);
@@ -76,12 +80,13 @@ public class TaskAssigner {
         }
     }
 
-    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
+    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository, SequenceYamlUtils sequenceYamlUtils) {
         this.globals = globals;
         this.downloadDatasetActor = downloadDatasetActor;
         this.downloadFeatureActor = downloadFeatureActor;
         this.downloadSnippetActor = downloadSnippetActor;
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
+        this.sequenceYamlUtils = sequenceYamlUtils;
     }
 
     private void createDownloadDatasetTask(long datasetId) {

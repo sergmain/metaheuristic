@@ -29,7 +29,7 @@ public class StationDatasetUtils {
 
         AssetFile datasetFile = new AssetFile();
 
-        File currDir = new File(stationDatasetDir, String.format("%03d", datasetId));
+        File currDir = new File(stationDatasetDir, String.format("%06d", datasetId));
         if (!currDir.exists()) {
             boolean isOk = currDir.mkdirs();
             if (!isOk) {

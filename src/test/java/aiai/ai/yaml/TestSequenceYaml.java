@@ -17,7 +17,6 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
@@ -32,7 +31,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.*;
 
+@RunWith(SpringRunner.class)
+@SpringBootTest
 public class TestSequenceYaml {
+
+    @Autowired
+    private SequenceYamlUtils sequenceYamlUtils;
 
     @Test
     public void testSequenceYaml() {
@@ -48,10 +52,10 @@ public class TestSequenceYaml {
         list.add(new SimpleSnippet(SnippetType.predict, "456", "file.txt", "112233", "python.exe", 2));
         seq.setSnippets(list);
 
-        String s = SequenceYamlUtils.toString(seq);
+        String s = sequenceYamlUtils.toString(seq);
 
 
-        SequenceYaml seq1 = SequenceYamlUtils.toSequenceYaml(s);
+        SequenceYaml seq1 = sequenceYamlUtils.toSequenceYaml(s);
         Assert.assertEquals(seq, seq1);
     }
 }

@@ -38,17 +38,18 @@ import aiai.ai.yaml.sequence.SimpleSnippet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
-@EnableScheduling
 @Slf4j
 public class SequenceProcessor {
 
@@ -58,6 +59,7 @@ public class SequenceProcessor {
     private final ProcessService processService;
     private final StationService stationService;
     private final LogDataRepository logDataRepository;
+    private final SequenceYamlUtils sequenceYamlUtils;
 
     private Map<Long, AssetFile> isDatasetReady = new HashMap<>();
     private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
@@ -65,7 +67,7 @@ public class SequenceProcessor {
 
     static class CurrentExecState {
         private final Map<Long, Enums.ExperimentExecState> experimentState = new HashMap<>();
-        private boolean isInit = false;
+        boolean isInit = false;
 
         private void register(List<Protocol.ExperimentStatus.SimpleStatus> statuses) {
             synchronized(experimentState) {
@@ -76,7 +78,7 @@ public class SequenceProcessor {
             }
         }
 
-        private Enums.ExperimentExecState getState(long experimentId) {
+        Enums.ExperimentExecState getState(long experimentId) {
             synchronized(experimentState) {
                 if (!isInit) {
                     return null;
@@ -93,19 +95,19 @@ public class SequenceProcessor {
 
     final CurrentExecState STATE = new CurrentExecState();
 
-    public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService, StationService stationService, LogDataRepository logDataRepository) {
+    public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService, StationService stationService, LogDataRepository logDataRepository, SequenceYamlUtils sequenceYamlUtils) {
         this.globals = globals;
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
         this.processService = processService;
         this.stationService = stationService;
         this.logDataRepository = logDataRepository;
+        this.sequenceYamlUtils = sequenceYamlUtils;
     }
 
     @PostConstruct
     public void init() {
     }
 
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.task-assigner-task.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelay() {
         log.info("SequenceProcessor.fixedDelay()");
         if (globals.isUnitTesting) {
@@ -132,7 +134,13 @@ public class SequenceProcessor {
 
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
-            final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
+            if (StringUtils.isBlank(seq.getParams())) {
+                // very strange behaviour. this field is required in DB and can't be null
+                // is this bug in mysql or it's a spring's data bug with MEDIUMTEXT fields?
+                log.warn("Params for sequence {} is blank", seq.getId());
+                continue;
+            }
+            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
             if (!STATE.isStarted(sequenceYaml.experimentId)) {
                 continue;
             }
@@ -152,7 +160,7 @@ public class SequenceProcessor {
                 continue;
             }
 
-            File artifactDir = prepareSequenceDir(seq.getExperimentSequenceId(), "artifacts");
+            File artifactDir = prepareSequenceDir(sequenceYaml.experimentId, seq.getExperimentSequenceId(), "artifacts");
             if (artifactDir == null) {
                 finishAndWriteToLog(seq, "Error of configuring of environment. 'artifacts' directory wasn't created, sequence can't be processed.");
                 continue;
@@ -180,7 +188,7 @@ public class SequenceProcessor {
 
             sequenceYaml.artifactPath = artifactDir.getAbsolutePath();
             initAllPaths(stationDatasetDir, sequenceYaml);
-            final String params = SequenceYamlUtils.toString(sequenceYaml);
+            final String params = sequenceYamlUtils.toString(sequenceYaml);
 
             seq.setLaunchedOn(System.currentTimeMillis());
             seq = stationExperimentSequenceRepository.save(seq);
@@ -202,7 +210,7 @@ public class SequenceProcessor {
                     continue;
                 }
 
-                final File paramFile = prepareParamFile(seq.getExperimentSequenceId(), snippet.getType(), params);
+                final File paramFile = prepareParamFile(sequenceYaml.experimentId, seq.getExperimentSequenceId(), snippet.getType(), params);
                 if (paramFile == null) {
                     break;
                 }
@@ -323,18 +331,19 @@ public class SequenceProcessor {
         logDataRepository.save(logData);
     }
 
-    private File prepareParamFile(Long experimentSequenceId, SnippetType type, String params) {
-        File snippetTypeDir = prepareSequenceDir(experimentSequenceId, type.toString());
+    private File prepareParamFile(long experimentId, Long experimentSequenceId, SnippetType type, String params) {
+        File snippetTypeDir = prepareSequenceDir(experimentId, experimentSequenceId, type.toString());
         if (snippetTypeDir == null) {
             return null;
         }
 
         File paramFile = new File(snippetTypeDir, "params.yaml");
         if (paramFile.exists()) {
+            //noinspection ResultOfMethodCallIgnored
             paramFile.delete();
         }
         try {
-            FileUtils.writeStringToFile(paramFile, params);
+            FileUtils.writeStringToFile(paramFile, params, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("Error with writing to params.yaml file", e);
             return null;
@@ -342,8 +351,9 @@ public class SequenceProcessor {
         return paramFile;
     }
 
-    private File prepareSequenceDir(Long experimentSequenceId, String snippetType) {
-        String path = String.format("sequence%c%06d%c%s", File.separatorChar, experimentSequenceId, File.separatorChar, snippetType);
+    private File prepareSequenceDir(long experimentId, Long experimentSequenceId, String snippetType) {
+        String path = String.format("experiment%c%06d%csequence%c%06d%c%s", File.separatorChar, experimentId, File.separatorChar, File.separatorChar, experimentSequenceId, File.separatorChar, snippetType);
+        //noinspection UnnecessaryLocalVariable
         File snippetTypeDir = DirUtils.createDir(globals.stationDir, path);
         return snippetTypeDir;
     }

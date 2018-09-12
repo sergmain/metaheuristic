@@ -34,9 +34,6 @@ import java.util.List;
 @Transactional
 public interface DatasetPathRepository extends CrudRepository<DatasetPath, Long> {
 
-//    @Transactional(readOnly = true)
-//    List<DatasetPath> findByDataset_Id(Long datasetId);
-
     @Transactional(readOnly = true)
     List<DatasetPath> findByDataset(Dataset dataset);
 

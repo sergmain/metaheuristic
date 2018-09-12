@@ -70,8 +70,10 @@ public class CommandProcessor {
             case RegisterInviteResult:
                 break;
             case RequestExperimentSequence:
+                // processing on launchpad side
                 return processRequestExperimentSequence((Protocol.RequestExperimentSequence) command);
             case AssignedExperimentSequence:
+                // processing on station side
                 return processAssignedExperimentSequence((Protocol.AssignedExperimentSequence) command);
             case ReportStationEnv:
                 return processReportStationEnv((Protocol.ReportStationEnv) command);

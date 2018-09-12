@@ -79,6 +79,9 @@ public class DatasetGroup implements Serializable {
     @Column(name = "IS_LABEL")
     private boolean isLabel;
 
+    @Column(name = "IS_REQUIRED")
+    private boolean isRequired;
+
     @Column(name = "STATUS")
     private int featureStatus;
 

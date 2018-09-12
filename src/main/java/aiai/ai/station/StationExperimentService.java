@@ -21,20 +21,25 @@ import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 public class StationExperimentService {
 
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
     private final SequenceProcessor sequenceProcessor;
+    private final SequenceYamlUtils sequenceYamlUtils;
 
-    public StationExperimentService(StationExperimentSequenceRepository stationExperimentSequenceRepository, SequenceProcessor sequenceProcessor) {
+    public StationExperimentService(StationExperimentSequenceRepository stationExperimentSequenceRepository, SequenceProcessor sequenceProcessor, SequenceYamlUtils sequenceYamlUtils) {
         this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
         this.sequenceProcessor = sequenceProcessor;
+        this.sequenceYamlUtils = sequenceYamlUtils;
     }
 
     public List<StationExperimentSequence> getForReporting() {
@@ -58,7 +63,13 @@ public class StationExperimentService {
         }
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
-            final SequenceYaml sequenceYaml = SequenceYamlUtils.toSequenceYaml(seq.getParams());
+            if (StringUtils.isBlank(seq.getParams())) {
+                // very strange behaviour. this field is required in DB and can't be null
+                // is this bug in mysql or it's a spring's data bug with MEDIUMTEXT fields?
+                log.warn("Params for sequence {} is blank", seq.getId());
+                continue;
+            }
+            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
             if (sequenceProcessor.STATE.isStarted(sequenceYaml.experimentId)) {
                 return false;
             }

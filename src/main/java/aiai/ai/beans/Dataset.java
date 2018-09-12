@@ -77,13 +77,13 @@ public class Dataset implements Serializable {
 
     public String asRawFilePath() {
         //noinspection UnnecessaryLocalVariable
-        String rawFilePath = String.format("%s%c%03d%c%s", Consts.DEFINITIONS_DIR, File.separatorChar, id, File.separatorChar, Consts.RAW_FILE_NAME);
+        String rawFilePath = String.format("%s%c%06d%c%s", Consts.DATASET_DIR, File.separatorChar, id, File.separatorChar, Consts.RAW_FILE_NAME);
         return  rawFilePath;
     }
 
     public String asDatasetFilePath() {
         //noinspection UnnecessaryLocalVariable
-        String datasetFilePath = String.format("%s%c%03d%cdataset%c%s", Consts.DEFINITIONS_DIR, File.separatorChar, id, File.separatorChar, File.separatorChar, Consts.DATASET_FILE_NAME);
+        String datasetFilePath = String.format("%s%c%06d%cdataset%c%s", Consts.DATASET_DIR, File.separatorChar, id, File.separatorChar, File.separatorChar, Consts.DATASET_FILE_NAME);
         return  datasetFilePath;
 
 

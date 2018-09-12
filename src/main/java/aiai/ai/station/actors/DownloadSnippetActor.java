@@ -34,7 +34,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
-@EnableScheduling
 @Slf4j
 public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask> {
 
@@ -55,7 +54,6 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
         }
     }
 
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-snippet-task.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelay() {
         log.info("DownloadSnippetActor.fixedDelay()");
         if (globals.isUnitTesting) {

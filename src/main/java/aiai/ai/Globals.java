@@ -30,11 +30,11 @@ import java.io.File;
 @ToString
 public class Globals {
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
-    public File stationDir;
-
     @Value("${aiai.station.launchpad.url:#{null}}")
     public String launchpadUrl;
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
+    public File stationDir;
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.launchpad.dir' )) }")
     public File launchpadDir;
@@ -49,15 +49,24 @@ public class Globals {
     public boolean isLaunchpadEnabled = true;
     public boolean isUnitTesting = false;
 
+    public File stationDatasetDir;
+    public File stationExperimentDir;
+    public File stationSnippetDir;
+
     @PostConstruct
     public void init() {
-        if (stationDir==null || launchpadUrl==null) {
-            log.info("station is disabled, stationDir: {}, launchpadUrl: {}", stationDir, launchpadUrl);
+        if (stationDir==null) {
+            log.warn("Station is disabled, stationDir: {}", stationDir);
             isStationEnabled = false;
+        }
+        else {
+            stationDatasetDir = new File(stationDir, Consts.DATASET_DIR);
+            stationExperimentDir = new File(stationDir, Consts.EXPERIMENT_DIR);
+            stationSnippetDir = new File(stationDir, Consts.SNIPPET_DIR);
         }
 
         if (launchpadDir==null) {
-            log.info("Launchpad is disabled, launchpadDir: {}", launchpadDir);
+            log.warn("Launchpad is disabled, launchpadDir: {}", launchpadDir);
             isLaunchpadEnabled = false;
         }
 

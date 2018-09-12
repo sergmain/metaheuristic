@@ -25,13 +25,9 @@ import aiai.ai.comm.CommandProcessor;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
-import aiai.ai.yaml.console.SnippetExec;
-import aiai.ai.yaml.console.SnippetExecUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -47,7 +43,6 @@ import java.util.List;
  * Time: 16:25
  */
 @Service
-@EnableScheduling
 @Slf4j
 public class LaunchpadRequester {
 
@@ -100,7 +95,6 @@ public class LaunchpadRequester {
      * long fixedDelay()
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.request-launchpad.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelay() {
         log.info("LaunchpadRequester.fixedDelay()");
         if (globals.isUnitTesting) {

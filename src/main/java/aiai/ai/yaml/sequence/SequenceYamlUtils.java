@@ -17,18 +17,24 @@
  */
 package aiai.ai.yaml.sequence;
 
-import aiai.ai.yaml.hyper_params.HyperParams;
+import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
+import javax.annotation.PostConstruct;
+
+@Service
 public class SequenceYamlUtils {
 
-    private static Yaml yamlSequenceYaml;
+    private Yaml yamlSequenceYaml;
 
-    static {
+    // TODO 2018.09.12. so, snakeYaml isn't thread-safe?
+    private static final Object syncObj = new Object();
+
+    public SequenceYamlUtils() {
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
@@ -39,12 +45,16 @@ public class SequenceYamlUtils {
         yamlSequenceYaml = new Yaml(new Constructor(SequenceYaml.class), representer, options);
     }
 
-    public static String toString(SequenceYaml sequenceYaml) {
-        return yamlSequenceYaml.dump(sequenceYaml);
+    public String toString(SequenceYaml sequenceYaml) {
+        synchronized (syncObj) {
+            return yamlSequenceYaml.dump(sequenceYaml);
+        }
     }
 
-    public static SequenceYaml toSequenceYaml(String s) {
-        return yamlSequenceYaml.load(s);
+    public SequenceYaml toSequenceYaml(String s) {
+        synchronized (syncObj) {
+            return yamlSequenceYaml.load(s);
+        }
     }
 
 

@@ -39,8 +39,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -48,7 +46,6 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@EnableScheduling
 @EnableTransactionManagement
 @Slf4j
 public class ExperimentService {
@@ -59,14 +56,16 @@ public class ExperimentService {
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final SnippetRepository snippetRepository;
     private final DatasetRepository datasetRepository;
+    private final SequenceYamlUtils sequenceYamlUtils;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, DatasetRepository datasetRepository) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, DatasetRepository datasetRepository, SequenceYamlUtils sequenceYamlUtils) {
         this.globals = globals;
         this.experimentRepository = experimentRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.snippetRepository = snippetRepository;
         this.datasetRepository = datasetRepository;
+        this.sequenceYamlUtils = sequenceYamlUtils;
     }
 
     private static final List<Protocol.AssignedExperimentSequence.SimpleSequence> EMPTY_SIMPLE_SEQUENCES = Collections.unmodifiableList(new ArrayList<>());
@@ -279,7 +278,6 @@ public class ExperimentService {
      * long fixedDelay()
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.create-sequence.timeout'), 10, 20, 10)*1000 }")
     public void fixedDelayExperimentSequencesProducer() {
         log.info("ExperimentService.fixedDelayExperimentSequencesProducer()");
         if (globals.isUnitTesting) {
@@ -373,7 +371,7 @@ public class ExperimentService {
                 }
                 yaml.snippets = snippets;
 
-                String sequenceParams = SequenceYamlUtils.toString(yaml);
+                String sequenceParams = sequenceYamlUtils.toString(yaml);
 
                 if (sequnces.contains(sequenceParams)) {
                     continue;

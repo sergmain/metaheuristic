@@ -41,8 +41,10 @@ public class Consts {
 
     public static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 
-    public static final String DEFINITIONS_DIR = "definitions";
+    public static final String DATASET_DIR = "dataset";
+    public static final String SNIPPET_DIR = "snippet";
     public static final String FEATURE_DIR = "feature";
+    public static final String EXPERIMENT_DIR = "experiment";
 
     public static final String RAW_FILE_NAME = "raw-file.txt";
     public static final String DATASET_FILE_NAME = "dataset.txt";

@@ -34,7 +34,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
-@EnableScheduling
 @Slf4j
 public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask> {
 
@@ -55,7 +54,6 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
         }
     }
 
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-dataset-task.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelay() {
         log.info("DownloadDatasetActor.fixedDelay()");
         if (globals.isUnitTesting) {

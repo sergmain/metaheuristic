@@ -32,6 +32,6 @@ public class TestCreateDatasetPath {
 
     @Test
     public void testCreatePath() {
-        Assert.assertEquals("004", String.format("%03d", 4) );
+        Assert.assertEquals("000004", String.format("%06d", 4) );
     }
 }

@@ -23,19 +23,20 @@ import aiai.ai.station.StationDatasetUtils;
 import aiai.ai.station.StationFeatureUtils;
 import aiai.ai.station.tasks.DownloadFeatureTask;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Service
-@EnableScheduling
 @Slf4j
 public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask> {
 
@@ -54,7 +55,6 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
         }
     }
 
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-feature-task.timeout'), 3, 20, 10)*1000 }")
     public void fixedDelay() {
         log.info("DownloadSnippetActor.fixedDelay()");
         if (globals.isUnitTesting) {
@@ -82,8 +82,19 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
                 Request.Get(targetUrl + '/' + task.getFeatureId()).execute().saveContent(assetFile.file);
                 preparedMap.put(task.getDatasetId(), true);
             }
+            catch (HttpResponseException e) {
+                if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
+                    log.warn("Feature with id {} wasn't found", task.getFeatureId());
+                }
+                else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
+                    log.warn("Feature with id {} is broken and need to be recreated", task.getFeatureId());
+                }
+                else {
+                    log.error("HttpResponseException", e);
+                }
+            }
             catch (IOException e) {
-                e.printStackTrace();
+                log.error("IOException", e);
             }
         }
     }
