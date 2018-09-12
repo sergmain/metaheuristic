@@ -407,6 +407,38 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
+    @PostMapping("/experiment-metadata-edit-commit/{id}")
+    public String metadataEditCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
+        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#89.01 experiment wasn't found, id: "+id );
+            return "redirect:/launchpad/experiments";
+        }
+        if (experiment.getHyperParams()==null) {
+            experiment.setHyperParams(new ArrayList<>());
+        }
+        ExperimentHyperParams m=null;
+        for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
+            if (hyperParam.getKey().equals(key)) {
+                m = hyperParam;
+                break;
+            }
+        }
+        if (m==null) {
+            m = new ExperimentHyperParams();
+            m.setExperiment(experiment);
+            m.setKey(key);
+            experiment.getHyperParams().add(m);
+        }
+        else {
+            // experiment.getHyperParams().add(m);
+        }
+        m.setValues(value);
+
+        experimentRepository.save(experiment);
+        return "redirect:/launchpad/experiment-edit/"+id;
+    }
+
     @PostMapping("/experiment-snippet-add-commit/{id}")
     public String snippetAddCommit(@PathVariable Long id, String code) {
         Experiment experiment = experimentRepository.findById(id).orElse(null);
@@ -528,22 +560,23 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
         Experiment trg = new Experiment();
-        BeanUtils.copyProperties(experiment, trg);
-        trg.setId(null);
-        trg.setVersion(null);
+        trg.setDatasetId(experiment.getDatasetId());
+        trg.setEpoch(experiment.getEpoch());
+        trg.setEpochVariant(experiment.getEpochVariant());
+        trg.setSeed(experiment.getSeed());
         trg.setName( StrUtils.incCopyNumber(experiment.getName()) );
         trg.setDescription( StrUtils.incCopyNumber( experiment.getDescription()) );
         trg.setAllSequenceProduced(false);
         trg.setFeatureProduced(false);
+        trg.setCreatedOn(System.currentTimeMillis());
         trg.setLaunchedOn(null);
         trg.setLaunched(false);
-        List<ExperimentSnippet> snippets = experiment.getSnippets();
         trg.setSnippets(new ArrayList<>());
-        List<ExperimentHyperParams> params = experiment.getHyperParams();
         trg.setHyperParams(new ArrayList<>());
+        trg.setExecState(Enums.ExperimentExecState.NONE.code);
         experimentRepository.save(trg);
 
-        for (ExperimentSnippet snippet : snippets) {
+        for (ExperimentSnippet snippet : experiment.getSnippets()) {
             ExperimentSnippet trgSnippet = new ExperimentSnippet();
             BeanUtils.copyProperties(snippet, trgSnippet);
             trgSnippet.setId(null);
@@ -552,7 +585,7 @@ public class ExperimentsController {
             trg.getSnippets().add(trgSnippet);
             experimentSnippetRepository.save(trgSnippet);
         }
-        for (ExperimentHyperParams params1 : params) {
+        for (ExperimentHyperParams params1 : experiment.getHyperParams()) {
             ExperimentHyperParams trgParam = new ExperimentHyperParams();
             BeanUtils.copyProperties(params1, trgParam);
             trgParam.setId(null);

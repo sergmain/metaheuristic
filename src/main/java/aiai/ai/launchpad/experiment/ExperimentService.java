@@ -423,14 +423,37 @@ public class ExperimentService {
     public void produceFeaturePermutations(Dataset dataset, Experiment experiment) {
         final List<ExperimentFeature> list = experimentFeatureRepository.findByExperimentId(experiment.getId());
 
-        List<Long> ids = new ArrayList<>();
+        final List<Long> ids = new ArrayList<>();
+        final Set<Long> requiredIds = new HashSet<>();
         for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
             ids.add(datasetGroup.getId());
+            if (datasetGroup.isRequired()) {
+                requiredIds.add(datasetGroup.getId());
+            }
         }
+        if (!requiredIds.isEmpty()) {
+            for (ExperimentFeature feature : list) {
+                final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
+                boolean isFound = false;
+                for (String value : ofVariants.values) {
+                    if (requiredIds.contains(Long.parseLong(value))) {
+                        isFound = true;
+                        break;
+                    }
+                }
+                if (!isFound){
+                    experimentFeatureRepository.delete(feature);
+                }
+            }
+        }
+
         Permutation<Long> permutation = new Permutation<>();
         for (int i = 0; i < ids.size(); i++) {
             permutation.printCombination(ids, i+1,
                     data -> {
+                        if (isSkip(data, requiredIds)) {
+                            return true;
+                        }
                         final String idsAsStr = String.valueOf(data);
                         if (isExist(list, idsAsStr)) {
                             return true;
@@ -445,6 +468,20 @@ public class ExperimentService {
         }
         experiment.setFeatureProduced(true);
         experimentRepository.save(experiment);
+    }
+
+    private boolean isSkip(List<Long> data, Set<Long> requiredIds) {
+        if (requiredIds.isEmpty()) {
+            return false;
+        }
+        boolean isFound = false;
+        for (Long datum : data) {
+            if (requiredIds.contains(datum)) {
+                isFound = true;
+                break;
+            }
+        }
+        return !isFound;
     }
 
     private boolean isExist(List<ExperimentFeature> features, String f) {

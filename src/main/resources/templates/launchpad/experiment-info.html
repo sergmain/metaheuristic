@@ -105,7 +105,7 @@
             </tr>
             </thead>
 
-            <tbody>Command for generating feature
+            <tbody>
             <tr th:each="m : ${experiment.hyperParams}">
                 <td th:text="${m.key}">Key</td>
                 <td th:text="${m.values}">Value</td>
@@ -120,13 +120,15 @@
             <thead>
             <tr>
                 <th width="50">Id</th>
-                <th width="700">Command for generating feature</th>
+                <th width="100">Is required</th>
+                <th width="600">Command for generating feature</th>
             </tr>
             </thead>
 
             <tbody>
             <tr th:each="g : ${experimentResult.dataset.datasetGroups}">
                 <td th:text="${g.id}">Group Id</td>
+                <td th:text="${g.required ? 'Yes' : 'No'}">Is required</td>
                 <td th:text="${g.command}">Command</td>
             </tr>
             </tbody>
