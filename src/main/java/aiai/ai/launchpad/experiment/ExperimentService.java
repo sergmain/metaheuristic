@@ -169,10 +169,12 @@ public class ExperimentService {
         ExperimentFeature feature;
         if (features == null || features.isEmpty()) {
             // is there any feature which wasn't started and not finished yet?
+            // TODO !!!!!!!!!!!!!!!!!!!!!!!!!
             feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse();
         } else {
             feature = features.get(0);
         }
+
 
         // there isn't any feature to process
         if (feature==null) {
