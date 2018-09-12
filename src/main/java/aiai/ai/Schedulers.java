@@ -31,6 +31,8 @@ import org.springframework.stereotype.Service;
 
 public class Schedulers {
 
+    // !!! 2018.09.12 method-based creation of schedulers doesn't work
+
     // Launchpad schedulers
     @Service
     @EnableScheduling
