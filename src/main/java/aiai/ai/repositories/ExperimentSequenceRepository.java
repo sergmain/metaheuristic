@@ -54,6 +54,9 @@ public interface ExperimentSequenceRepository extends CrudRepository<ExperimentS
     ExperimentSequence findTop1ByStationIdAndIsCompletedIsFalseAndFeatureId(long stationId, long featureId);
 
     @Transactional(readOnly = true)
+    List<ExperimentSequence> findByStationIdAndIsCompletedIsFalse(long stationId);
+
+    @Transactional(readOnly = true)
     ExperimentSequence findTop1ByFeatureId(Long featureId);
 
     @Transactional(readOnly = true)

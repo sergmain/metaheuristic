@@ -80,6 +80,29 @@ public class Protocol {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
+    public static class StationSequenceStatus extends Command {
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        // will use static inner class for future extension
+        public static class SimpleStatus {
+            public long experimentSequencId;
+        }
+        List<SimpleStatus> statuses;
+
+        public StationSequenceStatus(List<SimpleStatus> statuses) {
+            this.setType(Type.StationSequenceStatus);
+            this.statuses = statuses;
+        }
+
+        public StationSequenceStatus() {
+            this.setType(Type.StationSequenceStatus);
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
     public static class AssignedExperimentSequence extends Command {
 
         @Data

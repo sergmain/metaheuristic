@@ -53,6 +53,8 @@ public class TestCommands {
                 return new Protocol.ReportResultDelivering();
             case ExperimentStatus:
                 return new Protocol.ExperimentStatus();
+            case StationSequenceStatus:
+                return new Protocol.StationSequenceStatus();
             default:
                 throw new IllegalStateException("unknown command type: " + type);
         }

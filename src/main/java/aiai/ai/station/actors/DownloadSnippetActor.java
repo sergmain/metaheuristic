@@ -80,7 +80,10 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 return;
             }
             try {
-                Request.Get(targetUrl+'/'+task.snippetCode).execute().saveContent(snippetFile.file);
+                Request.Get(targetUrl+'/'+task.snippetCode)
+                        .connectTimeout(5000)
+                        .socketTimeout(5000)
+                        .execute().saveContent(snippetFile.file);
                 preparedMap.put(task.snippetCode, true);
             } catch (IOException e) {
                 e.printStackTrace();

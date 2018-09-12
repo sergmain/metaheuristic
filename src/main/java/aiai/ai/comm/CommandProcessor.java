@@ -84,9 +84,17 @@ public class CommandProcessor {
             case ExperimentStatus:
                 // processing on station side
                 return processExperimentStatus((Protocol.ExperimentStatus) command);
+            case StationSequenceStatus:
+                // processing on launchpad side
+                return processStationSequenceStatus((Protocol.StationSequenceStatus) command);
             default:
                 System.out.println("There is new command which isn't processed: " + command.getType());
         }
+        return Protocol.NOP_ARRAY;
+    }
+
+    private Command[] processStationSequenceStatus(Protocol.StationSequenceStatus command) {
+        experimentService.reconcileStationSequences(command.stationId, command.statuses);
         return Protocol.NOP_ARRAY;
     }
 

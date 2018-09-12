@@ -57,7 +57,6 @@ public class TestDatasetGroup {
 
     @PostConstruct
     public void preapre_1() {
-        globals.isUnitTesting = true;
     }
 
     @Before

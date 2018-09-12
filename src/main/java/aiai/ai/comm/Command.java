@@ -54,7 +54,8 @@ public class Command implements Serializable {
         ReportStationEnv /* returned after processing AssignedStationId and ReAssignStationId */,
         ReportSequenceProcessingResult /* returned result of processing sequence at station */,
         ReportResultDelivering, /* results were delivered to the launchpad */
-        ExperimentStatus /* current exec status of experiments sended by launchpad every iteration with station */
+        ExperimentStatus, /* current exec status of experiments sended by launchpad every iteration with station */
+        StationSequenceStatus /* sent by station, contains all active experimentSequenceId which is present as station side . neede to elimi*/
     }
 
 }

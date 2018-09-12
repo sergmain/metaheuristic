@@ -51,6 +51,7 @@ public class ExchangeData {
     private Protocol.ReportSequenceProcessingResult reportSequenceProcessingResult;
     private Protocol.ReportResultDelivering reportResultDelivering;
     private Protocol.ExperimentStatus experimentStatus;
+    private Protocol.StationSequenceStatus stationSequenceStatus;
 
     @JsonProperty(value = "success")
     private boolean isSuccess = true;
@@ -84,6 +85,9 @@ public class ExchangeData {
                 break;
             case ExperimentStatus:
                 this.experimentStatus = (Protocol.ExperimentStatus) command;
+                break;
+            case StationSequenceStatus:
+                this.stationSequenceStatus = (Protocol.StationSequenceStatus) command;
                 break;
             case RequestStationId:
                 if (this.requestStationId != null) {
@@ -167,7 +171,7 @@ public class ExchangeData {
         return asListOfNonNull(isExcludeNop, nop, reportStation, requestStationId,
                 assignedStationId, reAssignedStationId, registerInvite,
                 registerInviteResult, requestExperimentSequence, assignedExperimentSequence, reportStationEnv,
-                reportSequenceProcessingResult, reportResultDelivering, experimentStatus);
+                reportSequenceProcessingResult, reportResultDelivering, experimentStatus, stationSequenceStatus);
     }
 
     @JsonIgnore

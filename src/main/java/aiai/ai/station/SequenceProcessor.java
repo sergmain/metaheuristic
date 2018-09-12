@@ -173,6 +173,7 @@ public class SequenceProcessor {
                     assetFile = StationFeatureUtils.prepareFeatureFile(stationDatasetDir, sequenceYaml.dataset.id, feature.id);
                     // is this feature prepared?
                     if (assetFile.isError || !assetFile.isContent) {
+                        log.info("Feature hasn't been prepared yet, {}", assetFile);
                         isFeatureOk = false;
                         continue;
                     }
@@ -180,7 +181,6 @@ public class SequenceProcessor {
                 }
             }
             if (!isFeatureOk) {
-                log.info("Features haven't been prepared yet");
                 continue;
             }
 

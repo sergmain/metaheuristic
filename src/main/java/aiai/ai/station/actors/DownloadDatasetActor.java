@@ -79,7 +79,10 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
                 return;
             }
             try {
-                Request.Get(targetUrl+'/'+task.getDatasetId()).execute().saveContent(assetFile.file);
+                Request.Get(targetUrl+'/'+task.getDatasetId())
+                        .connectTimeout(5000)
+                        .socketTimeout(5000)
+                        .execute().saveContent(assetFile.file);
                 preparedMap.put(task.getDatasetId(), true);
             } catch (IOException e) {
                 log.error("Error retrivind dataset from server", e);

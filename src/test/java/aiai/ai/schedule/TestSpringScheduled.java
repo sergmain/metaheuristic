@@ -65,12 +65,10 @@ public class TestSpringScheduled {
 
     @PostConstruct
     public void preapre_1() {
-        globals.isUnitTesting = true;
     }
 
     @Before
     public void prepare_2() {
-        globals.isUnitTesting = true;
     }
 
     @Test

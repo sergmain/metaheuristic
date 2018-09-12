@@ -249,6 +249,24 @@ public class ExperimentService {
         return ids;
     }
 
+    public void reconcileStationSequences(String stationIdAsStr, List<Protocol.StationSequenceStatus.SimpleStatus> statuses) {
+        final long stationId = Long.parseLong(stationIdAsStr);
+        List<ExperimentSequence> seqs = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(stationId);
+        for (ExperimentSequence seq : seqs) {
+            boolean isFound = false;
+            for (Protocol.StationSequenceStatus.SimpleStatus status : statuses) {
+                if (status.experimentSequencId==seq.getId()) {
+                    isFound = true;
+                }
+            }
+            if(!isFound) {
+                seq.setStationId(null);
+                seq.setAssignedOn(null);
+                experimentSequenceRepository.save(seq);
+            }
+        }
+    }
+
     public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed, String epochs) {
         List<ExperimentHyperParams> params = new ArrayList<>();
         ExperimentHyperParams p1 = new ExperimentHyperParams();

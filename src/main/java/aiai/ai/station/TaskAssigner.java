@@ -46,6 +46,17 @@ public class TaskAssigner {
     private final DownloadSnippetActor downloadSnippetActor;
     private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
     private final SequenceYamlUtils sequenceYamlUtils;
+    private final SequenceProcessor sequenceProcessor;
+
+    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository, SequenceYamlUtils sequenceYamlUtils, SequenceProcessor sequenceProcessor) {
+        this.globals = globals;
+        this.downloadDatasetActor = downloadDatasetActor;
+        this.downloadFeatureActor = downloadFeatureActor;
+        this.downloadSnippetActor = downloadSnippetActor;
+        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
+        this.sequenceYamlUtils = sequenceYamlUtils;
+        this.sequenceProcessor = sequenceProcessor;
+    }
 
     public void fixedDelay() {
         log.info("TaskAssigner.fixedDelay()");
@@ -59,6 +70,11 @@ public class TaskAssigner {
 
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
+            if (sequenceProcessor.STATE.isInit && sequenceProcessor.STATE.getState(seq.getExperimentSequenceId())==null) {
+                stationExperimentSequenceRepository.delete(seq);
+                log.info("Deleted orphan sequence {}", seq);
+                continue;
+            }
             if (StringUtils.isBlank(seq.getParams())) {
                 // strange behaviour. this field is required in DB and can't be null
                 // is this bug in mysql or it's a spring's data bug with MEDIUMTEXT fields?
@@ -78,15 +94,6 @@ public class TaskAssigner {
                 createDownloadSnippetTask(snippet);
             }
         }
-    }
-
-    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository, SequenceYamlUtils sequenceYamlUtils) {
-        this.globals = globals;
-        this.downloadDatasetActor = downloadDatasetActor;
-        this.downloadFeatureActor = downloadFeatureActor;
-        this.downloadSnippetActor = downloadSnippetActor;
-        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
-        this.sequenceYamlUtils = sequenceYamlUtils;
     }
 
     private void createDownloadDatasetTask(long datasetId) {

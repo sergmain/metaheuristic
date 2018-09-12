@@ -47,6 +47,8 @@ public class Globals {
 
     public boolean isStationEnabled = true;
     public boolean isLaunchpadEnabled = true;
+
+    @Value("${aiai.is-testing:#{false}}")
     public boolean isUnitTesting = false;
 
     public File stationDatasetDir;

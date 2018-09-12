@@ -82,7 +82,6 @@ public abstract class TestFeature {
 
     @PostConstruct
     public void preapre_1() {
-        globals.isUnitTesting = true;
     }
 
     @Before
