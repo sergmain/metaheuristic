@@ -124,6 +124,12 @@ public class LaunchpadRequester {
             commands.clear();
         }
         data.setCommands(cmds);
+        if (stationId!=null) {
+            // always report about current active sequences, if we have actual stationId
+            data.setCommand(stationExperimentService.produceStationSequenceStatus());
+        }
+
+        // !!! always use data.setCommand() for correct initializing stationId !!!
 
         // we have to pull new tasks from server constantly
         try {

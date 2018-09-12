@@ -70,11 +70,6 @@ public class TaskAssigner {
 
         List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
-            if (sequenceProcessor.STATE.isInit && sequenceProcessor.STATE.getState(seq.getExperimentSequenceId())==null) {
-                stationExperimentSequenceRepository.delete(seq);
-                log.info("Deleted orphan sequence {}", seq);
-                continue;
-            }
             if (StringUtils.isBlank(seq.getParams())) {
                 // strange behaviour. this field is required in DB and can't be null
                 // is this bug in mysql or it's a spring's data bug with MEDIUMTEXT fields?
@@ -86,6 +81,13 @@ public class TaskAssigner {
                 log.warn("sequenceYaml.dataset is null\n{}", seq.getParams());
                 continue;
             }
+
+            if (sequenceProcessor.STATE.isInit && sequenceProcessor.STATE.getState(sequenceYaml.getExperimentId())==null) {
+                stationExperimentSequenceRepository.delete(seq);
+                log.info("Deleted orphan sequence {}", seq);
+                continue;
+            }
+
             createDownloadDatasetTask(sequenceYaml.dataset.id);
             for (SimpleFeature simpleFeature : sequenceYaml.features) {
                 createDownloadFeatureTask(sequenceYaml.dataset.id, simpleFeature.id);

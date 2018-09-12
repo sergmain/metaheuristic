@@ -260,6 +260,7 @@ public class ExperimentService {
                 }
             }
             if(!isFound) {
+                log.info("De-assign sequence from station #{}", stationIdAsStr);
                 seq.setStationId(null);
                 seq.setAssignedOn(null);
                 experimentSequenceRepository.save(seq);

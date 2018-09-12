@@ -26,6 +26,7 @@ import aiai.ai.station.StationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -94,7 +95,7 @@ public class CommandProcessor {
     }
 
     private Command[] processStationSequenceStatus(Protocol.StationSequenceStatus command) {
-        experimentService.reconcileStationSequences(command.stationId, command.statuses);
+        experimentService.reconcileStationSequences(command.stationId, command.statuses!=null ? command.statuses : new ArrayList<>());
         return Protocol.NOP_ARRAY;
     }
 

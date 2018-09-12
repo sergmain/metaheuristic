@@ -18,6 +18,7 @@
 package aiai.ai.station;
 
 import aiai.ai.beans.StationExperimentSequence;
+import aiai.ai.comm.Protocol;
 import aiai.ai.repositories.StationExperimentSequenceRepository;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
@@ -42,7 +43,7 @@ public class StationExperimentService {
         this.sequenceYamlUtils = sequenceYamlUtils;
     }
 
-    public List<StationExperimentSequence> getForReporting() {
+    List<StationExperimentSequence> getForReporting() {
         List<StationExperimentSequence> list = stationExperimentSequenceRepository.findAllByFinishedOnIsNotNull();
         List<StationExperimentSequence> result = new ArrayList<>();
         for (StationExperimentSequence seq : list) {
@@ -53,11 +54,11 @@ public class StationExperimentService {
         return result;
     }
 
-    public void saveReported(List<StationExperimentSequence> list) {
+    void saveReported(List<StationExperimentSequence> list) {
         stationExperimentSequenceRepository.saveAll(list);
     }
 
-    public boolean isNeedNewExperimentSequence(String stationId) {
+    boolean isNeedNewExperimentSequence(String stationId) {
         if (stationId==null) {
             return false;
         }
@@ -77,4 +78,14 @@ public class StationExperimentService {
         }
         return true;
     }
+
+    Protocol.StationSequenceStatus produceStationSequenceStatus() {
+        Protocol.StationSequenceStatus status = new Protocol.StationSequenceStatus(new ArrayList<>());
+        List<StationExperimentSequence> list = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
+        for (StationExperimentSequence sequence : list) {
+            status.getStatuses().add( new Protocol.StationSequenceStatus.SimpleStatus(sequence.getExperimentSequenceId()));
+        }
+        return status;
+    }
+
 }
