@@ -8,6 +8,7 @@
     <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
     <!--/*@thymesVar id="feature" type="aiai.ai.beans.ExperimentFeature"*/-->
     <!--/*@thymesVar id="consoleResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ConsoleResult"*/-->
+    <!--/*@thymesVar id="params" type="aiai.ai.launchpad.experiment.ExperimentsController.HyperParamResult"*/-->
 
     <script>
         var table = function (html) {
@@ -72,15 +73,52 @@
     <h1 class="widget-header">The experiment info</h1>
 
     <h1 class="widget-header">General info</h1>
-    <table class="pure-table pure-table-bordered">
-        <tbody>
-        <tr><td>#Id</td><td  th:text="${feature.id}">#Id</td></tr>
-        <tr><td>Feature ids</td><td th:text="${feature.featureIds}">featureIds</td></tr>
-        <tr><td>Is in progress?</td><td th:text="${feature.isInProgress}">isInProgress</td></tr>
-        <tr><td>Is in finished?</td><td th:text="${feature.isFinished}">isFinished</td></tr>
-        <tr><td>Exec status</td><td th:text="${feature.execStatusAsString()}">Exec status</td></tr>
-        </tbody>
-    </table>
+    <table>
+        <tr  valign="top">
+            <td>
+                <table class="pure-table pure-table-bordered">
+                    <tbody>
+                    <tr><td>#Id</td><td  th:text="${feature.id}">#Id</td></tr>
+                    <tr><td>Feature ids</td><td th:text="${feature.featureIds}">featureIds</td></tr>
+                    <tr><td>Is in progress?</td><td th:text="${feature.isInProgress}">isInProgress</td></tr>
+                    <tr><td>Is in finished?</td><td th:text="${feature.isFinished}">isFinished</td></tr>
+                    <tr><td>Exec status</td><td th:text="${feature.execStatusAsString()}">Exec status</td></tr>
+                    </tbody>
+                </table>
+            </td>
+            <td width="50">&nbsp;</td>
+            <td>
+                <table class="pure-table pure-table-bordered">
+                    <thead>
+                    <tr>
+                        <th>Hyper param name</th>
+                        <th></th>
+                        <th>Hyper param values</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="e : ${params.elements}" valign="top">
+                            <td th:text="${e.key}">Hyper param key</td>
+                            <td width="20">&nbsp;</td>
+                            <td th:if="${not e.isSelectable()}" th:text="${e.list[0].param}">Just value</td>
+                            <td th:if="${e.isSelectable()}">
+                                <table class="pure-table pure-table-bordered">
+                                    <tbody>
+                                    <tr valign="top">
+                                        <div th:remove="tag" th:each="l : ${e.list}" >
+                                            <td th:text="${l.param}">Hyper param value</td>
+                                            <td>checkbox</td>
+                                        </div>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
     <p>&nbsp;</p>
 
     <table>

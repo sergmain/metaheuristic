@@ -67,6 +67,30 @@ public class ExperimentsController {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HyperParamElement {
+        String param;
+        boolean isSelected;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HyperParamList {
+        String key;
+        public final List<HyperParamElement> list = new ArrayList<>();
+        public boolean isSelectable() {
+            return list.size()>1;
+        }
+    }
+
+    @Data
+    public static class HyperParamResult {
+        public final List<HyperParamList> elements = new ArrayList<>();
+    }
+
+    @Data
     public static class ConsoleResult {
         @Data
         @AllArgsConstructor
@@ -78,29 +102,6 @@ public class ExperimentsController {
             public String console;
         }
         public final List<SimpleConsoleOuput> items = new ArrayList<>();
-    }
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.table.rows.limit'), 5, 30, 5) }")
-    private int limit;
-
-    private final DatasetRepository datasetRepository;
-    private final DatasetGroupsRepository datasetGroupsRepository;
-    private final ExperimentRepository experimentRepository;
-    private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
-    private final SnippetRepository snippetRepository;
-    private final ExperimentSnippetRepository experimentSnippetRepository;
-    private final ExperimentFeatureRepository experimentFeatureRepository;
-    private final ExperimentSequenceRepository experimentSequenceRepository;
-
-    public ExperimentsController(DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository) {
-        this.datasetRepository = datasetRepository;
-        this.datasetGroupsRepository = datasetGroupsRepository;
-        this.experimentRepository = experimentRepository;
-        this.experimentHyperParamsRepository = experimentHyperParamsRepository;
-        this.snippetRepository = snippetRepository;
-        this.experimentSnippetRepository = experimentSnippetRepository;
-        this.experimentFeatureRepository = experimentFeatureRepository;
-        this.experimentSequenceRepository = experimentSequenceRepository;
     }
 
     @Data
@@ -140,6 +141,29 @@ public class ExperimentsController {
         public static SimpleExperiment to(Experiment e) {
             return new SimpleExperiment(e.getName(), e.getDescription(), e.getSeed(), e.getEpoch(), e.getId());
         }
+    }
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.table.rows.limit'), 5, 30, 5) }")
+    private int limit;
+
+    private final DatasetRepository datasetRepository;
+    private final DatasetGroupsRepository datasetGroupsRepository;
+    private final ExperimentRepository experimentRepository;
+    private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
+    private final SnippetRepository snippetRepository;
+    private final ExperimentSnippetRepository experimentSnippetRepository;
+    private final ExperimentFeatureRepository experimentFeatureRepository;
+    private final ExperimentSequenceRepository experimentSequenceRepository;
+
+    public ExperimentsController(DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository) {
+        this.datasetRepository = datasetRepository;
+        this.datasetGroupsRepository = datasetGroupsRepository;
+        this.experimentRepository = experimentRepository;
+        this.experimentHyperParamsRepository = experimentHyperParamsRepository;
+        this.snippetRepository = snippetRepository;
+        this.experimentSnippetRepository = experimentSnippetRepository;
+        this.experimentFeatureRepository = experimentFeatureRepository;
+        this.experimentSequenceRepository = experimentSequenceRepository;
     }
 
     @GetMapping("/experiments")
@@ -211,6 +235,20 @@ public class ExperimentsController {
         SequencesResult result = new SequencesResult();
         result.items = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), featureId);
 
+        HyperParamResult hyperParamResult = new HyperParamResult();
+        for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
+            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
+            HyperParamList list = new HyperParamList(hyperParam.getKey());
+            for (String value : variants.values) {
+                list.getList().add( new HyperParamElement(value, false));
+            }
+            if (list.getList().isEmpty()) {
+                list.getList().add( new HyperParamElement("<Error value>", false));
+            }
+            hyperParamResult.getElements().add(list);
+        }
+
+        model.addAttribute("params", hyperParamResult);
         model.addAttribute("result", result);
         model.addAttribute("experiment", experiment);
         model.addAttribute("feature", feature);
@@ -378,6 +416,7 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
         if (experiment.getDatasetId()==null) {
+            // dataset was already unassigned
             return "redirect:/launchpad/experiment-edit/"+id;
         }
         experiment.setDatasetId(null);
@@ -391,19 +430,24 @@ public class ExperimentsController {
         if (experiment == null) {
             return "redirect:/launchpad/experiments";
         }
+        if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#89.51 hyper param's key and value must not be null, key: "+key+", value: " + value );
+            return "redirect:/launchpad/experiment-edit/"+id;
+        }
         if (experiment.getHyperParams()==null) {
             experiment.setHyperParams(new ArrayList<>());
         }
-        boolean isExist = experiment.getHyperParams().stream().map(ExperimentHyperParams::getKey).anyMatch(key::equals);
+        String keyFinal = key.trim();
+        boolean isExist = experiment.getHyperParams().stream().map(ExperimentHyperParams::getKey).anyMatch(keyFinal::equals);
         if (isExist) {
-            redirectAttributes.addFlashAttribute("errorMessage", String.format("Hyper parameter %s already exist",key) );
+            redirectAttributes.addFlashAttribute("errorMessage", "#89.52 hyper parameter "+key+" already exist");
             return "redirect:/launchpad/experiment-edit/"+id;
         }
 
         ExperimentHyperParams m = new ExperimentHyperParams();
         m.setExperiment(experiment);
-        m.setKey(key);
-        m.setValues(value);
+        m.setKey(keyFinal);
+        m.setValues(value.trim());
         experiment.getHyperParams().add(m);
 
         experimentRepository.save(experiment);
@@ -417,12 +461,17 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#89.01 experiment wasn't found, id: "+id );
             return "redirect:/launchpad/experiments";
         }
+        if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#89.02 hyper param's key and value must not be null, key: "+key+", value: " + value );
+            return "redirect:/launchpad/experiment-edit/"+id;
+        }
         if (experiment.getHyperParams()==null) {
             experiment.setHyperParams(new ArrayList<>());
         }
         ExperimentHyperParams m=null;
+        String keyFinal = key.trim();
         for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
-            if (hyperParam.getKey().equals(key)) {
+            if (hyperParam.getKey().equals(keyFinal)) {
                 m = hyperParam;
                 break;
             }
@@ -430,13 +479,10 @@ public class ExperimentsController {
         if (m==null) {
             m = new ExperimentHyperParams();
             m.setExperiment(experiment);
-            m.setKey(key);
+            m.setKey(keyFinal);
             experiment.getHyperParams().add(m);
         }
-        else {
-            // experiment.getHyperParams().add(m);
-        }
-        m.setValues(value);
+        m.setValues(value.trim());
 
         experimentRepository.save(experiment);
         return "redirect:/launchpad/experiment-edit/"+id;
