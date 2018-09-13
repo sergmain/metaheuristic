@@ -38,7 +38,7 @@ public class ProcessService {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Result {
-        private boolean isOk;
+        public boolean isOk;
         public int exitCode;
         public String console;
     }

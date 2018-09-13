@@ -4,7 +4,6 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
      sec:authorize="isAuthenticated()"
 >
-
     <!--/*@thymesVar id="result" type="aiai.ai.launchpad.experiment.ExperimentsController.SequencesResult"*/-->
     <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
     <!--/*@thymesVar id="feature" type="aiai.ai.beans.ExperimentFeature"*/-->
@@ -42,6 +41,30 @@
 
             $.post('/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]], table);
         });
+
+        var trStateMap = {};
+
+        /**
+         *
+         * @param {string} trId
+         */
+        function switchTr(trId) {
+            if (!trStateMap.hasOwnProperty(trId)) {
+                trStateMap[trId] = 'show';
+            }
+            var state = trStateMap[trId];
+            if (state==='show') {
+                $('#'+trId).hide();
+                trStateMap[trId] = 'hide'
+            }
+            else if (state==='hide') {
+                $('#'+trId).show();
+                trStateMap[trId] = 'show'            }
+            else {
+                console.warn('Unknown state: ' + state)
+            }
+        }
+
     </script>
 
 
@@ -126,9 +149,9 @@
                 <h1 class="widget-header">Console output</h1>
                 <table class="pure-table pure-table-bordered" id="fragment-console-table" th:fragment="fragment-console-table">
                     <tbody>
-                    <div  th:remove="tag" th:each="c : ${consoleResult.items}" >
-                        <tr><td th:text="${'#'+c.order}">Order number</td></tr>
-                        <tr><td><pre th:text="${c.console}">console output</pre></td></tr>
+                    <div  th:remove="tag" th:each="c, g : ${consoleResult.items}" >
+                        <tr th:onclick="${ 'switchTr(''snippet-console-' + c.order +''');' }" ><td th:text="${'#'+c.order+', exit code: ' + c.exitCode + ', isOk: ' + c.isOk}">Current state</td></tr>
+                        <tr th:style="${ c.order==1 ? 'display:none' : '' }" th:id="${'snippet-console-' + c.order}"><td><pre th:text="${c.console}">console output</pre></td></tr>
                     </div>
                     </tbody>
                 </table>

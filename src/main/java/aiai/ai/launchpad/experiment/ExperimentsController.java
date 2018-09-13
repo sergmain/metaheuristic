@@ -73,6 +73,8 @@ public class ExperimentsController {
         @NoArgsConstructor
         public static class SimpleConsoleOuput {
             public int order;
+            public int exitCode;
+            public boolean isOk;
             public String console;
         }
         public final List<SimpleConsoleOuput> items = new ArrayList<>();
@@ -183,7 +185,8 @@ public class ExperimentsController {
         if (sequence!=null) {
             SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(sequence.getSnippetExecResults());
             for (Map.Entry<Integer, ProcessService.Result> entry : snippetExec.getExecs().entrySet()) {
-                result.items.add( new ConsoleResult.SimpleConsoleOuput(entry.getKey(), entry.getValue().console));
+                final ProcessService.Result value = entry.getValue();
+                result.items.add( new ConsoleResult.SimpleConsoleOuput(entry.getKey(), value.exitCode, value.isOk, value.console));
             }
         }
         model.addAttribute("consoleResult", result);

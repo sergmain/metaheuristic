@@ -42,6 +42,10 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
     @Transactional(readOnly = true)
     ExperimentFeature findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
 
+    // continue process the same feature
+    @Transactional(readOnly = true)
+    ExperimentFeature findTop1ByIsFinishedIsFalseAndIsInProgressIsTrueAndExperimentId(long experimentId);
+
     // find new feature for processing
     @Transactional(readOnly = true)
     ExperimentFeature findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse();

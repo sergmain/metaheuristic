@@ -36,7 +36,6 @@
             }
             var state = trStateMap[trId];
             if (state==='show') {
-                // $('#trId').attr('style').hide()
                 $('#'+trId).hide();
                 trStateMap[trId] = 'hide'
             }
@@ -186,18 +185,18 @@
 
             <tbody>
             <div th:remove="tag" th:each="p : ${experiment.hyperParams}">
-                <tr th:onclick="${ 'switchTr(''meta-edit-' + p.id +''');' }">
-                    <td th:text="${p.key}">Hyper param key</td>
-                    <td th:text="${p.values}">Hyper param values</td>
+                <tr>
+                    <td th:text="${p.key}" th:onclick="${ 'switchTr(''meta-edit-' + p.id +''');' }">Hyper param key</td>
+                    <td th:text="${p.values}" th:onclick="${ 'switchTr(''meta-edit-' + p.id +''');' }">Hyper param values</td>
                     <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-metadata-delete-commit/' + experiment.id+'/'+ p.id}">Delete</a></td>
                 </tr>
                 <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-metadata-edit-commit/'+experiment.id}" accept-charset="UTF-8" >
                     <input type="hidden" th:name="key" th:value="${p.key}"/>
                     <tr style="display:none" th:id="${'meta-edit-' + p.id}">
-                    <td>&nbsp;</td>
-                    <td><input placeholder="Value" name="value" type="text" size="100" th:value="${p.values}"></td>
-                    <td><button class="pure-button pure-button-primary" type="submit">Change</button></td>
-                </tr>
+                        <td>&nbsp;</td>
+                        <td><input placeholder="Value" name="value" type="text" size="100" th:value="${p.values}"></td>
+                        <td><button class="pure-button pure-button-primary" type="submit">Change</button></td>
+                    </tr>
                 </form>
             </div>
             </tbody>

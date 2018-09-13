@@ -164,13 +164,21 @@ public class ExperimentService {
 
         // main part, prepare new batch of sequences for station
 
-        // is there any feature which was started(in progress) and not finished yet?
+        // is there any feature which was started(or in progress) and not finished yet for specific station?
         List<ExperimentFeature> features = experimentSequenceRepository.findAnyStartedButNotFinished(Consts.PAGE_REQUEST_1_REC, stationId, Enums.ExperimentExecState.STARTED.code);
         ExperimentFeature feature;
+        // all sequences, which were assigned to station, are finished
         if (features == null || features.isEmpty()) {
-            // is there any feature which wasn't started and not finished yet?
-            // TODO !!!!!!!!!!!!!!!!!!!!!!!!!
-            feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse();
+            if (experimentId!=null) {
+                feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrueAndExperimentId(experimentId);
+            }
+            else {
+                feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
+            }
+            if (feature==null) {
+                // is there any feature which wasn't started and not finished yet?
+                feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse();
+            }
         } else {
             feature = features.get(0);
         }
@@ -261,8 +269,8 @@ public class ExperimentService {
                     isFound = true;
                 }
             }
-            if(!isFound) {
-                log.info("De-assign sequence from station #{}", stationIdAsStr);
+            if(!isFound && (seq.getAssignedOn()!=null && (System.currentTimeMillis() - seq.getAssignedOn() > 90_000))) {
+                log.info("De-assign sequence from station #{}, {}", stationIdAsStr, seq);
                 seq.setStationId(null);
                 seq.setAssignedOn(null);
                 experimentSequenceRepository.save(seq);
