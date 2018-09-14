@@ -148,22 +148,26 @@ public class ExperimentsController {
 
     private final DatasetRepository datasetRepository;
     private final DatasetGroupsRepository datasetGroupsRepository;
-    private final ExperimentRepository experimentRepository;
-    private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
     private final SnippetRepository snippetRepository;
+    private final ExperimentRepository experimentRepository;
+    private final ExperimentService experimentService;
+    private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
     private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
+    private final ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository;
 
-    public ExperimentsController(DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository) {
+    public ExperimentsController(DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository) {
         this.datasetRepository = datasetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
         this.experimentRepository = experimentRepository;
         this.experimentHyperParamsRepository = experimentHyperParamsRepository;
         this.snippetRepository = snippetRepository;
+        this.experimentService = experimentService;
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
+        this.experimentSequenceWithSpecRepository = experimentSequenceWithSpecRepository;
     }
 
     @GetMapping("/experiments")
@@ -192,6 +196,36 @@ public class ExperimentsController {
         else {
             pageable = ControllerUtils.fixPageSize(10, pageable);
             result.items = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(pageable, featureId);
+        }
+
+        model.addAttribute("result", result);
+        model.addAttribute("experiment", experiment);
+        model.addAttribute("feature", feature);
+        model.addAttribute("consoleResult", new ConsoleResult());
+
+        return "launchpad/experiment-feature-progress :: fragment-table";
+    }
+
+    @PostMapping("/experiment-feature-progress-params-part/{experimentId}/{featureId}/{params}")
+    public String getSequncesPartWithParams(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
+        SequencesResult result = new SequencesResult();
+        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
+        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
+        if (experiment == null || feature==null) {
+            result.items = Page.empty();
+        }
+        else {
+            pageable = ControllerUtils.fixPageSize(10, pageable);
+
+/*
+            CustomerSpecs.ExperimentSequenceSpecification specification = new CustomerSpecs.ExperimentSequenceSpecification(params);
+
+            CustomerSpecs.HelperSpecification spec1 = new CustomerSpecs.HelperSpecification(new CustomerSpecs.SearchCriteria("isCompleted", "==B", true));
+            CustomerSpecs.HelperSpecification spec2 = new CustomerSpecs.HelperSpecification(new CustomerSpecs.SearchCriteria("featureId", "==L", featureId));
+
+            result.items = experimentSequenceWithSpecRepository.findAll(Specifications.where(spec1).and(spec2).and(specification), pageable);
+*/
+            result.items = experimentService.findExperimentSequence( pageable, experiment, featureId, params);
         }
 
         model.addAttribute("result", result);

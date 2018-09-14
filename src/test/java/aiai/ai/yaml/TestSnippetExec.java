@@ -39,10 +39,7 @@ public class TestSnippetExec {
         output.execs.put(2, new ProcessService.Result(true, 0, "output#2"));
 
         String yaml = SnippetExecUtils.toString(output);
-        Assert.assertFalse(yaml.contains("isOk"));
-
         SnippetExec output1 = SnippetExecUtils.toSnippetExec(yaml);
-
         Assert.assertEquals(output, output1);
     }
 

@@ -31,12 +31,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 public interface ExperimentSequenceRepository extends CrudRepository<ExperimentSequence, Long> {
 
     @Transactional(readOnly = true)
     Slice<ExperimentSequence> findAll(Pageable pageable);
+
+    @Transactional(readOnly = true)
+    List<ExperimentSequence> findByIsCompletedIsTrueAndFeatureId(long featureId);
 
     @Transactional(readOnly = true)
     Slice<ExperimentSequence> findByIsCompletedIsTrueAndFeatureId(Pageable pageable, long featureId);

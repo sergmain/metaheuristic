@@ -36,19 +36,32 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.*;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @EnableTransactionManagement
 @Slf4j
 public class ExperimentService {
+
+    private static final List<Protocol.AssignedExperimentSequence.SimpleSequence> EMPTY_SIMPLE_SEQUENCES = Collections.unmodifiableList(new ArrayList<>());
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SequencesAndAssignToStationResult {
+        ExperimentFeature feature;
+        List<Protocol.AssignedExperimentSequence.SimpleSequence> simpleSequences;
+    }
+
+    public static final SequencesAndAssignToStationResult EMPTY_RESULT = new SequencesAndAssignToStationResult(null, EMPTY_SIMPLE_SEQUENCES);
 
     private final Globals globals;
     private final ExperimentRepository experimentRepository;
@@ -68,17 +81,56 @@ public class ExperimentService {
         this.sequenceYamlUtils = sequenceYamlUtils;
     }
 
-    private static final List<Protocol.AssignedExperimentSequence.SimpleSequence> EMPTY_SIMPLE_SEQUENCES = Collections.unmodifiableList(new ArrayList<>());
+    public Slice<ExperimentSequence> findExperimentSequence(Pageable pageable, Experiment experiment, long featureId, String[] params) {
+        final Set<String> paramSet = new HashSet<>();
+        for (String param : params) {
+            if (StringUtils.isBlank(param)) {
+                continue;
+            }
+            paramSet.add(param);
+        }
+        final Map<String, Integer> paramByIndex = new HashMap<>();
+        for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
+            ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
+            for (int i = 0; i <ofVariants.values.size(); i++) {
+                String value = ofVariants.values.get(i);
+                paramByIndex.put(hyperParam.getKey()+"-"+value, i);
+            }
+        }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SequencesAndAssignToStationResult {
-        ExperimentFeature feature;
-        List<Protocol.AssignedExperimentSequence.SimpleSequence> simpleSequences;
+        List<ExperimentSequence> list = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
+        if (list.size() > pageable.getOffset()) {
+            return Page.empty(pageable);
+        }
+        List<ExperimentSequence> selected = new ArrayList<>();
+        for (ExperimentSequence sequence : list) {
+            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(sequence.getParams());
+            boolean isFound = false;
+            for (Map.Entry<String, String> entry : sequenceYaml.hyperParams.entrySet()) {
+                Integer idx = paramByIndex.get(entry.getKey()+"-"+entry.getValue());
+                if (idx==null) {
+                    continue;
+                }
+                if (paramSet.contains(entry.getKey()+"-" + idx)) {
+                    isFound = true;
+                    break;
+                }
+            }
+            if (isFound) {
+                selected.add(sequence);
+            }
+        }
+        return new PageImpl<>(selected, pageable, list.size() );
     }
 
-    public static final SequencesAndAssignToStationResult EMPTY_RESULT = new SequencesAndAssignToStationResult(null, EMPTY_SIMPLE_SEQUENCES);
+    private ExperimentHyperParams findByKey(Experiment experiment, String key) {
+        for (ExperimentHyperParams param : experiment.getHyperParams()) {
+            if (key.equals(param.getKey())) {
+                return param;
+            }
+        }
+        return null;
+    }
 
     // for implementing cache later
     public Experiment findById(long id) {

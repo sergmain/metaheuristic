@@ -46,7 +46,6 @@
         var trStateMap = {};
 
         /**
-         *
          * @param {string} trId
          */
         function switchTr(trId) {
@@ -64,6 +63,115 @@
             else {
                 console.warn('Unknown state: ' + state)
             }
+        }
+
+        var buttonStateMap = {};
+
+        /**
+         * @param {string} state
+         * @param {string} key
+         * @param {int} idx
+         * @constructor
+         */
+        function ButtonState(state, key, idx) {
+            this.state = state;
+            this.key = key;
+            this.idx = idx;
+        }
+
+        ButtonState.prototype.getState = function() {
+            return this.state;
+        };
+
+        ButtonState.prototype.getIndex = function() {
+            return this.idx;
+        };
+
+        ButtonState.prototype.toString = function() {
+            return 'ButtonState(state: ' + this.state + ', key: ' +this.key+ ', idx: ' +this.idx+')';
+        };
+
+        var isDebug = false;
+
+        /**
+         * @param {string} id
+         * @param {string} key
+         * @param {int} idx
+         */
+        function switchButton(id, key, idx) {
+            printLog('id: ' + id + ', key: ' + key + ', idx: ' + idx);
+            if (!buttonStateMap.hasOwnProperty(id)) {
+                printLog('#1 buttonStateMap.hasOwnProperty(id): ' + buttonStateMap.hasOwnProperty(id));
+                buttonStateMap[id] = new ButtonState('hide', key, idx);
+            }
+            var buttonState = buttonStateMap[id];
+            var $1 = $('#'+id);
+            $1.toggleClass("pure-button-primary");
+            printLog("#1 buttonState: " + buttonState.toString());
+            printLog("buttonState.getState()==='show'" + (buttonState.getState()==='show'));
+            printLog("buttonState.getState()==='hide'" + (buttonState.getState()==='hide'));
+            if (buttonState.getState()==='show') {
+                buttonStateMap[id] = new ButtonState('hide', key, idx);
+            }
+            else if (buttonState.getState()==='hide') {
+                buttonStateMap[id] = new ButtonState('show', key, idx);
+            }
+            else {
+                console.warn('Unknown state: ' + buttonState.getState())
+            }
+            printLog("#2 buttonState: " + buttonState.toString());
+            printLog('#2 buttonStateMap.hasOwnProperty(id): ' + buttonStateMap.hasOwnProperty(id));
+
+            $( '#fragment-console-table' ).empty();
+            var url;
+            var anySelected = isAnySelected();
+            printLog('anySelected: ' + anySelected+', state: ' + buttonStateMap[id].state + ', idx: ' +buttonStateMap[id].idx);
+            if (anySelected) {
+                url = '/launchpad/experiment-feature-progress-params-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramsForUrl() + '/';
+            }
+            else {
+                url = '/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/';
+            }
+            printLog('url: '+ url);
+            $.post(url, table);
+            printLog('');
+            return false;
+        }
+
+        function printLog( s ) {
+            if (isDebug) {
+                console.log(s);
+            }
+        }
+
+        function paramsForUrl() {
+            var suffix = '';
+            Object.keys(buttonStateMap).forEach(
+                function(key) {
+                    var buttonState = buttonStateMap[key];
+                    if (buttonState.state==='show') {
+                        suffix += ( buttonState.key + '-' + buttonState.idx + ',');
+                    }
+                }
+            );
+            return suffix;
+        }
+
+        /**
+         * @return {boolean}
+         */
+        function isAnySelected() {
+            var b = false;
+            Object.keys(buttonStateMap).forEach(
+                function(key) {
+                    var buttonState = buttonStateMap[key];
+                    printLog('   key: ' + key+', ' + buttonState.toString()+', state: ' + buttonState.state+', buttonState.getState()===\'show\': ' + (buttonState.state==='show'));
+                    if (buttonState.state==='show') {
+                        b = true;
+                    }
+                }
+            );
+            return b;
         }
 
     </script>
@@ -105,15 +213,19 @@
                                 <table class="pure-table pure-table-bordered">
                                     <tbody>
                                     <tr valign="top">
-                                        <div th:remove="tag" th:each="l : ${e.list}" >
-                                            <td th:text="${l.param}">Hyper param value</td>
-                                            <td>checkbox</td>
+                                        <div th:remove="tag" th:each="l,idx : ${e.list}" >
+                                            <!--pure-button-disabled-->
+                                            <!--pure-button-primary-->
+                                            <a class='pure-button' href="#"
+                                               th:id="${'button-param-'+e.key+'-'+l.param}"
+                                               th:onclick="${ 'switchButton(''button-param-'+e.key+'-' + l.param + ''', ''' + e.key + ''', ' + idx.index + ');' }"
+                                               title='Hyper param' th:text="${l.param}">param value</a>
+                                            &nbsp;
                                         </div>
                                     </tr>
                                     </tbody>
                                 </table>
                             </td>
-
                         </tr>
                     </tbody>
                 </table>
