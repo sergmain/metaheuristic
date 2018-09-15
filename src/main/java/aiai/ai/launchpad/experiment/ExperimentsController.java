@@ -185,17 +185,22 @@ public class ExperimentsController {
         return "launchpad/experiments :: table";
     }
 
-    @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}")
-    public String getSequncesPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PageableDefault(size = 10) Pageable pageable) {
+    @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
+    public String getSequncesPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
         SequencesResult result = new SequencesResult();
-        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
-        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
-        if (experiment == null || feature==null) {
+        ExperimentFeature feature;
+        Experiment experiment;
+        experiment = experimentRepository.findById(experimentId).orElse(null);
+        feature = experimentFeatureRepository.findById(featureId).orElse(null);
+        if (experiment == null || feature == null) {
             result.items = Page.empty();
-        }
-        else {
+        } else {
             pageable = ControllerUtils.fixPageSize(10, pageable);
-            result.items = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(pageable, featureId);
+            if (isEmpty(params)) {
+                result.items = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(pageable, featureId);
+            } else {
+                result.items = experimentService.findExperimentSequence(pageable, experiment, featureId, params);
+            }
         }
 
         model.addAttribute("result", result);
@@ -206,34 +211,13 @@ public class ExperimentsController {
         return "launchpad/experiment-feature-progress :: fragment-table";
     }
 
-    @PostMapping("/experiment-feature-progress-params-part/{experimentId}/{featureId}/{params}")
-    public String getSequncesPartWithParams(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
-        SequencesResult result = new SequencesResult();
-        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
-        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
-        if (experiment == null || feature==null) {
-            result.items = Page.empty();
+    private boolean isEmpty(String[] params) {
+        for (String param : params) {
+            if (StringUtils.isNotBlank(param)) {
+                return false;
+            }
         }
-        else {
-            pageable = ControllerUtils.fixPageSize(10, pageable);
-
-/*
-            CustomerSpecs.ExperimentSequenceSpecification specification = new CustomerSpecs.ExperimentSequenceSpecification(params);
-
-            CustomerSpecs.HelperSpecification spec1 = new CustomerSpecs.HelperSpecification(new CustomerSpecs.SearchCriteria("isCompleted", "==B", true));
-            CustomerSpecs.HelperSpecification spec2 = new CustomerSpecs.HelperSpecification(new CustomerSpecs.SearchCriteria("featureId", "==L", featureId));
-
-            result.items = experimentSequenceWithSpecRepository.findAll(Specifications.where(spec1).and(spec2).and(specification), pageable);
-*/
-            result.items = experimentService.findExperimentSequence( pageable, experiment, featureId, params);
-        }
-
-        model.addAttribute("result", result);
-        model.addAttribute("experiment", experiment);
-        model.addAttribute("feature", feature);
-        model.addAttribute("consoleResult", new ConsoleResult());
-
-        return "launchpad/experiment-feature-progress :: fragment-table";
+        return true;
     }
 
     @PostMapping("/experiment-feature-progress-console-part/{id}")

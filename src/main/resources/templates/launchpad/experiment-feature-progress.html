@@ -11,13 +11,32 @@
     <!--/*@thymesVar id="params" type="aiai.ai.launchpad.experiment.ExperimentsController.HyperParamResult"*/-->
 
     <script>
+        var /*{boolean}*/ isDebug = true;
+        var buttonStateMap = {};
+        var trStateMap = {};
+        var /*{string}*/ paramFilter = ',';
+
+
         var table = function (html) {
             var html1 = $('#fragment-table').html(html);
 
             html1.find('.ajax-elem').each(function () {
                 $(this).click(function () {
                     $( '#fragment-console-table' ).empty();
-                    $.post($(this).attr('href'), table);
+                    trStateMap = {};
+
+                    var /*{string}*/ url = $(this).attr('href');
+                    printLog('url: ' + url);
+                    // /launchpad/experiment-feature-progress-part/82/428/,/part?page=1&size=10
+                    var /*{string}*/ urlPart1 = url.substring(0, url.indexOf(',/part'));
+                    var /*{string}*/ urlPart = urlPart1.substring(0, urlPart1.lastIndexOf('/'));
+                    var /*{string}*/ urlParams = url.substring(url.indexOf('?'));
+
+                    printLog('urlPart: ' + urlPart+', urlParam: ' + urlParams);
+                    var /*{string}*/ urlFinal = urlPart + '/' + paramFilter + '/part' + urlParams;
+                    printLog('urlFinal: ' + urlFinal);
+
+                    $.post(urlFinal, table);
                     return false;
                 });
             });
@@ -40,19 +59,20 @@
                 xhr.setRequestHeader(header, token);
             });
 
-            $.post('/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]], table);
+            $.post('/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]]+'/,/part', table);
         });
-
-        var trStateMap = {};
 
         /**
          * @param {string} trId
+         * @param {int} order
          */
-        function switchTr(trId) {
+        function switchTr(trId, order) {
+            printLog("trId: " + trId+', order: ' + order+', trStateMap.hasOwnProperty(trId): ' + trStateMap.hasOwnProperty(trId));
             if (!trStateMap.hasOwnProperty(trId)) {
-                trStateMap[trId] = 'show';
+                trStateMap[trId] = order===1 ? 'hide' : 'show';
             }
             var state = trStateMap[trId];
+            printLog('state : ' + state);
             if (state==='show') {
                 $('#'+trId).hide();
                 trStateMap[trId] = 'hide'
@@ -63,9 +83,8 @@
             else {
                 console.warn('Unknown state: ' + state)
             }
+            printLog('trStateMap[trId] : ' + trStateMap[trId]);
         }
-
-        var buttonStateMap = {};
 
         /**
          * @param {string} state
@@ -90,8 +109,6 @@
         ButtonState.prototype.toString = function() {
             return 'ButtonState(state: ' + this.state + ', key: ' +this.key+ ', idx: ' +this.idx+')';
         };
-
-        var isDebug = false;
 
         /**
          * @param {string} id
@@ -127,11 +144,12 @@
             var anySelected = isAnySelected();
             printLog('anySelected: ' + anySelected+', state: ' + buttonStateMap[id].state + ', idx: ' +buttonStateMap[id].idx);
             if (anySelected) {
-                url = '/launchpad/experiment-feature-progress-params-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramsForUrl() + '/';
+                paramFilter = paramsForUrl();
             }
             else {
-                url = '/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/';
+                paramFilter = ',';
             }
+            url = '/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
             printLog('url: '+ url);
             $.post(url, table);
             printLog('');
@@ -271,17 +289,17 @@
                                     <li class="table-nav-padding">
                                         <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
                                     </li>
                                     <li class="table-nav-padding">
                                         <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                                     </li>
                                     <li class="table-nav-padding">
                                         <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
                                     </li>
                                 </ul>
                             </div>
@@ -300,7 +318,7 @@
                 <table class="pure-table pure-table-bordered" id="fragment-console-table" th:fragment="fragment-console-table">
                     <tbody>
                     <div  th:remove="tag" th:each="c, g : ${consoleResult.items}" >
-                        <tr th:onclick="${ 'switchTr(''snippet-console-' + c.order +''');' }" ><td th:text="${'#'+c.order+', exit code: ' + c.exitCode + ', isOk: ' + c.isOk}">Current state</td></tr>
+                        <tr th:onclick="${ 'switchTr(''snippet-console-' + c.order +''', ' + c.order +');' }" ><td th:text="${'#'+c.order+', exit code: ' + c.exitCode + ', isOk: ' + c.isOk}">Current state</td></tr>
                         <tr th:style="${ c.order==1 ? 'display:none' : '' }" th:id="${'snippet-console-' + c.order}"><td><pre th:text="${c.console}">console output</pre></td></tr>
                     </div>
                     </tbody>

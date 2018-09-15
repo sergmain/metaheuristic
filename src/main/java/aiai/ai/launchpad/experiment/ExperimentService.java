@@ -99,7 +99,7 @@ public class ExperimentService {
         }
 
         List<ExperimentSequence> list = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
-        if (list.size() > pageable.getOffset()) {
+        if (list.size() < pageable.getOffset()) {
             return Page.empty(pageable);
         }
         List<ExperimentSequence> selected = new ArrayList<>();
@@ -120,7 +120,10 @@ public class ExperimentService {
                 selected.add(sequence);
             }
         }
-        return new PageImpl<>(selected, pageable, list.size() );
+        List<ExperimentSequence> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
+        //noinspection UnnecessaryLocalVariable
+        final PageImpl<ExperimentSequence> page = new PageImpl<>(subList, pageable, selected.size());
+        return page;
     }
 
     private ExperimentHyperParams findByKey(Experiment experiment, String key) {
