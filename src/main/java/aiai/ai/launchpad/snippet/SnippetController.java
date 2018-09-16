@@ -92,9 +92,9 @@ public class SnippetController {
                 if (!file.exists()) {
                     throw new IllegalStateException("File " + snippetConfig.file+" wasn't found in "+ srcDir.getAbsolutePath());
                 }
-                String code;
+                byte[] code;
                 try( InputStream inputStream = new FileInputStream(file)) {
-                    code = IOUtils.toString(inputStream, Charsets.UTF_8);;
+                    code = IOUtils.toByteArray(inputStream);;
                 }
                 String sum = Checksum.Type.SHA256.getChecksum(code);
 
@@ -124,7 +124,7 @@ public class SnippetController {
                     snippet.type = snippetConfig.type.toString();
                     snippet.filename = snippetConfig.file;
                     try( InputStream inputStream = new FileInputStream(file)) {
-                        snippet.code = IOUtils.toString(inputStream, Charsets.UTF_8);;
+                        snippet.code = IOUtils.toByteArray(inputStream);;
                     }
                     snippet.env = snippetConfig.env;
                     snippetRepository.save(snippet);

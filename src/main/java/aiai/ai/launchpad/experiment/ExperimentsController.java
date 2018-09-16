@@ -556,7 +556,7 @@ public class ExperimentsController {
         }
 
         add(experiment, "RNN", "[LSTM, GRU, SimpleRNN]");
-        add(experiment, "activation", "[elu, linear, softsign, relu, tanh, sigmoid, hard_sigmoid, softplus]");
+        add(experiment, "activation", "[hard_sigmoid, softplus, softmax, softsign, relu, tanh, sigmoid, linear, elu]");
         add(experiment, "optimizer", "[sgd, nadam, adagrad, adadelta, rmsprop, adam, adamax]");
         add(experiment, "batch_size", "[20, 40, 60]");
         add(experiment, "time_steps", "[5, 40, 60]");

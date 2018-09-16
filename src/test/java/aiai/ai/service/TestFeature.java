@@ -105,7 +105,7 @@ public abstract class TestFeature {
                 fitSnippet.setEnv("python-3");
                 fitSnippet.setType(SnippetType.fit.toString());
                 fitSnippet.setChecksum("sha2");
-                fitSnippet.setCode("some program code");
+                fitSnippet.setCode("some program code".getBytes());
                 fitSnippet.setFilename("fit-filename.txt");
                 snippetRepository.save(fitSnippet);
             }
@@ -118,7 +118,7 @@ public abstract class TestFeature {
                 predictSnippet.setEnv("python-3");
                 predictSnippet.setType(SnippetType.predict.toString());
                 predictSnippet.setChecksum("sha2");
-                predictSnippet.setCode("some program code");
+                predictSnippet.setCode("some program code".getBytes());
                 predictSnippet.setFilename("predict-filename.txt");
                 snippetRepository.save(predictSnippet);
             }

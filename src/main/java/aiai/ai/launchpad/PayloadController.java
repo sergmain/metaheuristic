@@ -24,7 +24,6 @@ import aiai.ai.beans.Snippet;
 import aiai.ai.launchpad.dataset.DatasetUtils;
 import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.DatasetGroupsRepository;
-import aiai.ai.repositories.DatasetRepository;
 import aiai.ai.repositories.SnippetRepository;
 import aiai.ai.utils.Checksum;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +38,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
@@ -48,6 +48,7 @@ import java.util.Map;
 @Slf4j
 public class PayloadController {
 
+    private static final HttpEntity<byte[]> EMPTY_HTTP_ENTITY = new HttpEntity<>(new byte[0], getHeader(0));
     private  final SnippetRepository snippetRepository;
     private  final DatasetGroupsRepository datasetGroupsRepository;
 
@@ -82,36 +83,36 @@ public class PayloadController {
     }
 
     @GetMapping("/snippet/{name}")
-    public HttpEntity<String> snippets(HttpServletResponse response, @PathVariable("name") String snippetName) throws IOException {
+    public HttpEntity<byte[]> snippets(HttpServletResponse response, @PathVariable("name") String snippetName) throws IOException {
 
         SnippetVersion snippetVersion = SnippetVersion.from(snippetName);
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             log.info("Snippet wan't found for name {}", snippetName);
             response.sendError(HttpServletResponse.SC_GONE);
-            return new HttpEntity<>("", getHeader(0));
+            return EMPTY_HTTP_ENTITY;
         }
 
         if (snippet.getChecksum()==null) {
             log.info("Checksum for snippet {} wan't found", snippetName);
             response.sendError(HttpServletResponse.SC_GONE);
-            return new HttpEntity<>("", getHeader(0));
+            return EMPTY_HTTP_ENTITY;
         }
 
         Checksum checksum = Checksum.fromJson(snippet.getChecksum());
         for (Map.Entry<Checksum.Type, String> entry : checksum.checksums.entrySet()) {
-            String sum = entry.getKey().getChecksum(snippet.getCode());
+            String sum = entry.getKey().getChecksum( snippet.getCode() );
             if (sum.equals(entry.getValue())) {
                 log.info("Snippet {}, checksum is Ok", snippet.getSnippetCode());
             }
             else {
                 log.error("Snippet {}, checksum is wrong, expected: {}, actual: {}", snippet.getSnippetCode(), entry.getValue(), sum );
                 response.sendError(HttpServletResponse.SC_CONFLICT);
-                return new HttpEntity<>("", getHeader(0));
+                return EMPTY_HTTP_ENTITY;
             }
         }
 
-        final int length = snippet.getCode().length();
+        final int length = snippet.getCode().length;
         log.info("Send snippet {}, length: {}", snippet.getSnippetCode(), length);
 
         return new HttpEntity<>(snippet.getCode(), getHeader(length) );
@@ -119,8 +120,7 @@ public class PayloadController {
 
     private static HttpHeaders getHeader(long length) {
         HttpHeaders header = new HttpHeaders();
-        // TODO 2018-09-10, must be number of bytes, not chars, maybe better way is to switch to binary output of files?
-//        header.setContentLength(length);
+        header.setContentLength(length);
         header.setCacheControl("max-age=0");
         header.setExpires(0);
         header.setPragma("no-cache");

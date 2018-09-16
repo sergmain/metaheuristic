@@ -126,7 +126,7 @@ CREATE TABLE AIAI_LP_SNIPPET (
   SNIPPET_TYPE      VARCHAR(50) not null,
   SNIPPET_VERSION   VARCHAR(20) not null,
   FILENAME  VARCHAR(250) not null,
-  CODE        MEDIUMTEXT not null,
+  CODE        MEDIUMBLOB not null,
   CHECKSUM    VARCHAR(200) NOT NULL,
   ENV         VARCHAR(50) not null
 );

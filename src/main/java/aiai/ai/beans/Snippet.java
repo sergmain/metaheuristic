@@ -51,7 +51,9 @@ public class Snippet implements Serializable {
      * programm code, i.e. pyphon, js,...
      */
     @Column(name = "CODE")
-    public String code;
+    @Lob
+    public byte[] code;
+//    public String code;
 
     @Column(name = "CHECKSUM")
     public String checksum;

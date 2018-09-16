@@ -24,6 +24,7 @@ import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -44,6 +45,10 @@ public class Checksum {
 
         public String getChecksum(String data) throws IOException {
             return getChecksum( IOUtils.toInputStream(data, Charsets.UTF_8));
+        }
+
+        public String getChecksum(byte[] data) throws IOException {
+            return getChecksum( new ByteArrayInputStream(data));
         }
 
         public String getChecksum(InputStream inputStream) throws IOException {
