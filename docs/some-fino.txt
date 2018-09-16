@@ -9,6 +9,7 @@ online yaml parser
 Python, On localhost, how do I pick a free port number?
     https://stackoverflow.com/questions/1365265/on-localhost-how-do-i-pick-a-free-port-number
 
+======================
 
 Java, Killing a process using Java
     https://stackoverflow.com/questions/6356340/killing-a-process-using-java
@@ -19,6 +20,10 @@ Java, Killing a java.lang.Process not killing subprocess()
 Java, How to Terminate a Process Normally Created using ProcessBuilder
     https://stackoverflow.com/questions/27942679/how-to-terminate-a-process-normally-created-using-processbuilder
 
+=======================
 
 Store bynary data in DB vwith JPA
     http://www.developerscrappad.com/278/java/java-ee/ejb3-x-jpa-how-to-store-an-image-file-or-a-binary-as-blob-in-database/
+
+Free hosting of docu for OSS projects
+    https://readthedocs.org/

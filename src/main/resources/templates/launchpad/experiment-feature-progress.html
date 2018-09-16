@@ -43,8 +43,19 @@
 
             html1.find('.ajax-elem-console').each(function () {
                 $(this).click(function () {
-                    $.post( $(this).attr('href'), function( data ) {
+                    var $1 = $(this);
+                    var origId = $1.attr('id');
+                    $.post( $1.attr('href'), function(data ) {
                         $( '#fragment-console-table' ).empty().append( data );
+                        $( '#fragment-table' ).find('.ajax-elem-console').each(function () {
+                            printLog('origId: ' + origId);
+                            var $2 = $(this);
+                            printLog('$(this).id: ' + $2.attr('id'));
+                            printLog('$(this).class: ' + $2.attr('class'));
+                            var newClass = origId===$2.attr('id') ?  'ajax-elem-console table-nav-button pure-button pure-button-selected' : 'ajax-elem-console table-nav-button pure-button';
+                            printLog('newClass: ' + newClass);
+                            $2.attr('class', newClass) ;
+                        });
                     });
                     return false;
                 });
@@ -267,7 +278,7 @@
                     </thead>
 
                     <tbody>
-                    <tr th:each="s : ${result.items}" valign="top">
+                    <tr th:each="s, g : ${result.items}" valign="top">
                         <td th:text="${s.id}">Sequence Id</td>
                         <td th:text="${s.isCompleted}">isCompleted</td>
                         <td th:text="${s.isAllSnippetsOk}">isAllSnippetsOk</td>
@@ -278,7 +289,7 @@
                             </table>
                         </td>
                         <td>
-                            <a class='ajax-elem-console table-nav-button pure-button prev' href="#"
+                            <a class='ajax-elem-console table-nav-button pure-button' th:id="${'a-console-'+ g.index}" href="#"
                                th:href="@{/launchpad/experiment-feature-progress-console-part/{id}/(id=${s.id})}"
                                title='Console output'>Info</a>
                     </tr>

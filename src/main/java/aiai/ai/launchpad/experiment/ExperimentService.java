@@ -44,7 +44,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @EnableTransactionManagement
@@ -542,6 +541,9 @@ public class ExperimentService {
                         if (isExist(list, idsAsStr)) {
                             return true;
                         }
+                        if (isNotAll(requiredIds, data)) {
+                            return true;
+                        }
                         final ExperimentFeature feature = new ExperimentFeature();
                         feature.setExperimentId(experiment.getId());;
                         feature.setFeatureIds(idsAsStr);
@@ -552,6 +554,15 @@ public class ExperimentService {
         }
         experiment.setFeatureProduced(true);
         experimentRepository.save(experiment);
+    }
+
+    private boolean isNotAll(Set<Long> requiredIds, List<Long> data) {
+        for (Long requiredId : requiredIds) {
+            if (!data.contains(requiredId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isSkip(List<Long> data, Set<Long> requiredIds) {
