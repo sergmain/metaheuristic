@@ -55,7 +55,6 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
     }
 
     public void fixedDelay() {
-        log.info("DownloadDatasetActor.fixedDelay()");
         if (globals.isUnitTesting) {
             return;
         }

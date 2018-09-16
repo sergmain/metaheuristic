@@ -362,7 +362,6 @@ public class ExperimentService {
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
     public void fixedDelayExperimentSequencesProducer() {
-        log.info("ExperimentService.fixedDelayExperimentSequencesProducer()");
         if (globals.isUnitTesting) {
             return;
         }

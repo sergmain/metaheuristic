@@ -59,8 +59,6 @@ public class TaskAssigner {
     }
 
     public void fixedDelay() {
-        log.info("TaskAssigner.fixedDelay()");
-
         if (globals.isUnitTesting) {
             return;
         }

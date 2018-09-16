@@ -56,7 +56,6 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
     }
 
     public void fixedDelay() {
-        log.info("DownloadSnippetActor.fixedDelay()");
         if (globals.isUnitTesting) {
             return;
         }

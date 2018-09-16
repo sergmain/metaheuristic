@@ -25,12 +25,14 @@ import aiai.ai.station.TaskAssigner;
 import aiai.ai.station.actors.DownloadDatasetActor;
 import aiai.ai.station.actors.DownloadFeatureActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 @Service
 @EnableScheduling
+@Slf4j
 public class Schedulers {
 
     private final LaunchpadRequester launchpadRequester;
@@ -57,6 +59,7 @@ public class Schedulers {
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.create-sequence'), 10, 20, 10)*1000 }")
     public void experimentService() {
+        log.info("ExperimentService.fixedDelayExperimentSequencesProducer()");
         experimentService.fixedDelayExperimentSequencesProducer();
     }
 
@@ -64,36 +67,43 @@ public class Schedulers {
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.request-launchpad'), 3, 20, 10)*1000 }")
     public void launchRequester() {
+        log.info("LaunchpadRequester.fixedDelay()");
         launchpadRequester.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.task-assigner-task'), 3, 20, 10)*1000 }")
     public void taskAssigner() {
+        log.info("TaskAssigner.fixedDelay()");
         taskAssigner.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.sequence-processor'), 3, 20, 10)*1000 }")
     public void sequenceProcessor() {
+        log.info("SequenceProcessor.fixedDelay()");
         sequenceProcessor.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-snippet-task'), 3, 20, 10)*1000 }")
     public void downloadSnippetActor() {
+        log.info("DownloadSnippetActor.fixedDelay()");
         downloadSnippetActor.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-feature-task'), 3, 20, 10)*1000 }")
     public void downloadFeatureActor() {
+        log.info("DownloadSnippetActor.fixedDelay()");
         downloadFeatureActor.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-dataset-task'), 3, 20, 10)*1000 }")
     public void downloadDatasetActor() {
+        log.info("DownloadDatasetActor.fixedDelay()");
         downloadDatasetActor.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.artifact-cleaner'), 10, 60, 30)*1000 }")
     public void artifactCleaner() {
+        log.info("ArtifactCleaner.fixedDelay()");
         artifactCleaner.fixedDelay();
     }
 

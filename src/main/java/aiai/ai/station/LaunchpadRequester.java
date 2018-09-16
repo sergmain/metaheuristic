@@ -96,7 +96,6 @@ public class LaunchpadRequester {
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
     public void fixedDelay() {
-        log.info("LaunchpadRequester.fixedDelay()");
         if (globals.isUnitTesting) {
             return;
         }

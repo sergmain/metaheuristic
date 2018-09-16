@@ -109,7 +109,6 @@ public class SequenceProcessor {
     }
 
     public void fixedDelay() {
-        log.info("SequenceProcessor.fixedDelay()");
         if (globals.isUnitTesting) {
             return;
         }
