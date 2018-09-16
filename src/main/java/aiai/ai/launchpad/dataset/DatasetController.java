@@ -64,9 +64,6 @@ public class DatasetController {
     private static final String CONFIG_YAML = "config.yaml";
     private static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.dataset-table-rows.limit'), 5, 100, 20) }")
-    private int limit;
-
     private final Globals globals;
 
     private final DatasetRepository datasetRepository;
@@ -86,7 +83,7 @@ public class DatasetController {
 
     @GetMapping("/datasets")
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
-        pageable = ControllerUtils.fixPageSize(limit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.datasetRowsLimit, pageable);
         result.items = datasetRepository.findAll(pageable);
         return "launchpad/datasets";
     }
@@ -94,7 +91,7 @@ public class DatasetController {
     // for AJAX
     @PostMapping("/datasets-part")
     public String getDatasets(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(limit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.datasetRowsLimit, pageable);
         result.items = datasetRepository.findAll(pageable);
         return "launchpad/datasets :: table";
     }

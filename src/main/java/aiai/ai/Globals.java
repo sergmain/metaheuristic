@@ -45,6 +45,13 @@ public class Globals {
     @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
     public boolean isReplaceSnapshot;
 
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.dataset-table-rows-limit'), 5, 100, 20) }")
+    public int datasetRowsLimit;
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.experiment-table-rows-limit'), 5, 30, 5) }")
+    public int experimentRowsLimit;
+
+
     public boolean isStationEnabled = true;
     public boolean isLaunchpadEnabled = true;
 

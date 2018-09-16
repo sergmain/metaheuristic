@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Enums;
+import aiai.ai.Globals;
 import aiai.ai.core.ProcessService;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.beans.*;
@@ -33,7 +34,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -143,8 +143,7 @@ public class ExperimentsController {
         }
     }
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.table.rows.limit'), 5, 30, 5) }")
-    private int limit;
+    private final Globals globals;
 
     private final DatasetRepository datasetRepository;
     private final DatasetGroupsRepository datasetGroupsRepository;
@@ -157,7 +156,8 @@ public class ExperimentsController {
     private final ExperimentSequenceRepository experimentSequenceRepository;
     private final ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository;
 
-    public ExperimentsController(DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository) {
+    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository) {
+        this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
         this.experimentRepository = experimentRepository;
@@ -172,7 +172,7 @@ public class ExperimentsController {
 
     @GetMapping("/experiments")
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
-        pageable = ControllerUtils.fixPageSize(limit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.experimentRowsLimit, pageable);
         result.items = experimentRepository.findAll(pageable);
         return "launchpad/experiments";
     }
@@ -180,7 +180,7 @@ public class ExperimentsController {
     // for AJAX
     @PostMapping("/experiments-part")
     public String getExperiments(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(limit, pageable);
+        pageable = ControllerUtils.fixPageSize(globals.experimentRowsLimit, pageable);
         result.items = experimentRepository.findAll(pageable);
         return "launchpad/experiments :: table";
     }
