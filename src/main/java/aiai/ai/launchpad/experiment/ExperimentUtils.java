@@ -38,7 +38,7 @@ public class ExperimentUtils {
         public boolean status;
         String error;
         int count;
-        final List<String> values = new ArrayList<>();
+        public final List<String> values = new ArrayList<>();
 
         public static NumberOfVariants instanceOf(boolean status, String error, int count) {
             return new NumberOfVariants(status, error, count);

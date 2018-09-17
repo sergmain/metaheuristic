@@ -18,6 +18,7 @@
 
 package aiai.ai.beans;
 
+import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.snippet.SnippetType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,7 +29,9 @@ import org.hibernate.annotations.LazyCollectionOption;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: Serg
@@ -127,4 +130,17 @@ public class Experiment implements Serializable {
         }
         return false;
     }
+
+    public Map<String, Integer> getHyperParamsAsMap() {
+        final Map<String, Integer> paramByIndex = new HashMap<>();
+        for (ExperimentHyperParams hyperParam : getHyperParams()) {
+            ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
+            for (int i = 0; i <ofVariants.values.size(); i++) {
+                String value = ofVariants.values.get(i);
+                paramByIndex.put(hyperParam.getKey()+"-"+value, i);
+            }
+        }
+        return paramByIndex;
+    }
+
 }

@@ -187,21 +187,11 @@ public class ExperimentsController {
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
     public String getSequncesPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
+        Experiment experiment= experimentRepository.findById(experimentId).orElse(null);
+        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
+
         SequencesResult result = new SequencesResult();
-        ExperimentFeature feature;
-        Experiment experiment;
-        experiment = experimentRepository.findById(experimentId).orElse(null);
-        feature = experimentFeatureRepository.findById(featureId).orElse(null);
-        if (experiment == null || feature == null) {
-            result.items = Page.empty();
-        } else {
-            pageable = ControllerUtils.fixPageSize(10, pageable);
-            if (isEmpty(params)) {
-                result.items = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(pageable, featureId);
-            } else {
-                result.items = experimentService.findExperimentSequence(pageable, experiment, featureId, params);
-            }
-        }
+        result.items = experimentService.findExperimentSequence(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
         model.addAttribute("result", result);
         model.addAttribute("experiment", experiment);
@@ -209,15 +199,6 @@ public class ExperimentsController {
         model.addAttribute("consoleResult", new ConsoleResult());
 
         return "launchpad/experiment-feature-progress :: fragment-table";
-    }
-
-    private boolean isEmpty(String[] params) {
-        for (String param : params) {
-            if (StringUtils.isNotBlank(param)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     @PostMapping("/experiment-feature-progress-console-part/{id}")

@@ -80,7 +80,7 @@ public class ExperimentService {
         this.sequenceYamlUtils = sequenceYamlUtils;
     }
 
-    public Slice<ExperimentSequence> findExperimentSequence(Pageable pageable, Experiment experiment, long featureId, String[] params) {
+    private Slice<ExperimentSequence> findExperimentSequenceWithFilter(Pageable pageable, Experiment experiment, long featureId, String[] params) {
         final Set<String> paramSet = new HashSet<>();
         for (String param : params) {
             if (StringUtils.isBlank(param)) {
@@ -88,14 +88,7 @@ public class ExperimentService {
             }
             paramSet.add(param);
         }
-        final Map<String, Integer> paramByIndex = new HashMap<>();
-        for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
-            ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
-            for (int i = 0; i <ofVariants.values.size(); i++) {
-                String value = ofVariants.values.get(i);
-                paramByIndex.put(hyperParam.getKey()+"-"+value, i);
-            }
-        }
+        final Map<String, Integer> paramByIndex = experiment.getHyperParamsAsMap();
 
         List<ExperimentSequence> list = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
         if (list.size() < pageable.getOffset()) {
@@ -104,18 +97,18 @@ public class ExperimentService {
         List<ExperimentSequence> selected = new ArrayList<>();
         for (ExperimentSequence sequence : list) {
             final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(sequence.getParams());
-            boolean isFound = false;
+            List<String> found = new ArrayList<>();
             for (Map.Entry<String, String> entry : sequenceYaml.hyperParams.entrySet()) {
                 Integer idx = paramByIndex.get(entry.getKey()+"-"+entry.getValue());
                 if (idx==null) {
                     continue;
                 }
-                if (paramSet.contains(entry.getKey()+"-" + idx)) {
-                    isFound = true;
-                    break;
+                final String param = entry.getKey() + "-" + idx;
+                if (paramSet.contains(param)) {
+                    found.add(param);
                 }
             }
-            if (isFound) {
+            if (paramSet.size()==found.size()) {
                 selected.add(sequence);
             }
         }
@@ -330,6 +323,27 @@ public class ExperimentService {
                 experimentSequenceRepository.save(seq);
             }
         }
+    }
+
+    Slice<ExperimentSequence> findExperimentSequence(Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
+        if (experiment == null || feature == null) {
+            return Page.empty();
+        } else {
+            if (isEmpty(params)) {
+                return experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(pageable, feature.getId());
+            } else {
+                return findExperimentSequenceWithFilter(pageable, experiment, feature.getId(), params);
+            }
+        }
+    }
+
+    private boolean isEmpty(String[] params) {
+        for (String param : params) {
+            if (StringUtils.isNotBlank(param)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed, String epochs) {
