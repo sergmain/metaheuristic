@@ -54,6 +54,10 @@
     width: 100px;
 }
 
+.table-nav-button-fill {
+    width: 100%;
+}
+
 .error-msg {
     color:red;
 }

@@ -219,7 +219,7 @@ public class SequenceProcessor {
                     break;
                 }
 
-                log.info("!!! all system are checked, lift off !!! ");
+                log.info("all system are checked, lift off");
 
                 try {
                     List<String> cmd = new ArrayList<>();
@@ -260,7 +260,7 @@ public class SequenceProcessor {
     }
 
     private void storeExecResult(Long seqId, int snippetOrder, ProcessService.Result result, long experimentId) {
-        log.info("storeExecResult(experimentId: {}, seqId: {}, snippetOrder{})", experimentId, seqId, snippetOrder);
+        log.info("storeExecResult(experimentId: {}, seqId: {}, snippetOrder: {})", experimentId, seqId, snippetOrder);
         StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
         if (seqTemp == null) {
             log.error("StationExperimentSequence wasn't found for Id " + seqId);

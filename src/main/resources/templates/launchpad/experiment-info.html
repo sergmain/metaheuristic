@@ -158,7 +158,8 @@
                 <td th:text="${f.inProgress}">Is InProgress?</td>
                 <td th:text="${f.finished}">Is finished?</td>
                 <td th:text="${f.execStatusAsString()}">Exec status</td>
-                <td><a th:if="${f.isFinished or f.isInProgress}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-feature-progress/'+ experiment.id + '/' + f.id}">Info</a></td>
+                <td><a th:if="${f.isFinished or f.isInProgress}" class="pure-button table-nav-button-fill pure-button-primary"
+                       th:href="${'/launchpad/experiment-feature-progress/'+ experiment.id + '/' + f.id}">Info</a></td>
             </tr>
             </tbody>
         </table>

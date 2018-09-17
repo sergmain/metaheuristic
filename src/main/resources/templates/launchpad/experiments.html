@@ -45,37 +45,55 @@
         <!--/*@thymesVar id="result" type="aiai.ai.launchpad.experiment.ExperimentsController.Result"*/-->
         <tr th:each="r : ${result.items}" valign="top">
             <td>
-                <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table-experiment">
-                    <tbody>
+                <table>
                     <tr>
-                        <td>#Id</td>
-                        <td th:text="${r.id}">#Id</td>
+                        <td>
+                            <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table-experiment">
+                                <tbody>
+                                <tr>
+                                    <td>#Id</td>
+                                    <td th:text="${r.id}">#Id</td>
+                                </tr>
+                                <tr>
+                                    <td>Created on</td>
+                                    <td th:text="${#dates.format(r.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
+                                </tr>
+                                <tr>
+                                    <td>Launched on</td>
+                                    <td th:text="${r.launched ? #dates.format(r.createdOn, 'dd-MMM-yy HH:mm') : 'not launched yet'}">Launched on</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                        <td>
+                            <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table-experiment">
+                                <tbody>
+                                <tr>
+                                    <td>Is launched</td>
+                                    <td th:text="${r.launched ? 'Yes' : ' No'}">Is launched?</td>
+                                </tr>
+                                <tr>
+                                    <td>Is started</td>
+                                    <td th:text="${T(aiai.ai.Enums.ExperimentExecState).from(r.execState)}">Exec state</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                        <td>
+                            <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table-experiment">
+                                <tbody>
+                                <tr>
+                                    <td>Name</td>
+                                    <td th:text="${r.name}">name</td>
+                                </tr>
+                                <tr>
+                                    <td>Description</td>
+                                    <td th:text="${r.description}">description</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </td>
                     </tr>
-                    <tr>
-                        <td>Created on</td>
-                        <td th:text="${#dates.formatISO(r.createdOn)}">CreatedOn</td>
-                    </tr>
-                    <tr>
-                        <td>Is launched</td>
-                        <td th:text="${r.launched ? 'Yes' : ' No'}">Is launched?</td>
-                    </tr>
-                    <tr>
-                        <td>Launched on</td>
-                        <td th:text="${r.launched ? #dates.formatISO(r.createdOn) : 'not launched yet'}">Launched on</td>
-                    </tr>
-                    <tr>
-                        <td>Is started</td>
-                        <td th:text="${T(aiai.ai.Enums.ExperimentExecState).from(r.execState)}">Exec state</td>
-                    </tr>
-                    <tr>
-                        <td>Name</td>
-                        <td th:text="${r.name}">name</td>
-                    </tr>
-                    <tr>
-                        <td>Description</td>
-                        <td th:text="${r.description}">description</td>
-                    </tr>
-                    </tbody>
                 </table>
             </td>
             <td><a class="pure-button pure-button-primary" th:disabled="${r.launched}" th:href="${'/launchpad/experiment-edit/' + r.id}">Edit</a></td>

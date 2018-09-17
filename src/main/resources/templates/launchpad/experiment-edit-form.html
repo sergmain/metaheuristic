@@ -127,7 +127,7 @@
                 <td th:text="${experimentResult.dataset.id}">datasetId</td>
                 <td th:text="${experimentResult.dataset.name}">name</td>
                 <td th:text="${experimentResult.dataset.description}">description</td>
-                <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-dataset-unassign-commit/' + experiment.id}">Unassign</a></td>
+                <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment-dataset-unassign-commit/' + experiment.id}">Unassign</a></td>
             </tr>
             </tbody>
         </table>
@@ -157,7 +157,7 @@
             <tr th:each="s : ${snippetResult.snippets}">
                 <td th:text="${s.type}">Snippet type</td>
                 <td th:text="${s.getSnippetCode()}">Snippet code</td>
-                <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-snippet-delete-commit/' + experiment.id+'/'+ s.id}">Delete</a></td>
+                <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment-snippet-delete-commit/' + experiment.id+'/'+ s.id}">Delete</a></td>
             </tr>
             </tbody>
         </table>
@@ -188,14 +188,14 @@
                 <tr>
                     <td th:text="${p.key}" th:onclick="${ 'switchTr(''meta-edit-' + p.id +''');' }">Hyper param key</td>
                     <td th:text="${p.values}" th:onclick="${ 'switchTr(''meta-edit-' + p.id +''');' }">Hyper param values</td>
-                    <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-metadata-delete-commit/' + experiment.id+'/'+ p.id}">Delete</a></td>
+                    <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment-metadata-delete-commit/' + experiment.id+'/'+ p.id}">Delete</a></td>
                 </tr>
                 <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-metadata-edit-commit/'+experiment.id}" accept-charset="UTF-8" >
                     <input type="hidden" th:name="key" th:value="${p.key}"/>
                     <tr style="display:none" th:id="${'meta-edit-' + p.id}">
                         <td>&nbsp;</td>
                         <td><input placeholder="Value" name="value" type="text" size="100" th:value="${p.values}"></td>
-                        <td><button class="pure-button pure-button-primary" type="submit">Change</button></td>
+                        <td><button class="pure-button pure-button-primary table-nav-button" type="submit">Change</button></td>
                     </tr>
                 </form>
             </div>

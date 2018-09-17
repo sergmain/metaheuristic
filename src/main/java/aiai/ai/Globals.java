@@ -48,7 +48,7 @@ public class Globals {
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.dataset-table-rows-limit'), 5, 100, 20) }")
     public int datasetRowsLimit;
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.experiment-table-rows-limit'), 5, 30, 5) }")
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.experiment-table-rows-limit'), 5, 30, 10) }")
     public int experimentRowsLimit;
 
 
