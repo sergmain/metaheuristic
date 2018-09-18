@@ -360,6 +360,7 @@ public class ExperimentService {
             }
             seq.setAllSnippetsOk(isAllOk);
             seq.setSnippetExecResults(result.getResult());
+            seq.setMetrics(result.getMetrics());
             seq.setCompleted(true);
             seq.setCompletedOn(System.currentTimeMillis());
             list.add(seq);

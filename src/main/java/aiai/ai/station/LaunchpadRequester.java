@@ -151,7 +151,7 @@ public class LaunchpadRequester {
         }
         final Protocol.ReportSequenceProcessingResult command = new Protocol.ReportSequenceProcessingResult();
         for (StationExperimentSequence seq : list) {
-            command.getResults().add(new SimpleSequenceExecResult(seq.getExperimentSequenceId(), seq.getSnippetExecResults()));
+            command.getResults().add(new SimpleSequenceExecResult(seq.getExperimentSequenceId(), seq.getSnippetExecResults(), seq.getMetrics()));
             seq.setReported(true);
             seq.setReportedOn(System.currentTimeMillis());
         }

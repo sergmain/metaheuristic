@@ -17,6 +17,7 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.beans.LogData;
@@ -31,6 +32,8 @@ import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
+import aiai.ai.yaml.metrics.Metrics;
+import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleFeature;
@@ -228,7 +231,7 @@ public class SequenceProcessor {
 
                     final File execDir = paramFile.getParentFile();
                     ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
-                    storeExecResult(seq.getId(), snippet.order, result, sequenceYaml.experimentId);
+                    storeExecResult(seq.getId(), snippet.order, result, sequenceYaml.experimentId, artifactDir);
                     if (!result.isOk()) {
                         break;
                     }
@@ -259,12 +262,31 @@ public class SequenceProcessor {
         }
     }
 
-    private void storeExecResult(Long seqId, int snippetOrder, ProcessService.Result result, long experimentId) {
+    private void storeExecResult(Long seqId, int snippetOrder, ProcessService.Result result, long experimentId, File artifactDir) {
         log.info("storeExecResult(experimentId: {}, seqId: {}, snippetOrder: {})", experimentId, seqId, snippetOrder);
         StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
         if (seqTemp == null) {
             log.error("StationExperimentSequence wasn't found for Id " + seqId);
         } else {
+            File metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
+            Metrics metrics = new Metrics();
+            if (metricsFile.exists()) {
+                try {
+                    String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
+                    metrics.setStatus(Metrics.Status.Ok);
+                    metrics.setMetrics(execMetrics);
+                }
+                catch (IOException e) {
+                    log.error("Erorr reading metrics file {}", metricsFile.getAbsolutePath());
+                    seqTemp.setMetrics( "system-error : " + e.toString() );
+                    metrics.setStatus(Metrics.Status.Error);
+                    metrics.setError(e.toString());
+                }
+            }
+            else {
+                metrics.setStatus(Metrics.Status.NotFound);
+            }
+            seqTemp.setMetrics(MetricsUtils.toString(metrics));
             SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
             if (snippetExec==null) {
                 snippetExec = new SnippetExec();

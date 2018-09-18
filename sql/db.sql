@@ -116,6 +116,7 @@ CREATE TABLE AIAI_LP_EXPERIMENT_SEQUENCE (
   IS_COMPLETED  tinyint(1) not null default 0,
   COMPLETED_ON   bigint,
   SNIPPET_EXEC_RESULTS  MEDIUMTEXT,
+  METRICS      MEDIUMTEXT,
   IS_ALL_SNIPPETS_OK  tinyint(1) not null default 0
 );
 
@@ -171,6 +172,7 @@ CREATE TABLE AIAI_S_EXPERIMENT_SEQUENCE (
   FINISHED_ON  bigint,
   REPORTED_ON  bigint,
   PARAMS       MEDIUMTEXT not null,
+  METRICS      MEDIUMTEXT,
   IS_ASSETS_PREPARED  tinyint(1) not null default 0,
   IS_REPORTED  tinyint(1) not null default 0,
   IS_DELIVERED  tinyint(1) not null default 0,

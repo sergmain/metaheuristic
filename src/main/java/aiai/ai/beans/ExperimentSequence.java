@@ -67,4 +67,7 @@ public class ExperimentSequence implements Serializable {
     @Column(name = "SNIPPET_EXEC_RESULTS")
     public String snippetExecResults;
 
+    @Column(name = "METRICS")
+    public String metrics;
+
 }

@@ -15,17 +15,19 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.launchpad.experiment;
+package aiai.ai.yaml.metrics;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
-public class SimpleSequenceExecResult {
-    public long sequenceId;
-    public String result;
+@AllArgsConstructor
+public class Metrics {
+    public enum Status { NotFound, Ok, Error }
+
+    public Status status;
+    public String error;
     public String metrics;
 }

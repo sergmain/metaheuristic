@@ -79,6 +79,7 @@ public class CommandProcessor {
             case ReportStationEnv:
                 return processReportStationEnv((Protocol.ReportStationEnv) command);
             case ReportSequenceProcessingResult:
+                // processing on launchpad side
                 return processReportSequenceProcessingResult((Protocol.ReportSequenceProcessingResult) command);
             case ReportResultDelivering:
                 return processReportResultDelivering((Protocol.ReportResultDelivering) command);

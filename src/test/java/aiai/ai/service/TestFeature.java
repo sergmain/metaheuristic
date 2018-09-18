@@ -31,6 +31,7 @@ import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.repositories.*;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
+import aiai.ai.yaml.metrics.MetricsUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -298,7 +299,7 @@ public abstract class TestFeature {
             snippetExec.getExecs().put(1, result);
             String yaml = SnippetExecUtils.toString(snippetExec);
 
-            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(experimentSequence.getId(), yaml);
+            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(experimentSequence.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(sser);
         }
 
@@ -318,7 +319,7 @@ public abstract class TestFeature {
             snippetExec.getExecs().put(2, new ProcessService.Result(true, 0, "This is sample console output. predict"));
             String yaml = SnippetExecUtils.toString(snippetExec);
 
-            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(experimentSequence.getId(), yaml);
+            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(experimentSequence.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(sser);
         }
 
