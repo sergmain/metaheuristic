@@ -131,13 +131,16 @@ public class Experiment implements Serializable {
         return false;
     }
 
-    public Map<String, Integer> getHyperParamsAsMap() {
-        final Map<String, Integer> paramByIndex = new HashMap<>();
+    public Map<String, Map<String, Integer>> getHyperParamsAsMap() {
+        final Map<String, Map<String, Integer>> paramByIndex = new HashMap<>();
         for (ExperimentHyperParams hyperParam : getHyperParams()) {
             ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
+            Map<String, Integer> map = new HashMap<>();
+            paramByIndex.put(hyperParam.getKey(), map);
             for (int i = 0; i <ofVariants.values.size(); i++) {
                 String value = ofVariants.values.get(i);
-                paramByIndex.put(hyperParam.getKey()+"-"+value, i);
+
+                map.put(hyperParam.getKey()+"-"+value, i);
             }
         }
         return paramByIndex;

@@ -36,79 +36,79 @@
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>
-            <th>Experiment info</th>
-            <th colspan="4">&nbsp;</th>
+            <th colspan="5">Experiment info</th>
         </tr>
         </thead>
 
         <tbody>
         <!--/*@thymesVar id="result" type="aiai.ai.launchpad.experiment.ExperimentsController.Result"*/-->
-        <tr th:each="r : ${result.items}" valign="top">
-            <td>
-                <table>
-                    <tr valign="top">
-                        <td>
-                            <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table-experiment">
-                                <tbody>
-                                <tr>
-                                    <td>#Id</td>
-                                    <td th:text="${r.id}">#Id</td>
-                                </tr>
-                                <tr>
-                                    <td>Created on</td>
-                                    <td th:text="${#dates.format(r.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
-                                </tr>
-                                <tr>
-                                    <td>Launched on</td>
-                                    <td th:text="${r.launched ? #dates.format(r.createdOn, 'dd-MMM-yy HH:mm') : 'not launched yet'}">Launched on</td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </td>
-                        <td>
-                            <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table-experiment">
-                                <tbody>
-                                <tr>
-                                    <td>Is launched</td>
-                                    <td th:text="${r.launched ? 'Yes' : ' No'}">Is launched?</td>
-                                </tr>
-                                <tr>
-                                    <td>Is started</td>
-                                    <td th:text="${T(aiai.ai.Enums.ExperimentExecState).from(r.execState)}">Exec state</td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </td>
-                        <td>
-                            <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table-experiment">
-                                <tbody>
-                                <tr>
-                                    <td>Name</td>
-                                    <td th:text="${r.name}">name</td>
-                                </tr>
-                                <tr>
-                                    <td>Description</td>
-                                    <td th:text="${r.description}">description</td>
-                                </tr>
-                                </tbody>
-                            </table>
-                        </td>
-                    </tr>
-                </table>
-            </td>
-            <td><a class="pure-button pure-button-primary" th:disabled="${r.launched}" th:href="${'/launchpad/experiment-edit/' + r.id}">Edit</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-delete/' + r.id}">Delete</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-info/' + r.id}">Info</a></td>
-            <td>
-                <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/launchpad/experiment-clone-commit}"
-                      accept-charset="UTF-8"
-                      id="experiment-clone-commit"
-                      name="f">
-                    <input type="hidden" name="id" th:value="${r.id}"/>
-                    <button type="submit" class="pure-button pure-button-primary">Clone</button>
-                </form>
-            </td>
-        </tr>
+        <div th:remove="tag" th:each="r : ${result.items}" >
+            <tr>
+                <td th:text="${r.description}">description</td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:disabled="${r.launched}" th:href="${'/launchpad/experiment-edit/' + r.id}">Edit</a></td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-delete/' + r.id}">Delete</a></td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-info/' + r.id}">Info</a></td>
+                <td rowspan="2">
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/launchpad/experiment-clone-commit}"
+                          accept-charset="UTF-8"
+                          id="experiment-clone-commit"
+                          name="f">
+                        <input type="hidden" name="id" th:value="${r.id}"/>
+                        <button type="submit" class="pure-button pure-button-primary">Clone</button>
+                    </form>
+                </td>
+            </tr>
+            <tr valign="top">
+                <td>
+                    <table>
+                        <tr valign="top">
+                            <td>
+                                <table class="pure-table pure-table-bordered">
+                                    <tbody>
+                                    <tr>
+                                        <td>#Id</td>
+                                        <td th:text="${r.id}">#Id</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Name</td>
+                                        <td th:text="${r.name}">name</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                            <td>
+                                <table class="pure-table pure-table-bordered">
+                                    <tbody>
+                                    <tr>
+                                        <td>Created on</td>
+                                        <td th:text="${#dates.format(r.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Launched on</td>
+                                        <td th:text="${r.launched ? #dates.format(r.createdOn, 'dd-MMM-yy HH:mm') : 'not launched yet'}">Launched on</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                            <td>
+                                <table class="pure-table pure-table-bordered">
+                                    <tbody>
+                                    <tr>
+                                        <td>Is launched</td>
+                                        <td th:text="${r.launched ? 'Yes' : ' No'}">Is launched?</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Is started</td>
+                                        <td th:text="${T(aiai.ai.Enums.ExperimentExecState).from(r.execState)}">Exec state</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </div>
         <tr>
             <td colspan="5">
                 <div>

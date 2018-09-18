@@ -68,7 +68,7 @@
                 <span class="pure-form-message">This is a required field.</span>
 
                 <label for="description">Description</label>
-                <input name="description" id="description" type="text" placeholder="description"  th:field="*{description}">
+                <textarea name="description" id="description" placeholder="description" cols="40" rows="5" th:field="*{description}" maxlength="250"></textarea>
                 <span class="pure-form-message">This is a required field.</span>
 
                 <label for="seed">Seed</label>
