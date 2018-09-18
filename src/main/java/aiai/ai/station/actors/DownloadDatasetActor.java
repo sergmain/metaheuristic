@@ -83,6 +83,7 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
                         .socketTimeout(5000)
                         .execute().saveContent(assetFile.file);
                 preparedMap.put(task.getDatasetId(), true);
+                log.info("Dataset #{} was loaded", task.getDatasetId());
             } catch (IOException e) {
                 log.error("Error retrivind dataset from server", e);
             }

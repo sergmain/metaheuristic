@@ -103,9 +103,28 @@ public class DatasetController {
     }
 
     @GetMapping(value = "/dataset-edit/{id}")
-    public String edit(@PathVariable Long id, Model model) {
-        model.addAttribute("dataset", datasetRepository.findById(id));
+    public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
+        final Dataset dataset = datasetRepository.findById(id).orElse(null);
+        if (dataset==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#73.01 dataset wasn't found, datasetId: " + id);
+            return "redirect:/launchpad/datasets";
+        }
+        model.addAttribute("dataset", dataset);
         return "launchpad/dataset-form";
+    }
+
+    @PostMapping("/dataset-form-commit")
+    public String datasetFormCommit(Dataset dataset, final RedirectAttributes redirectAttributes) {
+        final Dataset ds = datasetRepository.findById(dataset.getId()).orElse(null);
+        if (ds==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#73.02 dataset wasn't found, datasetId: " + dataset.getId());
+            return "redirect:/launchpad/datasets";
+        }
+        ds.setName(dataset.getName());
+        ds.setDescription(dataset.getDescription());
+        ds.setEditable(true);
+        datasetRepository.save(ds);
+        return "redirect:/launchpad/datasets";
     }
 
     @GetMapping(value = "/dataset-definition/{id}")
@@ -598,6 +617,19 @@ public class DatasetController {
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
+    private void updateInfoWithRaw(Dataset dataset, boolean isOk) {
+        final String path = dataset.asRawFilePath();
+        final File datasetFile = new File(globals.launchpadDir, path);
+        if (!datasetFile.exists()) {
+            isOk = false;
+        }
+        dataset.setDatasetProducingStatus(ArtifactStatus.OBSOLETE.value);
+        dataset.setRawAssemblingStatus(isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value);
+        datasetRepository.save(dataset);
+
+        obsoleteDatasetGroups(dataset);
+    }
+
     @PostMapping(value = "/dataset-run-producing-commit")
     public String runProducingOfDatasetFile(Long id) throws IOException {
         Dataset dataset = datasetRepository.findById(id).orElse(null);
@@ -610,19 +642,6 @@ public class DatasetController {
         updateInfoWithDataset(dataset, isOk);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
-    }
-
-    private void updateInfoWithRaw(Dataset dataset, boolean isOk) {
-        final String path = dataset.asRawFilePath();
-        final File datasetFile = new File(globals.launchpadDir, path);
-        if (!datasetFile.exists()) {
-            return;
-        }
-        dataset.setDatasetProducingStatus(ArtifactStatus.OBSOLETE.value);
-        dataset.setRawAssemblingStatus(isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value);
-        datasetRepository.save(dataset);
-
-        obsoleteDatasetGroups(dataset);
     }
 
     private void obsoleteDatasetGroups(Dataset dataset) {
@@ -818,13 +837,6 @@ public class DatasetController {
                 columnRepository.saveAll(columns);
             }
         }
-    }
-
-    @PostMapping("/dataset-form-commit")
-    public String datasetFormCommit(Dataset dataset) {
-        dataset.setEditable(true);
-        datasetRepository.save(dataset);
-        return "redirect:/launchpad/datasets";
     }
 
     @PostMapping("/dataset-definition-form-commit")

@@ -196,8 +196,9 @@ public class ExperimentService {
                 feature.setInProgress(false);
                 experimentFeatureRepository.save(feature);
             }
-
         }
+
+        checkForFinished();
 
         // check that there isn't feature with FeatureExecStatus.error
         if (Boolean.FALSE.equals(isContinue)) {
@@ -213,14 +214,20 @@ public class ExperimentService {
 
         // is there any feature which was started(or in progress) and not finished yet for specific station?
         List<ExperimentFeature> features = experimentSequenceRepository.findAnyStartedButNotFinished(Consts.PAGE_REQUEST_1_REC, stationId, Enums.ExperimentExecState.STARTED.code);
-        ExperimentFeature feature;
+        ExperimentFeature feature = null;
         // all sequences, which were assigned to station, are finished
         if (features == null || features.isEmpty()) {
             if (experimentId!=null) {
-                feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrueAndExperimentId(experimentId);
+                features = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrueAndExperimentId(Consts.PAGE_REQUEST_1_REC, Enums.ExperimentExecState.STARTED.code, experimentId);
+                if (!features.isEmpty()) {
+                    feature = features.get(0);
+                }
             }
             else {
-                feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
+                features = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue(Consts.PAGE_REQUEST_1_REC, Enums.ExperimentExecState.STARTED.code);
+                if (!features.isEmpty()) {
+                    feature = features.get(0);
+                }
             }
             if (feature==null) {
                 // is there any feature which wasn't started and not finished yet?
@@ -267,6 +274,32 @@ public class ExperimentService {
 
         return new SequencesAndAssignToStationResult(feature, result);
 
+    }
+
+    private void checkForFinished() {
+        List<ExperimentFeature> features = experimentFeatureRepository.findAllForActiveExperiments(Enums.ExperimentExecState.FINISHED.code);
+        Set<Long> ids = new HashSet<>();
+        // ugly but ok for first version
+        for (ExperimentFeature feature : features) {
+            ids.add(feature.getExperimentId());
+        }
+        for (long id : ids) {
+            boolean isFinished = true;
+            for (ExperimentFeature feature : features) {
+                if (id==feature.getExperimentId() && !feature.isFinished) {
+                    isFinished = false;
+                    break;
+                }
+            }
+            if (isFinished) {
+                Experiment experiment = experimentRepository.findById(id).orElse(null);
+                if (experiment==null) {
+                    continue;
+                }
+                experiment.setExecState(Enums.ExperimentExecState.FINISHED.code);
+                experimentRepository.save(experiment);
+            }
+        }
     }
 
     public List<Long> storeAllResults(List<SimpleSequenceExecResult> results) {
@@ -440,7 +473,7 @@ public class ExperimentService {
                 yaml.setHyperParams( hyperParams.toSortedMap() );
                 yaml.setExperimentId( experiment.getId() );
                 yaml.setDataset( SimpleDataset.of(experiment.getDatasetId() ));
-                yaml.setFeatures( simpleFeatures ); ;
+                yaml.setFeatures( simpleFeatures );
 
                 final List<SimpleSnippet> snippets = new ArrayList<>();
                 for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
@@ -558,7 +591,7 @@ public class ExperimentService {
                             return true;
                         }
                         final ExperimentFeature feature = new ExperimentFeature();
-                        feature.setExperimentId(experiment.getId());;
+                        feature.setExperimentId(experiment.getId());
                         feature.setFeatureIds(idsAsStr);
                         experimentFeatureRepository.save(feature);
                         return true;

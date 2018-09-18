@@ -18,12 +18,14 @@
 package aiai.ai.launchpad.feature;
 
 public enum FeatureExecStatus {
-    unknown(0), ok(1), error(2), empty(3);
+    unknown(0, "Unknown"), ok(1, "Ok"), error(2, "All are errors"), empty(3, "No sequenses");
 
-    public int code;
+    public final int code;
+    public final String info;
 
-    FeatureExecStatus(int code) {
+    FeatureExecStatus(int code, String info) {
         this.code = code;
+        this.info = info;
     }
 
     public boolean equals(String type) {

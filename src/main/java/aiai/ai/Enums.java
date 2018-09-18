@@ -19,7 +19,7 @@ package aiai.ai;
 
 public final class Enums {
     public enum ExperimentExecState {
-        NONE(0), STARTED(1), STOPPED(2);
+        NONE(0), STARTED(1), STOPPED(2), FINISHED(3);
         public int code;
 
         ExperimentExecState(int code) {
@@ -34,6 +34,8 @@ public final class Enums {
                     return STARTED;
                 case 2:
                     return STOPPED;
+                case 3:
+                    return FINISHED;
                 default:
                     return null;
             }

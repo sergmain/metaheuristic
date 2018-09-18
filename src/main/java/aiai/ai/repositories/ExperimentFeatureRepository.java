@@ -21,6 +21,7 @@ package aiai.ai.repositories;
 import aiai.ai.Enums;
 import aiai.ai.beans.ExperimentFeature;
 import aiai.ai.beans.ExperimentSnippet;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
@@ -42,9 +43,14 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
     @Transactional(readOnly = true)
     ExperimentFeature findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
 
+    @Transactional(readOnly = true)
+    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and f.isFinished=false and f.isInProgress=true and e.execState=:state")
+    List<ExperimentFeature> findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue(Pageable limit, int state);
+
     // continue process the same feature
     @Transactional(readOnly = true)
-    ExperimentFeature findTop1ByIsFinishedIsFalseAndIsInProgressIsTrueAndExperimentId(long experimentId);
+    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and f.isFinished=false and f.isInProgress=true and e.execState=:state and e.id=:experimentId")
+    List<ExperimentFeature> findTop1ByIsFinishedIsFalseAndIsInProgressIsTrueAndExperimentId(Pageable limit, int state, long experimentId);
 
     // find new feature for processing
     @Transactional(readOnly = true)
@@ -57,6 +63,10 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
     @Transactional(readOnly = true)
     @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and e.isLaunched=true and e.execState=:state")
     List<ExperimentFeature> findAllForLaunchedExperiments(int state);
+
+    @Transactional(readOnly = true)
+    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and e.isLaunched=true and e.execState<>:state")
+    List<ExperimentFeature> findAllForActiveExperiments(int state);
 
 
     @Transactional
