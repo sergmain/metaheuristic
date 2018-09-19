@@ -22,14 +22,17 @@ import aiai.ai.station.StationSnippetUtils;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -84,8 +87,23 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         .socketTimeout(5000)
                         .execute().saveContent(snippetFile.file);
                 preparedMap.put(task.snippetCode, true);
-            } catch (IOException e) {
-                e.printStackTrace();
+            }
+            catch (HttpResponseException e) {
+                if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
+                    log.warn("Snippet with code {} wasn't found", task.snippetCode);
+                }
+                else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
+                    log.warn("Snippet with id {} is broken and need to be recreated", task.snippetCode);
+                }
+                else {
+                    log.error("HttpResponseException", e);
+                }
+            }
+            catch (SocketTimeoutException e) {
+                log.error("SocketTimeoutException", e.toString());
+            }
+            catch (IOException e) {
+                log.error("IOException", e);
             }
         }
     }

@@ -33,6 +33,7 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -94,6 +95,9 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
                 else {
                     log.error("HttpResponseException", e);
                 }
+            }
+            catch (SocketTimeoutException e) {
+                log.error("SocketTimeoutException", e.toString());
             }
             catch (IOException e) {
                 log.error("IOException", e);

@@ -231,7 +231,7 @@ public class SequenceProcessor {
 
                     final File execDir = paramFile.getParentFile();
                     ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
-                    storeExecResult(seq.getId(), snippet.order, result, sequenceYaml.experimentId, artifactDir);
+                    storeExecResult(seq.getId(), snippet, result, sequenceYaml.experimentId, artifactDir);
                     if (!result.isOk()) {
                         break;
                     }
@@ -262,36 +262,38 @@ public class SequenceProcessor {
         }
     }
 
-    private void storeExecResult(Long seqId, int snippetOrder, ProcessService.Result result, long experimentId, File artifactDir) {
-        log.info("storeExecResult(experimentId: {}, seqId: {}, snippetOrder: {})", experimentId, seqId, snippetOrder);
+    private void storeExecResult(Long seqId, SimpleSnippet snippet, ProcessService.Result result, long experimentId, File artifactDir) {
+        log.info("storeExecResult(experimentId: {}, seqId: {}, snippetOrder: {})", experimentId, seqId, snippet.order);
         StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
         if (seqTemp == null) {
             log.error("StationExperimentSequence wasn't found for Id " + seqId);
         } else {
-            File metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
-            Metrics metrics = new Metrics();
-            if (metricsFile.exists()) {
-                try {
-                    String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
-                    metrics.setStatus(Metrics.Status.Ok);
-                    metrics.setMetrics(execMetrics);
+            // store metrics after predict only
+            if (snippet.type==SnippetType.predict) {
+                File metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
+                Metrics metrics = new Metrics();
+                if (metricsFile.exists()) {
+                    try {
+                        String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
+                        metrics.setStatus(Metrics.Status.Ok);
+                        metrics.setMetrics(execMetrics);
+                    }
+                    catch (IOException e) {
+                        log.error("Erorr reading metrics file {}", metricsFile.getAbsolutePath());
+                        seqTemp.setMetrics("system-error : " + e.toString());
+                        metrics.setStatus(Metrics.Status.Error);
+                        metrics.setError(e.toString());
+                    }
+                } else {
+                    metrics.setStatus(Metrics.Status.NotFound);
                 }
-                catch (IOException e) {
-                    log.error("Erorr reading metrics file {}", metricsFile.getAbsolutePath());
-                    seqTemp.setMetrics( "system-error : " + e.toString() );
-                    metrics.setStatus(Metrics.Status.Error);
-                    metrics.setError(e.toString());
-                }
+                seqTemp.setMetrics(MetricsUtils.toString(metrics));
             }
-            else {
-                metrics.setStatus(Metrics.Status.NotFound);
-            }
-            seqTemp.setMetrics(MetricsUtils.toString(metrics));
             SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
             if (snippetExec==null) {
                 snippetExec = new SnippetExec();
             }
-            snippetExec.getExecs().put(snippetOrder, result);
+            snippetExec.getExecs().put(snippet.order, result);
             String yaml = SnippetExecUtils.toString(snippetExec);
             seqTemp.setSnippetExecResults(yaml);
             stationExperimentSequenceRepository.save(seqTemp);
