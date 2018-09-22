@@ -27,3 +27,13 @@ Store bynary data in DB vwith JPA
 
 Free hosting of docu for OSS projects
     https://readthedocs.org/
+
+
+=======================
+3d plots
+    https://plot.ly/javascript/3d-surface-plots/
+    https://plot.ly/javascript/3d-charts/
+    http://bl.ocks.org/supereggbert/aff58196188816576af0
+    http://www.grvisualisation.50webs.com/javascript_surface_plot.html
+
+    https://www.webjars.org/all
