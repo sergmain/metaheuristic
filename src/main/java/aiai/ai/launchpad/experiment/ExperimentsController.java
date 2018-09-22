@@ -43,6 +43,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -63,30 +64,6 @@ public class ExperimentsController {
     @Data
     public static class SequencesResult {
         public Slice<ExperimentSequence> items;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class HyperParamElement {
-        String param;
-        boolean isSelected;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class HyperParamList {
-        String key;
-        public final List<HyperParamElement> list = new ArrayList<>();
-        public boolean isSelectable() {
-            return list.size()>1;
-        }
-    }
-
-    @Data
-    public static class HyperParamResult {
-        public final List<HyperParamList> elements = new ArrayList<>();
     }
 
     @Data
@@ -230,27 +207,9 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
 
-        SequencesResult result = new SequencesResult();
-        result.items = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), featureId);
+        Map<String, Object> map = experimentService.prepareExperimentFeatures(experiment, feature);
+        model.addAllAttributes(map);
 
-        HyperParamResult hyperParamResult = new HyperParamResult();
-        for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
-            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
-            HyperParamList list = new HyperParamList(hyperParam.getKey());
-            for (String value : variants.values) {
-                list.getList().add( new HyperParamElement(value, false));
-            }
-            if (list.getList().isEmpty()) {
-                list.getList().add( new HyperParamElement("<Error value>", false));
-            }
-            hyperParamResult.getElements().add(list);
-        }
-
-        model.addAttribute("params", hyperParamResult);
-        model.addAttribute("result", result);
-        model.addAttribute("experiment", experiment);
-        model.addAttribute("feature", feature);
-        model.addAttribute("consoleResult", new ConsoleResult());
         return "launchpad/experiment-feature-progress";
     }
 

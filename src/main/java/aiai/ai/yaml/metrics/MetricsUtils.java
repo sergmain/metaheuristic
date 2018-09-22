@@ -28,6 +28,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
+import java.util.Map;
 
 /**
  * Because of xxx.class can't use generics (or don't have enough time to find out how to)
@@ -35,6 +37,7 @@ import java.io.InputStream;
 public class MetricsUtils {
 
     private static Yaml yaml;
+    private static Yaml valueYaml;
     public static final Metrics EMPTY_METRICS = new Metrics(Metrics.Status.NotFound, null, null);
 
     static {
@@ -46,6 +49,17 @@ public class MetricsUtils {
         representer.addClassTag(Metrics.class, Tag.MAP);
 
         yaml = new Yaml(new Constructor(Metrics.class), representer, options);
+    }
+
+    static {
+        final DumperOptions options1 = new DumperOptions();
+        options1.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options1.setPrettyFlow(true);
+
+        Representer representer1 = new Representer();
+        representer1.addClassTag(MetricValues.class, Tag.MAP);
+
+        valueYaml = new Yaml(new Constructor(MetricValues.class), representer1, options1);
     }
 
     public static String toString(Metrics config) {
@@ -70,6 +84,15 @@ public class MetricsUtils {
             e.printStackTrace();
             throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
         }
+    }
+
+    public static MetricValues getValues(Metrics metrics) {
+        if (metrics==null || metrics.getStatus()!= Metrics.Status.Ok) {
+            return null;
+        }
+        //noinspection UnnecessaryLocalVariable
+        MetricValues metricValues = valueYaml.load(metrics.metrics);
+        return metricValues;
     }
 
 }

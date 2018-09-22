@@ -9,11 +9,13 @@
     <!--/*@thymesVar id="feature" type="aiai.ai.beans.ExperimentFeature"*/-->
     <!--/*@thymesVar id="consoleResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ConsoleResult"*/-->
     <!--/*@thymesVar id="params" type="aiai.ai.launchpad.experiment.ExperimentsController.HyperParamResult"*/-->
+    <!--/*@thymesVar id="metrics" type="aiai.ai.launchpad.experiment.ExperimentsController.MetricsResult"*/-->
 
     <script>
         var /*{boolean}*/ isDebug = false;
         var buttonStateMap = {};
         var trStateMap = {};
+        var metricsStateMap = {};
         var /*{string}*/ paramFilter = ',';
 
 
@@ -95,6 +97,29 @@
                 console.warn('Unknown state: ' + state)
             }
             printLog('trStateMap[trId] : ' + trStateMap[trId]);
+        }
+
+        function switchMetrics() {
+            var trId = 'some-id-doesnt-matter-which';
+            printLog("metricsStateMap.hasOwnProperty(trId): " + trStateMap.hasOwnProperty(trId));
+            if (!metricsStateMap.hasOwnProperty(trId)) {
+                metricsStateMap[trId] = 'hide';
+            }
+            var state = metricsStateMap[trId];
+            printLog('state : ' + state);
+            if (state==='show') {
+                $('#metrics-main-p').show();
+                $('#metrics-main-table').hide();
+                metricsStateMap[trId] = 'hide'
+            }
+            else if (state==='hide') {
+                $('#metrics-main-p').hide();
+                $('#metrics-main-table').show();
+                metricsStateMap[trId] = 'show'            }
+            else {
+                console.warn('Unknown state: ' + state)
+            }
+            printLog('metricsStateMap[trId] : ' + metricsStateMap[trId]);
         }
 
         /**
@@ -260,7 +285,76 @@
                 </table>
             </td>
         </tr>
+    </table>
     <p>&nbsp;</p>
+
+    <h1 class="widget-header" th:onclick="${ 'switchMetrics();' }" >Metrics</h1>
+    <p id="metrics-main-p">Metrics is hidden</p>
+    <table style="display:none" id="metrics-main-table">
+        <tr valign="top">
+            <td>
+                <h1 class="widget-header">As the table</h1>
+                <table class="pure-table pure-table-bordered" id="fragment-metrics-value-table" th:fragment="fragment-metrics-value-table">
+                    <thead>
+                    <tr>
+                        <div th:remove="tag" th:each="m, g : ${metrics.metricNames}">
+                            <th th:text="${m}">Metric name</th>
+                        </div>
+                        <th>Hyper params</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="m, g : ${metrics.metrics}" valign="top">
+                        <div th:remove="tag" th:each="v : ${m.values}">
+                            <td th:text="${v.value}">Metric value</td>
+                        </div>
+                        <td th:text="${m.params}">Hyper params</td>
+                    </tr>
+                    <tr>
+                        <td th:colspan="${metrics.metrics.size()}">
+                            <div th:if="${feature!=null and experiment!=null}">
+                                <ul class='pagination pagination-centered'>
+                                    <li class="table-nav-padding">
+                                        <span th:if='${result.items.first}' class="table-nav-button">« First</span>
+                                        <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                                    </li>
+                                    <li class="table-nav-padding">
+                                        <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
+                                        <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                                    </li>
+                                    <li class="table-nav-padding">
+                                        <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
+                                        <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p>&nbsp;</p>
+
+                <a class="pure-button pure-button-primary" href="experiment-info.html" th:href="${'/launchpad/experiment-info/' + experiment.id }">To experiment info</a>
+
+            </td>
+            <td width="20">&nbsp;</td>
+            <td>
+                <h1 class="widget-header">As the graph</h1>
+                <table class="pure-table pure-table-bordered" id="fragment-metrics-graph-table" th:fragment="fragment-metrics-graph-table">
+                    <tbody>
+                        <tr>
+                            <td>Metrics graph</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <p>&nbsp;</p>
+
 
     <table>
         <tr valign="top">

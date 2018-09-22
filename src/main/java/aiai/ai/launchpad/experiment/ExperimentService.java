@@ -27,21 +27,26 @@ import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.*;
+import aiai.ai.utils.BigDecimalHolder;
 import aiai.ai.utils.permutation.Permutation;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.hyper_params.HyperParams;
+import aiai.ai.yaml.metrics.MetricValues;
+import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.sequence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.*;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -62,6 +67,61 @@ public class ExperimentService {
     }
 
     private static final SequencesAndAssignToStationResult EMPTY_RESULT = new SequencesAndAssignToStationResult(null, EMPTY_SIMPLE_SEQUENCES);
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HyperParamElement {
+        String param;
+        boolean isSelected;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HyperParamList {
+        String key;
+        public final List<HyperParamElement> list = new ArrayList<>();
+        public boolean isSelectable() {
+            return list.size()>1;
+        }
+    }
+
+    @Data
+    public static class HyperParamResult {
+        public final List<HyperParamList> elements = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class MetricElement {
+        public final List<BigDecimalHolder> values = new ArrayList<>();
+        public String params;
+
+        public static int compare(MetricElement o2, MetricElement o1) {
+            for (int i = 0; i < Math.min(o1.values.size(), o2.values.size()); i++) {
+                final BigDecimalHolder holder1 = o1.values.get(i);
+                if (holder1 == null) {
+                    return -1;
+                }
+                final BigDecimalHolder holder2 = o2.values.get(i);
+                if (holder2 == null) {
+                    return -1;
+                }
+                int c = ObjectUtils.compare(holder1.value, holder2.value);
+                if (c != 0) {
+                    return c;
+                }
+            }
+            return Integer.compare(o1.values.size(), o2.values.size());        }
+    }
+
+    @Data
+    public static class MetricsResult {
+        public final LinkedHashSet<String> metricNames = new LinkedHashSet<>();
+        public final List<MetricElement> metrics = new ArrayList<>();
+    }
 
     private final Globals globals;
     private final ExperimentRepository experimentRepository;
@@ -409,6 +469,63 @@ public class ExperimentService {
         return true;
     }
 
+    public Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature feature) {
+        ExperimentsController.SequencesResult result = new ExperimentsController.SequencesResult();
+        result.items = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), feature.getId());
+
+        HyperParamResult hyperParamResult = new HyperParamResult();
+        for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
+            ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
+            HyperParamList list = new HyperParamList(hyperParam.getKey());
+            for (String value : variants.values) {
+                list.getList().add( new HyperParamElement(value, false));
+            }
+            if (list.getList().isEmpty()) {
+                list.getList().add( new HyperParamElement("<Error value>", false));
+            }
+            hyperParamResult.getElements().add(list);
+        }
+
+        MetricsResult metricsResult = new MetricsResult();
+        List<Map<String, BigDecimal>> values = new ArrayList<>();
+
+        List<ExperimentSequence> seqs = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(feature.getId());
+        for (ExperimentSequence seq : seqs) {
+            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.metrics) );
+            if (metricValues==null) {
+                continue;
+            }
+            for (Map.Entry<String, BigDecimal> entry : metricValues.values.entrySet()) {
+                metricsResult.metricNames.add(entry.getKey());
+            }
+            values.add(metricValues.values);
+        }
+
+        List<MetricElement> elements = new ArrayList<>();
+        for (Map<String, BigDecimal> value : values) {
+            MetricElement element = new MetricElement();
+            for (String metricName : metricsResult.metricNames) {
+                BigDecimalHolder holder = new BigDecimalHolder();
+                holder.value = value.get(metricName);
+                element.values.add(holder);
+            }
+            elements.add(element);
+        }
+        elements.sort(MetricElement::compare);
+
+        metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
+
+        Map<String, Object> map = new HashMap<>();
+        map.put("metrics", metricsResult);
+        map.put("params", hyperParamResult);
+        map.put("result", result);
+        map.put("experiment", experiment);
+        map.put("feature", feature);
+        map.put("consoleResult", new ExperimentsController.ConsoleResult());
+
+        return map;
+    }
+
     public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed, String epochs) {
         List<ExperimentHyperParams> params = new ArrayList<>();
         ExperimentHyperParams p1 = new ExperimentHyperParams();
@@ -663,4 +780,5 @@ public class ExperimentService {
         }
         return false;
     }
+
 }
