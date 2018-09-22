@@ -47,7 +47,7 @@ public class Consts {
     public static final String EXPERIMENT_DIR = "experiment";
 
     public static final String RAW_FILE_NAME = "raw-file.txt";
-    public static final String METRICS_FILE_NAME = "metrics.txt";
+    public static final String METRICS_FILE_NAME = "metrics.yaml";
     public static final String DATASET_FILE_NAME = "dataset.txt";
     public static final String DATASET_FILE_MASK = "dataset-%04d.txt";
     public static final String FEATURE_FILE_MASK = "feature-%04d.txt";

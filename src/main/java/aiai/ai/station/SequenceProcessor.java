@@ -41,6 +41,9 @@ import aiai.ai.yaml.sequence.SimpleSnippet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -86,13 +89,13 @@ public class SequenceProcessor {
                 if (!isInit) {
                     return null;
                 }
-                return experimentState.get(experimentId);
+                return experimentState.getOrDefault(experimentId, Enums.ExperimentExecState.NONE);
             }
         }
 
         boolean isStarted(long experimentId) {
             final Enums.ExperimentExecState state = getState(experimentId);
-            return state!=null && state== Enums.ExperimentExecState.STARTED;
+            return state == Enums.ExperimentExecState.STARTED;
         }
     }
 
@@ -326,6 +329,7 @@ public class SequenceProcessor {
         }
     }
 
+    @Contract("_, null -> false")
     private boolean isThisSnippetCompleted(SimpleSnippet snippet, SnippetExec snippetExec) {
         if (snippetExec ==null) {
             return false;
@@ -333,6 +337,7 @@ public class SequenceProcessor {
         return snippetExec.execs.get(snippet.order)!=null;
     }
 
+    @Contract("_, null -> false")
     private boolean isThisSnippetCompletedWithError(SimpleSnippet snippet, SnippetExec snippetExec) {
         if (snippetExec ==null) {
             return false;
@@ -341,7 +346,7 @@ public class SequenceProcessor {
         return result!=null && !result.isOk();
     }
 
-    private void finishAndWriteToLog(StationExperimentSequence seq, String es) {
+    private void finishAndWriteToLog(@NotNull StationExperimentSequence seq, String es) {
         log.warn(es);
         seq.setLaunchedOn(System.currentTimeMillis());
         seq.setFinishedOn(System.currentTimeMillis());
@@ -354,7 +359,7 @@ public class SequenceProcessor {
         logDataRepository.save(logData);
     }
 
-    private File prepareParamFile(long experimentId, Long experimentSequenceId, SnippetType type, String params) {
+    private File prepareParamFile(long experimentId, long experimentSequenceId, @NotNull SnippetType type, @NotNull String params) {
         File snippetTypeDir = prepareSequenceDir(experimentId, experimentSequenceId, type.toString());
         if (snippetTypeDir == null) {
             return null;

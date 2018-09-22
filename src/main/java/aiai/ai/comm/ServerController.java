@@ -22,16 +22,15 @@ import aiai.ai.beans.Experiment;
 import aiai.ai.beans.Station;
 import aiai.ai.repositories.ExperimentRepository;
 import aiai.ai.repositories.StationsRepository;
-import aiai.ai.yaml.sequence.SimpleFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * User: Serg
@@ -105,7 +104,9 @@ public class ServerController {
         return "Ok";
     }
 
-    private static Protocol.ExperimentStatus.SimpleStatus to(Experiment experiment) {
+    @NotNull
+    @Contract("_ -> new")
+    private static Protocol.ExperimentStatus.SimpleStatus to(@NotNull Experiment experiment) {
         return new Protocol.ExperimentStatus.SimpleStatus(experiment.getId(), Enums.ExperimentExecState.toState(experiment.getExecState()));
     }
 }

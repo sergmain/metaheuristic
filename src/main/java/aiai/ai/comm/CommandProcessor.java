@@ -24,6 +24,7 @@ import aiai.ai.repositories.StationsRepository;
 import aiai.ai.station.SequenceProcessor;
 import aiai.ai.station.StationService;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -54,7 +55,8 @@ public class CommandProcessor {
         this.sequenceProcessor = sequenceProcessor;
     }
 
-    public Command[] process(Command command) {
+    @NotNull
+    Command[] process(Command command) {
         switch (command.getType()) {
             case Nop:
                 break;
@@ -95,22 +97,26 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processStationSequenceStatus(Protocol.StationSequenceStatus command) {
+    @NotNull
+    private Command[] processStationSequenceStatus(@NotNull Protocol.StationSequenceStatus command) {
         experimentService.reconcileStationSequences(command.stationId, command.statuses!=null ? command.statuses : new ArrayList<>());
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processExperimentStatus(Protocol.ExperimentStatus command) {
+    @NotNull
+    private Command[] processExperimentStatus(@NotNull Protocol.ExperimentStatus command) {
         sequenceProcessor.processExperimentStatus(command.statuses);
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processReportResultDelivering(Protocol.ReportResultDelivering command) {
+    @NotNull
+    private Command[] processReportResultDelivering(@NotNull Protocol.ReportResultDelivering command) {
         stationService.markAsDelivered(command.getIds());
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processReportSequenceProcessingResult(Protocol.ReportSequenceProcessingResult command) {
+    @NotNull
+    private Command[] processReportSequenceProcessingResult(@NotNull Protocol.ReportSequenceProcessingResult command) {
         if (command.getResults().isEmpty()) {
             return Protocol.NOP_ARRAY;
         }
@@ -121,7 +127,8 @@ public class CommandProcessor {
         return new Command[]{cmd1};
     }
 
-    private Command[] processReportStationEnv(Protocol.ReportStationEnv command) {
+    @NotNull
+    private Command[] processReportStationEnv(@NotNull Protocol.ReportStationEnv command) {
         checkStationId(command);
         final long stationId = Long.parseLong(command.getStationId());
         Station station = stationsRepository.findById(stationId).orElse(null);
@@ -134,7 +141,8 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processAssignedExperimentSequence(Protocol.AssignedExperimentSequence command) {
+    @NotNull
+    private Command[] processAssignedExperimentSequence(@NotNull Protocol.AssignedExperimentSequence command) {
         if (command.sequences==null) {
             return Protocol.NOP_ARRAY;
         }
@@ -144,12 +152,14 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
+    @NotNull
     private Command[] processRequestExperimentSequence(Protocol.RequestExperimentSequence command) {
         checkStationId(command);
         Protocol.AssignedExperimentSequence r = getAssignedExperimentSequence(command.getStationId(), MAX_SEQUENSE_POOL_SIZE);
         return Protocol.asArray(r);
     }
 
+    @NotNull
     private synchronized Protocol.AssignedExperimentSequence getAssignedExperimentSequence(String stationId, int recordNumber) {
         Protocol.AssignedExperimentSequence r = new Protocol.AssignedExperimentSequence();
         ExperimentService.SequencesAndAssignToStationResult result = experimentService.getSequencesAndAssignToStation(Long.parseLong(stationId), recordNumber, null);
@@ -157,37 +167,42 @@ public class CommandProcessor {
         return r;
     }
 
-    private void checkStationId(Command command) {
+    private void checkStationId(@NotNull Command command) {
         if (command.getStationId()==null) {
             // we throw ISE cos all checks have to be made early
             throw new IllegalStateException("stationId is null");
         }
     }
 
-    private Command[] storeStationId(Protocol.AssignedStationId command) {
+    @NotNull
+    private Command[] storeStationId(@NotNull Protocol.AssignedStationId command) {
         System.out.println("New station Id: " + command.getStationId());
         stationService.setStationId(command.getStationId());
         return Protocol.asArray(createReportStationEnvCommand());
     }
 
-    private Command[] reAssignStationId(Protocol.ReAssignStationId command) {
+    @NotNull
+    private Command[] reAssignStationId(@NotNull Protocol.ReAssignStationId command) {
         System.out.println("New station Id: " + command.getStationId());
         stationService.setStationId(command.getStationId());
 
         return Protocol.asArray(createReportStationEnvCommand());
     }
 
+    @NotNull
     private Command createReportStationEnvCommand() {
         String env = stationService.getEnv();
         return env==null ? Protocol.NOP : new Protocol.ReportStationEnv(env);
     }
 
-    private Command[] processInvite(Protocol.RegisterInvite command) {
+    @NotNull
+    private Command[] processInvite(@NotNull Protocol.RegisterInvite command) {
         Protocol.RegisterInviteResult result = new Protocol.RegisterInviteResult();
         result.setInviteResult(inviteService.processInvite(command.getInvite()));
         return Protocol.asArray(result);
     }
 
+    @NotNull
     private Command[] getNewStationId(Protocol.RequestStationId command) {
         final Station st = new Station();
         stationsRepository.save(st);
@@ -195,11 +210,13 @@ public class CommandProcessor {
         return Protocol.asArray(new Protocol.AssignedStationId(Long.toString(st.getId())));
     }
 
+    @NotNull
     public ExchangeData processExchangeData(ExchangeData data) {
         return processExchangeData(null, data);
     }
 
-    public ExchangeData processExchangeData(Map<String, String> sysParams, ExchangeData data) {
+    @NotNull
+    private ExchangeData processExchangeData(Map<String, String> sysParams, @NotNull ExchangeData data) {
         ExchangeData responses = new ExchangeData();
         for (Command command : data.getCommands()) {
             if (command.getType()== Command.Type.Nop) {

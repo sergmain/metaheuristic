@@ -20,10 +20,7 @@ package aiai.ai.station;
 
 import aiai.ai.Globals;
 import aiai.ai.beans.StationExperimentSequence;
-import aiai.ai.comm.Command;
-import aiai.ai.comm.CommandProcessor;
-import aiai.ai.comm.ExchangeData;
-import aiai.ai.comm.Protocol;
+import aiai.ai.comm.*;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,15 +43,13 @@ import java.util.List;
 @Slf4j
 public class LaunchpadRequester {
 
-    private String targetUrl;
-
     private final Globals globals;
 
     private final RestTemplate restTemplate;
 
     private final CommandProcessor commandProcessor;
     private final StationExperimentService stationExperimentService;
-    private StationService stationService;
+    private final StationService stationService;
 
     @Autowired
     public LaunchpadRequester(Globals globals, CommandProcessor commandProcessor, StationExperimentService stationExperimentService, StationService stationService) {
@@ -70,7 +65,6 @@ public class LaunchpadRequester {
         if (!globals.isStationEnabled) {
             return;
         }
-        targetUrl = globals.launchpadUrl + "/rest-anon/srv";
         String env = stationService.getEnv();
         addCommand(new Protocol.ReportStationEnv(env));
     }
@@ -133,13 +127,13 @@ public class LaunchpadRequester {
         // we have to pull new tasks from server constantly
         try {
             HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
-            ResponseEntity<ExchangeData> response = restTemplate.exchange(targetUrl, HttpMethod.POST, request, ExchangeData.class);
+            ResponseEntity<ExchangeData> response = restTemplate.exchange(globals.serverRestUrl, HttpMethod.POST, request, ExchangeData.class);
             ExchangeData result = response.getBody();
 
             addCommands(commandProcessor.processExchangeData(result).getCommands());
             log.debug("fixedDelay(), {}", result);
         } catch (RestClientException e) {
-            System.out.println("Error accessing url: " + targetUrl);
+            System.out.println("Error accessing url: " + globals.serverRestUrl);
             e.printStackTrace();
         }
     }

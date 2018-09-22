@@ -34,7 +34,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -613,7 +612,7 @@ public class ExperimentsController {
         trg.setEpochVariant(experiment.getEpochVariant());
         trg.setSeed(experiment.getSeed());
         trg.setName( StrUtils.incCopyNumber(experiment.getName()) );
-        trg.setDescription( StrUtils.incCopyNumber( experiment.getDescription()) );
+        trg.setDescription( experiment.getDescription() );
         trg.setAllSequenceProduced(false);
         trg.setFeatureProduced(false);
         trg.setCreatedOn(System.currentTimeMillis());

@@ -62,8 +62,12 @@ public class Globals {
     public File stationExperimentDir;
     public File stationSnippetDir;
 
+    public String serverRestUrl;
+
     @PostConstruct
     public void init() {
+        serverRestUrl = launchpadUrl + Consts.SERVER_REST_URL;
+
         if (stationDir==null) {
             log.warn("Station is disabled, stationDir: {}", stationDir);
             isStationEnabled = false;

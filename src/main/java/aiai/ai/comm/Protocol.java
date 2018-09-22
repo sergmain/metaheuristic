@@ -24,6 +24,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -229,6 +231,8 @@ public class Protocol {
     }
 
 
+    @NotNull
+    @Contract(value = "_ -> new", pure = true)
     static Command[] asArray(Command cmd) {
         return new Command[]{cmd};
     }

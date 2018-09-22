@@ -40,7 +40,7 @@ public class StationExperimentSequence implements Serializable {
     private Integer version;
 
     @Column(name = "EXPERIMENT_SEQUENCE_ID")
-    private Long experimentSequenceId;
+    private long experimentSequenceId;
 
     @Column(name="CREATED_ON")
     private long createdOn;
