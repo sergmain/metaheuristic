@@ -154,59 +154,6 @@ public class ExperimentService {
             return new ParamFilter(filetr);
         }
     }
-    private Slice<ExperimentSequence> findExperimentSequenceWithFilter(Pageable pageable, Experiment experiment, long featureId, String[] params) {
-        final Set<String> paramSet = new HashSet<>();
-        final Set<String> paramFilerKeys = new HashSet<>();
-        for (String param : params) {
-            if (StringUtils.isBlank(param)) {
-                continue;
-            }
-            paramSet.add(param);
-            paramFilerKeys.add(ParamFilter.of(param).key);
-        }
-        final Map<String, Map<String, Integer>> paramByIndex = experiment.getHyperParamsAsMap();
-
-        List<ExperimentSequence> list = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
-
-        List<ExperimentSequence> selected = new ArrayList<>();
-        for (ExperimentSequence sequence : list) {
-            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(sequence.getParams());
-            boolean[] isOk = new boolean[sequenceYaml.hyperParams.size()];
-            int idx = 0;
-            for (Map.Entry<String, String> entry : sequenceYaml.hyperParams.entrySet()) {
-                try {
-                    if (!paramFilerKeys.contains(entry.getKey())) {
-                        isOk[idx] = true;
-                        continue;
-                    }
-                    final Map<String, Integer> map = paramByIndex.getOrDefault(entry.getKey(), HASH_MAP);
-                    if (map.isEmpty()) {
-                        continue;
-                    }
-                    if (map.size()==1) {
-                        isOk[idx] = true;
-                        continue;
-                    }
-
-                    boolean isFilter = paramSet.contains(entry.getKey() + "-" + paramByIndex.get(entry.getKey()).get(entry.getKey() + "-" + entry.getValue()));
-                    if (isFilter) {
-                        isOk[idx] = true;
-                    }
-                }
-                finally {
-                    idx++;
-                }
-            }
-            if (isInclude(isOk)) {
-                selected.add(sequence);
-            }
-        }
-        List<ExperimentSequence> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
-        //noinspection UnnecessaryLocalVariable
-        final PageImpl<ExperimentSequence> page = new PageImpl<>(subList, pageable, selected.size());
-        return page;
-    }
-
     private boolean isInclude(boolean[] isOk ) {
         for (boolean b : isOk) {
             if (!b) {
@@ -455,9 +402,85 @@ public class ExperimentService {
             if (isEmpty(params)) {
                 return experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(pageable, feature.getId());
             } else {
-                return findExperimentSequenceWithFilter(pageable, experiment, feature.getId(), params);
+                List<ExperimentSequence> selected = findExperimentSequenceWithFilter(experiment, feature.getId(), params);
+                List<ExperimentSequence> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
+                //noinspection UnnecessaryLocalVariable
+                final PageImpl<ExperimentSequence> page = new PageImpl<>(subList, pageable, selected.size());
+                return page;
+
             }
         }
+    }
+
+    List<Object> findExperimentSequenceForPlot(Experiment experiment, ExperimentFeature feature, String[] params) {
+        if (experiment == null || feature == null) {
+            return Collections.emptyList();
+        } else {
+            List<ExperimentSequence> selected;
+            if (isEmpty(params)) {
+                selected = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(feature.getId());
+            } else {
+                selected = findExperimentSequenceWithFilter(experiment, feature.getId(), params);
+            }
+            return collectDataForPlotting(selected);
+        }
+    }
+
+    private List<Object> collectDataForPlotting(List<ExperimentSequence> selected) {
+        // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+        return null;
+    }
+
+
+    private List<ExperimentSequence> findExperimentSequenceWithFilter(Experiment experiment, long featureId, String[] params) {
+        final Set<String> paramSet = new HashSet<>();
+        final Set<String> paramFilterKeys = new HashSet<>();
+        for (String param : params) {
+            if (StringUtils.isBlank(param)) {
+                continue;
+            }
+            paramSet.add(param);
+            paramFilterKeys.add(ParamFilter.of(param).key);
+        }
+        final Map<String, Map<String, Integer>> paramByIndex = experiment.getHyperParamsAsMap();
+
+        List<ExperimentSequence> list = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
+
+        List<ExperimentSequence> selected = new ArrayList<>();
+        for (ExperimentSequence sequence : list) {
+            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(sequence.getParams());
+            boolean[] isOk = new boolean[sequenceYaml.hyperParams.size()];
+            int idx = 0;
+            for (Map.Entry<String, String> entry : sequenceYaml.hyperParams.entrySet()) {
+                try {
+                    if (!paramFilterKeys.contains(entry.getKey())) {
+                        isOk[idx] = true;
+                        continue;
+                    }
+                    final Map<String, Integer> map = paramByIndex.getOrDefault(entry.getKey(), HASH_MAP);
+                    if (map.isEmpty()) {
+                        continue;
+                    }
+                    if (map.size()==1) {
+                        isOk[idx] = true;
+                        continue;
+                    }
+
+                    boolean isFilter = paramSet.contains(entry.getKey() + "-" + paramByIndex.get(entry.getKey()).get(entry.getKey() + "-" + entry.getValue()));
+                    if (isFilter) {
+                        isOk[idx] = true;
+                    }
+                }
+                finally {
+                    idx++;
+                }
+            }
+            if (isInclude(isOk)) {
+                selected.add(sequence);
+            }
+        }
+        //noinspection UnnecessaryLocalVariable
+        return selected;
     }
 
     private boolean isEmpty(String[] params) {

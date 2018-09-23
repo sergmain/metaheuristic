@@ -183,28 +183,23 @@
 
             $('#'+id).toggleClass("pure-button-primary");
             isDrawEnabled = (numberSelected===2);
-            $('#button-draw-plot').toggleClass("pure-button-primary", (numberSelected===1));
+            $('#button-draw-plot').toggleClass("pure-button-primary", isDrawEnabled);
             $('#fragment-console-table' ).empty();
-            if (numberSelected>0) {
-                paramFilterAxis = paramsForUrlAxis();
-            }
-            else {
-                paramFilterAxis = ',';
-            }
+            paramFilterAxis = paramsForUrlAxis();
 
-            currentState();
+            printCurrentState();
             printLogButtonAxis("#2 buttonState: " + buttonState.toString());
             printLogButtonAxis('#2 buttonAxisStateMap.hasOwnProperty(id): ' + buttonAxisStateMap.hasOwnProperty(id));
             printLogButtonAxis('numberSelected: ' + numberSelected);
             printLogButtonAxis('paramFilterAxis: ' + paramFilterAxis);
-
         }
 
         function drawPlot() {
             if (isDrawEnabled) {
                 var url = '/launchpad/experiment-feature-plot-data-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilterAxis + '/part';
+                printLogButtonAxis('url for plot data: ' + url);
                 $.post(url, function(data ) {
-
+                    printLogButtonAxis('json for plotting:\n' + data);
                     x1 = data['x'];
                     y1 = data['y'];
                     z1 = data['z'];
@@ -247,16 +242,9 @@
             printLogButton('#2 buttonStateMap.hasOwnProperty(id): ' + buttonStateMap.hasOwnProperty(id));
 
             $( '#fragment-console-table' ).empty();
-            var url;
-            var anySelected = isAnySelected();
-            printLogButton('anySelected: ' + anySelected+', state: ' + buttonStateMap[id].state + ', idx: ' +buttonStateMap[id].idx);
-            if (anySelected) {
-                paramFilter = paramsForUrl();
-            }
-            else {
-                paramFilter = ',';
-            }
-            url = '/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
+            printLogButton('state: ' + buttonStateMap[id].state + ', idx: ' +buttonStateMap[id].idx);
+            paramFilter = paramsForUrl();
+            var url = '/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
             printLogButton('url: '+ url);
             $.post(url, table);
             printLogButton('');
@@ -317,10 +305,12 @@
                     }
                 }
             );
-            return suffix;
+            return suffix === '' ? ',' : suffix;
         }
 
         function paramsForUrl() {
+            printLogButton('anySelected: ' + isAnySelected());
+
             var suffix = '';
             Object.keys(buttonStateMap).forEach(
                 function(key) {
@@ -330,7 +320,7 @@
                     }
                 }
             );
-            return suffix;
+            return suffix === '' ? ',' : suffix;
         }
 
         /**
@@ -349,7 +339,7 @@
             return num;
         }
 
-        function currentState() {
+        function printCurrentState() {
             Object.keys(buttonAxisStateMap).forEach(
                 function(key) {
                     var buttonState = buttonAxisStateMap[key];

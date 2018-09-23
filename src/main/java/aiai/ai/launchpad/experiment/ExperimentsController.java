@@ -177,6 +177,22 @@ public class ExperimentsController {
         return "launchpad/experiment-feature-progress :: fragment-table";
     }
 
+    @PostMapping("/experiment-feature-plot-data-part}/{featureId}/{params}/part")
+    public @ResponseBody String getPlotData(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
+        Experiment experiment= experimentRepository.findById(experimentId).orElse(null);
+        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
+
+        SequencesResult result = new SequencesResult();
+        result.items = experimentService.findExperimentSequence(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
+
+        model.addAttribute("result", result);
+        model.addAttribute("experiment", experiment);
+        model.addAttribute("feature", feature);
+        model.addAttribute("consoleResult", new ConsoleResult());
+
+        return "launchpad/experiment-feature-progress :: fragment-table";
+    }
+
     @PostMapping("/experiment-feature-progress-console-part/{id}")
     public String getSequncesConsolePart(Model model, @PathVariable(name="id") Long sequenceId) {
         ConsoleResult result = new ConsoleResult();
