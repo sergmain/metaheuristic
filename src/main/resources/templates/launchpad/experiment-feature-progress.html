@@ -18,6 +18,8 @@
         var trStateMap = {};
         var metricsStateMap = {};
         var /*{string}*/ paramFilter = ',';
+        var /*{string}*/ paramFilterAxis = ',';
+        var /*boolean*/ isDrawEnabled = false;
 
 
         var table = function (html) {
@@ -101,7 +103,7 @@
         }
 
         function switchMetrics() {
-            var trId = 'some-id-doesnt-matter-which';
+            var trId = 'some-id--doesnt-matter-which';
             printLog("metricsStateMap.hasOwnProperty(trId): " + trStateMap.hasOwnProperty(trId));
             if (!metricsStateMap.hasOwnProperty(trId)) {
                 metricsStateMap[trId] = 'hide';
@@ -116,7 +118,6 @@
             else if (state==='hide') {
                 $('#metrics-main-p').hide();
                 $('#metrics-main-table').show();
-                Plotly.newPlot('plot-place', [data_z1], layout);
                 metricsStateMap[trId] = 'show'            }
             else {
                 console.warn('Unknown state: ' + state)
@@ -153,48 +154,67 @@
          * @param {string} key
          */
         function switchButtonAxis(id, key) {
-            var numberSelected = getNumberSelected();
-            printLogButtonAxis('id: ' + id + ", numberSelected: " + numberSelected);
-            if (numberSelected>1) {
-                return false;
-            }
+            printLogButtonAxis('id: ' + id);
             if (!buttonAxisStateMap.hasOwnProperty(id)) {
                 printLogButtonAxis('#1 buttonStateMap.hasOwnProperty(id): ' + buttonAxisStateMap.hasOwnProperty(id));
                 buttonAxisStateMap[id] = new ButtonState('hide', key, 0);
             }
             var buttonState = buttonAxisStateMap[id];
-            var $1 = $('#'+id);
-            $1.toggleClass("pure-button-primary");
             printLogButtonAxis("#1 buttonState: " + buttonState.toString());
-            printLogButtonAxis("buttonState.getState()==='show'" + (buttonState.getState()==='show'));
-            printLogButtonAxis("buttonState.getState()==='hide'" + (buttonState.getState()==='hide'));
+            printLogButtonAxis("buttonState.getState()==='show': " + (buttonState.getState()==='show'));
+            printLogButtonAxis("buttonState.getState()==='hide': " + (buttonState.getState()==='hide'));
+
+            var numberSelected = getNumberSelected();
+            printLogButtonAxis('numberSelected: ' + numberSelected);
             if (buttonState.getState()==='show') {
                 buttonAxisStateMap[id] = new ButtonState('hide', key, 0);
+                numberSelected--;
             }
             else if (buttonState.getState()==='hide') {
+                if (numberSelected>1) {
+                    return;
+                }
                 buttonAxisStateMap[id] = new ButtonState('show', key, 0);
+                numberSelected++;
             }
             else {
                 console.warn('Unknown state: ' + buttonState.getState())
             }
-            printLogButtonAxis("#2 buttonState: " + buttonState.toString());
-            printLogButtonAxis('#2 buttonAxisStateMap.hasOwnProperty(id): ' + buttonAxisStateMap.hasOwnProperty(id));
 
-            $( '#fragment-console-table' ).empty();
-            var url;
-            var anySelected = isAnySelected();
-            printLogButtonAxis('anySelected: ' + anySelected+', state: ' + buttonAxisStateMap[id].state );
-            if (anySelected) {
-                paramFilter = paramsForUrl();
+            $('#'+id).toggleClass("pure-button-primary");
+            isDrawEnabled = (numberSelected===2);
+            $('#button-draw-plot').toggleClass("pure-button-primary", (numberSelected===1));
+            $('#fragment-console-table' ).empty();
+            if (numberSelected>0) {
+                paramFilterAxis = paramsForUrlAxis();
             }
             else {
-                paramFilter = ',';
+                paramFilterAxis = ',';
             }
-            url = '/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
-            printLogButtonAxis('url: '+ url);
-            $.post(url, table);
-            printLogButtonAxis('');
-            return false;
+
+            currentState();
+            printLogButtonAxis("#2 buttonState: " + buttonState.toString());
+            printLogButtonAxis('#2 buttonAxisStateMap.hasOwnProperty(id): ' + buttonAxisStateMap.hasOwnProperty(id));
+            printLogButtonAxis('numberSelected: ' + numberSelected);
+            printLogButtonAxis('paramFilterAxis: ' + paramFilterAxis);
+
+        }
+
+        function drawPlot() {
+            if (isDrawEnabled) {
+                var url = '/launchpad/experiment-feature-plot-data-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilterAxis + '/part';
+                $.post(url, function(data ) {
+
+                    x1 = data['x'];
+                    y1 = data['y'];
+                    z1 = data['z'];
+
+                    var data_plot = {x:x1, y:y1, z: z1, type: 'surface'};
+
+                    // Plotting the surfaces
+                    Plotly.newPlot('plot-place', [data_plot], layout);
+                });
+            }
         }
 
         /**
@@ -240,7 +260,6 @@
             printLogButton('url: '+ url);
             $.post(url, table);
             printLogButton('');
-            return false;
         }
 
         /**
@@ -288,6 +307,19 @@
             }
         }
 
+        function paramsForUrlAxis() {
+            var suffix = '';
+            Object.keys(buttonAxisStateMap).forEach(
+                function(key) {
+                    var buttonState = buttonAxisStateMap[key];
+                    if (buttonState.state==='show') {
+                        suffix += ( buttonState.key + ',');
+                    }
+                }
+            );
+            return suffix;
+        }
+
         function paramsForUrl() {
             var suffix = '';
             Object.keys(buttonStateMap).forEach(
@@ -309,13 +341,21 @@
             Object.keys(buttonAxisStateMap).forEach(
                 function(key) {
                     var buttonState = buttonAxisStateMap[key];
-                    printLog('   key: ' + key+', ' + buttonState.toString()+', state: ' + buttonState.state+', buttonState.getState()===\'show\': ' + (buttonState.state==='show'));
                     if (buttonState.state==='show') {
                         num++;
                     }
                 }
             );
             return num;
+        }
+
+        function currentState() {
+            Object.keys(buttonAxisStateMap).forEach(
+                function(key) {
+                    var buttonState = buttonAxisStateMap[key];
+                    printLogButtonAxis('   key: ' + key+', ' + buttonState.toString()+', state: ' + buttonState.state+', buttonState.getState()===\'show\': ' + (buttonState.state==='show'));
+                }
+            );
         }
 
         /**
@@ -326,7 +366,7 @@
             Object.keys(buttonStateMap).forEach(
                 function(key) {
                     var buttonState = buttonStateMap[key];
-                    printLog('   key: ' + key+', ' + buttonState.toString()+', state: ' + buttonState.state+', buttonState.getState()===\'show\': ' + (buttonState.state==='show'));
+                    printLogButton('   key: ' + key+', ' + buttonState.toString()+', state: ' + buttonState.state+', buttonState.getState()===\'show\': ' + (buttonState.state==='show'));
                     if (buttonState.state==='show') {
                         b = true;
                     }
@@ -364,11 +404,6 @@
                 zaxis: {title: 'OD'}
             }
         };
-
-        // creating data objects..
-        var data_z1 = {x:x1, y:y1, z: z1, type: 'surface'};
-        // Plotting the surfaces..
-        // Plotly.newPlot('plot-place', [data_z1], layout);
 
     </script>
 
@@ -425,7 +460,7 @@
                                 <a class='pure-button' href="#" th:id="${'button-axis-'+g.index}"
                                    th:if="${e.list.size()>1}"
                                    th:onclick="${ 'switchButtonAxis(''button-axis-'+g.index + ''', ''' + e.key + ''' );' }"
-                                   title='Axis'>Axis for plotting</a>
+                                   th:text='Axis'>Axis for plotting</a>
                             </td>
                         </tr>
                     </tbody>
@@ -486,13 +521,24 @@
             <td width="20">&nbsp;</td>
             <td>
                 <h1 class="widget-header">As the graph</h1>
-                <table class="pure-table pure-table-bordered" id="fragment-metrics-graph-table" th:fragment="fragment-metrics-graph-table">
+                <table class="pure-table" id="fragment-metrics-graph-table" th:fragment="fragment-metrics-graph-table">
                     <tbody>
-                        <tr>
-                            <td width="800" height="800" id="plot-place">
-                                <!--<div id="plot-place" style="width:800px; height:800px;"></div>-->
-                            </td>
-                        </tr>
+                    <tr>
+                        <td width="200">
+                            <p id="axes-selected">Axes: </p>
+                        </td>
+                        <td style="border-left:0">
+                            <a class='pure-button' href="#" id='button-draw-plot'
+                               th:onclick="${ 'drawPlot();' }"
+                               th:text="${'Draw plot'}">Axis for plotting</a>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="800" id="plot-place" colspan="2">
+                            <!--<div id="plot-place" style="width:800px; height:800px;"></div>-->
+                        </td>
+                    </tr>
                     </tbody>
                 </table>
             </td>
