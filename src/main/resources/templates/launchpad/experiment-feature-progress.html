@@ -8,8 +8,8 @@
     <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
     <!--/*@thymesVar id="feature" type="aiai.ai.beans.ExperimentFeature"*/-->
     <!--/*@thymesVar id="consoleResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ConsoleResult"*/-->
-    <!--/*@thymesVar id="params" type="aiai.ai.launchpad.experiment.ExperimentsController.HyperParamResult"*/-->
-    <!--/*@thymesVar id="metrics" type="aiai.ai.launchpad.experiment.ExperimentsController.MetricsResult"*/-->
+    <!--/*@thymesVar id="params" type="aiai.ai.launchpad.experiment.ExperimentsService.HyperParamResult"*/-->
+    <!--/*@thymesVar id="metrics" type="aiai.ai.launchpad.experiment.ExperimentsService.MetricsResult"*/-->
 
     <script>
         var /*{boolean}*/ isDebug = false;
@@ -115,6 +115,7 @@
             else if (state==='hide') {
                 $('#metrics-main-p').hide();
                 $('#metrics-main-table').show();
+                Plotly.newPlot('plot-place', [data_z1], layout);
                 metricsStateMap[trId] = 'show'            }
             else {
                 console.warn('Unknown state: ' + state)
@@ -228,6 +229,41 @@
             return b;
         }
 
+        // Plotly stuff
+
+        x1 = ['A12', 'BC2', 109, 'E57', 'F13', 'G41'];
+        y1 = ['D12', 'EC4', 42, 'z01', 'y07', 'x17', 'u87', 't15', 'r91'];
+
+        z1 = [
+            [8.75,8.78,8.77,8.91,8.95,8.92],
+            [8.8,8.8,8.77,8.91,8.95,8.94],
+            [8.74,8.81,8.76,8.93,8.98,8.99],
+            [8.89,8.99,8.92,9.1,9.13,9.11],
+            [8.97,8.97,8.91,9.09,9.11,9.11],
+            [9.04,9.08,9.05,9.25,9.28,9.27],
+            [9,9.01,9,9.2,9.23,9.2],
+            [8.99,8.99,8.98,9.18,9.2,9.19],
+            [8.93,8.97,8.97,9.18,9.2,9.18]
+        ];
+
+        var layout = {
+            title: 'Ribbon Plot',
+            showlegend: false,
+            autosize: false,
+            width: 800,
+            height: 800,
+            scene: {
+                xaxis: {type: 'category', title: 'Sample #'},
+                yaxis: {type: 'category',title: 'Wavelength'},
+                zaxis: {title: 'OD'}
+            }
+        };
+
+        // creating data objects..
+        var data_z1 = {x:x1, y:y1, z: z1, type: 'surface'};
+        // Plotting the surfaces..
+        // Plotly.newPlot('plot-place', [data_z1], layout);
+
     </script>
 
 
@@ -335,10 +371,6 @@
                     </tr>
                     </tbody>
                 </table>
-                <p>&nbsp;</p>
-
-                <a class="pure-button pure-button-primary" href="experiment-info.html" th:href="${'/launchpad/experiment-info/' + experiment.id }">To experiment info</a>
-
             </td>
             <td width="20">&nbsp;</td>
             <td>
@@ -346,7 +378,9 @@
                 <table class="pure-table pure-table-bordered" id="fragment-metrics-graph-table" th:fragment="fragment-metrics-graph-table">
                     <tbody>
                         <tr>
-                            <td>Metrics graph</td>
+                            <td width="800" height="800" id="plot-place">
+                                <!--<div id="plot-place" style="width:800px; height:800px;"></div>-->
+                            </td>
                         </tr>
                     </tbody>
                 </table>

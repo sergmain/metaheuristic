@@ -112,6 +112,14 @@
 			<artifactId>jquery</artifactId>
 			<version>3.2.1</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.webjars.bower/plotly.js -->
+		<dependency>
+			<!--License	MIT-->
+			<groupId>org.webjars.bower</groupId>
+			<artifactId>plotly.js</artifactId>
+			<version>1.39.3</version>
+		</dependency>
+
 		<dependency>
 			<!--License	Apache 2.0-->
 			<groupId>org.webjars</groupId>
