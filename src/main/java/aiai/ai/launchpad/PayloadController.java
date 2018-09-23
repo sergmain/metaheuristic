@@ -25,7 +25,7 @@ import aiai.ai.launchpad.dataset.DatasetUtils;
 import aiai.ai.launchpad.snippet.SnippetVersion;
 import aiai.ai.repositories.DatasetGroupsRepository;
 import aiai.ai.repositories.SnippetRepository;
-import aiai.ai.utils.Checksum;
+import aiai.ai.utils.checksum.Checksum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
@@ -38,7 +38,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;

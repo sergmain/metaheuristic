@@ -17,7 +17,7 @@
 
 package aiai.ai.launchpad.dataset;
 
-import aiai.ai.utils.Checksum;
+import aiai.ai.utils.checksum.Checksum;
 
 import java.io.File;
 import java.io.FileInputStream;
