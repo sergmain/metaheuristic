@@ -28,10 +28,7 @@ import org.hibernate.annotations.LazyCollectionOption;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * User: Serg
@@ -132,15 +129,20 @@ public class Experiment implements Serializable {
     }
 
     public Map<String, Map<String, Integer>> getHyperParamsAsMap() {
-        final Map<String, Map<String, Integer>> paramByIndex = new HashMap<>();
+        return getHyperParamsAsMap(true);
+    }
+
+    public Map<String, Map<String, Integer>> getHyperParamsAsMap(boolean isFull) {
+        final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
         for (ExperimentHyperParams hyperParam : getHyperParams()) {
             ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
-            Map<String, Integer> map = new HashMap<>();
+            Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);
             for (int i = 0; i <ofVariants.values.size(); i++) {
                 String value = ofVariants.values.get(i);
 
-                map.put(hyperParam.getKey()+"-"+value, i);
+
+                map.put(isFull ? hyperParam.getKey()+'-'+value : value , i);
             }
         }
         return paramByIndex;

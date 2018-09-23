@@ -123,6 +123,16 @@ public class ExperimentService {
         public final List<MetricElement> metrics = new ArrayList<>();
     }
 
+    public static final PlotData EMPTY_PLOT_DATA = new PlotData();
+
+    @Data
+    @NoArgsConstructor
+    public static class PlotData {
+        public List<String> x = new ArrayList<>();
+        public List<String> y = new ArrayList<>();
+        public BigDecimal[][] z;
+    }
+
     private final Globals globals;
     private final ExperimentRepository experimentRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
@@ -412,9 +422,9 @@ public class ExperimentService {
         }
     }
 
-    List<Object> findExperimentSequenceForPlot(Experiment experiment, ExperimentFeature feature, String[] params) {
+    PlotData findExperimentSequenceForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
         if (experiment == null || feature == null) {
-            return Collections.emptyList();
+            return EMPTY_PLOT_DATA;
         } else {
             List<ExperimentSequence> selected;
             if (isEmpty(params)) {
@@ -422,13 +432,68 @@ public class ExperimentService {
             } else {
                 selected = findExperimentSequenceWithFilter(experiment, feature.getId(), params);
             }
-            return collectDataForPlotting(selected);
+            return collectDataForPlotting(experiment, selected, paramsAxis);
         }
     }
 
-    private List<Object> collectDataForPlotting(List<ExperimentSequence> selected) {
-        // TODO !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        return null;
+    private PlotData collectDataForPlotting(Experiment experiment, List<ExperimentSequence> selected, String[] paramsAxis) {
+        final PlotData data = new PlotData();
+        final List<String> paramCleared = new ArrayList<>();
+        for (String param : paramsAxis) {
+            if (StringUtils.isBlank(param)) {
+                continue;
+            }
+            if (!paramCleared.contains(param)) {
+                paramCleared.add(param);
+            }
+        }
+        if (paramCleared.size()!=2) {
+            throw new IllegalStateException("Wrong number of params for axes. Expected: 2, actual: " + paramCleared.size());
+        }
+        Map<String, Map<String, Integer>> map = experiment.getHyperParamsAsMap(false);
+        data.x.addAll(map.get(paramCleared.get(0)).keySet());
+        data.y.addAll(map.get(paramCleared.get(1)).keySet());
+
+        Map<String, Integer> mapX = new HashMap<>();
+        int idx=0;
+        for (String x : data.x) {
+            mapX.put(x, idx++);
+        }
+        Map<String, Integer> mapY = new HashMap<>();
+        idx=0;
+        for (String y : data.y) {
+            mapY.put(y, idx++);
+        }
+
+        data.z = new BigDecimal[data.x.size()][data.y.size()];
+        for (int i = 0; i < data.x.size(); i++) {
+            for (int j = 0; j < data.y.size(); j++) {
+                data.z[i][j] = BigDecimal.ZERO;
+            }
+        }
+
+        String metricKey = null;
+        for (ExperimentSequence sequence : selected) {
+
+            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(sequence.metrics) );
+            if (metricValues==null) {
+                continue;
+            }
+            if (metricKey==null) {
+                //noinspection LoopStatementThatDoesntLoop
+                for (Map.Entry<String, BigDecimal> entry : metricValues.values.entrySet()) {
+                    metricKey = entry.getKey();
+                    break;
+                }
+            }
+
+            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(sequence.getParams());
+            int idxX = mapX.get(sequenceYaml.hyperParams.get(paramCleared.get(0)));
+            int idxY = mapY.get(sequenceYaml.hyperParams.get(paramCleared.get(1)));
+            data.z[idxX][idxY] = data.z[idxX][idxY].add(metricValues.values.get(metricKey));
+        }
+
+        return data;
     }
 
 

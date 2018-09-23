@@ -196,9 +196,8 @@
 
         function drawPlot() {
             if (isDrawEnabled) {
-                var url = '/launchpad/experiment-feature-plot-data-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilterAxis + '/part';
+                var url = '/launchpad/experiment-feature-plot-data-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/' + paramFilterAxis + '/part';
                 printLogButtonAxis('url for plot data: ' + url);
-/*
                 $.post(url, function(data ) {
                     printLogButtonAxis('json for plotting:\n' + data);
                     x1 = data['x'];
@@ -210,11 +209,12 @@
                     // Plotting the surfaces
                     Plotly.newPlot('plot-place', [data_plot], layout);
                 });
-*/
+/*
                 var data_plot = {x:x1, y:y1, z: z1, type: 'surface'};
 
                 // Plotting the surfaces
                 Plotly.newPlot('plot-place', [data_plot], layout);
+*/
             }
         }
 
@@ -388,15 +388,15 @@
         ];
 
         var layout = {
-            title: 'Ribbon Plot',
+            title: 'Metrics',
             showlegend: false,
             autosize: false,
             width: 800,
             height: 800,
             scene: {
-                xaxis: {type: 'category', title: 'Sample #'},
-                yaxis: {type: 'category',title: 'Wavelength'},
-                zaxis: {title: 'OD'}
+                xaxis: {type: 'category', title: ''},
+                yaxis: {type: 'category', title: ''},
+                zaxis: {title: ''}
             }
         };
 

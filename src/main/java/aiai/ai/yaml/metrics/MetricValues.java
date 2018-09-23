@@ -21,9 +21,10 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Data
 public class MetricValues {
-    public Map<String, BigDecimal> values = new HashMap<>();
+    public LinkedHashMap<String, BigDecimal> values = new LinkedHashMap<>();
 }
