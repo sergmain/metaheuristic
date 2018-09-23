@@ -149,7 +149,7 @@
 		</dependency>
 
         <dependency>
-            <!--License	Apache 2.0-->
+            <!-- License Apache 2.0 -->
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
             <version>4.5.1</version>
@@ -186,6 +186,7 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <!-- License Apache 2.0 -->
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
 			<version>16.0.3</version>

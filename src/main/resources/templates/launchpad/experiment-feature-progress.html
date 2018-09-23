@@ -8,12 +8,13 @@
     <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
     <!--/*@thymesVar id="feature" type="aiai.ai.beans.ExperimentFeature"*/-->
     <!--/*@thymesVar id="consoleResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ConsoleResult"*/-->
-    <!--/*@thymesVar id="params" type="aiai.ai.launchpad.experiment.ExperimentsService.HyperParamResult"*/-->
-    <!--/*@thymesVar id="metrics" type="aiai.ai.launchpad.experiment.ExperimentsService.MetricsResult"*/-->
+    <!--/*@thymesVar id="params" type="aiai.ai.launchpad.experiment.ExperimentService.HyperParamResult"*/-->
+    <!--/*@thymesVar id="metrics" type="aiai.ai.launchpad.experiment.ExperimentService.MetricsResult"*/-->
 
     <script>
-        var /*{boolean}*/ isDebug = false;
+        var /*{boolean}*/ isDebug = true;
         var buttonStateMap = {};
+        var buttonAxisStateMap = {};
         var trStateMap = {};
         var metricsStateMap = {};
         var /*{string}*/ paramFilter = ',';
@@ -28,15 +29,15 @@
                     trStateMap = {};
 
                     var /*{string}*/ url = $(this).attr('href');
-                    printLog('url: ' + url);
+                    printLogMain('url: ' + url);
                     // /launchpad/experiment-feature-progress-part/82/428/,/part?page=1&size=10
                     var /*{string}*/ urlPart1 = url.substring(0, url.indexOf(',/part'));
                     var /*{string}*/ urlPart = urlPart1.substring(0, urlPart1.lastIndexOf('/'));
                     var /*{string}*/ urlParams = url.substring(url.indexOf('?'));
 
-                    printLog('urlPart: ' + urlPart+', urlParam: ' + urlParams);
+                    printLogMain('urlPart: ' + urlPart+', urlParam: ' + urlParams);
                     var /*{string}*/ urlFinal = urlPart + '/' + paramFilter + '/part' + urlParams;
-                    printLog('urlFinal: ' + urlFinal);
+                    printLogMain('urlFinal: ' + urlFinal);
 
                     $.post(urlFinal, table);
                     return false;
@@ -50,12 +51,12 @@
                     $.post( $1.attr('href'), function(data ) {
                         $( '#fragment-console-table' ).empty().append( data );
                         $( '#fragment-table' ).find('.ajax-elem-console').each(function () {
-                            printLog('origId: ' + origId);
+                            printLogMain('origId: ' + origId);
                             var $2 = $(this);
-                            printLog('$(this).id: ' + $2.attr('id'));
-                            printLog('$(this).class: ' + $2.attr('class'));
+                            printLogMain('$(this).id: ' + $2.attr('id'));
+                            printLogMain('$(this).class: ' + $2.attr('class'));
                             var newClass = origId===$2.attr('id') ?  'ajax-elem-console table-nav-button pure-button pure-button-selected' : 'ajax-elem-console table-nav-button pure-button';
-                            printLog('newClass: ' + newClass);
+                            printLogMain('newClass: ' + newClass);
                             $2.attr('class', newClass) ;
                         });
                     });
@@ -80,12 +81,12 @@
          * @param {int} order
          */
         function switchTr(trId, order) {
-            printLog("trId: " + trId+', order: ' + order+', trStateMap.hasOwnProperty(trId): ' + trStateMap.hasOwnProperty(trId));
+            printLogTr("trId: " + trId+', order: ' + order+', trStateMap.hasOwnProperty(trId): ' + trStateMap.hasOwnProperty(trId));
             if (!trStateMap.hasOwnProperty(trId)) {
                 trStateMap[trId] = order===1 ? 'hide' : 'show';
             }
             var state = trStateMap[trId];
-            printLog('state : ' + state);
+            printLogTr('state : ' + state);
             if (state==='show') {
                 $('#'+trId).hide();
                 trStateMap[trId] = 'hide'
@@ -96,7 +97,7 @@
             else {
                 console.warn('Unknown state: ' + state)
             }
-            printLog('trStateMap[trId] : ' + trStateMap[trId]);
+            printLogTr('trStateMap[trId] : ' + trStateMap[trId]);
         }
 
         function switchMetrics() {
@@ -106,7 +107,7 @@
                 metricsStateMap[trId] = 'hide';
             }
             var state = metricsStateMap[trId];
-            printLog('state : ' + state);
+            printLogMetrics('state : ' + state);
             if (state==='show') {
                 $('#metrics-main-p').show();
                 $('#metrics-main-table').hide();
@@ -120,7 +121,7 @@
             else {
                 console.warn('Unknown state: ' + state)
             }
-            printLog('metricsStateMap[trId] : ' + metricsStateMap[trId]);
+            printLogMetrics('metricsStateMap[trId] : ' + metricsStateMap[trId]);
         }
 
         /**
@@ -150,20 +151,69 @@
         /**
          * @param {string} id
          * @param {string} key
+         */
+        function switchButtonAxis(id, key) {
+            var numberSelected = getNumberSelected();
+            printLogButtonAxis('id: ' + id + ", numberSelected: " + numberSelected);
+            if (numberSelected>1) {
+                return false;
+            }
+            if (!buttonAxisStateMap.hasOwnProperty(id)) {
+                printLogButtonAxis('#1 buttonStateMap.hasOwnProperty(id): ' + buttonAxisStateMap.hasOwnProperty(id));
+                buttonAxisStateMap[id] = new ButtonState('hide', key, 0);
+            }
+            var buttonState = buttonAxisStateMap[id];
+            var $1 = $('#'+id);
+            $1.toggleClass("pure-button-primary");
+            printLogButtonAxis("#1 buttonState: " + buttonState.toString());
+            printLogButtonAxis("buttonState.getState()==='show'" + (buttonState.getState()==='show'));
+            printLogButtonAxis("buttonState.getState()==='hide'" + (buttonState.getState()==='hide'));
+            if (buttonState.getState()==='show') {
+                buttonAxisStateMap[id] = new ButtonState('hide', key, 0);
+            }
+            else if (buttonState.getState()==='hide') {
+                buttonAxisStateMap[id] = new ButtonState('show', key, 0);
+            }
+            else {
+                console.warn('Unknown state: ' + buttonState.getState())
+            }
+            printLogButtonAxis("#2 buttonState: " + buttonState.toString());
+            printLogButtonAxis('#2 buttonAxisStateMap.hasOwnProperty(id): ' + buttonAxisStateMap.hasOwnProperty(id));
+
+            $( '#fragment-console-table' ).empty();
+            var url;
+            var anySelected = isAnySelected();
+            printLogButtonAxis('anySelected: ' + anySelected+', state: ' + buttonAxisStateMap[id].state );
+            if (anySelected) {
+                paramFilter = paramsForUrl();
+            }
+            else {
+                paramFilter = ',';
+            }
+            url = '/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
+            printLogButtonAxis('url: '+ url);
+            $.post(url, table);
+            printLogButtonAxis('');
+            return false;
+        }
+
+        /**
+         * @param {string} id
+         * @param {string} key
          * @param {int} idx
          */
         function switchButton(id, key, idx) {
-            printLog('id: ' + id + ', key: ' + key + ', idx: ' + idx);
+            printLogButton('id: ' + id + ', key: ' + key + ', idx: ' + idx);
             if (!buttonStateMap.hasOwnProperty(id)) {
-                printLog('#1 buttonStateMap.hasOwnProperty(id): ' + buttonStateMap.hasOwnProperty(id));
+                printLogButton('#1 buttonStateMap.hasOwnProperty(id): ' + buttonStateMap.hasOwnProperty(id));
                 buttonStateMap[id] = new ButtonState('hide', key, idx);
             }
             var buttonState = buttonStateMap[id];
             var $1 = $('#'+id);
             $1.toggleClass("pure-button-primary");
-            printLog("#1 buttonState: " + buttonState.toString());
-            printLog("buttonState.getState()==='show'" + (buttonState.getState()==='show'));
-            printLog("buttonState.getState()==='hide'" + (buttonState.getState()==='hide'));
+            printLogButton("#1 buttonState: " + buttonState.toString());
+            printLogButton("buttonState.getState()==='show'" + (buttonState.getState()==='show'));
+            printLogButton("buttonState.getState()==='hide'" + (buttonState.getState()==='hide'));
             if (buttonState.getState()==='show') {
                 buttonStateMap[id] = new ButtonState('hide', key, idx);
             }
@@ -173,13 +223,13 @@
             else {
                 console.warn('Unknown state: ' + buttonState.getState())
             }
-            printLog("#2 buttonState: " + buttonState.toString());
-            printLog('#2 buttonStateMap.hasOwnProperty(id): ' + buttonStateMap.hasOwnProperty(id));
+            printLogButton("#2 buttonState: " + buttonState.toString());
+            printLogButton('#2 buttonStateMap.hasOwnProperty(id): ' + buttonStateMap.hasOwnProperty(id));
 
             $( '#fragment-console-table' ).empty();
             var url;
             var anySelected = isAnySelected();
-            printLog('anySelected: ' + anySelected+', state: ' + buttonStateMap[id].state + ', idx: ' +buttonStateMap[id].idx);
+            printLogButton('anySelected: ' + anySelected+', state: ' + buttonStateMap[id].state + ', idx: ' +buttonStateMap[id].idx);
             if (anySelected) {
                 paramFilter = paramsForUrl();
             }
@@ -187,15 +237,54 @@
                 paramFilter = ',';
             }
             url = '/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
-            printLog('url: '+ url);
+            printLogButton('url: '+ url);
             $.post(url, table);
-            printLog('');
+            printLogButton('');
             return false;
         }
 
-        function printLog( s ) {
+        /**
+         * @param {string} s
+         */
+        function printLogMain( s ) {
+            printLog('MAIN', s );
+        }
+
+        /**
+         * @param {string} s
+         */
+        function printLogMetrics( s ) {
+            printLog('METRICS', s );
+        }
+
+        /**
+         * @param {string} s
+         */
+        function printLogTr( s ) {
+            printLog('TR', s );
+        }
+
+        /**
+         * @param {string} s
+         */
+        function printLogButton( s ) {
+            printLog('BUTTON', s );
+        }
+
+        /**
+         * @param {string} s
+         */
+        function printLogButtonAxis( s ) {
+            printLog('BUTTON-AXIS', s );
+        }
+
+        /**
+         * @param {string} tag
+         * @param {string} s
+         */
+        function printLog(tag, s ) {
             if (isDebug) {
-                console.log(s);
+                console.log(tag+', '+ s);
             }
         }
 
@@ -210,6 +299,23 @@
                 }
             );
             return suffix;
+        }
+
+        /**
+         * @return {int}
+         */
+        function getNumberSelected() {
+            var num = 0;
+            Object.keys(buttonAxisStateMap).forEach(
+                function(key) {
+                    var buttonState = buttonAxisStateMap[key];
+                    printLog('   key: ' + key+', ' + buttonState.toString()+', state: ' + buttonState.state+', buttonState.getState()===\'show\': ' + (buttonState.state==='show'));
+                    if (buttonState.state==='show') {
+                        num++;
+                    }
+                }
+            );
+            return num;
         }
 
         /**
@@ -292,10 +398,11 @@
                         <th>Hyper param name</th>
                         <th></th>
                         <th>Hyper param values</th>
+                        <th>X,Y axes for plotting</th>
                     </tr>
                     </thead>
                     <tbody>
-                        <tr th:each="e : ${params.elements}" valign="top">
+                        <tr th:each="e, g : ${params.elements}" valign="top">
                             <td th:text="${e.key}">Hyper param key</td>
                             <td width="20">&nbsp;</td>
                             <td th:if="${not e.isSelectable()}" th:text="${e.list[0].param}">Just value</td>
@@ -304,8 +411,6 @@
                                     <tbody>
                                     <tr valign="top">
                                         <div th:remove="tag" th:each="l,idx : ${e.list}" >
-                                            <!--pure-button-disabled-->
-                                            <!--pure-button-primary-->
                                             <a class='pure-button' href="#"
                                                th:id="${'button-param-'+e.key+'-'+l.param}"
                                                th:onclick="${ 'switchButton(''button-param-'+e.key+'-' + l.param + ''', ''' + e.key + ''', ' + idx.index + ');' }"
@@ -315,6 +420,12 @@
                                     </tr>
                                     </tbody>
                                 </table>
+                            </td>
+                            <td>
+                                <a class='pure-button' href="#" th:id="${'button-axis-'+g.index}"
+                                   th:if="${e.list.size()>1}"
+                                   th:onclick="${ 'switchButtonAxis(''button-axis-'+g.index + ''', ''' + e.key + ''' );' }"
+                                   title='Axis'>Axis for plotting</a>
                             </td>
                         </tr>
                     </tbody>
