@@ -89,13 +89,17 @@ public class SequenceProcessor {
                 if (!isInit) {
                     return null;
                 }
-                return experimentState.getOrDefault(experimentId, Enums.ExperimentExecState.NONE);
+                return experimentState.getOrDefault(experimentId, Enums.ExperimentExecState.DOESNT_EXIST);
             }
         }
 
+        boolean isState(long experimentId, Enums.ExperimentExecState state) {
+            Enums.ExperimentExecState currState = getState(experimentId);
+            return currState!=null && currState==state;
+        }
+
         boolean isStarted(long experimentId) {
-            final Enums.ExperimentExecState state = getState(experimentId);
-            return state == Enums.ExperimentExecState.STARTED;
+            return isState(experimentId, Enums.ExperimentExecState.STARTED);
         }
     }
 

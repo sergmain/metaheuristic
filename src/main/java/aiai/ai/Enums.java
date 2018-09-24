@@ -19,7 +19,12 @@ package aiai.ai;
 
 public final class Enums {
     public enum ExperimentExecState {
-        NONE(0), STARTED(1), STOPPED(2), FINISHED(3);
+        NONE(0),            // just created experiment
+        STARTED(1),         // started
+        STOPPED(2),         // stopped
+        FINISHED(3),        // finished
+        DOESNT_EXIST(4);    // doesn't exist. this state is needed at station side to reconsile list of experiments
+
         public int code;
 
         ExperimentExecState(int code) {
@@ -36,6 +41,8 @@ public final class Enums {
                     return STOPPED;
                 case 3:
                     return FINISHED;
+                case 4:
+                    return DOESNT_EXIST;
                 default:
                     return null;
             }

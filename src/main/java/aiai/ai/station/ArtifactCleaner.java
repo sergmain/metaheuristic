@@ -17,7 +17,12 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.beans.StationExperimentSequence;
+import aiai.ai.repositories.StationExperimentSequenceRepository;
+import aiai.ai.yaml.sequence.SequenceYaml;
+import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
@@ -31,10 +36,14 @@ import java.nio.file.Path;
 @Slf4j
 public class ArtifactCleaner {
 
+    private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
+    private final SequenceYamlUtils sequenceYamlUtils;
     private final SequenceProcessor sequenceProcessor;
     private final Globals globals;
 
-    public ArtifactCleaner(SequenceProcessor sequenceProcessor, Globals globals) {
+    public ArtifactCleaner(StationExperimentSequenceRepository stationExperimentSequenceRepository, SequenceYamlUtils sequenceYamlUtils, SequenceProcessor sequenceProcessor, Globals globals) {
+        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
+        this.sequenceYamlUtils = sequenceYamlUtils;
         this.sequenceProcessor = sequenceProcessor;
         this.globals = globals;
     }
@@ -43,6 +52,14 @@ public class ArtifactCleaner {
         if (!globals.isStationEnabled || !sequenceProcessor.STATE.isInit) {
             // don't delete anything until station will receive the list of actual experiments
             return;
+        }
+
+        for (StationExperimentSequence seq : stationExperimentSequenceRepository.findAll()) {
+            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
+            if (sequenceProcessor.STATE.isState(sequenceYaml.experimentId, Enums.ExperimentExecState.DOESNT_EXIST)) {
+                log.info("Delete obsolete sequence {}", seq);
+                stationExperimentSequenceRepository.deleteById(seq.getId());
+            }
         }
 
         try {
@@ -60,13 +77,11 @@ public class ArtifactCleaner {
                         FileUtils.deleteQuietly(file);
                     }
             );
-
         }
         catch (IOException e) {
+            log.error("Erorr", e);
             throw new RuntimeException("erorr", e);
         }
-
-
     }
 
 }

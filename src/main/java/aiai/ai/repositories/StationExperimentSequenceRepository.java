@@ -20,6 +20,7 @@ package aiai.ai.repositories;
 import aiai.ai.beans.StationExperimentSequence;
 import aiai.ai.beans.StationMetadata;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
@@ -36,4 +37,5 @@ public interface StationExperimentSequenceRepository extends CrudRepository<Stat
     List<StationExperimentSequence> findAllByFinishedOnIsNotNullAndIsReportedIsFalse();
 
     StationExperimentSequence findByExperimentSequenceId(long id);
+
 }
