@@ -19,6 +19,7 @@ package aiai.ai.yaml;
 
 import aiai.ai.beans.ExperimentSequence;
 import aiai.ai.repositories.ExperimentSequenceRepository;
+import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.Metrics;
 import aiai.ai.yaml.metrics.MetricsUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +30,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.StringReader;
 
@@ -43,12 +45,25 @@ public class TestFixingMetricsYaml {
 
     @Test
     public void fix() {
-        Iterable<ExperimentSequence> seqs = experimentSequenceRepository.findByExperimentId(108);
+        Iterable<ExperimentSequence> seqs = experimentSequenceRepository.findByExperimentId(105);
         for (ExperimentSequence seq : seqs) {
             Metrics metrics = MetricsUtils.to(seq.metrics);
             if (metrics==null || metrics.getStatus()!= Metrics.Status.Ok) {
                 continue;
             }
+
+            boolean isOk = true;
+            try {
+                MetricValues metricValues = MetricsUtils.getValues(metrics);
+            }
+            catch (YAMLException e) {
+                isOk = false;
+            }
+            if (isOk) {
+                continue;
+            }
+            log.info("update seq: " + seq);
+
 
             String s = metrics.getMetrics();
             LineIterator iterator = IOUtils.lineIterator(new StringReader(s));
@@ -61,8 +76,7 @@ public class TestFixingMetricsYaml {
             }
             metrics.setMetrics(builder.toString());
             seq.setMetrics( MetricsUtils.toString(metrics));
-            log.info("update seq: " + seq);
-//            experimentSequenceRepository.save(seq);
+            experimentSequenceRepository.save(seq);
         }
     }
 
