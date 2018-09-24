@@ -43,7 +43,7 @@ public class TestFixingMetricsYaml {
 
     @Test
     public void fix() {
-        Iterable<ExperimentSequence> seqs = experimentSequenceRepository.findAll();
+        Iterable<ExperimentSequence> seqs = experimentSequenceRepository.findByExperimentId(108);
         for (ExperimentSequence seq : seqs) {
             Metrics metrics = MetricsUtils.to(seq.metrics);
             if (metrics==null || metrics.getStatus()!= Metrics.Status.Ok) {
@@ -52,12 +52,12 @@ public class TestFixingMetricsYaml {
 
             String s = metrics.getMetrics();
             LineIterator iterator = IOUtils.lineIterator(new StringReader(s));
-            iterator.next();
+//            iterator.next();
             StringBuilder builder = new StringBuilder("values:\n");
             while (iterator.hasNext()) {
                 String line = iterator.next();
-//                builder.append("    ").append(line).append("\n");
-                builder.append(line).append("\n");
+                builder.append("    ").append(line).append("\n");
+//                builder.append(line).append("\n");
             }
             metrics.setMetrics(builder.toString());
             seq.setMetrics( MetricsUtils.toString(metrics));

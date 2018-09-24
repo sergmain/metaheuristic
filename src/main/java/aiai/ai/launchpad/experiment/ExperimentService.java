@@ -392,7 +392,7 @@ public class ExperimentService {
         for (ExperimentSequence seq : seqs) {
             boolean isFound = false;
             for (Protocol.StationSequenceStatus.SimpleStatus status : statuses) {
-                if (status.experimentSequencId==seq.getId()) {
+                if (status.experimentSequenceId ==seq.getId()) {
                     isFound = true;
                 }
             }
@@ -465,9 +465,9 @@ public class ExperimentService {
             mapY.put(y, idx++);
         }
 
-        data.z = new BigDecimal[data.x.size()][data.y.size()];
-        for (int i = 0; i < data.x.size(); i++) {
-            for (int j = 0; j < data.y.size(); j++) {
+        data.z = new BigDecimal[data.y.size()][data.x.size()];
+        for (int i = 0; i < data.y.size(); i++) {
+            for (int j = 0; j < data.x.size(); j++) {
                 data.z[i][j] = BigDecimal.ZERO;
             }
         }
@@ -490,7 +490,7 @@ public class ExperimentService {
             final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(sequence.getParams());
             int idxX = mapX.get(sequenceYaml.hyperParams.get(paramCleared.get(0)));
             int idxY = mapY.get(sequenceYaml.hyperParams.get(paramCleared.get(1)));
-            data.z[idxX][idxY] = data.z[idxX][idxY].add(metricValues.values.get(metricKey));
+            data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
         }
 
         return data;

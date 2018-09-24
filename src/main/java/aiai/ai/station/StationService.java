@@ -84,6 +84,7 @@ public class StationService {
     public void createSequence(Protocol.AssignedExperimentSequence.SimpleSequence sequence) {
         StationExperimentSequence seq = stationExperimentSequenceRepository.findByExperimentSequenceId(sequence.getExperimentSequenceId());
         // this can happen when launchpad's db was completely reinitialized  but station's db wasn't
+        // or when user decided to re-run sequence manually
         if (seq!=null) {
             stationExperimentSequenceRepository.delete(seq);
         }

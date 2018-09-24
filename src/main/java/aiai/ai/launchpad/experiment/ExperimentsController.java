@@ -20,6 +20,7 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.beans.*;
 import aiai.ai.launchpad.snippet.SnippetType;
@@ -613,6 +614,41 @@ public class ExperimentsController {
         }
 
         return "redirect:/launchpad/experiments";
+    }
+
+    @PostMapping("/experiment-sequence-rerun/{id}")
+    public @ResponseBody boolean rerunSequence(@PathVariable long id) {
+        ExperimentSequence seq = experimentSequenceRepository.findById(id).orElse(null);
+        if (seq == null) {
+            return false;
+        }
+        ExperimentFeature feature = experimentFeatureRepository.findById(seq.featureId).orElse(null);
+        if (feature == null) {
+            return false;
+        }
+        Experiment experiment = experimentRepository.findById(seq.getExperimentId()).orElse(null);
+        if (experiment == null) {
+            return false;
+        }
+
+        seq.setCompletedOn(null);
+        seq.setCompleted(false);
+        seq.setMetrics(null);
+        seq.setAllSnippetsOk(false);
+        seq.setSnippetExecResults(null);
+        seq.setStationId(null);
+        seq.setAssignedOn(null);
+        experimentSequenceRepository.save(seq);
+
+        feature.setExecStatus(FeatureExecStatus.unknown.code);
+        feature.setFinished(false);
+        feature.setInProgress(true);
+        experimentFeatureRepository.save(feature);
+
+        experiment.setExecState(Enums.ExperimentExecState.STOPPED.code);
+        experimentRepository.save(experiment);
+
+        return true;
     }
 
     @GetMapping("/experiment-launch/{experimentId}")
