@@ -17,8 +17,8 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.beans.ExperimentSequence;
-import aiai.ai.repositories.ExperimentSequenceRepository;
+import aiai.ai.launchpad.beans.ExperimentSequence;
+import aiai.ai.launchpad.repositories.ExperimentSequenceRepository;
 import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.Metrics;
 import aiai.ai.yaml.metrics.MetricsUtils;

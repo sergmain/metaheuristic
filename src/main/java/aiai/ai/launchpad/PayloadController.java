@@ -19,12 +19,12 @@
 package aiai.ai.launchpad;
 
 import aiai.ai.Globals;
-import aiai.ai.beans.DatasetGroup;
-import aiai.ai.beans.Snippet;
+import aiai.ai.launchpad.beans.DatasetGroup;
+import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.dataset.DatasetUtils;
 import aiai.ai.launchpad.snippet.SnippetVersion;
-import aiai.ai.repositories.DatasetGroupsRepository;
-import aiai.ai.repositories.SnippetRepository;
+import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.utils.checksum.Checksum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.AbstractResource;

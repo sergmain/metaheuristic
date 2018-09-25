@@ -18,11 +18,11 @@
 package aiai.ai.station;
 
 import aiai.ai.Globals;
-import aiai.ai.beans.StationExperimentSequence;
-import aiai.ai.beans.StationMetadata;
+import aiai.ai.station.beans.StationExperimentSequence;
+import aiai.ai.station.beans.StationMetadata;
 import aiai.ai.comm.Protocol;
-import aiai.ai.repositories.StationExperimentSequenceRepository;
-import aiai.ai.repositories.StationMetadataRepository;
+import aiai.ai.station.repositories.StationExperimentSequenceRepository;
+import aiai.ai.station.repositories.StationMetadataRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;

@@ -17,9 +17,9 @@
  */
 package aiai.ai.station;
 
-import aiai.ai.beans.StationExperimentSequence;
+import aiai.ai.station.beans.StationExperimentSequence;
 import aiai.ai.comm.Protocol;
-import aiai.ai.repositories.StationExperimentSequenceRepository;
+import aiai.ai.station.repositories.StationExperimentSequenceRepository;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import lombok.extern.slf4j.Slf4j;

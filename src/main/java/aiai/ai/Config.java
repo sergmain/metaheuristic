@@ -17,15 +17,27 @@
 
 package aiai.ai;
 
+import aiai.ai.launchpad.repositories.DatasetRepository;
+import aiai.ai.station.repositories.StationExperimentSequenceRepository;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.scheduling.annotation.SchedulingConfigurer;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.scheduling.config.ScheduledTaskRegistrar;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
 
 /**
  * User: Serg
@@ -33,7 +45,6 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
  * Time: 17:21
  */
 @Configuration
-@EnableJpaRepositories(basePackages = {"aiai.ai.repositories"})
 @EnableTransactionManagement
 public class Config {
 
@@ -43,10 +54,92 @@ public class Config {
         this.globals = globals;
     }
 
+    @Configuration
+    @EnableTransactionManagement
+    @EnableJpaRepositories(basePackageClasses = { DatasetRepository.class })
+    public class LaunchpadDbConfig {
+
+        private final Environment env;
+
+        @Autowired
+        public LaunchpadDbConfig(Environment env) {
+            this.env = env;
+        }
+
+        @Primary
+        @Bean(name = "dataSource")
+        @ConfigurationProperties(prefix = "spring.datasource")
+        public DataSource customDataSource() {
+
+            DriverManagerDataSource dataSource = new DriverManagerDataSource();
+            dataSource.setDriverClassName(env.getProperty("spring.datasource.driver-class-name"));
+            dataSource.setUrl(env.getProperty("spring.datasource.url"));
+            dataSource.setUsername(env.getProperty("spring.datasource.username"));
+            dataSource.setPassword(env.getProperty("spring.datasource.password"));
+
+            return dataSource;
+        }
+
+        @Primary
+        @Bean(name = "entityManagerFactory")
+        public LocalContainerEntityManagerFactoryBean entityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("dataSource") DataSource dataSource) {
+            return builder
+                    .dataSource(dataSource)
+                    .packages("aiai.ai.launchpad.beans")
+                    .persistenceUnit("launchpad")
+                    .build();
+        }
+
+        @Primary
+        @Bean(name = "transactionManager")
+        public PlatformTransactionManager transactionManager(@Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
+            return new JpaTransactionManager(entityManagerFactory);
+        }
+    }
+
+    @Configuration
+    @EnableTransactionManagement
+    @EnableJpaRepositories(entityManagerFactoryRef = "stationEntityManagerFactory", transactionManagerRef = "stationTransactionManager", basePackageClasses = { StationExperimentSequenceRepository.class })
+    public class StationDbConfig {
+
+        private final Environment env;
+
+        public StationDbConfig(Environment env) {
+            this.env = env;
+        }
+
+        @Bean(name = "stationDataSource")
+        @ConfigurationProperties(prefix = "station.datasource")
+        public DataSource dataSource() {
+            DriverManagerDataSource dataSource = new DriverManagerDataSource();
+            dataSource.setDriverClassName(env.getProperty("station.datasource.driver-class-name"));
+            dataSource.setUrl(env.getProperty("station.datasource.url"));
+            dataSource.setUsername(env.getProperty("station.datasource.username"));
+            dataSource.setPassword(env.getProperty("station.datasource.password"));
+            return dataSource;
+        }
+
+        @Bean(name = "stationEntityManagerFactory")
+        public LocalContainerEntityManagerFactoryBean stationEntityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("stationDataSource") DataSource dataSource) {
+            return builder
+                    .dataSource(dataSource)
+                    .packages("aiai.ai.station.beans")
+                    .persistenceUnit("station")
+                    .build();
+        }
+
+        @Bean(name = "stationTransactionManager")
+        public PlatformTransactionManager stationTransactionManager(@Qualifier("stationEntityManagerFactory") EntityManagerFactory stationEntityManagerFactory) {
+            return new JpaTransactionManager(stationEntityManagerFactory);
+        }
+    }
+
     @Bean
     public LayoutDialect layoutDialect() {
         return new LayoutDialect();
     }
+
+    // https://medium.com/@joeclever/using-multiple-datasources-with-spring-boot-and-spring-data-6430b00c02e7
 
 /*
     TODO 20018-08-24 If everything will be fine, then delete this inner class
@@ -69,6 +162,9 @@ public class Config {
         threadPoolTaskScheduler.setPoolSize(globals.threadNumber);
         return threadPoolTaskScheduler;
     }
+
+
+
 
 
 

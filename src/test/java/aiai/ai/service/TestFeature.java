@@ -19,7 +19,7 @@ package aiai.ai.service;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.beans.*;
+import aiai.ai.launchpad.beans.*;
 import aiai.ai.comm.CommandProcessor;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
@@ -28,7 +28,7 @@ import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.ai.launchpad.snippet.SnippetType;
-import aiai.ai.repositories.*;
+import aiai.ai.launchpad.repositories.*;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.metrics.MetricsUtils;

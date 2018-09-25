@@ -17,10 +17,10 @@
 
 package aiai.ai.db;
 
-import aiai.ai.beans.LogData;
-import aiai.ai.beans.Dataset;
-import aiai.ai.repositories.DatasetRepository;
-import aiai.ai.repositories.LogDataRepository;
+import aiai.ai.launchpad.beans.LogData;
+import aiai.ai.launchpad.beans.Dataset;
+import aiai.ai.launchpad.repositories.DatasetRepository;
+import aiai.ai.launchpad.repositories.LogDataRepository;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

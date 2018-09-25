@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration
 @EnableTransactionManagement
-@ComponentScan("aiai.ai.repositories")
+@ComponentScan("aiai.ai.launchpad.repositories")
 public class TestDatasetDefinition {
 
     // just stub for future tests

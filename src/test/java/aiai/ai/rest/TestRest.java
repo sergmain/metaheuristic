@@ -18,13 +18,13 @@
 package aiai.ai.rest;
 
 import aiai.ai.Consts;
-import aiai.ai.beans.InviteResult;
-import aiai.ai.beans.Station;
+import aiai.ai.launchpad.beans.InviteResult;
+import aiai.ai.launchpad.beans.Station;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.JsonUtils;
-import aiai.ai.repositories.StationsRepository;
+import aiai.ai.launchpad.repositories.StationsRepository;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

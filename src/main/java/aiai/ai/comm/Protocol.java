@@ -18,7 +18,7 @@
 package aiai.ai.comm;
 
 import aiai.ai.Enums;
-import aiai.ai.beans.InviteResult;
+import aiai.ai.launchpad.beans.InviteResult;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;

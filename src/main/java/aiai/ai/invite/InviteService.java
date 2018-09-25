@@ -17,7 +17,7 @@
 
 package aiai.ai.invite;
 
-import aiai.ai.beans.InviteResult;
+import aiai.ai.launchpad.beans.InviteResult;
 import org.springframework.stereotype.Service;
 
 @Service

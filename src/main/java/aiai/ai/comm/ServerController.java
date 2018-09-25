@@ -18,10 +18,10 @@
 package aiai.ai.comm;
 
 import aiai.ai.Enums;
-import aiai.ai.beans.Experiment;
-import aiai.ai.beans.Station;
-import aiai.ai.repositories.ExperimentRepository;
-import aiai.ai.repositories.StationsRepository;
+import aiai.ai.launchpad.beans.Experiment;
+import aiai.ai.launchpad.beans.Station;
+import aiai.ai.launchpad.repositories.ExperimentRepository;
+import aiai.ai.launchpad.repositories.StationsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.Contract;

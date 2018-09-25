@@ -18,8 +18,8 @@
 package aiai.ai.station;
 
 import aiai.ai.Globals;
-import aiai.ai.beans.StationExperimentSequence;
-import aiai.ai.repositories.StationExperimentSequenceRepository;
+import aiai.ai.station.beans.StationExperimentSequence;
+import aiai.ai.station.repositories.StationExperimentSequenceRepository;
 import aiai.ai.station.actors.DownloadDatasetActor;
 import aiai.ai.station.actors.DownloadFeatureActor;
 import aiai.ai.station.actors.DownloadSnippetActor;

@@ -18,11 +18,11 @@
 package aiai.ai.service;
 
 import aiai.ai.Globals;
-import aiai.ai.beans.Dataset;
-import aiai.ai.beans.DatasetGroup;
+import aiai.ai.launchpad.beans.Dataset;
+import aiai.ai.launchpad.beans.DatasetGroup;
 import aiai.ai.core.ArtifactStatus;
-import aiai.ai.repositories.DatasetGroupsRepository;
-import aiai.ai.repositories.DatasetRepository;
+import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
+import aiai.ai.launchpad.repositories.DatasetRepository;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

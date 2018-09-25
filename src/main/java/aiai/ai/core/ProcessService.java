@@ -17,8 +17,8 @@
  */
 package aiai.ai.core;
 
-import aiai.ai.beans.LogData;
-import aiai.ai.repositories.LogDataRepository;
+import aiai.ai.launchpad.beans.LogData;
+import aiai.ai.launchpad.repositories.LogDataRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

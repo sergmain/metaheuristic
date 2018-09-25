@@ -17,7 +17,7 @@
 
 package aiai.ai.sec;
 
-import aiai.ai.beans.Account;
+import aiai.ai.launchpad.beans.Account;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,8 +26,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-
-import java.math.BigInteger;
 
 /**
  * User: Serg

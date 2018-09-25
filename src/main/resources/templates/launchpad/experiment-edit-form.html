@@ -57,7 +57,7 @@
         <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
         <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ExperimentResult"*/-->
-        <!--/*@thymesVar id="experiment" type="aiai.ai.beans.Experiment"*/-->
+        <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
         <!--/*@thymesVar id="simpleExperiment" type="aiai.ai.launchpad.experiment.ExperimentsController.SimpleExperiment"*/-->
         <form class="pure-form pure-form-stacked" th:object="${simpleExperiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment-edit-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <input type="hidden" th:field="*{id}"/>

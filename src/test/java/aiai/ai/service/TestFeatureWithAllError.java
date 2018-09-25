@@ -17,7 +17,7 @@
  */
 package aiai.ai.service;
 
-import aiai.ai.beans.*;
+import aiai.ai.launchpad.beans.*;
 import aiai.ai.comm.CommandProcessor;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import org.junit.Test;

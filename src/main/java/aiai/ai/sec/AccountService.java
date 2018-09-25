@@ -17,8 +17,8 @@
 
 package aiai.ai.sec;
 
-import aiai.ai.beans.Account;
-import aiai.ai.repositories.AccountRepository;
+import aiai.ai.launchpad.beans.Account;
+import aiai.ai.launchpad.repositories.AccountRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;

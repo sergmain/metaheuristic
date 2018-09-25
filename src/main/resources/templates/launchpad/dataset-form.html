@@ -9,7 +9,7 @@
         <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
         <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
-        <!--/*@thymesVar id="dataset" type="aiai.ai.beans.Dataset"*/-->
+        <!--/*@thymesVar id="dataset" type="aiai.ai.launchpad.beans.Dataset"*/-->
         <form class="pure-form pure-form-stacked" th:object="${dataset}" method="post" action="#" th:method="POST" th:action="@{/launchpad/dataset-form-commit}" accept-charset="UTF-8" id="dataset-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <input type="hidden" th:field="*{version}"/>

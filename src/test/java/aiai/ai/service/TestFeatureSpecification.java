@@ -17,13 +17,9 @@
  */
 package aiai.ai.service;
 
-import aiai.ai.beans.ExperimentFeature;
-import aiai.ai.comm.CommandProcessor;
-import aiai.ai.launchpad.experiment.ExperimentService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static org.junit.Assert.*;

@@ -17,10 +17,10 @@
 
 package aiai.ai.comm;
 
-import aiai.ai.beans.Station;
+import aiai.ai.launchpad.beans.Station;
 import aiai.ai.invite.InviteService;
 import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.repositories.StationsRepository;
+import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.station.SequenceProcessor;
 import aiai.ai.station.StationService;
 import lombok.extern.slf4j.Slf4j;

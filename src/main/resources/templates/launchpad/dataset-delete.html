@@ -9,7 +9,7 @@
         <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
         <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
-        <!--/*@thymesVar id="dataset" type="aiai.ai.beans.Dataset"*/-->
+        <!--/*@thymesVar id="dataset" type="aiai.ai.launchpad.beans.Dataset"*/-->
         <form class="form-horizontal" th:object="${dataset}">
             <div class="form-group">
                 <label class="col-sm-2 control-label">Name:</label>

@@ -17,7 +17,7 @@
  */
 package aiai.ai.core;
 
-import aiai.ai.beans.ExperimentSnippet;
+import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.experiment.ExperimentsController;
 import org.junit.Test;
 

@@ -19,8 +19,8 @@ package aiai.ai.launchpad.snippet;
 
 import aiai.ai.Consts;
 import aiai.ai.Globals;
-import aiai.ai.beans.Snippet;
-import aiai.ai.repositories.SnippetRepository;
+import aiai.ai.launchpad.beans.Snippet;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.utils.checksum.Checksum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
