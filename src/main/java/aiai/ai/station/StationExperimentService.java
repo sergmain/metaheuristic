@@ -19,23 +19,34 @@ package aiai.ai.station;
 
 import aiai.ai.Consts;
 import aiai.ai.Globals;
+import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.station.beans.StationExperimentSequence;
 import aiai.ai.comm.Protocol;
+import aiai.ai.yaml.console.SnippetExec;
+import aiai.ai.yaml.console.SnippetExecUtils;
+import aiai.ai.yaml.metrics.Metrics;
+import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
+import aiai.ai.yaml.sequence.SimpleSnippet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 @Service
 @Slf4j
 public class StationExperimentService {
 
+    private static final String EXPERIMENT_SEQUENCE_FORMAT_STR = "experiment%c%06d%csequence%c%06d";
     private final SequenceProcessor sequenceProcessor;
     private final SequenceYamlUtils sequenceYamlUtils;
     private final Globals globals;
@@ -59,6 +70,40 @@ public class StationExperimentService {
         return result;
     }
 
+    void markAsFinishedIfAllOk(Long seqId, SequenceYaml sequenceYaml) {
+        log.info("markAsFinished({})", seqId);
+        StationExperimentSequence seqTemp = findById(seqId);
+        if (seqTemp == null) {
+            log.error("StationExperimentSequence wasn't found for Id " + seqId);
+        } else {
+            if (StringUtils.isBlank(seqTemp.getSnippetExecResults())) {
+                seqTemp.setSnippetExecResults(SnippetExecUtils.toString(new SnippetExec()));
+                save(seqTemp);
+            }
+            else {
+                SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
+                final int execSize = snippetExec.getExecs().size();
+                if (sequenceYaml.getSnippets().size() != execSize) {
+                    // if last exec Ok?
+                    if (snippetExec.getExecs().get(execSize).isOk()) {
+                        log.warn("Don't mark this experimentSequence as finished because not all snippets were processed");
+                        return;
+                    }
+                }
+                seqTemp.setFinishedOn(System.currentTimeMillis());
+                save(seqTemp);
+            }
+        }
+    }
+
+    void finishAndWriteToLog(@NotNull StationExperimentSequence seq, String es) {
+        log.warn(es);
+        seq.setLaunchedOn(System.currentTimeMillis());
+        seq.setFinishedOn(System.currentTimeMillis());
+        seq.setSnippetExecResults(es);
+        save(seq);
+    }
+
     void saveReported(List<StationExperimentSequence> list) {
         saveAll(list);
     }
@@ -80,6 +125,44 @@ public class StationExperimentService {
 
         }
         return true;
+    }
+
+    void storeExecResult(Long seqId, SimpleSnippet snippet, ProcessService.Result result, long experimentId, File artifactDir) {
+        log.info("storeExecResult(experimentId: {}, seqId: {}, snippetOrder: {})", experimentId, seqId, snippet.order);
+        StationExperimentSequence seqTemp = findById(seqId);
+        if (seqTemp == null) {
+            log.error("StationExperimentSequence wasn't found for Id " + seqId);
+        } else {
+            // store metrics after predict only
+            if (snippet.type== SnippetType.predict) {
+                File metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
+                Metrics metrics = new Metrics();
+                if (metricsFile.exists()) {
+                    try {
+                        String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
+                        metrics.setStatus(Metrics.Status.Ok);
+                        metrics.setMetrics(execMetrics);
+                    }
+                    catch (IOException e) {
+                        log.error("Erorr reading metrics file {}", metricsFile.getAbsolutePath());
+                        seqTemp.setMetrics("system-error : " + e.toString());
+                        metrics.setStatus(Metrics.Status.Error);
+                        metrics.setError(e.toString());
+                    }
+                } else {
+                    metrics.setStatus(Metrics.Status.NotFound);
+                }
+                seqTemp.setMetrics(MetricsUtils.toString(metrics));
+            }
+            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
+            if (snippetExec==null) {
+                snippetExec = new SnippetExec();
+            }
+            snippetExec.getExecs().put(snippet.order, result);
+            String yaml = SnippetExecUtils.toString(snippetExec);
+            seqTemp.setSnippetExecResults(yaml);
+            save(seqTemp);
+        }
     }
 
     List<StationExperimentSequence> findAllByFinishedOnIsNull() {
@@ -155,30 +238,61 @@ public class StationExperimentService {
             log.error("Error ", th);
             throw new RuntimeException("Error", th);
         }
-
     }
 
     public StationExperimentSequence save(StationExperimentSequence seq) {
+        String path = String.format("experiment%c%06d%csequence%c%06d%c%s", File.separatorChar, seq.experimentId, File.separatorChar, File.separatorChar, seq.experimentSequenceId, File.separatorChar, Consts.SYSTEM_DIR);
+        File systemDir = new File(globals.stationDir, path);
+        if (!systemDir.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            systemDir.mkdirs();
+        }
+
+
         throw new IllegalStateException("Not implemented");
     }
 
-    public StationExperimentSequence findById(Long seqId) {
+    void saveAll(List<StationExperimentSequence> list) {
         throw new IllegalStateException("Not implemented");
     }
 
-    public void saveAll(List<StationExperimentSequence> list) {
-        throw new IllegalStateException("Not implemented");
+    public StationExperimentSequence findById(Long experimentSequenceId) {
+        for (Map<Long, StationExperimentSequence> value : map.values()) {
+            for (StationExperimentSequence sequence : value.values()) {
+                if (sequence.experimentSequenceId == experimentSequenceId) {
+                    return sequence;
+                }
+            }
+        }
+        return null;
     }
 
     public List<StationExperimentSequence> findAll() {
-        throw new IllegalStateException("Not implemented");
+        List<StationExperimentSequence> list = new ArrayList<>();
+        for (Map<Long, StationExperimentSequence> entry : map.values()) {
+            list.addAll(entry.values());
+        }
+        return list;
     }
 
-    public void deleteById(long experimentSequenceId) {
-        throw new IllegalStateException("Not implemented");
+    void deleteById(long experimentSequenceId) {
+        delete( findById(experimentSequenceId) );
     }
 
     public void delete(StationExperimentSequence seq) {
-        throw new IllegalStateException("Not implemented");
+        if (seq==null) {
+            return;
+        }
+        String path = String.format(EXPERIMENT_SEQUENCE_FORMAT_STR, File.separatorChar, seq.experimentId, File.separatorChar, File.separatorChar, seq.experimentSequenceId);
+
+        File systemDir = new File(globals.stationDir, path);
+        try {
+            if (systemDir.exists()) {
+                FileUtils.deleteDirectory(systemDir);
+            }
+        }
+        catch( Throwable th) {
+            log.error("Error deleting sequence "+ seq.experimentSequenceId, th);
+        }
     }
 }

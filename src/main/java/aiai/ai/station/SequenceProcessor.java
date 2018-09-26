@@ -20,19 +20,17 @@ package aiai.ai.station;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.LogData;
-import aiai.ai.station.beans.StationExperimentSequence;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
-import aiai.ai.launchpad.snippet.SnippetType;
+import aiai.ai.launchpad.beans.LogData;
 import aiai.ai.launchpad.repositories.LogDataRepository;
+import aiai.ai.launchpad.snippet.SnippetType;
+import aiai.ai.station.beans.StationExperimentSequence;
 import aiai.ai.utils.DirUtils;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
-import aiai.ai.yaml.metrics.Metrics;
-import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleFeature;
@@ -61,7 +59,6 @@ public class SequenceProcessor {
 
     private final ProcessService processService;
     private final StationService stationService;
-    private final LogDataRepository logDataRepository;
     private final SequenceYamlUtils sequenceYamlUtils;
     private final StationExperimentService stationExperimentService;
 
@@ -103,11 +100,10 @@ public class SequenceProcessor {
 
     final CurrentExecState STATE = new CurrentExecState();
 
-    public SequenceProcessor(Globals globals, ProcessService processService, StationService stationService, LogDataRepository logDataRepository, SequenceYamlUtils sequenceYamlUtils, StationExperimentService stationExperimentService) {
+    public SequenceProcessor(Globals globals, ProcessService processService, StationService stationService, SequenceYamlUtils sequenceYamlUtils, StationExperimentService stationExperimentService) {
         this.globals = globals;
         this.processService = processService;
         this.stationService = stationService;
-        this.logDataRepository = logDataRepository;
         this.sequenceYamlUtils = sequenceYamlUtils;
         this.stationExperimentService = stationExperimentService;
     }
@@ -161,13 +157,13 @@ public class SequenceProcessor {
             }
 
             if (sequenceYaml.snippets.isEmpty()) {
-                finishAndWriteToLog(seq, "Broken sequence. List of snippets is empty");
+                stationExperimentService.finishAndWriteToLog(seq, "Broken sequence. List of snippets is empty");
                 continue;
             }
 
             File artifactDir = prepareSequenceDir(sequenceYaml.experimentId, seq.getExperimentSequenceId(), "artifacts");
             if (artifactDir == null) {
-                finishAndWriteToLog(seq, "Error of configuring of environment. 'artifacts' directory wasn't created, sequence can't be processed.");
+                stationExperimentService.finishAndWriteToLog(seq, "Error of configuring of environment. 'artifacts' directory wasn't created, sequence can't be processed.");
                 continue;
             }
 
@@ -234,7 +230,7 @@ public class SequenceProcessor {
 
                     final File execDir = paramFile.getParentFile();
                     ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
-                    storeExecResult(seq.getExperimentSequenceId(), snippet, result, sequenceYaml.experimentId, artifactDir);
+                    stationExperimentService.storeExecResult(seq.getExperimentSequenceId(), snippet, result, sequenceYaml.experimentId, artifactDir);
                     if (!result.isOk()) {
                         break;
                     }
@@ -243,7 +239,7 @@ public class SequenceProcessor {
                     log.error("Error exec process " + intepreter, err);
                 }
             }
-            markAsFinishedIfAllOk(seq.getExperimentSequenceId(), sequenceYaml);
+            stationExperimentService.markAsFinishedIfAllOk(seq.getExperimentSequenceId(), sequenceYaml);
         }
     }
 
@@ -265,70 +261,6 @@ public class SequenceProcessor {
         }
     }
 
-    private void storeExecResult(Long seqId, SimpleSnippet snippet, ProcessService.Result result, long experimentId, File artifactDir) {
-        log.info("storeExecResult(experimentId: {}, seqId: {}, snippetOrder: {})", experimentId, seqId, snippet.order);
-        StationExperimentSequence seqTemp = stationExperimentService.findById(seqId);
-        if (seqTemp == null) {
-            log.error("StationExperimentSequence wasn't found for Id " + seqId);
-        } else {
-            // store metrics after predict only
-            if (snippet.type==SnippetType.predict) {
-                File metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
-                Metrics metrics = new Metrics();
-                if (metricsFile.exists()) {
-                    try {
-                        String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
-                        metrics.setStatus(Metrics.Status.Ok);
-                        metrics.setMetrics(execMetrics);
-                    }
-                    catch (IOException e) {
-                        log.error("Erorr reading metrics file {}", metricsFile.getAbsolutePath());
-                        seqTemp.setMetrics("system-error : " + e.toString());
-                        metrics.setStatus(Metrics.Status.Error);
-                        metrics.setError(e.toString());
-                    }
-                } else {
-                    metrics.setStatus(Metrics.Status.NotFound);
-                }
-                seqTemp.setMetrics(MetricsUtils.toString(metrics));
-            }
-            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
-            if (snippetExec==null) {
-                snippetExec = new SnippetExec();
-            }
-            snippetExec.getExecs().put(snippet.order, result);
-            String yaml = SnippetExecUtils.toString(snippetExec);
-            seqTemp.setSnippetExecResults(yaml);
-            stationExperimentService.save(seqTemp);
-        }
-    }
-
-    private void markAsFinishedIfAllOk(Long seqId, SequenceYaml sequenceYaml) {
-        log.info("markAsFinished({})", seqId);
-        StationExperimentSequence seqTemp = stationExperimentService.findById(seqId);
-        if (seqTemp == null) {
-            log.error("StationExperimentSequence wasn't found for Id " + seqId);
-        } else {
-            if (StringUtils.isBlank(seqTemp.getSnippetExecResults())) {
-                seqTemp.setSnippetExecResults(SnippetExecUtils.toString(new SnippetExec()));
-                stationExperimentService.save(seqTemp);
-            }
-            else {
-                SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
-                final int execSize = snippetExec.getExecs().size();
-                if (sequenceYaml.getSnippets().size() != execSize) {
-                    // if last exec Ok?
-                    if (snippetExec.getExecs().get(execSize).isOk()) {
-                        log.warn("Don't mark this experimentSequence as finished because not all snippets were processed");
-                        return;
-                    }
-                }
-                seqTemp.setFinishedOn(System.currentTimeMillis());
-                stationExperimentService.save(seqTemp);
-            }
-        }
-    }
-
     @Contract("_, null -> false")
     private boolean isThisSnippetCompleted(SimpleSnippet snippet, SnippetExec snippetExec) {
         if (snippetExec ==null) {
@@ -344,14 +276,6 @@ public class SequenceProcessor {
         }
         final ProcessService.Result result = snippetExec.execs.get(snippet.order);
         return result!=null && !result.isOk();
-    }
-
-    private void finishAndWriteToLog(@NotNull StationExperimentSequence seq, String es) {
-        log.warn(es);
-        seq.setLaunchedOn(System.currentTimeMillis());
-        seq.setFinishedOn(System.currentTimeMillis());
-        seq.setSnippetExecResults(es);
-        stationExperimentService.save(seq);
     }
 
     private File prepareParamFile(long experimentId, long experimentSequenceId, @NotNull SnippetType type, @NotNull String params) {
