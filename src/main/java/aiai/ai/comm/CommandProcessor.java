@@ -146,9 +146,7 @@ public class CommandProcessor {
         if (command.sequences==null) {
             return Protocol.NOP_ARRAY;
         }
-        for (Protocol.AssignedExperimentSequence.SimpleSequence sequence : command.sequences) {
-            stationService.createSequence(sequence);
-        }
+        stationService.createSequence(command.sequences);
         return Protocol.NOP_ARRAY;
     }
 

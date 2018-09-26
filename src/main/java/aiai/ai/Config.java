@@ -17,27 +17,11 @@
 
 package aiai.ai;
 
-import aiai.ai.launchpad.repositories.DatasetRepository;
-import aiai.ai.station.repositories.StationExperimentSequenceRepository;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.core.env.Environment;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.orm.jpa.JpaTransactionManager;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
 
 /**
  * User: Serg
@@ -54,6 +38,7 @@ public class Config {
         this.globals = globals;
     }
 
+/*
     @Configuration
     @EnableTransactionManagement
     @EnableJpaRepositories(basePackageClasses = { DatasetRepository.class })
@@ -70,8 +55,12 @@ public class Config {
         @Bean(name = "dataSource")
         @ConfigurationProperties(prefix = "spring.datasource")
         public DataSource customDataSource() {
+            if (!globals.isLaunchpadEnabled) {
+                return null;
+            }
 
             DriverManagerDataSource dataSource = new DriverManagerDataSource();
+            //noinspection ConstantConditions
             dataSource.setDriverClassName(env.getProperty("spring.datasource.driver-class-name"));
             dataSource.setUrl(env.getProperty("spring.datasource.url"));
             dataSource.setUsername(env.getProperty("spring.datasource.username"));
@@ -83,6 +72,9 @@ public class Config {
         @Primary
         @Bean(name = "entityManagerFactory")
         public LocalContainerEntityManagerFactoryBean entityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("dataSource") DataSource dataSource) {
+            if (!globals.isLaunchpadEnabled) {
+                return null;
+            }
             return builder
                     .dataSource(dataSource)
                     .packages("aiai.ai.launchpad.beans")
@@ -93,13 +85,17 @@ public class Config {
         @Primary
         @Bean(name = "transactionManager")
         public PlatformTransactionManager transactionManager(@Qualifier("entityManagerFactory") EntityManagerFactory entityManagerFactory) {
+            if (!globals.isLaunchpadEnabled) {
+                return null;
+            }
             return new JpaTransactionManager(entityManagerFactory);
         }
     }
 
     @Configuration
     @EnableTransactionManagement
-    @EnableJpaRepositories(entityManagerFactoryRef = "stationEntityManagerFactory", transactionManagerRef = "stationTransactionManager", basePackageClasses = { StationExperimentSequenceRepository.class })
+    @EnableJpaRepositories(entityManagerFactoryRef = "stationEntityManagerFactory", transactionManagerRef = "stationTransactionManager",
+            basePackage = { "aiai.ai.station.repositories" })
     public class StationDbConfig {
 
         private final Environment env;
@@ -111,6 +107,9 @@ public class Config {
         @Bean(name = "stationDataSource")
         @ConfigurationProperties(prefix = "station.datasource")
         public DataSource dataSource() {
+            if (!globals.isStationEnabled) {
+                return null;
+            }
             DriverManagerDataSource dataSource = new DriverManagerDataSource();
             dataSource.setDriverClassName(env.getProperty("station.datasource.driver-class-name"));
             dataSource.setUrl(env.getProperty("station.datasource.url"));
@@ -121,6 +120,9 @@ public class Config {
 
         @Bean(name = "stationEntityManagerFactory")
         public LocalContainerEntityManagerFactoryBean stationEntityManagerFactory(EntityManagerFactoryBuilder builder, @Qualifier("stationDataSource") DataSource dataSource) {
+            if (!globals.isStationEnabled) {
+                return null;
+            }
             return builder
                     .dataSource(dataSource)
                     .packages("aiai.ai.station.beans")
@@ -130,10 +132,14 @@ public class Config {
 
         @Bean(name = "stationTransactionManager")
         public PlatformTransactionManager stationTransactionManager(@Qualifier("stationEntityManagerFactory") EntityManagerFactory stationEntityManagerFactory) {
+            if (!globals.isStationEnabled) {
+                return null;
+            }
             return new JpaTransactionManager(stationEntityManagerFactory);
         }
     }
 
+*/
     @Bean
     public LayoutDialect layoutDialect() {
         return new LayoutDialect();

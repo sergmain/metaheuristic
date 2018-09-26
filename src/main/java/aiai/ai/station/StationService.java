@@ -17,12 +17,12 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.Consts;
 import aiai.ai.Globals;
-import aiai.ai.station.beans.StationExperimentSequence;
-import aiai.ai.station.beans.StationMetadata;
 import aiai.ai.comm.Protocol;
-import aiai.ai.station.repositories.StationExperimentSequenceRepository;
-import aiai.ai.station.repositories.StationMetadataRepository;
+import aiai.ai.station.beans.StationExperimentSequence;
+import aiai.ai.yaml.metadata.Metadata;
+import aiai.ai.yaml.metadata.MetadataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -39,93 +39,86 @@ import java.util.List;
 public class StationService {
 
     private final Globals globals;
+    private final StationExperimentService stationExperimentService;
 
-    private final StationMetadataRepository stationMetadataRepository;
-    private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
+    private String env;
+    private Metadata metadata = new Metadata();
 
-    public StationService(Globals globals, StationMetadataRepository stationMetadataRepository, StationExperimentSequenceRepository stationExperimentSequenceRepository) {
+    public StationService(Globals globals, StationExperimentService stationExperimentService) {
         this.globals = globals;
-        this.stationMetadataRepository = stationMetadataRepository;
-        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
+        this.stationExperimentService = stationExperimentService;
     }
 
     public String getStationId() {
-        return getMeta(StationConsts.STATION_ID);
+        return metadata.metadata.get(StationConsts.STATION_ID);
     }
 
     public void setStationId(String stationId) {
-        storeOrReplace(StationConsts.STATION_ID, stationId);
+        metadata.metadata.put(StationConsts.STATION_ID, stationId);
+        updateMetadataFile();
     }
 
     public String getEnv() {
-        return getMeta(StationConsts.ENV);
-    }
-
-    public void setEnv(String stationId) {
-        storeOrReplace(StationConsts.ENV, stationId);
+        return env;
     }
 
     @PostConstruct
     public void init() {
+        if (!globals.isStationEnabled) {
+            return;
+        }
+
         final File file = new File(globals.stationDir, "env.yaml");
         if (!file.exists()) {
             log.warn("Station's config file doesn't exist: {}", file.getPath());
             return;
         }
         try {
-            String env = FileUtils.readFileToString(file, Charsets.UTF_8);
-            setEnv(env);
+            env = FileUtils.readFileToString(file, Charsets.UTF_8);
         } catch (IOException e) {
             e.printStackTrace();
             throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
         }
     }
 
-    public void createSequence(Protocol.AssignedExperimentSequence.SimpleSequence sequence) {
-        StationExperimentSequence seq = stationExperimentSequenceRepository.findByExperimentSequenceId(sequence.getExperimentSequenceId());
-        // this can happen when launchpad's db was completely reinitialized  but station's db wasn't
-        // or when user decided to re-run sequence manually
-        if (seq!=null) {
-            stationExperimentSequenceRepository.delete(seq);
+    public void createSequence(List<Protocol.AssignedExperimentSequence.SimpleSequence> sequences) {
+        for (Protocol.AssignedExperimentSequence.SimpleSequence sequence : sequences) {
+            stationExperimentService.createSequence(sequence.experimentSequenceId, sequence.params);
         }
-
-        seq = new StationExperimentSequence();
-        seq.setCreatedOn(System.currentTimeMillis());
-        seq.setParams(sequence.params);
-        seq.setExperimentSequenceId(sequence.getExperimentSequenceId());
-        stationExperimentSequenceRepository.save(seq);
     }
 
     public void markAsDelivered(List<Long> ids) {
         List<StationExperimentSequence> list = new ArrayList<>();
         for (Long id : ids) {
-            StationExperimentSequence seq = stationExperimentSequenceRepository.findByExperimentSequenceId(id);
+            StationExperimentSequence seq = stationExperimentService.findByExperimentSequenceId(id);
             if(seq==null) {
                 continue;
             }
             seq.setDelivered(true);
             list.add(seq);
         }
-        stationExperimentSequenceRepository.saveAll(list);
+        stationExperimentService.saveAll(list);
     }
 
-    private synchronized void storeOrReplace(String key, String value) {
-        StationMetadata metadata = stationMetadataRepository.findByKey(key).orElse(null);
-        if (metadata != null) {
-            metadata.setValue(value);
-            stationMetadataRepository.save(metadata);
-            return;
+    private void updateMetadataFile() {
+        final File metadataFile =  new File(globals.stationDir, Consts.METADATA_FILE_NAME);
+        if (metadataFile.exists()) {
+            log.info("Metadata file exists. Make backup");
+            File yamlFileBak = new File(globals.stationDir, Consts.METADATA_FILE_NAME + ".bak");
+            //noinspection ResultOfMethodCallIgnored
+            yamlFileBak.delete();
+            if (metadataFile.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                metadataFile.renameTo(yamlFileBak);
+            }
         }
-        StationMetadata m = new StationMetadata();
-        m.setKey(key);
-        m.setValue(value);
-        stationMetadataRepository.save(m);
+
+        try {
+            FileUtils.write(metadataFile, MetadataUtils.toString(metadata), Charsets.UTF_8, false);
+        } catch (IOException e) {
+            log.error("Error", e);
+            throw new IllegalStateException("Error while writing to file: " + metadataFile.getPath(), e);
+        }
+
     }
-
-
-    private String getMeta(String key) {
-        return stationMetadataRepository.findByKey(key).map(StationMetadata::getValue).orElse(null);
-    }
-
-
 }

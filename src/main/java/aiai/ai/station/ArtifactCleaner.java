@@ -20,7 +20,6 @@ package aiai.ai.station;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.station.beans.StationExperimentSequence;
-import aiai.ai.station.repositories.StationExperimentSequenceRepository;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -36,13 +35,13 @@ import java.nio.file.Path;
 @Slf4j
 public class ArtifactCleaner {
 
-    private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
+    private final StationExperimentService stationExperimentService;
     private final SequenceYamlUtils sequenceYamlUtils;
     private final SequenceProcessor sequenceProcessor;
     private final Globals globals;
 
-    public ArtifactCleaner(StationExperimentSequenceRepository stationExperimentSequenceRepository, SequenceYamlUtils sequenceYamlUtils, SequenceProcessor sequenceProcessor, Globals globals) {
-        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
+    public ArtifactCleaner(StationExperimentService stationExperimentService, SequenceYamlUtils sequenceYamlUtils, SequenceProcessor sequenceProcessor, Globals globals) {
+        this.stationExperimentService = stationExperimentService;
         this.sequenceYamlUtils = sequenceYamlUtils;
         this.sequenceProcessor = sequenceProcessor;
         this.globals = globals;
@@ -54,11 +53,11 @@ public class ArtifactCleaner {
             return;
         }
 
-        for (StationExperimentSequence seq : stationExperimentSequenceRepository.findAll()) {
+        for (StationExperimentSequence seq : stationExperimentService.findAll()) {
             final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
             if (sequenceProcessor.STATE.isState(sequenceYaml.experimentId, Enums.ExperimentExecState.DOESNT_EXIST)) {
                 log.info("Delete obsolete sequence {}", seq);
-                stationExperimentSequenceRepository.deleteById(seq.getId());
+                stationExperimentService.deleteById(seq.getExperimentSequenceId());
             }
         }
 

@@ -17,56 +17,29 @@
  */
 package aiai.ai.station.beans;
 
-import aiai.ai.core.JsonUtils;
-import aiai.ai.launchpad.experiment.ExperimentService;
 import lombok.Data;
-import org.apache.commons.lang3.StringUtils;
 
-import javax.persistence.*;
-import java.io.IOException;
-import java.io.Serializable;
-
-@Entity
-@Table(name = "AIAI_S_EXPERIMENT_SEQUENCE")
 @Data
-public class StationExperimentSequence implements Serializable {
-    private static final long serialVersionUID = 6399969247304215923L;
+public class StationExperimentSequence {
+    public long experimentId;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public long experimentSequenceId;
 
-    @Version
-    private Integer version;
+    public long createdOn;
 
-    @Column(name = "EXPERIMENT_SEQUENCE_ID")
-    private long experimentSequenceId;
+    public Long launchedOn;
 
-    @Column(name="CREATED_ON")
-    private long createdOn;
+    public Long finishedOn;
 
-    @Column(name="LAUNCHED_ON")
-    private Long launchedOn;
+    public Long reportedOn;
 
-    @Column(name="FINISHED_ON")
-    private Long finishedOn;
+    public String params;
 
-    @Column(name="REPORTED_ON")
-    private Long reportedOn;
+    public String metrics;
 
-    @Column(name="PARAMS")
-    private String params;
+    public boolean isReported;
 
-    @Column(name="METRICS")
-    private String metrics;
+    public boolean isDelivered;
 
-    @Column(name = "IS_REPORTED")
-    private boolean isReported;
-
-    @Column(name = "IS_DELIVERED")
-    private boolean isDelivered;
-
-    @Column(name="SNIPPET_EXEC_RESULTS")
-    private String snippetExecResults;
-
+    public String snippetExecResults;
 }

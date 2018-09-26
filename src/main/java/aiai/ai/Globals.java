@@ -61,6 +61,8 @@ public class Globals {
     public File stationDatasetDir;
     public File stationExperimentDir;
     public File stationSnippetDir;
+    public File stationDbDir;
+    public File stationSystemDir;
 
     public String serverRestUrl;
 
@@ -76,6 +78,8 @@ public class Globals {
             stationDatasetDir = new File(stationDir, Consts.DATASET_DIR);
             stationExperimentDir = new File(stationDir, Consts.EXPERIMENT_DIR);
             stationSnippetDir = new File(stationDir, Consts.SNIPPET_DIR);
+            stationDbDir = new File(stationDir, Consts.DATABASE_DIR);
+            stationSystemDir = new File(stationDir, Consts.SYSTEM_DIR);
         }
 
         if (launchpadDir==null) {

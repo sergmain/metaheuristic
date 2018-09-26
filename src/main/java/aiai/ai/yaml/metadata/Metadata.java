@@ -15,25 +15,14 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
+package aiai.ai.yaml.metadata;
 
-package aiai.ai.station.repositories;
+import lombok.Data;
 
-import aiai.ai.station.beans.Env;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+import java.math.BigDecimal;
+import java.util.LinkedHashMap;
 
-/**
- * User: Serg
- * Date: 13.07.2017
- * Time: 17:34
- */
-@Component
-@Transactional
-public interface EnvironmentRepository extends CrudRepository<Env, Long> {
-
-    @Transactional(readOnly = true)
-    Slice<Env> findAll(Pageable pageable);
+@Data
+public class Metadata {
+    public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
 }

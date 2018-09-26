@@ -482,8 +482,10 @@ public class DatasetController {
 
         File yamlFile = new File(featureDir, PRODUCE_FEATURE_YAML);
         File yamlFileBak = new File(featureDir, PRODUCE_FEATURE_YAML + ".bak");
+        //noinspection ResultOfMethodCallIgnored
         yamlFileBak.delete();
         if (yamlFile.exists()) {
+            //noinspection ResultOfMethodCallIgnored
             yamlFile.renameTo(yamlFileBak);
         }
 
@@ -492,8 +494,10 @@ public class DatasetController {
         File featureFile = new File(globals.launchpadDir, featureFilename);
         File featureFileBak = new File(globals.launchpadDir, featureFilename + ".bak");
 
+        //noinspection ResultOfMethodCallIgnored
         featureFileBak.delete();
         if (featureFile.exists()) {
+            //noinspection ResultOfMethodCallIgnored
             featureFile.renameTo(featureFileBak);
         }
 

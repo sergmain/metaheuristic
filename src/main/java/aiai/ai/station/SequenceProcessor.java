@@ -26,7 +26,6 @@ import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.snippet.SnippetType;
 import aiai.ai.launchpad.repositories.LogDataRepository;
-import aiai.ai.station.repositories.StationExperimentSequenceRepository;
 import aiai.ai.utils.DirUtils;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
@@ -60,11 +59,11 @@ public class SequenceProcessor {
 
     private final Globals globals;
 
-    private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
     private final ProcessService processService;
     private final StationService stationService;
     private final LogDataRepository logDataRepository;
     private final SequenceYamlUtils sequenceYamlUtils;
+    private final StationExperimentService stationExperimentService;
 
     private Map<Long, AssetFile> isDatasetReady = new HashMap<>();
     private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
@@ -104,13 +103,13 @@ public class SequenceProcessor {
 
     final CurrentExecState STATE = new CurrentExecState();
 
-    public SequenceProcessor(Globals globals, StationExperimentSequenceRepository stationExperimentSequenceRepository, ProcessService processService, StationService stationService, LogDataRepository logDataRepository, SequenceYamlUtils sequenceYamlUtils) {
+    public SequenceProcessor(Globals globals, ProcessService processService, StationService stationService, LogDataRepository logDataRepository, SequenceYamlUtils sequenceYamlUtils, StationExperimentService stationExperimentService) {
         this.globals = globals;
-        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
         this.processService = processService;
         this.stationService = stationService;
         this.logDataRepository = logDataRepository;
         this.sequenceYamlUtils = sequenceYamlUtils;
+        this.stationExperimentService = stationExperimentService;
     }
 
     @PostConstruct
@@ -140,12 +139,10 @@ public class SequenceProcessor {
             return;
         }
 
-        List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
+        List<StationExperimentSequence> seqs = stationExperimentService.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
             if (StringUtils.isBlank(seq.getParams())) {
-                // very strange behaviour. this field is required in DB and can't be null
-                // is this bug in mysql or it's a spring's data bug with MEDIUMTEXT fields?
-                log.warn("Params for sequence {} is blank", seq.getId());
+                log.warn("Params for sequence {} is blank", seq.getExperimentSequenceId());
                 continue;
             }
             final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
@@ -199,7 +196,7 @@ public class SequenceProcessor {
             final String params = sequenceYamlUtils.toString(sequenceYaml);
 
             seq.setLaunchedOn(System.currentTimeMillis());
-            seq = stationExperimentSequenceRepository.save(seq);
+            seq = stationExperimentService.save(seq);
             for (SimpleSnippet snippet : sequenceYaml.getSnippets()) {
                 StationSnippetUtils.SnippetFile snippetFile = isSnippetsReady.get(snippet.code);
                 if (snippetFile == null) {
@@ -237,7 +234,7 @@ public class SequenceProcessor {
 
                     final File execDir = paramFile.getParentFile();
                     ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
-                    storeExecResult(seq.getId(), snippet, result, sequenceYaml.experimentId, artifactDir);
+                    storeExecResult(seq.getExperimentSequenceId(), snippet, result, sequenceYaml.experimentId, artifactDir);
                     if (!result.isOk()) {
                         break;
                     }
@@ -246,7 +243,7 @@ public class SequenceProcessor {
                     log.error("Error exec process " + intepreter, err);
                 }
             }
-            markAsFinishedIfAllOk(seq.getId(), sequenceYaml);
+            markAsFinishedIfAllOk(seq.getExperimentSequenceId(), sequenceYaml);
         }
     }
 
@@ -270,7 +267,7 @@ public class SequenceProcessor {
 
     private void storeExecResult(Long seqId, SimpleSnippet snippet, ProcessService.Result result, long experimentId, File artifactDir) {
         log.info("storeExecResult(experimentId: {}, seqId: {}, snippetOrder: {})", experimentId, seqId, snippet.order);
-        StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
+        StationExperimentSequence seqTemp = stationExperimentService.findById(seqId);
         if (seqTemp == null) {
             log.error("StationExperimentSequence wasn't found for Id " + seqId);
         } else {
@@ -302,19 +299,19 @@ public class SequenceProcessor {
             snippetExec.getExecs().put(snippet.order, result);
             String yaml = SnippetExecUtils.toString(snippetExec);
             seqTemp.setSnippetExecResults(yaml);
-            stationExperimentSequenceRepository.save(seqTemp);
+            stationExperimentService.save(seqTemp);
         }
     }
 
     private void markAsFinishedIfAllOk(Long seqId, SequenceYaml sequenceYaml) {
         log.info("markAsFinished({})", seqId);
-        StationExperimentSequence seqTemp = stationExperimentSequenceRepository.findById(seqId).orElse(null);
+        StationExperimentSequence seqTemp = stationExperimentService.findById(seqId);
         if (seqTemp == null) {
             log.error("StationExperimentSequence wasn't found for Id " + seqId);
         } else {
             if (StringUtils.isBlank(seqTemp.getSnippetExecResults())) {
                 seqTemp.setSnippetExecResults(SnippetExecUtils.toString(new SnippetExec()));
-                stationExperimentSequenceRepository.save(seqTemp);
+                stationExperimentService.save(seqTemp);
             }
             else {
                 SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
@@ -327,7 +324,7 @@ public class SequenceProcessor {
                     }
                 }
                 seqTemp.setFinishedOn(System.currentTimeMillis());
-                stationExperimentSequenceRepository.save(seqTemp);
+                stationExperimentService.save(seqTemp);
             }
         }
     }
@@ -354,12 +351,7 @@ public class SequenceProcessor {
         seq.setLaunchedOn(System.currentTimeMillis());
         seq.setFinishedOn(System.currentTimeMillis());
         seq.setSnippetExecResults(es);
-        stationExperimentSequenceRepository.save(seq);
-        LogData logData = new LogData();
-        logData.setRefId(seq.getId());
-        logData.setType(LogData.Type.SEQUENCE);
-        logData.setLogData(es);
-        logDataRepository.save(logData);
+        stationExperimentService.save(seq);
     }
 
     private File prepareParamFile(long experimentId, long experimentSequenceId, @NotNull SnippetType type, @NotNull String params) {
@@ -368,7 +360,7 @@ public class SequenceProcessor {
             return null;
         }
 
-        File paramFile = new File(snippetTypeDir, "params.yaml");
+        File paramFile = new File(snippetTypeDir, Consts.PARAMS_YAML);
         if (paramFile.exists()) {
             //noinspection ResultOfMethodCallIgnored
             paramFile.delete();

@@ -19,7 +19,6 @@ package aiai.ai.station;
 
 import aiai.ai.Globals;
 import aiai.ai.station.beans.StationExperimentSequence;
-import aiai.ai.station.repositories.StationExperimentSequenceRepository;
 import aiai.ai.station.actors.DownloadDatasetActor;
 import aiai.ai.station.actors.DownloadFeatureActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
@@ -44,18 +43,18 @@ public class TaskAssigner {
     private final DownloadDatasetActor downloadDatasetActor;
     private final DownloadFeatureActor downloadFeatureActor;
     private final DownloadSnippetActor downloadSnippetActor;
-    private final StationExperimentSequenceRepository stationExperimentSequenceRepository;
     private final SequenceYamlUtils sequenceYamlUtils;
     private final SequenceProcessor sequenceProcessor;
+    private final StationExperimentService stationExperimentService;
 
-    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, StationExperimentSequenceRepository stationExperimentSequenceRepository, SequenceYamlUtils sequenceYamlUtils, SequenceProcessor sequenceProcessor) {
+    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, SequenceYamlUtils sequenceYamlUtils, SequenceProcessor sequenceProcessor, StationExperimentService stationExperimentService) {
         this.globals = globals;
         this.downloadDatasetActor = downloadDatasetActor;
         this.downloadFeatureActor = downloadFeatureActor;
         this.downloadSnippetActor = downloadSnippetActor;
-        this.stationExperimentSequenceRepository = stationExperimentSequenceRepository;
         this.sequenceYamlUtils = sequenceYamlUtils;
         this.sequenceProcessor = sequenceProcessor;
+        this.stationExperimentService = stationExperimentService;
     }
 
     public void fixedDelay() {
@@ -66,12 +65,12 @@ public class TaskAssigner {
             return;
         }
 
-        List<StationExperimentSequence> seqs = stationExperimentSequenceRepository.findAllByFinishedOnIsNull();
+        List<StationExperimentSequence> seqs = stationExperimentService.findAllByFinishedOnIsNull();
         for (StationExperimentSequence seq : seqs) {
             if (StringUtils.isBlank(seq.getParams())) {
                 // strange behaviour. this field is required in DB and can't be null
                 // is this bug in mysql or it's a spring's data bug with MEDIUMTEXT fields?
-                log.warn("Params for sequence {} is blank", seq.getId());
+                log.warn("Params for sequence {} is blank", seq.getExperimentSequenceId());
                 continue;
             }
             final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
@@ -81,7 +80,7 @@ public class TaskAssigner {
             }
 
             if (sequenceProcessor.STATE.isInit && sequenceProcessor.STATE.getState(sequenceYaml.getExperimentId())==null) {
-                stationExperimentSequenceRepository.delete(seq);
+                stationExperimentService.delete(seq);
                 log.info("Deleted orphan sequence {}", seq);
                 continue;
             }

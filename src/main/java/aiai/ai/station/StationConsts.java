@@ -20,6 +20,5 @@ package aiai.ai.station;
 public class StationConsts {
 
     public static final String STATION_ID = "stationId";
-    public static final String ENV = "env";
 
 }
