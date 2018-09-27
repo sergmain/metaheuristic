@@ -20,7 +20,7 @@ package aiai.ai.station;
 import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
-import aiai.ai.station.beans.StationExperimentSequence;
+import aiai.ai.yaml.station.StationExperimentSequence;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.metadata.MetadataUtils;
 import lombok.extern.slf4j.Slf4j;

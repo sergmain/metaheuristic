@@ -17,11 +17,26 @@
 
 package aiai.ai;
 
+import aiai.ai.launchpad.repositories.DatasetRepository;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.core.env.Environment;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.jdbc.datasource.DriverManagerDataSource;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+
+import javax.persistence.EntityManagerFactory;
+import javax.sql.DataSource;
 
 /**
  * User: Serg
@@ -95,7 +110,7 @@ public class Config {
     @Configuration
     @EnableTransactionManagement
     @EnableJpaRepositories(entityManagerFactoryRef = "stationEntityManagerFactory", transactionManagerRef = "stationTransactionManager",
-            basePackage = { "aiai.ai.station.repositories" })
+            basePackages = { "aiai.ai.station.repositories" })
     public class StationDbConfig {
 
         private final Environment env;
@@ -111,6 +126,7 @@ public class Config {
                 return null;
             }
             DriverManagerDataSource dataSource = new DriverManagerDataSource();
+            //noinspection ConstantConditions
             dataSource.setDriverClassName(env.getProperty("station.datasource.driver-class-name"));
             dataSource.setUrl(env.getProperty("station.datasource.url"));
             dataSource.setUsername(env.getProperty("station.datasource.username"));

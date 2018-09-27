@@ -21,7 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.snippet.SnippetType;
-import aiai.ai.station.beans.StationExperimentSequence;
+import aiai.ai.yaml.station.StationExperimentSequence;
 import aiai.ai.comm.Protocol;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
@@ -30,6 +30,7 @@ import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleSnippet;
+import aiai.ai.yaml.station.StationExperimentSequenceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -47,14 +48,15 @@ import java.util.*;
 public class StationExperimentService {
 
     private static final String EXPERIMENT_SEQUENCE_FORMAT_STR = "experiment%c%06d%csequence%c%06d";
-    private final SequenceProcessor sequenceProcessor;
-    private final SequenceYamlUtils sequenceYamlUtils;
+
     private final Globals globals;
+    private final SequenceYamlUtils sequenceYamlUtils;
+    private final CurrentExecState currentExecState;
 
     private final Map<Long, Map<Long, StationExperimentSequence>> map = new HashMap<>();
 
-    public StationExperimentService(SequenceProcessor sequenceProcessor, SequenceYamlUtils sequenceYamlUtils, Globals globals) {
-        this.sequenceProcessor = sequenceProcessor;
+    public StationExperimentService(SequenceYamlUtils sequenceYamlUtils, Globals globals, CurrentExecState currentExecState) {
+        this.currentExecState = currentExecState;
         this.sequenceYamlUtils = sequenceYamlUtils;
         this.globals = globals;
     }
@@ -119,7 +121,7 @@ public class StationExperimentService {
                 continue;
             }
             final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
-            if (sequenceProcessor.STATE.isStarted(sequenceYaml.experimentId)) {
+            if (currentExecState.isStarted(sequenceYaml.experimentId)) {
                 return false;
             }
 
@@ -219,11 +221,11 @@ public class StationExperimentService {
 
         seq.experimentId = experimentId;
         seq.experimentSequenceId = experimentSequenceId;
+        seq.createdOn = System.currentTimeMillis();
         seq.params = params;
         seq.finishedOn = null;
 
-        String path = String.format("experiment%c%06d%csequence%c%06d%c%s", File.separatorChar, experimentId, File.separatorChar, File.separatorChar, experimentSequenceId, File.separatorChar, Consts.SYSTEM_DIR);
-
+        String path = String.format("experiment%c%06d%csequence%c%06d", File.separatorChar, experimentId, File.separatorChar, File.separatorChar, experimentSequenceId);
         File systemDir = new File(globals.stationDir, path);
         try {
             if (systemDir.exists()) {
@@ -231,7 +233,7 @@ public class StationExperimentService {
             }
             //noinspection ResultOfMethodCallIgnored
             systemDir.mkdirs();
-            File paramsFile = new File(systemDir, Consts.PARAMS_YAML);
+            File paramsFile = new File(systemDir, Consts.SEQUENCE_YAML);
             FileUtils.write(paramsFile, params, Charsets.UTF_8, false);
         }
         catch( Throwable th) {
@@ -241,19 +243,39 @@ public class StationExperimentService {
     }
 
     public StationExperimentSequence save(StationExperimentSequence seq) {
-        String path = String.format("experiment%c%06d%csequence%c%06d%c%s", File.separatorChar, seq.experimentId, File.separatorChar, File.separatorChar, seq.experimentSequenceId, File.separatorChar, Consts.SYSTEM_DIR);
-        File systemDir = new File(globals.stationDir, path);
-        if (!systemDir.exists()) {
+        String path = String.format("experiment%c%06d%csequence%c%06d", File.separatorChar, seq.experimentId, File.separatorChar, File.separatorChar, seq.experimentSequenceId);
+        File sequenceDir = new File(globals.stationDir, path);
+        if (!sequenceDir.exists()) {
             //noinspection ResultOfMethodCallIgnored
-            systemDir.mkdirs();
+            sequenceDir.mkdirs();
+        }
+        File sequenceYaml = new File(sequenceDir, Consts.SEQUENCE_YAML);
+
+
+        if (sequenceYaml.exists()) {
+            log.info("sequenceYaml file exists. Make backup");
+            File yamlFileBak = new File(sequenceDir, Consts.SEQUENCE_YAML + ".bak");
+            //noinspection ResultOfMethodCallIgnored
+            yamlFileBak.delete();
+            if (sequenceYaml.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                sequenceYaml.renameTo(yamlFileBak);
+            }
         }
 
-
-        throw new IllegalStateException("Not implemented");
+        try {
+            FileUtils.write(sequenceYaml, StationExperimentSequenceUtils.toString(seq), Charsets.UTF_8, false);
+        } catch (IOException e) {
+            log.error("Error", e);
+            throw new IllegalStateException("Error while writing to file: " + sequenceYaml.getPath(), e);
+        }
+        return seq;
     }
 
     void saveAll(List<StationExperimentSequence> list) {
-        throw new IllegalStateException("Not implemented");
+        for (StationExperimentSequence stationExperimentSequence : list) {
+            save(stationExperimentSequence);
+        }
     }
 
     public StationExperimentSequence findById(Long experimentSequenceId) {

@@ -19,7 +19,7 @@ package aiai.ai.station;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.station.beans.StationExperimentSequence;
+import aiai.ai.yaml.station.StationExperimentSequence;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -37,25 +37,25 @@ public class ArtifactCleaner {
 
     private final StationExperimentService stationExperimentService;
     private final SequenceYamlUtils sequenceYamlUtils;
-    private final SequenceProcessor sequenceProcessor;
+    private final CurrentExecState currentExecState;
     private final Globals globals;
 
-    public ArtifactCleaner(StationExperimentService stationExperimentService, SequenceYamlUtils sequenceYamlUtils, SequenceProcessor sequenceProcessor, Globals globals) {
+    public ArtifactCleaner(StationExperimentService stationExperimentService, SequenceYamlUtils sequenceYamlUtils, CurrentExecState currentExecState, Globals globals) {
         this.stationExperimentService = stationExperimentService;
         this.sequenceYamlUtils = sequenceYamlUtils;
-        this.sequenceProcessor = sequenceProcessor;
+        this.currentExecState = currentExecState;
         this.globals = globals;
     }
 
     public void fixedDelay() {
-        if (!globals.isStationEnabled || !sequenceProcessor.STATE.isInit) {
+        if (!globals.isStationEnabled || !currentExecState.isInit) {
             // don't delete anything until station will receive the list of actual experiments
             return;
         }
 
         for (StationExperimentSequence seq : stationExperimentService.findAll()) {
             final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
-            if (sequenceProcessor.STATE.isState(sequenceYaml.experimentId, Enums.ExperimentExecState.DOESNT_EXIST)) {
+            if (currentExecState.isState(sequenceYaml.experimentId, Enums.ExperimentExecState.DOESNT_EXIST)) {
                 log.info("Delete obsolete sequence {}", seq);
                 stationExperimentService.deleteById(seq.getExperimentSequenceId());
             }
@@ -69,7 +69,7 @@ public class ArtifactCleaner {
                             return;
                         }
                         int experimentId = Integer.parseInt(file.getName());
-                        if (sequenceProcessor.STATE.getState(experimentId) != null) {
+                        if (currentExecState.getState(experimentId) != null) {
                             return;
                         }
                         log.warn("Start deleting dir {}", file.getPath());

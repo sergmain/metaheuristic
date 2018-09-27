@@ -18,7 +18,7 @@
 package aiai.ai.station;
 
 import aiai.ai.Globals;
-import aiai.ai.station.beans.StationExperimentSequence;
+import aiai.ai.yaml.station.StationExperimentSequence;
 import aiai.ai.station.actors.DownloadDatasetActor;
 import aiai.ai.station.actors.DownloadFeatureActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
@@ -44,16 +44,16 @@ public class TaskAssigner {
     private final DownloadFeatureActor downloadFeatureActor;
     private final DownloadSnippetActor downloadSnippetActor;
     private final SequenceYamlUtils sequenceYamlUtils;
-    private final SequenceProcessor sequenceProcessor;
+    private final CurrentExecState currentExecState;
     private final StationExperimentService stationExperimentService;
 
-    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, SequenceYamlUtils sequenceYamlUtils, SequenceProcessor sequenceProcessor, StationExperimentService stationExperimentService) {
+    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, SequenceYamlUtils sequenceYamlUtils, CurrentExecState currentExecState, StationExperimentService stationExperimentService) {
         this.globals = globals;
         this.downloadDatasetActor = downloadDatasetActor;
         this.downloadFeatureActor = downloadFeatureActor;
         this.downloadSnippetActor = downloadSnippetActor;
         this.sequenceYamlUtils = sequenceYamlUtils;
-        this.sequenceProcessor = sequenceProcessor;
+        this.currentExecState = currentExecState;
         this.stationExperimentService = stationExperimentService;
     }
 
@@ -79,7 +79,7 @@ public class TaskAssigner {
                 continue;
             }
 
-            if (sequenceProcessor.STATE.isInit && sequenceProcessor.STATE.getState(sequenceYaml.getExperimentId())==null) {
+            if (currentExecState.isInit && currentExecState.getState(sequenceYaml.getExperimentId())==null) {
                 stationExperimentService.delete(seq);
                 log.info("Deleted orphan sequence {}", seq);
                 continue;

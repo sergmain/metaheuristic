@@ -18,14 +18,12 @@
 package aiai.ai.station;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.beans.LogData;
-import aiai.ai.launchpad.repositories.LogDataRepository;
 import aiai.ai.launchpad.snippet.SnippetType;
-import aiai.ai.station.beans.StationExperimentSequence;
+import aiai.ai.yaml.station.StationExperimentSequence;
 import aiai.ai.utils.DirUtils;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
@@ -61,51 +59,19 @@ public class SequenceProcessor {
     private final StationService stationService;
     private final SequenceYamlUtils sequenceYamlUtils;
     private final StationExperimentService stationExperimentService;
+    private final CurrentExecState currentExecState;
 
     private Map<Long, AssetFile> isDatasetReady = new HashMap<>();
     private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
     private Map<String, StationSnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
-    static class CurrentExecState {
-        private final Map<Long, Enums.ExperimentExecState> experimentState = new HashMap<>();
-        boolean isInit = false;
-
-        private void register(List<Protocol.ExperimentStatus.SimpleStatus> statuses) {
-            synchronized(experimentState) {
-                for (Protocol.ExperimentStatus.SimpleStatus status : statuses) {
-                    experimentState.put(status.experimentId, status.state);
-                }
-                isInit = true;
-            }
-        }
-
-        Enums.ExperimentExecState getState(long experimentId) {
-            synchronized(experimentState) {
-                if (!isInit) {
-                    return null;
-                }
-                return experimentState.getOrDefault(experimentId, Enums.ExperimentExecState.DOESNT_EXIST);
-            }
-        }
-
-        boolean isState(long experimentId, Enums.ExperimentExecState state) {
-            Enums.ExperimentExecState currState = getState(experimentId);
-            return currState!=null && currState==state;
-        }
-
-        boolean isStarted(long experimentId) {
-            return isState(experimentId, Enums.ExperimentExecState.STARTED);
-        }
-    }
-
-    final CurrentExecState STATE = new CurrentExecState();
-
-    public SequenceProcessor(Globals globals, ProcessService processService, StationService stationService, SequenceYamlUtils sequenceYamlUtils, StationExperimentService stationExperimentService) {
+    public SequenceProcessor(Globals globals, ProcessService processService, StationService stationService, SequenceYamlUtils sequenceYamlUtils, StationExperimentService stationExperimentService, CurrentExecState currentExecState) {
         this.globals = globals;
         this.processService = processService;
         this.stationService = stationService;
         this.sequenceYamlUtils = sequenceYamlUtils;
         this.stationExperimentService = stationExperimentService;
+        this.currentExecState = currentExecState;
     }
 
     @PostConstruct
@@ -142,7 +108,7 @@ public class SequenceProcessor {
                 continue;
             }
             final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
-            if (!STATE.isStarted(sequenceYaml.experimentId)) {
+            if (!currentExecState.isStarted(sequenceYaml.experimentId)) {
                 continue;
             }
             AssetFile datasetFile = isDatasetReady.get(sequenceYaml.dataset.id);
@@ -306,6 +272,6 @@ public class SequenceProcessor {
     }
 
     public void processExperimentStatus(List<Protocol.ExperimentStatus.SimpleStatus> statuses) {
-        STATE.register(statuses);
+        currentExecState.register(statuses);
     }
 }

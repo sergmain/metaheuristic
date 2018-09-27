@@ -15,7 +15,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml;
+package aiai.ai.fixing;
 
 import aiai.ai.launchpad.beans.ExperimentSequence;
 import aiai.ai.launchpad.repositories.ExperimentSequenceRepository;
