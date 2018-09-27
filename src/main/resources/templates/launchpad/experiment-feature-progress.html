@@ -578,10 +578,18 @@
                             </table>
                         </td>
                         <td>
-                            <a class='ajax-elem-console table-nav-button pure-button' th:id="${'a-console-'+ g.index}" href="#"
-                               th:href="@{/launchpad/experiment-feature-progress-console-part/{id}/(id=${s.id})}"
-                               title='Console output'>Info</a>
-                            <a class='ajax-elem-console table-nav-button pure-button' href="#" th:onclick="${ 'rerunSequence(' + s.id + ');' }" title='Console output'>Re-run</a>
+                            <table>
+                                <tr>
+                                    <td>
+                                        <a class='ajax-elem-console table-nav-button pure-button' th:id="${'a-console-'+ g.index}" href="#"
+                                           th:href="@{/launchpad/experiment-feature-progress-console-part/{id}/(id=${s.id})}"
+                                           title='Console output'>Info</a>
+                                    </td>
+                                    <td>
+                                        <a class='ajax-elem-console table-nav-button pure-button' href="#" th:onclick="${ 'rerunSequence(' + s.id + ');' }" title='Console output'>Re-run</a>
+                                    </td>
+                                </tr>
+                            </table>
                     </tr>
                     <tr>
                         <td colspan="6">

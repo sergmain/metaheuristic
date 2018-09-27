@@ -314,7 +314,7 @@ public class StationExperimentService {
 
 
         if (sequenceYaml.exists()) {
-            log.info("sequenceYaml file exists. Make backup");
+            log.debug("{} file exists. Make backup", sequenceYaml.getPath());
             File yamlFileBak = new File(sequenceDir, Consts.SEQUENCE_YAML + ".bak");
             //noinspection ResultOfMethodCallIgnored
             yamlFileBak.delete();
