@@ -19,10 +19,9 @@ package aiai.ai.station;
 
 import aiai.ai.Consts;
 import aiai.ai.Globals;
+import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.snippet.SnippetType;
-import aiai.ai.yaml.station.StationExperimentSequence;
-import aiai.ai.comm.Protocol;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.metrics.Metrics;
@@ -30,6 +29,7 @@ import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleSnippet;
+import aiai.ai.yaml.station.StationExperimentSequence;
 import aiai.ai.yaml.station.StationExperimentSequenceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
@@ -38,10 +38,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -59,6 +65,60 @@ public class StationExperimentService {
         this.currentExecState = currentExecState;
         this.sequenceYamlUtils = sequenceYamlUtils;
         this.globals = globals;
+    }
+
+    @PostConstruct
+    public void postConstruct() {
+        if (!globals.stationExperimentDir.exists()) {
+            return;
+        }
+        try {
+            Files.list(globals.stationExperimentDir.toPath()).forEach(p -> {
+                final File file = p.toFile();
+                long experimentId = Long.parseLong(file.getName());
+                Map<Long, StationExperimentSequence> seqs = map.computeIfAbsent(experimentId, k -> new HashMap<>());
+                File seqDir = new File(file, "sequence");
+                try {
+                    Files.list(seqDir.toPath()).forEach(s -> {
+                        long seqId = Long.parseLong(s.toFile().getName());
+                        File sequuenceYamlFile = new File(s.toFile(), Consts.SEQUENCE_YAML);
+                        if (sequuenceYamlFile.exists()) {
+                            try(FileInputStream fis = new FileInputStream(sequuenceYamlFile)) {
+                                StationExperimentSequence seq = StationExperimentSequenceUtils.to(fis);
+                                seqs.put(seqId, seq);
+                            }
+                            catch (IOException e) {
+                                log.error("Error #3", e);
+                                throw new RuntimeException("Error #3", e);
+                            }
+                        }
+                    });
+                }
+                catch (IOException e) {
+                    log.error("Error #2", e);
+                    throw new RuntimeException("Error #2", e);
+                }
+            });
+        }
+        catch (IOException e) {
+            log.error("Error #1", e);
+            throw new RuntimeException("Error #1", e);
+        }
+        //noinspection unused
+        int i=0;
+    }
+
+    private void putInMap(@NotNull StationExperimentSequence seq) {
+        Map<Long, StationExperimentSequence> seqs = map.computeIfAbsent(seq.experimentId, k -> new HashMap<>());
+        seqs.put(seq.experimentSequenceId, seq);
+    }
+
+    private void deleteFromMap(@NotNull StationExperimentSequence seq) {
+        Map<Long, StationExperimentSequence> seqs = map.get(seq.experimentId);
+        if (seqs==null) {
+            return;
+        }
+        seqs.remove(seq.experimentSequenceId);
     }
 
     List<StationExperimentSequence> getForReporting() {
@@ -233,8 +293,9 @@ public class StationExperimentService {
             }
             //noinspection ResultOfMethodCallIgnored
             systemDir.mkdirs();
-            File paramsFile = new File(systemDir, Consts.SEQUENCE_YAML);
-            FileUtils.write(paramsFile, params, Charsets.UTF_8, false);
+            File sequenceYamlFile = new File(systemDir, Consts.SEQUENCE_YAML);
+            FileUtils.write(sequenceYamlFile, StationExperimentSequenceUtils.toString(seq), Charsets.UTF_8, false);
+            putInMap(seq);
         }
         catch( Throwable th) {
             log.error("Error ", th);
@@ -311,6 +372,7 @@ public class StationExperimentService {
         try {
             if (systemDir.exists()) {
                 FileUtils.deleteDirectory(systemDir);
+                deleteFromMap(seq);
             }
         }
         catch( Throwable th) {

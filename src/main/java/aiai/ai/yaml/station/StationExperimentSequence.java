@@ -37,8 +37,10 @@ public class StationExperimentSequence {
 
     public String metrics;
 
+    // TODO right not there will be 2 the same properties in yaml file - isReported and reported. Won't fix this at this momonet
     public boolean isReported;
 
+    // TODO right not there will be 2 the same properties in yaml file - isDelivered and delivered. Won't fix this at this momonet
     public boolean isDelivered;
 
     public String snippetExecResults;

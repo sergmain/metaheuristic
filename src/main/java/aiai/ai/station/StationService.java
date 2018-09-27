@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class StationService {
     private final StationExperimentService stationExperimentService;
 
     private String env;
-    private Metadata metadata = new Metadata();
+    private Metadata metadata;
 
     public StationService(Globals globals, StationExperimentService stationExperimentService) {
         this.globals = globals;
@@ -54,6 +55,9 @@ public class StationService {
     }
 
     public void setStationId(String stationId) {
+        if (stationId==null) {
+            throw new IllegalStateException("StationId is null");
+        }
         metadata.metadata.put(StationConsts.STATION_ID, stationId);
         updateMetadataFile();
     }
@@ -70,15 +74,29 @@ public class StationService {
 
         final File file = new File(globals.stationDir, "env.yaml");
         if (!file.exists()) {
-            log.warn("Station's config file doesn't exist: {}", file.getPath());
+            log.warn("Station's evironment config file doesn't exist: {}", file.getPath());
             return;
         }
         try {
             env = FileUtils.readFileToString(file, Charsets.UTF_8);
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error", e);
             throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
         }
+
+        final File metadataFile = new File(globals.stationDir, Consts.METADATA_FILE_NAME);
+        if (!metadataFile.exists()) {
+            log.warn("Station's metadata file doesn't exist: {}", file.getPath());
+            return;
+        }
+        try(FileInputStream fis = new FileInputStream(metadataFile)) {
+            metadata = MetadataUtils.to(fis);
+        } catch (IOException e) {
+            log.error("Error", e);
+            throw new IllegalStateException("Error while loading file: " + metadataFile.getPath(), e);
+        }
+        //noinspection unused
+        int i=0;
     }
 
     public void createSequence(List<Protocol.AssignedExperimentSequence.SimpleSequence> sequences) {
