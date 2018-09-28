@@ -15,16 +15,20 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.env;
+package aiai.ai.yaml.snippet;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.io.InputStream;
 
-@Data
-@NoArgsConstructor
-public class EnvYaml {
-    Map<String, String> envs = new LinkedHashMap<>();
+public class SnippetsConfigUtils {
+
+    public static SnippetsConfig loadSnippetYaml(InputStream is) {
+
+        Yaml yaml = new Yaml(new Constructor(SnippetsConfig.class));
+
+        SnippetsConfig config = yaml.load(is);
+        return config;
+    }
 }

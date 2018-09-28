@@ -15,7 +15,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.launchpad.snippet;
+package aiai.ai.yaml.snippet;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -70,11 +70,4 @@ public class SnippetsConfig {
 
     public List<SnippetConfig> snippets;
 
-    public static SnippetsConfig loadSnippetYaml(InputStream is) {
-
-        Yaml yaml = new Yaml(new Constructor(SnippetsConfig.class));
-
-        SnippetsConfig config = yaml.load(is);
-        return config;
-    }
 }

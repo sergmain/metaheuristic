@@ -22,11 +22,13 @@ import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.utils.checksum.Checksum;
+import aiai.ai.yaml.snippet.SnippetsConfig;
+import aiai.ai.yaml.snippet.SnippetsConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -34,7 +36,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Controller
+@Component
 @Slf4j
 public class SnippetController {
 
@@ -80,7 +82,7 @@ public class SnippetController {
         }
 
         try (InputStream is = new FileInputStream(yamlConfigFile)) {
-            SnippetsConfig snippetsConfig = SnippetsConfig.loadSnippetYaml(is);
+            SnippetsConfig snippetsConfig = SnippetsConfigUtils.loadSnippetYaml(is);
             for (SnippetsConfig.SnippetConfig snippetConfig : snippetsConfig.snippets) {
                 SnippetsConfig.SnippetConfigStatus status = snippetConfig.verify();
                 if (!status.isOk) {

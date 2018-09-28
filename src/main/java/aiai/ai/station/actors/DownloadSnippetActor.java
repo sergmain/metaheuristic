@@ -24,6 +24,7 @@ import aiai.ai.utils.DirUtils;
 import aiai.ai.utils.checksum.Checksum;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
 import org.springframework.stereotype.Service;
@@ -157,6 +158,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     continue;
                 }
                 if (isOk && !Boolean.FALSE.equals(isSignatureOk)) {
+                    snippetTempFile.renameTo(snippetFile.file);
                     preparedMap.put(task.snippetCode, true);
                 }
             }

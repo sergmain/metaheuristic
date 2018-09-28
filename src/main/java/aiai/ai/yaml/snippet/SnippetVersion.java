@@ -15,7 +15,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.launchpad.snippet;
+package aiai.ai.yaml.snippet;
 
 import lombok.Data;
 

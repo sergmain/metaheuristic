@@ -17,7 +17,7 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.launchpad.snippet.SnippetType;
+import aiai.ai.yaml.snippet.SnippetType;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleDataset;

@@ -139,7 +139,7 @@ CREATE TABLE AIAI_LP_DATASET_PATH (
   PATH_NUMBER NUMERIC(3, 0) NOT NULL,
   PATH        VARCHAR(200),
   REG_TS      TIMESTAMP NOT NULL,
-  CHECKSUM    VARCHAR(200),
+  CHECKSUM    VARCHAR(2048),
   IS_FILE     tinyint(1) not null default 1,
   IS_VALID    tinyint(1) not null default 0
 );

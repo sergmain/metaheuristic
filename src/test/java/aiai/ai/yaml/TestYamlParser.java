@@ -17,12 +17,11 @@
 
 package aiai.ai.yaml;
 
-import aiai.ai.launchpad.snippet.SnippetType;
-import aiai.ai.launchpad.snippet.SnippetsConfig;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
+import aiai.ai.yaml.snippet.SnippetType;
+import aiai.ai.yaml.snippet.SnippetsConfig;
+import aiai.ai.yaml.snippet.SnippetsConfigUtils;
 import lombok.Data;
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -84,7 +83,7 @@ dataset:
 
         try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/snippets-test-error.yaml")) {
 
-            SnippetsConfig config = SnippetsConfig.loadSnippetYaml(is);
+            SnippetsConfig config = SnippetsConfigUtils.loadSnippetYaml(is);
             assertNotNull(config);
             assertNotNull(config.getSnippets());
             assertEquals(1, config.getSnippets().size());
@@ -117,7 +116,7 @@ dataset:
 
         try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/snippets-test.yaml")) {
 
-            SnippetsConfig config = SnippetsConfig.loadSnippetYaml(is);
+            SnippetsConfig config = SnippetsConfigUtils.loadSnippetYaml(is);
 
             assertNotNull(config);
             assertNotNull(config.snippets);

@@ -22,7 +22,7 @@ import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.DatasetGroup;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.dataset.DatasetUtils;
-import aiai.ai.launchpad.snippet.SnippetVersion;
+import aiai.ai.yaml.snippet.SnippetVersion;
 import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.utils.checksum.Checksum;
