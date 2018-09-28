@@ -259,7 +259,8 @@ public abstract class TestFeature {
 
     protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
         assertEquals(sequences1Feature.experimentId, experiment.getId());
-        ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, experiment.getId());
+        ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getSequencesAndAssignToStation(
+                station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, false, experiment.getId());
         assertNotNull(sequences2);
         assertTrue(sequences2.getSimpleSequences().isEmpty());
         assertNull(sequences2.getFeature());
@@ -273,7 +274,8 @@ public abstract class TestFeature {
     }
 
     protected void checkCurrentState_with10sequences() {
-        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, experiment.getId());
+        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(
+                station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, false, experiment.getId());
         assertNotNull(sequences);
         assertNotNull(sequences.getFeature());
         assertNotNull(sequences.getSimpleSequences());

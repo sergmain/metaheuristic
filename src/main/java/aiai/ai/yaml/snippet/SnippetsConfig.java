@@ -17,6 +17,7 @@
  */
 package aiai.ai.yaml.snippet;
 
+import aiai.ai.utils.checksum.Checksum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,7 +27,9 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 
 import java.io.InputStream;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Data
 public class SnippetsConfig {
@@ -56,6 +59,7 @@ public class SnippetsConfig {
         public String file;
         public String version;
         public String env;
+        public Map<Checksum.Type, String> checksums;
 
         public SnippetConfigStatus verify() {
             if (StringUtils.isBlank(name) || type==null || StringUtils.isBlank(file) || StringUtils.isBlank(version) || StringUtils.isBlank(env)) {

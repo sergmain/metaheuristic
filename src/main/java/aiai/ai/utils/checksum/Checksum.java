@@ -43,7 +43,7 @@ public class Checksum {
     public enum Type {
         MD5(false), SHA256(false), SHA256WithSign(true);
 
-        private boolean isSign;
+        public boolean isSign;
 
         Type(boolean isSign) {
             this.isSign = isSign;

@@ -38,14 +38,16 @@ public class TestFeatureWithSomeOk extends TestFeature {
         checkCurrentState_with10sequences();
 
         // this station already got sequences, so don't provide any new
-        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, experiment.getId());
+        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(
+                station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, false, experiment.getId());
         assertNotNull(sequences);
         // sequences is empty cos we still didn't finish those sequences
         assertTrue(sequences.getSimpleSequences().isEmpty());
 
         finishCurrentWithError(CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
 
-        ExperimentService.SequencesAndAssignToStationResult sequences1 = experimentService.getSequencesAndAssignToStation(station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, experiment.getId());
+        ExperimentService.SequencesAndAssignToStationResult sequences1 = experimentService.getSequencesAndAssignToStation(
+                station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, false, experiment.getId());
         assertNotNull(sequences1);
         final ExperimentFeature feature = sequences1.getFeature();
         assertNotNull(feature);

@@ -174,7 +174,16 @@ public class Protocol {
         }
     }
 
+    @EqualsAndHashCode(callSuper = false)
+    @Data
     public static class RequestExperimentSequence extends Command {
+        private boolean isAcceptOnlySigned;
+
+        public RequestExperimentSequence(boolean isAcceptOnlySigned) {
+            this.setType(Type.RequestExperimentSequence);
+            this.isAcceptOnlySigned = isAcceptOnlySigned;
+        }
+
         public RequestExperimentSequence() {
             this.setType(Type.RequestExperimentSequence);
         }

@@ -17,13 +17,58 @@
  */
 package aiai.ai.yaml.snippet;
 
+import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.nodes.Tag;
+import org.yaml.snakeyaml.representer.Representer;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 public class SnippetsConfigUtils {
 
+    private static Yaml yaml;
+
+    static {
+        final DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setPrettyFlow(true);
+
+        Representer representer = new Representer();
+        representer.addClassTag(SnippetsConfig.class, Tag.MAP);
+
+        yaml = new Yaml(new Constructor(SnippetsConfig.class), representer, options);
+    }
+
+    public static String toString(SnippetsConfig config) {
+        return yaml.dump(config);
+    }
+
+    public static SnippetsConfig to(String s) {
+        if (s == null) {
+            return null;
+        }
+        return yaml.load(s);
+    }
+
+    public static SnippetsConfig to(InputStream is) {
+        return yaml.load(is);
+    }
+
+    public static SnippetsConfig to(File file) {
+        try (FileInputStream fis = new FileInputStream(file)) {
+            return yaml.load(fis);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
+        }
+   }
+
+/*
     public static SnippetsConfig loadSnippetYaml(InputStream is) {
 
         Yaml yaml = new Yaml(new Constructor(SnippetsConfig.class));
@@ -31,4 +76,5 @@ public class SnippetsConfigUtils {
         SnippetsConfig config = yaml.load(is);
         return config;
     }
+*/
 }

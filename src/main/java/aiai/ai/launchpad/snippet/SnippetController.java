@@ -35,13 +35,13 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Map;
 
 @Component
 @Slf4j
 public class SnippetController {
 
     private final Globals globals;
-
     private final PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver;
     private final SnippetRepository snippetRepository;
 
@@ -58,7 +58,7 @@ public class SnippetController {
             final File[] dirs = customSnippets.listFiles(File::isDirectory);
             if (dirs!=null) {
                 for (File dir : dirs) {
-                    log.info("Load snippets from: {}", dir.getPath());
+                    log.info("Load snippets from {}", dir.getPath());
                     loadSnippetsFromDir(dir);
                 }
             }
@@ -69,7 +69,7 @@ public class SnippetController {
 
         Resource[] resources  = pathMatchingResourcePatternResolver.getResources("classpath:snippets/*");
         for (Resource resource : resources) {
-            System.out.println(resource);
+            log.info("Load snippets as resource from {} ", resource.getFile().getPath());
             loadSnippetsFromDir(resource.getFile());
         }
     }
@@ -77,16 +77,16 @@ public class SnippetController {
     private void loadSnippetsFromDir(File srcDir) throws IOException {
         File yamlConfigFile = new File(srcDir, "snippets.yaml");
         if (!yamlConfigFile.exists()) {
-            log.info("File 'snippets.yaml' wasn't found in dir {}", srcDir.getAbsolutePath());
+            log.warn("File 'snippets.yaml' wasn't found in dir {}", srcDir.getAbsolutePath());
             return;
         }
 
         try (InputStream is = new FileInputStream(yamlConfigFile)) {
-            SnippetsConfig snippetsConfig = SnippetsConfigUtils.loadSnippetYaml(is);
+            SnippetsConfig snippetsConfig = SnippetsConfigUtils.to(is);
             for (SnippetsConfig.SnippetConfig snippetConfig : snippetsConfig.snippets) {
                 SnippetsConfig.SnippetConfigStatus status = snippetConfig.verify();
                 if (!status.isOk) {
-                    System.out.println(status.error);
+                    log.error(status.error);
                     continue;
                 }
                 File file = new File(srcDir, snippetConfig.file);
@@ -101,9 +101,10 @@ public class SnippetController {
 
                 Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
                 if (snippet!=null) {
-                    if (!Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256).equals(sum)) {
+                    final String checksum = Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256);
+                    if (!sum.equals(checksum)) {
                         if (globals.isReplaceSnapshot && snippetConfig.version.endsWith(Consts.SNAPSHOT_SUFFIX)) {
-                            snippet.checksum = new Checksum(Checksum.Type.SHA256, sum).toJson();
+                            setChecksum(snippetConfig, sum, snippet);
                             snippet.name = snippetConfig.name;
                             snippet.snippetVersion = snippetConfig.version;
                             snippet.type = snippetConfig.type.toString();
@@ -119,7 +120,7 @@ public class SnippetController {
                 }
                 else {
                     snippet = new Snippet();
-                    snippet.checksum = new Checksum(Checksum.Type.SHA256, sum).toJson();
+                    setChecksum(snippetConfig, sum, snippet);
                     snippet.name = snippetConfig.name;
                     snippet.snippetVersion = snippetConfig.version;
                     snippet.type = snippetConfig.type.toString();
@@ -131,6 +132,27 @@ public class SnippetController {
                     snippetRepository.save(snippet);
                 }
             }
+        }
+    }
+
+    private void setChecksum(SnippetsConfig.SnippetConfig snippetConfig, String sum, Snippet snippet) {
+        if (snippetConfig.checksums != null) {
+            // already defined checksum in snippets.yaml
+            Checksum checksum = new Checksum();
+            checksum.checksums.putAll(snippetConfig.checksums);
+            snippet.checksum = checksum.toJson();
+            boolean isSigned = false;
+            for (Map.Entry<Checksum.Type, String> entry : snippetConfig.checksums.entrySet()) {
+                if (entry.getKey().isSign) {
+                    isSigned = true;
+                    break;
+                }
+            }
+            snippet.setSigned(isSigned);
+        } else {
+            // calc the new checksum
+            snippet.checksum = new Checksum(Checksum.Type.SHA256, sum).toJson();
+            snippet.setSigned(false);
         }
     }
 }

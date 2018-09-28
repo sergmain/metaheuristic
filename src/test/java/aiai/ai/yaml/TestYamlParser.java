@@ -83,7 +83,7 @@ dataset:
 
         try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/snippets-test-error.yaml")) {
 
-            SnippetsConfig config = SnippetsConfigUtils.loadSnippetYaml(is);
+            SnippetsConfig config = SnippetsConfigUtils.to(is);
             assertNotNull(config);
             assertNotNull(config.getSnippets());
             assertEquals(1, config.getSnippets().size());
@@ -116,7 +116,7 @@ dataset:
 
         try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/snippets-test.yaml")) {
 
-            SnippetsConfig config = SnippetsConfigUtils.loadSnippetYaml(is);
+            SnippetsConfig config = SnippetsConfigUtils.to(is);
 
             assertNotNull(config);
             assertNotNull(config.snippets);

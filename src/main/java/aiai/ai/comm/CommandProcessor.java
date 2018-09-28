@@ -153,14 +153,15 @@ public class CommandProcessor {
     @NotNull
     private Command[] processRequestExperimentSequence(Protocol.RequestExperimentSequence command) {
         checkStationId(command);
-        Protocol.AssignedExperimentSequence r = getAssignedExperimentSequence(command.getStationId(), MAX_SEQUENSE_POOL_SIZE);
+        Protocol.AssignedExperimentSequence r = getAssignedExperimentSequence(command.getStationId(), command.isAcceptOnlySigned(), MAX_SEQUENSE_POOL_SIZE);
         return Protocol.asArray(r);
     }
 
     @NotNull
-    private synchronized Protocol.AssignedExperimentSequence getAssignedExperimentSequence(String stationId, int recordNumber) {
+    private synchronized Protocol.AssignedExperimentSequence getAssignedExperimentSequence(String stationId, boolean isAcceptOnlySigned, int recordNumber) {
         Protocol.AssignedExperimentSequence r = new Protocol.AssignedExperimentSequence();
-        ExperimentService.SequencesAndAssignToStationResult result = experimentService.getSequencesAndAssignToStation(Long.parseLong(stationId), recordNumber, null);
+        ExperimentService.SequencesAndAssignToStationResult result = experimentService.getSequencesAndAssignToStation(
+                Long.parseLong(stationId), recordNumber, isAcceptOnlySigned, null);
         r.sequences = result.getSimpleSequences();
         return r;
     }

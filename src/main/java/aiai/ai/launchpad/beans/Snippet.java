@@ -60,6 +60,9 @@ public class Snippet implements Serializable {
     @Column(name = "ENV")
     public String env;
 
+    @Column(name = "IS_SIGNED")
+    private boolean isSigned;
+
     public String getSnippetCode() {
         return ""+ name + ':' + snippetVersion;
     }

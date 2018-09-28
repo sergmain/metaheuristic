@@ -173,17 +173,32 @@ public class ExperimentService {
         return true;
     }
 
-    // for implementing cache later
+    // for implementing cache later. there is ExperimentCache class for that
     public Experiment findById(long id) {
         return experimentRepository.findById(id).orElse(null);
     }
 
-    public synchronized SequencesAndAssignToStationResult getSequencesAndAssignToStation(long stationId, int recordNumber, Long experimentId) {
+    public synchronized SequencesAndAssignToStationResult getSequencesAndAssignToStation(long stationId, int recordNumber, boolean isAcceptOnlySigned, Long experimentId) {
 
         // check and mark all completed features
         List<ExperimentFeature> fsTemp = experimentFeatureRepository.findAllForLaunchedExperiments( Enums.ExperimentExecState.STARTED.code);
         List<ExperimentFeature> fs = new ArrayList<>();
         if (experimentId!=null) {
+            Experiment experiment = findById(experimentId);
+            if (experiment==null) {
+                log.warn("there isn't the experiment for #id {}", experimentId);
+                return EMPTY_RESULT;
+            }
+            if (isAcceptOnlySigned) {
+                for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
+                    final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
+                    Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                    if (snippet!=null && !snippet.isSigned()) {
+                        // this experiment with #experimentId contains non-signed snippet but we were asked for singed snippets only
+                        return EMPTY_RESULT;
+                    }
+                }
+            }
             for (ExperimentFeature feature : fsTemp) {
                 if (feature.experimentId.equals(experimentId)) {
                     fs.add(feature);
@@ -191,7 +206,26 @@ public class ExperimentService {
             }
         }
         else {
-            fs = fsTemp;
+            if (isAcceptOnlySigned) {
+                for (ExperimentFeature feature : fsTemp) {
+                    Experiment experiment = findById(feature.experimentId);
+                    if (experiment==null) {
+                        log.warn("there isn't the experiment for #id {}", experimentId);
+                        continue;
+                    }
+                    for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
+                        final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
+                        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                        if (snippet!=null && snippet.isSigned()) {
+                            // add only feature for signed experiments
+                            fs.add(feature);
+                        }
+                    }
+                }
+            }
+            else {
+                fs = fsTemp;
+            }
         }
         Set<Long> idsForError = new HashSet<>();
         Set<Long> idsForOk = new HashSet<>();
@@ -247,7 +281,7 @@ public class ExperimentService {
         checkForFinished();
 
         // check that there isn't feature with FeatureExecStatus.error
-        if (Boolean.FALSE.equals(isContinue)) {
+        if (!Boolean.TRUE.equals(isContinue)) {
             return EMPTY_RESULT;
         }
 

@@ -156,7 +156,7 @@ public class LaunchpadRequester {
     private void needNewExperimentSequence(ExchangeData data, String stationId) {
         final boolean b = stationExperimentService.isNeedNewExperimentSequence(stationId);
         if (b) {
-            data.setCommand(new Protocol.RequestExperimentSequence());
+            data.setCommand(new Protocol.RequestExperimentSequence(globals.isAcceptOnlySignedSnippets));
         }
     }
 }
