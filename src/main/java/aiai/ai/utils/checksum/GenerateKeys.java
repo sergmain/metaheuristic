@@ -18,6 +18,7 @@
 package aiai.ai.utils.checksum;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.StringUtils;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -31,8 +32,7 @@ public class GenerateKeys {
     private PrivateKey privateKey;
     private PublicKey publicKey;
 
-    public GenerateKeys(int keylength) throws NoSuchAlgorithmException, NoSuchProviderException {
-
+    public GenerateKeys(int keylength) throws NoSuchAlgorithmException {
         this.keyGen = KeyPairGenerator.getInstance("RSA");
         this.keyGen.initialize(keylength);
     }
@@ -41,7 +41,6 @@ public class GenerateKeys {
         this.pair = this.keyGen.generateKeyPair();
         this.privateKey = pair.getPrivate();
         this.publicKey = pair.getPublic();
-
     }
 
     public PrivateKey getPrivateKey() {
@@ -52,25 +51,18 @@ public class GenerateKeys {
         return this.publicKey;
     }
 
-    public void writeToFile(String path, byte[] key) throws IOException {
-
-        File f = new File(path);
-        f.getParentFile().mkdirs();
-
-        FileOutputStream fos = new FileOutputStream(f);
-        fos.write(key);
-        fos.flush();
-        fos.close();
-
+    public static String encodeBase64String(final byte[] binaryData) {
+        return StringUtils.newStringUsAscii(Base64.encodeBase64(binaryData, true));
     }
 
-    public static void main(String[] args) throws NoSuchAlgorithmException, NoSuchProviderException, IOException {
-        GenerateKeys myKeys = new GenerateKeys(1024);
+    public static void main(String[] args) throws NoSuchAlgorithmException {
+        GenerateKeys myKeys = new GenerateKeys(2048);
         myKeys.createKeys();
-        String base64 = Base64.encodeBase64String(myKeys.getPublicKey().getEncoded());
-        System.out.println("base64:\n" + base64);
 
-        boolean base64Encoded = Base64.isBase64(base64);
-        System.out.println("is base64Encoded: "+base64Encoded);
+        String privateKey64 = encodeBase64String(myKeys.getPrivateKey().getEncoded());
+        String publicKey64 = Base64.encodeBase64String(myKeys.getPublicKey().getEncoded());
+        System.out.println("privateKey64:\n" + privateKey64);
+        System.out.println("publicKey64:\n" + publicKey64);
+
    }
 }

@@ -53,7 +53,6 @@ public class Snippet implements Serializable {
     @Column(name = "CODE")
     @Lob
     public byte[] code;
-//    public String code;
 
     @Column(name = "CHECKSUM")
     public String checksum;

@@ -38,3 +38,7 @@ Free hosting of docu for OSS projects
     https://codepen.io/anon/pen/oPOEVR
 
     https://www.webjars.org/all
+
+=======================
+SHA256+Signature
+    https://www.mkyong.com/java/java-asymmetric-cryptography-example/

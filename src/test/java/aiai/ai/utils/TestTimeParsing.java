@@ -24,6 +24,7 @@ import org.joda.time.format.DateTimeFormatter;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class TestTimeParsing {
@@ -44,6 +45,32 @@ public class TestTimeParsing {
         TimePeriods.TimePeriod tp2 = periods.periods.get(1);
         assertTrue(tp2.start.isEqual(LocalTime.parse("19:00", FORMATTER)));
         assertTrue(tp2.end.isEqual(LocalTime.parse("23:59", FORMATTER)));
+
+
+        assertTrue(periods.isActive(LocalTime.parse("0:0", FORMATTER)));
+        assertTrue(periods.isActive(LocalTime.parse("00:00", FORMATTER)));
+        assertTrue(periods.isActive(LocalTime.parse("08:45", FORMATTER)));
+        assertTrue(periods.isActive(LocalTime.parse("19:00", FORMATTER)));
+        assertTrue(periods.isActive(LocalTime.parse("23:59", FORMATTER)));
+
+        assertFalse(periods.isActive(LocalTime.parse("12:00", FORMATTER)));
+
+    }
+
+    @Test
+    public void testTimePeriodAlwaysActive() {
+        TimePeriods periods = TimePeriods.from(null);
+        assertEquals(1, periods.periods.size());
+
+        TimePeriods.TimePeriod tp1 = periods.periods.get(0);
+        assertTrue(tp1.start.isEqual(LocalTime.parse("0:00", FORMATTER)));
+        assertTrue(tp1.end.isEqual(LocalTime.parse("23:59", FORMATTER)));
+
+        assertTrue(periods.isActive(LocalTime.parse("0:0", FORMATTER)));
+        assertTrue(periods.isActive(LocalTime.parse("00:00", FORMATTER)));
+        assertTrue(periods.isActive(LocalTime.parse("08:45", FORMATTER)));
+        assertTrue(periods.isActive(LocalTime.parse("19:00", FORMATTER)));
+        assertTrue(periods.isActive(LocalTime.parse("23:59", FORMATTER)));
     }
 
     @Test

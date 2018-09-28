@@ -31,7 +31,7 @@ public class SequenceYamlUtils {
 
     private Yaml yamlSequenceYaml;
 
-    // TODO 2018.09.12. so, snakeYaml isn't thread-safe?
+    // TODO 2018.09.12. so, snakeYaml isn't thread-safe or it was a side-effect?
     private static final Object syncObj = new Object();
 
     public SequenceYamlUtils() {

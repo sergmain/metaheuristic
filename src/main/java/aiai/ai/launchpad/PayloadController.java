@@ -48,6 +48,7 @@ import java.util.Map;
 public class PayloadController {
 
     private static final HttpEntity<byte[]> EMPTY_HTTP_ENTITY = new HttpEntity<>(new byte[0], getHeader(0));
+    private static final HttpEntity<String> EMPTY_STRING_HTTP_ENTITY = new HttpEntity<>("", getHeader(0));
     private  final SnippetRepository snippetRepository;
     private  final DatasetGroupsRepository datasetGroupsRepository;
 
@@ -112,9 +113,45 @@ public class PayloadController {
         }
 
         final int length = snippet.getCode().length;
-        log.info("Send snippet {}, length: {}", snippet.getSnippetCode(), length);
+        log.info("Send snippet, length: {}", length);
 
         return new HttpEntity<>(snippet.getCode(), getHeader(length) );
+    }
+
+    @GetMapping("/snippet-checksum/{name}")
+    public HttpEntity<String> snippetChecksum(HttpServletResponse response, @PathVariable("name") String snippetName) throws IOException {
+
+        SnippetVersion snippetVersion = SnippetVersion.from(snippetName);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        if (snippet==null) {
+            log.info("Snippet wan't found for name {}", snippetName);
+            response.sendError(HttpServletResponse.SC_GONE);
+            return EMPTY_STRING_HTTP_ENTITY;
+        }
+
+        if (snippet.getChecksum()==null) {
+            log.info("Checksum for snippet {} wan't found", snippetName);
+            response.sendError(HttpServletResponse.SC_GONE);
+            return EMPTY_STRING_HTTP_ENTITY;
+        }
+
+        Checksum checksum = Checksum.fromJson(snippet.getChecksum());
+        for (Map.Entry<Checksum.Type, String> entry : checksum.checksums.entrySet()) {
+            String sum = entry.getKey().getChecksum( snippet.getCode() );
+            if (sum.equals(entry.getValue())) {
+                log.info("Snippet {}, checksum is Ok", snippet.getSnippetCode());
+            }
+            else {
+                log.error("Snippet {}, checksum is wrong, expected: {}, actual: {}", snippet.getSnippetCode(), entry.getValue(), sum );
+                response.sendError(HttpServletResponse.SC_CONFLICT);
+                return EMPTY_STRING_HTTP_ENTITY;
+            }
+        }
+
+        final int length = snippet.getCode().length;
+        log.info("Send snippet checksum, length: {}", snippet.getSnippetCode(), length);
+
+        return new HttpEntity<>(snippet.getChecksum(), getHeader(length) );
     }
 
     private static HttpHeaders getHeader(long length) {

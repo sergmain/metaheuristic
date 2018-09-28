@@ -17,6 +17,7 @@
  */
 package aiai.ai;
 
+import aiai.ai.yaml.env.TimePeriods;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,9 @@ import java.io.File;
 @Slf4j
 @ToString
 public class Globals {
+
+    @Value("${aiai.public-key:#{null}}")
+    public String publicKey;
 
     @Value("${aiai.station.launchpad.url:#{null}}")
     public String launchpadUrl;
@@ -51,6 +55,12 @@ public class Globals {
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.experiment-table-rows-limit'), 5, 30, 10) }")
     public int experimentRowsLimit;
 
+    @Value("${aiai.station.active-time:#{null}}")
+    public String stationActiveTime;
+
+    @Value("${aiai.accept.run-only-signed-snippets:#{true}}")
+    public boolean isAcceptOnlySignedSnippets;
+
 
     public boolean isStationEnabled = true;
     public boolean isLaunchpadEnabled = true;
@@ -63,6 +73,8 @@ public class Globals {
     public File stationSnippetDir;
     public File stationDbDir;
     public File stationSystemDir;
+
+    public TimePeriods timePeriods;
 
     public String serverRestUrl;
 
@@ -80,6 +92,8 @@ public class Globals {
             stationSnippetDir = new File(stationDir, Consts.SNIPPET_DIR);
             stationDbDir = new File(stationDir, Consts.DATABASE_DIR);
             stationSystemDir = new File(stationDir, Consts.SYSTEM_DIR);
+
+            timePeriods = TimePeriods.from(stationActiveTime);
         }
 
         if (launchpadDir==null) {

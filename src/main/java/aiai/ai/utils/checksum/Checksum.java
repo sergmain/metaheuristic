@@ -41,7 +41,13 @@ public class Checksum {
     }
 
     public enum Type {
-        MD5, SHA256;
+        MD5(false), SHA256(false), SHA256WithSign(true);
+
+        private boolean isSign;
+
+        Type(boolean isSign) {
+            this.isSign = isSign;
+        }
 
         public String getChecksum(String data) throws IOException {
             return getChecksum( IOUtils.toInputStream(data, Charsets.UTF_8));
@@ -57,6 +63,8 @@ public class Checksum {
                     return DigestUtils.md5Hex(inputStream);
                 case SHA256:
                     return DigestUtils.sha256Hex(inputStream);
+                case SHA256WithSign:
+                    throw new IllegalStateException("Shouldn't be created here. Use external methods");
                 default:
                     throw new IllegalStateException("Not implemented: " + this);
             }
@@ -94,5 +102,11 @@ public class Checksum {
         return "Checksum{" +
                 "checksums=" + checksums +
                 '}';
+    }
+
+    public static void main(String[] args) {
+        String c = "{\"checksums\":{\"SHA256\":\"34f55188ece53401987db632429bf5f96758be391a0812d29baad2cb874da974\"}}";
+
+
     }
 }

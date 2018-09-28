@@ -19,6 +19,8 @@ package aiai.ai.yaml.env;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
@@ -28,6 +30,7 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 @Data
+@NoArgsConstructor
 public class TimePeriods {
 
     @Data
@@ -41,16 +44,27 @@ public class TimePeriods {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormat.forPattern("HH:mm");
 
+    public static final TimePeriods ALWAYS_ACTIVE = new TimePeriods(new TimePeriod( LocalTime.parse("0:00", FORMATTER),  LocalTime.parse("23:59", FORMATTER)));
+
+    public TimePeriods(TimePeriod period) {
+        periods.add( period );
+    }
+
     private static TimePeriod asTimePeriod(String s) {
         final int idx = s.indexOf('-');
         if (idx ==-1) {
             throw new IllegalArgumentException("Wrong format of string for parsing: " + s+". Must be in format [HH:mm - HH:mm] (without brackets)");
         }
+        //noinspection UnnecessaryLocalVariable
         TimePeriod period = new TimePeriod( LocalTime.parse(s.substring(0, idx).trim(), FORMATTER),  LocalTime.parse(s.substring(idx+1).trim(), FORMATTER));
         return period;
     }
 
     public static TimePeriods from(String s) {
+        if (StringUtils.isBlank(s)) {
+            return ALWAYS_ACTIVE;
+        }
+
         TimePeriods periods = new TimePeriods();
         for (StringTokenizer st = new StringTokenizer(s, ","); st.hasMoreTokens(); ) {
             String token = st.nextToken().trim();

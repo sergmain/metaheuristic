@@ -48,8 +48,9 @@ public class Consts {
     public static final String EXPERIMENT_DIR = "experiment";
     public static final String SYSTEM_DIR = "system";
 
-    public static final String METADATA_FILE_NAME = "metadata.yaml";
+    public static final String METADATA_YAML_FILE_NAME = "metadata.yaml";
     public static final String RAW_FILE_NAME = "raw-file.txt";
+    public static final String ENV_YAML_FILE_NAME = "env.yaml";
 
     public static final String METRICS_FILE_NAME = "metrics.yaml";
     public static final String DATASET_FILE_NAME = "dataset.txt";

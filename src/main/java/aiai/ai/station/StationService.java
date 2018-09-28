@@ -20,12 +20,15 @@ package aiai.ai.station;
 import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
+import aiai.ai.yaml.env.EnvYaml;
+import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.station.StationExperimentSequence;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.metadata.MetadataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -42,7 +45,9 @@ public class StationService {
     private final Globals globals;
     private final StationExperimentService stationExperimentService;
 
+    @NotNull
     private String env;
+    private EnvYaml envYaml;
     private Metadata metadata;
 
     public StationService(Globals globals, StationExperimentService stationExperimentService) {
@@ -62,8 +67,14 @@ public class StationService {
         updateMetadataFile();
     }
 
+    @NotNull
     public String getEnv() {
         return env;
+    }
+
+    @NotNull
+    EnvYaml getEnvYaml() {
+        return envYaml;
     }
 
     @PostConstruct
@@ -72,19 +83,24 @@ public class StationService {
             return;
         }
 
-        final File file = new File(globals.stationDir, "env.yaml");
+        final File file = new File(globals.stationDir, Consts.ENV_YAML_FILE_NAME);
         if (!file.exists()) {
             log.warn("Station's evironment config file doesn't exist: {}", file.getPath());
             return;
         }
         try {
             env = FileUtils.readFileToString(file, Charsets.UTF_8);
+            envYaml = EnvYamlUtils.toEnvYaml(env);
+            if (envYaml==null) {
+                log.error("env.yaml wasn't found or empty. path: {}{}env.yaml", globals.stationDir, File.separatorChar );
+                throw new IllegalStateException("Station isn't configured, env.yaml is empty or doesn't exist");
+            }
         } catch (IOException e) {
             log.error("Error", e);
             throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
         }
 
-        final File metadataFile = new File(globals.stationDir, Consts.METADATA_FILE_NAME);
+        final File metadataFile = new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME);
         if (!metadataFile.exists()) {
             log.warn("Station's metadata file doesn't exist: {}", file.getPath());
             return;
@@ -119,10 +135,10 @@ public class StationService {
     }
 
     private void updateMetadataFile() {
-        final File metadataFile =  new File(globals.stationDir, Consts.METADATA_FILE_NAME);
+        final File metadataFile =  new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME);
         if (metadataFile.exists()) {
             log.info("Metadata file exists. Make backup");
-            File yamlFileBak = new File(globals.stationDir, Consts.METADATA_FILE_NAME + ".bak");
+            File yamlFileBak = new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME + ".bak");
             //noinspection ResultOfMethodCallIgnored
             yamlFileBak.delete();
             if (metadataFile.exists()) {

@@ -23,16 +23,14 @@ import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.beans.LogData;
 import aiai.ai.launchpad.snippet.SnippetType;
-import aiai.ai.yaml.station.StationExperimentSequence;
 import aiai.ai.utils.DirUtils;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
-import aiai.ai.yaml.env.EnvYaml;
-import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
 import aiai.ai.yaml.sequence.SimpleFeature;
 import aiai.ai.yaml.sequence.SimpleSnippet;
+import aiai.ai.yaml.station.StationExperimentSequence;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -40,7 +38,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -74,10 +71,6 @@ public class SequenceProcessor {
         this.currentExecState = currentExecState;
     }
 
-    @PostConstruct
-    public void init() {
-    }
-
     public void fixedDelay() {
         if (globals.isUnitTesting) {
             return;
@@ -85,9 +78,7 @@ public class SequenceProcessor {
         if (!globals.isStationEnabled) {
             return;
         }
-        EnvYaml envYaml = EnvYamlUtils.toEnvYaml(stationService.getEnv());
-        if (envYaml == null) {
-            log.warn("env.yaml wasn't found or empty. path: {}{}env.yaml", globals.stationDir, File.separatorChar );
+        if (!globals.timePeriods.isCurrentTimeActive()) {
             return;
         }
 
@@ -181,7 +172,7 @@ public class SequenceProcessor {
                 if (paramFile == null) {
                     break;
                 }
-                String intepreter = envYaml.getEnvs().get(snippet.env);
+                String intepreter = stationService.getEnvYaml().getEnvs().get(snippet.env);
                 if (intepreter == null) {
                     log.warn("Can't process sequence, interpreter wasn't found for env: {}", snippet.env);
                     break;
@@ -209,7 +200,7 @@ public class SequenceProcessor {
         }
     }
 
-    private void initAllPaths(File stationDatasetDir, SequenceYaml sequenceYaml) {
+    private void initAllPaths(File stationDatasetDir, @NotNull SequenceYaml sequenceYaml) {
         final AssetFile datasetAssetFile = StationDatasetUtils.prepareDatasetFile(stationDatasetDir, sequenceYaml.dataset.id);
         if (datasetAssetFile.isError || !datasetAssetFile.isContent ) {
             log.warn("Dataset file wasn't found. {}", datasetAssetFile);
