@@ -18,6 +18,7 @@
 package aiai.ai.comm;
 
 import aiai.ai.Enums;
+import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,19 +45,36 @@ import java.util.stream.Collectors;
 public class ServerController {
 
     private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
+
+    private final Globals globals;
     private final CommandProcessor commandProcessor;
     private final StationsRepository stationsRepository;
     private final ExperimentRepository experimentRepository;
 
-    public ServerController(CommandProcessor commandProcessor, StationsRepository stationsRepository, ExperimentRepository experimentRepository) {
+    public ServerController(Globals globals, CommandProcessor commandProcessor, StationsRepository stationsRepository, ExperimentRepository experimentRepository) {
+        this.globals = globals;
         this.commandProcessor = commandProcessor;
         this.stationsRepository = stationsRepository;
         this.experimentRepository = experimentRepository;
     }
 
     @PostMapping("/rest-anon/srv")
-    public ExchangeData postDatasets(@RequestBody ExchangeData data, HttpServletRequest request) {
-        log.debug("postDatasets(),  {}", data);
+    public ExchangeData processRequestAnon(HttpServletResponse response, @RequestBody ExchangeData data, HttpServletRequest request) throws IOException {
+        log.debug("processRequestAnon(), globals.isSecureRestUrl: {}, data: {}", globals.isSecureRestUrl, data);
+        if (globals.isSecureRestUrl) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        }
+        return processRequest(data, request);
+    }
+
+    @PostMapping("/rest-auth/srv")
+    public ExchangeData processRequestAuth(@RequestBody ExchangeData data, HttpServletRequest request) {
+        log.debug("processRequestAnon(), globals.isSecureRestUrl: {}, data: {}", globals.isSecureRestUrl, data);
+        return processRequest(data, request);
+    }
+
+    private ExchangeData processRequest(@RequestBody ExchangeData data, HttpServletRequest request) {
         if (StringUtils.isBlank(data.getStationId())) {
             return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
         }

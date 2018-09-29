@@ -37,13 +37,6 @@ import org.springframework.stereotype.Service;
 public class CustomUserDetails implements UserDetailsService {
 
     private final AccountService accountService;
-    @Value("${aiai.master-username}")
-    private String masterUsername;
-    @Value("${aiai.master-token}")
-    private String masterToken;
-    @Value("${aiai.master-password}")
-    private String masterPassword;
-
     private final Globals globals;
 
     @Autowired
@@ -52,7 +45,6 @@ public class CustomUserDetails implements UserDetailsService {
         this.globals = globals;
     }
 
-    // q=1
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
@@ -69,7 +61,7 @@ public class CustomUserDetails implements UserDetailsService {
 
             Account account = new Account();
 
-            // fake Id, I hope it won't make any collision with real account
+            // fake Id, I hope it won't make any collision with real accounts
             // need to think of better solution for virtual accounts
             account.setId( Integer.MAX_VALUE -6L );
             account.setUsername(globals.restUsername);
@@ -83,20 +75,20 @@ public class CustomUserDetails implements UserDetailsService {
             return account;
         }
 
-        if (StringUtils.equals(masterUsername, complexUsername.getUsername()) && StringUtils.equals(masterToken, complexUsername.getToken())) {
+        if (StringUtils.equals(globals.masterUsername, complexUsername.getUsername()) && StringUtils.equals(globals.masterToken, complexUsername.getToken())) {
 
             Account account = new Account();
 
-            // fake Id, I hope it won't make any collision with real account
+            // fake Id, I hope it won't make any collision with real accounts
             // need to think of better solution for virtual accounts
             account.setId( Integer.MAX_VALUE -5L );
-            account.setUsername(masterUsername);
-            account.setToken(masterToken);
+            account.setUsername(globals.masterUsername);
+            account.setToken(globals.masterToken);
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
-            account.setPassword(masterPassword);
+            account.setPassword(globals.masterPassword);
 
             account.setAuthorities("ROLE_ADMIN, ROLE_MANAGER");
 /*

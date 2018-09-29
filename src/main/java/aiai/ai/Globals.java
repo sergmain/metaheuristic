@@ -48,7 +48,19 @@ public class Globals {
     @Value("${aiai.rest-token:#{null}}")
     public String restToken;
 
+    @Value("${aiai.secure-rest-url:#{true}}")
+    public boolean isSecureRestUrl;
+
     // Launchpad's globals
+
+    @Value("${aiai.master-username}")
+    public String masterUsername;
+
+    @Value("${aiai.master-token}")
+    public String masterToken;
+
+    @Value("${aiai.master-password}")
+    public String masterPassword;
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.thread-number'), 1, 8, 3) }")
     public int threadNumber;
@@ -98,7 +110,11 @@ public class Globals {
 
     @PostConstruct
     public void init() {
-        serverRestUrl = launchpadUrl + Consts.SERVER_REST_URL;
+        if (masterUsername!=null && masterUsername.equals(restUsername)) {
+            throw new IllegalStateException("masterUsername can't be the same as restUsername, masterUsername: " + masterUsername + ", restUsername: " + restUsername);
+        }
+
+        serverRestUrl = launchpadUrl + (isSecureRestUrl ? Consts.SERVER_REST_AUTH_URL : Consts.SERVER_REST_ANON_URL );
 
         if (stationDir==null) {
             log.warn("Station is disabled, stationDir: {}", stationDir);
