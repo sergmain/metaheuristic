@@ -31,11 +31,27 @@ import java.io.File;
 @ToString
 public class Globals {
 
+    // Globals' globals
+
     @Value("${aiai.public-key:#{null}}")
     public String publicKey;
 
     @Value("${aiai.station.launchpad.url:#{null}}")
     public String launchpadUrl;
+
+    @Value("${aiai.rest-password:#{null}}")
+    public String restPassword;
+
+    @Value("${aiai.rest-username:#{null}}")
+    public String restUsername;
+
+    @Value("${aiai.rest-token:#{null}}")
+    public String restToken;
+
+    // Launchpad's globals
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.thread-number'), 1, 8, 3) }")
+    public int threadNumber;
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
     public File stationDir;
@@ -43,17 +59,19 @@ public class Globals {
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.launchpad.dir' )) }")
     public File launchpadDir;
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.thread-number'), 1, 8, 3) }")
-    public int threadNumber;
-
-    @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
-    public boolean isReplaceSnapshot;
-
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.dataset-table-rows-limit'), 5, 100, 20) }")
     public int datasetRowsLimit;
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.experiment-table-rows-limit'), 5, 30, 10) }")
     public int experimentRowsLimit;
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.station-table-rows-limit'), 5, 30, 10) }")
+    public int stationRowsLimit;
+
+    @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
+    public boolean isReplaceSnapshot;
+
+    // Station's globals
 
     @Value("${aiai.station.active-time:#{null}}")
     public String stationActiveTime;

@@ -58,6 +58,7 @@ public class TestStationExperimentSequenceYaml {
 
     @Test
     public void fix() {
+/*
         for (StationExperimentSequenceOld seq : stationExperimentSequenceOldRepository.findAll()) {
             StationExperimentSequence seqTrg = new StationExperimentSequence();
             BeanUtils.copyProperties(seq, seqTrg);
@@ -68,6 +69,7 @@ public class TestStationExperimentSequenceYaml {
 
             stationExperimentService.save(seqTrg);
         }
+*/
     }
 
 }

@@ -45,6 +45,7 @@ public class TestFixingMetricsYaml {
 
     @Test
     public void fix() {
+/*
         Iterable<ExperimentSequence> seqs = experimentSequenceRepository.findByExperimentId(105);
         for (ExperimentSequence seq : seqs) {
             Metrics metrics = MetricsUtils.to(seq.metrics);
@@ -78,6 +79,7 @@ public class TestFixingMetricsYaml {
             seq.setMetrics( MetricsUtils.toString(metrics));
             experimentSequenceRepository.save(seq);
         }
+*/
     }
 
 }

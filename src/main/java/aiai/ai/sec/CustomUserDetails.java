@@ -17,6 +17,7 @@
 
 package aiai.ai.sec;
 
+import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Account;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -43,13 +44,15 @@ public class CustomUserDetails implements UserDetailsService {
     @Value("${aiai.master-password}")
     private String masterPassword;
 
-    // q=1
+    private final Globals globals;
 
     @Autowired
-    public CustomUserDetails(AccountService accountService) {
+    public CustomUserDetails(AccountService accountService, Globals globals) {
         this.accountService = accountService;
+        this.globals = globals;
     }
 
+    // q=1
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
@@ -60,6 +63,24 @@ public class CustomUserDetails implements UserDetailsService {
         ComplexUsername complexUsername = ComplexUsername.getInstance(username);
         if (complexUsername == null) {
             throw new UsernameNotFoundException("Username not found");
+        }
+
+        if (StringUtils.equals(globals.restUsername, complexUsername.getUsername()) && StringUtils.equals(globals.restToken, complexUsername.getToken())) {
+
+            Account account = new Account();
+
+            // fake Id, I hope it won't make any collision with real account
+            // need to think of better solution for virtual accounts
+            account.setId( Integer.MAX_VALUE -6L );
+            account.setUsername(globals.restUsername);
+            account.setToken(globals.restToken);
+            account.setAccountNonExpired(true);
+            account.setAccountNonLocked(true);
+            account.setCredentialsNonExpired(true);
+            account.setEnabled(true);
+            account.setPassword(globals.restPassword);
+            account.setAuthorities("ROLE_ACCESS_REST");
+            return account;
         }
 
         if (StringUtils.equals(masterUsername, complexUsername.getUsername()) && StringUtils.equals(masterToken, complexUsername.getToken())) {

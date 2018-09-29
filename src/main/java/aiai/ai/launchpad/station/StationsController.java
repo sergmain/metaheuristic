@@ -17,10 +17,11 @@
 
 package aiai.ai.launchpad.station;
 
+import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.repositories.StationsRepository;
+import aiai.ai.utils.ControllerUtils;
 import lombok.Data;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -40,17 +41,17 @@ import java.util.Optional;
 @RequestMapping("/launchpad")
 public class StationsController {
 
+    private final Globals globals;
     private final StationsRepository repository;
-    @Value("${aiai.table.rows.limit:#{5}}")
-    private int limit;
 
-    public StationsController(StationsRepository repository) {
+    public StationsController(Globals globals, StationsRepository repository) {
+        this.globals = globals;
         this.repository = repository;
     }
 
     @GetMapping("/stations")
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
-        pageable = fixPageSize(pageable);
+        pageable = ControllerUtils.fixPageSize(globals.stationRowsLimit, pageable);
         result.items = repository.findAll(pageable);
         return "launchpad/stations";
     }
@@ -58,7 +59,7 @@ public class StationsController {
     // for AJAX
     @PostMapping("/stations-part")
     public String getStations(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
-        pageable = fixPageSize(pageable);
+        pageable = ControllerUtils.fixPageSize(globals.stationRowsLimit, pageable);
         result.items = repository.findAll(pageable);
         return "launchpad/stations :: table";
     }
@@ -96,13 +97,6 @@ public class StationsController {
     public String deleteCommit(Long id) {
         repository.deleteById(id);
         return "redirect:/launchpad/stations";
-    }
-
-    private Pageable fixPageSize(Pageable pageable) {
-        if (pageable.getPageSize() != limit) {
-            pageable = PageRequest.of(pageable.getPageNumber(), limit);
-        }
-        return pageable;
     }
 
     @Data

@@ -281,7 +281,7 @@ public class ExperimentService {
         checkForFinished();
 
         // check that there isn't feature with FeatureExecStatus.error
-        if (!Boolean.TRUE.equals(isContinue)) {
+        if (Boolean.FALSE.equals(isContinue)) {
             return EMPTY_RESULT;
         }
 

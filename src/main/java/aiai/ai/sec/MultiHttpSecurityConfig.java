@@ -17,7 +17,7 @@
 
 package aiai.ai.sec;
 
-import aiai.ai.Consts;
+import aiai.ai.Globals;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -38,6 +38,12 @@ import org.springframework.security.web.csrf.CsrfTokenRepository;
  */
 @Configuration
 public class MultiHttpSecurityConfig {
+
+    private final Globals globals;
+
+    public MultiHttpSecurityConfig(Globals globals) {
+        this.globals = globals;
+    }
 
     @Bean
     public CsrfTokenRepository csrfTokenRepository() {
@@ -61,11 +67,14 @@ public class MultiHttpSecurityConfig {
             http
                     .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                     .and()
-                    .antMatcher("/rest-auth/**").authorizeRequests().anyRequest().authenticated()
+                    .antMatcher("/rest-auth/**").authorizeRequests().anyRequest()
+//                    .authenticated()
+                    .hasAuthority("ROLE_ACCESS_REST")
                     .and()
                     .httpBasic().realmName(REST_REALM)
                     .and()
-                    .csrf().disable();
+                    .csrf().disable()
+                    .headers().cacheControl();
         }
     }
 
