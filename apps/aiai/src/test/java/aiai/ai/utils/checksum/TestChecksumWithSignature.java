@@ -17,6 +17,7 @@
  */
 package aiai.ai.utils.checksum;
 
+import aiai.apps.commons.SecUtils;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
@@ -45,10 +46,10 @@ public class TestChecksumWithSignature {
         File file = new File("config", "private-key.txt");
         String base64 = FileUtils.readFileToString(file, StandardCharsets.UTF_8);
 
-        PrivateKey privateKey = ChecksumWithSignatureService.getPrivateKey(base64);
+        PrivateKey privateKey = SecUtils.getPrivateKey(base64);
         String checksum = "69c33a60e09f00fa3610fb8833bef54487f9c8b99db48b339cd6ed0f192ba5c9";
 
-        String signature = ChecksumWithSignatureService.getSignature(checksum, privateKey);
+        String signature = SecUtils.getSignature(checksum, privateKey);
 
         String forVerifying = checksum + ChecksumWithSignatureService.SIGN_DELIMITER + signature;
 

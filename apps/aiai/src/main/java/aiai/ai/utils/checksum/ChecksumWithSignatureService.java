@@ -18,21 +18,17 @@
 package aiai.ai.utils.checksum;
 
 import aiai.ai.Globals;
+import aiai.apps.commons.SecUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
-import java.security.*;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.Signature;
+import java.security.SignatureException;
 import java.security.spec.InvalidKeySpecException;
-import java.security.spec.PKCS8EncodedKeySpec;
-import java.security.spec.X509EncodedKeySpec;
 
 @Component
 @Slf4j
@@ -55,38 +51,17 @@ public class ChecksumWithSignatureService {
     public static ChecksumWithSignature parse(String data) {
         final int idx = data.indexOf(SIGN_DELIMITER);
         if (idx == -1) {
-            throw new IllegalStateException("Wroong format of checksum with signature");
+            throw new IllegalStateException("Wrong format of checksum with signature");
         }
         //noinspection UnnecessaryLocalVariable
         ChecksumWithSignature checksumWithSignature = new ChecksumWithSignature(data.substring(0, idx), data.substring(idx + SIGN_DELIMITER.length()));
         return checksumWithSignature;
     }
 
-    public static String getSignature(String data, PrivateKey privateKey) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-        Signature signer= Signature.getInstance("SHA256withRSA");
-        signer.initSign(privateKey);
-        signer.update(data.getBytes(StandardCharsets.UTF_8));
-        return Base64.encodeBase64String(signer.sign());
-    }
-
-    public static PublicKey getPublicKey(String keyBase64) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] keyBytes = Base64.decodeBase64(keyBase64);
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        return kf.generatePublic(spec);
-    }
-
-    public static PrivateKey getPrivateKey(String keyBase64) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] keyBytes = Base64.decodeBase64(keyBase64);
-        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        return kf.generatePrivate(spec);
-    }
-
     public boolean isValid(ChecksumWithSignature checksumWithSignature) {
         try {
             Signature signature = Signature.getInstance("SHA256withRSA");
-            signature.initVerify(getPublicKey(globals.publicKey));
+            signature.initVerify(SecUtils.getPublicKey(globals.publicKey));
             signature.update(checksumWithSignature.checksum.getBytes());
             //noinspection UnnecessaryLocalVariable
             final byte[] bytes = Base64.decodeBase64(checksumWithSignature.signature);

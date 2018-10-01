@@ -15,27 +15,29 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.apps.sign_file;
+package aiai.apps.commons;
 
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.apache.commons.codec.binary.Base64;
-
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
-@SpringBootApplication(scanBasePackageClasses={SignFile.class}, excludeName = {"aiai.ai.AiApplication", "aiai.ai.Config"})
-public class SignFile implements CommandLineRunner {
-    public static void main(String[] args) {
-            SpringApplication.run(SignFile.class, args);
-        }
+public class SecUtils {
 
-    @Override
-    public void run(String... args) {
-        System.out.println("SignFile is here");
+    public static String getSignature(String data, PrivateKey privateKey) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+        Signature signer= Signature.getInstance("SHA256withRSA");
+        signer.initSign(privateKey);
+        signer.update(data.getBytes(StandardCharsets.UTF_8));
+        return Base64.encodeBase64String(signer.sign());
+    }
+
+    public static PublicKey getPublicKey(String keyBase64) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        byte[] keyBytes = Base64.decodeBase64(keyBase64);
+        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+        KeyFactory kf = KeyFactory.getInstance("RSA");
+        return kf.generatePublic(spec);
     }
 
     public static PrivateKey getPrivateKey(String keyBase64) throws NoSuchAlgorithmException, InvalidKeySpecException {
@@ -45,10 +47,5 @@ public class SignFile implements CommandLineRunner {
         return kf.generatePrivate(spec);
     }
 
-    public static String getSignature(String data, PrivateKey privateKey) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
-        Signature signer= Signature.getInstance("SHA256withRSA");
-        signer.initSign(privateKey);
-        signer.update(data.getBytes(StandardCharsets.UTF_8));
-        return Base64.encodeBase64String(signer.sign());
-    }
+
 }
