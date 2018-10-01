@@ -85,6 +85,9 @@ public class Globals {
 
     // Station's globals
 
+    @Value("${aiai.station.rest-password:#{null}}")
+    public String stationRestPassword;
+
     @Value("${aiai.station.active-time:#{null}}")
     public String stationActiveTime;
 

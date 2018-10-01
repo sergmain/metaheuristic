@@ -75,7 +75,7 @@ public class CustomUserDetails implements UserDetailsService {
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
-            account.setPassword(passwordEncoder.encode(globals.restPassword));
+            account.setPassword(globals.restPassword);
             account.setAuthorities("ROLE_ACCESS_REST");
             return account;
         }
