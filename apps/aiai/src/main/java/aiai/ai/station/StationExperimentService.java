@@ -21,7 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
-import aiai.ai.yaml.snippet.SnippetType;
+import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.metrics.Metrics;

@@ -15,19 +15,12 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.snippet;
+package aiai.apps.commons.yaml.snippet;
 
-import lombok.Data;
+public enum SnippetType {
+    fit, predict, custom;
 
-@Data
-public class SnippetVersion {
-    public String name;
-    public String version;
-
-    public static SnippetVersion from(String s) {
-        SnippetVersion snippetVersion = new SnippetVersion();
-        snippetVersion.name = s.substring(0, s.indexOf(':'));
-        snippetVersion.version = s.substring(s.indexOf(':')+1);
-        return snippetVersion;
+    public boolean equals(String type) {
+        return this.toString().equals(type);
     }
 }

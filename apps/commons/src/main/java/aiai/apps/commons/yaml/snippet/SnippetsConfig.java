@@ -15,19 +15,15 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.snippet;
+package aiai.apps.commons.yaml.snippet;
 
-import aiai.ai.utils.checksum.Checksum;
+import aiai.apps.commons.utils.Checksum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.apache.commons.lang3.StringUtils;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
 
-import java.io.InputStream;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

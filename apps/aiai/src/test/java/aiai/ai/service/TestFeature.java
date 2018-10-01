@@ -27,7 +27,7 @@ import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
-import aiai.ai.yaml.snippet.SnippetType;
+import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;

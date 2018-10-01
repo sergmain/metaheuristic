@@ -15,14 +15,11 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.utils.checksum;
+package aiai.apps.gen_keys;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.security.*;
 
 public class GenerateKeys {
@@ -61,8 +58,8 @@ public class GenerateKeys {
 
         String privateKey64 = encodeBase64String(myKeys.getPrivateKey().getEncoded());
         String publicKey64 = Base64.encodeBase64String(myKeys.getPublicKey().getEncoded());
-        System.out.println("privateKey64:\n" + privateKey64);
-        System.out.println("publicKey64:\n" + publicKey64);
+        System.out.println("Private key in base64 format:\n" + privateKey64 +"\n\n");
+        System.out.println("Public key in base64 format:\n" + publicKey64);
 
    }
 }

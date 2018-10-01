@@ -18,7 +18,7 @@
 package aiai.ai.utils.checksum;
 
 import aiai.ai.Globals;
-import aiai.apps.commons.SecUtils;
+import aiai.apps.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;

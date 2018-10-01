@@ -17,7 +17,7 @@
  */
 package aiai.ai.station;
 
-import aiai.ai.yaml.snippet.SnippetVersion;
+import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import aiai.ai.utils.DirUtils;
 
 import java.io.File;

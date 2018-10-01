@@ -17,7 +17,7 @@
  */
 package aiai.ai.yaml.sequence;
 
-import aiai.ai.yaml.snippet.SnippetType;
+import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

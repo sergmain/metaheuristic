@@ -17,8 +17,7 @@
  */
 package aiai.ai.utils.checksum;
 
-import aiai.apps.commons.SecUtils;
-import org.apache.commons.codec.binary.Base64;
+import aiai.apps.commons.utils.SecUtils;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;

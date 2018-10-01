@@ -19,7 +19,7 @@
 package aiai.ai.launchpad.beans;
 
 import aiai.ai.launchpad.experiment.ExperimentUtils;
-import aiai.ai.yaml.snippet.SnippetType;
+import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;

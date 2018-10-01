@@ -15,7 +15,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.apps.commons;
+package aiai.apps.commons.utils;
 
 import org.apache.commons.codec.binary.Base64;
 import java.nio.charset.StandardCharsets;
