@@ -23,13 +23,16 @@ import aiai.ai.yaml.station.StationExperimentSequence;
 import aiai.ai.comm.*;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import javax.annotation.PostConstruct;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -97,10 +100,6 @@ public class LaunchpadRequester {
             return;
         }
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
         ExchangeData data = new ExchangeData();
         String stationId = stationService.getStationId();
         if (stationId==null) {
@@ -126,15 +125,35 @@ public class LaunchpadRequester {
 
         // we have to pull new tasks from server constantly
         try {
+            HttpHeaders headers = new HttpHeaders();
+            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            if (globals.isSecureRestUrl) {
+                String auth = globals.restUsername + ":" + globals.restPassword;
+                byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
+                String authHeader = "Basic " + new String(encodedAuth);
+                headers.set("Authorization", authHeader);
+            }
+
             HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
+
             ResponseEntity<ExchangeData> response = restTemplate.exchange(globals.serverRestUrl, HttpMethod.POST, request, ExchangeData.class);
             ExchangeData result = response.getBody();
 
             addCommands(commandProcessor.processExchangeData(result).getCommands());
             log.debug("fixedDelay(), {}", result);
-        } catch (RestClientException e) {
-            System.out.println("Error accessing url: " + globals.serverRestUrl);
-            e.printStackTrace();
+        }
+        catch (HttpClientErrorException e) {
+            if (e.getStatusCode()== HttpStatus.UNAUTHORIZED) {
+                log.error("Error 401 accessing url {}, globals.isSecureRestUrl: {}", globals.serverRestUrl, globals.isSecureRestUrl);
+            }
+            else {
+                throw e;
+            }
+        }
+        catch (RestClientException e) {
+            log.error("Error accessing url: {}", globals.serverRestUrl);
+            log.error("Stacktrace", e);
         }
     }
 

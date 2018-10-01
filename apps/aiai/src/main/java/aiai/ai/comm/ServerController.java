@@ -25,8 +25,6 @@ import aiai.ai.launchpad.repositories.ExperimentRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -124,9 +122,7 @@ public class ServerController {
         return "Ok";
     }
 
-    @NotNull
-    @Contract("_ -> new")
-    private static Protocol.ExperimentStatus.SimpleStatus to(@NotNull Experiment experiment) {
+    private static Protocol.ExperimentStatus.SimpleStatus to(Experiment experiment) {
         return new Protocol.ExperimentStatus.SimpleStatus(experiment.getId(), Enums.ExperimentExecState.toState(experiment.getExecState()));
     }
 }

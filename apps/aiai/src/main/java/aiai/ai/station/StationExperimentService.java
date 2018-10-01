@@ -35,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -108,12 +107,12 @@ public class StationExperimentService {
         int i=0;
     }
 
-    private void putInMap(@NotNull StationExperimentSequence seq) {
+    private void putInMap(StationExperimentSequence seq) {
         Map<Long, StationExperimentSequence> seqs = map.computeIfAbsent(seq.experimentId, k -> new HashMap<>());
         seqs.put(seq.experimentSequenceId, seq);
     }
 
-    private void deleteFromMap(@NotNull StationExperimentSequence seq) {
+    private void deleteFromMap(StationExperimentSequence seq) {
         Map<Long, StationExperimentSequence> seqs = map.get(seq.experimentId);
         if (seqs==null) {
             return;
@@ -158,7 +157,7 @@ public class StationExperimentService {
         }
     }
 
-    void finishAndWriteToLog(@NotNull StationExperimentSequence seq, String es) {
+    void finishAndWriteToLog(StationExperimentSequence seq, String es) {
         log.warn(es);
         seq.setLaunchedOn(System.currentTimeMillis());
         seq.setFinishedOn(System.currentTimeMillis());

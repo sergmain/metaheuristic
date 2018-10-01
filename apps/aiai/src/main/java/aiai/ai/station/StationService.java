@@ -28,7 +28,6 @@ import aiai.ai.yaml.metadata.MetadataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -45,7 +44,6 @@ public class StationService {
     private final Globals globals;
     private final StationExperimentService stationExperimentService;
 
-    @NotNull
     private String env;
     private EnvYaml envYaml;
     private Metadata metadata;
@@ -67,12 +65,10 @@ public class StationService {
         updateMetadataFile();
     }
 
-    @NotNull
     public String getEnv() {
         return env;
     }
 
-    @NotNull
     EnvYaml getEnvYaml() {
         return envYaml;
     }

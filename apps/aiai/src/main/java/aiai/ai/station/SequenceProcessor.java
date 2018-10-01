@@ -34,8 +34,6 @@ import aiai.ai.yaml.station.StationExperimentSequence;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -200,7 +198,7 @@ public class SequenceProcessor {
         }
     }
 
-    private void initAllPaths(File stationDatasetDir, @NotNull SequenceYaml sequenceYaml) {
+    private void initAllPaths(File stationDatasetDir, SequenceYaml sequenceYaml) {
         final AssetFile datasetAssetFile = StationDatasetUtils.prepareDatasetFile(stationDatasetDir, sequenceYaml.dataset.id);
         if (datasetAssetFile.isError || !datasetAssetFile.isContent ) {
             log.warn("Dataset file wasn't found. {}", datasetAssetFile);
@@ -218,7 +216,6 @@ public class SequenceProcessor {
         }
     }
 
-    @Contract("_, null -> false")
     private boolean isThisSnippetCompleted(SimpleSnippet snippet, SnippetExec snippetExec) {
         if (snippetExec ==null) {
             return false;
@@ -226,7 +223,6 @@ public class SequenceProcessor {
         return snippetExec.execs.get(snippet.order)!=null;
     }
 
-    @Contract("_, null -> false")
     private boolean isThisSnippetCompletedWithError(SimpleSnippet snippet, SnippetExec snippetExec) {
         if (snippetExec ==null) {
             return false;
@@ -235,7 +231,7 @@ public class SequenceProcessor {
         return result!=null && !result.isOk();
     }
 
-    private File prepareParamFile(long experimentId, long experimentSequenceId, @NotNull SnippetType type, @NotNull String params) {
+    private File prepareParamFile(long experimentId, long experimentSequenceId, SnippetType type, String params) {
         File snippetTypeDir = prepareSequenceDir(experimentId, experimentSequenceId, type.toString());
         if (snippetTypeDir == null) {
             return null;
