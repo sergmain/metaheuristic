@@ -33,40 +33,40 @@ public class Globals {
 
     // Globals' globals
 
-    @Value("${aiai.public-key:#{null}}")
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.public-key')) }")
     public String publicKey;
 
-    @Value("${aiai.station.launchpad.url:#{null}}")
-    public String launchpadUrl;
-
-    @Value("${aiai.rest-password:#{null}}")
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.rest-password')) }")
     public String restPassword;
 
-    @Value("${aiai.rest-username:#{null}}")
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.rest-username')) }")
     public String restUsername;
 
-    @Value("${aiai.rest-token:#{null}}")
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.rest-token')) }")
     public String restToken;
 
     @Value("${aiai.secure-rest-url:#{true}}")
     public boolean isSecureRestUrl;
 
-    // Launchpad's globals
-
-    @Value("${aiai.master-username}")
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.master-username')) }")
     public String masterUsername;
 
-    @Value("${aiai.master-token}")
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.master-token')) }")
     public String masterToken;
 
-    @Value("${aiai.master-password}")
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.master-password')) }")
     public String masterPassword;
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.thread-number'), 1, 8, 3) }")
     public int threadNumber;
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
-    public File stationDir;
+    @Value("${aiai.is-testing:#{false}}")
+    public boolean isUnitTesting = false;
+
+    // Launchpad's globals
+
+    @Value("${aiai.launchpad.enabled:#{false}}")
+    public boolean isLaunchpadEnabled = true;
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.launchpad.dir' )) }")
     public File launchpadDir;
@@ -85,21 +85,25 @@ public class Globals {
 
     // Station's globals
 
-    @Value("${aiai.station.rest-password:#{null}}")
+    @Value("${aiai.station.enabled:#{false}}")
+    public boolean isStationEnabled = true;
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
+    public File stationDir;
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.station.server-rest-password')) }")
     public String stationRestPassword;
 
-    @Value("${aiai.station.active-time:#{null}}")
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.station.active-time')) }")
     public String stationActiveTime;
 
-    @Value("${aiai.accept.run-only-signed-snippets:#{true}}")
+    @Value("${aiai.station.accept-only-signed-snippets:#{true}}")
     public boolean isAcceptOnlySignedSnippets;
 
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.station.launchpad-url')) }")
+    public String launchpadUrl;
 
-    public boolean isStationEnabled = true;
-    public boolean isLaunchpadEnabled = true;
-
-    @Value("${aiai.is-testing:#{false}}")
-    public boolean isUnitTesting = false;
+    // some fields
 
     public File stationDatasetDir;
     public File stationExperimentDir;
@@ -120,7 +124,7 @@ public class Globals {
         serverRestUrl = launchpadUrl + (isSecureRestUrl ? Consts.SERVER_REST_AUTH_URL : Consts.SERVER_REST_ANON_URL );
 
         if (stationDir==null) {
-            log.warn("Station is disabled, stationDir: {}", stationDir);
+            log.warn("Station is disabled, stationDir: {}, isStationEnabled: {}", stationDir, isStationEnabled);
             isStationEnabled = false;
         }
         else {
@@ -134,7 +138,7 @@ public class Globals {
         }
 
         if (launchpadDir==null) {
-            log.warn("Launchpad is disabled, launchpadDir: {}", launchpadDir);
+            log.warn("Launchpad is disabled, launchpadDir: {}, isLaunchpadEnabled: {}", launchpadDir, isLaunchpadEnabled);
             isLaunchpadEnabled = false;
         }
 

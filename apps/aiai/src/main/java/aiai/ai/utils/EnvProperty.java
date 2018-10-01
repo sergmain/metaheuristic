@@ -27,6 +27,13 @@ public class EnvProperty {
         return new File(filename);
     }
 
+    public static String strIfBlankThenNull(String prop) {
+        if (prop.isBlank()) {
+            return null;
+        }
+        return prop;
+    }
+
     public static int minMax(String prop, int min, int max, Integer defForBlank) {
         if (StringUtils.isBlank(prop)) {
             if (defForBlank==null) {
@@ -37,7 +44,7 @@ public class EnvProperty {
             }
             return defForBlank;
         }
-        Integer i = new Integer(prop);
+        int i = Integer.parseInt(prop);
         if (i>=min && i<=max) {
             return i;
         }
