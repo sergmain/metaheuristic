@@ -129,7 +129,7 @@ public class LaunchpadRequester {
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
             headers.setContentType(MediaType.APPLICATION_JSON);
             if (globals.isSecureRestUrl) {
-                String auth = globals.restUsername + ":" + globals.restPassword;
+                String auth = globals.restUsername+'='+globals.restToken + ':' + globals.restPassword;
                 byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
                 String authHeader = "Basic " + new String(encodedAuth);
                 headers.set("Authorization", authHeader);

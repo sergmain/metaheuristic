@@ -23,9 +23,11 @@ import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
@@ -39,10 +41,13 @@ public class CustomUserDetails implements UserDetailsService {
     private final AccountService accountService;
     private final Globals globals;
 
+    public final PasswordEncoder passwordEncoder;
+
     @Autowired
-    public CustomUserDetails(AccountService accountService, Globals globals) {
+    public CustomUserDetails(AccountService accountService, Globals globals, PasswordEncoder passwordEncoder) {
         this.accountService = accountService;
         this.globals = globals;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -70,7 +75,7 @@ public class CustomUserDetails implements UserDetailsService {
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
-            account.setPassword(globals.restPassword);
+            account.setPassword(passwordEncoder.encode(globals.restPassword));
             account.setAuthorities("ROLE_ACCESS_REST");
             return account;
         }
