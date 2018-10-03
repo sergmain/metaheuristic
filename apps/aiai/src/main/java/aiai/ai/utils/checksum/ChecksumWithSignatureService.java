@@ -24,10 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Component;
 
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.security.Signature;
-import java.security.SignatureException;
+import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 
 @Component
@@ -58,17 +55,17 @@ public class ChecksumWithSignatureService {
         return checksumWithSignature;
     }
 
-    public boolean isValid(ChecksumWithSignature checksumWithSignature) {
+    public boolean isValid(ChecksumWithSignature checksumWithSignature, PublicKey publicKey) {
         try {
             Signature signature = Signature.getInstance("SHA256withRSA");
-            signature.initVerify(SecUtils.getPublicKey(globals.publicKey));
+            signature.initVerify(publicKey);
             signature.update(checksumWithSignature.checksum.getBytes());
             //noinspection UnnecessaryLocalVariable
             final byte[] bytes = Base64.decodeBase64(checksumWithSignature.signature);
             boolean status = signature.verify(bytes);
             return status;
         }
-        catch (SignatureException | NoSuchAlgorithmException | InvalidKeySpecException | InvalidKeyException e) {
+        catch (SignatureException | NoSuchAlgorithmException | InvalidKeyException e) {
             log.error("Error checking signature", e);
             throw new RuntimeException("Error", e);
         }

@@ -28,7 +28,8 @@ public class EnvProperty {
     }
 
     public static String strIfBlankThenNull(String prop) {
-        if (prop.isBlank()) {
+        if (prop==null || prop.isBlank()) {
+//        if (StringUtils.isBlank(prop)) {
             return null;
         }
         return prop;

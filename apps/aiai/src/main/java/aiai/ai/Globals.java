@@ -18,6 +18,7 @@
 package aiai.ai;
 
 import aiai.ai.yaml.env.TimePeriods;
+import aiai.apps.commons.utils.SecUtils;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,10 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
+import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.spec.InvalidKeySpecException;
 
 @Component
 @Slf4j
@@ -34,7 +39,7 @@ public class Globals {
     // Globals' globals
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.public-key')) }")
-    public String publicKey;
+    public String publicKeyStr;
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.rest-password')) }")
     public String restPassword;
@@ -114,11 +119,28 @@ public class Globals {
     public TimePeriods timePeriods;
 
     public String serverRestUrl;
+    public PublicKey publicKey = null;
+
 
     @PostConstruct
-    public void init() {
+    public void init() throws GeneralSecurityException {
+        if (publicKeyStr!=null) {
+            publicKey = SecUtils.getPublicKey(publicKeyStr);
+        }
+
         if (masterUsername!=null && masterUsername.equals(restUsername)) {
             throw new IllegalStateException("masterUsername can't be the same as restUsername, masterUsername: " + masterUsername + ", restUsername: " + restUsername);
+        }
+
+        if (isSecureRestUrl) {
+            if (masterUsername==null || masterToken==null || masterPassword==null) {
+                throw new IllegalArgumentException("if aiai.secure-rest-url=true, then aiai.master-username, aiai.master-token, and aiai.master-password have to be not null");
+            }
+            if (isStationEnabled) {
+                if (stationRestPassword==null) {
+                    throw new IllegalArgumentException("if aiai.secure-rest-url=true and aiai.station.enabled=true, then aiai.station.server-rest-password has to be not null");
+                }
+            }
         }
 
         serverRestUrl = launchpadUrl + (isSecureRestUrl ? Consts.SERVER_REST_AUTH_URL : Consts.SERVER_REST_ANON_URL );

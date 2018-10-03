@@ -17,6 +17,7 @@
  */
 package aiai.ai.utils.checksum;
 
+import aiai.ai.Globals;
 import aiai.apps.commons.utils.SecUtils;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
@@ -39,6 +40,9 @@ public class TestChecksumWithSignature {
     @Autowired
     public ChecksumWithSignatureService checksumWithSignatureService;
 
+    @Autowired
+    public Globals globals;
+
 
     @Test
     public void test() throws IOException, GeneralSecurityException {
@@ -54,7 +58,7 @@ public class TestChecksumWithSignature {
 
         ChecksumWithSignatureService.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureService.parse(forVerifying);
 
-        assertTrue(checksumWithSignatureService.isValid(checksumWithSignature));
+        assertTrue(checksumWithSignatureService.isValid(checksumWithSignature, globals.publicKey));
     }
 
 

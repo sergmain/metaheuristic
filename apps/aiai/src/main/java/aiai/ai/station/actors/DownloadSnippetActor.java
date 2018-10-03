@@ -23,6 +23,7 @@ import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.DirUtils;
 import aiai.apps.commons.utils.Checksum;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
+import aiai.apps.commons.utils.SecUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
@@ -131,7 +132,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         String sum;
                         if (entry.getKey()==Checksum.Type.SHA256WithSign) {
                             ChecksumWithSignatureService.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureService.parse(entry.getValue());
-                            if (!(isSignatureOk=checksumWithSignatureService.isValid(checksumWithSignature)) ) {
+                            if (!(isSignatureOk=checksumWithSignatureService.isValid(checksumWithSignature, globals.publicKey)) ) {
                                 break;
                             }
                             sum = Checksum.Type.SHA256.getChecksum(fis);

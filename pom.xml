@@ -27,7 +27,9 @@
 
     <modules>
         <module>apps/aiai</module>
+        <module>apps/commons</module>
         <module>apps/sign-file</module>
+        <module>apps/gen-keys</module>
     </modules>
 
 </project>
