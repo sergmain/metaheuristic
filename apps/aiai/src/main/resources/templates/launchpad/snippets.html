@@ -1,0 +1,77 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+     xmlns:th="http://www.thymeleaf.org"
+     layout:decorate="~{/layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+>
+
+    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
+    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
+    <p>&nbsp;</p>
+
+    <!-- ==================================== Snippet files ==================================== -->
+
+    <h2 class="widget-header">Parts of raw file and assembled raw file</h2>
+    <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
+          th:action="@{/launchpad/dataset-upload-part-raw-from-file}"
+          th:if="${ result.dataset.editable}"
+    >
+        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
+        <p>&nbsp;</p>
+        <table>
+            <tr>
+                <td valign="top">
+                    <fieldset>
+
+                        <label for="uploadFile">Part of raw file</label>
+                        <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:size="100"/>
+                        <div class="fileUpload pure-button pure-button-primary">
+                            <span>Select file</span>
+                            <input name="file" id="uploadBtn" type="file" class="upload">
+                        </div>
+                        <span class="pure-form-message">This is a required field.</span>
+                    </fieldset>
+                </td>
+            </tr>
+        </table>
+        <p></p>
+        <button type="submit" class="pure-button pure-button-primary">Start uploading part of raw file</button>
+    </form>
+
+    <script>
+        document.getElementById("uploadBtn").onchange = function () {
+            document.getElementById("uploadFile").value = this.value;
+        };
+    </script>
+
+    <p>&nbsp;</p>
+
+    <table class="pure-table pure-table-bordered" id="table-ds-path-cols">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Path number</th>
+            <th>Path</th>
+            <th>Checksum</th>
+            <th>Is file?</th>
+            <th>Is valid?</th>
+            <th colspan="1">&nbsp;</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${result.paths}">
+            <td th:text="${p.id}">#Id</td>
+            <td th:text="${#dates.formatISO(p.registerTs)}">Date</td>
+            <td th:text="${p.pathNumber}">Path number</td>
+            <td th:text="${p.path}">Path</td>
+            <td th:text="${p.checksum}">Checksum</td>
+            <td th:text="${p.isFile() ? 'True' : 'False'}">Is file?</td>
+            <td th:text="${p.isValid() ? 'True' : 'False'}">Is valid?</td>
+            <td><a th:if="${!result.dataset.locked && result.dataset.editable}" class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-path-delete/' + p.id}">Delete</a></td>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <p>&nbsp;</p>
+
+</div>

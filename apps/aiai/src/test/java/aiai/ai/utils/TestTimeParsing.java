@@ -33,7 +33,7 @@ public class TestTimeParsing {
 
     @Test
     public void testTimePeriodParsing() {
-        String s = "0:00 - 8:45, 19:00 - 23:59";
+        String s = "0:00    - 8:45, 19:00 -   23:59";
 
         TimePeriods periods = TimePeriods.from(s);
         assertEquals(2, periods.periods.size());

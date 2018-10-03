@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.dataset;
 
 import aiai.ai.Consts;
-import aiai.ai.utils.DirUtils;
+import aiai.apps.commons.utils.DirUtils;
 
 import java.io.File;
 

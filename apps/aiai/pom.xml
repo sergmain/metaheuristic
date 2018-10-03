@@ -215,8 +215,7 @@
             <version>2.22.0</version>
             <scope>test</scope>
         </dependency>
-
-    </dependencies>
+	</dependencies>
 
 	<build>
         <finalName>aiai</finalName>

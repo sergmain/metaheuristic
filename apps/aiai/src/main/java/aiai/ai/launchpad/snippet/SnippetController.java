@@ -17,142 +17,92 @@
  */
 package aiai.ai.launchpad.snippet;
 
-import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.repositories.SnippetRepository;
-import aiai.apps.commons.utils.Checksum;
-import aiai.apps.commons.yaml.snippet.SnippetsConfig;
-import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
-
-@Component
+@Controller
+@RequestMapping("/launchpad")
 @Slf4j
 public class SnippetController {
 
     private final Globals globals;
-    private final PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver;
     private final SnippetRepository snippetRepository;
+
+    @Data
+    public static class Result {
+        Iterable<Snippet> snippets;
+    }
 
     public SnippetController(Globals globals, SnippetRepository snippetRepository) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
-        this.pathMatchingResourcePatternResolver = new PathMatchingResourcePatternResolver();
     }
 
-    @PostConstruct
-    public void init() throws IOException {
-        File customSnippets = new File(globals.launchpadDir, "snippets");
-        if (customSnippets.exists()) {
-            final File[] dirs = customSnippets.listFiles(File::isDirectory);
-            if (dirs!=null) {
-                for (File dir : dirs) {
-                    log.info("Load snippets from {}", dir.getPath());
-                    loadSnippetsFromDir(dir);
-                }
-            }
-        }
-        else {
-            log.info("Directory with custom snippets doesn't exist, {}", customSnippets.getPath());
-        }
-
-        Resource[] resources  = pathMatchingResourcePatternResolver.getResources("classpath:snippets/*");
-        for (Resource resource : resources) {
-            log.info("Load snippets as resource from {} ", resource.getFile().getPath());
-            loadSnippetsFromDir(resource.getFile());
-        }
+    @GetMapping("/snippets")
+    public String init(@ModelAttribute Result result, @ModelAttribute("errorMessage") final String errorMessage) {
+        result.snippets = snippetRepository.findAll();
+        return "launchpad/snippets";
     }
 
-    private void loadSnippetsFromDir(File srcDir) throws IOException {
-        File yamlConfigFile = new File(srcDir, "snippets.yaml");
-        if (!yamlConfigFile.exists()) {
-            log.warn("File 'snippets.yaml' wasn't found in dir {}", srcDir.getAbsolutePath());
-            return;
+    @PostMapping(value = "/snippet-upload-from-file")
+    public String uploadSnippet(MultipartFile file, final RedirectAttributes redirectAttributes) {
+
+        String originFilename = file.getOriginalFilename();
+        if (originFilename == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#22.01 name of uploaded file is null");
+            return "redirect:/launchpad/snippets";
         }
-
-        try (InputStream is = new FileInputStream(yamlConfigFile)) {
-            SnippetsConfig snippetsConfig = SnippetsConfigUtils.to(is);
-            for (SnippetsConfig.SnippetConfig snippetConfig : snippetsConfig.snippets) {
-                SnippetsConfig.SnippetConfigStatus status = snippetConfig.verify();
-                if (!status.isOk) {
-                    log.error(status.error);
-                    continue;
-                }
-                File file = new File(srcDir, snippetConfig.file);
-                if (!file.exists()) {
-                    throw new IllegalStateException("File " + snippetConfig.file+" wasn't found in "+ srcDir.getAbsolutePath());
-                }
-                byte[] code;
-                try( InputStream inputStream = new FileInputStream(file)) {
-                    code = IOUtils.toByteArray(inputStream);;
-                }
-                String sum = Checksum.Type.SHA256.getChecksum(code);
-
-                Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
-                if (snippet!=null) {
-                    final String checksum = Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256);
-                    if (!sum.equals(checksum)) {
-                        if (globals.isReplaceSnapshot && snippetConfig.version.endsWith(Consts.SNAPSHOT_SUFFIX)) {
-                            setChecksum(snippetConfig, sum, snippet);
-                            snippet.name = snippetConfig.name;
-                            snippet.snippetVersion = snippetConfig.version;
-                            snippet.type = snippetConfig.type.toString();
-                            snippet.filename = snippetConfig.file;
-                            snippet.code = code;
-                            snippet.env = snippetConfig.env;
-                            snippetRepository.save(snippet);
-                        }
-                        else {
-                            log.warn("Checksum mismatch for snippet '{}:{}'", snippet.name, snippet.snippetVersion);
-                        }
-                    }
-                }
-                else {
-                    snippet = new Snippet();
-                    setChecksum(snippetConfig, sum, snippet);
-                    snippet.name = snippetConfig.name;
-                    snippet.snippetVersion = snippetConfig.version;
-                    snippet.type = snippetConfig.type.toString();
-                    snippet.filename = snippetConfig.file;
-                    try( InputStream inputStream = new FileInputStream(file)) {
-                        snippet.code = IOUtils.toByteArray(inputStream);;
-                    }
-                    snippet.env = snippetConfig.env;
-                    snippetRepository.save(snippet);
-                }
+        int idx;
+        if ((idx = originFilename.lastIndexOf('.')) == -1) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#22.02 '.' wasn't found, bad filename: " + originFilename);
+            return "redirect:/launchpad/snippets";
+        }
+        String ext = originFilename.substring(idx).toLowerCase();
+        if (!".zip".equals(ext)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#22.03 only '.zip' files is supported, filename: " + originFilename);
+            return "redirect:/launchpad/snippets";
+        }
+/*
+        try {
+            File dir = DirUtils.getTempFile(file);
+            if (!dir.exists()) {
+                dir.mkdir();
             }
+            ZipUtils.unzipFolder(file, dir);
+            executorsForProcessing.put(dir);
         }
-    }
+        catch (Exception e) {
+            throw new RuntimeException("Error, file: " + file, e);
+        }
 
-    private void setChecksum(SnippetsConfig.SnippetConfig snippetConfig, String sum, Snippet snippet) {
-        if (snippetConfig.checksums != null) {
-            // already defined checksum in snippets.yaml
-            Checksum checksum = new Checksum();
-            checksum.checksums.putAll(snippetConfig.checksums);
-            snippet.checksum = checksum.toJson();
-            boolean isSigned = false;
-            for (Map.Entry<Checksum.Type, String> entry : snippetConfig.checksums.entrySet()) {
-                if (entry.getKey().isSign) {
-                    isSigned = true;
-                    break;
-                }
-            }
-            snippet.setSigned(isSigned);
-        } else {
-            // calc the new checksum
-            snippet.checksum = new Checksum(Checksum.Type.SHA256, sum).toJson();
-            snippet.setSigned(false);
+        Snippet snippet = new Snippet();
+        snippet.setCode();
+
+        file.
+        Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
+        if (dataset == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#72.02 dataset wasn't found for id " + datasetId);
+            return "redirect:/launchpad/dataset-definition/" + datasetId;
         }
+
+        try (InputStream is = file.getInputStream()) {
+            storeNewPartOfRawFile(originFilename, dataset, is, true);
+        }
+        catch (IOException e) {
+            throw new RuntimeException("error", e);
+        }
+
+*/
+        return "redirect:/launchpad/snippets";
     }
 }

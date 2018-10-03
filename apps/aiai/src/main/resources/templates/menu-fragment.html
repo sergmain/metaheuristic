@@ -10,9 +10,6 @@
         <li th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/index.html" th:href="@{/launchpad/index}">Launchpad</a>
         </li>
-        <li th:if="${#bools.isTrue(@environment.getProperty('aiai.station.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/station/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="station/index.html" th:href="@{/station/index}">Station</a>
-        </li>
         <li sec:authorize="isAnonymous()" th:attr="class=${#httpServletRequest.requestURI=='/login'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="/login" th:href="@{/login}">Sign in</a>
         </li>
