@@ -19,7 +19,7 @@ package aiai.apps.sign_snippet;
 
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.SecUtils;
-import aiai.apps.commons.yaml.snippet.SnippetType;
+import aiai.apps.commons.utils.ZipUtils;
 import aiai.apps.commons.yaml.snippet.SnippetsConfig;
 import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
 import org.apache.commons.io.FileUtils;
@@ -31,11 +31,16 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.*;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 @SpringBootApplication
 public class PackageSnippet implements CommandLineRunner {
+
+    public static final String SNIPPETS_YAML = "snippets.yaml";
+    public static final String ZIP_EXTENSION = ".zip";
+
     public static void main(String[] args) {
             SpringApplication.run(PackageSnippet.class, args);
         }
@@ -43,38 +48,93 @@ public class PackageSnippet implements CommandLineRunner {
     @Override
     public void run(String... args) throws IOException, GeneralSecurityException {
 
+        if (args.length<2) {
+            System.out.println("PackageSnippet <private key file> <target zip file>");
+            return;
+        }
+        if (!args[1].endsWith(ZIP_EXTENSION)) {
+            System.out.println("Zip file have to have .zip extension, actual: " + args[1]);
+            return;
+        }
+
         String privateKeyStr = FileUtils.readFileToString( new File(args[0]) );
         PrivateKey privateKey = SecUtils.getPrivateKey(privateKeyStr);
 
-        final File file = new File(args[1]);
-        String sum;
-        try(FileInputStream fis = new FileInputStream(file)) {
-            sum = Checksum.Type.SHA256.getChecksum(fis);
+        File snippetYamlFile = new File(SNIPPETS_YAML);
+        if (!snippetYamlFile.exists()) {
+            System.out.println("File "+snippetYamlFile.getPath()+" wasn't found");
+            return;
         }
 
-        String signature = SecUtils.getSignature(sum, privateKey);
+        File targetZip = new File(args[1]);
+        if (targetZip.exists()) {
+            System.out.println("File "+targetZip.getPath()+" already exists");
+            return;
+        }
 
-        SnippetsConfig snippets = new SnippetsConfig();
-        SnippetsConfig.SnippetConfig config = new SnippetsConfig.SnippetConfig();
-        config.checksums = new HashMap<>();
-        config.checksums.put(Checksum.Type.SHA256WithSign, sum + '=' + signature);
-        config.file = file.getName();
-        config.name = args[2];
-        config.version = args[3];
-        config.type = SnippetType.valueOf(args[4]);
-        config.env = args[5];
-        snippets.snippets = new ArrayList<>();
-        snippets.snippets.add(config);
+        String tempDirName = args[1].substring(0, args[1].length() - ZIP_EXTENSION.length());
 
-        String yaml = SnippetsConfigUtils.toString(snippets);
+        File targetDir = new File(tempDirName);
+        if (targetDir.exists()) {
+            System.out.println("Directory "+targetDir.getPath()+" already exists");
+            return;
+        }
 
-        System.out.println("File: " + file.getPath());
-        System.out.println("Yaml config: "+ "\n" + yaml);
-        System.out.println();
+        SnippetsConfig snippetsConfig = SnippetsConfigUtils.to(snippetYamlFile);
 
-        SnippetsConfig cs = SnippetsConfigUtils.to(yaml);
-        System.out.println(cs);
+        // Verify
+        boolean isError = false;
+        Set<String> set = new HashSet<>();
+        for (SnippetsConfig.SnippetConfig snippet : snippetsConfig.getSnippets()) {
+            final SnippetsConfig.SnippetConfigStatus verify = snippet.verify();
+            if (!verify.isOk) {
+                System.out.println(verify.error);
+                isError=true;
+            }
+            File sn = new File(snippetYamlFile.getParent(), snippet.file);
+            if (!sn.exists()) {
+                System.out.println("File "+sn.getPath()+" wasn't found");
+                isError=true;
+            }
 
+            final String o = snippet.name + ':' + snippet.version;
+            if (set.contains(o)) {
+                System.out.println("Found duplicate snippet: " +o);
+                isError=true;
+            }
+            set.add(o);
+            File f = new File(snippet.file);
+            if (!f.getPath().equals(snippet.file)) {
+                System.out.println("Relative path for snippet file isn't supported, file: " + snippet.file);
+                isError=true;
+            }
+        }
+        if (isError) {
+            return;
+        }
+
+        // Process
+        for (SnippetsConfig.SnippetConfig snippet : snippetsConfig.getSnippets()) {
+            final File snippetFile = new File(targetDir, snippet.file);
+            FileUtils.copyFile(new File(snippet.file), snippetFile);
+
+            String sum;
+            try(FileInputStream fis = new FileInputStream(snippetFile)) {
+                sum = Checksum.Type.SHA256.getChecksum(fis);
+            }
+
+            String signature = SecUtils.getSignature(sum, privateKey);
+            snippet.checksums = new HashMap<>();
+            snippet.checksums.put(Checksum.Type.SHA256WithSign, sum + '=' + signature);
+        }
+
+        String yaml = SnippetsConfigUtils.toString(snippetsConfig);
+        final File file = new File(targetDir, SNIPPETS_YAML);
+        FileUtils.writeStringToFile(file, yaml);
+
+        ZipUtils.createZip(targetDir, targetZip);
+        FileUtils.deleteDirectory(targetDir);
+
+        System.out.println("All done.");
     }
-
 }

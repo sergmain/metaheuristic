@@ -34,22 +34,28 @@ import java.util.Enumeration;
  *
  */
 public class ZipUtils {
+    /*
+     * @param directoryPath The path of the directory where the archive will be created. eg. c:/temp
+     * @param zipFile The full path of the archive to create. eg. c:/temp/archive.zip
+     */
+    public static void createZip(String directoryPath, String zipPath) throws IOException {
+        createZip(new File(directoryPath), new File(zipPath));
+    }
 
     /**
      * Creates a zip file at the specified path with the contents of the specified directory.
      * NB:
      *
-     * @param directoryPath The path of the directory where the archive will be created. eg. c:/temp
-     * @param zipPath The full path of the archive to create. eg. c:/temp/archive.zip
+     * @param directory The path of the directory where the archive will be created. eg. c:/temp
+     * @param zipFile zip file
      * @throws IOException If anything goes wrong
      */
-    public static void createZip(String directoryPath, String zipPath) throws IOException {
+    public static void createZip(File directory, File zipFile) throws IOException {
 
-        try (FileOutputStream fOut = new FileOutputStream(new File(zipPath));
+        try (FileOutputStream fOut = new FileOutputStream(zipFile);
              BufferedOutputStream bOut = new BufferedOutputStream(fOut);
-             ZipArchiveOutputStream tOut = new ZipArchiveOutputStream(bOut) )
-        {
-            addFileToZip(tOut, directoryPath, "");
+             ZipArchiveOutputStream tOut = new ZipArchiveOutputStream(bOut) ) {
+            addFileToZip(tOut, directory, "");
         }
     }
 
@@ -58,13 +64,12 @@ public class ZipUtils {
      * name. If the path is a directory, a recursive call is made such that the full directory is added to the zip.
      *
      * @param zOut The zip file's output stream
-     * @param path The filesystem path of the file/directory being added
+     * @param f The filesystem path of the file/directory being added
      * @param base The base prefix to for the name of the zip file entry
      *
      * @throws IOException If anything goes wrong
      */
-    private static void addFileToZip(ZipArchiveOutputStream zOut, String path, String base) throws IOException {
-        File f = new File(path);
+    private static void addFileToZip(ZipArchiveOutputStream zOut, File f, String base) throws IOException {
         String entryName = base + f.getName();
         ZipArchiveEntry zipEntry = new ZipArchiveEntry(f, entryName);
 
@@ -81,7 +86,7 @@ public class ZipUtils {
 
             if (children != null) {
                 for (File child : children) {
-                    addFileToZip(zOut, child.getAbsolutePath(), entryName + "/");
+                    addFileToZip(zOut, child.getAbsoluteFile(), entryName + "/");
                 }
             }
         }
