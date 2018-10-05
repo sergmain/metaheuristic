@@ -57,7 +57,12 @@ public class PackageSnippet implements CommandLineRunner {
             return;
         }
 
-        String privateKeyStr = FileUtils.readFileToString( new File(args[0]) );
+        final File privateKeyFile = new File(args[0]);
+        if (!privateKeyFile.exists()) {
+            System.out.println("Private key file wasn't found. File: " + args[0]);
+            return;
+        }
+        String privateKeyStr = FileUtils.readFileToString(privateKeyFile);
         PrivateKey privateKey = SecUtils.getPrivateKey(privateKeyStr);
 
         File snippetYamlFile = new File(SNIPPETS_YAML);

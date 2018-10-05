@@ -20,8 +20,11 @@ package aiai.ai.launchpad.snippet;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.repositories.SnippetRepository;
+import aiai.apps.commons.utils.DirUtils;
+import aiai.apps.commons.utils.ZipUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -30,6 +33,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.io.File;
+import java.io.IOException;
+
 @Controller
 @RequestMapping("/launchpad")
 @Slf4j
@@ -37,15 +43,17 @@ public class SnippetController {
 
     private final Globals globals;
     private final SnippetRepository snippetRepository;
+    private final SnippetService snippetService;
 
     @Data
     public static class Result {
         Iterable<Snippet> snippets;
     }
 
-    public SnippetController(Globals globals, SnippetRepository snippetRepository) {
+    public SnippetController(Globals globals, SnippetRepository snippetRepository, SnippetService snippetService) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
+        this.snippetService = snippetService;
     }
 
     @GetMapping("/snippets")
@@ -72,37 +80,26 @@ public class SnippetController {
             redirectAttributes.addFlashAttribute("errorMessage", "#22.03 only '.zip' files is supported, filename: " + originFilename);
             return "redirect:/launchpad/snippets";
         }
-/*
+
+        final String location = System.getProperty("java.io.tmpdir");
+
         try {
-            File dir = DirUtils.getTempFile(file);
-            if (!dir.exists()) {
-                dir.mkdir();
+            File tempDir = DirUtils.createTempDir("snippet-upload-");
+            if (tempDir==null || tempDir.isFile()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "#22.04 can't create temporary directory in " + location);
+                return "redirect:/launchpad/snippets";
             }
-            ZipUtils.unzipFolder(file, dir);
-            executorsForProcessing.put(dir);
-        }
-        catch (Exception e) {
-            throw new RuntimeException("Error, file: " + file, e);
-        }
-
-        Snippet snippet = new Snippet();
-        snippet.setCode();
-
-        file.
-        Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
-        if (dataset == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#72.02 dataset wasn't found for id " + datasetId);
-            return "redirect:/launchpad/dataset-definition/" + datasetId;
-        }
-
-        try (InputStream is = file.getInputStream()) {
-            storeNewPartOfRawFile(originFilename, dataset, is, true);
+            final File zipFile = new File(tempDir, "snippet.zip");
+            FileUtils.copyInputStreamToFile(file.getInputStream(), zipFile);
+            ZipUtils.unzipFolder(zipFile, tempDir);
+            snippetService.loadSnippetsRecursevly(tempDir);
         }
         catch (IOException e) {
-            throw new RuntimeException("error", e);
+            log.error("Error", e);
+            redirectAttributes.addFlashAttribute("errorMessage", "#22.05 can't load snippets, Error: " + e.toString());
+            return "redirect:/launchpad/snippets";
         }
 
-*/
         return "redirect:/launchpad/snippets";
     }
 }

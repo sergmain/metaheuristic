@@ -55,13 +55,7 @@ public class SnippetService {
     public void init() throws IOException {
         File customSnippets = new File(globals.launchpadDir, "snippets");
         if (customSnippets.exists()) {
-            final File[] dirs = customSnippets.listFiles(File::isDirectory);
-            if (dirs!=null) {
-                for (File dir : dirs) {
-                    log.info("Load snippets from {}", dir.getPath());
-                    loadSnippetsFromDir(dir);
-                }
-            }
+            loadSnippetsRecursevly(customSnippets);
         }
         else {
             log.info("Directory with custom snippets doesn't exist, {}", customSnippets.getPath());
@@ -71,6 +65,17 @@ public class SnippetService {
         for (Resource resource : resources) {
             log.info("Load snippets as resource from {} ", resource.getFile().getPath());
             loadSnippetsFromDir(resource.getFile());
+        }
+    }
+
+    void loadSnippetsRecursevly(File startDir) throws IOException {
+        final File[] dirs = startDir.listFiles(File::isDirectory);
+        if (dirs!=null) {
+            for (File dir : dirs) {
+                log.info("Load snippets from {}", dir.getPath());
+                loadSnippetsFromDir(dir);
+                loadSnippetsRecursevly(dir);
+            }
         }
     }
 
