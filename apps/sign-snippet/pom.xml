@@ -77,7 +77,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>aiai.apps.sign_file.GenYamlForSnippet</mainClass>
+                    <mainClass>aiai.apps.sign_snippet.PackageSnippet</mainClass>
                 </configuration>
             </plugin>
         </plugins>

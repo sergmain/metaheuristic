@@ -410,9 +410,8 @@
             <tr>
                 <td valign="top">
                     <fieldset>
-
                         <label for="uploadFile">Part of raw file</label>
-                        <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:size="100"/>
+                        <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:size="100" style="color:black; background-color:white"/>
                         <div class="fileUpload pure-button pure-button-primary">
                             <span>Select file</span>
                             <input name="file" id="uploadBtn" type="file" class="upload">
@@ -458,7 +457,6 @@
             <td th:text="${p.isFile() ? 'True' : 'False'}">Is file?</td>
             <td th:text="${p.isValid() ? 'True' : 'False'}">Is valid?</td>
             <td><a th:if="${!result.dataset.locked && result.dataset.editable}" class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-path-delete/' + p.id}">Delete</a></td>
-            </td>
         </tr>
         </tbody>
     </table>

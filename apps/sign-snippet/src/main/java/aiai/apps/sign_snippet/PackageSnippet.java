@@ -15,7 +15,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.apps.sign_file;
+package aiai.apps.sign_snippet;
 
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.SecUtils;
@@ -35,9 +35,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 @SpringBootApplication
-public class GenYamlForSnippet implements CommandLineRunner {
+public class PackageSnippet implements CommandLineRunner {
     public static void main(String[] args) {
-            SpringApplication.run(GenYamlForSnippet.class, args);
+            SpringApplication.run(PackageSnippet.class, args);
         }
 
     @Override

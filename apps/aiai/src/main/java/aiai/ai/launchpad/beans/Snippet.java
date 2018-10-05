@@ -30,7 +30,7 @@ public class Snippet implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public Long id;
 
     @Version
     private Integer version;
@@ -61,7 +61,7 @@ public class Snippet implements Serializable {
     public String env;
 
     @Column(name = "IS_SIGNED")
-    private boolean isSigned;
+    public boolean isSigned;
 
     public String getSnippetCode() {
         return ""+ name + ':' + snippetVersion;

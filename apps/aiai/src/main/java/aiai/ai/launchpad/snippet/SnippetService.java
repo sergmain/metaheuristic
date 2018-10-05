@@ -45,10 +45,10 @@ public class SnippetService {
     private final PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver;
     private final SnippetRepository snippetRepository;
 
-    public SnippetService(Globals globals, PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver, SnippetRepository snippetRepository) {
+    public SnippetService(Globals globals, SnippetRepository snippetRepository) {
         this.globals = globals;
-        this.pathMatchingResourcePatternResolver = pathMatchingResourcePatternResolver;
         this.snippetRepository = snippetRepository;
+        this.pathMatchingResourcePatternResolver = new PathMatchingResourcePatternResolver();
     }
 
     @PostConstruct
