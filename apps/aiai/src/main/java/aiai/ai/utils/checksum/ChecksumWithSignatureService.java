@@ -18,7 +18,6 @@
 package aiai.ai.utils.checksum;
 
 import aiai.ai.Globals;
-import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
@@ -29,7 +28,6 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.*;
-import java.security.spec.InvalidKeySpecException;
 import java.util.Map;
 
 @Component
@@ -48,27 +46,40 @@ public class ChecksumWithSignatureService {
         this.globals = globals;
     }
 
-    public void verifyChecksumAndSignature(Checksum checksum, String snippetCode, CheckSumAndSignatureStatus status, InputStream fis ) throws IOException {
+    public CheckSumAndSignatureStatus verifyChecksumAndSignature(Checksum checksum, String snippetCode, InputStream fis, boolean isVerifySignature ) throws IOException {
+        CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
+        status.isOk = true;
+        status.isSignatureOk = null;
         for (Map.Entry<Checksum.Type, String> entry : checksum.checksums.entrySet()) {
-            String sum;
+            String sum, entrySum;
             if (entry.getKey()==Checksum.Type.SHA256WithSign) {
                 ChecksumWithSignature checksumWithSignature = parse(entry.getValue());
-                if (!(status.isSignatureOk= isValid(checksumWithSignature, globals.publicKey)) ) {
-                    break;
+                entrySum = checksumWithSignature.checksum;
+
+                if (isVerifySignature) {
+                    if (!(status.isSignatureOk = isValid(checksumWithSignature, globals.publicKey))) {
+                        break;
+                    }
+                    log.info("Snippet {}, signature is Ok", snippetCode);
                 }
                 sum = Checksum.Type.SHA256.getChecksum(fis);
             }
             else {
                 sum = entry.getKey().getChecksum(fis);
+                entrySum = entry.getValue();
             }
-            if (sum.equals(entry.getValue())) {
+            if (sum.equals(entrySum)) {
                 log.info("Snippet {}, checksum is Ok", snippetCode);
             } else {
-                log.error("Snippet {}, checksum is wrong, expected: {}, actual: {}", snippetCode, entry.getValue(), sum);
+                log.error("Snippet {}, checksum is wrong, expected: {}, actual: {}", snippetCode, entrySum, sum);
                 status.isOk = false;
                 break;
             }
         }
+        if (Boolean.FALSE.equals(status.isSignatureOk)) {
+            log.error("Snippet {}, Signature is worng", snippetCode);
+        }
+        return status;
     }
 
     public static ChecksumWithSignature parse(String data) {

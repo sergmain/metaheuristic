@@ -106,16 +106,10 @@ public class PayloadController {
         }
 
         Checksum checksum = Checksum.fromJson(snippet.getChecksum());
-        for (Map.Entry<Checksum.Type, String> entry : checksum.checksums.entrySet()) {
-            String sum = entry.getKey().getChecksum( snippet.getCode() );
-            if (sum.equals(entry.getValue())) {
-                log.info("Snippet {}, checksum is Ok", snippet.getSnippetCode());
-            }
-            else {
-                log.error("Snippet {}, checksum is wrong, expected: {}, actual: {}", snippet.getSnippetCode(), entry.getValue(), sum );
-                response.sendError(HttpServletResponse.SC_CONFLICT);
-                return EMPTY_HTTP_ENTITY;
-            }
+        CheckSumAndSignatureStatus status = checksumWithSignatureService.verifyChecksumAndSignature(checksum, snippetName, new ByteArrayInputStream(snippet.getCode()), false );
+        if (!status.isOk) {
+            response.sendError(HttpServletResponse.SC_CONFLICT);
+            return EMPTY_HTTP_ENTITY;
         }
 
         final int length = snippet.getCode().length;
@@ -143,9 +137,9 @@ public class PayloadController {
 
         Checksum checksum = Checksum.fromJson(snippet.getChecksum());
 
-        CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
-        checksumWithSignatureService.verifyChecksumAndSignature(checksum, snippetName, status, new ByteArrayInputStream(snippet.getCode()) );
+        CheckSumAndSignatureStatus status = checksumWithSignatureService.verifyChecksumAndSignature(checksum, snippetName, new ByteArrayInputStream(snippet.getCode()), false );
 
+/*
         if (globals.isAcceptOnlySignedSnippets && status.isSignatureOk==null) {
             log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", globals.isAcceptOnlySignedSnippets, snippetName);
             response.sendError(HttpServletResponse.SC_CONFLICT);
@@ -157,9 +151,14 @@ public class PayloadController {
             response.sendError(HttpServletResponse.SC_CONFLICT);
             return EMPTY_STRING_HTTP_ENTITY;
         }
+*/
+        if (!status.isOk) {
+            response.sendError(HttpServletResponse.SC_CONFLICT);
+            return EMPTY_STRING_HTTP_ENTITY;
+        }
 
-        final int length = snippet.getCode().length;
-        log.info("Send snippet checksum, length: {}", snippet.getSnippetCode(), length);
+        final int length = snippet.getChecksum().length();
+        log.info("Send checksum for snippet {}, length: {}", snippet.getSnippetCode(), length);
 
         return new HttpEntity<>(snippet.getChecksum(), getHeader(length) );
     }
