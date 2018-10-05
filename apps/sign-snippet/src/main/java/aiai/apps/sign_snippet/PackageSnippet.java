@@ -130,7 +130,7 @@ public class PackageSnippet implements CommandLineRunner {
 
             String signature = SecUtils.getSignature(sum, privateKey);
             snippet.checksums = new HashMap<>();
-            snippet.checksums.put(Checksum.Type.SHA256WithSign, sum + '=' + signature);
+            snippet.checksums.put(Checksum.Type.SHA256WithSign, sum + SecUtils.SIGN_DELIMITER + signature);
         }
 
         String yaml = SnippetsConfigUtils.toString(snippetsConfig);

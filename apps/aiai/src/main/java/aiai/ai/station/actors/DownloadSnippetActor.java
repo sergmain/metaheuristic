@@ -20,6 +20,7 @@ package aiai.ai.station.actors;
 import aiai.ai.Globals;
 import aiai.ai.station.StationSnippetUtils;
 import aiai.ai.station.tasks.DownloadSnippetTask;
+import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.apps.commons.utils.Checksum;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import aiai.apps.commons.utils.DirUtils;
@@ -34,6 +35,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -87,20 +89,21 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 return;
             }
             Checksum checksum;
+            final String snippetCode = task.snippetCode;
             try {
-                String checksumStr = Request.Get(snippetChecksumUrl+'/'+task.snippetCode)
+                String checksumStr = Request.Get(snippetChecksumUrl+'/'+ snippetCode)
                         .connectTimeout(5000)
                         .socketTimeout(5000)
-                        .execute().toString();
+                        .execute().returnContent().asString(StandardCharsets.UTF_8);
 
                 checksum = Checksum.fromJson(checksumStr);
             }
             catch (HttpResponseException e) {
                 if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
-                    log.warn("Snippet with code {} wasn't found", task.snippetCode);
+                    log.warn("Snippet with code {} wasn't found", snippetCode);
                 }
                 else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-                    log.warn("Snippet with id {} is broken and need to be recreated", task.snippetCode);
+                    log.warn("Snippet with id {} is broken and need to be recreated", snippetCode);
                 }
                 else {
                     log.error("HttpResponseException", e);
@@ -119,54 +122,34 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             try {
                 File snippetTempFile = new File(snippetFile.file.getAbsolutePath()+".tmp");
 
-                Request.Get(targetUrl+'/'+task.snippetCode)
+                Request.Get(targetUrl+'/'+ snippetCode)
                         .connectTimeout(5000)
                         .socketTimeout(5000)
                         .execute().saveContent(snippetTempFile);
 
-                boolean isOk = true;
-                Boolean isSignatureOk = null;
-                for (Map.Entry<Checksum.Type, String> entry : checksum.checksums.entrySet()) {
-                    try(FileInputStream fis = new FileInputStream(snippetTempFile)) {
-                        String sum;
-                        if (entry.getKey()==Checksum.Type.SHA256WithSign) {
-                            ChecksumWithSignatureService.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureService.parse(entry.getValue());
-                            if (!(isSignatureOk=checksumWithSignatureService.isValid(checksumWithSignature, globals.publicKey)) ) {
-                                break;
-                            }
-                            sum = Checksum.Type.SHA256.getChecksum(fis);
-                        }
-                        else {
-                            sum = entry.getKey().getChecksum(fis);
-                        }
-                        if (sum.equals(entry.getValue())) {
-                            log.info("Snippet {}, checksum is Ok", task.snippetCode);
-                        } else {
-                            log.error("Snippet {}, checksum is wrong, expected: {}, actual: {}", task.snippetCode, entry.getValue(), sum);
-                            isOk = false;
-                            break;
-                        }
-                    }
+                CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
+                try(FileInputStream fis = new FileInputStream(snippetTempFile)) {
+                    checksumWithSignatureService.verifyChecksumAndSignature(checksum, snippetCode, status, fis);
                 }
-                if (globals.isAcceptOnlySignedSnippets && isSignatureOk==null) {
-                    log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", globals.isAcceptOnlySignedSnippets, task.snippetCode);
+                if (globals.isAcceptOnlySignedSnippets && status.isSignatureOk==null) {
+                    log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", globals.isAcceptOnlySignedSnippets, snippetCode);
                     continue;
                 }
-                if (Boolean.FALSE.equals(isSignatureOk)) {
-                    log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", globals.isAcceptOnlySignedSnippets, task.snippetCode);
+                if (Boolean.FALSE.equals(status.isSignatureOk)) {
+                    log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", globals.isAcceptOnlySignedSnippets, snippetCode);
                     continue;
                 }
-                if (isOk && !Boolean.FALSE.equals(isSignatureOk)) {
+                if (status.isOk && !Boolean.FALSE.equals(status.isSignatureOk)) {
                     snippetTempFile.renameTo(snippetFile.file);
-                    preparedMap.put(task.snippetCode, true);
+                    preparedMap.put(snippetCode, true);
                 }
             }
             catch (HttpResponseException e) {
                 if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
-                    log.warn("Snippet with code {} wasn't found", task.snippetCode);
+                    log.warn("Snippet with code {} wasn't found", snippetCode);
                 }
                 else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-                    log.warn("Snippet with id {} is broken and need to be recreated", task.snippetCode);
+                    log.warn("Snippet with id {} is broken and need to be recreated", snippetCode);
                 }
                 else {
                     log.error("HttpResponseException", e);
@@ -180,4 +163,5 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             }
         }
     }
+
 }

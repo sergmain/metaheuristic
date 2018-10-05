@@ -18,20 +18,23 @@
 package aiai.ai.utils.checksum;
 
 import aiai.ai.Globals;
+import aiai.ai.station.actors.DownloadSnippetActor;
+import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.stereotype.Component;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
+import java.util.Map;
 
 @Component
 @Slf4j
 public class ChecksumWithSignatureService {
-
-    public static final String SIGN_DELIMITER = "###";
 
     public final Globals globals;
 
@@ -45,13 +48,36 @@ public class ChecksumWithSignatureService {
         this.globals = globals;
     }
 
+    public void verifyChecksumAndSignature(Checksum checksum, String snippetCode, CheckSumAndSignatureStatus status, InputStream fis ) throws IOException {
+        for (Map.Entry<Checksum.Type, String> entry : checksum.checksums.entrySet()) {
+            String sum;
+            if (entry.getKey()==Checksum.Type.SHA256WithSign) {
+                ChecksumWithSignature checksumWithSignature = parse(entry.getValue());
+                if (!(status.isSignatureOk= isValid(checksumWithSignature, globals.publicKey)) ) {
+                    break;
+                }
+                sum = Checksum.Type.SHA256.getChecksum(fis);
+            }
+            else {
+                sum = entry.getKey().getChecksum(fis);
+            }
+            if (sum.equals(entry.getValue())) {
+                log.info("Snippet {}, checksum is Ok", snippetCode);
+            } else {
+                log.error("Snippet {}, checksum is wrong, expected: {}, actual: {}", snippetCode, entry.getValue(), sum);
+                status.isOk = false;
+                break;
+            }
+        }
+    }
+
     public static ChecksumWithSignature parse(String data) {
-        final int idx = data.indexOf(SIGN_DELIMITER);
+        final int idx = data.indexOf(SecUtils.SIGN_DELIMITER);
         if (idx == -1) {
             throw new IllegalStateException("Wrong format of checksum with signature");
         }
         //noinspection UnnecessaryLocalVariable
-        ChecksumWithSignature checksumWithSignature = new ChecksumWithSignature(data.substring(0, idx), data.substring(idx + SIGN_DELIMITER.length()));
+        ChecksumWithSignature checksumWithSignature = new ChecksumWithSignature(data.substring(0, idx), data.substring(idx + SecUtils.SIGN_DELIMITER.length()));
         return checksumWithSignature;
     }
 

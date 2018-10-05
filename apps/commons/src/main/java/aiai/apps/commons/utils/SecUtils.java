@@ -26,6 +26,8 @@ import java.security.spec.X509EncodedKeySpec;
 
 public class SecUtils {
 
+    public static final String SIGN_DELIMITER = "###";
+
     public static String getSignature(String data, PrivateKey privateKey) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
         Signature signer= Signature.getInstance("SHA256withRSA");
         signer.initSign(privateKey);

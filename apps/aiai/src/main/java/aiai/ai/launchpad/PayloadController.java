@@ -22,6 +22,8 @@ import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.DatasetGroup;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.dataset.DatasetUtils;
+import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
+import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
@@ -38,7 +40,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.http.HttpServletResponse;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Map;
 
@@ -51,12 +55,14 @@ public class PayloadController {
     private static final HttpEntity<String> EMPTY_STRING_HTTP_ENTITY = new HttpEntity<>("", getHeader(0));
     private  final SnippetRepository snippetRepository;
     private  final DatasetGroupsRepository datasetGroupsRepository;
+    private final ChecksumWithSignatureService checksumWithSignatureService;
 
     private final Globals globals;
 
-    public PayloadController(SnippetRepository snippetRepository, DatasetGroupsRepository datasetGroupsRepository, Globals globals) {
+    public PayloadController(SnippetRepository snippetRepository, DatasetGroupsRepository datasetGroupsRepository, ChecksumWithSignatureService checksumWithSignatureService, Globals globals) {
         this.snippetRepository = snippetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
+        this.checksumWithSignatureService = checksumWithSignatureService;
         this.globals = globals;
     }
 
@@ -136,16 +142,20 @@ public class PayloadController {
         }
 
         Checksum checksum = Checksum.fromJson(snippet.getChecksum());
-        for (Map.Entry<Checksum.Type, String> entry : checksum.checksums.entrySet()) {
-            String sum = entry.getKey().getChecksum( snippet.getCode() );
-            if (sum.equals(entry.getValue())) {
-                log.info("Snippet {}, checksum is Ok", snippet.getSnippetCode());
-            }
-            else {
-                log.error("Snippet {}, checksum is wrong, expected: {}, actual: {}", snippet.getSnippetCode(), entry.getValue(), sum );
-                response.sendError(HttpServletResponse.SC_CONFLICT);
-                return EMPTY_STRING_HTTP_ENTITY;
-            }
+
+        CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
+        checksumWithSignatureService.verifyChecksumAndSignature(checksum, snippetName, status, new ByteArrayInputStream(snippet.getCode()) );
+
+        if (globals.isAcceptOnlySignedSnippets && status.isSignatureOk==null) {
+            log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", globals.isAcceptOnlySignedSnippets, snippetName);
+            response.sendError(HttpServletResponse.SC_CONFLICT);
+            return EMPTY_STRING_HTTP_ENTITY;
+        }
+        // null value is Ok too
+        if (Boolean.FALSE.equals(status.isSignatureOk)) {
+            log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", globals.isAcceptOnlySignedSnippets, snippetName);
+            response.sendError(HttpServletResponse.SC_CONFLICT);
+            return EMPTY_STRING_HTTP_ENTITY;
         }
 
         final int length = snippet.getCode().length;
