@@ -19,12 +19,17 @@ package aiai.ai.launchpad.snippet;
 
 import aiai.ai.Consts;
 import aiai.ai.Globals;
+import aiai.ai.launchpad.beans.Experiment;
+import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.repositories.SnippetRepository;
+import aiai.ai.utils.SimpleSelectOption;
+import aiai.ai.utils.SnippetUtils;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.yaml.snippet.SnippetsConfig;
 import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -35,6 +40,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -53,7 +60,7 @@ public class SnippetService {
 
     @PostConstruct
     public void init() throws IOException {
-        File customSnippets = new File(globals.launchpadDir, "snippets");
+        File customSnippets = new File(globals.launchpadDir, "snippet-deploy");
         if (customSnippets.exists()) {
             loadSnippetsRecursevly(customSnippets);
         }
@@ -66,6 +73,68 @@ public class SnippetService {
             log.info("Load snippets as resource from {} ", resource.getFile().getPath());
             loadSnippetsFromDir(resource.getFile());
         }
+        persistSnippets();
+    }
+
+    private void persistSnippets() throws IOException {
+        File snippetDir = new File(globals.launchpadDir, "snippets");
+        if (!snippetDir.exists()) {
+            snippetDir.mkdirs();
+        }
+
+        Iterable<Snippet> snippets = snippetRepository.findAll();
+        for (Snippet snippet : snippets) {
+            SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
+            if (snippetFile.file==null) {
+                log.error("Error while persisting snippet {}", snippet.getSnippetCode());
+                continue;
+            }
+            if (!snippetFile.file.exists() || snippetFile.file.length()!=snippet.code.length) {
+                log.warn("Snippet {} has different length. On disk - {}, in db - {}. Snippet will be re-created.",snippet.getSnippetCode(), snippetFile.file.length(), snippet.code.length);
+                FileUtils.writeByteArrayToFile(snippetFile.file, snippet.code, false);
+            }
+        }
+        //noinspection unused
+        int i=0;
+    }
+
+    public interface SnippetFilter {
+        boolean filter(Snippet snippet);
+    }
+
+    public List<SimpleSelectOption> getSelectOptions(Iterable<Snippet> snippets, List<ExperimentSnippet> experimentSnippets,
+                                                     SnippetFilter snippetFilter) {
+        List<SimpleSelectOption> selectOptions = new ArrayList<>();
+        for (Snippet snippet : snippets) {
+            boolean isExist=false;
+            for (ExperimentSnippet experimentSnippet : experimentSnippets) {
+                if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
+                    isExist = true;
+                    break;
+                }
+            }
+            if (!isExist) {
+                if (snippetFilter.filter(snippet)) {
+                    continue;
+                }
+                selectOptions.add( new SimpleSelectOption(snippet.getSnippetCode(), String.format("Type: %s; Code: %s:%s", snippet.getType(), snippet.getName(), snippet.getSnippetVersion())));
+            }
+        }
+        return selectOptions;
+    }
+
+    public List<ExperimentSnippet> getExperimentSnippets(Iterable<Snippet> snippets, Experiment experiment) {
+        List<ExperimentSnippet> experimentSnippets = new ArrayList<>();
+        for (Snippet snippet : snippets) {
+            for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
+                if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
+                    experimentSnippet.type = snippet.type;
+                    experimentSnippets.add(experimentSnippet);
+                    break;
+                }
+            }
+        }
+        return experimentSnippets;
     }
 
     void loadSnippetsRecursevly(File startDir) throws IOException {

@@ -43,16 +43,10 @@ public class SnippetsConfig {
     @Data
     @ToString
     public static class SnippetConfig {
-/*
-- snippet:
-        ns: aiai.fit.default.snippet
-        type: fit
-        file: fit-model.py
-        version: 1.0
-*/
         public String name;
         public SnippetType type;
         public String file;
+        public String params;
         public String version;
         public String env;
         public Map<Checksum.Type, String> checksums;

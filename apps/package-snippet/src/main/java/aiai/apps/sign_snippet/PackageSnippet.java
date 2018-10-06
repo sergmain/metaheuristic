@@ -48,22 +48,25 @@ public class PackageSnippet implements CommandLineRunner {
     @Override
     public void run(String... args) throws IOException, GeneralSecurityException {
 
-        if (args.length<2) {
-            System.out.println("PackageSnippet <private key file> <target zip file>");
+        if (args.length==0) {
+            System.out.println("PackageSnippet <target zip file> [private key file]");
             return;
         }
-        if (!args[1].endsWith(ZIP_EXTENSION)) {
-            System.out.println("Zip file have to have .zip extension, actual: " + args[1]);
+        if (!args[0].endsWith(ZIP_EXTENSION)) {
+            System.out.println("Zip file have to have .zip extension, actual: " + args[0]);
             return;
         }
 
-        final File privateKeyFile = new File(args[0]);
-        if (!privateKeyFile.exists()) {
-            System.out.println("Private key file wasn't found. File: " + args[0]);
-            return;
+        PrivateKey privateKey = null;
+        if (args.length>1) {
+            File privateKeyFile = new File(args[1]);
+            if (!privateKeyFile.exists()) {
+                System.out.println("Private key file wasn't found. File: " + args[1]);
+                return;
+            }
+            String privateKeyStr = FileUtils.readFileToString(privateKeyFile);
+            privateKey = SecUtils.getPrivateKey(privateKeyStr);
         }
-        String privateKeyStr = FileUtils.readFileToString(privateKeyFile);
-        PrivateKey privateKey = SecUtils.getPrivateKey(privateKeyStr);
 
         File snippetYamlFile = new File(SNIPPETS_YAML);
         if (!snippetYamlFile.exists()) {
@@ -71,13 +74,13 @@ public class PackageSnippet implements CommandLineRunner {
             return;
         }
 
-        File targetZip = new File(args[1]);
+        File targetZip = new File(args[0]);
         if (targetZip.exists()) {
             System.out.println("File "+targetZip.getPath()+" already exists");
             return;
         }
 
-        String tempDirName = args[1].substring(0, args[1].length() - ZIP_EXTENSION.length());
+        String tempDirName = args[0].substring(0, args[0].length() - ZIP_EXTENSION.length());
 
         File targetDir = new File(tempDirName);
         if (targetDir.exists()) {
@@ -128,9 +131,14 @@ public class PackageSnippet implements CommandLineRunner {
                 sum = Checksum.Type.SHA256.getChecksum(fis);
             }
 
-            String signature = SecUtils.getSignature(sum, privateKey);
             snippet.checksums = new HashMap<>();
-            snippet.checksums.put(Checksum.Type.SHA256WithSign, sum + SecUtils.SIGN_DELIMITER + signature);
+            if (privateKey!=null) {
+                String signature = SecUtils.getSignature(sum, privateKey);
+                snippet.checksums.put(Checksum.Type.SHA256WithSign, sum + SecUtils.SIGN_DELIMITER + signature);
+            }
+            else {
+                snippet.checksums.put(Checksum.Type.SHA256, sum);
+            }
         }
 
         String yaml = SnippetsConfigUtils.toString(snippetsConfig);

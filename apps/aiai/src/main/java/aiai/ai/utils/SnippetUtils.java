@@ -15,14 +15,14 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.station;
+package aiai.ai.utils;
 
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 
 import java.io.File;
 
-public class StationSnippetUtils {
+public class SnippetUtils {
 
     public static class SnippetFile {
         public File file;
@@ -41,12 +41,13 @@ public class StationSnippetUtils {
         }
 
         File versionDir = DirUtils.createDir(currDir, snippetVersion.version);
+        snippetFile.file = new File(versionDir, filename );
+
         if (versionDir == null) {
             snippetFile.isError = true;
             return snippetFile;
         }
 
-        snippetFile.file = new File(versionDir, filename );
         if (snippetFile.file.exists()) {
             if (snippetFile.file.length() == 0) {
                 snippetFile.file.delete();
@@ -58,8 +59,8 @@ public class StationSnippetUtils {
         return snippetFile;
     }
 
-    public static File checkEvironment(File stationDir) {
-        File dsDir = new File(stationDir, "snippet");
+    public static File checkEvironment(File parentDir) {
+        File dsDir = new File(parentDir, "snippet");
         if (!dsDir.exists()) {
             boolean isOk = dsDir.mkdirs();
             if (!isOk) {

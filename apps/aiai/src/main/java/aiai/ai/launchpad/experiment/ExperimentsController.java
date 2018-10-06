@@ -21,8 +21,10 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
+import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.launchpad.beans.*;
+import aiai.ai.utils.SimpleSelectOption;
 import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import aiai.ai.launchpad.repositories.*;
@@ -80,13 +82,6 @@ public class ExperimentsController {
     }
 
     @Data
-    @AllArgsConstructor
-    public static class SimpleSelectOption {
-        String value;
-        String desc;
-    }
-
-    @Data
     public static class SnippetResult {
         public List<SimpleSelectOption> selectOptions = new ArrayList<>();
         public List<ExperimentSnippet> snippets = new ArrayList<>();
@@ -123,6 +118,7 @@ public class ExperimentsController {
     private final DatasetRepository datasetRepository;
     private final DatasetGroupsRepository datasetGroupsRepository;
     private final SnippetRepository snippetRepository;
+    private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
     private final ExperimentService experimentService;
     private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
@@ -131,13 +127,14 @@ public class ExperimentsController {
     private final ExperimentSequenceRepository experimentSequenceRepository;
     private final ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository;
 
-    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository) {
+    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
         this.experimentRepository = experimentRepository;
         this.experimentHyperParamsRepository = experimentHyperParamsRepository;
         this.snippetRepository = snippetRepository;
+        this.snippetService = snippetService;
         this.experimentService = experimentService;
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
@@ -262,33 +259,29 @@ public class ExperimentsController {
 
     @GetMapping(value = "/experiment-edit/{id}")
     public String edit(@PathVariable Long id, Model model) {
-        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        final Experiment experiment = experimentRepository.findById(id).orElse(null);
         if (experiment == null) {
             return "redirect:/launchpad/experiments";
         }
         Iterable<Snippet> snippets = snippetRepository.findAll();
         SnippetResult snippetResult = new SnippetResult();
         experiment.sortSnippetsByOrder();
-        for (Snippet snippet : snippets) {
-            boolean isExist=false;
-            for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
-                if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
-                    experimentSnippet.type = snippet.type;
-                    snippetResult.snippets.add(experimentSnippet);
-                    isExist = true;
-                    break;
-                }
-            }
-            if (!isExist) {
-                if (SnippetType.fit.equals(snippet.type) && experiment.hasFit()) {
-                    continue;
-                }
-                if (SnippetType.predict.equals(snippet.type) && experiment.hasPredict()) {
-                    continue;
-                }
-                snippetResult.selectOptions.add( new SimpleSelectOption(snippet.getSnippetCode(), String.format("Type: %s; Code: %s:%s", snippet.getType(), snippet.getName(), snippet.getSnippetVersion())));
-            }
-        }
+
+        snippetResult.snippets = snippetService.getExperimentSnippets(snippets, experiment);
+        final List<SnippetType> types = List.of(SnippetType.fit, SnippetType.predict);
+        snippetResult.selectOptions = snippetService.getSelectOptions(snippets, snippetResult.snippets,
+                (s) -> {
+                    if (!types.contains(SnippetType.valueOf(s.type)) ) {
+                        return true;
+                    }
+                    if (SnippetType.fit.equals(s.type) && experiment.hasFit()) {
+                        return true;
+                    }
+                    if (SnippetType.predict.equals(s.type) && experiment.hasPredict()) {
+                        return true;
+                    }
+                    return false;
+                });
 
         ExperimentResult experimentResult = new ExperimentResult();
         Dataset dataset = getDatasetAndCheck(experiment);

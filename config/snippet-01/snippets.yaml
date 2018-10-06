@@ -1,0 +1,15 @@
+snippets:
+    - name: serg.assembly.raw.files
+      version: 1.1
+      type: assembly
+      file: app-assembly-dataset-1.0-SNAPSHOT.jar
+      params: 6
+      env: java-11
+    - name: serg.dataset.produce
+      version: 1.1
+      type: dataset
+      file: app-assembly-dataset-1.0-SNAPSHOT.jar
+      params: 6 45
+      env: java-11
+
+

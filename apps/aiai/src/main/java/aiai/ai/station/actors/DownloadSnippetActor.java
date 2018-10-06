@@ -18,7 +18,7 @@
 package aiai.ai.station.actors;
 
 import aiai.ai.Globals;
-import aiai.ai.station.StationSnippetUtils;
+import aiai.ai.utils.SnippetUtils;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.apps.commons.utils.Checksum;
@@ -84,7 +84,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 continue;
             }
 
-            StationSnippetUtils.SnippetFile snippetFile = StationSnippetUtils.getSnippetFile(snippetDir, task.getSnippetCode(), task.filename);
+            SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, task.getSnippetCode(), task.filename);
             if (snippetFile.isError) {
                 return;
             }
@@ -99,15 +99,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 checksum = Checksum.fromJson(checksumStr);
             }
             catch (HttpResponseException e) {
-                if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
-                    log.warn("Snippet with code {} wasn't found", snippetCode);
-                }
-                else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-                    log.warn("Snippet with id {} is broken and need to be recreated", snippetCode);
-                }
-                else {
-                    log.error("HttpResponseException", e);
-                }
+                logError(snippetCode, e);
                 break;
             }
             catch (SocketTimeoutException e) {
@@ -140,20 +132,17 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     continue;
                 }
                 if (status.isOk && !Boolean.FALSE.equals(status.isSignatureOk)) {
+                    //noinspection ResultOfMethodCallIgnored
                     snippetTempFile.renameTo(snippetFile.file);
                     preparedMap.put(snippetCode, true);
                 }
+                else {
+                    //noinspection ResultOfMethodCallIgnored
+                    snippetTempFile.delete();
+                }
             }
             catch (HttpResponseException e) {
-                if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
-                    log.warn("Snippet with code {} wasn't found", snippetCode);
-                }
-                else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-                    log.warn("Snippet with id {} is broken and need to be recreated", snippetCode);
-                }
-                else {
-                    log.error("HttpResponseException", e);
-                }
+                logError(snippetCode, e);
             }
             catch (SocketTimeoutException e) {
                 log.error("SocketTimeoutException", e.toString());
@@ -161,6 +150,18 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             catch (IOException e) {
                 log.error("IOException", e);
             }
+        }
+    }
+
+    private void logError(String snippetCode, HttpResponseException e) {
+        if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
+            log.warn("Snippet with code {} wasn't found", snippetCode);
+        }
+        else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
+            log.warn("Snippet with id {} is broken and need to be recreated", snippetCode);
+        }
+        else {
+            log.error("HttpResponseException", e);
         }
     }
 

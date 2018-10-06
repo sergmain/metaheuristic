@@ -23,11 +23,14 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.repositories.*;
+import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.ControllerUtils;
+import aiai.ai.utils.SimpleSelectOption;
 import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.config.DatasetPreparingConfig;
 import aiai.ai.yaml.config.DatasetPreparingConfigUtils;
 import aiai.apps.commons.utils.DirUtils;
+import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
@@ -75,6 +78,9 @@ public class DatasetController {
         public List<DatasetPath> paths = new ArrayList<>();
         public String launchpadDirAsString;
         public String datasetDirAsString;
+        public List<SimpleSelectOption> assemblyOptions;
+        public List<SimpleSelectOption> datasetOptions;
+        public List<SimpleSelectOption> featureOptions;
 
         public DatasetDefinition(Dataset dataset, String launchpadDirAsString, String datasetDirAsString) {
             this.dataset = dataset;
@@ -94,14 +100,18 @@ public class DatasetController {
     private final DatasetColumnRepository columnRepository;
     private final DatasetPathRepository pathRepository;
     private final ProcessService processService;
+    private final SnippetService snippetService;
+    private final SnippetRepository snippetRepository;
 
-    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService) {
+    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetRepository snippetRepository) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.groupsRepository = groupsRepository;
         this.columnRepository = columnRepository;
         this.pathRepository = pathRepository;
         this.processService = processService;
+        this.snippetService = snippetService;
+        this.snippetRepository = snippetRepository;
     }
 
     @GetMapping("/datasets")
@@ -207,6 +217,11 @@ public class DatasetController {
             }
         }
 
+        Iterable<Snippet> snippets = snippetRepository.findAll();
+        definition.assemblyOptions = snippetService.getSelectOptions(snippets, new ArrayList<>(), (s) -> SnippetType.assembly!=(SnippetType.valueOf(s.type)));
+        definition.datasetOptions = snippetService.getSelectOptions(snippets, new ArrayList<>(), (s) -> SnippetType.dataset!=(SnippetType.valueOf(s.type)));
+        definition.featureOptions = snippetService.getSelectOptions(snippets, new ArrayList<>(), (s) -> SnippetType.fit!=(SnippetType.valueOf(s.type)));
+
         model.addAttribute("result", definition);
         return "launchpad/dataset-definition";
     }
@@ -220,7 +235,7 @@ public class DatasetController {
         }
         Dataset ds = new Dataset();
         ds.setName(StrUtils.incCopyNumber(dataset.getName()));
-        ds.setDescription(StrUtils.incCopyNumber(dataset.getDescription()));
+        ds.setDescription(dataset.getDescription());
         ds.setAssemblingCommand(dataset.getAssemblingCommand());
         ds.setProducingCommand(dataset.getProducingCommand());
         ds.setEditable(true);

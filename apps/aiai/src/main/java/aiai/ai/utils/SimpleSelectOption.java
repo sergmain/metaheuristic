@@ -15,12 +15,14 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.apps.commons.yaml.snippet;
+package aiai.ai.utils;
 
-public enum SnippetType {
-    fit, predict, custom, assembly, dataset, feature;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 
-    public boolean equals(String type) {
-        return this.toString().equals(type);
-    }
+@Data
+@AllArgsConstructor
+public class SimpleSelectOption {
+    String value;
+    String desc;
 }

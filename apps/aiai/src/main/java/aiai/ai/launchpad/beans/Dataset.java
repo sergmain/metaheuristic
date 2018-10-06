@@ -54,6 +54,12 @@ public class Dataset implements Serializable {
     @Column(name = "DESCRIPTION")
     private String description;
 
+    @Column(name = "ASSEMBLY_SNIPPET_ID")
+    public Long assemblySnippetId;
+
+    @Column(name = "DATASET_SNIPPET_ID")
+    public Long datasetSnippetId;
+
     @Column(name = "CMD_ASSEMBLE")
     private String assemblingCommand;
 

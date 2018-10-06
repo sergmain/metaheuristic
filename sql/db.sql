@@ -22,6 +22,8 @@ CREATE TABLE AIAI_LP_DATASET (
   NAME        VARCHAR(40)  NOT NULL,
   DESCRIPTION VARCHAR(250) NOT NULL,
   IS_EDITABLE   tinyint(1) not null default 1,
+  ASSEMBLY_SNIPPET_ID  NUMERIC(10, 0),
+  DATASET_SNIPPET_ID  NUMERIC(10, 0),
   CMD_ASSEMBLE         VARCHAR(250),
   CMD_PRODUCE         VARCHAR(250),
   IS_LOCKED   tinyint(1) not null default 0,
@@ -127,7 +129,7 @@ CREATE TABLE AIAI_LP_SNIPPET (
   SNIPPET_TYPE      VARCHAR(50) not null,
   SNIPPET_VERSION   VARCHAR(20) not null,
   FILENAME  VARCHAR(250) not null,
-  CODE        MEDIUMBLOB not null,
+  CODE        LONGBLOB not null,
   CHECKSUM    VARCHAR(2048),
   IS_SIGNED   tinyint(1) not null default 0,
   ENV         VARCHAR(50) not null

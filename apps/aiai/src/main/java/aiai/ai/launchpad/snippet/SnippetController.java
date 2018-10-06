@@ -22,6 +22,7 @@ import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
+import com.mysql.cj.jdbc.exceptions.PacketTooBigException;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -35,6 +36,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 
 @Controller
 @RequestMapping("/launchpad")
@@ -94,7 +96,7 @@ public class SnippetController {
             ZipUtils.unzipFolder(zipFile, tempDir);
             snippetService.loadSnippetsRecursevly(tempDir);
         }
-        catch (IOException e) {
+        catch (Exception e) {
             log.error("Error", e);
             redirectAttributes.addFlashAttribute("errorMessage", "#22.05 can't load snippets, Error: " + e.toString());
             return "redirect:/launchpad/snippets";

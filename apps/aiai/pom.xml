@@ -226,10 +226,6 @@
                 <version>3.8.0</version>
 				<configuration>
 					<compilerArgument>-parameters</compilerArgument>
-<!--
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
--->
                     <release>11</release>
                     <encoding>${project.build.sourceEncoding}</encoding>
 					<showDeprecation>true</showDeprecation>

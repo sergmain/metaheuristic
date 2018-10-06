@@ -22,6 +22,7 @@ import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.beans.LogData;
+import aiai.ai.utils.SnippetUtils;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.ai.yaml.console.SnippetExec;
@@ -58,7 +59,7 @@ public class SequenceProcessor {
 
     private Map<Long, AssetFile> isDatasetReady = new HashMap<>();
     private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
-    private Map<String, StationSnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
+    private Map<String, SnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
     public SequenceProcessor(Globals globals, ProcessService processService, StationService stationService, SequenceYamlUtils sequenceYamlUtils, StationExperimentService stationExperimentService, CurrentExecState currentExecState) {
         this.globals = globals;
@@ -85,7 +86,7 @@ public class SequenceProcessor {
             return;
         }
 
-        File snippetDir = StationSnippetUtils.checkEvironment(globals.stationDir);
+        File snippetDir = SnippetUtils.checkEvironment(globals.stationDir);
         if (snippetDir == null) {
             return;
         }
@@ -149,9 +150,9 @@ public class SequenceProcessor {
             seq.setLaunchedOn(System.currentTimeMillis());
             seq = stationExperimentService.save(seq);
             for (SimpleSnippet snippet : sequenceYaml.getSnippets()) {
-                StationSnippetUtils.SnippetFile snippetFile = isSnippetsReady.get(snippet.code);
+                SnippetUtils.SnippetFile snippetFile = isSnippetsReady.get(snippet.code);
                 if (snippetFile == null) {
-                    snippetFile = StationSnippetUtils.getSnippetFile(snippetDir, snippet.getCode(), snippet.filename);
+                    snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getCode(), snippet.filename);
                     if (snippetFile.isError || !snippetFile.isContent) {
                         return;
                     }
