@@ -47,6 +47,9 @@ public class Snippet implements Serializable {
     @Column(name = "FILENAME")
     public String filename;
 
+    @Column(name = "PARAMS")
+    public String params;
+
     /**
      * programm code, i.e. pyphon, js,...
      */

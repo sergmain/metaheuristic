@@ -168,10 +168,11 @@
 
     <p>&nbsp;</p>
     <h2 class="widget-header">dataset file</h2>
-    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
-          th:if="${ result.dataset.editable}"
-          th:action="@{/launchpad/dataset-cmd-produce-dataset-commit}" accept-charset="UTF-8" id="dataset-cmd-produce-form" name="f">
         <table class="pure-table pure-table-bordered" id="table-dataset-cmd-produce" >
+<!--
+            <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
+                  th:if="${ result.dataset.editable}"
+                  th:action="@{/launchpad/dataset-cmd-produce-dataset-commit}" accept-charset="UTF-8" id="dataset-cmd-produce-form" name="f">
             <tr>
                 <td>
                     <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
@@ -186,8 +187,34 @@
                     <button type="submit" class="pure-button pure-button-primary">Save command for producing dataset file</button>
                 </td>
             </tr>
-        </table>
     </form>
+-->
+            <tr>
+                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-dataset-commit/'+result.dataset.id}" accept-charset="UTF-8"
+                      th:if="${!result.datasetOptions.isEmpty()}">
+                    <td>
+                        <select class="pure-input-medium" th:name="code">
+                            <option  th:each="o : ${result.datasetOptions}" th:value="${o.value}" th:text="${o.desc} "></option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="pure-button pure-button-primary" type="submit">Set snippet as dataset producer</button>
+                    </td>
+                </form>
+            </tr>
+        </table>
+    <table class="pure-table pure-table-bordered" id="table-snippet-dataset" th:if="${ result.dataset.datasetSnippet!=null }">
+        <tbody>
+        <tr><td>#Id</td><td  th:text="${result.dataset.datasetSnippet.id}">#Id</td></tr>
+        <tr><td>Type</td><td th:text="${result.dataset.datasetSnippet.type}">Type</td></tr>
+        <tr><td>Name</td><td th:text="${result.dataset.datasetSnippet.name}">name</td></tr>
+        <tr><td>Version</td><td th:text="${result.dataset.datasetSnippet.snippetVersion}">version</td></tr>
+        <tr><td>File</td><td th:text="${result.dataset.datasetSnippet.filename}">Filename</td></tr>
+        <tr><td>Env</td><td th:text="${result.dataset.datasetSnippet.env}">env</td></tr>
+        <tr><td>Is signed</td><td th:text="${result.dataset.datasetSnippet.isSigned ? 'Yes' : 'No'}">is signed</td></tr>
+        </tbody>
+    </table>
+
     <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
           th:if="${ not result.dataset.editable and result.dataset.producingCommand!=null and result.dataset.producingCommand.length() &gt; 0 }"
           th:action="@{/launchpad/dataset-run-producing-commit}" accept-charset="UTF-8" id="dataset-run-producing-form" name="f">
@@ -235,6 +262,7 @@
 
 
         <table class="pure-table pure-table-bordered" id="table-dataset-cmd-assemble" >
+<!--
             <tr>
                 <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
                       th:if="${ result.dataset.editable}"
@@ -253,8 +281,9 @@
                     </td>
                 </form>
             </tr>
+-->
             <tr>
-                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-add-commit/'+result.dataset.id}" accept-charset="UTF-8"
+                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-assembly-commit/'+result.dataset.id}" accept-charset="UTF-8"
                       th:if="${!result.assemblyOptions.isEmpty()}">
                     <td>
                         <select class="pure-input-medium" th:name="code">
@@ -266,20 +295,20 @@
                     </td>
                 </form>
             </tr>
-            <tr>
-                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-add-commit/'+result.dataset.id}" accept-charset="UTF-8"
-                      th:if="${!result.datasetOptions.isEmpty()}">
-                    <td>
-                        <select class="pure-input-medium" th:name="code">
-                            <option  th:each="o : ${result.datasetOptions}" th:value="${o.value}" th:text="${o.desc} "></option>
-                        </select>
-                    </td>
-                    <td>
-                        <button class="pure-button pure-button-primary" type="submit">Set snippet as dataset producer</button>
-                    </td>
-                </form>
-            </tr>
+
         </table>
+    <table class="pure-table pure-table-bordered" id="table-snippet-assembly" th:if="${ result.dataset.assemblySnippet!=null }">
+        <tbody>
+        <tr><td>#Id</td><td  th:text="${result.dataset.assemblySnippet.id}">#Id</td></tr>
+        <tr><td>Type</td><td th:text="${result.dataset.assemblySnippet.type}">Type</td></tr>
+        <tr><td>Name</td><td th:text="${result.dataset.assemblySnippet.name}">name</td></tr>
+        <tr><td>Version</td><td th:text="${result.dataset.assemblySnippet.snippetVersion}">version</td></tr>
+        <tr><td>File</td><td th:text="${result.dataset.assemblySnippet.filename}">Filename</td></tr>
+        <tr><td>Env</td><td th:text="${result.dataset.assemblySnippet.env}">env</td></tr>
+        <tr><td>Is signed</td><td th:text="${result.dataset.assemblySnippet.isSigned ? 'Yes' : 'No'}">is signed</td></tr>
+        </tbody>
+    </table>
+
     <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
           th:if="${ not result.dataset.editable and result.dataset.assemblingCommand!=null and result.dataset.assemblingCommand.length() &gt; 0 }"
           th:action="@{/launchpad/dataset-run-assembling-commit}" accept-charset="UTF-8" id="dataset-run-assembling-form" name="f">
