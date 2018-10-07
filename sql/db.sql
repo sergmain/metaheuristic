@@ -132,7 +132,8 @@ CREATE TABLE AIAI_LP_SNIPPET (
   CODE        LONGBLOB not null,
   CHECKSUM    VARCHAR(2048),
   IS_SIGNED   tinyint(1) not null default 0,
-  ENV         VARCHAR(50) not null
+  ENV         VARCHAR(50) not null,
+  PARAMS         VARCHAR(1000)
 );
 
 CREATE TABLE AIAI_LP_DATASET_PATH (

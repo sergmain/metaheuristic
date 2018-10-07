@@ -32,6 +32,7 @@ import aiai.ai.yaml.config.DatasetPreparingConfig;
 import aiai.ai.yaml.config.DatasetPreparingConfigUtils;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.yaml.snippet.SnippetType;
+import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
@@ -229,6 +230,44 @@ public class DatasetController {
 
         model.addAttribute("result", definition);
         return "launchpad/dataset-definition";
+    }
+
+    @PostMapping("/dataset-snippet-assembly-commit/{id}")
+    public String snippetAssemblyCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
+        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        if (dataset == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#175.01 dataset wasn't found, datasetId: " + id);
+            return "redirect:/launchpad/datasets";
+        }
+        SnippetVersion snippetVersion = SnippetVersion.from(code);
+
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        if (snippet==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#176.01 dataset wasn't found, datasetId: " + id);
+            return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+        }
+        dataset.setAssemblySnippet(snippet);
+        datasetRepository.save(dataset);
+        return "redirect:/launchpad/dataset-definition/"+id;
+    }
+
+    @PostMapping("/dataset-snippet-dataset-commit/{id}")
+    public String snippetDatasetCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
+        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        if (dataset == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#177.01 dataset wasn't found, datasetId: " + id);
+            return "redirect:/launchpad/datasets";
+        }
+        SnippetVersion snippetVersion = SnippetVersion.from(code);
+
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        if (snippet==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#178.01 dataset wasn't found, datasetId: " + id);
+            return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+        }
+        dataset.setDatasetSnippet(snippet);
+        datasetRepository.save(dataset);
+        return "redirect:/launchpad/dataset-definition/"+id;
     }
 
     @PostMapping(value = "/dataset-clone-commit")

@@ -192,6 +192,7 @@ public class SnippetService {
                             snippet.filename = snippetConfig.file;
                             snippet.code = code;
                             snippet.env = snippetConfig.env;
+                            snippet.params = snippetConfig.params;
                             snippetRepository.save(snippet);
                         }
                         else {
@@ -206,10 +207,9 @@ public class SnippetService {
                     snippet.snippetVersion = snippetConfig.version;
                     snippet.type = snippetConfig.type.toString();
                     snippet.filename = snippetConfig.file;
-                    try( InputStream inputStream = new FileInputStream(file)) {
-                        snippet.code = IOUtils.toByteArray(inputStream);;
-                    }
+                    snippet.code = code;
                     snippet.env = snippetConfig.env;
+                    snippet.params = snippetConfig.params;
                     snippetRepository.save(snippet);
                 }
             }

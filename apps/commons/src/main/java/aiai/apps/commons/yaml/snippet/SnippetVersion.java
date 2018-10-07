@@ -26,8 +26,9 @@ public class SnippetVersion {
 
     public static SnippetVersion from(String s) {
         SnippetVersion snippetVersion = new SnippetVersion();
-        snippetVersion.name = s.substring(0, s.indexOf(':'));
-        snippetVersion.version = s.substring(s.indexOf(':')+1);
+        final int index = s.indexOf(':');
+        snippetVersion.name = s.substring(0, index);
+        snippetVersion.version = s.substring(index +1);
         return snippetVersion;
     }
 }

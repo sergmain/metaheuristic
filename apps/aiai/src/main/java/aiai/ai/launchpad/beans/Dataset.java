@@ -22,6 +22,8 @@ import aiai.ai.Consts;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import javax.persistence.*;
 import java.io.File;
@@ -56,10 +58,12 @@ public class Dataset implements Serializable {
 
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "ASSEMBLY_SNIPPET_ID")
+    @NotFound(action = NotFoundAction.IGNORE)
     private Snippet assemblySnippet;
 
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "DATASET_SNIPPET_ID")
+    @NotFound(action = NotFoundAction.IGNORE)
     private Snippet datasetSnippet;
 
     @Column(name = "CMD_ASSEMBLE")

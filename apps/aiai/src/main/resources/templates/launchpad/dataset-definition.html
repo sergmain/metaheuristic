@@ -190,7 +190,7 @@
     </form>
 -->
             <tr>
-                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-dataset-commit/'+result.dataset.id}" accept-charset="UTF-8"
+                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/dataset-snippet-dataset-commit/'+result.dataset.id}" accept-charset="UTF-8"
                       th:if="${!result.datasetOptions.isEmpty()}">
                     <td>
                         <select class="pure-input-medium" th:name="code">
@@ -210,6 +210,7 @@
         <tr><td>Name</td><td th:text="${result.dataset.datasetSnippet.name}">name</td></tr>
         <tr><td>Version</td><td th:text="${result.dataset.datasetSnippet.snippetVersion}">version</td></tr>
         <tr><td>File</td><td th:text="${result.dataset.datasetSnippet.filename}">Filename</td></tr>
+        <tr><td>Params</td><td th:text="${result.dataset.datasetSnippet.params}">params</td></tr>
         <tr><td>Env</td><td th:text="${result.dataset.datasetSnippet.env}">env</td></tr>
         <tr><td>Is signed</td><td th:text="${result.dataset.datasetSnippet.isSigned ? 'Yes' : 'No'}">is signed</td></tr>
         </tbody>
@@ -283,7 +284,7 @@
             </tr>
 -->
             <tr>
-                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-assembly-commit/'+result.dataset.id}" accept-charset="UTF-8"
+                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/dataset-snippet-assembly-commit/'+result.dataset.id}" accept-charset="UTF-8"
                       th:if="${!result.assemblyOptions.isEmpty()}">
                     <td>
                         <select class="pure-input-medium" th:name="code">
@@ -304,6 +305,7 @@
         <tr><td>Name</td><td th:text="${result.dataset.assemblySnippet.name}">name</td></tr>
         <tr><td>Version</td><td th:text="${result.dataset.assemblySnippet.snippetVersion}">version</td></tr>
         <tr><td>File</td><td th:text="${result.dataset.assemblySnippet.filename}">Filename</td></tr>
+        <tr><td>Params</td><td th:text="${result.dataset.assemblySnippet.params}">params</td></tr>
         <tr><td>Env</td><td th:text="${result.dataset.assemblySnippet.env}">env</td></tr>
         <tr><td>Is signed</td><td th:text="${result.dataset.assemblySnippet.isSigned ? 'Yes' : 'No'}">is signed</td></tr>
         </tbody>
