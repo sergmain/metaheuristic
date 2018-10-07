@@ -24,6 +24,7 @@ import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
+import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.utils.SimpleSelectOption;
 import aiai.ai.utils.StrUtils;
@@ -217,9 +218,13 @@ public class DatasetController {
             }
         }
 
-        Iterable<Snippet> snippets = snippetRepository.findAll();
-        definition.assemblyOptions = snippetService.getSelectOptions(snippets, new ArrayList<>(), (s) -> SnippetType.assembly!=(SnippetType.valueOf(s.type)));
-        definition.datasetOptions = snippetService.getSelectOptions(snippets, new ArrayList<>(), (s) -> SnippetType.dataset!=(SnippetType.valueOf(s.type)));
+        final Iterable<Snippet> snippets = snippetRepository.findAll();
+        final List<SnippetCode> assemblyCodes = dataset.getAssemblySnippet() == null ? new ArrayList<>() : Collections.singletonList(new SnippetCode(dataset.getAssemblySnippet().getId(), dataset.getAssemblySnippet().getSnippetCode()));
+        definition.assemblyOptions = snippetService.getSelectOptions(snippets, assemblyCodes, (s) -> SnippetType.assembly!=(SnippetType.valueOf(s.type)));
+
+        final List<SnippetCode> datasetCodes = dataset.getDatasetSnippet() == null ? new ArrayList<>() : Collections.singletonList(new SnippetCode(dataset.getDatasetSnippet().getId(), dataset.getDatasetSnippet().getSnippetCode()));
+        definition.datasetOptions = snippetService.getSelectOptions(snippets, datasetCodes, (s) -> SnippetType.dataset!=(SnippetType.valueOf(s.type)));
+
         definition.featureOptions = snippetService.getSelectOptions(snippets, new ArrayList<>(), (s) -> SnippetType.fit!=(SnippetType.valueOf(s.type)));
 
         model.addAttribute("result", definition);

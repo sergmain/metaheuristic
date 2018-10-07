@@ -18,7 +18,7 @@
 package aiai.ai.station.actors;
 
 import aiai.ai.Globals;
-import aiai.ai.utils.SnippetUtils;
+import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.apps.commons.utils.Checksum;

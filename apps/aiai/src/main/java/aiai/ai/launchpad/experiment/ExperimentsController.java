@@ -22,9 +22,11 @@ import aiai.ai.Globals;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.ai.launchpad.snippet.SnippetService;
+import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.utils.SimpleSelectOption;
+import aiai.ai.yaml.sequence.SimpleSnippet;
 import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import aiai.ai.launchpad.repositories.*;
@@ -46,6 +48,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * User: Serg
@@ -268,8 +271,9 @@ public class ExperimentsController {
         experiment.sortSnippetsByOrder();
 
         snippetResult.snippets = snippetService.getExperimentSnippets(snippets, experiment);
-        final List<SnippetType> types = List.of(SnippetType.fit, SnippetType.predict);
-        snippetResult.selectOptions = snippetService.getSelectOptions(snippets, snippetResult.snippets,
+        final List<SnippetType> types = Arrays.asList(SnippetType.fit, SnippetType.predict);
+        snippetResult.selectOptions = snippetService.getSelectOptions(snippets,
+                snippetResult.snippets.stream().map(o -> new SnippetCode(o.getId(), o.getSnippetCode())).collect(Collectors.toList()),
                 (s) -> {
                     if (!types.contains(SnippetType.valueOf(s.type)) ) {
                         return true;

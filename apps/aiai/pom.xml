@@ -41,8 +41,8 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 
-		<maven.compiler.source>11</maven.compiler.source>
-		<maven.compiler.target>11</maven.compiler.target>
+		<!--<maven.compiler.source>11</maven.compiler.source>-->
+		<!--<maven.compiler.target>11</maven.compiler.target>-->
 	</properties>
 	<dependencies>
 
@@ -226,7 +226,9 @@
                 <version>3.8.0</version>
 				<configuration>
 					<compilerArgument>-parameters</compilerArgument>
-                    <release>11</release>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <!--<release>11</release>-->
                     <encoding>${project.build.sourceEncoding}</encoding>
 					<showDeprecation>true</showDeprecation>
 				</configuration>

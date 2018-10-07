@@ -22,7 +22,7 @@ import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.beans.LogData;
-import aiai.ai.utils.SnippetUtils;
+import aiai.ai.snippet.SnippetUtils;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.ai.yaml.console.SnippetExec;

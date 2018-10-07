@@ -54,11 +54,13 @@ public class Dataset implements Serializable {
     @Column(name = "DESCRIPTION")
     private String description;
 
-    @Column(name = "ASSEMBLY_SNIPPET_ID")
-    public Long assemblySnippetId;
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "ASSEMBLY_SNIPPET_ID")
+    private Snippet assemblySnippet;
 
-    @Column(name = "DATASET_SNIPPET_ID")
-    public Long datasetSnippetId;
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "DATASET_SNIPPET_ID")
+    private Snippet datasetSnippet;
 
     @Column(name = "CMD_ASSEMBLE")
     private String assemblingCommand;

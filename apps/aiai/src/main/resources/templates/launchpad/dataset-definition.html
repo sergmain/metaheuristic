@@ -254,15 +254,28 @@
                 </form>
             </tr>
             <tr>
-                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-add-commit/'+experiment.id}" accept-charset="UTF-8"
-                      th:if="${!result.assemblyOptrions.isEmpty()}">
+                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-add-commit/'+result.dataset.id}" accept-charset="UTF-8"
+                      th:if="${!result.assemblyOptions.isEmpty()}">
                     <td>
                         <select class="pure-input-medium" th:name="code">
-                            <option  th:each="o : ${result.assemblyOptrions}" th:value="${o.value}" th:text="${o.desc} "></option>
+                            <option  th:each="o : ${result.assemblyOptions}" th:value="${o.value}" th:text="${o.desc} "></option>
                         </select>
                     </td>
                     <td>
                         <button class="pure-button pure-button-primary" type="submit">Set snippet as assembler</button>
+                    </td>
+                </form>
+            </tr>
+            <tr>
+                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-add-commit/'+result.dataset.id}" accept-charset="UTF-8"
+                      th:if="${!result.datasetOptions.isEmpty()}">
+                    <td>
+                        <select class="pure-input-medium" th:name="code">
+                            <option  th:each="o : ${result.datasetOptions}" th:value="${o.value}" th:text="${o.desc} "></option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="pure-button pure-button-primary" type="submit">Set snippet as dataset producer</button>
                     </td>
                 </form>
             </tr>

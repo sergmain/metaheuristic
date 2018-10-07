@@ -52,7 +52,7 @@ public class SnippetsConfig {
         public Map<Checksum.Type, String> checksums;
 
         public SnippetConfigStatus verify() {
-            if (StringUtils.isBlank(name) || type==null || type.toString().isBlank() || StringUtils.isBlank(file) || StringUtils.isBlank(version) || StringUtils.isBlank(env)) {
+            if (StringUtils.isBlank(name) || StringUtils.isBlank(type.toString()) || StringUtils.isBlank(file) || StringUtils.isBlank(version) || StringUtils.isBlank(env)) {
                 return new SnippetConfigStatus(false, "A field is null or empty: " + this.toString());
             }
             if (name.indexOf(':')!=-1 || version.indexOf(':')!=-1) {

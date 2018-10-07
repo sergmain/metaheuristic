@@ -23,8 +23,9 @@ import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.repositories.SnippetRepository;
+import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.SimpleSelectOption;
-import aiai.ai.utils.SnippetUtils;
+import aiai.ai.snippet.SnippetUtils;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.yaml.snippet.SnippetsConfig;
 import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
@@ -102,13 +103,13 @@ public class SnippetService {
         boolean filter(Snippet snippet);
     }
 
-    public List<SimpleSelectOption> getSelectOptions(Iterable<Snippet> snippets, List<ExperimentSnippet> experimentSnippets,
+    public List<SimpleSelectOption> getSelectOptions(Iterable<Snippet> snippets, List<SnippetCode> snippetCodes,
                                                      SnippetFilter snippetFilter) {
         List<SimpleSelectOption> selectOptions = new ArrayList<>();
         for (Snippet snippet : snippets) {
             boolean isExist=false;
-            for (ExperimentSnippet experimentSnippet : experimentSnippets) {
-                if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
+            for (SnippetCode snippetCode : snippetCodes) {
+                if (snippet.getSnippetCode().equals(snippetCode.getSnippetCode()) ) {
                     isExist = true;
                     break;
                 }
