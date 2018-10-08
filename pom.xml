@@ -30,6 +30,7 @@
         <module>apps/commons</module>
         <module>apps/package-snippet</module>
         <module>apps/gen-keys</module>
+        <module>apps/sign-environment</module>
     </modules>
 
 </project>

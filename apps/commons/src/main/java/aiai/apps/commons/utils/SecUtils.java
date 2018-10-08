@@ -18,6 +18,8 @@
 package aiai.apps.commons.utils;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.StringUtils;
+
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
@@ -28,11 +30,15 @@ public class SecUtils {
 
     public static final String SIGN_DELIMITER = "###";
 
-    public static String getSignature(String data, PrivateKey privateKey) throws NoSuchAlgorithmException, InvalidKeyException, SignatureException {
+    public static String getSignature(String data, PrivateKey privateKey) throws GeneralSecurityException {
+        return getSignature(data, privateKey, false);
+    }
+
+    public static String getSignature(String data, PrivateKey privateKey, boolean isChuncked) throws GeneralSecurityException {
         Signature signer= Signature.getInstance("SHA256withRSA");
         signer.initSign(privateKey);
         signer.update(data.getBytes(StandardCharsets.UTF_8));
-        return Base64.encodeBase64String(signer.sign());
+        return StringUtils.newStringUsAscii(Base64.encodeBase64(signer.sign(), isChuncked));
     }
 
     public static PublicKey getPublicKey(String keyBase64) throws NoSuchAlgorithmException, InvalidKeySpecException {

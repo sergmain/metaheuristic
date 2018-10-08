@@ -28,12 +28,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>aiai</groupId>
-    <artifactId>package-snippet</artifactId>
+    <artifactId>sign-environment</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>package-snippet</name>
-    <description>Package snippet, signing is optional</description>
+    <name>sign-environmentfile</name>
+    <description>Sign environment</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

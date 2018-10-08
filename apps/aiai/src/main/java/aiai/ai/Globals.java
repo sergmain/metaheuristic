@@ -88,6 +88,9 @@ public class Globals {
     @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
     public boolean isReplaceSnapshot;
 
+    @Value("${aiai.launchpad.accept-only-signed-env:#{true}}")
+    public boolean isAcceptOnlySignedEnv;
+
     // Station's globals
 
     @Value("${aiai.station.enabled:#{false}}")
