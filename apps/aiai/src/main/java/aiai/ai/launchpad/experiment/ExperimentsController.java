@@ -20,13 +20,13 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.utils.SimpleSelectOption;
-import aiai.ai.yaml.sequence.SimpleSnippet;
 import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import aiai.ai.launchpad.repositories.*;
@@ -129,8 +129,9 @@ public class ExperimentsController {
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
     private final ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository;
+    private final DatasetCache datasetCache;
 
-    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository) {
+    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
@@ -143,6 +144,7 @@ public class ExperimentsController {
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
         this.experimentSequenceWithSpecRepository = experimentSequenceWithSpecRepository;
+        this.datasetCache = datasetCache;
     }
 
     @GetMapping("/experiments")
@@ -306,7 +308,8 @@ public class ExperimentsController {
     private Dataset getDatasetAndCheck(Experiment experiment) {
         Dataset dataset = null;
         if (experiment.getDatasetId()!=null) {
-            dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
+//            dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
+            dataset = datasetCache.findById(experiment.getDatasetId());
             if (dataset == null) {
                 log.warn("dataset wasn't found for id {}", experiment.getDatasetId());
                 experiment.setDatasetId(null);
@@ -361,7 +364,8 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#287.02 Dataset is already assigned to this experiment, experimentId: " + id);
             return "redirect:/launchpad/experiment-edit/"+id;
         }
-        Dataset dataset = datasetRepository.findById(Long.parseLong(code)).orElse(null);
+//        Dataset dataset = datasetRepository.findById(Long.parseLong(code)).orElse(null);
+        Dataset dataset = datasetCache.findById(Long.parseLong(code));
         if (dataset==null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#287.03 Wrong datasetId: "+code+", experimentId: " + id);
             return "redirect:/launchpad/experiment-edit/"+id;
@@ -667,14 +671,16 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#284.03 dataset wasn't assigned, experimentId: " + experimentId);
             return "redirect:/launchpad/experiments";
         }
-        Dataset dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
+//        Dataset dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
+        Dataset dataset = datasetCache.findById(experiment.getDatasetId());
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#284.04 experiment has broken link to dataset. Need to reassign a dataset.");
             return "redirect:/launchpad/experiments";
         }
         dataset.setLocked(true);
         dataset.setEditable(false);
-        datasetRepository.save(dataset);
+//        datasetRepository.save(dataset);
+        datasetCache.save(dataset);
 
         experiment.setLaunched(true);
         experiment.setLaunchedOn(System.currentTimeMillis());

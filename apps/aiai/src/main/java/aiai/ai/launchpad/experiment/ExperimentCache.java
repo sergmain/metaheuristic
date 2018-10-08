@@ -37,7 +37,7 @@ public class ExperimentCache {
         experimentRepository.save(experiment);
     }
 
-    @Cacheable(cacheNames = "experiments")
+    @Cacheable(cacheNames = "experiments", unless="#result==null")
     public Experiment findById(long id) {
         return experimentRepository.findById(id).orElse(null);
     }

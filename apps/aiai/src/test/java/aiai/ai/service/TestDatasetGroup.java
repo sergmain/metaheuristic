@@ -21,6 +21,7 @@ import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Dataset;
 import aiai.ai.launchpad.beans.DatasetGroup;
 import aiai.ai.core.ArtifactStatus;
+import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
 import aiai.ai.launchpad.repositories.DatasetRepository;
 import org.junit.After;
@@ -51,6 +52,9 @@ public class TestDatasetGroup {
 
     @Autowired
     private DatasetGroupsRepository datasetGroupsRepository;
+
+    @Autowired
+    private DatasetCache datasetCache;
 
     private Dataset dataset = null;
     private boolean isCorrectInit = true;
@@ -92,7 +96,8 @@ public class TestDatasetGroup {
 
             dataset.setDatasetGroups(Arrays.asList(dg1, dg2, dg3));
 
-            datasetRepository.save(dataset);
+//            datasetRepository.save(dataset);
+            datasetCache.save(dataset);
 
             System.out.println("Was inited correctly");
         }
@@ -107,7 +112,8 @@ public class TestDatasetGroup {
 
         if (dataset != null) {
             try {
-                datasetRepository.deleteById(dataset.getId());
+//                datasetRepository.deleteById(dataset.getId());
+                datasetCache.delete(dataset.getId());
             }
             catch (EmptyResultDataAccessException e) {
                 //
@@ -123,7 +129,8 @@ public class TestDatasetGroup {
         assertTrue(isCorrectInit);
 
         final Long datasetId = dataset.getId();
-        datasetRepository.deleteById(datasetId);
+//        datasetRepository.deleteById(datasetId);
+        datasetCache.delete(datasetId);
 
         List<DatasetGroup> groups  = datasetGroupsRepository.findByDataset_Id(datasetId);
         assertNotNull(groups);

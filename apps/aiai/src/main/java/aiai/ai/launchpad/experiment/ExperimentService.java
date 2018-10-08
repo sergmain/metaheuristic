@@ -23,6 +23,7 @@ import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
@@ -140,8 +141,9 @@ public class ExperimentService {
     private final SnippetRepository snippetRepository;
     private final DatasetRepository datasetRepository;
     private final SequenceYamlUtils sequenceYamlUtils;
+    private final DatasetCache datasetCache;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, DatasetRepository datasetRepository, SequenceYamlUtils sequenceYamlUtils) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, DatasetRepository datasetRepository, SequenceYamlUtils sequenceYamlUtils, DatasetCache datasetCache) {
         this.globals = globals;
         this.experimentRepository = experimentRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
@@ -149,6 +151,7 @@ public class ExperimentService {
         this.snippetRepository = snippetRepository;
         this.datasetRepository = datasetRepository;
         this.sequenceYamlUtils = sequenceYamlUtils;
+        this.datasetCache = datasetCache;
     }
 
     private static class ParamFilter {
@@ -694,7 +697,8 @@ public class ExperimentService {
                 continue;
             }
 
-            Dataset dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
+//            Dataset dataset = datasetRepository.findById(experiment.getDatasetId()).orElse(null);
+            Dataset dataset = datasetCache.findById(experiment.getDatasetId());
             if (dataset == null) {
                 experiment.setDatasetId(null);
                 experiment.setNumberOfSequence(0);

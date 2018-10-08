@@ -23,6 +23,7 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.comm.CommandProcessor;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
@@ -73,6 +74,9 @@ public abstract class TestFeature {
 
     @Autowired
     protected ExperimentSequenceRepository experimentSequenceRepository;
+
+    @Autowired
+    private DatasetCache datasetCache;
 
     Station station = null;
     private Dataset dataset = null;
@@ -154,7 +158,8 @@ public abstract class TestFeature {
 
             dataset.setDatasetGroups(Arrays.asList(dg1, dg2, dg3));
 
-            datasetRepository.save(dataset);
+//            datasetRepository.save(dataset);
+            datasetCache.save(dataset);
 
             // Prepare experiment
             experiment = new Experiment();
@@ -242,7 +247,8 @@ public abstract class TestFeature {
             experimentRepository.deleteById(experiment.getId());
         }
         if (dataset != null) {
-            datasetRepository.deleteById(dataset.getId());
+//            datasetRepository.deleteById(dataset.getId());
+            datasetCache.delete(dataset.getId());
         }
         if (station != null) {
             stationsRepository.deleteById(station.getId());

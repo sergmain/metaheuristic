@@ -107,8 +107,9 @@ public class DatasetController {
     private final SnippetService snippetService;
     private final SnippetRepository snippetRepository;
     private final EnvService envService;
+    private final DatasetCache datasetCache;
 
-    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetRepository snippetRepository, EnvService envService) {
+    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetRepository snippetRepository, EnvService envService, DatasetCache datasetCache) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.groupsRepository = groupsRepository;
@@ -118,6 +119,7 @@ public class DatasetController {
         this.snippetService = snippetService;
         this.snippetRepository = snippetRepository;
         this.envService = envService;
+        this.datasetCache = datasetCache;
     }
 
     @GetMapping("/datasets")
@@ -143,7 +145,8 @@ public class DatasetController {
 
     @GetMapping(value = "/dataset-edit/{id}")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        final Dataset dataset = datasetRepository.findById(id).orElse(null);
+//        final Dataset dataset = datasetRepository.findById(id).orElse(null);
+        Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#173.01 dataset wasn't found, datasetId: " + id);
             return "redirect:/launchpad/datasets";
@@ -154,7 +157,8 @@ public class DatasetController {
 
     @PostMapping("/dataset-form-commit")
     public String datasetFormCommit(Dataset dataset, final RedirectAttributes redirectAttributes) {
-        final Dataset ds = datasetRepository.findById(dataset.getId()).orElse(null);
+//        final Dataset ds = datasetRepository.findById(dataset.getId()).orElse(null);
+        Dataset ds = datasetCache.findById(dataset.getId());
         if (ds == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#173.02 dataset wasn't found, datasetId: " + dataset.getId());
             return "redirect:/launchpad/datasets";
@@ -162,13 +166,15 @@ public class DatasetController {
         ds.setName(dataset.getName());
         ds.setDescription(dataset.getDescription());
         ds.setEditable(true);
-        datasetRepository.save(ds);
+//        datasetRepository.save(ds);
+        datasetCache.save(ds);
         return "redirect:/launchpad/datasets";
     }
 
     @GetMapping(value = "/dataset-definition/{id}")
     public String toDatasetDefinition(@PathVariable(name = "id") Long datasetId, Model model, @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes) {
-        Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
+//        Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
+        Dataset dataset = datasetCache.findById(datasetId);
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#174.01 dataset wasn't found, datasetId: " + datasetId);
             return "redirect:/launchpad/datasets";
@@ -240,7 +246,8 @@ public class DatasetController {
 
     @PostMapping("/dataset-snippet-assembly-commit/{id}")
     public String snippetAssemblyCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
-        Dataset dataset = datasetRepository.findById(id).orElse(null);
+//        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#175.01 dataset wasn't found, datasetId: " + id);
             return "redirect:/launchpad/datasets";
@@ -253,13 +260,15 @@ public class DatasetController {
             return "redirect:/launchpad/dataset-definition/" + dataset.getId();
         }
         dataset.setAssemblySnippet(snippet);
-        datasetRepository.save(dataset);
+//        datasetRepository.save(dataset);
+        datasetCache.save(dataset);
         return "redirect:/launchpad/dataset-definition/"+id;
     }
 
     @PostMapping("/dataset-snippet-dataset-commit/{id}")
     public String snippetDatasetCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
-        Dataset dataset = datasetRepository.findById(id).orElse(null);
+//        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#177.01 dataset wasn't found, datasetId: " + id);
             return "redirect:/launchpad/datasets";
@@ -272,13 +281,15 @@ public class DatasetController {
             return "redirect:/launchpad/dataset-definition/" + dataset.getId();
         }
         dataset.setDatasetSnippet(snippet);
-        datasetRepository.save(dataset);
+//        datasetRepository.save(dataset);
+        datasetCache.save(dataset);
         return "redirect:/launchpad/dataset-definition/"+id;
     }
 
     @PostMapping(value = "/dataset-clone-commit")
     public String cloneDataset(Long id, final RedirectAttributes redirectAttributes) {
-        Dataset dataset = datasetRepository.findById(id).orElse(null);
+//        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#150.01 dataset wasn't found, datasetId: " + id);
             return "redirect:/launchpad/datasets";
@@ -291,7 +302,8 @@ public class DatasetController {
         ds.setEditable(true);
         ds.setLocked(false);
         ds.setDatasetGroups(new ArrayList<>());
-        datasetRepository.save(ds);
+//        datasetRepository.save(ds);
+        datasetCache.save(ds);
 
         for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
             DatasetGroup dg = new DatasetGroup();
@@ -458,11 +470,11 @@ public class DatasetController {
 
     @GetMapping(value = "/dataset-group-add-new/{id}")
     public String addNewGroup(@PathVariable(name = "id") Long datasetId) {
-        final Optional<Dataset> value = datasetRepository.findById(datasetId);
-        if (!value.isPresent()) {
+//        final Optional<Dataset> value = datasetRepository.findById(datasetId);
+        Dataset dataset = datasetCache.findById(datasetId);
+        if (dataset==null) {
             return "redirect:/launchpad/datasets";
         }
-        Dataset dataset = value.get();
 
         List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
         int groupNumber;
@@ -475,17 +487,24 @@ public class DatasetController {
 
         dataset.getDatasetGroups().add(group);
 
-        datasetRepository.save(dataset);
+//        datasetRepository.save(dataset);
+        datasetCache.save(dataset);
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
     @GetMapping(value = "/dataset-group-add-new-feature/{id}")
     public String addNewFeatureGroup(@PathVariable(name = "id") Long datasetId) {
+/*
         final Optional<Dataset> value = datasetRepository.findById(datasetId);
         if (!value.isPresent()) {
             return "redirect:/launchpad/datasets";
         }
         Dataset dataset = value.get();
+*/
+        Dataset dataset = datasetCache.findById(datasetId);
+        if (dataset==null) {
+            return "redirect:/launchpad/datasets";
+        }
 
         List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
         int groupNumber;
@@ -498,13 +517,15 @@ public class DatasetController {
 
         dataset.getDatasetGroups().add(group);
 
-        datasetRepository.save(dataset);
+//        datasetRepository.save(dataset);
+        datasetCache.save(dataset);
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
     @GetMapping(value = "/dataset-produce-all-features/{id}")
     public String produceFeaturesForDataset(@PathVariable(name = "id") Long datasetId, final RedirectAttributes redirectAttributes) {
-        final Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
+//        final Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
+        Dataset dataset = datasetCache.findById(datasetId);
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#150.11 dataset wasn't found, datasetId: " + datasetId);
             return "redirect:/launchpad/datasets";
@@ -645,12 +666,14 @@ public class DatasetController {
 
     @PostMapping(value = "/dataset-is-editable-commit")
     public String isEditable(Long id, boolean editable) {
-        Dataset dataset = datasetRepository.findById(id).orElse(null);
+//        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             return "redirect:/launchpad/datasets";
         }
         dataset.setEditable(editable);
-        datasetRepository.save(dataset);
+//        datasetRepository.save(dataset);
+        datasetCache.save(dataset);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
@@ -670,13 +693,15 @@ public class DatasetController {
 
     @PostMapping(value = "/dataset-cmd-assemble-commit")
     public String setCmdForRaw(Long id, @RequestParam(name = "command_assemble") String assemblingCommand) {
-        Dataset dataset = datasetRepository.findById(id).orElse(null);
+//        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             return "redirect:/launchpad/datasets";
         }
         dataset.setAssemblingCommand(assemblingCommand);
         dataset.setRawAssemblingStatus(ArtifactStatus.OBSOLETE.value);
-        datasetRepository.save(dataset);
+//        datasetRepository.save(dataset);
+        datasetCache.save(dataset);
 
         obsoleteDatasetGroups(dataset);
 
@@ -685,20 +710,23 @@ public class DatasetController {
 
     @PostMapping(value = "/dataset-cmd-produce-dataset-commit")
     public String setCmdForDataset(Long id, @RequestParam(name = "command_produce") String cmd) {
-        Dataset dataset = datasetRepository.findById(id).orElse(null);
+//        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             return "redirect:/launchpad/datasets";
         }
         dataset.setProducingCommand(cmd);
         dataset.setDatasetProducingStatus(ArtifactStatus.OBSOLETE.value);
-        datasetRepository.save(dataset);
+//        datasetRepository.save(dataset);
+        datasetCache.save(dataset);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
     @PostMapping(value = "/dataset-run-assembling-commit")
     public String runAssemblingOfRawFile(Long id) throws IOException {
-        Dataset dataset = datasetRepository.findById(id).orElse(null);
+//        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             return "redirect:/launchpad/datasets";
         }
@@ -718,14 +746,16 @@ public class DatasetController {
         }
         dataset.setDatasetProducingStatus(ArtifactStatus.OBSOLETE.value);
         dataset.setRawAssemblingStatus(isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value);
-        datasetRepository.save(dataset);
+//        datasetRepository.save(dataset);
+        datasetCache.save(dataset);
 
         obsoleteDatasetGroups(dataset);
     }
 
     @PostMapping(value = "/dataset-run-producing-commit")
     public String runProducingOfDatasetFile(Long id) throws IOException {
-        Dataset dataset = datasetRepository.findById(id).orElse(null);
+//        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             return "redirect:/launchpad/datasets";
         }
@@ -754,7 +784,8 @@ public class DatasetController {
             status = ArtifactStatus.ERROR.value;
         }
         dataset.setDatasetProducingStatus(status);
-        datasetRepository.save(dataset);
+//        datasetRepository.save(dataset);
+        datasetCache.save(dataset);
     }
 
     private ProcessService.Result runCommand(File yaml, String command, LogData.Type type, Long refId) {
@@ -842,7 +873,8 @@ public class DatasetController {
             return "redirect:/launchpad/dataset-definition/" + datasetId;
         }
 
-        Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
+//        Dataset dataset = datasetRepository.findById(datasetId).orElse(null);
+        Dataset dataset = datasetCache.findById(datasetId);
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#172.02 dataset wasn't found for id " + datasetId);
             return "redirect:/launchpad/dataset-definition/" + datasetId;
@@ -924,20 +956,23 @@ public class DatasetController {
 
     @PostMapping("/dataset-definition-form-commit")
     public String datasetDefinitionFormCommit(DatasetDefinition datasetDefinition, final RedirectAttributes redirectAttributes) {
-        Dataset dataset = datasetRepository.findById(datasetDefinition.dataset.getId()).orElse(null);
+//        Dataset dataset = datasetRepository.findById(datasetDefinition.dataset.getId()).orElse(null);
+        Dataset dataset = datasetCache.findById(datasetDefinition.dataset.getId());
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#180.01 dataset wasn't found, datasetId: " + datasetDefinition.dataset.getId());
             return "redirect:/launchpad/experiments";
         }
         dataset.setName(datasetDefinition.dataset.getName());
         dataset.setDescription(datasetDefinition.dataset.getDescription());
-        datasetRepository.save(dataset);
+//        datasetRepository.save(dataset);
+        datasetCache.save(dataset);
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
     @GetMapping("/dataset-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        Dataset dataset = datasetRepository.findById(id).orElse(null);
+//        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#181.01 dataset wasn't found, datasetId: " + id);
             return "redirect:/launchpad/experiments";
@@ -948,13 +983,15 @@ public class DatasetController {
 
     @PostMapping("/dataset-delete-commit")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
-        Dataset dataset = datasetRepository.findById(id).orElse(null);
+//        Dataset dataset = datasetRepository.findById(id).orElse(null);
+        Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#182.01 dataset wasn't found, datasetId: " + id);
             return "redirect:/launchpad/experiments";
         }
         pathRepository.deleteByDataset(dataset);
-        datasetRepository.deleteById(id);
+//        datasetRepository.deleteById(id);
+        datasetCache.delete(id);
         return "redirect:/launchpad/datasets";
     }
 

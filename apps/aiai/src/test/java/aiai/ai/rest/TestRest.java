@@ -18,6 +18,7 @@
 package aiai.ai.rest;
 
 import aiai.ai.Consts;
+import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.InviteResult;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.comm.Command;
@@ -54,8 +55,6 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 @Import({SpringSecurityWebAuxTestConfig.class, AuthenticationProviderForTests.class, TestRest.JsonTestController.class})
 public class TestRest {
 
-    private MockMvc mockMvc;
-
     @RestController
     public static class JsonTestController {
 
@@ -66,9 +65,14 @@ public class TestRest {
             return new NewMessage("42", "test msg");
         }
     }
-
+    private MockMvc mockMvc;
     @Autowired
     private StationsRepository stationsRepository;
+
+    @Autowired
+    private Globals globals;
+    @Autowired
+    private WebApplicationContext webApplicationContext;
 
     // тестируем, что сообщения маршалятся в json
     @Test
@@ -82,9 +86,6 @@ public class TestRest {
         Assert.assertEquals(json, content);
         System.out.println(content);
     }
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
 
     @Before
     public void setup() {
@@ -110,6 +111,9 @@ public class TestRest {
     @Test
     @WithUserDetails("admin")
     public void whenTestAdminCredentials_thenOk() throws Exception {
+        if (globals.isSecureRestUrl) {
+            return;
+        }
         MvcResult result = mockMvc.perform(get("/rest-auth/test"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
@@ -127,6 +131,9 @@ public class TestRest {
     @Test
 //    @WithUserDetails("admin")
     public void testSimpleCommunicationWithServer() throws Exception {
+        if (globals.isSecureRestUrl) {
+            return;
+        }
         ExchangeData dataReqest = new ExchangeData(new Protocol.Nop());
         String jsonReqest = JsonUtils.toJson(dataReqest);
         MvcResult result = mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
@@ -152,32 +159,42 @@ public class TestRest {
 
         dataReqest.setStationId(s.getId().toString());
         String jsonReqest = JsonUtils.toJson(dataReqest);
-        MvcResult result = mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
-                .content(jsonReqest))
-                .andExpect(status().isOk())
-                .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
+        MvcResult result;
+        if (globals.isSecureRestUrl) {
+            result = mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
+                    .content(jsonReqest))
+                    .andExpect(status().isForbidden()).andReturn();
+        } else {
 
-        String json = result.getResponse().getContentAsString();
-        System.out.println("json = " + json);
-        ExchangeData data = JsonUtils.getExchangeData(json);
+            result = mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
+                    .content(jsonReqest))
+                    .andExpect(status().isOk())
+                    .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
+            String json = result.getResponse().getContentAsString();
+            System.out.println("json = " + json);
+            ExchangeData data = JsonUtils.getExchangeData(json);
 
-        Assert.assertNotNull(data);
-        Assert.assertTrue(data.isSuccess());
-        // 2 - because we add current state of all experiments to all responses
-        Assert.assertEquals(2, data.getCommands().size());
-        Protocol.RegisterInviteResult registerInviteResult = data.getRegisterInviteResult();
-        Assert.assertNotNull(registerInviteResult);
-        InviteResult inviteResult = registerInviteResult.getInviteResult();
-        Assert.assertNotNull(inviteResult);
-        Assert.assertNotNull(inviteResult.getUsername());
-        Assert.assertNotNull(inviteResult.getToken());
-        Assert.assertNotNull(inviteResult.getPassword());
+            Assert.assertNotNull(data);
+            Assert.assertTrue(data.isSuccess());
+            // 2 - because we add current state of all experiments to all responses
+            Assert.assertEquals(2, data.getCommands().size());
+            Protocol.RegisterInviteResult registerInviteResult = data.getRegisterInviteResult();
+            Assert.assertNotNull(registerInviteResult);
+            InviteResult inviteResult = registerInviteResult.getInviteResult();
+            Assert.assertNotNull(inviteResult);
+            Assert.assertNotNull(inviteResult.getUsername());
+            Assert.assertNotNull(inviteResult.getToken());
+            Assert.assertNotNull(inviteResult.getPassword());
+        }
 
         stationsRepository.delete(s);
     }
 
     @Test
-    public void testEmptyStationId() throws Exception {
+    public void testEmptyStationIdWithoutSercuredRest() throws Exception {
+        if (globals.isSecureRestUrl) {
+            return;
+        }
         ExchangeData dataReqest = new ExchangeData(new Protocol.RegisterInvite("invite-123"));
         String jsonReqest = JsonUtils.toJson(dataReqest);
         MvcResult result = mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
@@ -192,12 +209,24 @@ public class TestRest {
         Assert.assertEquals(1, data.getCommands().size());
         Command command = data.getCommands().get(0);
         Assert.assertEquals(Command.Type.AssignedStationId, command.getType());
-        Protocol.AssignedStationId assignedStationId = (Protocol.AssignedStationId)command;
+        Protocol.AssignedStationId assignedStationId = (Protocol.AssignedStationId) command;
         Assert.assertNotNull(assignedStationId.getAssignedStationId());
 
         final long id = Long.parseLong(assignedStationId.getAssignedStationId());
         stationsRepository.deleteById(id);
         Assert.assertNull(stationsRepository.findById(id).orElse(null));
+    }
+
+    @Test
+    public void testEmptyStationId() throws Exception {
+        if (!globals.isSecureRestUrl) {
+            return;
+        }
+        ExchangeData dataReqest = new ExchangeData(new Protocol.RegisterInvite("invite-123"));
+        String jsonReqest = JsonUtils.toJson(dataReqest);
+        mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
+                .content(jsonReqest))
+                .andExpect(status().isForbidden());
     }
 
 }

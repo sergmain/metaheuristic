@@ -57,7 +57,7 @@ public class AccountService {
         accountRepository.save(account);
     }
 
-    @Cacheable(cacheNames = "byUsername")
+    @Cacheable(cacheNames = "byUsername", unless="#result==null")
     public Account findByUsername(String username) {
         //System.out.println("return non-cached result");
         return accountRepository.findByUsername(username);

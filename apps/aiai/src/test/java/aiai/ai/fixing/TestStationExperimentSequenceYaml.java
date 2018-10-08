@@ -17,29 +17,15 @@
  */
 package aiai.ai.fixing;
 
-import aiai.ai.launchpad.beans.ExperimentSequence;
 import aiai.ai.launchpad.repositories.ExperimentSequenceRepository;
 import aiai.ai.station.StationExperimentService;
-import aiai.ai.station.beans.StationExperimentSequenceOld;
-import aiai.ai.station.repositories.StationExperimentSequenceOldRepository;
-import aiai.ai.yaml.metrics.MetricValues;
-import aiai.ai.yaml.metrics.Metrics;
-import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.sequence.SequenceYaml;
 import aiai.ai.yaml.sequence.SequenceYamlUtils;
-import aiai.ai.yaml.station.StationExperimentSequence;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.LineIterator;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.yaml.snakeyaml.error.YAMLException;
-
-import java.io.StringReader;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -49,8 +35,7 @@ public class TestStationExperimentSequenceYaml {
 
     @Autowired
     public ExperimentSequenceRepository experimentSequenceRepository;
-    @Autowired
-    public StationExperimentSequenceOldRepository stationExperimentSequenceOldRepository;
+
     @Autowired
     public StationExperimentService stationExperimentService;
     @Autowired

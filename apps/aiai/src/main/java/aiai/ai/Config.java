@@ -17,26 +17,21 @@
 
 package aiai.ai;
 
-import aiai.ai.launchpad.repositories.DatasetRepository;
+import aiai.ai.launchpad.repositories.RefToLaunchpadRepositories;
+import com.google.common.cache.CacheBuilder;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
+import org.springframework.cache.Cache;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.concurrent.ConcurrentMapCache;
+import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Primary;
-import org.springframework.core.env.Environment;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.jdbc.datasource.DriverManagerDataSource;
-import org.springframework.orm.jpa.JpaTransactionManager;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-import javax.persistence.EntityManagerFactory;
-import javax.sql.DataSource;
+import java.util.concurrent.TimeUnit;
 
 /**
  * User: Serg
@@ -44,7 +39,9 @@ import javax.sql.DataSource;
  * Time: 17:21
  */
 @Configuration
+@EnableCaching
 @EnableTransactionManagement
+@EnableJpaRepositories(basePackageClasses = {RefToLaunchpadRepositories.class} )
 public class Config {
 
     private final Globals globals;
@@ -53,7 +50,21 @@ public class Config {
         this.globals = globals;
     }
 
-/*
+    @Bean
+    public CacheManager cacheManager() {
+        //noinspection UnnecessaryLocalVariable
+        ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager() {
+            @Override
+            protected Cache createConcurrentMapCache(final String name) {
+                return new ConcurrentMapCache(name,
+                        CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.DAYS).maximumSize(1000).build().asMap(), false);
+            }
+        };
+
+        return cacheManager;
+    }
+
+    /*
     @Configuration
     @EnableTransactionManagement
     @EnableJpaRepositories(basePackageClasses = { DatasetRepository.class })

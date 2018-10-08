@@ -19,6 +19,7 @@ package aiai.ai.db;
 
 import aiai.ai.launchpad.beans.LogData;
 import aiai.ai.launchpad.beans.Dataset;
+import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.repositories.DatasetRepository;
 import aiai.ai.launchpad.repositories.LogDataRepository;
 import org.junit.Assert;
@@ -41,30 +42,41 @@ public class TestControllers {
     @Autowired
     private LogDataRepository logDataRepository;
 
+    @Autowired
+    private DatasetCache datasetCache;
+
     @Test
     public void testDataset() {
 
         Optional<Dataset> datasetOptional = datasetRepository.findById(-1L);
         Assert.assertFalse(datasetOptional.isPresent());
 
+        Dataset dataset = datasetCache.findById(-1L);
+        Assert.assertNull(dataset);
+
         Dataset ds = new Dataset();
         ds.setDescription("Dataset for testing");
         ds.setEditable(false);
         ds.setName("ds #42");
 
-        Dataset newDataset= datasetRepository.save(ds);
+//        Dataset newDataset= datasetRepository.save(ds);
+        Dataset newDataset = datasetCache.save(ds);
         Assert.assertNotNull(newDataset);
 
         datasetOptional = datasetRepository.findById(newDataset.getId());
         Assert.assertTrue(datasetOptional.isPresent());
 
+        Assert.assertNotNull(datasetCache.findById(newDataset.getId()));
+
         Dataset datasetWithLogs = datasetOptional.get();
 
-        datasetRepository.delete(datasetWithLogs);
+//        datasetRepository.delete(datasetWithLogs);
+        datasetCache.delete(datasetWithLogs);
 
         datasetOptional = datasetRepository.findById(newDataset.getId());
         Assert.assertFalse(datasetOptional.isPresent());
 
+        Assert.assertNull(datasetCache.findById(newDataset.getId()));
     }
 
     @Test
