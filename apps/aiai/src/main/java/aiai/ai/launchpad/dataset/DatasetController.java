@@ -22,6 +22,7 @@ import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetCode;
@@ -83,6 +84,7 @@ public class DatasetController {
         public List<SimpleSelectOption> assemblyOptions;
         public List<SimpleSelectOption> datasetOptions;
         public List<SimpleSelectOption> featureOptions;
+        public Map<String, Env> envs = new HashMap<>();
 
         public DatasetDefinition(Dataset dataset, String launchpadDirAsString, String datasetDirAsString) {
             this.dataset = dataset;
@@ -104,8 +106,9 @@ public class DatasetController {
     private final ProcessService processService;
     private final SnippetService snippetService;
     private final SnippetRepository snippetRepository;
+    private final EnvService envService;
 
-    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetRepository snippetRepository) {
+    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetRepository snippetRepository, EnvService envService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.groupsRepository = groupsRepository;
@@ -114,6 +117,7 @@ public class DatasetController {
         this.processService = processService;
         this.snippetService = snippetService;
         this.snippetRepository = snippetRepository;
+        this.envService = envService;
     }
 
     @GetMapping("/datasets")
@@ -227,6 +231,8 @@ public class DatasetController {
         definition.datasetOptions = snippetService.getSelectOptions(snippets, datasetCodes, (s) -> SnippetType.dataset!=(SnippetType.valueOf(s.type)));
 
         definition.featureOptions = snippetService.getSelectOptions(snippets, new ArrayList<>(), (s) -> SnippetType.fit!=(SnippetType.valueOf(s.type)));
+
+        definition.envs.putAll( envService.envsAsMap() );
 
         model.addAttribute("result", definition);
         return "launchpad/dataset-definition";

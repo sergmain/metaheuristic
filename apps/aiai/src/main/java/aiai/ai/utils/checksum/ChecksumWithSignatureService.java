@@ -57,7 +57,7 @@ public class ChecksumWithSignatureService {
                 entrySum = checksumWithSignature.checksum;
 
                 if (isVerifySignature) {
-                    if (!(status.isSignatureOk = isValid(checksumWithSignature, globals.publicKey))) {
+                    if (!(status.isSignatureOk = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, globals.publicKey))) {
                         break;
                     }
                     log.info("Snippet {}, signature is Ok", snippetCode);
@@ -92,17 +92,17 @@ public class ChecksumWithSignatureService {
         return checksumWithSignature;
     }
 
-    public boolean isValid(ChecksumWithSignature checksumWithSignature, PublicKey publicKey) {
+    public static boolean isValid(byte[] data, String signatureAsBase64, PublicKey publicKey) {
         try {
             Signature signature = Signature.getInstance("SHA256withRSA");
             signature.initVerify(publicKey);
-            signature.update(checksumWithSignature.checksum.getBytes());
+            signature.update(data);
             //noinspection UnnecessaryLocalVariable
-            final byte[] bytes = Base64.decodeBase64(checksumWithSignature.signature);
+            final byte[] bytes = Base64.decodeBase64(signatureAsBase64);
             boolean status = signature.verify(bytes);
             return status;
         }
-        catch (SignatureException | NoSuchAlgorithmException | InvalidKeyException e) {
+        catch (GeneralSecurityException e) {
             log.error("Error checking signature", e);
             throw new RuntimeException("Error", e);
         }

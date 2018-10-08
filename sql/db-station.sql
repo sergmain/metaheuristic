@@ -1,4 +1,4 @@
--- Right now this functionality isn't used
+-- Right now this functionality (db as a storage at station side) isn't used
 -- ============
 
 CREATE TABLE AIAI_S_METADATA (

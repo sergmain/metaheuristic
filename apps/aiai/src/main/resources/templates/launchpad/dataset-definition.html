@@ -169,26 +169,6 @@
     <p>&nbsp;</p>
     <h2 class="widget-header">dataset file</h2>
         <table class="pure-table pure-table-bordered" id="table-dataset-cmd-produce" >
-<!--
-            <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
-                  th:if="${ result.dataset.editable}"
-                  th:action="@{/launchpad/dataset-cmd-produce-dataset-commit}" accept-charset="UTF-8" id="dataset-cmd-produce-form" name="f">
-            <tr>
-                <td>
-                    <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
-                    <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
-                    <fieldset>
-                        <label for="input_command_assemble">Command for producing dataset</label>
-                        <input name="command_produce" id="input_command_produce" type="text" placeholder="command for producing dataset" th:size="100"
-                               th:value="${result.dataset.producingCommand}">
-                    </fieldset>
-                </td>
-                <td>
-                    <button type="submit" class="pure-button pure-button-primary">Save command for producing dataset file</button>
-                </td>
-            </tr>
-    </form>
--->
             <tr>
                 <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/dataset-snippet-dataset-commit/'+result.dataset.id}" accept-charset="UTF-8"
                       th:if="${!result.datasetOptions.isEmpty()}">
@@ -212,7 +192,8 @@
         <tr><td>File</td><td th:text="${result.dataset.datasetSnippet.filename}">Filename</td></tr>
         <tr><td>Params</td><td th:text="${result.dataset.datasetSnippet.params}">params</td></tr>
         <tr><td>Env</td><td th:text="${result.dataset.datasetSnippet.env}">env</td></tr>
-        <tr><td>Is signed</td><td th:text="${result.dataset.datasetSnippet.isSigned ? 'Yes' : 'No'}">is signed</td></tr>
+        <tr><td>Exec for env</td><td th:text="${result.envs.get(result.dataset.datasetSnippet.env)!=null ? result.envs.get(result.dataset.datasetSnippet.env).value: 'Not specified yet.'}">env</td></tr>
+        <tr><td>Snippet is signed?</td><td th:text="${result.dataset.datasetSnippet.isSigned ? 'Yes' : 'No'}">is signed</td></tr>
         </tbody>
     </table>
 
@@ -263,26 +244,6 @@
 
 
         <table class="pure-table pure-table-bordered" id="table-dataset-cmd-assemble" >
-<!--
-            <tr>
-                <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
-                      th:if="${ result.dataset.editable}"
-                      th:action="@{/launchpad/dataset-cmd-assemble-commit}" accept-charset="UTF-8" id="dataset-cmd-assemble-form" name="f">
-                    <td>
-                        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
-                        <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
-                        <fieldset>
-                            <label for="input_command_assemble">Command for assembling raw file</label>
-                            <input name="command_assemble" id="input_command_assemble" type="text" placeholder="command for assembling raw file" th:size="100"
-                                   th:value="${result.dataset.assemblingCommand}">
-                        </fieldset>
-                    </td>
-                    <td>
-                        <button type="submit" class="pure-button pure-button-primary">Save command for assembling raw file</button>
-                    </td>
-                </form>
-            </tr>
--->
             <tr>
                 <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/dataset-snippet-assembly-commit/'+result.dataset.id}" accept-charset="UTF-8"
                       th:if="${!result.assemblyOptions.isEmpty()}">
@@ -307,7 +268,8 @@
         <tr><td>File</td><td th:text="${result.dataset.assemblySnippet.filename}">Filename</td></tr>
         <tr><td>Params</td><td th:text="${result.dataset.assemblySnippet.params}">params</td></tr>
         <tr><td>Env</td><td th:text="${result.dataset.assemblySnippet.env}">env</td></tr>
-        <tr><td>Is signed</td><td th:text="${result.dataset.assemblySnippet.isSigned ? 'Yes' : 'No'}">is signed</td></tr>
+        <tr><td>Exec for env</td><td th:text="${result.envs.get(result.dataset.assemblySnippet.env)!=null ? result.envs.get(result.dataset.assemblySnippet.env).value: 'Not specified yet.'}">env</td></tr>
+        <tr><td>Snippet is signed?</td><td th:text="${result.dataset.assemblySnippet.isSigned ? 'Yes' : 'No'}">is signed</td></tr>
         </tbody>
     </table>
 

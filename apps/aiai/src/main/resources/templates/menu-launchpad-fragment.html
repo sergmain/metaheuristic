@@ -19,5 +19,8 @@
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/snippets'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/snippets.html" th:href="@{/launchpad/snippets}">Snippets</a>
         </li>
+        <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/envs'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="launchpad/envs.html" th:href="@{/launchpad/envs}">Environment</a>
+        </li>
     </ul>
 </div>

@@ -69,17 +69,17 @@ public class SnippetController {
 
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#22.01 name of uploaded file is null");
+            redirectAttributes.addFlashAttribute("errorMessage", "#422.01 name of uploaded file is null");
             return "redirect:/launchpad/snippets";
         }
         int idx;
         if ((idx = originFilename.lastIndexOf('.')) == -1) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#22.02 '.' wasn't found, bad filename: " + originFilename);
+            redirectAttributes.addFlashAttribute("errorMessage", "#422.02 '.' wasn't found, bad filename: " + originFilename);
             return "redirect:/launchpad/snippets";
         }
         String ext = originFilename.substring(idx).toLowerCase();
         if (!".zip".equals(ext)) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#22.03 only '.zip' files is supported, filename: " + originFilename);
+            redirectAttributes.addFlashAttribute("errorMessage", "#422.03 only '.zip' files is supported, filename: " + originFilename);
             return "redirect:/launchpad/snippets";
         }
 
@@ -88,7 +88,7 @@ public class SnippetController {
         try {
             File tempDir = DirUtils.createTempDir("snippet-upload-");
             if (tempDir==null || tempDir.isFile()) {
-                redirectAttributes.addFlashAttribute("errorMessage", "#22.04 can't create temporary directory in " + location);
+                redirectAttributes.addFlashAttribute("errorMessage", "#422.04 can't create temporary directory in " + location);
                 return "redirect:/launchpad/snippets";
             }
             final File zipFile = new File(tempDir, "snippet.zip");
@@ -98,7 +98,7 @@ public class SnippetController {
         }
         catch (Exception e) {
             log.error("Error", e);
-            redirectAttributes.addFlashAttribute("errorMessage", "#22.05 can't load snippets, Error: " + e.toString());
+            redirectAttributes.addFlashAttribute("errorMessage", "#422.05 can't load snippets, Error: " + e.toString());
             return "redirect:/launchpad/snippets";
         }
 
