@@ -18,13 +18,17 @@
 
 package aiai.ai.launchpad.beans;
 
+import aiai.ai.utils.SimpleSelectOption;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -35,8 +39,8 @@ import java.util.List;
 @Entity
 @Table(name = "AIAI_LP_DATASET_GROUP")
 @Data
-@EqualsAndHashCode(exclude = {"dataset", "datasetColumns"})
-@ToString(exclude = {"dataset"})
+@EqualsAndHashCode(exclude = {"dataset", "snippet"})
+@ToString(exclude = {"dataset", "snippet"})
 @NoArgsConstructor
 public class DatasetGroup implements Serializable {
     private static final long serialVersionUID = -3161178396332333392L;
@@ -64,6 +68,11 @@ public class DatasetGroup implements Serializable {
     @Column(name = "DESCRIPTION")
     private String description;
 
+    @OneToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "SNIPPET_ID")
+    @NotFound(action = NotFoundAction.IGNORE)
+    private Snippet snippet;
+
     @Column(name = "CMD")
     private String command;
 
@@ -89,14 +98,15 @@ public class DatasetGroup implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DATASET_ID")
     private Dataset dataset;
-    @OneToMany(mappedBy = "datasetGroup", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    private List<DatasetColumn> datasetColumns;
 
     /**
      * used only for UI
      */
     @Transient
     private boolean isAddColumn;
+
+    @Transient
+    public List<SimpleSelectOption> featureOptions;
 
     public DatasetGroup(int groupNumber) {
         this.groupNumber = groupNumber;

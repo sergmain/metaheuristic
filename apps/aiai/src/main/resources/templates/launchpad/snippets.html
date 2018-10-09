@@ -49,6 +49,7 @@
             <th>Version</th>
             <th>Type</th>
             <th>Environment</th>
+            <th>Params</th>
             <th>Is signed?</th>
             <th colspan="1">&nbsp;</th>
         </tr>
@@ -60,6 +61,7 @@
             <td th:text="${s.snippetVersion}"></td>
             <td th:text="${s.type}">Type</td>
             <td th:text="${s.env}">Environment</td>
+            <td th:text="${s.params}">Params</td>
             <td th:text="${s.isSigned ? 'Yes' : 'No'}">Is signed?</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/snippet-delete/' + s.id}">Delete</a></td>
         </tr>

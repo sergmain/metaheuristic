@@ -89,7 +89,7 @@ public class Experiment implements Serializable {
     @Column(name = "NUMBER_OF_SEQUENCE")
     private int numberOfSequence;
 
-    // we need eager because of @Scheduled
+    // we need eager because of @Scheduled and cache
 
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)

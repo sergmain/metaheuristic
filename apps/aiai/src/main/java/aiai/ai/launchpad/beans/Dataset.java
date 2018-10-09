@@ -22,6 +22,7 @@ import aiai.ai.Consts;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
@@ -38,7 +39,8 @@ import java.util.List;
 @Entity
 @Table(name = "AIAI_LP_DATASET")
 @Data
-@EqualsAndHashCode(exclude = {"datasetGroups"})
+@EqualsAndHashCode(exclude = {"datasetGroups", "assemblySnippet", "datasetSnippet"})
+@ToString(exclude = {"datasetGroups", "datasetSnippet", "assemblySnippet"})
 @NoArgsConstructor
 public class Dataset implements Serializable {
     private static final long serialVersionUID = -1972306380977162458L;

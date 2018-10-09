@@ -18,19 +18,25 @@
 package aiai.ai.launchpad.dataset;
 
 import aiai.ai.launchpad.beans.Dataset;
+import aiai.ai.launchpad.beans.DatasetGroup;
+import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
 import aiai.ai.launchpad.repositories.DatasetRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class DatasetCache {
 
     private final DatasetRepository datasetRepository;
+    private final DatasetGroupsRepository groupsRepository;
 
-    public DatasetCache(DatasetRepository datasetRepository) {
+    public DatasetCache(DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository) {
         this.datasetRepository = datasetRepository;
+        this.groupsRepository = groupsRepository;
     }
 
     @CachePut(cacheNames = "datasets", key = "#dataset.id")
@@ -48,8 +54,23 @@ public class DatasetCache {
         datasetRepository.deleteById(datasetId);
     }
 
+    @CacheEvict(cacheNames = "datasets", key = "#group.dataset.id")
+    public void saveGroup(DatasetGroup group) {
+        groupsRepository.save(group);
+    }
+
     @Cacheable(cacheNames = "datasets", unless="#result==null")
     public Dataset findById(long id) {
         return datasetRepository.findById(id).orElse(null);
+    }
+
+    @CacheEvict(cacheNames = "datasets", key = "#datasetId")
+    public void saveAllGroups(List<DatasetGroup> groups, long datasetId) {
+        groupsRepository.saveAll(groups);
+    }
+
+    @CacheEvict(cacheNames = "datasets", key = "#group.dataset.id")
+    public void delete(DatasetGroup group) {
+        groupsRepository.delete(group);
     }
 }

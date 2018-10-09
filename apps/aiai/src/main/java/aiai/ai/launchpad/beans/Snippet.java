@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.beans;
 
 import lombok.Data;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -25,6 +26,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "AIAI_LP_SNIPPET")
 @Data
+@ToString(exclude = {"code"})
 public class Snippet implements Serializable {
     private static final long serialVersionUID = 4066977399166436522L;
 

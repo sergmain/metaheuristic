@@ -36,20 +36,13 @@ CREATE TABLE AIAI_LP_DATASET_GROUP (
   GROUP_NUMBER  NUMERIC(3, 0) NOT NULL,
   DESCRIPTION VARCHAR(250),
   CMD         VARCHAR(250),
+  SNIPPET_ID  NUMERIC(10, 0),
   IS_ID_GROUP tinyint(1) not null default 0,
   IS_FEATURE  tinyint(1) not null default 0,
   IS_LABEL    tinyint(1) not null default 0,
   IS_REQUIRED tinyint(1) not null default 0,
   FEATURE_FILE         VARCHAR(250),
   STATUS     tinyint(1) not null default 0
-);
-
-CREATE TABLE AIAI_LP_DATASET_COLUMN (
-  ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-  DATASET_GROUP_ID          NUMERIC(10, 0) NOT NULL,
-  VERSION     NUMERIC(5, 0)  NOT NULL,
-  NAME    VARCHAR(50),
-  DESCRIPTION VARCHAR(250)
 );
 
 CREATE TABLE AIAI_LP_EXPERIMENT (

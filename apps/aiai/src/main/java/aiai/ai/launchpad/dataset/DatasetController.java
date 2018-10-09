@@ -19,9 +19,9 @@ package aiai.ai.launchpad.dataset;
 
 import aiai.ai.Consts;
 import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.*;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
@@ -36,10 +36,10 @@ import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.Data;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -50,11 +50,12 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 /**
@@ -77,6 +78,7 @@ public class DatasetController {
     }
 
     @Data
+    @ToString(exclude = {"dataset"})
     public static class DatasetDefinition {
         public Dataset dataset;
         public List<DatasetPath> paths = new ArrayList<>();
@@ -84,7 +86,6 @@ public class DatasetController {
         public String datasetDirAsString;
         public List<SimpleSelectOption> assemblyOptions;
         public List<SimpleSelectOption> datasetOptions;
-        public List<SimpleSelectOption> featureOptions;
         public Map<String, Env> envs = new HashMap<>();
 
         public DatasetDefinition(Dataset dataset, String launchpadDirAsString, String datasetDirAsString) {
@@ -102,7 +103,6 @@ public class DatasetController {
     private final Globals globals;
     private final DatasetRepository datasetRepository;
     private final DatasetGroupsRepository groupsRepository;
-    private final DatasetColumnRepository columnRepository;
     private final DatasetPathRepository pathRepository;
     private final ProcessService processService;
     private final SnippetService snippetService;
@@ -110,11 +110,10 @@ public class DatasetController {
     private final EnvService envService;
     private final DatasetCache datasetCache;
 
-    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetColumnRepository columnRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetRepository snippetRepository, EnvService envService, DatasetCache datasetCache) {
+    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetRepository snippetRepository, EnvService envService, DatasetCache datasetCache) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.groupsRepository = groupsRepository;
-        this.columnRepository = columnRepository;
         this.pathRepository = pathRepository;
         this.processService = processService;
         this.snippetService = snippetService;
@@ -183,57 +182,30 @@ public class DatasetController {
         final DatasetDefinition definition = new DatasetDefinition(dataset, globals.launchpadDir.getPath(), path);
         definition.paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
 
+        final Iterable<Snippet> snippets = snippetRepository.findAll();
+
+        final List<SnippetCode> featureCodes = new ArrayList<>();
+
         // fix conditions for UI
         final int groupSize = dataset.getDatasetGroups().size();
         for (int i = 0; i < groupSize; i++) {
             DatasetGroup group = dataset.getDatasetGroups().get(i);
             group.setAddColumn(true);
+            if (group.getSnippet()!=null) {
+                featureCodes.add(new SnippetCode(group.getSnippet().getId(), group.getSnippet().getSnippetCode()));
+            }
         }
 
         // ugly but it works
-        boolean isAllEmpty = true;
         for (DatasetGroup group : dataset.getDatasetGroups()) {
-            if (!group.getDatasetColumns().isEmpty()) {
-                isAllEmpty = false;
-                break;
-            }
+            group.featureOptions = snippetService.getSelectOptions(snippets, featureCodes, (s) -> SnippetType.feature!=(SnippetType.valueOf(s.type)));
         }
 
-        // don't invert the condition, because ...
-        // TODO 2018-03-17 I forgot why
-        //noinspection StatementWithEmptyBody
-        if (isAllEmpty) {
-            // nothing to do with this
-        } else {
-            // last actual column in groups. there isn't any non-empty group after this one
-            for (int i = 0; i < dataset.getDatasetGroups().size(); i++) {
-
-                // case when last group isn't empty
-                if (i + 1 == dataset.getDatasetGroups().size()) {
-                    final List<DatasetColumn> columns = dataset.getDatasetGroups().get(i).getDatasetColumns();
-                    columns.get(columns.size() - 1).setLastColumn(true);
-                    break;
-                }
-                // case when there are some empty groups
-                if (i < dataset.getDatasetGroups().size() - 1 && dataset.getDatasetGroups().get(i + 1).getDatasetColumns().size() == 0) {
-                    final List<DatasetColumn> columns = dataset.getDatasetGroups().get(i).getDatasetColumns();
-                    if (columns.isEmpty()) {
-                        continue;
-                    }
-                    columns.get(columns.size() - 1).setLastColumn(true);
-                    break;
-                }
-            }
-        }
-
-        final Iterable<Snippet> snippets = snippetRepository.findAll();
         final List<SnippetCode> assemblyCodes = dataset.getAssemblySnippet() == null ? new ArrayList<>() : Collections.singletonList(new SnippetCode(dataset.getAssemblySnippet().getId(), dataset.getAssemblySnippet().getSnippetCode()));
         definition.assemblyOptions = snippetService.getSelectOptions(snippets, assemblyCodes, (s) -> SnippetType.assembly!=(SnippetType.valueOf(s.type)));
 
         final List<SnippetCode> datasetCodes = dataset.getDatasetSnippet() == null ? new ArrayList<>() : Collections.singletonList(new SnippetCode(dataset.getDatasetSnippet().getId(), dataset.getDatasetSnippet().getSnippetCode()));
         definition.datasetOptions = snippetService.getSelectOptions(snippets, datasetCodes, (s) -> SnippetType.dataset!=(SnippetType.valueOf(s.type)));
-
-        definition.featureOptions = snippetService.getSelectOptions(snippets, new ArrayList<>(), (s) -> SnippetType.fit!=(SnippetType.valueOf(s.type)));
 
         definition.envs.putAll( envService.envsAsMap() );
 
@@ -249,10 +221,9 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         SnippetVersion snippetVersion = SnippetVersion.from(code);
-
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#176.01 dataset wasn't found, datasetId: " + id);
+            redirectAttributes.addFlashAttribute("errorMessage", "#176.01 snippet "+code+" wasn't found");
             return "redirect:/launchpad/dataset-definition/" + dataset.getId();
         }
         dataset.setAssemblySnippet(snippet);
@@ -268,15 +239,32 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         SnippetVersion snippetVersion = SnippetVersion.from(code);
-
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#178.01 dataset wasn't found, datasetId: " + id);
+            redirectAttributes.addFlashAttribute("errorMessage", "#178.01 snippet "+code+" wasn't found");
             return "redirect:/launchpad/dataset-definition/" + dataset.getId();
         }
         dataset.setDatasetSnippet(snippet);
         datasetCache.save(dataset);
         return "redirect:/launchpad/dataset-definition/"+id;
+    }
+
+    @PostMapping("/dataset-group-snippet-commit/{id}")
+    public String snippetGroupCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
+        final DatasetGroup group = groupsRepository.findById(id).orElse(null);
+        if (group==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#180.01 dataset group wasn't found, datasetGroupId: " + id);
+            return "redirect:/launchpad/datasets";
+        }
+        SnippetVersion snippetVersion = SnippetVersion.from(code);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        if (snippet==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#182.01 snippet "+code+" wasn't found");
+            return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
+        }
+        group.setSnippet(snippet);
+        datasetCache.saveGroup(group);
+        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
 
     @PostMapping(value = "/dataset-clone-commit")
@@ -301,11 +289,10 @@ public class DatasetController {
             BeanUtils.copyProperties(datasetGroup, dg);
             dg.setId(null);
             dg.setVersion(null);
-            // 2018.09.08, right now, we don't use GroupColumn beans
-            dg.setDatasetColumns(new ArrayList<>());
             dg.setFeatureStatus(ArtifactStatus.NONE.value);
             dg.setDataset(ds);
-            groupsRepository.save(dg);
+//            groupsRepository.save(dg);
+            datasetCache.saveGroup(dg);
         }
 
         for (DatasetPath path : pathRepository.findByDataset(dataset)) {
@@ -322,127 +309,6 @@ public class DatasetController {
         return "redirect:/launchpad/datasets";
     }
 
-    @GetMapping(value = "/dataset-column-add/{id}")
-    public String addColumn(@PathVariable(name = "id") Long datasetGroupId, Model model) {
-        final Optional<DatasetGroup> value = groupsRepository.findById(datasetGroupId);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-        DatasetGroup group = value.get();
-        final DatasetColumn column = new DatasetColumn();
-        column.setDatasetGroup(group);
-        model.addAttribute("column", column);
-        return "launchpad/dataset-column-form";
-    }
-
-    @PostMapping(value = "/dataset-column-add-commit")
-    public String addNewColumnCommit(DatasetColumn column) {
-        final Optional<DatasetGroup> value = groupsRepository.findById(column.getDatasetGroup().getId());
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-        DatasetGroup group = value.get();
-
-        column.setDatasetGroup(group);
-        columnRepository.save(column);
-
-        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
-    }
-
-    @GetMapping(value = "/dataset-column-edit/{id}")
-    public String editDatasetColumn(@PathVariable Long id, Model model) {
-        final Optional<DatasetColumn> optionalColumn = columnRepository.findById(id);
-        if (!optionalColumn.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-
-        model.addAttribute("column", optionalColumn.get());
-        return "launchpad/dataset-column-form";
-    }
-
-    @PostMapping("/dataset-column-form-commit")
-    public String datasetColumnFormCommit(DatasetColumn column) {
-        columnRepository.save(column);
-        return "redirect:/launchpad/dataset-definition/" + column.getDatasetGroup().getDataset().getId();
-    }
-
-    @GetMapping("/dataset-column-delete/{id}")
-    public String deleteColumn(@PathVariable Long id, Model model) {
-        final Optional<DatasetColumn> value = columnRepository.findById(id);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-        model.addAttribute("column", value.get());
-        return "launchpad/dataset-column-delete";
-    }
-
-    @PostMapping("/dataset-column-delete-commit")
-    public String deleteColumnCommit(Long id) {
-        final Optional<DatasetColumn> value = columnRepository.findById(id);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-        DatasetColumn column = value.get();
-        final long datasetId = column.getDatasetGroup().getDataset().getId();
-        columnRepository.deleteById(id);
-        return "redirect:/launchpad/dataset-definition/" + datasetId;
-    }
-
-    @GetMapping(value = "/dataset-column-move-prev-group/{id}")
-    public String moveColumnToPrevGroup(@PathVariable Long id) {
-        final Optional<DatasetColumn> value = columnRepository.findById(id);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-        DatasetColumn column = value.get();
-        final Dataset dataset = column.getDatasetGroup().getDataset();
-        List<DatasetGroup> groups = dataset.getDatasetGroups();
-        if (groups.size() < 2) {
-            return "redirect:/launchpad/datasets";
-        }
-
-        DatasetGroup prevGroup = null;
-        for (DatasetGroup group : groups) {
-            if (column.getDatasetGroup().getId().equals(group.getId())) {
-                if (prevGroup == null) {
-                    return "redirect:/launchpad/datasets";
-                }
-                column.setDatasetGroup(prevGroup);
-                break;
-            }
-            prevGroup = group;
-        }
-
-        columnRepository.save(column);
-        return "redirect:/launchpad/dataset-definition/" + dataset.getId();
-    }
-
-    @GetMapping(value = "/dataset-column-move-next-group/{id}")
-    public String moveColumnToNextGroup(@PathVariable Long id) {
-        final Optional<DatasetColumn> value = columnRepository.findById(id);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-        DatasetColumn column = value.get();
-        final Dataset dataset = column.getDatasetGroup().getDataset();
-        List<DatasetGroup> groups = dataset.getDatasetGroups();
-        if (groups.size() < 2) {
-            return "redirect:/launchpad/datasets";
-        }
-
-        for (int i = 0; i < groups.size() - 1; i++) {
-            DatasetGroup group = groups.get(i);
-            if (column.getDatasetGroup().getId().equals(group.getId())) {
-                DatasetGroup nextGroup = groups.get(i + 1);
-                column.setDatasetGroup(nextGroup);
-                break;
-            }
-        }
-
-        columnRepository.save(column);
-        return "redirect:/launchpad/dataset-definition/" + dataset.getId();
-    }
-
     @GetMapping(value = "/dataset-delete-group/{id}")
     public String deleteGroup(@PathVariable Long id) {
         final Optional<DatasetGroup> value = groupsRepository.findById(id);
@@ -451,11 +317,9 @@ public class DatasetController {
         }
         DatasetGroup group = value.get();
         long datasetId = group.getDataset().getId();
-        if (!group.getDatasetColumns().isEmpty()) {
-            return "redirect:/launchpad/datasets";
-        }
 
-        groupsRepository.delete(group);
+//        groupsRepository.delete(group);
+        datasetCache.delete(group);
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
@@ -503,44 +367,41 @@ public class DatasetController {
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
-    @GetMapping(value = "/dataset-produce-all-features/{id}")
-    public String produceFeaturesForDataset(@PathVariable(name = "id") Long datasetId, final RedirectAttributes redirectAttributes) {
-        Dataset dataset = datasetCache.findById(datasetId);
-        if (dataset == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#150.11 dataset wasn't found, datasetId: " + datasetId);
-            return "redirect:/launchpad/datasets";
-        }
-
-        for (DatasetGroup group : dataset.getDatasetGroups()) {
-            produceFeature(group);
-        }
-
-        return "redirect:/launchpad/dataset-definition/" + datasetId;
-    }
-
     @GetMapping(value = "/dataset-produce-feature/{id}")
     public String produceFeatureForGroup(@PathVariable(name = "id") Long groupId, final RedirectAttributes redirectAttributes) {
         final DatasetGroup group = groupsRepository.findById(groupId).orElse(null);
         if (group == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#150.12 datasetGroup wasn't found, groupId: " + groupId);
+            redirectAttributes.addFlashAttribute("errorMessage", "#150.01 datasetGroup wasn't found, groupId: " + groupId);
             return "redirect:/launchpad/datasets";
         }
-        produceFeature(group);
-        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
-    }
-
-    private void produceFeature(DatasetGroup group) {
         try {
+            Env env = envService.envsAsMap().get(group.getSnippet().getEnv());
+            if (env == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "#153.01 Environment definition wasn't found for feature snippet. Requested environment: " + group.getSnippet().getEnv());
+                return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
+            }
+
+            final Snippet snippet = group.getSnippet();
+            File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
+            SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
+            if (!snippetFile.file.exists()) {
+                redirectAttributes.addFlashAttribute("errorMessage", "#155.01 Dataset's feature producer isn't specified");
+                return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
+            }
+            String cmdLine = env.value+' '+ snippetFile.file.getAbsolutePath()+' '+ snippet.params;
+
             File yaml = createYamlForFeature(group);
             System.out.println("yaml file: " + yaml.getPath());
-            final ProcessService.Result result = runCommand(yaml, group.getCommand(), LogData.Type.FEATURE, group.getId());
+            final ProcessService.Result result = runCommand(yaml, cmdLine, LogData.Type.FEATURE, group.getId());
             boolean isOk = result.isOk();
             group.setFeatureStatus(isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value);
-            groupsRepository.save(group);
+//            groupsRepository.save(group);
+            datasetCache.saveGroup(group);
         }
         catch (Exception err) {
             err.printStackTrace();
         }
+        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
 
     private File createYamlForFeature(DatasetGroup group) {
@@ -606,18 +467,6 @@ public class DatasetController {
         return new File(featurePath, PRODUCE_FEATURE_YAML);
     }
 
-    @PostMapping("/dataset-group-cmd-commit")
-    public String groupCommandFormCommit(Long id, String command) {
-        final Optional<DatasetGroup> value = groupsRepository.findById(id);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-        DatasetGroup group = value.get();
-        group.setCommand(command);
-        groupsRepository.save(group);
-        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
-    }
-
     @PostMapping(value = "/dataset-group-id-group-commit")
     public String setIdGrouppForGroup(Long id, @RequestParam(name = "id_group", required = false, defaultValue = "false") boolean isIdGroup) {
         final Optional<DatasetGroup> value = groupsRepository.findById(id);
@@ -626,7 +475,8 @@ public class DatasetController {
         }
         DatasetGroup group = value.get();
         group.setIdGroup(isIdGroup);
-        groupsRepository.save(group);
+//        groupsRepository.save(group);
+        datasetCache.saveGroup(group);
 
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
@@ -639,7 +489,8 @@ public class DatasetController {
         }
         DatasetGroup group = value.get();
         group.setLabel(label);
-        groupsRepository.save(group);
+//        groupsRepository.save(group);
+        datasetCache.saveGroup(group);
 
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
@@ -664,7 +515,8 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         group.setRequired(required);
-        groupsRepository.save(group);
+//        groupsRepository.save(group);
+        datasetCache.saveGroup(group);
 
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
@@ -729,14 +581,16 @@ public class DatasetController {
             return "redirect:/launchpad/dataset-definition/" + dataset.getId();
         }
 
+        final String es = "#191.01 Dataset producing snippet isn't specified";
+        final Snippet snippet = dataset.getDatasetSnippet();
         File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
-        SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, dataset.getDatasetSnippet().getSnippetCode(), dataset.getDatasetSnippet().filename);
+        SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
         if (!snippetFile.file.exists()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#191.01 Dataset producing snippet isn't specified");
+            redirectAttributes.addFlashAttribute("errorMessage", es);
             return "redirect:/launchpad/dataset-definition/" + dataset.getId();
         }
         String cmdLine;
-        cmdLine = env.value+' '+ snippetFile.file.getAbsolutePath()+' '+dataset.getDatasetSnippet().params;
+        cmdLine = env.value+' '+ snippetFile.file.getAbsolutePath()+' '+ snippet.params;
 
         File yaml = createConfigYaml(dataset);
         final ProcessService.Result result = runCommand(yaml, cmdLine, LogData.Type.PRODUCING, dataset.getId());
@@ -751,7 +605,8 @@ public class DatasetController {
         for (DatasetGroup group : groups) {
             group.setFeatureStatus(ArtifactStatus.OBSOLETE.value);
         }
-        groupsRepository.saveAll(groups);
+//        groupsRepository.saveAll(groups);
+        datasetCache.saveAllGroups(groups, dataset.getId());
     }
 
     private void updateInfoWithDataset(Dataset dataset, boolean isOk) {
@@ -903,32 +758,6 @@ public class DatasetController {
         dp.setRegisterTs(new Timestamp(System.currentTimeMillis()));
 
         pathRepository.save(dp);
-    }
-
-    private void createColumnsDefinition(Dataset dataset, InputStream is) throws IOException {
-        try (final InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8)) {
-            try (BufferedReader br = new BufferedReader(isr)) {
-                String line = br.readLine();
-                DatasetGroup group = new DatasetGroup();
-                group.setDescription("Group #1");
-                group.setDataset(dataset);
-                List<DatasetGroup> groups = new ArrayList<>();
-                groups.add(group);
-                dataset.setDatasetGroups(groups);
-
-                final AtomicInteger i = new AtomicInteger(1);
-                List<DatasetColumn> columns = new ArrayList<>();
-                Arrays.stream(line.split("[,]")).filter(s -> s != null && s.length() > 0).map(String::trim).forEach(name -> {
-                            final DatasetColumn c = new DatasetColumn();
-                            c.setDatasetGroup(group);
-                            c.setName(StringUtils.substring(name, 0, 50));
-                            c.setDescription(StringUtils.substring("Column #" + (i.getAndAdd(1)) + ", " + name, 0, 250));
-                            columns.add(c);
-                        }
-                );
-                columnRepository.saveAll(columns);
-            }
-        }
     }
 
     @PostMapping("/dataset-definition-form-commit")

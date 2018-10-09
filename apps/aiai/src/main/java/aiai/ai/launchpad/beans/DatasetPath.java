@@ -20,6 +20,7 @@ package aiai.ai.launchpad.beans;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -34,6 +35,7 @@ import java.sql.Timestamp;
 @Table(name = "AIAI_LP_DATASET_PATH")
 @Data
 @EqualsAndHashCode(exclude = {"dataset"})
+@ToString(exclude = {"dataset"})
 public class DatasetPath implements Serializable {
     private static final long serialVersionUID = 5327272240646790910L;
 
