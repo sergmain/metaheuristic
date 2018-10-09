@@ -78,7 +78,7 @@ public class SnippetService {
     }
 
     private void persistSnippets() throws IOException {
-        File snippetDir = new File(globals.launchpadDir, "snippets");
+        File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
         if (!snippetDir.exists()) {
             snippetDir.mkdirs();
         }

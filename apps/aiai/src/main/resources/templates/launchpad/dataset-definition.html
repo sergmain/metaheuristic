@@ -198,17 +198,13 @@
     </table>
 
     <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
-          th:if="${ not result.dataset.editable and result.dataset.producingCommand!=null and result.dataset.producingCommand.length() &gt; 0 }"
+          th:if="${ not result.dataset.editable and result.dataset.datasetSnippet!=null }"
           th:action="@{/launchpad/dataset-run-producing-commit}" accept-charset="UTF-8" id="dataset-run-producing-form" name="f">
+        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
         <table>
             <tr>
                 <td width="600">
-                    <fieldset>
-                        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
-                        <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
-                        <label for="p_command_produce">Command for producing dataset file</label>
-                        <p id="p_command_produce" th:text="${result.dataset.producingCommand}">Producing command</p>
-                    </fieldset>
+                    &nbsp;
                 </td>
                 <td>&nbsp;</td>
                 <td th:if="${!result.dataset.locked}" >
@@ -274,17 +270,13 @@
     </table>
 
     <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
-          th:if="${ not result.dataset.editable and result.dataset.assemblingCommand!=null and result.dataset.assemblingCommand.length() &gt; 0 }"
+          th:if="${ not result.dataset.editable and result.dataset.assemblySnippet!=null }"
           th:action="@{/launchpad/dataset-run-assembling-commit}" accept-charset="UTF-8" id="dataset-run-assembling-form" name="f">
+        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
         <table>
             <tr>
                 <td width="600">
-                    <fieldset>
-                        <input type="hidden" th:name="id" th:value="${result.dataset.id}"/>
-                        <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
-                        <label for="p_command_assemble">Command for assembling raw file</label>
-                        <p id="p_command_assemble" th:text="${result.dataset.assemblingCommand}">Assembling command</p>
-                    </fieldset>
+                    &nbsp;
                 </td>
                 <td>&nbsp;</td>
                 <td th:if="${!result.dataset.locked}" >

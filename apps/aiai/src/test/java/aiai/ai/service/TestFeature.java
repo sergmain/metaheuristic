@@ -158,7 +158,6 @@ public abstract class TestFeature {
 
             dataset.setDatasetGroups(Arrays.asList(dg1, dg2, dg3));
 
-//            datasetRepository.save(dataset);
             datasetCache.save(dataset);
 
             // Prepare experiment
@@ -247,7 +246,6 @@ public abstract class TestFeature {
             experimentRepository.deleteById(experiment.getId());
         }
         if (dataset != null) {
-//            datasetRepository.deleteById(dataset.getId());
             datasetCache.delete(dataset.getId());
         }
         if (station != null) {

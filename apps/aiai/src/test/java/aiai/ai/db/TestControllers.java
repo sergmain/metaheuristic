@@ -59,7 +59,6 @@ public class TestControllers {
         ds.setEditable(false);
         ds.setName("ds #42");
 
-//        Dataset newDataset= datasetRepository.save(ds);
         Dataset newDataset = datasetCache.save(ds);
         Assert.assertNotNull(newDataset);
 
@@ -70,7 +69,6 @@ public class TestControllers {
 
         Dataset datasetWithLogs = datasetOptional.get();
 
-//        datasetRepository.delete(datasetWithLogs);
         datasetCache.delete(datasetWithLogs);
 
         datasetOptional = datasetRepository.findById(newDataset.getId());

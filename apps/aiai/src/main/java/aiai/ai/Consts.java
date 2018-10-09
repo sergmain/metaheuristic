@@ -60,4 +60,5 @@ public class Consts {
 
     public static final String PARAMS_YAML = "params.yaml";
     public static final String SEQUENCE_YAML = "sequence.yaml";
+
 }

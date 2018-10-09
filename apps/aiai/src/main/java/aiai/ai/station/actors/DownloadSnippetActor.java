@@ -74,7 +74,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
         File snippetDir = DirUtils.createDir(globals.stationDir, "snippet");
         if (snippetDir==null) {
-            System.out.println("Station enviroment is broken. See log for more information");
+            System.out.println("Station environment is broken. See log for more information");
             return;
         }
 

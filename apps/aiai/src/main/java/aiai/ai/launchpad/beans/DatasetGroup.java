@@ -89,7 +89,7 @@ public class DatasetGroup implements Serializable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DATASET_ID")
     private Dataset dataset;
-    @OneToMany(mappedBy = "datasetGroup", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "datasetGroup", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<DatasetColumn> datasetColumns;
 
     /**

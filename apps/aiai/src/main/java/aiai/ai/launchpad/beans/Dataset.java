@@ -66,12 +66,6 @@ public class Dataset implements Serializable {
     @NotFound(action = NotFoundAction.IGNORE)
     private Snippet datasetSnippet;
 
-    @Column(name = "CMD_ASSEMBLE")
-    private String assemblingCommand;
-
-    @Column(name = "CMD_PRODUCE")
-    private String producingCommand;
-
     @Column(name = "IS_EDITABLE")
     private boolean isEditable;
 

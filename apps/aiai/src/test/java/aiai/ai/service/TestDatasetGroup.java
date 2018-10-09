@@ -96,7 +96,6 @@ public class TestDatasetGroup {
 
             dataset.setDatasetGroups(Arrays.asList(dg1, dg2, dg3));
 
-//            datasetRepository.save(dataset);
             datasetCache.save(dataset);
 
             System.out.println("Was inited correctly");
@@ -112,7 +111,6 @@ public class TestDatasetGroup {
 
         if (dataset != null) {
             try {
-//                datasetRepository.deleteById(dataset.getId());
                 datasetCache.delete(dataset.getId());
             }
             catch (EmptyResultDataAccessException e) {
@@ -129,7 +127,6 @@ public class TestDatasetGroup {
         assertTrue(isCorrectInit);
 
         final Long datasetId = dataset.getId();
-//        datasetRepository.deleteById(datasetId);
         datasetCache.delete(datasetId);
 
         List<DatasetGroup> groups  = datasetGroupsRepository.findByDataset_Id(datasetId);
