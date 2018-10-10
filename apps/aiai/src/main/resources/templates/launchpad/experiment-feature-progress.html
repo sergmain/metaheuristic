@@ -276,21 +276,63 @@
             return false;
         }
 
+        function my_confirm(message, title, okAction) {
+            let $dialog = $( "#dialog-confirm" );
+            $dialog.attr('title', title);
+            $( "#dialog-confirmation-text" ).empty().append(message);
+            $dialog.show();
+            $dialog.dialog({
+                resizable: false,
+                height: "auto",
+                width: 400,
+                modal: true,
+                buttons: {
+                    "Re-run": function() {
+                        $( this ).dialog( "close" );
+                        okAction();
+                    },
+                    Cancel: function() {
+                        $( this ).dialog( "close" );
+                    }
+                }
+            });
+        }
+
+        function my_alert(message, title) {
+            let $dialog = $( "#dialog-message" );
+            $dialog.attr('title', title);
+            $( "#dialog-message-text" ).empty().append(message);
+            $dialog.show();
+            $dialog.dialog({
+                modal: true,
+                buttons: {
+                    Ok: function() {
+                        $( this ).dialog( "close" );
+                    }
+                }
+            });
+
+        }
+
         /**
          * @param {int} id
          */
         function rerunSequence(id) {
-            let status = confirm('Do you really want to re-run thi sequnce?');
-            if (status) {
+            // console.log("Start rerunSequence()");
+            my_confirm('Do you really want to re-run this sequnce?', 'Re-run sequence?', function() {
+                console.log("re-run was confirmet.");
                 $.post('/launchpad/experiment-sequence-rerun/' + id, function(status) {
-                    if (status==='true') {
-                        alert('Sequence was prepared for re-run. You need update page to see changes');
+                    // console.log("experiment-sequence-rerun is finished, Status: " + status);
+                    if (status===true) {
+                        // console.log("experiment-sequence-rerun is finished, status " + status);
+                        my_alert('Sequence was prepared for re-run. You need update page to see changes', 'Status');
                     }
                     else {
-                        alert('There is some problem with re-run this sequence. Try to reload this page');
+                        // console.log("experiment-sequence-rerun is finished, status " + status);
+                        my_alert('There is some problem with re-run this sequence. Status: '+status+'. Try to reload this page', 'Status');
                     }
                 });
-            }
+            });
             return false;
         }
 
@@ -412,6 +454,13 @@
         }
 
     </script>
+
+    <div id="dialog-confirm" style="display:none" title="">
+        <p id="dialog-confirmation-text"><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span></p>
+    </div>
+    <div id="dialog-message" style="display:none" title="">
+        <p id="dialog-message-text"></p>
+    </div>
 
     <h1 class="widget-header">The experiment info</h1>
 
@@ -586,7 +635,7 @@
                                            title='Console output'>Info</a>
                                     </td>
                                     <td>
-                                        <a class='ajax-elem-console table-nav-button pure-button' href="#" th:onclick="${ 'rerunSequence(' + s.id + ');' }" title='Console output'>Re-run</a>
+                                        <a class='table-nav-button pure-button' href="#" th:onclick="${ 'rerunSequence(' + s.id + '); return false;' }" title='Console output'>Re-run</a>
                                     </td>
                                 </tr>
                             </table>

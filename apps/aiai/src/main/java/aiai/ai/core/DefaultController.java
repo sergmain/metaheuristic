@@ -66,4 +66,9 @@ public class DefaultController {
         return "/error/403";
     }
 
+    @GetMapping("/405")
+    public String error405() {
+        return "/error/405";
+    }
+
 }

@@ -130,16 +130,27 @@
 			<scope>test</scope>
 		</dependency>
 
-
-        <dependency>
+		<dependency>
+			<groupId>org.webjars</groupId>
+			<artifactId>jquery-ui</artifactId>
+			<version>1.12.1</version>
+		</dependency>
+		<dependency>
 			<!--License	MIT-->
 			<groupId>org.webjars</groupId>
 			<artifactId>jquery</artifactId>
 			<version>3.2.1</version>
-			<!--<version>3.3.1-1</version>-->
 		</dependency>
-		<!-- https://mvnrepository.com/artifact/org.webjars.bower/plotly.js -->
-		<dependency>
+<!--
+        <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>jquery-ui-themes</artifactId>
+            <version>1.10.0</version>
+            <scope>runtime</scope>
+        </dependency>
+-->
+
+        <dependency>
 			<!--License	MIT-->
 			<groupId>org.webjars.bower</groupId>
 			<artifactId>plotly.js</artifactId>

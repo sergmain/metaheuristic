@@ -41,6 +41,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -162,8 +163,8 @@ public class SnippetService {
             return;
         }
 
-        try (InputStream is = new FileInputStream(yamlConfigFile)) {
-            SnippetsConfig snippetsConfig = SnippetsConfigUtils.to(is);
+        String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
+            SnippetsConfig snippetsConfig = SnippetsConfigUtils.to(cfg);
             for (SnippetsConfig.SnippetConfig snippetConfig : snippetsConfig.snippets) {
                 SnippetsConfig.SnippetConfigStatus status = snippetConfig.verify();
                 if (!status.isOk) {
@@ -213,7 +214,6 @@ public class SnippetService {
                     snippetRepository.save(snippet);
                 }
             }
-        }
     }
 
     private void setChecksum(SnippetsConfig.SnippetConfig snippetConfig, String sum, Snippet snippet) {

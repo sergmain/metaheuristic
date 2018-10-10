@@ -576,7 +576,7 @@ public class ExperimentsController {
     public String cloneCommit(Long id, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentRepository.findById(id).orElse(null);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#283.02 experiment wasn't found, experimentId: " + id);
+            redirectAttributes.addFlashAttribute("errorMessage", "#284.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
         }
         Experiment trg = new Experiment();
@@ -622,14 +622,17 @@ public class ExperimentsController {
     public @ResponseBody boolean rerunSequence(@PathVariable long id) {
         ExperimentSequence seq = experimentSequenceRepository.findById(id).orElse(null);
         if (seq == null) {
+            log.warn("#291.01 Can't re-run sequence {}, sequence with such id wasn't found", id);
             return false;
         }
         ExperimentFeature feature = experimentFeatureRepository.findById(seq.featureId).orElse(null);
         if (feature == null) {
+            log.warn("#292.01 Can't re-run sequence {}, ExperimentFeature wasn't found for this sequence", id);
             return false;
         }
         Experiment experiment = experimentRepository.findById(seq.getExperimentId()).orElse(null);
         if (experiment == null) {
+            log.warn("#293.01 Can't re-run sequence {}, this sequence is orphan and doesn't belong to any experiment", id);
             return false;
         }
 
@@ -646,9 +649,6 @@ public class ExperimentsController {
         feature.setFinished(false);
         feature.setInProgress(true);
         experimentFeatureRepository.save(feature);
-
-        experiment.setExecState(Enums.ExperimentExecState.STOPPED.code);
-        experimentRepository.save(experiment);
 
         return true;
     }
