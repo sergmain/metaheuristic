@@ -22,7 +22,6 @@ import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
-import com.mysql.cj.jdbc.exceptions.PacketTooBigException;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;

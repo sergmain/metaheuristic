@@ -30,6 +30,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -64,7 +65,7 @@ public class PackageSnippet implements CommandLineRunner {
                 System.out.println("Private key file wasn't found. File: " + args[1]);
                 return;
             }
-            String privateKeyStr = FileUtils.readFileToString(privateKeyFile);
+            String privateKeyStr = FileUtils.readFileToString(privateKeyFile, StandardCharsets.UTF_8);
             privateKey = SecUtils.getPrivateKey(privateKeyStr);
         }
 
@@ -143,7 +144,7 @@ public class PackageSnippet implements CommandLineRunner {
 
         String yaml = SnippetsConfigUtils.toString(snippetsConfig);
         final File file = new File(targetDir, SNIPPETS_YAML);
-        FileUtils.writeStringToFile(file, yaml);
+        FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
 
         ZipUtils.createZip(targetDir, targetZip);
         FileUtils.deleteDirectory(targetDir);

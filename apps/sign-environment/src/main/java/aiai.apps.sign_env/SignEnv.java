@@ -53,7 +53,7 @@ public class SignEnv  implements CommandLineRunner {
             System.out.println("Private key file wasn't found. File: " + args[1]);
             return;
         }
-        String privateKeyStr = FileUtils.readFileToString(privateKeyFile);
+        String privateKeyStr = FileUtils.readFileToString(privateKeyFile, StandardCharsets.UTF_8);
         PrivateKey privateKey = SecUtils.getPrivateKey(privateKeyStr);
 
 

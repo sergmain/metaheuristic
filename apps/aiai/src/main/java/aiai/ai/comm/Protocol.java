@@ -150,15 +150,15 @@ public class Protocol {
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class ReAssignStationId extends Command {
-        String stationId;
+        String reAssignedStationId;
 
         public ReAssignStationId(Long stationId) {
             this(Long.toString(stationId));
         }
 
-        public ReAssignStationId(String stationId) {
+        public ReAssignStationId(String reAssignedStationId) {
             this.setType(Type.ReAssignStationId);
-            this.stationId = stationId;
+            this.reAssignedStationId = reAssignedStationId;
         }
 
         public ReAssignStationId() {

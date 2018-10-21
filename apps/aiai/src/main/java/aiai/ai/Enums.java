@@ -18,6 +18,11 @@
 package aiai.ai;
 
 public final class Enums {
+
+    public enum DatasetStore {
+        DISK, DB
+    }
+
     public enum ExperimentExecState {
         NONE(0),            // just created experiment
         STARTED(1),         // started

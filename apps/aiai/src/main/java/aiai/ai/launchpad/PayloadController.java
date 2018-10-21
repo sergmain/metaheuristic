@@ -31,7 +31,7 @@ import aiai.apps.commons.utils.Checksum;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.PathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Controller;
@@ -67,11 +67,11 @@ public class PayloadController {
     }
 
     @GetMapping("/dataset/{id}")
-    public HttpEntity<PathResource> datasets(@PathVariable("id") long datasetId) {
+    public HttpEntity<FileSystemResource> datasets(@PathVariable("id") long datasetId) {
 
         final File datasetFile = DatasetUtils.getDatasetFile(globals.launchpadDir, datasetId);
 
-        return new HttpEntity<>(new PathResource(datasetFile.toPath()), getHeader(datasetFile.length()) );
+        return new HttpEntity<>(new FileSystemResource(datasetFile.toPath()), getHeader(datasetFile.length()) );
     }
 
     @GetMapping("/feature/{featureId}")
@@ -85,7 +85,7 @@ public class PayloadController {
         }
         final File featureFile = DatasetUtils.getFeatureFile(globals.launchpadDir, datasetGroup.getDataset().getId(), featureId);
 
-        return new HttpEntity<>(new PathResource(featureFile.toPath()), getHeader(featureFile.length()));
+        return new HttpEntity<>(new FileSystemResource(featureFile.toPath()), getHeader(featureFile.length()));
     }
 
     @GetMapping("/snippet/{name}")

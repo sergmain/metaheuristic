@@ -32,6 +32,9 @@ public class CurrentExecState {
     boolean isInit = false;
 
     void register(List<Protocol.ExperimentStatus.SimpleStatus> statuses) {
+        if (statuses==null) {
+            return;
+        }
         synchronized(experimentState) {
             for (Protocol.ExperimentStatus.SimpleStatus status : statuses) {
                 experimentState.put(status.experimentId, status.state);

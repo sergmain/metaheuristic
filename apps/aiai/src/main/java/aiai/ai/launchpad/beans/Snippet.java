@@ -19,6 +19,7 @@ package aiai.ai.launchpad.beans;
 
 import lombok.Data;
 import lombok.ToString;
+import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -55,8 +56,9 @@ public class Snippet implements Serializable {
     /**
      * programm code, i.e. pyphon, js,...
      */
-    @Column(name = "CODE")
     @Lob
+    @Type(type="org.hibernate.type.BinaryType")
+    @Column(name = "CODE")
     public byte[] code;
 
     @Column(name = "CHECKSUM")

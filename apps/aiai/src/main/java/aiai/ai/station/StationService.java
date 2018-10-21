@@ -99,6 +99,7 @@ public class StationService {
         final File metadataFile = new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME);
         if (!metadataFile.exists()) {
             log.warn("Station's metadata file doesn't exist: {}", file.getPath());
+            metadata = new Metadata();
             return;
         }
         try(FileInputStream fis = new FileInputStream(metadataFile)) {

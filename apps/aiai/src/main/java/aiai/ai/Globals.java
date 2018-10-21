@@ -21,15 +21,14 @@ import aiai.ai.yaml.env.TimePeriods;
 import aiai.apps.commons.utils.SecUtils;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
 import java.security.GeneralSecurityException;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
 
 @Component
 @Slf4j
@@ -91,6 +90,9 @@ public class Globals {
     @Value("${aiai.launchpad.accept-only-signed-env:#{true}}")
     public boolean isAcceptOnlySignedEnv;
 
+    @Value("${aiai.launchpad.dataset-store:#{'disk'}}")
+    public String datasetStoreStr;
+
     // Station's globals
 
     @Value("${aiai.station.enabled:#{false}}")
@@ -124,6 +126,7 @@ public class Globals {
     public String serverRestUrl;
     public PublicKey publicKey = null;
 
+    public Enums.DatasetStore[] datasetStore = new Enums.DatasetStore[0];
 
     @PostConstruct
     public void init() throws GeneralSecurityException {
@@ -162,10 +165,36 @@ public class Globals {
             timePeriods = TimePeriods.from(stationActiveTime);
         }
 
-        if (launchpadDir==null) {
+        if (isLaunchpadEnabled && launchpadDir==null) {
             log.warn("Launchpad is disabled, launchpadDir: {}, isLaunchpadEnabled: {}", launchpadDir, isLaunchpadEnabled);
             isLaunchpadEnabled = false;
         }
 
+        if (isLaunchpadEnabled) {
+            String[] split = StringUtils.split(datasetStoreStr, ',');
+            datasetStore = new Enums.DatasetStore[split.length];
+            for (int i = 0; i < split.length; i++) {
+                datasetStore[i] = Enums.DatasetStore.valueOf(split[i].toUpperCase());
+            }
+        }
+        //noinspection unused
+        int i=0;
+    }
+
+    public boolean isDatasetStoreToDisk() {
+        return isLaunchpadEnabled && isDatasetStore(Enums.DatasetStore.DISK);
+    }
+
+    public boolean isDatasetStoreToDb() {
+        return isLaunchpadEnabled && isDatasetStore(Enums.DatasetStore.DB);
+    }
+
+    private boolean isDatasetStore(Enums.DatasetStore type) {
+        for (Enums.DatasetStore datasetStore : this.datasetStore) {
+            if (datasetStore==type) {
+                return true;
+            }
+        }
+        return false;
     }
 }
