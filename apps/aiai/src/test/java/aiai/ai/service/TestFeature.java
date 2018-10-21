@@ -103,6 +103,7 @@ public abstract class TestFeature {
 
             // Prepare snippets
             fitSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_FIT_SNIPPET, SNIPPET_VERSION_1_0);
+            byte[] bytes = "some program code".getBytes();
             if (fitSnippet == null) {
                 fitSnippet = new Snippet();
                 fitSnippet.setName(TEST_FIT_SNIPPET);
@@ -110,7 +111,8 @@ public abstract class TestFeature {
                 fitSnippet.setEnv("python-3");
                 fitSnippet.setType(SnippetType.fit.toString());
                 fitSnippet.setChecksum("sha2");
-                fitSnippet.setCode("some program code".getBytes());
+                fitSnippet.setCode(bytes);
+                fitSnippet.codeLength = bytes.length;
                 fitSnippet.setFilename("fit-filename.txt");
                 snippetRepository.save(fitSnippet);
             }
@@ -123,7 +125,8 @@ public abstract class TestFeature {
                 predictSnippet.setEnv("python-3");
                 predictSnippet.setType(SnippetType.predict.toString());
                 predictSnippet.setChecksum("sha2");
-                predictSnippet.setCode("some program code".getBytes());
+                predictSnippet.setCode(bytes);
+                predictSnippet.codeLength = bytes.length;
                 predictSnippet.setFilename("predict-filename.txt");
                 snippetRepository.save(predictSnippet);
             }

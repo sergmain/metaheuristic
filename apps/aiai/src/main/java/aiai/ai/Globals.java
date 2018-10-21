@@ -157,10 +157,15 @@ public class Globals {
         }
         else {
             stationDatasetDir = new File(stationDir, Consts.DATASET_DIR);
+            stationDatasetDir.mkdirs();
             stationExperimentDir = new File(stationDir, Consts.EXPERIMENT_DIR);
+            stationExperimentDir.mkdirs();
             stationSnippetDir = new File(stationDir, Consts.SNIPPET_DIR);
+            stationSnippetDir.mkdirs();
             stationDbDir = new File(stationDir, Consts.DATABASE_DIR);
+            stationDbDir.mkdirs();
             stationSystemDir = new File(stationDir, Consts.SYSTEM_DIR);
+            stationSystemDir.mkdirs();
 
             timePeriods = TimePeriods.from(stationActiveTime);
         }

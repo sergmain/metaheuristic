@@ -107,10 +107,11 @@ public class DatasetController {
     private final ProcessService processService;
     private final SnippetService snippetService;
     private final SnippetRepository snippetRepository;
+    private final SnippetBaseRepository snippetBaseRepository;
     private final EnvService envService;
     private final DatasetCache datasetCache;
 
-    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetRepository snippetRepository, EnvService envService, DatasetCache datasetCache) {
+    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetRepository snippetRepository, SnippetBaseRepository snippetBaseRepository, EnvService envService, DatasetCache datasetCache) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.groupsRepository = groupsRepository;
@@ -118,6 +119,7 @@ public class DatasetController {
         this.processService = processService;
         this.snippetService = snippetService;
         this.snippetRepository = snippetRepository;
+        this.snippetBaseRepository = snippetBaseRepository;
         this.envService = envService;
         this.datasetCache = datasetCache;
     }
@@ -156,10 +158,17 @@ public class DatasetController {
 
     @PostMapping("/dataset-form-commit")
     public String datasetFormCommit(Dataset dataset, final RedirectAttributes redirectAttributes) {
-        Dataset ds = datasetCache.findById(dataset.getId());
-        if (ds == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#173.02 dataset wasn't found, datasetId: " + dataset.getId());
-            return "redirect:/launchpad/datasets";
+        Dataset ds;
+        if (dataset.getId()==null) {
+            // we've just created new dataset
+            ds = new Dataset();
+        }
+        else {
+            ds = datasetCache.findById(dataset.getId());
+            if (ds == null) {
+                redirectAttributes.addFlashAttribute("errorMessage", "#173.02 dataset wasn't found, datasetId: " + dataset.getId());
+                return "redirect:/launchpad/datasets";
+            }
         }
         ds.setName(dataset.getName());
         ds.setDescription(dataset.getDescription());
@@ -182,7 +191,7 @@ public class DatasetController {
         final DatasetDefinition definition = new DatasetDefinition(dataset, globals.launchpadDir.getPath(), path);
         definition.paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
 
-        final Iterable<Snippet> snippets = snippetRepository.findAll();
+        final Iterable<SnippetBase> snippets = snippetBaseRepository.findAll();
 
         final List<SnippetCode> featureCodes = new ArrayList<>();
 
@@ -221,7 +230,7 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         SnippetVersion snippetVersion = SnippetVersion.from(code);
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#176.01 snippet "+code+" wasn't found");
             return "redirect:/launchpad/dataset-definition/" + dataset.getId();
@@ -239,7 +248,7 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         SnippetVersion snippetVersion = SnippetVersion.from(code);
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#178.01 snippet "+code+" wasn't found");
             return "redirect:/launchpad/dataset-definition/" + dataset.getId();
@@ -257,7 +266,7 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         SnippetVersion snippetVersion = SnippetVersion.from(code);
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#182.01 snippet "+code+" wasn't found");
             return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
@@ -381,7 +390,7 @@ public class DatasetController {
                 return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
             }
 
-            final Snippet snippet = group.getSnippet();
+            final SnippetBase snippet = group.getSnippet();
             File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
             SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
             if (!snippetFile.file.exists()) {
@@ -582,7 +591,7 @@ public class DatasetController {
         }
 
         final String es = "#191.01 Dataset producing snippet isn't specified";
-        final Snippet snippet = dataset.getDatasetSnippet();
+        final SnippetBase snippet = dataset.getDatasetSnippet();
         File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
         SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
         if (!snippetFile.file.exists()) {
@@ -761,14 +770,14 @@ public class DatasetController {
     }
 
     @PostMapping("/dataset-definition-form-commit")
-    public String datasetDefinitionFormCommit(DatasetDefinition datasetDefinition, final RedirectAttributes redirectAttributes) {
-        Dataset dataset = datasetCache.findById(datasetDefinition.dataset.getId());
+    public String datasetDefinitionFormCommit(long datasetId, String name, String description, final RedirectAttributes redirectAttributes) {
+        Dataset dataset = datasetCache.findById(datasetId);
         if (dataset == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#180.01 dataset wasn't found, datasetId: " + datasetDefinition.dataset.getId());
+            redirectAttributes.addFlashAttribute("errorMessage", "#180.01 dataset wasn't found, datasetId: " + datasetId);
             return "redirect:/launchpad/experiments";
         }
-        dataset.setName(datasetDefinition.dataset.getName());
-        dataset.setDescription(datasetDefinition.dataset.getDescription());
+        dataset.setName(name);
+        dataset.setDescription(description);
         datasetCache.save(dataset);
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }

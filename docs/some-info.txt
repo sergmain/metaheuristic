@@ -28,6 +28,14 @@ Store bynary data in DB vwith JPA
 Free hosting of docu for OSS projects
     https://readthedocs.org/
 
+=============================
+How to deal with new thymeleaf
+    https://github.com/thymeleaf/thymeleaf/issues/705
+
+===============================
+
+
+
 
 =======================
 3d plots

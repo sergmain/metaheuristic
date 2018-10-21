@@ -24,26 +24,25 @@
         <input type="hidden" th:name="version" th:value="${result.dataset.version}"/>
         Is definition of dataset editable? &nbsp;<input name="editable" id="editable" type="checkbox" placeholder="checkbox"
                                                        th:checked="${result.dataset.editable}"
-                                                       th:onclick="'document.getElementById(\'dataset-is-editable-form\').submit();'">
+                                                       onclick="document.getElementById('dataset-is-editable-form').submit();">
     </form>
     <p>&nbsp;</p>
 
-    <form class="pure-form " th:object="${result.dataset}" method="post" action="#" th:method="POST"
+    <form class="pure-form" method="post" action="#" th:method="POST"
           th:action="@{/launchpad/dataset-definition-form-commit}" accept-charset="UTF-8"
           id="dataset-form" name="f">
         <table>
             <tr>
                 <td valign="top">
-                    <input type="hidden" th:field="*{id}"/>
-                    <input type="hidden" th:field="*{version}"/>
+                    <input type="hidden" th:name="datasetId" th:value="${result.dataset.id}"/>
                     <fieldset>
                         <label for="name">Name</label>
-                        <input size="90" name="name" id="name" type="text" placeholder="name" th:field="*{name}">
+                        <input size="90" name="name" id="name" type="text" placeholder="name">
                         <span class="pure-form-message">This is a required field.</span>
                     </fieldset>
                     <fieldset>
                         <label for="description">Description</label>
-                        <input size="90" name="description" id="description" type="text" placeholder="description" th:field="*{description}">
+                        <input size="90" name="description" id="description" type="text" placeholder="description">
                         <span class="pure-form-message">This is a required field.</span>
                     </fieldset>
                 </td>
@@ -96,8 +95,9 @@
                       accept-charset="UTF-8" th:id="${'dataset-group-is-required-form-'+g.id}" name="f">
                     <input type="hidden" th:name="id" th:value="${g.id}"/>
                     <input name="required" type="checkbox" placeholder="checkbox"
-                                                                    th:checked="${g.required}"
-                                                                    th:onclick="${ 'document.getElementById(''dataset-group-is-required-form-'+g.id+''').submit();'}">
+                           th:checked="${g.required}"
+                           th:data-group-id="${'dataset-group-is-required-form-'+g.id}"
+                           onclick="document.getElementById(this.getAttribute('data-group-id')).submit();">
                 </form>
             </td>
             <td th:if="${ result.dataset.editable}">
@@ -122,6 +122,9 @@
                                     </form>
                                 </tr>
                             </table>
+                        </td>
+                        <td th:if="${ g.featureOptions.isEmpty() and g.snippet==null }">
+                            <p class="error-msg">There isn't any 'feature' snippets</p>
                         </td>
                         <td th:if="${ !result.dataset.editable and !result.dataset.locked}">
                             <a class="pure-button pure-button-primary" href="#" th:if="${ !result.dataset.editable}"

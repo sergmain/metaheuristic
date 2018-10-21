@@ -501,7 +501,10 @@
                                         <div th:remove="tag" th:each="l,idx : ${e.list}" >
                                             <a class='pure-button' href="#"
                                                th:id="${'button-param-'+e.key+'-'+l.param}"
-                                               th:onclick="${ 'switchButton(''button-param-'+e.key+'-' + l.param + ''', ''' + e.key + ''', ' + idx.index + ');' }"
+                                               th:data-id="${'button-param-'+e.key+'-' + l.param }"
+                                               th:data-key="${e.key}"
+                                               th:data-idx="${idx.index}"
+                                               onclick="switchButton(this.getAttribute('data-id'), this.getAttribute('data-key'), this.getAttribute('data-idx'));"
                                                title='Hyper param' th:text="${l.param}">param value</a>
                                             &nbsp;
                                         </div>
@@ -512,7 +515,9 @@
                             <td>
                                 <a class='pure-button' href="#" th:id="${'button-axis-'+g.index}"
                                    th:if="${e.list.size()>1}"
-                                   th:onclick="${ 'switchButtonAxis(''button-axis-'+g.index + ''', ''' + e.key + ''' );' }"
+                                   th:data-id="${'button-axis-'+g.index}"
+                                   th:data-key="${e.key}"
+                                   onclick="switchButtonAxis(this.getAttribute('data-id'), this.getAttribute('data-key'));"
                                    th:text='Axis'>Axis for plotting</a>
                             </td>
                         </tr>
@@ -523,7 +528,7 @@
     </table>
     <p>&nbsp;</p>
 
-    <h1 class="widget-header" th:onclick="${ 'switchMetrics();' }" >Metrics</h1>
+    <h1 class="widget-header" onclick="switchMetrics();" >Metrics</h1>
     <p id="metrics-main-p">Metrics is hidden</p>
     <table style="display:none" id="metrics-main-table">
         <tr valign="top">
@@ -582,7 +587,7 @@
                         </td>
                         <td style="border-left:0">
                             <a class='pure-button' href="#" id='button-draw-plot'
-                               th:onclick="${ 'drawPlot();' }"
+                               onclick="drawPlot();"
                                th:text="${'Draw plot'}">Axis for plotting</a>
 
                         </td>
@@ -635,7 +640,10 @@
                                            title='Console output'>Info</a>
                                     </td>
                                     <td>
-                                        <a class='table-nav-button pure-button' href="#" th:onclick="${ 'rerunSequence(' + s.id + '); return false;' }" title='Console output'>Re-run</a>
+                                        <a class='table-nav-button pure-button' href="#"
+                                           th:data-id="${s.id}"
+                                           onclick="rerunSequence( this.getAttribute('data-id') ); return false;"
+                                           title='Console output'>Re-run</a>
                                     </td>
                                 </tr>
                             </table>
@@ -676,7 +684,11 @@
                 <table class="pure-table pure-table-bordered" id="fragment-console-table" th:fragment="fragment-console-table">
                     <tbody>
                     <div  th:remove="tag" th:each="c, g : ${consoleResult.items}" >
-                        <tr th:onclick="${ 'switchTr(''snippet-console-' + c.order +''', ' + c.order +');' }" ><td th:text="${'#'+c.order+', exit code: ' + c.exitCode + ', isOk: ' + c.isOk}">Current state</td></tr>
+                        <tr
+                                th:data-order="${c.order}"
+                                th:data-console-order="${'snippet-console-' + c.order}"
+                                onclick="switchTr(this.getAttribute('data-console-order'), this.getAttribute('data-order'));"
+                        ><td th:text="${'#'+c.order+', exit code: ' + c.exitCode + ', isOk: ' + c.isOk}">Current state</td></tr>
                         <tr th:style="${ c.order==1 ? 'display:none' : '' }" th:id="${'snippet-console-' + c.order}"><td><pre th:text="${c.console}">console output</pre></td></tr>
                     </div>
                     </tbody>

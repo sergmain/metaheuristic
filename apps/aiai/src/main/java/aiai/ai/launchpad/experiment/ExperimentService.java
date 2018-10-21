@@ -139,16 +139,18 @@ public class ExperimentService {
     private final ExperimentSequenceRepository experimentSequenceRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final SnippetRepository snippetRepository;
+    private final SnippetBaseRepository snippetBaseRepository;
     private final DatasetRepository datasetRepository;
     private final SequenceYamlUtils sequenceYamlUtils;
     private final DatasetCache datasetCache;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, DatasetRepository datasetRepository, SequenceYamlUtils sequenceYamlUtils, DatasetCache datasetCache) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, SnippetBaseRepository snippetBaseRepository, DatasetRepository datasetRepository, SequenceYamlUtils sequenceYamlUtils, DatasetCache datasetCache) {
         this.globals = globals;
         this.experimentRepository = experimentRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.snippetRepository = snippetRepository;
+        this.snippetBaseRepository = snippetBaseRepository;
         this.datasetRepository = datasetRepository;
         this.sequenceYamlUtils = sequenceYamlUtils;
         this.datasetCache = datasetCache;
@@ -195,7 +197,7 @@ public class ExperimentService {
             if (isAcceptOnlySigned) {
                 for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                    Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                    SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                     if (snippet!=null && !snippet.isSigned()) {
                         // this experiment with #experimentId contains non-signed snippet but we were asked for singed snippets only
                         return EMPTY_RESULT;
@@ -218,7 +220,7 @@ public class ExperimentService {
                     }
                     for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                         final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                         if (snippet!=null && snippet.isSigned()) {
                             // add only feature for signed experiments
                             fs.add(feature);
@@ -738,7 +740,7 @@ public class ExperimentService {
             final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
             final List<SimpleFeature> simpleFeatures = Collections.unmodifiableList(ofVariants.values.stream().map(SimpleFeature::of).collect(Collectors.toList()));
 
-            Map<String, Snippet> localCache = new HashMap<>();
+            Map<String, SnippetBase> localCache = new HashMap<>();
             boolean isNew = false;
             for (HyperParams hyperParams : allHyperParams) {
                 SequenceYaml yaml = new SequenceYaml();
@@ -750,9 +752,9 @@ public class ExperimentService {
                 final List<SimpleSnippet> snippets = new ArrayList<>();
                 for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                    Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
+                    SnippetBase snippet =  localCache.get(experimentSnippet.getSnippetCode());
                     if (snippet==null) {
-                        snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                        snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                         if (snippet!=null) {
                             localCache.put(experimentSnippet.getSnippetCode(), snippet);
                         }

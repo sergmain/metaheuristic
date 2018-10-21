@@ -112,7 +112,7 @@ public class PayloadController {
             return EMPTY_HTTP_ENTITY;
         }
 
-        final int length = snippet.getCode().length;
+        final int length = snippet.getCodeLength();
         log.info("Send snippet, length: {}", length);
 
         return new HttpEntity<>(snippet.getCode(), getHeader(length) );

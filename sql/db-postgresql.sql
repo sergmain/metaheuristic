@@ -62,7 +62,7 @@ CREATE TABLE AIAI_LP_EXPERIMENT (
   IS_LAUNCHED   BOOLEAN not null default false,
   EXEC_STATE        smallint not null default 0,
   CREATED_ON   bigint not null,
-  LAUNCHED_ON   bigint not null
+  LAUNCHED_ON   bigint
 );
 
 CREATE TABLE AIAI_LP_EXPERIMENT_HYPER_PARAMS (
@@ -125,7 +125,8 @@ CREATE TABLE AIAI_LP_SNIPPET (
   CHECKSUM    VARCHAR(2048),
   IS_SIGNED   BOOLEAN not null default false,
   ENV         VARCHAR(50) not null,
-  PARAMS         VARCHAR(1000)
+  PARAMS         VARCHAR(1000),
+  CODE_LENGTH integer not null
 );
 
 CREATE UNIQUE INDEX AIAI_LP_SNIPPET_UNQ_IDX

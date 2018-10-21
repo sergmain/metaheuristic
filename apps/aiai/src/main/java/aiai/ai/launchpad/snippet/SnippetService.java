@@ -22,6 +22,8 @@ import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.beans.Snippet;
+import aiai.ai.launchpad.beans.SnippetBase;
+import aiai.ai.launchpad.repositories.SnippetBaseRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.SimpleSelectOption;
@@ -53,10 +55,12 @@ public class SnippetService {
     private final Globals globals;
     private final PathMatchingResourcePatternResolver pathMatchingResourcePatternResolver;
     private final SnippetRepository snippetRepository;
+    private final SnippetBaseRepository snippetBaseRepository;
 
-    public SnippetService(Globals globals, SnippetRepository snippetRepository) {
+    public SnippetService(Globals globals, SnippetRepository snippetRepository, SnippetBaseRepository snippetBaseRepository) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
+        this.snippetBaseRepository = snippetBaseRepository;
         this.pathMatchingResourcePatternResolver = new PathMatchingResourcePatternResolver();
     }
 
@@ -78,22 +82,27 @@ public class SnippetService {
         persistSnippets();
     }
 
+    // TODO need to optimize persisting
     private void persistSnippets() throws IOException {
         File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
         if (!snippetDir.exists()) {
             snippetDir.mkdirs();
         }
 
-        Iterable<Snippet> snippets = snippetRepository.findAll();
-        for (Snippet snippet : snippets) {
+        Iterable<SnippetBase> snippets = snippetBaseRepository.findAll();
+        for (SnippetBase snippet : snippets) {
             SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
             if (snippetFile.file==null) {
                 log.error("Error while persisting snippet {}", snippet.getSnippetCode());
                 continue;
             }
-            if (!snippetFile.file.exists() || snippetFile.file.length()!=snippet.code.length) {
-                log.warn("Snippet {} has different length. On disk - {}, in db - {}. Snippet will be re-created.",snippet.getSnippetCode(), snippetFile.file.length(), snippet.code.length);
-                FileUtils.writeByteArrayToFile(snippetFile.file, snippet.code, false);
+            if (!snippetFile.file.exists() || snippetFile.file.length()!=snippet.codeLength) {
+                log.warn("Snippet {} has different length. On disk - {}, in db - {}. Snippet will be re-created.",snippet.getSnippetCode(), snippetFile.file.length(), snippet.codeLength);
+                Snippet s = snippetRepository.findById(snippet.getId()).orElse(null);
+                if (s==null) {
+                    throw new IllegalStateException("Can't find snippet for Id " + snippet.getId()+", but base snippet is there");
+                }
+                FileUtils.writeByteArrayToFile(snippetFile.file, s.code, false);
             }
         }
         //noinspection unused
@@ -101,13 +110,13 @@ public class SnippetService {
     }
 
     public interface SnippetFilter {
-        boolean filter(Snippet snippet);
+        boolean filter(SnippetBase snippet);
     }
 
-    public List<SimpleSelectOption> getSelectOptions(Iterable<Snippet> snippets, List<SnippetCode> snippetCodes,
+    public List<SimpleSelectOption> getSelectOptions(Iterable<SnippetBase> snippets, List<SnippetCode> snippetCodes,
                                                      SnippetFilter snippetFilter) {
         List<SimpleSelectOption> selectOptions = new ArrayList<>();
-        for (Snippet snippet : snippets) {
+        for (SnippetBase snippet : snippets) {
             boolean isExist=false;
             for (SnippetCode snippetCode : snippetCodes) {
                 if (snippet.getSnippetCode().equals(snippetCode.getSnippetCode()) ) {
@@ -125,9 +134,9 @@ public class SnippetService {
         return selectOptions;
     }
 
-    public List<ExperimentSnippet> getExperimentSnippets(Iterable<Snippet> snippets, Experiment experiment) {
+    public List<ExperimentSnippet> getExperimentSnippets(Iterable<SnippetBase> snippets, Experiment experiment) {
         List<ExperimentSnippet> experimentSnippets = new ArrayList<>();
-        for (Snippet snippet : snippets) {
+        for (SnippetBase snippet : snippets) {
             for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                 if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
                     experimentSnippet.type = snippet.type;
@@ -192,6 +201,7 @@ public class SnippetService {
                             snippet.type = snippetConfig.type.toString();
                             snippet.filename = snippetConfig.file;
                             snippet.code = code;
+                            snippet.codeLength = code.length;
                             snippet.env = snippetConfig.env;
                             snippet.params = snippetConfig.params;
                             snippetRepository.save(snippet);
@@ -209,6 +219,7 @@ public class SnippetService {
                     snippet.type = snippetConfig.type.toString();
                     snippet.filename = snippetConfig.file;
                     snippet.code = code;
+                    snippet.codeLength = code.length;
                     snippet.env = snippetConfig.env;
                     snippet.params = snippetConfig.params;
                     snippetRepository.save(snippet);

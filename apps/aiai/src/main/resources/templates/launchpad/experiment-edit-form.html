@@ -186,8 +186,12 @@
             <tbody>
             <div th:remove="tag" th:each="p : ${experiment.hyperParams}">
                 <tr>
-                    <td th:text="${p.key}" th:onclick="${ 'switchTr(''meta-edit-' + p.id +''');' }">Hyper param key</td>
-                    <td th:text="${p.values}" th:onclick="${ 'switchTr(''meta-edit-' + p.id +''');' }">Hyper param values</td>
+                    <td th:text="${p.key}"
+                        th:data-id="${'meta-edit-' + p.id}"
+                        onclick="switchTr(this.getAttribute('data-id'));">Hyper param key</td>
+                    <td th:text="${p.values}"
+                        th:data-id="${'meta-edit-' + p.id}"
+                        onclick="switchTr(this.getAttribute('data-id'));">Hyper param values</td>
                     <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment-metadata-delete-commit/' + experiment.id+'/'+ p.id}">Delete</a></td>
                 </tr>
                 <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-metadata-edit-commit/'+experiment.id}" accept-charset="UTF-8" >

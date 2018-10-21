@@ -27,8 +27,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "AIAI_LP_SNIPPET")
 @Data
-@ToString(exclude = {"code"})
-public class Snippet implements Serializable {
+public class SnippetBase implements Serializable {
     private static final long serialVersionUID = 4066977399166436522L;
 
     @Id
@@ -52,17 +51,6 @@ public class Snippet implements Serializable {
 
     @Column(name = "PARAMS")
     public String params;
-
-    /**
-     * programm code, i.e. pyphon, js,...
-     */
-    @Lob
-    @Type(type="org.hibernate.type.BinaryType")
-    @Column(name = "CODE")
-    @Basic(fetch = FetchType.LAZY)
-    // there is some problem with @Basic(fetch = FetchType.LAZY) -
-    // it doesn't work at all. So we'll continue to use SnippetBase
-    public byte[] code;
 
     @Column(name = "CHECKSUM")
     public String checksum;

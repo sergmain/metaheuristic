@@ -19,6 +19,8 @@ package aiai.ai.launchpad.snippet;
 
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Snippet;
+import aiai.ai.launchpad.beans.SnippetBase;
+import aiai.ai.launchpad.repositories.SnippetBaseRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
@@ -34,8 +36,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
-import java.io.IOException;
-import java.sql.SQLException;
 
 @Controller
 @RequestMapping("/launchpad")
@@ -43,23 +43,25 @@ import java.sql.SQLException;
 public class SnippetController {
 
     private final Globals globals;
+    private final SnippetBaseRepository snippetBaseRepository;
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
 
     @Data
     public static class Result {
-        Iterable<Snippet> snippets;
+        Iterable<SnippetBase> snippets;
     }
 
-    public SnippetController(Globals globals, SnippetRepository snippetRepository, SnippetService snippetService) {
+    public SnippetController(Globals globals, SnippetBaseRepository snippetBaseRepository, SnippetRepository snippetRepository, SnippetService snippetService) {
         this.globals = globals;
+        this.snippetBaseRepository = snippetBaseRepository;
         this.snippetRepository = snippetRepository;
         this.snippetService = snippetService;
     }
 
     @GetMapping("/snippets")
     public String init(@ModelAttribute Result result, @ModelAttribute("errorMessage") final String errorMessage) {
-        result.snippets = snippetRepository.findAll();
+        result.snippets = snippetBaseRepository.findAll();
         return "launchpad/snippets";
     }
 

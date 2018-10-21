@@ -29,6 +29,7 @@ import org.hibernate.annotations.NotFoundAction;
 import javax.persistence.*;
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -61,12 +62,12 @@ public class Dataset implements Serializable {
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "ASSEMBLY_SNIPPET_ID")
     @NotFound(action = NotFoundAction.IGNORE)
-    private Snippet assemblySnippet;
+    private SnippetBase assemblySnippet;
 
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "DATASET_SNIPPET_ID")
     @NotFound(action = NotFoundAction.IGNORE)
-    private Snippet datasetSnippet;
+    private SnippetBase datasetSnippet;
 
     @Column(name = "IS_EDITABLE")
     private boolean isEditable;
@@ -81,7 +82,7 @@ public class Dataset implements Serializable {
     private int datasetProducingStatus;
 
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
-    private List<DatasetGroup> datasetGroups;
+    private List<DatasetGroup> datasetGroups = new ArrayList<>();
 
     public String asRawFilePath() {
         //noinspection UnnecessaryLocalVariable

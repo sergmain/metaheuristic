@@ -71,7 +71,7 @@ public class DatasetGroup implements Serializable {
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "SNIPPET_ID")
     @NotFound(action = NotFoundAction.IGNORE)
-    private Snippet snippet;
+    private SnippetBase snippet;
 
     @Column(name = "CMD")
     private String command;
