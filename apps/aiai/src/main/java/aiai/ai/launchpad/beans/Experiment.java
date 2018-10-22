@@ -18,6 +18,7 @@
 
 package aiai.ai.launchpad.beans;
 
+import aiai.ai.Enums;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.Data;

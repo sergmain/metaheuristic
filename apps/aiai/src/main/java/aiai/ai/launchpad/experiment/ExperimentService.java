@@ -211,13 +211,13 @@ public class ExperimentService {
             }
         }
         else {
-            if (isAcceptOnlySigned) {
-                for (ExperimentFeature feature : fsTemp) {
-                    Experiment experiment = findById(feature.experimentId);
-                    if (experiment==null) {
-                        log.warn("there isn't the experiment for #id {}", experimentId);
-                        continue;
-                    }
+            for (ExperimentFeature feature : fsTemp) {
+                Experiment experiment = findById(feature.experimentId);
+                if (experiment==null) {
+                    log.warn("there isn't the experiment for #id {}", feature.experimentId);
+                    continue;
+                }
+                if (isAcceptOnlySigned) {
                     for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                         final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                         SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
@@ -227,9 +227,9 @@ public class ExperimentService {
                         }
                     }
                 }
-            }
-            else {
-                fs = fsTemp;
+                else {
+                    fs.add(feature);
+                }
             }
         }
         Set<Long> idsForError = new HashSet<>();
@@ -316,7 +316,10 @@ public class ExperimentService {
             }
             if (feature==null) {
                 // is there any feature which wasn't started and not finished yet?
-                feature = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse();
+                List<ExperimentFeature> fTemp = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse(Consts.PAGE_REQUEST_1_REC);
+                if (fTemp!=null && !fTemp.isEmpty()) {
+                    feature = fTemp.get(0);
+                }
             }
         } else {
             feature = features.get(0);

@@ -19,6 +19,7 @@ package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
@@ -99,6 +100,7 @@ public class ExperimentsController {
         public Dataset dataset;
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeature> features;
+        public boolean isCanBeLaunched;
     }
 
     @Data
@@ -258,10 +260,33 @@ public class ExperimentsController {
         experimentResult.features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         experimentResult.features.sort( (ExperimentFeature o1, ExperimentFeature o2) -> (Boolean.compare(o2.isFinished, o1.isFinished)));
 
+        experimentResult.isCanBeLaunched = isCanBeLaunched_FirstCheck(experiment);
+        if (experimentResult.isCanBeLaunched) {
+            if (dataset.getAssemblySnippet()==null || dataset.getDatasetSnippet()==null ||
+                dataset.getRawAssemblingStatus()!= ArtifactStatus.OK.value ||
+                dataset.getDatasetProducingStatus()!= ArtifactStatus.OK.value ||
+                    dataset.getDatasetGroups()==null || dataset.getDatasetGroups().isEmpty()
+            ) {
+                experimentResult.isCanBeLaunched = false;
+            }
+            else {
+                for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
+                    if (datasetGroup.getFeatureStatus()!=ArtifactStatus.OK.value) {
+                        experimentResult.isCanBeLaunched = false;
+                        break;
+                    }
+                }
+            }
+        }
 
         model.addAttribute("experiment", experiment);
         model.addAttribute("experimentResult", experimentResult);
         return "launchpad/experiment-info";
+    }
+
+    private boolean isCanBeLaunched_FirstCheck(Experiment experiment) {
+        return experiment.getSnippets().size() > 1 && experiment.getExecState() != Enums.ExperimentExecState.FINISHED.code &&
+                !experiment.isLaunched() && experiment.getDatasetId() != null;
     }
 
     @GetMapping(value = "/experiment-edit/{id}")

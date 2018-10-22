@@ -106,7 +106,7 @@
             <td>
                 <table class="pure-table pure-table-bordered" id="table-group-cmd-line">
                     <tr>
-                        <td th:if="${ !g.featureOptions.isEmpty() }">
+                        <td th:if="${ !g.featureOptions.isEmpty() and result.dataset.editable}">
                             <table class="pure-table pure-table-bordered" id="table-feature-cmd-produce" >
                                 <tr>
                                     <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"

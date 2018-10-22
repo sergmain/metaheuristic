@@ -52,7 +52,8 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
 
     // find new feature for processing
     @Transactional(readOnly = true)
-    ExperimentFeature findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse();
+    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and f.isInProgress=false and f.isFinished=false ")
+    List<ExperimentFeature> findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse(Pageable limit);
 
     @Transactional(readOnly = true)
     @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and e.isLaunched=true and f.isFinished=false ")

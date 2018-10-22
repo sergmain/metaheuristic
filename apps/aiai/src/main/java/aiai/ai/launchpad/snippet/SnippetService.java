@@ -207,7 +207,7 @@ public class SnippetService {
                             snippetRepository.save(snippet);
                         }
                         else {
-                            log.warn("Checksum mismatch for snippet '{}:{}'", snippet.name, snippet.snippetVersion);
+                            log.warn("Updating of snippets is prohibited, not a snapshot version '{}:{}'", snippet.name, snippet.snippetVersion);
                         }
                     }
                 }

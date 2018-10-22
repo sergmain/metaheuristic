@@ -8,6 +8,8 @@
     <h1 class="widget-header">The experiment info</h1>
 
     <!--/*@thymesVar id="infoMessages" type="java.util.List"*/-->
+    <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ExperimentResult"*/-->
+    <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
     <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
 
     <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
@@ -28,7 +30,7 @@
             <td th:text="${experiment.launched and experimentResult.dataset!=null ? 'Experiment is launched' : 'Experiment isn''t launched'}"></td>
             <td th:text="${T(aiai.ai.Enums.ExperimentExecState).from(experiment.execState)}">exec state</td>
             <td>
-                <a th:if="${experiment.snippets.size()>1 and experiment.execState!=3 and !experiment.launched and experiment.datasetId!=null}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-launch/' + experiment.id}">Launch</a>
+                <a th:if="${experimentResult.isCanBeLaunched}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-launch/' + experiment.id}">Launch</a>
                 <a th:if="${experiment.launched and experiment.execState==1}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-target-exec-state/stopped/' + experiment.id}">Stop</a>
                 <a th:if="${experiment.launched and experiment.execState==2}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-target-exec-state/started/' + experiment.id}">Start</a>
             </td>
@@ -38,9 +40,6 @@
 
     <p>&nbsp;</p>
 
-
-    <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ExperimentResult"*/-->
-    <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
         <h1 class="widget-header">General info</h1>
         <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table">
             <tbody>
