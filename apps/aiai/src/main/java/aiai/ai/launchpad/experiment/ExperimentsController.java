@@ -22,6 +22,7 @@ import aiai.ai.Globals;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.dataset.DatasetCache;
+import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetCode;
@@ -76,13 +77,13 @@ public class ExperimentsController {
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
-        public static class SimpleConsoleOuput {
+        public static class SimpleConsoleOutput {
             public int order;
             public int exitCode;
             public boolean isOk;
             public String console;
         }
-        public final List<SimpleConsoleOuput> items = new ArrayList<>();
+        public final List<SimpleConsoleOutput> items = new ArrayList<>();
     }
 
     @Data
@@ -101,6 +102,7 @@ public class ExperimentsController {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeature> features;
         public boolean isCanBeLaunched;
+        public Map<String, Env> envs = new HashMap<>();
     }
 
     @Data
@@ -133,8 +135,9 @@ public class ExperimentsController {
     private final ExperimentSequenceRepository experimentSequenceRepository;
     private final ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository;
     private final DatasetCache datasetCache;
+    private final EnvService envService;
 
-    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, SnippetBaseRepository snippetBaseRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache) {
+    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, SnippetBaseRepository snippetBaseRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache, EnvService envService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
@@ -149,6 +152,7 @@ public class ExperimentsController {
         this.experimentSequenceRepository = experimentSequenceRepository;
         this.experimentSequenceWithSpecRepository = experimentSequenceWithSpecRepository;
         this.datasetCache = datasetCache;
+        this.envService = envService;
     }
 
     @GetMapping("/experiments")
@@ -201,7 +205,7 @@ public class ExperimentsController {
             SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(sequence.getSnippetExecResults());
             for (Map.Entry<Integer, ProcessService.Result> entry : snippetExec.getExecs().entrySet()) {
                 final ProcessService.Result value = entry.getValue();
-                result.items.add( new ConsoleResult.SimpleConsoleOuput(entry.getKey(), value.exitCode, value.isOk, value.console));
+                result.items.add( new ConsoleResult.SimpleConsoleOutput(entry.getKey(), value.exitCode, value.isOk, value.console));
             }
         }
         model.addAttribute("consoleResult", result);
@@ -278,6 +282,7 @@ public class ExperimentsController {
                 }
             }
         }
+        experimentResult.envs.putAll( envService.envsAsMap() );
 
         model.addAttribute("experiment", experiment);
         model.addAttribute("experimentResult", experimentResult);

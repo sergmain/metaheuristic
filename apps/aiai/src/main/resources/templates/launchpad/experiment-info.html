@@ -120,7 +120,7 @@
             <tr>
                 <th width="50">Id</th>
                 <th width="100">Is required</th>
-                <th width="700">Command for generating feature</th>
+                <th width="700">Snippet</th>
             </tr>
             </thead>
 
@@ -128,7 +128,22 @@
             <tr th:each="g : ${experimentResult.dataset.datasetGroups}">
                 <td th:text="${g.id}">Group Id</td>
                 <td th:text="${g.required ? 'Yes' : 'No'}">Is required</td>
-                <td th:text="${g.command}">Command</td>
+                <td>
+                    <table class="pure-table pure-table-bordered" width="100%"
+                           id="table-snippet-dataset" th:if="${ g.snippet!=null }">
+                        <tbody>
+                        <tr><td width="150">#Id</td><td  th:text="${g.snippet.id}">#Id</td></tr>
+                        <tr><td>Type</td><td th:text="${g.snippet.type}">Type</td></tr>
+                        <tr><td>Name</td><td th:text="${g.snippet.name}">name</td></tr>
+                        <tr><td>Version</td><td th:text="${g.snippet.snippetVersion}">version</td></tr>
+                        <tr><td>Env</td><td th:text="${g.snippet.env}">env</td></tr>
+                        <tr><td>Exec for env</td><td th:text="${experimentResult.envs.get(g.snippet.env)!=null ? experimentResult.envs.get(g.snippet.env).value: 'Not specified yet.'}">env</td></tr>
+                        <tr><td>File</td><td th:text="${g.snippet.filename}">Filename</td></tr>
+                        <tr><td>Params</td><td th:text="${g.snippet.params}">params</td></tr>
+                        <tr><td>Snippet is signed?</td><td th:text="${g.snippet.isSigned ? 'Yes' : 'No'}">is signed</td></tr>
+                        </tbody>
+                    </table>
+                </td>
             </tr>
             </tbody>
         </table>
