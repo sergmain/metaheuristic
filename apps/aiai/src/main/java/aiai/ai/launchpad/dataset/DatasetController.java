@@ -53,6 +53,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.*;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -295,36 +296,43 @@ public class DatasetController {
             redirectAttributes.addFlashAttribute("errorMessage", "#150.01 dataset wasn't found, datasetId: " + id);
             return "redirect:/launchpad/datasets";
         }
-        Dataset ds = new Dataset();
-        ds.setName(StrUtils.incCopyNumber(dataset.getName()));
-        ds.setDescription(dataset.getDescription());
-        ds.setDatasetSnippet(dataset.getAssemblySnippet());
-        ds.setDatasetSnippet(dataset.getDatasetSnippet());
-        ds.setEditable(true);
-        ds.setLocked(false);
-        ds.setDatasetGroups(new ArrayList<>());
-        datasetCache.save(ds);
+        try {
+            Dataset ds = new Dataset();
+            ds.setName(StrUtils.incCopyNumber(dataset.getName()));
+            ds.setDescription(dataset.getDescription());
+            ds.setAssemblySnippet(dataset.getAssemblySnippet());
+            ds.setDatasetSnippet(dataset.getDatasetSnippet());
+            ds.setEditable(true);
+            ds.setLocked(false);
+            ds.setDatasetGroups(new ArrayList<>());
+            ds.setLength(dataset.getLength());
+            datasetCache.save(ds);
+            binaryDataService.cloneBinaryData(dataset.getId(), ds.getId(), BinaryData.Type.DATASET);
 
-        for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
-            DatasetGroup dg = new DatasetGroup();
-            BeanUtils.copyProperties(datasetGroup, dg);
-            dg.setId(null);
-            dg.setVersion(null);
-            dg.setFeatureStatus(ArtifactStatus.NONE.value);
-            dg.setDataset(ds);
-            datasetCache.saveGroup(dg);
-        }
+            for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
+                DatasetGroup dg = new DatasetGroup();
+                BeanUtils.copyProperties(datasetGroup, dg);
+                dg.setId(null);
+                dg.setVersion(null);
+                dg.setFeatureStatus(ArtifactStatus.NONE.value);
+                dg.setDataset(ds);
+                datasetCache.saveGroup(dg);
+            }
 
-        for (DatasetPath path : pathRepository.findByDataset(dataset)) {
-            File file = new File(globals.launchpadDir, path.getPath());
-            try {
-                storeNewPartOfRawFile(new File(path.getPath()).getName(), ds, file, false);
+            for (DatasetPath path : pathRepository.findByDataset(dataset)) {
+                File file = new File(globals.launchpadDir, path.getPath());
+                try {
+                    storeNewPartOfRawFile(new File(path.getPath()).getName(), ds, file, false);
+                }
+                catch (IOException e) {
+                    log.error("Error while copying part of raw file: " + file.getPath(), e);
+                    redirectAttributes.addFlashAttribute("errorMessage", "#150.02 Error while copying part of raw file: " + e.toString());
+                    return "redirect:/launchpad/datasets";
+                }
             }
-            catch (IOException e) {
-                log.error("Error while copying part of raw file: " + file.getPath(), e);
-                redirectAttributes.addFlashAttribute("errorMessage", "#150.02 Error while copying part of raw file: " + e.toString());
-                return "redirect:/launchpad/datasets";
-            }
+        } catch (SQLException e) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#150.05 Error cloning binaryData, error: " + e.toString());
+            return "redirect:/launchpad/datasets";
         }
 
         return "redirect:/launchpad/datasets";
@@ -339,7 +347,6 @@ public class DatasetController {
         DatasetGroup group = value.get();
         long datasetId = group.getDataset().getId();
 
-//        groupsRepository.delete(group);
         datasetCache.delete(group);
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }

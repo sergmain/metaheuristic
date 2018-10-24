@@ -94,4 +94,21 @@ public class BinaryDataService {
 
         binaryDataRepository.save(data);
     }
+
+    public void cloneBinaryData(Long srcDatasetId, Long trgDatasetId, BinaryData.Type type) throws SQLException {
+        BinaryData srcData = binaryDataRepository.findByDataTypeAndRefId(type.value, srcDatasetId);
+        if (srcData==null) {
+            return;
+        }
+
+        BinaryData data = new BinaryData();
+        data.setDataType(type.value);
+        data.setRefId(trgDatasetId);
+        data.setUpdateTs(new Timestamp(System.currentTimeMillis()));
+        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class))
+                .createBlob(srcData.getData().getBinaryStream(), srcData.getData().length());
+        data.setData(blob);
+
+        binaryDataRepository.save(data);
+    }
 }
