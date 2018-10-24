@@ -28,12 +28,24 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>aiai</groupId>
-    <artifactId>package-snippet</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <packaging>jar</packaging>
-
-    <name>package-snippet</name>
-    <description>Package snippet, signing is optional</description>
+    <artifactId>gen-passwords</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.11</version>
+            <scope>compile</scope>
+        </dependency>
+    </dependencies>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -42,24 +54,6 @@
         <!--<maven.compiler.source>11</maven.compiler.source>-->
         <!--<maven.compiler.target>11</maven.compiler.target>-->
     </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>aiai</groupId>
-            <artifactId>commons</artifactId>
-            <version>1.0-SNAPSHOT</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.6</version>
-            <scope>compile</scope>
-        </dependency>
-    </dependencies>
 
     <build>
         <plugins>
@@ -79,10 +73,9 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>aiai.apps.sign_snippet.PackageSnippet</mainClass>
+                    <mainClass>aiai.apps.gen_passwords.GeneratePasswords</mainClass>
                 </configuration>
-            </plugin>
-        </plugins>
+            </plugin>        </plugins>
     </build>
 
     <repositories>
