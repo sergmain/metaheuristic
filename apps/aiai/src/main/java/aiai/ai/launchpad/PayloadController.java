@@ -19,9 +19,11 @@
 package aiai.ai.launchpad;
 
 import aiai.ai.Globals;
+import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.DatasetGroup;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.dataset.DatasetUtils;
+import aiai.ai.launchpad.repositories.BinaryDataRepository;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
@@ -32,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Controller;
@@ -40,11 +43,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.transaction.Transactional;
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.Map;
+import java.sql.SQLException;
 
 @Controller
 @RequestMapping("/payload")
@@ -53,39 +56,83 @@ public class PayloadController {
 
     private static final HttpEntity<byte[]> EMPTY_HTTP_ENTITY = new HttpEntity<>(new byte[0], getHeader(0));
     private static final HttpEntity<String> EMPTY_STRING_HTTP_ENTITY = new HttpEntity<>("", getHeader(0));
-    private  final SnippetRepository snippetRepository;
-    private  final DatasetGroupsRepository datasetGroupsRepository;
+
     private final ChecksumWithSignatureService checksumWithSignatureService;
+    private final SnippetRepository snippetRepository;
+    private final DatasetGroupsRepository datasetGroupsRepository;
+    private final BinaryDataRepository binaryDataRepository;
 
     private final Globals globals;
 
-    public PayloadController(SnippetRepository snippetRepository, DatasetGroupsRepository datasetGroupsRepository, ChecksumWithSignatureService checksumWithSignatureService, Globals globals) {
+    public PayloadController(SnippetRepository snippetRepository, DatasetGroupsRepository datasetGroupsRepository, ChecksumWithSignatureService checksumWithSignatureService, BinaryDataRepository binaryDataRepository, Globals globals) {
         this.snippetRepository = snippetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
         this.checksumWithSignatureService = checksumWithSignatureService;
+        this.binaryDataRepository = binaryDataRepository;
         this.globals = globals;
     }
 
     @GetMapping("/dataset/{id}")
-    public HttpEntity<FileSystemResource> datasets(@PathVariable("id") long datasetId) {
-
-        final File datasetFile = DatasetUtils.getDatasetFile(globals.launchpadDir, datasetId);
-
-        return new HttpEntity<>(new FileSystemResource(datasetFile.toPath()), getHeader(datasetFile.length()) );
+    @Transactional
+    public HttpEntity<AbstractResource> datasets(HttpServletResponse response, @PathVariable("id") long datasetId) throws IOException {
+        if (globals.isStoreDataToDb()) {
+            BinaryData data = binaryDataRepository.findByDataTypeAndRefId(BinaryData.Type.DATASET.value, datasetId);
+            if (data==null) {
+                log.warn("Dataset wasn't found for id {}", datasetId);
+                response.sendError(HttpServletResponse.SC_GONE);
+                return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
+            }
+            try {
+                return new HttpEntity<>(
+                        new InputStreamResource(data.getData().getBinaryStream()),
+                        getHeader(data.getData().length())
+                );
+            } catch (SQLException e) {
+                log.warn("Error produce dataset {}", datasetId);
+                log.warn("Exception: ", e);
+                response.sendError(HttpServletResponse.SC_GONE);
+                return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
+            }
+        }
+        else {
+            final File datasetFile = DatasetUtils.getDatasetFile(globals.launchpadDir, datasetId);
+            return new HttpEntity<>(new FileSystemResource(datasetFile.toPath()), getHeader(datasetFile.length()));
+        }
     }
 
     @GetMapping("/feature/{featureId}")
+    @Transactional
     public HttpEntity<AbstractResource> feature(HttpServletResponse response, @PathVariable("featureId") long featureId) throws IOException {
 
         DatasetGroup datasetGroup = datasetGroupsRepository.findById(featureId).orElse(null);
         if (datasetGroup==null) {
-            log.info("Feature wan't found for id {}", featureId);
+            log.info("Feature wasn't found for id {}", featureId);
             response.sendError(HttpServletResponse.SC_GONE);
             return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
         }
-        final File featureFile = DatasetUtils.getFeatureFile(globals.launchpadDir, datasetGroup.getDataset().getId(), featureId);
-
-        return new HttpEntity<>(new FileSystemResource(featureFile.toPath()), getHeader(featureFile.length()));
+        if (globals.isStoreDataToDb()) {
+            BinaryData data = binaryDataRepository.findByDataTypeAndRefId(BinaryData.Type.FEATURE.value, featureId);
+            if (data==null) {
+                log.warn("Feature's data wasn't found for id {}", featureId);
+                response.sendError(HttpServletResponse.SC_GONE);
+                return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
+            }
+            try {
+                return new HttpEntity<>(
+                        new InputStreamResource(data.getData().getBinaryStream()),
+                        getHeader(data.getData().length())
+                );
+            } catch (SQLException e) {
+                log.warn("Error produce feature {}", featureId);
+                log.warn("Exception: ", e);
+                response.sendError(HttpServletResponse.SC_GONE);
+                return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
+            }
+        }
+        else {
+            final File featureFile = DatasetUtils.getFeatureFile(globals.launchpadDir, datasetGroup.getDataset().getId(), featureId);
+            return new HttpEntity<>(new FileSystemResource(featureFile.toPath()), getHeader(featureFile.length()));
+        }
     }
 
     @GetMapping("/snippet/{name}")
@@ -94,7 +141,7 @@ public class PayloadController {
         SnippetVersion snippetVersion = SnippetVersion.from(snippetName);
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
-            log.info("Snippet wan't found for name {}", snippetName);
+            log.info("Snippet wasn't found for name {}", snippetName);
             response.sendError(HttpServletResponse.SC_GONE);
             return EMPTY_HTTP_ENTITY;
         }
@@ -124,7 +171,7 @@ public class PayloadController {
         SnippetVersion snippetVersion = SnippetVersion.from(snippetName);
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
-            log.info("Snippet wan't found for name {}", snippetName);
+            log.info("Snippet wasn't found for name {}", snippetName);
             response.sendError(HttpServletResponse.SC_GONE);
             return EMPTY_STRING_HTTP_ENTITY;
         }
@@ -134,24 +181,8 @@ public class PayloadController {
             response.sendError(HttpServletResponse.SC_GONE);
             return EMPTY_STRING_HTTP_ENTITY;
         }
-
         Checksum checksum = Checksum.fromJson(snippet.getChecksum());
-
         CheckSumAndSignatureStatus status = checksumWithSignatureService.verifyChecksumAndSignature(checksum, snippetName, new ByteArrayInputStream(snippet.getCode()), false );
-
-/*
-        if (globals.isAcceptOnlySignedSnippets && status.isSignatureOk==null) {
-            log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", globals.isAcceptOnlySignedSnippets, snippetName);
-            response.sendError(HttpServletResponse.SC_CONFLICT);
-            return EMPTY_STRING_HTTP_ENTITY;
-        }
-        // null value is Ok too
-        if (Boolean.FALSE.equals(status.isSignatureOk)) {
-            log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", globals.isAcceptOnlySignedSnippets, snippetName);
-            response.sendError(HttpServletResponse.SC_CONFLICT);
-            return EMPTY_STRING_HTTP_ENTITY;
-        }
-*/
         if (!status.isOk) {
             response.sendError(HttpServletResponse.SC_CONFLICT);
             return EMPTY_STRING_HTTP_ENTITY;

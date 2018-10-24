@@ -90,8 +90,8 @@ public class Globals {
     @Value("${aiai.launchpad.accept-only-signed-env:#{true}}")
     public boolean isAcceptOnlySignedEnv;
 
-    @Value("${aiai.launchpad.dataset-store:#{'disk'}}")
-    public String datasetStoreStr;
+    @Value("${aiai.launchpad.store-data:#{'disk'}}")
+    public String storeDataStr;
 
     // Station's globals
 
@@ -114,6 +114,7 @@ public class Globals {
     public String launchpadUrl;
 
     // some fields
+    public File launchpadTempDir;
 
     public File stationDatasetDir;
     public File stationExperimentDir;
@@ -126,7 +127,7 @@ public class Globals {
     public String serverRestUrl;
     public PublicKey publicKey = null;
 
-    public Enums.DatasetStore[] datasetStore = new Enums.DatasetStore[0];
+    public Enums.StoreData[] storeData = new Enums.StoreData[0];
 
     @PostConstruct
     public void init() throws GeneralSecurityException {
@@ -176,27 +177,32 @@ public class Globals {
         }
 
         if (isLaunchpadEnabled) {
-            String[] split = StringUtils.split(datasetStoreStr, ',');
-            datasetStore = new Enums.DatasetStore[split.length];
+            String[] split = StringUtils.split(storeDataStr, ',');
+            storeData = new Enums.StoreData[split.length];
             for (int i = 0; i < split.length; i++) {
-                datasetStore[i] = Enums.DatasetStore.valueOf(split[i].toUpperCase());
+                storeData[i] = Enums.StoreData.valueOf(split[i].toUpperCase());
             }
+            if (storeData.length==0) {
+                throw new IllegalStateException("You have to define at least one storage type");
+            }
+            launchpadTempDir = new File(launchpadDir, "temp");
+            launchpadTempDir.mkdirs();
         }
         //noinspection unused
         int i=0;
     }
 
-    public boolean isDatasetStoreToDisk() {
-        return isLaunchpadEnabled && isDatasetStore(Enums.DatasetStore.DISK);
+    public boolean isStoreDataToDisk() {
+        return isLaunchpadEnabled && isStoreDataTo(Enums.StoreData.DISK);
     }
 
-    public boolean isDatasetStoreToDb() {
-        return isLaunchpadEnabled && isDatasetStore(Enums.DatasetStore.DB);
+    public boolean isStoreDataToDb() {
+        return isLaunchpadEnabled && isStoreDataTo(Enums.StoreData.DB);
     }
 
-    private boolean isDatasetStore(Enums.DatasetStore type) {
-        for (Enums.DatasetStore datasetStore : this.datasetStore) {
-            if (datasetStore==type) {
+    private boolean isStoreDataTo(Enums.StoreData type) {
+        for (Enums.StoreData storeData : this.storeData) {
+            if (storeData ==type) {
                 return true;
             }
         }

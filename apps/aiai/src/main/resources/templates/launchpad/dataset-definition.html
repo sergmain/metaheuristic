@@ -8,11 +8,15 @@
     <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
     <!--/*@thymesVar id="result" type="aiai.ai.launchpad.dataset.DatasetController.DatasetDefinition"*/-->
+    <!--/*@thymesVar id="extendedResult" type="aiai.ai.launchpad.dataset.DatasetController.ExtendedDefinitionResult"*/-->
+
     <p>&nbsp;</p>
     <h2 class="widget-header">General info</h2>
     <p th:if="${result.dataset.locked}" >Dataset is locked. The editing is disabled</p>
     <p>Launchpad directory: <b><span th:text="${@environment.getProperty('aiai.launchpad.dir')}"></span></b></p>
-    <p>Current dataset directory: <b><span th:text="${result.datasetDirAsString}"></span></b></p>
+
+    <p th:if="${extendedResult.isStoreToDisk}">Current dataset directory: <b><span th:text="${result.datasetDirAsString}"></span></b></p>
+    <p th:if="${!extendedResult.isStoreToDisk}">Storing data to disk isn't enabled</p>
 
     <p>&nbsp;</p>
     <h2 class="widget-header">Dataset options</h2>

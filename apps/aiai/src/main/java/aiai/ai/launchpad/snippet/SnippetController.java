@@ -18,7 +18,6 @@
 package aiai.ai.launchpad.snippet;
 
 import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.beans.SnippetBase;
 import aiai.ai.launchpad.repositories.SnippetBaseRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
@@ -95,7 +94,7 @@ public class SnippetController {
             final File zipFile = new File(tempDir, "snippet.zip");
             FileUtils.copyInputStreamToFile(file.getInputStream(), zipFile);
             ZipUtils.unzipFolder(zipFile, tempDir);
-            snippetService.loadSnippetsRecursevly(tempDir);
+            snippetService.loadSnippetsRecursively(tempDir);
         }
         catch (Exception e) {
             log.error("Error", e);

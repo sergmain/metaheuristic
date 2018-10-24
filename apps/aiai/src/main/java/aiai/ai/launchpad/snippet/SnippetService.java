@@ -29,6 +29,7 @@ import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.SimpleSelectOption;
 import aiai.ai.snippet.SnippetUtils;
 import aiai.apps.commons.utils.Checksum;
+import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import aiai.apps.commons.yaml.snippet.SnippetsConfig;
 import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -66,9 +67,10 @@ public class SnippetService {
 
     @PostConstruct
     public void init() throws IOException {
+/*
         File customSnippets = new File(globals.launchpadDir, "snippet-deploy");
         if (customSnippets.exists()) {
-            loadSnippetsRecursevly(customSnippets);
+            loadSnippetsRecursively(customSnippets);
         }
         else {
             log.info("Directory with custom snippets doesn't exist, {}", customSnippets.getPath());
@@ -79,10 +81,12 @@ public class SnippetService {
             log.info("Load snippets as resource from {} ", resource.getFile().getPath());
             loadSnippetsFromDir(resource.getFile());
         }
-        persistSnippets();
+*/
+        if (globals.isStoreDataToDisk()) {
+            persistSnippets();
+        }
     }
 
-    // TODO need to optimize persisting
     private void persistSnippets() throws IOException {
         File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
         if (!snippetDir.exists()) {
@@ -91,22 +95,38 @@ public class SnippetService {
 
         Iterable<SnippetBase> snippets = snippetBaseRepository.findAll();
         for (SnippetBase snippet : snippets) {
-            SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
-            if (snippetFile.file==null) {
-                log.error("Error while persisting snippet {}", snippet.getSnippetCode());
-                continue;
-            }
-            if (!snippetFile.file.exists() || snippetFile.file.length()!=snippet.codeLength) {
-                log.warn("Snippet {} has different length. On disk - {}, in db - {}. Snippet will be re-created.",snippet.getSnippetCode(), snippetFile.file.length(), snippet.codeLength);
-                Snippet s = snippetRepository.findById(snippet.getId()).orElse(null);
-                if (s==null) {
-                    throw new IllegalStateException("Can't find snippet for Id " + snippet.getId()+", but base snippet is there");
-                }
-                FileUtils.writeByteArrayToFile(snippetFile.file, s.code, false);
-            }
+            persistConcreteSnippet(snippetDir, snippet);
         }
         //noinspection unused
         int i=0;
+    }
+
+    public void persistSnippet(String snippetCode) throws IOException {
+        File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
+        if (!snippetDir.exists()) {
+            snippetDir.mkdirs();
+        }
+        SnippetVersion sv = SnippetVersion.from(snippetCode);
+        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(sv.name, sv.version);
+        persistConcreteSnippet(snippetDir, snippet);
+        //noinspection unused
+        int i=0;
+    }
+
+    private void persistConcreteSnippet(File snippetDir, SnippetBase snippet) throws IOException {
+        SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
+        if (snippetFile.file==null) {
+            log.error("Error while persisting snippet {}", snippet.getSnippetCode());
+            return;
+        }
+        if (!snippetFile.file.exists() || snippetFile.file.length()!=snippet.codeLength) {
+            log.warn("Snippet {} has different length. On disk - {}, in db - {}. Snippet will be re-created.",snippet.getSnippetCode(), snippetFile.file.length(), snippet.codeLength);
+            Snippet s = snippetRepository.findById(snippet.getId()).orElse(null);
+            if (s==null) {
+                throw new IllegalStateException("Can't find snippet for Id " + snippet.getId()+", but base snippet is there");
+            }
+            FileUtils.writeByteArrayToFile(snippetFile.file, s.code, false);
+        }
     }
 
     public interface SnippetFilter {
@@ -148,13 +168,13 @@ public class SnippetService {
         return experimentSnippets;
     }
 
-    void loadSnippetsRecursevly(File startDir) throws IOException {
+    void loadSnippetsRecursively(File startDir) throws IOException {
         final File[] dirs = startDir.listFiles(File::isDirectory);
         if (dirs!=null) {
             for (File dir : dirs) {
                 log.info("Load snippets from {}", dir.getPath());
                 loadSnippetsFromDir(dir);
-                loadSnippetsRecursevly(dir);
+                loadSnippetsRecursively(dir);
             }
         }
     }
@@ -173,58 +193,58 @@ public class SnippetService {
         }
 
         String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
-            SnippetsConfig snippetsConfig = SnippetsConfigUtils.to(cfg);
-            for (SnippetsConfig.SnippetConfig snippetConfig : snippetsConfig.snippets) {
-                SnippetsConfig.SnippetConfigStatus status = snippetConfig.verify();
-                if (!status.isOk) {
-                    log.error(status.error);
-                    continue;
-                }
-                File file = new File(srcDir, snippetConfig.file);
-                if (!file.exists()) {
-                    throw new IllegalStateException("File " + snippetConfig.file+" wasn't found in "+ srcDir.getAbsolutePath());
-                }
-                byte[] code;
-                try( InputStream inputStream = new FileInputStream(file)) {
-                    code = IOUtils.toByteArray(inputStream);;
-                }
-                String sum = Checksum.Type.SHA256.getChecksum(code);
+        SnippetsConfig snippetsConfig = SnippetsConfigUtils.to(cfg);
+        for (SnippetsConfig.SnippetConfig snippetConfig : snippetsConfig.snippets) {
+            SnippetsConfig.SnippetConfigStatus status = snippetConfig.verify();
+            if (!status.isOk) {
+                log.error(status.error);
+                continue;
+            }
+            File file = new File(srcDir, snippetConfig.file);
+            if (!file.exists()) {
+                throw new IllegalStateException("File " + snippetConfig.file+" wasn't found in "+ srcDir.getAbsolutePath());
+            }
+            byte[] code;
+            try( InputStream inputStream = new FileInputStream(file)) {
+                code = IOUtils.toByteArray(inputStream);;
+            }
+            String sum = Checksum.Type.SHA256.getChecksum(code);
 
-                Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
-                if (snippet!=null) {
-                    final String checksum = Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256);
-                    if (!sum.equals(checksum)) {
-                        if (globals.isReplaceSnapshot && snippetConfig.version.endsWith(Consts.SNAPSHOT_SUFFIX)) {
-                            setChecksum(snippetConfig, sum, snippet);
-                            snippet.name = snippetConfig.name;
-                            snippet.snippetVersion = snippetConfig.version;
-                            snippet.type = snippetConfig.type.toString();
-                            snippet.filename = snippetConfig.file;
-                            snippet.code = code;
-                            snippet.codeLength = code.length;
-                            snippet.env = snippetConfig.env;
-                            snippet.params = snippetConfig.params;
-                            snippetRepository.save(snippet);
-                        }
-                        else {
-                            log.warn("Updating of snippets is prohibited, not a snapshot version '{}:{}'", snippet.name, snippet.snippetVersion);
-                        }
+            Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
+            if (snippet!=null) {
+                final String checksum = Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256);
+                if (!sum.equals(checksum)) {
+                    if (globals.isReplaceSnapshot && snippetConfig.version.endsWith(Consts.SNAPSHOT_SUFFIX)) {
+                        setChecksum(snippetConfig, sum, snippet);
+                        snippet.name = snippetConfig.name;
+                        snippet.snippetVersion = snippetConfig.version;
+                        snippet.type = snippetConfig.type.toString();
+                        snippet.filename = snippetConfig.file;
+                        snippet.code = code;
+                        snippet.codeLength = code.length;
+                        snippet.env = snippetConfig.env;
+                        snippet.params = snippetConfig.params;
+                        snippetRepository.save(snippet);
+                    }
+                    else {
+                        log.warn("Updating of snippets is prohibited, not a snapshot version '{}:{}'", snippet.name, snippet.snippetVersion);
                     }
                 }
-                else {
-                    snippet = new Snippet();
-                    setChecksum(snippetConfig, sum, snippet);
-                    snippet.name = snippetConfig.name;
-                    snippet.snippetVersion = snippetConfig.version;
-                    snippet.type = snippetConfig.type.toString();
-                    snippet.filename = snippetConfig.file;
-                    snippet.code = code;
-                    snippet.codeLength = code.length;
-                    snippet.env = snippetConfig.env;
-                    snippet.params = snippetConfig.params;
-                    snippetRepository.save(snippet);
-                }
             }
+            else {
+                snippet = new Snippet();
+                setChecksum(snippetConfig, sum, snippet);
+                snippet.name = snippetConfig.name;
+                snippet.snippetVersion = snippetConfig.version;
+                snippet.type = snippetConfig.type.toString();
+                snippet.filename = snippetConfig.file;
+                snippet.code = code;
+                snippet.codeLength = code.length;
+                snippet.env = snippetConfig.env;
+                snippet.params = snippetConfig.params;
+                snippetRepository.save(snippet);
+            }
+        }
     }
 
     private void setChecksum(SnippetsConfig.SnippetConfig snippetConfig, String sum, Snippet snippet) {
@@ -247,5 +267,4 @@ public class SnippetService {
             snippet.setSigned(false);
         }
     }
-
 }

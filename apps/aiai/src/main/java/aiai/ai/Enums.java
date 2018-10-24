@@ -19,7 +19,7 @@ package aiai.ai;
 
 public final class Enums {
 
-    public enum DatasetStore {
+    public enum StoreData {
         DISK, DB
     }
 
