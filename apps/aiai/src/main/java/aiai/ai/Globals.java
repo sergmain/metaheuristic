@@ -29,6 +29,7 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
+import java.util.Random;
 
 @Component
 @Slf4j
@@ -207,5 +208,16 @@ public class Globals {
             }
         }
         return false;
+    }
+
+    private static final Random r = new Random();
+    public File createTempFileForLaunchpad(String prefix) {
+        if (StringUtils.isBlank(prefix)) {
+            throw new IllegalStateException("Prefix is blank");
+        }
+        File tempFile = new File(launchpadTempDir,
+                prefix + r.nextInt(99999999) + '-' + System.nanoTime()
+        );
+        return tempFile;
     }
 }

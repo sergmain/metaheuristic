@@ -77,12 +77,15 @@ public class StationExperimentService {
                 long experimentId = Long.parseLong(file.getName());
                 Map<Long, StationExperimentSequence> seqs = map.computeIfAbsent(experimentId, k -> new HashMap<>());
                 File seqDir = new File(file, "sequence");
+                if (!seqDir.exists()) {
+                    return;
+                }
                 try {
                     Files.list(seqDir.toPath()).forEach(s -> {
                         long seqId = Long.parseLong(s.toFile().getName());
-                        File sequuenceYamlFile = new File(s.toFile(), Consts.SEQUENCE_YAML);
-                        if (sequuenceYamlFile.exists()) {
-                            try(FileInputStream fis = new FileInputStream(sequuenceYamlFile)) {
+                        File sequenceYamlFile = new File(s.toFile(), Consts.SEQUENCE_YAML);
+                        if (sequenceYamlFile.exists()) {
+                            try(FileInputStream fis = new FileInputStream(sequenceYamlFile)) {
                                 StationExperimentSequence seq = StationExperimentSequenceUtils.to(fis);
                                 seqs.put(seqId, seq);
                             }

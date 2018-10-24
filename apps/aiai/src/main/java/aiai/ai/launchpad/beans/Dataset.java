@@ -81,6 +81,9 @@ public class Dataset implements Serializable {
     @Column(name = "DATASET_PRODUCING_STATUS")
     private int datasetProducingStatus;
 
+    @Column(name = "DATASET_LENGTH")
+    private Long length;
+
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
     private List<DatasetGroup> datasetGroups = new ArrayList<>();
 
@@ -94,8 +97,6 @@ public class Dataset implements Serializable {
         //noinspection UnnecessaryLocalVariable
         String datasetFilePath = String.format("%s%c%06d%cdataset%c%s", Consts.DATASET_DIR, File.separatorChar, id, File.separatorChar, File.separatorChar, Consts.DATASET_FILE_NAME);
         return  datasetFilePath;
-
-
     }
 
 

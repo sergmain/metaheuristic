@@ -1,5 +1,6 @@
 package aiai.ai.launchpad.binary_data;
 
+import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.repositories.BinaryDataRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -54,7 +55,7 @@ public class BinaryDataService {
             BinaryData data = binaryDataRepository.findByDataTypeAndRefId(type.value, refId);
             if (data==null) {
                 log.warn("Binary data for refId {} and type {} wasn't found", refId, type);
-                throw new IllegalStateException("Binary data wasn't found, refId: " + refId+", type: " + type);
+                throw new BinaryDataNotFoundException("Binary data wasn't found, refId: " + refId+", type: " + type);
             }
             FileUtils.copyInputStreamToFile(data.getData().getBinaryStream(), trgFile);
         } catch (Exception e) {

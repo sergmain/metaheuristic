@@ -91,6 +91,7 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
                     log.warn("Feature with id {} is broken and need to be recreated", task.getFeatureId());
                 }
                 else {
+                    log.error("HttpResponseException.getStatusCode(): {}", e.getStatusCode());
                     log.error("HttpResponseException", e);
                 }
             }

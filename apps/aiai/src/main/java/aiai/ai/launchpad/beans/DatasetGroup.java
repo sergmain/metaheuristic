@@ -18,7 +18,9 @@
 
 package aiai.ai.launchpad.beans;
 
+import aiai.ai.Consts;
 import aiai.ai.utils.SimpleSelectOption;
+import aiai.apps.commons.utils.DirUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -27,6 +29,7 @@ import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
 import javax.persistence.*;
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -94,6 +97,8 @@ public class DatasetGroup implements Serializable {
     @Column(name = "STATUS")
     private int featureStatus;
 
+    @Column(name = "FEATURE_LENGTH")
+    private Long length;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DATASET_ID")
@@ -110,6 +115,12 @@ public class DatasetGroup implements Serializable {
 
     public DatasetGroup(int groupNumber) {
         this.groupNumber = groupNumber;
+    }
+
+    public String asFeatureFilePath() {
+        final String featurePath = String.format("%s%c%06d%cfeature%c%06d%c"+Consts.FEATURE_FILE_MASK,
+                Consts.DATASET_DIR, File.separatorChar, dataset.getId(), File.separatorChar, File.separatorChar, id, File.separatorChar, id);
+        return featurePath;
     }
 
 }

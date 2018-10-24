@@ -26,7 +26,8 @@ CREATE TABLE AIAI_LP_DATASET (
   DATASET_SNIPPET_ID  NUMERIC(10, 0),
   IS_LOCKED   tinyint(1) not null default 0,
   RAW_ASSEMBLING_STATUS   tinyint(1) not null default 0,
-  DATASET_PRODUCING_STATUS   tinyint(1) not null default 0
+  DATASET_PRODUCING_STATUS   tinyint(1) not null default 0,
+  DATASET_LENGTH NUMERIC(10, 0)
 );
 
 CREATE TABLE AIAI_LP_DATASET_GROUP (
@@ -42,7 +43,8 @@ CREATE TABLE AIAI_LP_DATASET_GROUP (
   IS_LABEL    tinyint(1) not null default 0,
   IS_REQUIRED tinyint(1) not null default 0,
   FEATURE_FILE         VARCHAR(250),
-  STATUS     tinyint(1) not null default 0
+  STATUS     tinyint(1) not null default 0,
+  FEATURE_LENGTH NUMERIC(10, 0)
 );
 
 CREATE TABLE AIAI_LP_EXPERIMENT (

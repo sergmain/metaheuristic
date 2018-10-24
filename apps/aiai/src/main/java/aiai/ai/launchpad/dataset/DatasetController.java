@@ -395,11 +395,13 @@ public class DatasetController {
             redirectAttributes.addFlashAttribute("errorMessage", "#150.01 datasetGroup wasn't found, groupId: " + groupId);
             return "redirect:/launchpad/datasets";
         }
+        Dataset dataset = group.getDataset();
+        Long datasetId = dataset.getId();
         try {
             Env env = envService.envsAsMap().get(group.getSnippet().getEnv());
             if (env == null) {
                 redirectAttributes.addFlashAttribute("errorMessage", "#153.01 Environment definition wasn't found for feature snippet. Requested environment: " + group.getSnippet().getEnv());
-                return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
+                return "redirect:/launchpad/dataset-definition/" + datasetId;
             }
 
             final SnippetBase snippet = group.getSnippet();
@@ -407,16 +409,22 @@ public class DatasetController {
             final ConfigForFeature configForFeature = createYamlForFeature(group);
             if (!globals.isStoreDataToDisk()) {
                 snippetService.persistSnippet(snippet.getSnippetCode());
-                File datasetFile = new File(globals.launchpadDir, group.getDataset().asDatasetFilePath());
+                File datasetFile = new File(globals.launchpadDir, dataset.asDatasetFilePath());
                 if (datasetFile.exists()) {
                     datasetFile.delete();
                 }
-                binaryDataService.storeToFile(group.getDataset().getId(), BinaryData.Type.DATASET, datasetFile);
+                binaryDataService.storeToFile(datasetId, BinaryData.Type.DATASET, datasetFile);
+
+                File rawFile = new File(globals.launchpadDir, dataset.asRawFilePath());
+                if (rawFile.exists()) {
+                    rawFile.delete();
+                }
+                binaryDataService.storeToFile(datasetId, BinaryData.Type.ASSEMBLED_RAW, rawFile);
             }
             final SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
             if (!snippetFile.file.exists()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "#155.01 Dataset's feature producer isn't specified");
-                return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
+                return "redirect:/launchpad/dataset-definition/" + datasetId;
             }
             String cmdLine = env.value+' '+ snippetFile.file.getAbsolutePath()+' '+ snippet.params;
 
@@ -425,15 +433,30 @@ public class DatasetController {
             final ProcessService.Result result = runCommand(yaml, cmdLine, LogData.Type.FEATURE, group.getId());
             boolean isOk = result.isOk();
             updateInfoWithDatasetGroup(configForFeature, group, isOk);
+            if (!isOk) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "#155.02 Error executing of feature producer. See logs for more info");
+            }
         }
-        catch (Exception err) {
-            err.printStackTrace();
+        catch (Exception e) {
+            log.error("Error producing feature", e);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "#155.03 Error producing feature: " + e.toString());
+            return "redirect:/launchpad/dataset-definition/" + datasetId;
         }
-        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
+        return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
     private void updateInfoWithDatasetGroup(ConfigForFeature configForFeature, DatasetGroup group, boolean isOk) throws IOException {
-        group.setFeatureStatus(isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value);
+        int status = isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value;
+        if (!configForFeature.featureFile.exists()) {
+            log.error("Feature file doesn't exist: {}", configForFeature.featureFile.getPath());
+            status = ArtifactStatus.ERROR.value;
+        }
+        else {
+            group.setLength(configForFeature.featureFile.length());
+        }
+        group.setFeatureStatus(status);
         datasetCache.saveGroup(group);
 
         if (group.getFeatureStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
@@ -559,7 +582,6 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         group.setRequired(required);
-//        groupsRepository.save(group);
         datasetCache.saveGroup(group);
 
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
@@ -682,6 +704,9 @@ public class DatasetController {
             log.error("Dataset file doesn't exist: {}", datasetFile.getPath());
             status = ArtifactStatus.ERROR.value;
         }
+        else {
+            dataset.setLength(datasetFile.length());
+        }
         dataset.setDatasetProducingStatus(status);
         datasetCache.save(dataset);
 
@@ -769,10 +794,7 @@ public class DatasetController {
     private static final Random r = new Random();
     @PostMapping(value = "/dataset-upload-part-raw-from-file")
     public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId, final RedirectAttributes redirectAttributes) {
-        File tempFile;
-        tempFile = new File(globals.launchpadTempDir,
-                "temp-raw-file-"+r.nextInt(99999999)+'-'+System.currentTimeMillis()
-        );
+        File tempFile = globals.createTempFileForLaunchpad("temp-raw-file-");
         if (tempFile.exists()) {
             tempFile.delete();
         }

@@ -35,7 +35,8 @@ CREATE TABLE AIAI_LP_DATASET (
   DATASET_SNIPPET_ID  NUMERIC(10, 0),
   IS_LOCKED   BOOLEAN not null default false,
   RAW_ASSEMBLING_STATUS   smallint not null default 0,
-  DATASET_PRODUCING_STATUS   smallint not null default 0
+  DATASET_PRODUCING_STATUS   smallint not null default 0,
+  DATASET_LENGTH integer
 );
 
 CREATE TABLE AIAI_LP_DATASET_GROUP (
@@ -51,7 +52,8 @@ CREATE TABLE AIAI_LP_DATASET_GROUP (
   IS_LABEL    BOOLEAN not null default false,
   IS_REQUIRED BOOLEAN not null default false,
   FEATURE_FILE         VARCHAR(250),
-  STATUS     smallint not null default 0
+  STATUS     smallint not null default 0,
+  FEATURE_LENGTH integer
 );
 
 CREATE TABLE AIAI_LP_EXPERIMENT (
