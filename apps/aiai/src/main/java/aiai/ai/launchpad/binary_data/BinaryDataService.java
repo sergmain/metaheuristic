@@ -58,6 +58,8 @@ public class BinaryDataService {
                 throw new BinaryDataNotFoundException("Binary data wasn't found, refId: " + refId+", type: " + type);
             }
             FileUtils.copyInputStreamToFile(data.getData().getBinaryStream(), trgFile);
+        } catch (BinaryDataNotFoundException e) {
+            throw e;
         } catch (Exception e) {
             String es = "Error while storing binary data";
             log.error(es, e);
