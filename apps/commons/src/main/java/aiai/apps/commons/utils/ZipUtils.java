@@ -133,18 +133,25 @@ public class ZipUtils {
             while (entries.hasMoreElements()) {
                 ZipArchiveEntry zipEntry = entries.nextElement();
 
-                File destinationFile = DirUtils.createTargetFile(zipDestinationFolder, zipEntry.getName());
-                if (destinationFile==null) {
-                    throw new RuntimeException("Creation of target file was failed, dest: " + zipDestinationFolder+", entity: " + zipEntry.getName());
-                }
-                if (!destinationFile.getParentFile().exists()) {
-                    destinationFile.getParentFile().mkdirs();
-                }
+                String name = zipEntry.getName();
                 if (zipEntry.isDirectory()) {
-                    //noinspection ResultOfMethodCallIgnored
-                    destinationFile.mkdirs();
+                    if (name.endsWith("/")|| name.endsWith("\\")) {
+                        name = name.substring(0, name.length()-1);
+                    }
+
+                    File newDir = new File(zipDestinationFolder, name);
+                    if (!newDir.mkdirs()) {
+                        throw new RuntimeException("Creation of target dir was failed, target dir: " + zipDestinationFolder+", entity: " + name);
+                    }
                 }
                 else {
+                    File destinationFile = DirUtils.createTargetFile(zipDestinationFolder, name);
+                    if (destinationFile==null) {
+                        throw new RuntimeException("Creation of target file was failed, target dir: " + zipDestinationFolder+", entity: " + name);
+                    }
+                    if (!destinationFile.getParentFile().exists()) {
+                        destinationFile.getParentFile().mkdirs();
+                    }
                     FileUtils.copyInputStreamToFile(zipFile.getInputStream(zipEntry), destinationFile);
                 }
             }

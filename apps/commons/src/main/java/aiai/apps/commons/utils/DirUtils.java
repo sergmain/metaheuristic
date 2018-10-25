@@ -32,7 +32,7 @@ public class DirUtils {
             if (!destinationFile.isDirectory() && !destinationFile.mkdirs()) {
                 throw new RuntimeException("Error creating temp directory:" + destinationFile.getPath());
             }
-            return null;
+            return destinationFile;
         }
         else if (name.indexOf(File.separatorChar) != -1) {
             // Create the the parent directory if it doesn't exist
