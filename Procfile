@@ -1,1 +1,1 @@
-web: java -jar apps\aiai\target\aiai.jar 
+web: java -jar apps/aiai/target/aiai.jar
