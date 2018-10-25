@@ -33,12 +33,12 @@ public class DefaultController {
 
     @RequestMapping("/")
     public String index1(Map<String, Object> model) {
-        return "/index";
+        return "index";
     }
 
     @GetMapping("/index")
     public String index2(Map<String, Object> model) {
-        return "/index";
+        return "index";
     }
 
     @GetMapping("/admin")
@@ -53,22 +53,22 @@ public class DefaultController {
 
     @GetMapping("/about")
     public String about() {
-        return "/about";
+        return "about";
     }
 
     @GetMapping("/login")
     public String login() {
-        return "/login";
+        return "login";
     }
 
     @GetMapping("/403")
     public String error403() {
-        return "/error/403";
+        return "error/403";
     }
 
     @GetMapping("/405")
     public String error405() {
-        return "/error/405";
+        return "error/405";
     }
 
 }
