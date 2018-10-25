@@ -74,11 +74,6 @@ public class DatasetController {
     private static final Set<String> exts;
 
     @Data
-    public static class ExtendedDefinitionResult {
-        public boolean isStoreToDisk;
-    }
-
-    @Data
     public static class Result {
         public Slice<Dataset> items;
     }
@@ -93,6 +88,8 @@ public class DatasetController {
         public List<SimpleSelectOption> assemblyOptions;
         public List<SimpleSelectOption> datasetOptions;
         public Map<String, Env> envs = new HashMap<>();
+        public boolean isStoreToDisk;
+        public boolean isAllPathsValid;
 
         public DatasetDefinition(Dataset dataset, String launchpadDirAsString, String datasetDirAsString) {
             this.dataset = dataset;
@@ -226,11 +223,10 @@ public class DatasetController {
 
         definition.envs.putAll( envService.envsAsMap() );
 
-        ExtendedDefinitionResult extendedDefinitionResult = new ExtendedDefinitionResult();
-        extendedDefinitionResult.setStoreToDisk(globals.isStoreDataToDisk());
+        definition.setStoreToDisk(globals.isStoreDataToDisk());
+        definition.setAllPathsValid(globals.isStoreDataToDisk());
 
         model.addAttribute("result", definition);
-        model.addAttribute("extendedResult", extendedDefinitionResult);
         return "launchpad/dataset-definition";
     }
 
@@ -951,6 +947,22 @@ public class DatasetController {
         Dataset dataset = path.getDataset();
         pathRepository.delete(path);
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+    }
+
+    @GetMapping("/dataset-path-delete-all-not-valid/{id}")
+    public String deleteAllNotValidPath(@PathVariable("id") Long datasetId, final RedirectAttributes redirectAttributes) {
+        Dataset dataset = datasetCache.findById(datasetId);
+        if (dataset == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#183.01 dataset wasn't found, datasetId: " + datasetId);
+            return "redirect:/launchpad/dataset-definition/" + datasetId;
+        }
+        final List<DatasetPath> paths = pathRepository.findByDataset(dataset);
+        for (DatasetPath path : paths) {
+            if (!path.isValid()) {
+                pathRepository.delete(path);
+            }
+        }
+        return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
     private static boolean checkExtension(String filename) {
