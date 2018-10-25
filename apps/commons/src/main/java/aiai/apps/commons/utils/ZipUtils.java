@@ -17,6 +17,7 @@
  */
 package aiai.apps.commons.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -33,6 +34,7 @@ import java.util.Enumeration;
  * circa 13.07.12
  *
  */
+@Slf4j
 public class ZipUtils {
     /*
      * @param directoryPath The path of the directory where the archive will be created. eg. c:/temp
@@ -127,11 +129,20 @@ public class ZipUtils {
      */
     public static void unzipFolder(File archiveFile, File zipDestinationFolder) {
 
+        log.debug("Start unzipping archive file");
+        log.debug("'\tzip archive file: {}", archiveFile.getAbsolutePath());
+        log.debug("'\t\tis exist: {}", archiveFile.exists());
+        log.debug("'\t\tis writable: {}", archiveFile.canWrite());
+        log.debug("'\t\tis readable: {}", archiveFile.canRead());
+        log.debug("'\ttarget dir: {}", zipDestinationFolder.getAbsolutePath());
+        log.debug("'\t\tis exist: {}", zipDestinationFolder.exists());
+        log.debug("'\t\tis writable: {}", zipDestinationFolder.canWrite());
         try (MyZipFile zipFile = new MyZipFile(archiveFile)) {
 
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
             while (entries.hasMoreElements()) {
                 ZipArchiveEntry zipEntry = entries.nextElement();
+                log.debug("'\t\tzip entry: {}, is directory: {}", zipEntry.getName(), zipEntry.isDirectory());
 
                 String name = zipEntry.getName();
                 if (zipEntry.isDirectory()) {
@@ -140,6 +151,7 @@ public class ZipUtils {
                     }
 
                     File newDir = new File(zipDestinationFolder, name);
+                    log.debug("'\t\t\tcreate dirs in {}", newDir.getAbsolutePath());
                     if (!newDir.mkdirs()) {
                         throw new RuntimeException("Creation of target dir was failed, target dir: " + zipDestinationFolder+", entity: " + name);
                     }
@@ -152,6 +164,7 @@ public class ZipUtils {
                     if (!destinationFile.getParentFile().exists()) {
                         destinationFile.getParentFile().mkdirs();
                     }
+                    log.debug("'\t\t\tcopy content of zip entry to file {}", destinationFile.getAbsolutePath());
                     FileUtils.copyInputStreamToFile(zipFile.getInputStream(zipEntry), destinationFile);
                 }
             }

@@ -93,9 +93,6 @@ public class SnippetController {
             }
             final File zipFile = new File(tempDir, "snippet.zip");
             FileUtils.copyInputStreamToFile(file.getInputStream(), zipFile);
-            log.debug("Temporary dir: " + tempDir.getAbsolutePath());
-            log.debug("'\tis directory: " + tempDir.isDirectory());
-            log.debug("'\tis can be written: " + tempDir.canWrite());
             ZipUtils.unzipFolder(zipFile, tempDir);
             snippetService.loadSnippetsRecursively(tempDir);
         }
