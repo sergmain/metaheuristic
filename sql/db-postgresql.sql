@@ -130,7 +130,6 @@ CREATE TABLE AIAI_LP_SNIPPET (
   SNIPPET_TYPE      VARCHAR(50) not null,
   SNIPPET_VERSION   VARCHAR(20) not null,
   FILENAME  VARCHAR(250) not null,
-  CODE        BYTEA not null,
   CHECKSUM    VARCHAR(2048),
   IS_SIGNED   BOOLEAN not null default false,
   ENV         VARCHAR(50) not null,
