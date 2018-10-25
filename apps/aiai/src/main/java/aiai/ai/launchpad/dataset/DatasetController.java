@@ -224,8 +224,13 @@ public class DatasetController {
         definition.envs.putAll( envService.envsAsMap() );
 
         definition.setStoreToDisk(globals.isStoreDataToDisk());
-        definition.setAllPathsValid(globals.isStoreDataToDisk());
-
+        definition.setAllPathsValid(true);
+        for (DatasetPath datasetPath : definition.getPaths()) {
+            if (!datasetPath.isValid()) {
+                definition.setAllPathsValid(false);
+                break;
+            }
+        }
         model.addAttribute("result", definition);
         return "launchpad/dataset-definition";
     }
