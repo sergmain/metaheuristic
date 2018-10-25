@@ -51,6 +51,11 @@ public class Config {
     }
 
     @Bean
+    public LayoutDialect layoutDialect() {
+        return new LayoutDialect();
+    }
+
+    @Bean
     public CacheManager cacheManager() {
         //noinspection UnnecessaryLocalVariable
         ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager() {
@@ -167,10 +172,6 @@ public class Config {
     }
 
 */
-    @Bean
-    public LayoutDialect layoutDialect() {
-        return new LayoutDialect();
-    }
 
     // https://medium.com/@joeclever/using-multiple-datasources-with-spring-boot-and-spring-data-6430b00c02e7
 

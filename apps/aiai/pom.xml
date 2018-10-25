@@ -244,6 +244,7 @@
 	<build>
         <finalName>aiai</finalName>
 		<plugins>
+<!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -252,9 +253,22 @@
 					<compilerArgument>-parameters</compilerArgument>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
-                    <!--<release>11</release>-->
+                    &lt;!&ndash;<release>11</release>&ndash;&gt;
                     <encoding>${project.build.sourceEncoding}</encoding>
 					<showDeprecation>true</showDeprecation>
+				</configuration>
+			</plugin>
+-->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.6.0</version>
+				<configuration>
+					<compilerArgument>-parameters</compilerArgument>
+					<testCompilerArgument>-parameters</testCompilerArgument>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
+					<encoding>${project.build.sourceEncoding}</encoding>
 				</configuration>
 			</plugin>
 			<plugin>
