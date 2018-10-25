@@ -1,1 +1,1 @@
-web: java $JAVA_OPTS -Dserver.port=$PORT -jar ./target/aiai.jar
+web: java $JAVA_OPTS -Dserver.port=$PORT -jar apps/aiai/target/aiai.jar
