@@ -1,4 +1,4 @@
-<div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
+<div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
      sec:authorize="isAuthenticated()"
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
