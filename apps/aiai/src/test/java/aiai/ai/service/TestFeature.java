@@ -19,25 +19,27 @@ package aiai.ai.service;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.*;
 import aiai.ai.comm.CommandProcessor;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.metrics.MetricsUtils;
+import aiai.apps.commons.yaml.snippet.SnippetType;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import javax.annotation.PostConstruct;
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -70,7 +72,7 @@ public abstract class TestFeature {
     protected StationsRepository stationsRepository;
 
     @Autowired
-    protected SnippetRepository snippetRepository;
+    protected SnippetBaseRepository snippetRepository;
 
     @Autowired
     protected ExperimentSequenceRepository experimentSequenceRepository;
@@ -78,11 +80,14 @@ public abstract class TestFeature {
     @Autowired
     private DatasetCache datasetCache;
 
+    @Autowired
+    private BinaryDataService binaryDataService;
+
     Station station = null;
     private Dataset dataset = null;
     protected Experiment experiment = null;
-    private Snippet fitSnippet = null;
-    private Snippet predictSnippet = null;
+    private SnippetBase fitSnippet = null;
+    private SnippetBase predictSnippet = null;
     boolean isCorrectInit = true;
 
     @PostConstruct
@@ -105,30 +110,30 @@ public abstract class TestFeature {
             fitSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_FIT_SNIPPET, SNIPPET_VERSION_1_0);
             byte[] bytes = "some program code".getBytes();
             if (fitSnippet == null) {
-                fitSnippet = new Snippet();
+                fitSnippet = new SnippetBase();
                 fitSnippet.setName(TEST_FIT_SNIPPET);
                 fitSnippet.setSnippetVersion(SNIPPET_VERSION_1_0);
                 fitSnippet.setEnv("python-3");
                 fitSnippet.setType(SnippetType.fit.toString());
                 fitSnippet.setChecksum("sha2");
-                fitSnippet.setCode(bytes);
-                fitSnippet.codeLength = bytes.length;
+                fitSnippet.length = bytes.length;
                 fitSnippet.setFilename("fit-filename.txt");
                 snippetRepository.save(fitSnippet);
+                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, fitSnippet.getId(), BinaryData.Type.SNIPPET);
             }
 
             predictSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_PREDICT_SNIPPET, SNIPPET_VERSION_1_0);
             if (predictSnippet == null) {
-                predictSnippet = new Snippet();
+                predictSnippet = new SnippetBase();
                 predictSnippet.setName(TEST_PREDICT_SNIPPET);
                 predictSnippet.setSnippetVersion(SNIPPET_VERSION_1_0);
                 predictSnippet.setEnv("python-3");
                 predictSnippet.setType(SnippetType.predict.toString());
                 predictSnippet.setChecksum("sha2");
-                predictSnippet.setCode(bytes);
-                predictSnippet.codeLength = bytes.length;
+                predictSnippet.length = bytes.length;
                 predictSnippet.setFilename("predict-filename.txt");
                 snippetRepository.save(predictSnippet);
+                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, predictSnippet.getId(), BinaryData.Type.SNIPPET);
             }
 
             // Prepare dataset

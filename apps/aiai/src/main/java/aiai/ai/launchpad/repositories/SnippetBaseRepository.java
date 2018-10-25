@@ -17,7 +17,6 @@
  */
 package aiai.ai.launchpad.repositories;
 
-import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.beans.SnippetBase;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;

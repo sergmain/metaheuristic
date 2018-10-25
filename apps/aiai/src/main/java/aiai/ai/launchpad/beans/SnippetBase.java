@@ -62,7 +62,7 @@ public class SnippetBase implements Serializable {
     public boolean isSigned;
 
     @Column(name = "CODE_LENGTH")
-    public int codeLength;
+    public long length;
 
     public String getSnippetCode() {
         return ""+ name + ':' + snippetVersion;

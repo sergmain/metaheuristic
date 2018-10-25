@@ -18,19 +18,16 @@
 package aiai.ai.launchpad.snippet;
 
 import aiai.ai.Globals;
+import aiai.ai.launchpad.beans.DatasetGroup;
 import aiai.ai.launchpad.beans.SnippetBase;
 import aiai.ai.launchpad.repositories.SnippetBaseRepository;
-import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -43,7 +40,6 @@ public class SnippetController {
 
     private final Globals globals;
     private final SnippetBaseRepository snippetBaseRepository;
-    private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
 
     @Data
@@ -51,10 +47,9 @@ public class SnippetController {
         Iterable<SnippetBase> snippets;
     }
 
-    public SnippetController(Globals globals, SnippetBaseRepository snippetBaseRepository, SnippetRepository snippetRepository, SnippetService snippetService) {
+    public SnippetController(Globals globals, SnippetBaseRepository snippetBaseRepository, SnippetService snippetService) {
         this.globals = globals;
         this.snippetBaseRepository = snippetBaseRepository;
-        this.snippetRepository = snippetRepository;
         this.snippetService = snippetService;
     }
 
@@ -63,6 +58,28 @@ public class SnippetController {
         result.snippets = snippetBaseRepository.findAll();
         return "launchpad/snippets";
     }
+
+    @GetMapping("/snippet-delete/{id}")
+    public String delete(@ModelAttribute Result result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+        final SnippetBase snippet = snippetBaseRepository.findById(id).orElse(null);
+        if (snippet==null) {
+            return "redirect:/launchpad/datasets";
+        }
+        redirectAttributes.addFlashAttribute("errorMessage", "#423.01 ");
+
+/*
+        DatasetGroup group = value.get();
+        long datasetId = group.getDataset().getId();
+
+        datasetCache.delete(group);
+        return "redirect:/launchpad/dataset-definition/" + datasetId;
+*/
+
+        result.snippets = snippetBaseRepository.findAll();
+        return "launchpad/snippets";
+    }
+
+
 
     @PostMapping(value = "/snippet-upload-from-file")
     public String uploadSnippet(MultipartFile file, final RedirectAttributes redirectAttributes) {

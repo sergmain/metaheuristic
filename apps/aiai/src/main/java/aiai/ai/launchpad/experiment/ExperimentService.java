@@ -20,13 +20,11 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.*;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
-import aiai.apps.commons.yaml.snippet.SnippetType;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.utils.BigDecimalHolder;
 import aiai.ai.utils.permutation.Permutation;
@@ -36,6 +34,8 @@ import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.sequence.*;
+import aiai.apps.commons.yaml.snippet.SnippetType;
+import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -138,18 +138,16 @@ public class ExperimentService {
     private final ExperimentRepository experimentRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
-    private final SnippetRepository snippetRepository;
     private final SnippetBaseRepository snippetBaseRepository;
     private final DatasetRepository datasetRepository;
     private final SequenceYamlUtils sequenceYamlUtils;
     private final DatasetCache datasetCache;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, SnippetBaseRepository snippetBaseRepository, DatasetRepository datasetRepository, SequenceYamlUtils sequenceYamlUtils, DatasetCache datasetCache) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetBaseRepository snippetBaseRepository, DatasetRepository datasetRepository, SequenceYamlUtils sequenceYamlUtils, DatasetCache datasetCache) {
         this.globals = globals;
         this.experimentRepository = experimentRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
-        this.snippetRepository = snippetRepository;
         this.snippetBaseRepository = snippetBaseRepository;
         this.datasetRepository = datasetRepository;
         this.sequenceYamlUtils = sequenceYamlUtils;

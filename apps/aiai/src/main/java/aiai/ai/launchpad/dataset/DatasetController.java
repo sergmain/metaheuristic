@@ -111,21 +111,19 @@ public class DatasetController {
     private final DatasetPathRepository pathRepository;
     private final ProcessService processService;
     private final SnippetService snippetService;
-    private final SnippetRepository snippetRepository;
     private final SnippetBaseRepository snippetBaseRepository;
     private final EnvService envService;
     private final DatasetCache datasetCache;
     private final BinaryDataService binaryDataService;
     private BinaryDataRepository binaryDataRepository;
 
-    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetRepository snippetRepository, SnippetBaseRepository snippetBaseRepository, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, BinaryDataRepository binaryDataRepository) {
+    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetBaseRepository snippetBaseRepository, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, BinaryDataRepository binaryDataRepository) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.groupsRepository = groupsRepository;
         this.pathRepository = pathRepository;
         this.processService = processService;
         this.snippetService = snippetService;
-        this.snippetRepository = snippetRepository;
         this.snippetBaseRepository = snippetBaseRepository;
         this.envService = envService;
         this.datasetCache = datasetCache;

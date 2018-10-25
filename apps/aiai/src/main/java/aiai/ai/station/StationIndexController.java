@@ -34,7 +34,7 @@ public class StationIndexController {
 
     @GetMapping("/index")
     public String index(Map<String, Object> model) {
-        return "/station/index";
+        return "station/index";
     }
 
 }

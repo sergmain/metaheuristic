@@ -37,7 +37,7 @@ public class BinaryData implements Serializable {
         this.dataType = type.value;
     }
 
-    public enum Type{ DATASET(1), FEATURE(2), TEST(3), RAW_PART(4), ASSEMBLED_RAW(5);
+    public enum Type{ DATASET(1), FEATURE(2), TEST(3), RAW_PART(4), ASSEMBLED_RAW(5), SNIPPET(6);
 
         public int value;
 

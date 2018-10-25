@@ -20,7 +20,10 @@ package aiai.ai.core;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.util.WebUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /**
@@ -70,5 +73,14 @@ public class DefaultController {
     public String error405() {
         return "error/405";
     }
+
+/*
+    @RequestMapping("/uploadError")
+    public ModelAndView onUploadError(HttpServletRequest request) {
+        ModelAndView modelAndView = new ModelAndView("uploadPage");
+        modelAndView.addObject("error", request.getAttribute(WebUtils.ERROR_MESSAGE_ATTRIBUTE));
+        return modelAndView;
+    }
+*/
 
 }

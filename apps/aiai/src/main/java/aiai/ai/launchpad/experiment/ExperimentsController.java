@@ -21,20 +21,20 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
+import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
-import aiai.ai.launchpad.beans.*;
 import aiai.ai.utils.SimpleSelectOption;
-import aiai.apps.commons.yaml.snippet.SnippetType;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
-import aiai.ai.launchpad.repositories.*;
 import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
+import aiai.apps.commons.yaml.snippet.SnippetType;
+import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -124,7 +124,6 @@ public class ExperimentsController {
 
     private final DatasetRepository datasetRepository;
     private final DatasetGroupsRepository datasetGroupsRepository;
-    private final SnippetRepository snippetRepository;
     private final SnippetBaseRepository snippetBaseRepository;
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
@@ -137,14 +136,13 @@ public class ExperimentsController {
     private final DatasetCache datasetCache;
     private final EnvService envService;
 
-    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, SnippetBaseRepository snippetBaseRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetRepository snippetRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache, EnvService envService) {
+    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, SnippetBaseRepository snippetBaseRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache, EnvService envService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
         this.snippetBaseRepository = snippetBaseRepository;
         this.experimentRepository = experimentRepository;
         this.experimentHyperParamsRepository = experimentHyperParamsRepository;
-        this.snippetRepository = snippetRepository;
         this.snippetService = snippetService;
         this.experimentService = experimentService;
         this.experimentSnippetRepository = experimentSnippetRepository;

@@ -23,12 +23,12 @@ import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.Dataset;
 import aiai.ai.launchpad.beans.DatasetGroup;
-import aiai.ai.launchpad.beans.Snippet;
+import aiai.ai.launchpad.beans.SnippetBase;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.dataset.DatasetCache;
-import aiai.ai.launchpad.dataset.DatasetUtils;
 import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
-import aiai.ai.launchpad.repositories.SnippetRepository;
+import aiai.ai.launchpad.repositories.SnippetBaseRepository;
+import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import aiai.apps.commons.utils.Checksum;
@@ -46,32 +46,32 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
-import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 @Controller
 @RequestMapping("/payload")
 @Slf4j
 public class PayloadController {
 
-    private static final HttpEntity<byte[]> EMPTY_HTTP_ENTITY = new HttpEntity<>(new byte[0], getHeader(0));
-    private static final HttpEntity<String> EMPTY_STRING_HTTP_ENTITY = new HttpEntity<>("", getHeader(0));
-
     private final ChecksumWithSignatureService checksumWithSignatureService;
-    private final SnippetRepository snippetRepository;
+    private final SnippetBaseRepository snippetBaseRepository;
     private final DatasetGroupsRepository datasetGroupsRepository;
     private final BinaryDataService binaryDataService;
     private final DatasetCache datasetCache;
+    private final SnippetService snippetService;
 
     private final Globals globals;
 
-    public PayloadController(SnippetRepository snippetRepository, DatasetGroupsRepository datasetGroupsRepository, ChecksumWithSignatureService checksumWithSignatureService, BinaryDataService binaryDataService, DatasetCache datasetCache, Globals globals) {
-        this.snippetRepository = snippetRepository;
+    public PayloadController(SnippetBaseRepository snippetBaseRepository, DatasetGroupsRepository datasetGroupsRepository, ChecksumWithSignatureService checksumWithSignatureService, BinaryDataService binaryDataService, DatasetCache datasetCache, SnippetService snippetService, Globals globals) {
+        this.snippetBaseRepository = snippetBaseRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
         this.checksumWithSignatureService = checksumWithSignatureService;
         this.binaryDataService = binaryDataService;
         this.datasetCache = datasetCache;
+        this.snippetService = snippetService;
         this.globals = globals;
     }
 
@@ -114,6 +114,11 @@ public class PayloadController {
         return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
     }
 
+    private HttpEntity<AbstractResource> returnEmptyAsConflict(HttpServletResponse response) throws IOException {
+        response.sendError(HttpServletResponse.SC_CONFLICT);
+        return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
+    }
+
     @GetMapping("/feature/{featureId}")
     @Transactional
     public HttpEntity<AbstractResource> feature(HttpServletResponse response, @PathVariable("featureId") long featureId) throws IOException {
@@ -150,62 +155,80 @@ public class PayloadController {
     }
 
     @GetMapping("/snippet/{name}")
-    public HttpEntity<byte[]> snippets(HttpServletResponse response, @PathVariable("name") String snippetName) throws IOException {
+    public HttpEntity<AbstractResource> snippets(HttpServletResponse response, @PathVariable("name") String snippetCode) throws IOException {
 
-        SnippetVersion snippetVersion = SnippetVersion.from(snippetName);
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
+        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
-            log.info("Snippet wasn't found for name {}", snippetName);
-            response.sendError(HttpServletResponse.SC_GONE);
-            return EMPTY_HTTP_ENTITY;
+            log.info("Snippet wasn't found for name {}", snippetCode);
+            return returnEmptyAsGone(response);
         }
 
-        if (snippet.getChecksum()==null) {
-            log.info("Checksum for snippet {} wan't found", snippetName);
-            response.sendError(HttpServletResponse.SC_GONE);
-            return EMPTY_HTTP_ENTITY;
+        File snippetFile;
+        try {
+            snippetFile = snippetService.persistSnippet(snippetCode);
+        } catch (BinaryDataNotFoundException e) {
+            return returnEmptyAsGone(response);
+        }
+        if (snippetFile==null) {
+            log.info("Snippet wasn't found for name {}", snippetCode);
+            return returnEmptyAsGone(response);
         }
 
         Checksum checksum = Checksum.fromJson(snippet.getChecksum());
-        CheckSumAndSignatureStatus status = checksumWithSignatureService.verifyChecksumAndSignature(checksum, snippetName, new ByteArrayInputStream(snippet.getCode()), false );
-        if (!status.isOk) {
-            response.sendError(HttpServletResponse.SC_CONFLICT);
-            return EMPTY_HTTP_ENTITY;
+        try (InputStream is = new FileInputStream(snippetFile)) {
+            CheckSumAndSignatureStatus status = checksumWithSignatureService.verifyChecksumAndSignature(
+                    checksum, snippetCode, is, false
+            );
+            if (!status.isOk) {
+                return returnEmptyAsConflict(response);
+            }
         }
-
-        final int length = snippet.getCodeLength();
+        final long length = snippet.getLength();
         log.info("Send snippet, length: {}", length);
 
-        return new HttpEntity<>(snippet.getCode(), getHeader(length) );
+        return new HttpEntity<>(new FileSystemResource(snippetFile.toPath()), getHeader(length));
     }
 
     @GetMapping("/snippet-checksum/{name}")
-    public HttpEntity<String> snippetChecksum(HttpServletResponse response, @PathVariable("name") String snippetName) throws IOException {
+    public HttpEntity<String> snippetChecksum(HttpServletResponse response, @PathVariable("name") String snippetCode) throws IOException {
 
-        SnippetVersion snippetVersion = SnippetVersion.from(snippetName);
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
+        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
-            log.info("Snippet wasn't found for name {}", snippetName);
-            response.sendError(HttpServletResponse.SC_GONE);
-            return EMPTY_STRING_HTTP_ENTITY;
+            log.info("Snippet wasn't found for name {}", snippetCode);
+            return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);
         }
 
-        if (snippet.getChecksum()==null) {
-            log.info("Checksum for snippet {} wan't found", snippetName);
-            response.sendError(HttpServletResponse.SC_GONE);
-            return EMPTY_STRING_HTTP_ENTITY;
+        File snippetFile;
+        try {
+            snippetFile = snippetService.persistSnippet(snippetCode);
+        } catch (BinaryDataNotFoundException e) {
+            return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);
         }
+        if (snippetFile==null) {
+            log.info("Snippet wasn't found for name {}", snippetCode);
+            return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);
+        }
+
         Checksum checksum = Checksum.fromJson(snippet.getChecksum());
-        CheckSumAndSignatureStatus status = checksumWithSignatureService.verifyChecksumAndSignature(checksum, snippetName, new ByteArrayInputStream(snippet.getCode()), false );
-        if (!status.isOk) {
-            response.sendError(HttpServletResponse.SC_CONFLICT);
-            return EMPTY_STRING_HTTP_ENTITY;
+        try (InputStream is = new FileInputStream(snippetFile)) {
+            CheckSumAndSignatureStatus status = checksumWithSignatureService.verifyChecksumAndSignature(
+                    checksum, snippetCode, is, false
+            );
+            if (!status.isOk) {
+                return returnEmptyStringWithStatus(response, HttpServletResponse.SC_CONFLICT);
+            }
         }
-
         final int length = snippet.getChecksum().length();
         log.info("Send checksum for snippet {}, length: {}", snippet.getSnippetCode(), length);
 
         return new HttpEntity<>(snippet.getChecksum(), getHeader(length) );
+    }
+
+    private HttpEntity<String> returnEmptyStringWithStatus(HttpServletResponse response, int status) throws IOException {
+        response.sendError(status);
+        return new HttpEntity<>("", getHeader(0));
     }
 
     private static HttpHeaders getHeader(long length) {
