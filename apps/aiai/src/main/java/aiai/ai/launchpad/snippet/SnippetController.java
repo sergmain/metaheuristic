@@ -26,12 +26,15 @@ import aiai.apps.commons.utils.ZipUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 
 @Controller
 @RequestMapping("/launchpad")
@@ -109,7 +112,10 @@ public class SnippetController {
                 return "redirect:/launchpad/snippets";
             }
             final File zipFile = new File(tempDir, "snippet.zip");
-            FileUtils.copyInputStreamToFile(file.getInputStream(), zipFile);
+            //FileUtils.copyInputStreamToFile(file.getInputStream(), zipFile);
+            try(OutputStream os = new FileOutputStream(zipFile)) {
+                IOUtils.copy(file.getInputStream(), os, 64000);
+            }
             ZipUtils.unzipFolder(zipFile, tempDir);
             snippetService.loadSnippetsRecursively(tempDir);
         }
