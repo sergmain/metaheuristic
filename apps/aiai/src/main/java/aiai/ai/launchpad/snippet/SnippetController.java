@@ -112,11 +112,13 @@ public class SnippetController {
                 return "redirect:/launchpad/snippets";
             }
             final File zipFile = new File(tempDir, "snippet.zip");
-            //FileUtils.copyInputStreamToFile(file.getInputStream(), zipFile);
+            log.debug("Start storing an uploaded snippet to disk");
             try(OutputStream os = new FileOutputStream(zipFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
+            log.debug("Start unzipping archive");
             ZipUtils.unzipFolder(zipFile, tempDir);
+            log.debug("Start loading snippet data to db");
             snippetService.loadSnippetsRecursively(tempDir);
         }
         catch (Exception e) {
@@ -125,6 +127,7 @@ public class SnippetController {
             return "redirect:/launchpad/snippets";
         }
 
+        log.debug("All done. Send redirect");
         return "redirect:/launchpad/snippets";
     }
 }

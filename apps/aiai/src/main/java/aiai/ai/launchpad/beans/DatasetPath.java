@@ -64,6 +64,9 @@ public class DatasetPath implements Serializable {
     @Column(name = "IS_VALID")
     private boolean isValid;
 
+    @Column(name = "RAW_PART_LENGTH")
+    private long length;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "DATASET_ID")
     private Dataset dataset;

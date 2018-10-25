@@ -21,6 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
+import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.env.EnvService;
@@ -613,9 +614,25 @@ public class DatasetController {
         if (!globals.isStoreDataToDisk()) {
             snippetService.persistSnippet(dataset.getAssemblySnippet().getSnippetCode());
             List<DatasetPath> paths = pathRepository.findByDataset(dataset);
+            boolean isAllValid = true;
             for (DatasetPath path : paths) {
                 File rawPartFile = new File(globals.launchpadDir, path.getPath());
-                binaryDataService.storeToFile(path.getId(), BinaryData.Type.RAW_PART, rawPartFile);
+                if (rawPartFile.isFile() && rawPartFile.exists() && rawPartFile.length()==path.getLength()) {
+                    continue;
+                }
+                rawPartFile.delete();
+                try {
+                    binaryDataService.storeToFile(path.getId(), BinaryData.Type.RAW_PART, rawPartFile);
+                } catch (BinaryDataNotFoundException e) {
+                    isAllValid=false;
+                    path.setValid(false);
+                    pathRepository.save(path);
+                }
+            }
+            if (!isAllValid) {
+                redirectAttributes.addFlashAttribute("errorMessage",
+                        "#105.01 Some of raw parts aren't valid. You need to recreated them.");
+                return "redirect:/launchpad/dataset-definition/" + dataset.getId();
             }
         }
         SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, dataset.getAssemblySnippet().getSnippetCode(), dataset.getAssemblySnippet().filename);
@@ -872,6 +889,7 @@ public class DatasetController {
         dp.setPathNumber(pathNumber);
         dp.setValid(true);
         dp.setRegisterTs(new Timestamp(System.currentTimeMillis()));
+        dp.setLength(tempFile.length());
 
         pathRepository.save(dp);
 

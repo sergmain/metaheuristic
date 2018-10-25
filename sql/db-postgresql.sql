@@ -149,7 +149,8 @@ CREATE TABLE AIAI_LP_DATASET_PATH (
   REG_TS      TIMESTAMP NOT NULL,
   CHECKSUM    VARCHAR(2048),
   IS_FILE     BOOLEAN not null default true,
-  IS_VALID    BOOLEAN not null default false
+  IS_VALID    BOOLEAN not null default false,
+  RAW_PART_LENGTH integer not null default 0
 );
 
 CREATE TABLE AIAI_LP_ENV (

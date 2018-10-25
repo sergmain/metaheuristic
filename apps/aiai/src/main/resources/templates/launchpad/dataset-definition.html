@@ -334,24 +334,24 @@
         <thead>
         <tr>
             <th>#</th>
+            <th>Is valid?</th>
             <th>Date</th>
             <th>Part number</th>
             <th>Path</th>
             <th>Checksum</th>
             <th>Is file?</th>
-            <th>Is valid?</th>
             <th colspan="1">&nbsp;</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="p : ${result.paths}">
             <td th:text="${p.id}">#Id</td>
+            <td th:text="${p.isValid() ? 'True' : 'False'}">Is valid?</td>
             <td th:text="${#dates.formatISO(p.registerTs)}">Date</td>
             <td th:text="${p.pathNumber}">Path number</td>
             <td th:text="${p.path}">Path</td>
             <td th:text="${p.checksum}">Checksum</td>
             <td th:text="${p.isFile() ? 'True' : 'False'}">Is file?</td>
-            <td th:text="${p.isValid() ? 'True' : 'False'}">Is valid?</td>
             <td><a th:if="${!result.dataset.locked && result.dataset.editable}" class="pure-button pure-button-primary" th:href="${'/launchpad/dataset-path-delete/' + p.id}">Delete</a></td>
         </tr>
         </tbody>
