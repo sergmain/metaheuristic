@@ -40,6 +40,8 @@
             <th>Id</th>
             <th>IP address</th>
             <th>Description</th>
+            <th>Environment</th>
+            <th>Active time</th>
             <th colspan="2">&nbsp;</th>
         </tr>
         </thead>
@@ -48,11 +50,13 @@
             <td th:text="${r.id}">Sample Item</td>
             <td th:text="${r.ip}">Sample IP address</td>
             <td th:text="${r.description}">Sample Description</td>
+            <td th:text="${r.env}">Environment</td>
+            <td th:text="${r.activeTime}">Active time</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-edit/' + r.id}">Edit</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-delete/' + r.id}">Delete</a></td>
         </tr>
         <tr>
-            <td colspan="5">
+            <td colspan="7">
                 <div>
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">
