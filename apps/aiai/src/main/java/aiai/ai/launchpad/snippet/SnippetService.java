@@ -96,17 +96,16 @@ public class SnippetService {
     private File persistConcreteSnippet(File snippetDir, SnippetBase snippet) {
         SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
         if (snippetFile.file==null) {
-            log.error("Error while persisting snippet {}", snippet.getSnippetCode());
+            log.error("Error while persisting a snippet {}", snippet.getSnippetCode());
             return null;
         }
         if (!snippetFile.file.exists() || snippetFile.file.length()!=snippet.length) {
-            log.warn("Snippet {} has different length. On disk - {}, in db - {}. Snippet will be re-created.",snippet.getSnippetCode(), snippetFile.file.length(), snippet.length);
+            log.warn("Snippet {} has the different length. On disk - {}, in db - {}. Snippet will be re-created.",snippet.getSnippetCode(), snippetFile.file.length(), snippet.length);
             SnippetBase s = snippetBaseRepository.findById(snippet.getId()).orElse(null);
             if (s==null) {
-                throw new IllegalStateException("Can't find snippet for Id " + snippet.getId()+", but base snippet is there");
+                throw new IllegalStateException("Can't find a snippet for Id " + snippet.getId()+", but base snippet is there");
             }
             binaryDataService.storeToFile(snippet.getId(), BinaryData.Type.SNIPPET, snippetFile.file);
-//            FileUtils.writeByteArrayToFile(snippetFile.file, s.code, false);
         }
         return snippetFile.file;
     }
