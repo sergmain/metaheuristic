@@ -15,7 +15,7 @@
     <p>Launchpad directory: <b><span th:text="${@environment.getProperty('aiai.launchpad.dir')}"></span></b></p>
 
     <p th:if="${result.isStoreToDisk}">Current dataset directory: <b><span th:text="${result.datasetDirAsString}"></span></b></p>
-    <p th:if="${!result.isStoreToDisk}">Storing data to disk isn't enabled</p>
+    <p th:if="${!result.isStoreToDisk}">Persisted storing data to disk isn't enabled</p>
 
     <p>&nbsp;</p>
     <h2 class="widget-header">Dataset options</h2>
