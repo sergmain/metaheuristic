@@ -66,10 +66,9 @@ public class LaunchpadRequester {
     @PostConstruct
     public void postConstruct() {
         if (!globals.isStationEnabled) {
+            //noinspection UnnecessaryReturnStatement
             return;
         }
-        String env = stationService.getEnv();
-        addCommand(new Protocol.ReportStationEnv(env));
     }
 
     private final List<Command> commands = new ArrayList<>();
@@ -107,7 +106,16 @@ public class LaunchpadRequester {
         }
         data.setStationId(stationId);
 
-        needNewExperimentSequence(data, stationId);
+        if (stationId!=null) {
+            // always report about current active sequences, if we have actual stationId
+            data.setCommand(stationExperimentService.produceStationSequenceStatus());
+            data.setCommand(stationService.produceReportStationStatus());
+            final boolean b = stationExperimentService.isNeedNewExperimentSequence(stationId);
+            if (b) {
+                data.setCommand(new Protocol.RequestExperimentSequence(globals.isAcceptOnlySignedSnippets));
+            }
+        }
+
         reportSequenceProcessingResult(data);
 
         List<Command> cmds;
@@ -116,10 +124,6 @@ public class LaunchpadRequester {
             commands.clear();
         }
         data.setCommands(cmds);
-        if (stationId!=null) {
-            // always report about current active sequences, if we have actual stationId
-            data.setCommand(stationExperimentService.produceStationSequenceStatus());
-        }
 
         // !!! always use data.setCommand() for correct initializing stationId !!!
 
@@ -172,12 +176,6 @@ public class LaunchpadRequester {
         data.setCommand(command);
     }
 
-    private void needNewExperimentSequence(ExchangeData data, String stationId) {
-        final boolean b = stationExperimentService.isNeedNewExperimentSequence(stationId);
-        if (b) {
-            data.setCommand(new Protocol.RequestExperimentSequence(globals.isAcceptOnlySignedSnippets));
-        }
-    }
 }
 
 

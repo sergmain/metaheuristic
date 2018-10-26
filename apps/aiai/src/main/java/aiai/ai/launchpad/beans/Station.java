@@ -49,5 +49,8 @@ public class Station implements Serializable {
     @Column(name = "ENV")
     private String env;
 
+    @Column(name = "ACTIVE_TIME")
+    private String activeTime;
+
 }
 

@@ -19,6 +19,7 @@ package aiai.ai.station;
 
 import aiai.ai.Consts;
 import aiai.ai.Globals;
+import aiai.ai.comm.Command;
 import aiai.ai.comm.Protocol;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
@@ -52,6 +53,13 @@ public class StationService {
         this.globals = globals;
         this.stationExperimentService = stationExperimentService;
     }
+
+    Command produceReportStationStatus() {
+        Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(getEnv(), globals.stationActiveTime);
+//        return reportStationStatus.isOkToReport() ? reportStationStatus : Protocol.NOP ;
+        return reportStationStatus;
+    }
+
 
     public String getStationId() {
         return metadata.metadata.get(StationConsts.STATION_ID);

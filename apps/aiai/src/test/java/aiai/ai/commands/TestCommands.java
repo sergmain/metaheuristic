@@ -45,8 +45,8 @@ public class TestCommands {
                 return new Protocol.RequestExperimentSequence();
             case AssignedExperimentSequence:
                 return new Protocol.AssignedExperimentSequence();
-            case ReportStationEnv:
-                return new Protocol.ReportStationEnv();
+            case ReportStationStatus:
+                return new Protocol.ReportStationStatus();
             case ReportSequenceProcessingResult:
                 return new Protocol.ReportSequenceProcessingResult();
             case ReportResultDelivering:

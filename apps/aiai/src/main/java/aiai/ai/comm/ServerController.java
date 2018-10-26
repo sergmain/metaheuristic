@@ -79,19 +79,13 @@ public class ServerController {
         if (stationsRepository.findById(Long.parseLong(data.getStationId())).orElse(null)==null) {
             Station s = new Station();
             s.setIp(request.getRemoteAddr());
-            s.setDescription("Id was ressigned from "+data.getStationId());
+            s.setDescription("Id was reassigned from "+data.getStationId());
             stationsRepository.save(s);
             return new ExchangeData(new Protocol.ReAssignStationId(s.getId()));
         }
 
         ExchangeData resultData = new ExchangeData();
         resultData.setCommand(new Protocol.ExperimentStatus(experimentRepository.findAll().stream().map(ServerController::to).collect(Collectors.toList())));
-/*
-        2018.09.11 now we send statuses of experiments with every iteration
-        if (data.isNothingTodo()) {
-            return EXCHANGE_DATA_NOP;
-        }
-*/
 
         List<Command> commands = data.getCommands();
         for (Command command : commands) {

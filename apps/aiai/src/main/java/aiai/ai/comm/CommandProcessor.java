@@ -17,6 +17,7 @@
 
 package aiai.ai.comm;
 
+import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.invite.InviteService;
 import aiai.ai.launchpad.experiment.ExperimentService;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * User: Serg
@@ -45,13 +47,15 @@ public class CommandProcessor {
     private final InviteService inviteService;
     private final ExperimentService experimentService;
     private final SequenceProcessor sequenceProcessor;
+    private final Globals globals;
 
-    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService, SequenceProcessor sequenceProcessor) {
+    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService, SequenceProcessor sequenceProcessor, Globals globals) {
         this.stationsRepository = stationsRepository;
         this.stationService = stationService;
         this.inviteService = inviteService;
         this.experimentService = experimentService;
         this.sequenceProcessor = sequenceProcessor;
+        this.globals = globals;
     }
 
     Command[] process(Command command) {
@@ -76,8 +80,8 @@ public class CommandProcessor {
             case AssignedExperimentSequence:
                 // processing on station side
                 return processAssignedExperimentSequence((Protocol.AssignedExperimentSequence) command);
-            case ReportStationEnv:
-                return processReportStationEnv((Protocol.ReportStationEnv) command);
+            case ReportStationStatus:
+                return processReportStationStatus((Protocol.ReportStationStatus) command);
             case ReportSequenceProcessingResult:
                 // processing on launchpad side
                 return processReportSequenceProcessingResult((Protocol.ReportSequenceProcessingResult) command);
@@ -121,16 +125,19 @@ public class CommandProcessor {
         return new Command[]{cmd1};
     }
 
-    private Command[] processReportStationEnv(Protocol.ReportStationEnv command) {
+    private Command[] processReportStationStatus(Protocol.ReportStationStatus command) {
         checkStationId(command);
         final long stationId = Long.parseLong(command.getStationId());
         Station station = stationsRepository.findById(stationId).orElse(null);
         if (station==null) {
             // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("Staion wasn't found for stationId: " + stationId );
+            throw new IllegalStateException("Station wasn't found for stationId: " + stationId );
         }
-        station.setEnv( command.env);
-        stationsRepository.save(station);
+        if (!Objects.equals(station.getEnv(), command.getEnv()) || !Objects.equals(station.getActiveTime(), command.getActiveTime())) {
+            station.setEnv(command.env);
+            station.setActiveTime(command.activeTime);
+            stationsRepository.save(station);
+        }
         return Protocol.NOP_ARRAY;
     }
 
@@ -166,19 +173,13 @@ public class CommandProcessor {
     private Command[] storeStationId(Protocol.AssignedStationId command) {
         System.out.println("New station Id: " + command.getStationId());
         stationService.setStationId(command.getAssignedStationId());
-        return Protocol.asArray(createReportStationEnvCommand());
+        return Protocol.NOP_ARRAY;
     }
 
     private Command[] reAssignStationId(Protocol.ReAssignStationId command) {
         System.out.println("New station Id: " + command.getReAssignedStationId());
         stationService.setStationId(command.getReAssignedStationId());
-
-        return Protocol.asArray(createReportStationEnvCommand());
-    }
-
-    private Command createReportStationEnvCommand() {
-        String env = stationService.getEnv();
-        return env==null ? Protocol.NOP : new Protocol.ReportStationEnv(env);
+        return Protocol.NOP_ARRAY;
     }
 
     private Command[] processInvite(Protocol.RegisterInvite command) {

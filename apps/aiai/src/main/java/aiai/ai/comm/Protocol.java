@@ -24,7 +24,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
+import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -134,16 +136,23 @@ public class Protocol {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class ReportStationEnv extends Command {
+    public static class ReportStationStatus extends Command {
         public String env;
+        public String activeTime;
 
-        public ReportStationEnv(String env) {
-            this.setType(Type.ReportStationEnv);
+        public ReportStationStatus(String env, String activeTime) {
+            this.setType(Type.ReportStationStatus);
             this.env = env;
+            this.activeTime = activeTime;
         }
 
-        public ReportStationEnv() {
-            this.setType(Type.ReportStationEnv);
+        @Transient
+        public boolean isOkToReport() {
+            return StringUtils.isNotBlank(env) || StringUtils.isNotBlank(activeTime);
+        }
+
+        public ReportStationStatus() {
+            this.setType(Type.ReportStationStatus);
         }
     }
 
