@@ -23,7 +23,7 @@ import aiai.ai.comm.Command;
 import aiai.ai.comm.Protocol;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
-import aiai.ai.yaml.station.StationExperimentSequence;
+import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.metadata.MetadataUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -121,9 +121,9 @@ public class StationService {
     }
 
     public void markAsDelivered(List<Long> ids) {
-        List<StationExperimentSequence> list = new ArrayList<>();
+        List<StationTask> list = new ArrayList<>();
         for (Long id : ids) {
-            StationExperimentSequence seq = stationExperimentService.findByExperimentSequenceId(id);
+            StationTask seq = stationExperimentService.findByExperimentSequenceId(id);
             if(seq==null) {
                 continue;
             }

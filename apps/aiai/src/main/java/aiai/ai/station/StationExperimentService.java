@@ -21,15 +21,14 @@ import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
-import aiai.apps.commons.yaml.snippet.SnippetType;
+import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.metrics.Metrics;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.sequence.SequenceYaml;
-import aiai.ai.yaml.sequence.SequenceYamlUtils;
+import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import aiai.ai.yaml.sequence.SimpleSnippet;
-import aiai.ai.yaml.station.StationExperimentSequence;
+import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.station.StationExperimentSequenceUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
@@ -55,14 +54,14 @@ public class StationExperimentService {
     private static final String EXPERIMENT_SEQUENCE_FORMAT_STR = "experiment%c%06d%csequence%c%06d";
 
     private final Globals globals;
-    private final SequenceYamlUtils sequenceYamlUtils;
+    private final TaskParamYamlUtils taskParamYamlUtils;
     private final CurrentExecState currentExecState;
 
-    private final Map<Long, Map<Long, StationExperimentSequence>> map = new HashMap<>();
+    private final Map<Long, Map<Long, StationTask>> map = new HashMap<>();
 
-    public StationExperimentService(SequenceYamlUtils sequenceYamlUtils, Globals globals, CurrentExecState currentExecState) {
+    public StationExperimentService(TaskParamYamlUtils taskParamYamlUtils, Globals globals, CurrentExecState currentExecState) {
         this.currentExecState = currentExecState;
-        this.sequenceYamlUtils = sequenceYamlUtils;
+        this.taskParamYamlUtils = taskParamYamlUtils;
         this.globals = globals;
     }
 
@@ -75,7 +74,7 @@ public class StationExperimentService {
             Files.list(globals.stationExperimentDir.toPath()).forEach(p -> {
                 final File file = p.toFile();
                 long experimentId = Long.parseLong(file.getName());
-                Map<Long, StationExperimentSequence> seqs = map.computeIfAbsent(experimentId, k -> new HashMap<>());
+                Map<Long, StationTask> seqs = map.computeIfAbsent(experimentId, k -> new HashMap<>());
                 File seqDir = new File(file, "sequence");
                 if (!seqDir.exists()) {
                     return;
@@ -86,7 +85,7 @@ public class StationExperimentService {
                         File sequenceYamlFile = new File(s.toFile(), Consts.SEQUENCE_YAML);
                         if (sequenceYamlFile.exists()) {
                             try(FileInputStream fis = new FileInputStream(sequenceYamlFile)) {
-                                StationExperimentSequence seq = StationExperimentSequenceUtils.to(fis);
+                                StationTask seq = StationExperimentSequenceUtils.to(fis);
                                 seqs.put(seqId, seq);
                             }
                             catch (IOException e) {
@@ -110,23 +109,23 @@ public class StationExperimentService {
         int i=0;
     }
 
-    private void putInMap(StationExperimentSequence seq) {
-        Map<Long, StationExperimentSequence> seqs = map.computeIfAbsent(seq.experimentId, k -> new HashMap<>());
-        seqs.put(seq.experimentSequenceId, seq);
+    private void putInMap(StationTask seq) {
+        Map<Long, StationTask> seqs = map.computeIfAbsent(seq.experimentId, k -> new HashMap<>());
+        seqs.put(seq.taskId, seq);
     }
 
-    private void deleteFromMap(StationExperimentSequence seq) {
-        Map<Long, StationExperimentSequence> seqs = map.get(seq.experimentId);
+    private void deleteFromMap(StationTask seq) {
+        Map<Long, StationTask> seqs = map.get(seq.experimentId);
         if (seqs==null) {
             return;
         }
-        seqs.remove(seq.experimentSequenceId);
+        seqs.remove(seq.taskId);
     }
 
-    List<StationExperimentSequence> getForReporting() {
-        List<StationExperimentSequence> list = findAllByFinishedOnIsNotNull();
-        List<StationExperimentSequence> result = new ArrayList<>();
-        for (StationExperimentSequence seq : list) {
+    List<StationTask> getForReporting() {
+        List<StationTask> list = findAllByFinishedOnIsNotNull();
+        List<StationTask> result = new ArrayList<>();
+        for (StationTask seq : list) {
             if (!seq.isReported() || (seq.isReported() && !seq.isDelivered() && (seq.getReportedOn()==null || (System.currentTimeMillis() - seq.getReportedOn())>60_000)) ) {
                 result.add(seq);
             }
@@ -134,11 +133,11 @@ public class StationExperimentService {
         return result;
     }
 
-    void markAsFinishedIfAllOk(Long seqId, SequenceYaml sequenceYaml) {
+    void markAsFinishedIfAllOk(Long seqId, TaskParamYaml taskParamYaml) {
         log.info("markAsFinished({})", seqId);
-        StationExperimentSequence seqTemp = findById(seqId);
+        StationTask seqTemp = findById(seqId);
         if (seqTemp == null) {
-            log.error("StationExperimentSequence wasn't found for Id " + seqId);
+            log.error("StationTask wasn't found for Id " + seqId);
         } else {
             if (StringUtils.isBlank(seqTemp.getSnippetExecResults())) {
                 seqTemp.setSnippetExecResults(SnippetExecUtils.toString(new SnippetExec()));
@@ -147,7 +146,7 @@ public class StationExperimentService {
             else {
                 SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
                 final int execSize = snippetExec.getExecs().size();
-                if (sequenceYaml.getSnippets().size() != execSize) {
+                if (taskParamYaml.getSnippets().size() != execSize) {
                     // if last exec Ok?
                     if (snippetExec.getExecs().get(execSize).isOk()) {
                         log.warn("Don't mark this experimentSequence as finished because not all snippets were processed");
@@ -160,7 +159,7 @@ public class StationExperimentService {
         }
     }
 
-    void finishAndWriteToLog(StationExperimentSequence seq, String es) {
+    void finishAndWriteToLog(StationTask seq, String es) {
         log.warn(es);
         seq.setLaunchedOn(System.currentTimeMillis());
         seq.setFinishedOn(System.currentTimeMillis());
@@ -168,7 +167,7 @@ public class StationExperimentService {
         save(seq);
     }
 
-    void saveReported(List<StationExperimentSequence> list) {
+    void saveReported(List<StationTask> list) {
         saveAll(list);
     }
 
@@ -176,14 +175,14 @@ public class StationExperimentService {
         if (stationId==null) {
             return false;
         }
-        List<StationExperimentSequence> seqs = findAllByFinishedOnIsNull();
-        for (StationExperimentSequence seq : seqs) {
+        List<StationTask> seqs = findAllByFinishedOnIsNull();
+        for (StationTask seq : seqs) {
             if (StringUtils.isBlank(seq.getParams())) {
-                log.warn("Params for sequence {} is blank", seq.getExperimentSequenceId());
+                log.warn("Params for sequence {} is blank", seq.getTaskId());
                 continue;
             }
-            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
-            if (currentExecState.isStarted(sequenceYaml.experimentId)) {
+            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(seq.getParams());
+            if (currentExecState.isStarted(taskParamYaml.experimentId)) {
                 return false;
             }
 
@@ -193,12 +192,12 @@ public class StationExperimentService {
 
     void storeExecResult(Long seqId, SimpleSnippet snippet, ProcessService.Result result, long experimentId, File artifactDir) {
         log.info("storeExecResult(experimentId: {}, seqId: {}, snippetOrder: {})", experimentId, seqId, snippet.order);
-        StationExperimentSequence seqTemp = findById(seqId);
+        StationTask seqTemp = findById(seqId);
         if (seqTemp == null) {
-            log.error("StationExperimentSequence wasn't found for Id " + seqId);
+            log.error("StationTask wasn't found for Id " + seqId);
         } else {
             // store metrics after predict only
-            if (snippet.type== SnippetType.predict) {
+            if (snippet.isMetrics()) {
                 File metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
                 Metrics metrics = new Metrics();
                 if (metricsFile.exists()) {
@@ -208,7 +207,7 @@ public class StationExperimentService {
                         metrics.setMetrics(execMetrics);
                     }
                     catch (IOException e) {
-                        log.error("Erorr reading metrics file {}", metricsFile.getAbsolutePath());
+                        log.error("Error reading metrics file {}", metricsFile.getAbsolutePath());
                         seqTemp.setMetrics("system-error : " + e.toString());
                         metrics.setStatus(Metrics.Status.Error);
                         metrics.setError(e.toString());
@@ -229,10 +228,10 @@ public class StationExperimentService {
         }
     }
 
-    List<StationExperimentSequence> findAllByFinishedOnIsNull() {
-        List<StationExperimentSequence> list = new ArrayList<>();
-        for (Map<Long, StationExperimentSequence> value : map.values()) {
-            for (StationExperimentSequence sequence : value.values()) {
+    List<StationTask> findAllByFinishedOnIsNull() {
+        List<StationTask> list = new ArrayList<>();
+        for (Map<Long, StationTask> value : map.values()) {
+            for (StationTask sequence : value.values()) {
                 if (sequence.finishedOn==null) {
                     list.add(sequence);
                 }
@@ -241,10 +240,10 @@ public class StationExperimentService {
         return list;
     }
 
-    StationExperimentSequence findByExperimentSequenceId(Long id) {
-        for (Map<Long, StationExperimentSequence> value : map.values()) {
-            for (StationExperimentSequence sequence : value.values()) {
-                if (sequence.getExperimentSequenceId()==id) {
+    StationTask findByExperimentSequenceId(Long id) {
+        for (Map<Long, StationTask> value : map.values()) {
+            for (StationTask sequence : value.values()) {
+                if (sequence.getTaskId()==id) {
                     return sequence;
                 }
             }
@@ -252,10 +251,10 @@ public class StationExperimentService {
         return null;
     }
 
-    private List<StationExperimentSequence> findAllByFinishedOnIsNotNull() {
-        List<StationExperimentSequence> list = new ArrayList<>();
-        for (Map<Long, StationExperimentSequence> value : map.values()) {
-            for (StationExperimentSequence sequence : value.values()) {
+    private List<StationTask> findAllByFinishedOnIsNotNull() {
+        List<StationTask> list = new ArrayList<>();
+        for (Map<Long, StationTask> value : map.values()) {
+            for (StationTask sequence : value.values()) {
                 if (sequence.finishedOn != null) {
                     list.add(sequence);
                 }
@@ -266,23 +265,23 @@ public class StationExperimentService {
 
     Protocol.StationSequenceStatus produceStationSequenceStatus() {
         Protocol.StationSequenceStatus status = new Protocol.StationSequenceStatus(new ArrayList<>());
-        List<StationExperimentSequence> list = findAllByFinishedOnIsNull();
-        for (StationExperimentSequence sequence : list) {
-            status.getStatuses().add( new Protocol.StationSequenceStatus.SimpleStatus(sequence.getExperimentSequenceId()));
+        List<StationTask> list = findAllByFinishedOnIsNull();
+        for (StationTask sequence : list) {
+            status.getStatuses().add( new Protocol.StationSequenceStatus.SimpleStatus(sequence.getTaskId()));
         }
         return status;
     }
 
     void createSequence(Long experimentSequenceId, String params) {
 
-        final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(params);
-        final long experimentId = sequenceYaml.experimentId;
+        final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
+        final long experimentId = taskParamYaml.experimentId;
 
-        Map<Long, StationExperimentSequence> seqs = map.computeIfAbsent(experimentId, k -> new HashMap<>());
-        StationExperimentSequence seq = seqs.computeIfAbsent(experimentSequenceId, k -> new StationExperimentSequence());
+        Map<Long, StationTask> seqs = map.computeIfAbsent(experimentId, k -> new HashMap<>());
+        StationTask seq = seqs.computeIfAbsent(experimentSequenceId, k -> new StationTask());
 
         seq.experimentId = experimentId;
-        seq.experimentSequenceId = experimentSequenceId;
+        seq.taskId = experimentSequenceId;
         seq.createdOn = System.currentTimeMillis();
         seq.params = params;
         seq.finishedOn = null;
@@ -305,8 +304,8 @@ public class StationExperimentService {
         }
     }
 
-    public StationExperimentSequence save(StationExperimentSequence seq) {
-        String path = String.format("experiment%c%06d%csequence%c%06d", File.separatorChar, seq.experimentId, File.separatorChar, File.separatorChar, seq.experimentSequenceId);
+    public StationTask save(StationTask seq) {
+        String path = String.format("experiment%c%06d%csequence%c%06d", File.separatorChar, seq.experimentId, File.separatorChar, File.separatorChar, seq.taskId);
         File sequenceDir = new File(globals.stationDir, path);
         if (!sequenceDir.exists()) {
             //noinspection ResultOfMethodCallIgnored
@@ -335,16 +334,16 @@ public class StationExperimentService {
         return seq;
     }
 
-    void saveAll(List<StationExperimentSequence> list) {
-        for (StationExperimentSequence stationExperimentSequence : list) {
-            save(stationExperimentSequence);
+    void saveAll(List<StationTask> list) {
+        for (StationTask stationTask : list) {
+            save(stationTask);
         }
     }
 
-    public StationExperimentSequence findById(Long experimentSequenceId) {
-        for (Map<Long, StationExperimentSequence> value : map.values()) {
-            for (StationExperimentSequence sequence : value.values()) {
-                if (sequence.experimentSequenceId == experimentSequenceId) {
+    public StationTask findById(Long experimentSequenceId) {
+        for (Map<Long, StationTask> value : map.values()) {
+            for (StationTask sequence : value.values()) {
+                if (sequence.taskId == experimentSequenceId) {
                     return sequence;
                 }
             }
@@ -352,9 +351,9 @@ public class StationExperimentService {
         return null;
     }
 
-    public List<StationExperimentSequence> findAll() {
-        List<StationExperimentSequence> list = new ArrayList<>();
-        for (Map<Long, StationExperimentSequence> entry : map.values()) {
+    public List<StationTask> findAll() {
+        List<StationTask> list = new ArrayList<>();
+        for (Map<Long, StationTask> entry : map.values()) {
             list.addAll(entry.values());
         }
         return list;
@@ -364,11 +363,11 @@ public class StationExperimentService {
         delete( findById(experimentSequenceId) );
     }
 
-    public void delete(StationExperimentSequence seq) {
+    public void delete(StationTask seq) {
         if (seq==null) {
             return;
         }
-        String path = String.format(EXPERIMENT_SEQUENCE_FORMAT_STR, File.separatorChar, seq.experimentId, File.separatorChar, File.separatorChar, seq.experimentSequenceId);
+        String path = String.format(EXPERIMENT_SEQUENCE_FORMAT_STR, File.separatorChar, seq.experimentId, File.separatorChar, File.separatorChar, seq.taskId);
 
         File systemDir = new File(globals.stationDir, path);
         try {
@@ -378,7 +377,7 @@ public class StationExperimentService {
             }
         }
         catch( Throwable th) {
-            log.error("Error deleting sequence "+ seq.experimentSequenceId, th);
+            log.error("Error deleting sequence "+ seq.taskId, th);
         }
     }
 }

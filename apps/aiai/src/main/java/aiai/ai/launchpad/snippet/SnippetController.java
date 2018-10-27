@@ -18,14 +18,12 @@
 package aiai.ai.launchpad.snippet;
 
 import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.DatasetGroup;
-import aiai.ai.launchpad.beans.SnippetBase;
-import aiai.ai.launchpad.repositories.SnippetBaseRepository;
+import aiai.ai.launchpad.beans.Snippet;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -42,29 +40,29 @@ import java.io.OutputStream;
 public class SnippetController {
 
     private final Globals globals;
-    private final SnippetBaseRepository snippetBaseRepository;
+    private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
 
     @Data
     public static class Result {
-        Iterable<SnippetBase> snippets;
+        Iterable<Snippet> snippets;
     }
 
-    public SnippetController(Globals globals, SnippetBaseRepository snippetBaseRepository, SnippetService snippetService) {
+    public SnippetController(Globals globals, SnippetRepository snippetRepository, SnippetService snippetService) {
         this.globals = globals;
-        this.snippetBaseRepository = snippetBaseRepository;
+        this.snippetRepository = snippetRepository;
         this.snippetService = snippetService;
     }
 
     @GetMapping("/snippets")
     public String init(@ModelAttribute Result result, @ModelAttribute("errorMessage") final String errorMessage) {
-        result.snippets = snippetBaseRepository.findAll();
+        result.snippets = snippetRepository.findAll();
         return "launchpad/snippets";
     }
 
     @GetMapping("/snippet-delete/{id}")
     public String delete(@ModelAttribute Result result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        final SnippetBase snippet = snippetBaseRepository.findById(id).orElse(null);
+        final Snippet snippet = snippetRepository.findById(id).orElse(null);
         if (snippet==null) {
             return "redirect:/launchpad/datasets";
         }
@@ -78,7 +76,7 @@ public class SnippetController {
         return "redirect:/launchpad/dataset-definition/" + datasetId;
 */
 
-        result.snippets = snippetBaseRepository.findAll();
+        result.snippets = snippetRepository.findAll();
         return "launchpad/snippets";
     }
 

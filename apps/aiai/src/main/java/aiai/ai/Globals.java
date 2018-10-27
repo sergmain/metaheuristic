@@ -124,6 +124,7 @@ public class Globals {
     public File stationDbDir;
     public File stationSystemDir;
     public File stationResourcesDir;
+    public File stationTaskDir;
 
     public TimePeriods timePeriods;
 
@@ -172,6 +173,8 @@ public class Globals {
             stationSystemDir.mkdirs();
             stationResourcesDir = new File(stationDir, Consts.RESOURCES_DIR);
             stationResourcesDir.mkdirs();
+            stationTaskDir = new File(stationDir, Consts.TASK_DIR);
+            stationTaskDir.mkdirs();
 
             timePeriods = TimePeriods.from(stationActiveTime);
         }

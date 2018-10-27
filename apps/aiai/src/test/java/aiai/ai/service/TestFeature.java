@@ -72,7 +72,7 @@ public abstract class TestFeature {
     protected StationsRepository stationsRepository;
 
     @Autowired
-    protected SnippetBaseRepository snippetRepository;
+    protected SnippetRepository snippetRepository;
 
     @Autowired
     protected ExperimentSequenceRepository experimentSequenceRepository;
@@ -86,8 +86,8 @@ public abstract class TestFeature {
     Station station = null;
     private Dataset dataset = null;
     protected Experiment experiment = null;
-    private SnippetBase fitSnippet = null;
-    private SnippetBase predictSnippet = null;
+    private Snippet fitSnippet = null;
+    private Snippet predictSnippet = null;
     boolean isCorrectInit = true;
 
     @PostConstruct
@@ -110,7 +110,7 @@ public abstract class TestFeature {
             fitSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_FIT_SNIPPET, SNIPPET_VERSION_1_0);
             byte[] bytes = "some program code".getBytes();
             if (fitSnippet == null) {
-                fitSnippet = new SnippetBase();
+                fitSnippet = new Snippet();
                 fitSnippet.setName(TEST_FIT_SNIPPET);
                 fitSnippet.setSnippetVersion(SNIPPET_VERSION_1_0);
                 fitSnippet.setEnv("python-3");
@@ -124,7 +124,7 @@ public abstract class TestFeature {
 
             predictSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_PREDICT_SNIPPET, SNIPPET_VERSION_1_0);
             if (predictSnippet == null) {
-                predictSnippet = new SnippetBase();
+                predictSnippet = new Snippet();
                 predictSnippet.setName(TEST_PREDICT_SNIPPET);
                 predictSnippet.setSnippetVersion(SNIPPET_VERSION_1_0);
                 predictSnippet.setEnv("python-3");

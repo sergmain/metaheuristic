@@ -19,6 +19,10 @@ package aiai.ai;
 
 public final class Enums {
 
+    public enum TaskType {
+        ProduceRawFile, ProduceDataset, ProduceFeature, FitAndPredict
+    }
+
     public enum StoreData {
         DISK, DB
     }

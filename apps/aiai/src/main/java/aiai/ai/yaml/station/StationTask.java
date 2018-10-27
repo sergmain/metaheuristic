@@ -17,13 +17,14 @@
  */
 package aiai.ai.yaml.station;
 
+import aiai.ai.Enums;
 import lombok.Data;
 
 @Data
-public class StationExperimentSequence {
+public class StationTask {
     public long experimentId;
 
-    public long experimentSequenceId;
+    public long taskId;
 
     public long createdOn;
 
@@ -37,10 +38,14 @@ public class StationExperimentSequence {
 
     public String metrics;
 
-    // TODO right not there will be 2 the same properties in yaml file - isReported and reported. Won't fix this at this momonet
+    public Enums.TaskType taskType;
+
+    // TODO right not there will be 2 the same properties in yaml file - isReported and reported.
+    // Won't fix this at this moment
     public boolean isReported;
 
-    // TODO right not there will be 2 the same properties in yaml file - isDelivered and delivered. Won't fix this at this momonet
+    // TODO right not there will be 2 the same properties in yaml file - isDelivered and delivered.
+    // Won't fix this at this moment
     public boolean isDelivered;
 
     public String snippetExecResults;

@@ -11,7 +11,7 @@ import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
 import aiai.ai.launchpad.repositories.DatasetPathRepository;
-import aiai.ai.launchpad.repositories.SnippetBaseRepository;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.StrUtils;
@@ -47,18 +47,18 @@ public class DatasetService {
     private final DatasetPathRepository pathRepository;
     private final Globals globals;
     private final BinaryDataService binaryDataService;
-    private final SnippetBaseRepository snippetBaseRepository;
+    private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
     private final EnvService envService;
     private final DatasetCache datasetCache;
     private final DatasetGroupsRepository groupsRepository;
     private final ProcessService processService;
 
-    public DatasetService(DatasetPathRepository pathRepository, Globals globals, BinaryDataService binaryDataService, SnippetBaseRepository snippetBaseRepository, SnippetService snippetService, EnvService envService, DatasetCache datasetCache, DatasetGroupsRepository groupsRepository, ProcessService processService) {
+    public DatasetService(DatasetPathRepository pathRepository, Globals globals, BinaryDataService binaryDataService, SnippetRepository snippetRepository, SnippetService snippetService, EnvService envService, DatasetCache datasetCache, DatasetGroupsRepository groupsRepository, ProcessService processService) {
         this.pathRepository = pathRepository;
         this.globals = globals;
         this.binaryDataService = binaryDataService;
-        this.snippetBaseRepository = snippetBaseRepository;
+        this.snippetRepository = snippetRepository;
         this.snippetService = snippetService;
         this.envService = envService;
         this.datasetCache = datasetCache;
@@ -153,7 +153,7 @@ public class DatasetService {
         final DatasetController.DatasetDefinition definition = new DatasetController.DatasetDefinition(dataset, globals.launchpadDir.getPath(), path);
         definition.paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
 
-        final Iterable<SnippetBase> snippets = snippetBaseRepository.findAll();
+        final Iterable<Snippet> snippets = snippetRepository.findAll();
 
         final List<SnippetCode> featureCodes = new ArrayList<>();
 

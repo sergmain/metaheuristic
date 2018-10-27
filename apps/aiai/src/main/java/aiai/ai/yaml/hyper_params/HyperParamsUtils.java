@@ -17,7 +17,7 @@
  */
 package aiai.ai.yaml.hyper_params;
 
-import aiai.ai.yaml.sequence.SequenceYaml;
+import aiai.ai.yaml.sequence.TaskParamYaml;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -42,7 +42,7 @@ public class HyperParamsUtils {
         return yaml.dump(hyperParams);
     }
 
-    public static SequenceYaml toHyperParamsYaml(String s) {
+    public static TaskParamYaml toHyperParamsYaml(String s) {
         return yaml.load(s);
     }
 

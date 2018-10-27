@@ -15,22 +15,14 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.sequence;
+package aiai.ai.launchpad.repositories;
 
-import aiai.apps.commons.yaml.snippet.SnippetType;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import aiai.ai.launchpad.beans.Snippet;
+import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class SimpleSnippet {
-    public SnippetType type;
-    public String code;
-    public String filename;
-    public String checksum;
-    public String env;
-    public int order;
-    public boolean metrics;
+@Repository
+public interface SnippetRepository extends CrudRepository<Snippet, Long> {
+
+    Snippet findByNameAndSnippetVersion(String name, String snippetVersion);
 }

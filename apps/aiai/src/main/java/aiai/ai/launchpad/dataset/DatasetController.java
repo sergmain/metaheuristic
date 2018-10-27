@@ -28,7 +28,7 @@ import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
 import aiai.ai.launchpad.repositories.DatasetPathRepository;
 import aiai.ai.launchpad.repositories.DatasetRepository;
-import aiai.ai.launchpad.repositories.SnippetBaseRepository;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.utils.ControllerUtils;
@@ -100,18 +100,18 @@ public class DatasetController {
     private final DatasetGroupsRepository groupsRepository;
     private final DatasetPathRepository pathRepository;
     private final SnippetService snippetService;
-    private final SnippetBaseRepository snippetBaseRepository;
+    private final SnippetRepository snippetRepository;
     private final EnvService envService;
     private final DatasetCache datasetCache;
     private final BinaryDataService binaryDataService;
 
-    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetBaseRepository snippetBaseRepository, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, DatasetService datasetService) {
+    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetRepository snippetRepository, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, DatasetService datasetService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.groupsRepository = groupsRepository;
         this.pathRepository = pathRepository;
         this.snippetService = snippetService;
-        this.snippetBaseRepository = snippetBaseRepository;
+        this.snippetRepository = snippetRepository;
         this.envService = envService;
         this.datasetCache = datasetCache;
         this.binaryDataService = binaryDataService;
@@ -192,7 +192,7 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         SnippetVersion snippetVersion = SnippetVersion.from(code);
-        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#176.01 snippet "+code+" wasn't found");
             return "redirect:/launchpad/dataset-definition/" + dataset.getId();
@@ -210,7 +210,7 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         SnippetVersion snippetVersion = SnippetVersion.from(code);
-        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#178.01 snippet "+code+" wasn't found");
             return "redirect:/launchpad/dataset-definition/" + dataset.getId();
@@ -228,7 +228,7 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         SnippetVersion snippetVersion = SnippetVersion.from(code);
-        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#182.01 snippet "+code+" wasn't found");
             return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
@@ -314,7 +314,7 @@ public class DatasetController {
                 return "redirect:/launchpad/dataset-definition/" + datasetId;
             }
 
-            final SnippetBase snippet = group.getSnippet();
+            final Snippet snippet = group.getSnippet();
             final File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
             final ConfigForFeature configForFeature = datasetService.createYamlForFeature(group);
             if (!globals.isStoreDataToDisk()) {
@@ -481,7 +481,7 @@ public class DatasetController {
         }
 
         final String es = "#191.01 Dataset producing snippet isn't specified";
-        final SnippetBase snippet = dataset.getDatasetSnippet();
+        final Snippet snippet = dataset.getDatasetSnippet();
         final File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
         if (!globals.isStoreDataToDisk()) {
             snippetService.persistSnippet(dataset.getDatasetSnippet().getSnippetCode());

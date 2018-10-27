@@ -20,7 +20,6 @@ package aiai.ai.launchpad.beans;
 
 import aiai.ai.Consts;
 import aiai.ai.utils.SimpleSelectOption;
-import aiai.apps.commons.utils.DirUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -31,7 +30,6 @@ import org.hibernate.annotations.NotFoundAction;
 import javax.persistence.*;
 import java.io.File;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -74,7 +72,7 @@ public class DatasetGroup implements Serializable {
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "SNIPPET_ID")
     @NotFound(action = NotFoundAction.IGNORE)
-    private SnippetBase snippet;
+    private Snippet snippet;
 
     @Column(name = "CMD")
     private String command;

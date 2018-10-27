@@ -62,12 +62,12 @@ public class Dataset implements Serializable {
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "ASSEMBLY_SNIPPET_ID")
     @NotFound(action = NotFoundAction.IGNORE)
-    private SnippetBase assemblySnippet;
+    private Snippet assemblySnippet;
 
     @OneToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "DATASET_SNIPPET_ID")
     @NotFound(action = NotFoundAction.IGNORE)
-    private SnippetBase datasetSnippet;
+    private Snippet datasetSnippet;
 
     @Column(name = "IS_EDITABLE")
     private boolean isEditable;

@@ -17,8 +17,6 @@
  */
 package aiai.ai.yaml.config;
 
-import aiai.ai.yaml.console.SnippetExec;
-import aiai.ai.yaml.sequence.SequenceYaml;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;

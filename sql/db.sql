@@ -124,6 +124,7 @@ CREATE TABLE AIAI_LP_SNIPPET (
   FILENAME  VARCHAR(250) not null,
   CHECKSUM    VARCHAR(2048),
   IS_SIGNED   tinyint(1) not null default 0,
+  IS_REPORT_METRICS   tinyint(1) not null default 0,
   ENV         VARCHAR(50) not null,
   PARAMS         VARCHAR(1000),
   CODE_LENGTH integer not null

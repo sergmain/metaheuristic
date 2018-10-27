@@ -19,7 +19,7 @@
 package aiai.ai.station;
 
 import aiai.ai.Globals;
-import aiai.ai.yaml.station.StationExperimentSequence;
+import aiai.ai.yaml.station.StationTask;
 import aiai.ai.comm.*;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import lombok.extern.slf4j.Slf4j;
@@ -162,13 +162,13 @@ public class LaunchpadRequester {
     }
 
     private void reportSequenceProcessingResult(ExchangeData data) {
-        final List<StationExperimentSequence> list = stationExperimentService.getForReporting();
+        final List<StationTask> list = stationExperimentService.getForReporting();
         if (list.isEmpty()) {
             return;
         }
         final Protocol.ReportSequenceProcessingResult command = new Protocol.ReportSequenceProcessingResult();
-        for (StationExperimentSequence seq : list) {
-            command.getResults().add(new SimpleSequenceExecResult(seq.getExperimentSequenceId(), seq.getSnippetExecResults(), seq.getMetrics()));
+        for (StationTask seq : list) {
+            command.getResults().add(new SimpleSequenceExecResult(seq.getTaskId(), seq.getSnippetExecResults(), seq.getMetrics()));
             seq.setReported(true);
             seq.setReportedOn(System.currentTimeMillis());
         }

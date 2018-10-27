@@ -22,9 +22,9 @@ import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentSnippet;
-import aiai.ai.launchpad.beans.SnippetBase;
+import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.repositories.SnippetBaseRepository;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.utils.SimpleSelectOption;
@@ -51,12 +51,12 @@ import java.util.Map;
 public class SnippetService {
 
     private final Globals globals;
-    private final SnippetBaseRepository snippetBaseRepository;
+    private final SnippetRepository snippetRepository;
     private final BinaryDataService binaryDataService;
 
-    public SnippetService(Globals globals, SnippetBaseRepository snippetBaseRepository, BinaryDataService binaryDataService) {
+    public SnippetService(Globals globals, SnippetRepository snippetRepository, BinaryDataService binaryDataService) {
         this.globals = globals;
-        this.snippetBaseRepository = snippetBaseRepository;
+        this.snippetRepository = snippetRepository;
         this.binaryDataService = binaryDataService;
     }
 
@@ -73,8 +73,8 @@ public class SnippetService {
             snippetDir.mkdirs();
         }
 
-        Iterable<SnippetBase> snippets = snippetBaseRepository.findAll();
-        for (SnippetBase snippet : snippets) {
+        Iterable<Snippet> snippets = snippetRepository.findAll();
+        for (Snippet snippet : snippets) {
             persistConcreteSnippet(snippetDir, snippet);
         }
         //noinspection unused
@@ -87,13 +87,13 @@ public class SnippetService {
             snippetDir.mkdirs();
         }
         SnippetVersion sv = SnippetVersion.from(snippetCode);
-        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(sv.name, sv.version);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
         //noinspection UnnecessaryLocalVariable
         File file = persistConcreteSnippet(snippetDir, snippet);
         return file;
     }
 
-    private File persistConcreteSnippet(File snippetDir, SnippetBase snippet) {
+    private File persistConcreteSnippet(File snippetDir, Snippet snippet) {
         SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
         if (snippetFile.file==null) {
             log.error("Error while persisting a snippet {}", snippet.getSnippetCode());
@@ -101,7 +101,7 @@ public class SnippetService {
         }
         if (!snippetFile.file.exists() || snippetFile.file.length()!=snippet.length) {
             log.warn("Snippet {} has the different length. On disk - {}, in db - {}. Snippet will be re-created.",snippet.getSnippetCode(), snippetFile.file.length(), snippet.length);
-            SnippetBase s = snippetBaseRepository.findById(snippet.getId()).orElse(null);
+            Snippet s = snippetRepository.findById(snippet.getId()).orElse(null);
             if (s==null) {
                 throw new IllegalStateException("Can't find a snippet for Id " + snippet.getId()+", but base snippet is there");
             }
@@ -111,13 +111,13 @@ public class SnippetService {
     }
 
     public interface SnippetFilter {
-        boolean filter(SnippetBase snippet);
+        boolean filter(Snippet snippet);
     }
 
-    public List<SimpleSelectOption> getSelectOptions(Iterable<SnippetBase> snippets, List<SnippetCode> snippetCodes,
+    public List<SimpleSelectOption> getSelectOptions(Iterable<Snippet> snippets, List<SnippetCode> snippetCodes,
                                                      SnippetFilter snippetFilter) {
         List<SimpleSelectOption> selectOptions = new ArrayList<>();
-        for (SnippetBase snippet : snippets) {
+        for (Snippet snippet : snippets) {
             boolean isExist=false;
             for (SnippetCode snippetCode : snippetCodes) {
                 if (snippet.getSnippetCode().equals(snippetCode.getSnippetCode()) ) {
@@ -135,9 +135,9 @@ public class SnippetService {
         return selectOptions;
     }
 
-    public List<ExperimentSnippet> getExperimentSnippets(Iterable<SnippetBase> snippets, Experiment experiment) {
+    public List<ExperimentSnippet> getExperimentSnippets(Iterable<Snippet> snippets, Experiment experiment) {
         List<ExperimentSnippet> experimentSnippets = new ArrayList<>();
-        for (SnippetBase snippet : snippets) {
+        for (Snippet snippet : snippets) {
             for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                 if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
                     experimentSnippet.type = snippet.type;
@@ -190,7 +190,7 @@ public class SnippetService {
                 sum = Checksum.Type.SHA256.getChecksum(inputStream);
             }
 
-            SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
+            Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
             if (snippet!=null) {
                 final String checksum = Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256);
                 if (!sum.equals(checksum)) {
@@ -203,7 +203,8 @@ public class SnippetService {
                         snippet.length = file.length();
                         snippet.env = snippetConfig.env;
                         snippet.params = snippetConfig.params;
-                        snippetBaseRepository.save(snippet);
+                        snippet.reportMetrics = snippetConfig.isMetrics();
+                        snippetRepository.save(snippet);
                         try( InputStream inputStream = new FileInputStream(file)) {
                             binaryDataService.save(inputStream, snippet.length, snippet.getId(), BinaryData.Type.SNIPPET);
                         }
@@ -214,7 +215,7 @@ public class SnippetService {
                 }
             }
             else {
-                snippet = new SnippetBase();
+                snippet = new Snippet();
                 setChecksum(snippetConfig, sum, snippet);
                 snippet.name = snippetConfig.name;
                 snippet.snippetVersion = snippetConfig.version;
@@ -223,7 +224,8 @@ public class SnippetService {
                 snippet.length = file.length();
                 snippet.env = snippetConfig.env;
                 snippet.params = snippetConfig.params;
-                snippetBaseRepository.save(snippet);
+                snippet.reportMetrics = snippetConfig.isMetrics();
+                snippetRepository.save(snippet);
                 try( InputStream inputStream = new FileInputStream(file)) {
                     binaryDataService.save(inputStream, snippet.length, snippet.getId(), BinaryData.Type.SNIPPET);
                 }
@@ -231,7 +233,7 @@ public class SnippetService {
         }
     }
 
-    private void setChecksum(SnippetsConfig.SnippetConfig snippetConfig, String sum, SnippetBase snippet) {
+    private void setChecksum(SnippetsConfig.SnippetConfig snippetConfig, String sum, Snippet snippet) {
         if (snippetConfig.checksums != null) {
             // already defined checksum in snippets.yaml
             Checksum checksum = new Checksum();

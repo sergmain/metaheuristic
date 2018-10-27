@@ -19,9 +19,9 @@ package aiai.ai.station;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.yaml.station.StationExperimentSequence;
-import aiai.ai.yaml.sequence.SequenceYaml;
-import aiai.ai.yaml.sequence.SequenceYamlUtils;
+import aiai.ai.yaml.sequence.TaskParamYaml;
+import aiai.ai.yaml.station.StationTask;
+import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
@@ -36,13 +36,13 @@ import java.nio.file.Path;
 public class ArtifactCleaner {
 
     private final StationExperimentService stationExperimentService;
-    private final SequenceYamlUtils sequenceYamlUtils;
+    private final TaskParamYamlUtils taskParamYamlUtils;
     private final CurrentExecState currentExecState;
     private final Globals globals;
 
-    public ArtifactCleaner(StationExperimentService stationExperimentService, SequenceYamlUtils sequenceYamlUtils, CurrentExecState currentExecState, Globals globals) {
+    public ArtifactCleaner(StationExperimentService stationExperimentService, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, Globals globals) {
         this.stationExperimentService = stationExperimentService;
-        this.sequenceYamlUtils = sequenceYamlUtils;
+        this.taskParamYamlUtils = taskParamYamlUtils;
         this.currentExecState = currentExecState;
         this.globals = globals;
     }
@@ -53,11 +53,11 @@ public class ArtifactCleaner {
             return;
         }
 
-        for (StationExperimentSequence seq : stationExperimentService.findAll()) {
-            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
-            if (currentExecState.isState(sequenceYaml.experimentId, Enums.ExperimentExecState.DOESNT_EXIST)) {
+        for (StationTask seq : stationExperimentService.findAll()) {
+            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(seq.getParams());
+            if (currentExecState.isState(taskParamYaml.experimentId, Enums.ExperimentExecState.DOESNT_EXIST)) {
                 log.info("Delete obsolete sequence {}", seq);
-                stationExperimentService.deleteById(seq.getExperimentSequenceId());
+                stationExperimentService.deleteById(seq.getTaskId());
             }
         }
 

@@ -41,27 +41,27 @@ public class StationExperimentSequenceUtils {
         options.setPrettyFlow(true);
 
         Representer representer = new Representer();
-        representer.addClassTag(StationExperimentSequence.class, Tag.MAP);
+        representer.addClassTag(StationTask.class, Tag.MAP);
 
-        yaml = new Yaml(new Constructor(StationExperimentSequence.class), representer, options);
+        yaml = new Yaml(new Constructor(StationTask.class), representer, options);
     }
 
-    public static String toString(StationExperimentSequence config) {
+    public static String toString(StationTask config) {
         return yaml.dump(config);
     }
 
-    public static StationExperimentSequence to(String s) {
+    public static StationTask to(String s) {
         if (s==null) {
             return null;
         }
         return yaml.load(s);
     }
 
-    public static StationExperimentSequence to(InputStream is) {
+    public static StationTask to(InputStream is) {
         return yaml.load(is);
     }
 
-    public static StationExperimentSequence to(File file) {
+    public static StationTask to(File file) {
         try(FileInputStream fis =  new FileInputStream(file)) {
             return yaml.load(fis);
         } catch (IOException e) {

@@ -4,15 +4,20 @@ snippets:
       type: fit
       file: fit-model.py
       env: python-3
+      metrics: false
+      params: abc1
     - name: aiai.predict.default.snippet
       version: 1.0-SNAPSHOT
       type: predict
       file: predict-model.py
       env: python-3
+      metrics: true
+      params: abc2
     - name: aiai.predict-model-for-test-only.snippet
       version: 1.0-SNAPSHOT
       type: predict
       file: predict-model-for-test-only.py
       env: python-3
+      params: abc3
 
 

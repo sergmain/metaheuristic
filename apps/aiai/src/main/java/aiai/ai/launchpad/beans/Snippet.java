@@ -27,7 +27,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "AIAI_LP_SNIPPET")
 @Data
-public class SnippetBase implements Serializable {
+public class Snippet implements Serializable {
     private static final long serialVersionUID = 4066977399166436522L;
 
     @Id
@@ -60,6 +60,9 @@ public class SnippetBase implements Serializable {
 
     @Column(name = "IS_SIGNED")
     public boolean isSigned;
+
+    @Column(name = "IS_REPORT_METRICS")
+    public boolean reportMetrics;
 
     @Column(name = "CODE_LENGTH")
     public long length;

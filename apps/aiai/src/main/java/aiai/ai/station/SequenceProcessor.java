@@ -18,20 +18,22 @@
 package aiai.ai.station;
 
 import aiai.ai.Consts;
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
+import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.LogData;
 import aiai.ai.snippet.SnippetUtils;
-import aiai.apps.commons.utils.DirUtils;
-import aiai.apps.commons.yaml.snippet.SnippetType;
+import aiai.ai.utils.DigitUtils;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
-import aiai.ai.yaml.sequence.SequenceYaml;
-import aiai.ai.yaml.sequence.SequenceYamlUtils;
-import aiai.ai.yaml.sequence.SimpleFeature;
+import aiai.ai.yaml.sequence.SimpleResource;
 import aiai.ai.yaml.sequence.SimpleSnippet;
-import aiai.ai.yaml.station.StationExperimentSequence;
+import aiai.ai.yaml.sequence.TaskParamYaml;
+import aiai.ai.yaml.sequence.TaskParamYamlUtils;
+import aiai.ai.yaml.station.StationTask;
+import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -53,21 +55,35 @@ public class SequenceProcessor {
 
     private final ProcessService processService;
     private final StationService stationService;
-    private final SequenceYamlUtils sequenceYamlUtils;
-    private final StationExperimentService stationExperimentService;
+    private final TaskParamYamlUtils taskParamYamlUtils;
+    private final StationExperimentService stationTaskService;
     private final CurrentExecState currentExecState;
 
-    private Map<Long, AssetFile> isDatasetReady = new HashMap<>();
-    private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
-    private Map<String, SnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
+    private Map<BinaryData.Type, Map<String, AssetFile>> resourceReadyMap = new HashMap<>();
+//    private Map<Long, AssetFile> isDatasetReady = new HashMap<>();
+//    private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
+//    private Map<String, SnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
-    public SequenceProcessor(Globals globals, ProcessService processService, StationService stationService, SequenceYamlUtils sequenceYamlUtils, StationExperimentService stationExperimentService, CurrentExecState currentExecState) {
+    public SequenceProcessor(Globals globals, ProcessService processService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationExperimentService stationTaskService, CurrentExecState currentExecState) {
         this.globals = globals;
         this.processService = processService;
         this.stationService = stationService;
-        this.sequenceYamlUtils = sequenceYamlUtils;
-        this.stationExperimentService = stationExperimentService;
+        this.taskParamYamlUtils = taskParamYamlUtils;
+        this.stationTaskService = stationTaskService;
         this.currentExecState = currentExecState;
+    }
+
+    private AssetFile getResource(BinaryData.Type type, String id) {
+        return resourceReadyMap.containsKey(type) ? resourceReadyMap.get(type).get(id) : null;
+    }
+
+    private void putResource(BinaryData.Type type, String id, AssetFile assetFile) {
+        Map<String, AssetFile> map = resourceReadyMap.putIfAbsent(type, new HashMap<>());
+        if (map==null) {
+            map = new HashMap<>();
+            resourceReadyMap.put(type, map);
+        }
+        map.put(id, assetFile);
     }
 
     public void fixedDelay() {
@@ -81,84 +97,80 @@ public class SequenceProcessor {
             return;
         }
 
-        File stationDatasetDir = StationDatasetUtils.checkAndCreateDatasetDir(globals.stationDir);
-        if (stationDatasetDir == null) {
-            return;
-        }
-
         File snippetDir = SnippetUtils.checkEvironment(globals.stationDir);
         if (snippetDir == null) {
             return;
         }
 
-        List<StationExperimentSequence> seqs = stationExperimentService.findAllByFinishedOnIsNull();
-        for (StationExperimentSequence seq : seqs) {
-            if (StringUtils.isBlank(seq.getParams())) {
-                log.warn("Params for sequence {} is blank", seq.getExperimentSequenceId());
+        List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNull();
+        for (StationTask task : tasks) {
+            if (StringUtils.isBlank(task.getParams())) {
+                log.warn("Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
-            if (!currentExecState.isStarted(sequenceYaml.experimentId)) {
+            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
+            if (!currentExecState.isStarted(taskParamYaml.experimentId)) {
                 continue;
             }
-            AssetFile datasetFile = isDatasetReady.get(sequenceYaml.dataset.id);
-            if (datasetFile == null) {
-                datasetFile = StationDatasetUtils.prepareDatasetFile(stationDatasetDir, sequenceYaml.dataset.id);
-                // is this dataset prepared?
-                if (datasetFile.isError || !datasetFile.isContent) {
-                    log.info("Dataset #{} hasn't been prepared yet", sequenceYaml.dataset.id);
-                    continue;
-                }
-                isDatasetReady.put(sequenceYaml.dataset.id, datasetFile);
-            }
-
-            if (sequenceYaml.snippets.isEmpty()) {
-                stationExperimentService.finishAndWriteToLog(seq, "Broken sequence. List of snippets is empty");
-                continue;
-            }
-
-            File artifactDir = prepareSequenceDir(sequenceYaml.experimentId, seq.getExperimentSequenceId(), "artifacts");
-            if (artifactDir == null) {
-                stationExperimentService.finishAndWriteToLog(seq, "Error of configuring of environment. 'artifacts' directory wasn't created, sequence can't be processed.");
-                continue;
-            }
-
-            boolean isFeatureOk = true;
-            for (SimpleFeature feature : sequenceYaml.features) {
-                AssetFile assetFile= isFeatureReady.get(feature.id);
+            boolean isResourcesOk = true;
+            for (SimpleResource resource : taskParamYaml.resources) {
+                AssetFile assetFile= getResource(resource.type, resource.id);
                 if (assetFile == null) {
-                    assetFile = StationFeatureUtils.prepareFeatureFile(stationDatasetDir, sequenceYaml.dataset.id, feature.id);
-                    // is this feature prepared?
+                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, resource.type, resource.id);
+                    // is this resource prepared?
                     if (assetFile.isError || !assetFile.isContent) {
-                        log.info("Feature hasn't been prepared yet, {}", assetFile);
-                        isFeatureOk = false;
+                        log.info("Resource hasn't been prepared yet, {}", assetFile);
+                        isResourcesOk = false;
                         continue;
                     }
-                    isFeatureReady.put(sequenceYaml.dataset.id, assetFile);
+                    putResource(resource.type, resource.id, assetFile);
                 }
             }
-            if (!isFeatureOk) {
+            if (!isResourcesOk) {
                 continue;
             }
+
+            if (taskParamYaml.snippets.isEmpty()) {
+                stationTaskService.finishAndWriteToLog(task, "Broken task. List of snippets is empty");
+                continue;
+            }
+
+            File taskDir = prepareTaskDir(task.taskId, task.taskType);
+
+            File artifactDir = prepareTaskSubDir(taskDir, "artifacts");
+            if (artifactDir == null) {
+                stationTaskService.finishAndWriteToLog(task, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
+                continue;
+            }
+
 
             // at this point dataset and all features have to be downloaded from server
 
-            sequenceYaml.artifactPath = artifactDir.getAbsolutePath();
-            initAllPaths(stationDatasetDir, sequenceYaml);
-            final String params = sequenceYamlUtils.toString(sequenceYaml);
+            taskParamYaml.artifactPath = artifactDir.getAbsolutePath();
+            if (!initAllPaths(globals.stationResourcesDir, taskParamYaml) ){
+                log.warn("Some resource files wasn't initialized. Can't execute the task {}", task);
+            }
+            final String params = taskParamYamlUtils.toString(taskParamYaml);
 
-            seq.setLaunchedOn(System.currentTimeMillis());
-            seq = stationExperimentService.save(seq);
-            for (SimpleSnippet snippet : sequenceYaml.getSnippets()) {
-                SnippetUtils.SnippetFile snippetFile = isSnippetsReady.get(snippet.code);
-                if (snippetFile == null) {
-                    snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getCode(), snippet.filename);
-                    if (snippetFile.isError || !snippetFile.isContent) {
-                        return;
+            task.setLaunchedOn(System.currentTimeMillis());
+            task = stationTaskService.save(task);
+            for (SimpleSnippet snippet : taskParamYaml.getSnippets()) {
+                AssetFile assetFile= getResource(BinaryData.Type.SNIPPET, snippet.code);
+                if (assetFile == null) {
+                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, BinaryData.Type.SNIPPET, snippet.code);
+                    // is this snippet prepared?
+                    if (assetFile.isError || !assetFile.isContent) {
+                        log.info("Resource hasn't been prepared yet, {}", assetFile);
+                        isResourcesOk = false;
+                        continue;
                     }
-                    isSnippetsReady.put(snippet.code, snippetFile);
+                    putResource(BinaryData.Type.SNIPPET, snippet.code, assetFile);
                 }
-                SnippetExec snippetExec =  SnippetExecUtils.toSnippetExec(seq.getSnippetExecResults());
+                if (!isResourcesOk) {
+                    continue;
+                }
+
+                SnippetExec snippetExec =  SnippetExecUtils.toSnippetExec(task.getSnippetExecResults());
                 if (isThisSnippetCompletedWithError(snippet, snippetExec)) {
                     // stop processing this sequence because last snippet was finished with an error
                     break;
@@ -167,7 +179,7 @@ public class SequenceProcessor {
                     continue;
                 }
 
-                final File paramFile = prepareParamFile(sequenceYaml.experimentId, seq.getExperimentSequenceId(), snippet.getType(), params);
+                final File paramFile = prepareParamFile(taskDir, snippet.getType(), params);
                 if (paramFile == null) {
                     break;
                 }
@@ -182,11 +194,11 @@ public class SequenceProcessor {
                 try {
                     List<String> cmd = new ArrayList<>();
                     cmd.add(intepreter);
-                    cmd.add(snippetFile.file.getAbsolutePath());
+                    cmd.add(assetFile.file.getAbsolutePath());
 
                     final File execDir = paramFile.getParentFile();
-                    ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, seq.getExperimentSequenceId(), cmd, execDir);
-                    stationExperimentService.storeExecResult(seq.getExperimentSequenceId(), snippet, result, sequenceYaml.experimentId, artifactDir);
+                    ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, task.getTaskId(), cmd, execDir);
+                    stationTaskService.storeExecResult(task.getTaskId(), snippet, result, taskParamYaml.experimentId, artifactDir);
                     if (!result.isOk()) {
                         break;
                     }
@@ -195,26 +207,20 @@ public class SequenceProcessor {
                     log.error("Error exec process " + intepreter, err);
                 }
             }
-            stationExperimentService.markAsFinishedIfAllOk(seq.getExperimentSequenceId(), sequenceYaml);
+            stationTaskService.markAsFinishedIfAllOk(task.getTaskId(), taskParamYaml);
         }
     }
 
-    private void initAllPaths(File stationDatasetDir, SequenceYaml sequenceYaml) {
-        final AssetFile datasetAssetFile = StationDatasetUtils.prepareDatasetFile(stationDatasetDir, sequenceYaml.dataset.id);
-        if (datasetAssetFile.isError || !datasetAssetFile.isContent ) {
-            log.warn("Dataset file wasn't found. {}", datasetAssetFile);
-            return;
-        }
-        sequenceYaml.dataset.path = datasetAssetFile.file.getAbsolutePath();
-
-        for (SimpleFeature feature : sequenceYaml.features) {
-            AssetFile featureAssetFile = StationFeatureUtils.prepareFeatureFile(stationDatasetDir, sequenceYaml.dataset.id, feature.id);
-            if (featureAssetFile.isError || !featureAssetFile.isContent ) {
-                log.warn("Feature file wasn't found. {}", featureAssetFile);
-                return;
+    private boolean initAllPaths(File stationResourceDir, TaskParamYaml taskParamYaml) {
+        for (SimpleResource resource : taskParamYaml.resources) {
+            AssetFile assetFile = StationResourceUtils.prepareResourceFile(stationResourceDir, resource.type, resource.id);
+            if (assetFile.isError || !assetFile.isContent ) {
+                log.warn("Resource file wasn't found. {}", assetFile);
+                return false;
             }
-            feature.path = featureAssetFile.file.getAbsolutePath();
+            resource.path = assetFile.file.getAbsolutePath();
         }
+        return true;
     }
 
     private boolean isThisSnippetCompleted(SimpleSnippet snippet, SnippetExec snippetExec) {
@@ -232,8 +238,8 @@ public class SequenceProcessor {
         return result!=null && !result.isOk();
     }
 
-    private File prepareParamFile(long experimentId, long experimentSequenceId, SnippetType type, String params) {
-        File snippetTypeDir = prepareSequenceDir(experimentId, experimentSequenceId, type.toString());
+    private File prepareParamFile(File taskDir, SnippetType type, String params) {
+        File snippetTypeDir = prepareTaskSubDir(taskDir, type.toString());
         if (snippetTypeDir == null) {
             return null;
         }
@@ -252,10 +258,22 @@ public class SequenceProcessor {
         return paramFile;
     }
 
-    private File prepareSequenceDir(long experimentId, Long experimentSequenceId, String snippetType) {
-        String path = String.format("experiment%c%06d%csequence%c%06d%c%s", File.separatorChar, experimentId, File.separatorChar, File.separatorChar, experimentSequenceId, File.separatorChar, snippetType);
-        //noinspection UnnecessaryLocalVariable
-        File snippetTypeDir = DirUtils.createDir(globals.stationDir, path);
+    private File prepareTaskDir(Long taskId, Enums.TaskType taskType) {
+        File typeDir = new File(globals.stationTaskDir, taskType.toString());
+        DigitUtils.Power power = DigitUtils.getPower(taskId);
+        File taskDir = new File(typeDir,
+                ""+power.power7+File.separatorChar+power.power4+File.separatorChar);
+        taskDir.mkdirs();
+        return taskDir;
+    }
+
+    private File prepareTaskSubDir(File taskDir, String snippetType) {
+        File snippetTypeDir = new File(taskDir, snippetType);
+        snippetTypeDir.mkdirs();
+        if (!snippetTypeDir.exists()) {
+            log.warn("Can't create snippetTypeDir: {}", snippetTypeDir.getAbsolutePath());
+            return null;
+        }
         return snippetTypeDir;
     }
 

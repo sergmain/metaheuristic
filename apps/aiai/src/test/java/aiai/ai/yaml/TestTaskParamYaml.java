@@ -17,9 +17,9 @@
  */
 package aiai.ai.yaml;
 
+import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.apps.commons.yaml.snippet.SnippetType;
-import aiai.ai.yaml.sequence.SequenceYaml;
-import aiai.ai.yaml.sequence.SequenceYamlUtils;
+import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import aiai.ai.yaml.sequence.SimpleDataset;
 import aiai.ai.yaml.sequence.SimpleSnippet;
 import org.junit.Assert;
@@ -33,14 +33,14 @@ import java.util.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class TestSequenceYaml {
+public class TestTaskParamYaml {
 
     @Autowired
-    private SequenceYamlUtils sequenceYamlUtils;
+    private TaskParamYamlUtils taskParamYamlUtils;
 
     @Test
     public void testSequenceYaml() {
-        SequenceYaml seq = new SequenceYaml();
+        TaskParamYaml seq = new TaskParamYaml();
         seq.dataset = SimpleDataset.of(1L);
         seq.setExperimentId(2L);
         Map<String, String> map = new HashMap<>();
@@ -48,14 +48,14 @@ public class TestSequenceYaml {
         map.put("key2", "#1");
         seq.setHyperParams(map);
         List<SimpleSnippet> list = new ArrayList<>();
-        list.add(new SimpleSnippet(SnippetType.fit, "123", "file.txt", "112233", "python.exe", 1));
-        list.add(new SimpleSnippet(SnippetType.predict, "456", "file.txt", "112233", "python.exe", 2));
+        list.add(new SimpleSnippet(SnippetType.fit, "123", "file.txt", "112233", "python.exe", 1, false));
+        list.add(new SimpleSnippet(SnippetType.predict, "456", "file.txt", "112233", "python.exe", 2, true));
         seq.setSnippets(list);
 
-        String s = sequenceYamlUtils.toString(seq);
+        String s = taskParamYamlUtils.toString(seq);
 
 
-        SequenceYaml seq1 = sequenceYamlUtils.toSequenceYaml(s);
+        TaskParamYaml seq1 = taskParamYamlUtils.toTaskYaml(s);
         Assert.assertEquals(seq, seq1);
     }
 }

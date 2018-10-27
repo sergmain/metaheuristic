@@ -138,19 +138,19 @@ public class ExperimentService {
     private final ExperimentRepository experimentRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
-    private final SnippetBaseRepository snippetBaseRepository;
+    private final SnippetRepository snippetRepository;
     private final DatasetRepository datasetRepository;
-    private final SequenceYamlUtils sequenceYamlUtils;
+    private final TaskParamYamlUtils taskParamYamlUtils;
     private final DatasetCache datasetCache;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetBaseRepository snippetBaseRepository, DatasetRepository datasetRepository, SequenceYamlUtils sequenceYamlUtils, DatasetCache datasetCache) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, DatasetRepository datasetRepository, TaskParamYamlUtils taskParamYamlUtils, DatasetCache datasetCache) {
         this.globals = globals;
         this.experimentRepository = experimentRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
-        this.snippetBaseRepository = snippetBaseRepository;
+        this.snippetRepository = snippetRepository;
         this.datasetRepository = datasetRepository;
-        this.sequenceYamlUtils = sequenceYamlUtils;
+        this.taskParamYamlUtils = taskParamYamlUtils;
         this.datasetCache = datasetCache;
     }
 
@@ -195,7 +195,7 @@ public class ExperimentService {
             if (isAcceptOnlySigned) {
                 for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                    SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                    Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                     if (snippet!=null && !snippet.isSigned()) {
                         // this experiment with #experimentId contains non-signed snippet but we were asked for singed snippets only
                         return EMPTY_RESULT;
@@ -218,7 +218,7 @@ public class ExperimentService {
                 if (isAcceptOnlySigned) {
                     for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                         final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                         if (snippet!=null && snippet.isSigned()) {
                             // add only feature for signed experiments
                             fs.add(feature);
@@ -527,9 +527,9 @@ public class ExperimentService {
                 }
             }
 
-            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(sequence.getParams());
-            int idxX = mapX.get(sequenceYaml.hyperParams.get(paramCleared.get(0)));
-            int idxY = mapY.get(sequenceYaml.hyperParams.get(paramCleared.get(1)));
+            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(sequence.getParams());
+            int idxX = mapX.get(taskParamYaml.hyperParams.get(paramCleared.get(0)));
+            int idxY = mapY.get(taskParamYaml.hyperParams.get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
         }
 
@@ -553,10 +553,10 @@ public class ExperimentService {
 
         List<ExperimentSequence> selected = new ArrayList<>();
         for (ExperimentSequence sequence : list) {
-            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(sequence.getParams());
-            boolean[] isOk = new boolean[sequenceYaml.hyperParams.size()];
+            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(sequence.getParams());
+            boolean[] isOk = new boolean[taskParamYaml.hyperParams.size()];
             int idx = 0;
-            for (Map.Entry<String, String> entry : sequenceYaml.hyperParams.entrySet()) {
+            for (Map.Entry<String, String> entry : taskParamYaml.hyperParams.entrySet()) {
                 try {
                     if (!paramFilterKeys.contains(entry.getKey())) {
                         isOk[idx] = true;
@@ -741,10 +741,10 @@ public class ExperimentService {
             final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
             final List<SimpleFeature> simpleFeatures = Collections.unmodifiableList(ofVariants.values.stream().map(SimpleFeature::of).collect(Collectors.toList()));
 
-            Map<String, SnippetBase> localCache = new HashMap<>();
+            Map<String, Snippet> localCache = new HashMap<>();
             boolean isNew = false;
             for (HyperParams hyperParams : allHyperParams) {
-                SequenceYaml yaml = new SequenceYaml();
+                TaskParamYaml yaml = new TaskParamYaml();
                 yaml.setHyperParams( hyperParams.toSortedMap() );
                 yaml.setExperimentId( experiment.getId() );
                 yaml.setDataset( SimpleDataset.of(experiment.getDatasetId() ));
@@ -753,9 +753,9 @@ public class ExperimentService {
                 final List<SimpleSnippet> snippets = new ArrayList<>();
                 for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                    SnippetBase snippet =  localCache.get(experimentSnippet.getSnippetCode());
+                    Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
                     if (snippet==null) {
-                        snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                        snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                         if (snippet!=null) {
                             localCache.put(experimentSnippet.getSnippetCode(), snippet);
                         }
@@ -770,12 +770,13 @@ public class ExperimentService {
                             snippet.getFilename(),
                             snippet.checksum,
                             snippet.env,
-                            experimentSnippet.getOrder()
+                            experimentSnippet.getOrder(),
+                            snippet.reportMetrics
                     ));
                 }
                 yaml.snippets = snippets;
 
-                String sequenceParams = sequenceYamlUtils.toString(yaml);
+                String sequenceParams = taskParamYamlUtils.toString(yaml);
 
                 if (sequnces.contains(sequenceParams)) {
                     continue;

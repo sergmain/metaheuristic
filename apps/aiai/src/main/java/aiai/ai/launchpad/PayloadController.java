@@ -23,11 +23,11 @@ import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.Dataset;
 import aiai.ai.launchpad.beans.DatasetGroup;
-import aiai.ai.launchpad.beans.SnippetBase;
+import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
-import aiai.ai.launchpad.repositories.SnippetBaseRepository;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.DigitUtils;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
@@ -58,7 +58,7 @@ import java.io.InputStream;
 public class PayloadController {
 
     private final ChecksumWithSignatureService checksumWithSignatureService;
-    private final SnippetBaseRepository snippetBaseRepository;
+    private final SnippetRepository snippetRepository;
     private final DatasetGroupsRepository datasetGroupsRepository;
     private final BinaryDataService binaryDataService;
     private final DatasetCache datasetCache;
@@ -66,8 +66,8 @@ public class PayloadController {
 
     private final Globals globals;
 
-    public PayloadController(SnippetBaseRepository snippetBaseRepository, DatasetGroupsRepository datasetGroupsRepository, ChecksumWithSignatureService checksumWithSignatureService, BinaryDataService binaryDataService, DatasetCache datasetCache, SnippetService snippetService, Globals globals) {
-        this.snippetBaseRepository = snippetBaseRepository;
+    public PayloadController(SnippetRepository snippetRepository, DatasetGroupsRepository datasetGroupsRepository, ChecksumWithSignatureService checksumWithSignatureService, BinaryDataService binaryDataService, DatasetCache datasetCache, SnippetService snippetService, Globals globals) {
+        this.snippetRepository = snippetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
         this.checksumWithSignatureService = checksumWithSignatureService;
         this.binaryDataService = binaryDataService;
@@ -176,7 +176,7 @@ public class PayloadController {
     public HttpEntity<AbstractResource> snippets(HttpServletResponse response, @PathVariable("name") String snippetCode) throws IOException {
 
         SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
-        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             log.info("Snippet wasn't found for name {}", snippetCode);
             return returnEmptyAsGone(response);
@@ -212,7 +212,7 @@ public class PayloadController {
     public HttpEntity<String> snippetChecksum(HttpServletResponse response, @PathVariable("name") String snippetCode) throws IOException {
 
         SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
-        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             log.info("Snippet wasn't found for name {}", snippetCode);
             return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);

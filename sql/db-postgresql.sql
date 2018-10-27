@@ -133,6 +133,7 @@ CREATE TABLE AIAI_LP_SNIPPET (
   FILENAME  VARCHAR(250) not null,
   CHECKSUM    VARCHAR(2048),
   IS_SIGNED   BOOLEAN not null default false,
+  IS_REPORT_METRICS   BOOLEAN not null default false,
   ENV         VARCHAR(50) not null,
   PARAMS         VARCHAR(1000),
   CODE_LENGTH integer not null

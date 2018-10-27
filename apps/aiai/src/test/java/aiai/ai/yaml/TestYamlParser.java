@@ -129,6 +129,8 @@ dataset:
             assertEquals("fit-model.py", sc.file);
             assertEquals("1.0-SNAPSHOT", sc.version);
             assertEquals("python-3", sc.env);
+            assertEquals("abc1", sc.params);
+            assertFalse(sc.metrics);
 
             sc = config.snippets.get(1);
             assertEquals("aiai.predict.default.snippet", sc.name);
@@ -136,6 +138,17 @@ dataset:
             assertEquals("predict-model.py", sc.file);
             assertEquals("1.0-SNAPSHOT", sc.version);
             assertEquals("python-3", sc.env);
+            assertEquals("abc2", sc.params);
+            assertTrue(sc.metrics);
+
+            sc = config.snippets.get(2);
+            assertEquals("aiai.predict-model-for-test-only.snippet", sc.name);
+            assertEquals(SnippetType.predict, sc.type);
+            assertEquals("predict-model-for-test-only.py", sc.file);
+            assertEquals("1.0-SNAPSHOT", sc.version);
+            assertEquals("python-3", sc.env);
+            assertEquals("abc3", sc.params);
+            assertFalse(sc.metrics);
         }
     }
 

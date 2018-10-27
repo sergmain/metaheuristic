@@ -17,18 +17,19 @@
  */
 package aiai.ai.yaml.sequence;
 
+import aiai.ai.launchpad.beans.BinaryData;
 import lombok.Data;
 
-import java.util.List;
-import java.util.Map;
-
 @Data
-public class SequenceYaml {
-    public Long experimentId;
-    public SimpleDataset dataset;
-    public List<SimpleFeature> features;
-    public List<SimpleSnippet> snippets;
-    public Map<String, String> hyperParams;
+public class SimpleResource {
+    public String id;
+    public BinaryData.Type type;
+    // it's initialized at station side
+    public String path;
 
-    public String artifactPath;
+    public static SimpleResource of(String id) {
+        SimpleResource sf = new SimpleResource();
+        sf.id = id;
+        return sf;
+    }
 }

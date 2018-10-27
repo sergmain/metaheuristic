@@ -49,6 +49,7 @@ public class SnippetsConfig {
         public String params;
         public String version;
         public String env;
+        public boolean metrics = false;
         public Map<Checksum.Type, String> checksums;
 
         public SnippetConfigStatus verify() {

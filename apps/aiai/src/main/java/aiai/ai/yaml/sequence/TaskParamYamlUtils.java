@@ -24,36 +24,34 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
-import javax.annotation.PostConstruct;
-
 @Service
-public class SequenceYamlUtils {
+public class TaskParamYamlUtils {
 
-    private Yaml yamlSequenceYaml;
+    private Yaml yamlTaskYaml;
 
     // TODO 2018.09.12. so, snakeYaml isn't thread-safe or it was a side-effect?
     private static final Object syncObj = new Object();
 
-    public SequenceYamlUtils() {
+    public TaskParamYamlUtils() {
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
         Representer representer = new Representer();
-        representer.addClassTag(SequenceYaml.class, Tag.MAP);
+        representer.addClassTag(TaskParamYaml.class, Tag.MAP);
 
-        yamlSequenceYaml = new Yaml(new Constructor(SequenceYaml.class), representer, options);
+        yamlTaskYaml = new Yaml(new Constructor(TaskParamYaml.class), representer, options);
     }
 
-    public String toString(SequenceYaml sequenceYaml) {
+    public String toString(TaskParamYaml taskParamYaml) {
         synchronized (syncObj) {
-            return yamlSequenceYaml.dump(sequenceYaml);
+            return yamlTaskYaml.dump(taskParamYaml);
         }
     }
 
-    public SequenceYaml toSequenceYaml(String s) {
+    public TaskParamYaml toTaskYaml(String s) {
         synchronized (syncObj) {
-            return yamlSequenceYaml.load(s);
+            return yamlTaskYaml.load(s);
         }
     }
 

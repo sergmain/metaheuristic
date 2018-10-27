@@ -124,7 +124,7 @@ public class ExperimentsController {
 
     private final DatasetRepository datasetRepository;
     private final DatasetGroupsRepository datasetGroupsRepository;
-    private final SnippetBaseRepository snippetBaseRepository;
+    private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
     private final ExperimentService experimentService;
@@ -136,11 +136,11 @@ public class ExperimentsController {
     private final DatasetCache datasetCache;
     private final EnvService envService;
 
-    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, SnippetBaseRepository snippetBaseRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache, EnvService envService) {
+    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache, EnvService envService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
-        this.snippetBaseRepository = snippetBaseRepository;
+        this.snippetRepository = snippetRepository;
         this.experimentRepository = experimentRepository;
         this.experimentHyperParamsRepository = experimentHyperParamsRepository;
         this.snippetService = snippetService;
@@ -298,7 +298,7 @@ public class ExperimentsController {
         if (experiment == null) {
             return "redirect:/launchpad/experiments";
         }
-        Iterable<SnippetBase> snippets = snippetBaseRepository.findAll();
+        Iterable<Snippet> snippets = snippetRepository.findAll();
         SnippetResult snippetResult = new SnippetResult();
         experiment.sortSnippetsByOrder();
 
@@ -500,7 +500,7 @@ public class ExperimentsController {
 
         SnippetVersion snippetVersion = SnippetVersion.from(code);
 
-        SnippetBase snippet = snippetBaseRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         s.setType(snippet.getType());
         experiment.getSnippets().add(s);
 

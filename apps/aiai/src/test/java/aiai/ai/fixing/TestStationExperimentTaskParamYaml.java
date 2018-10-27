@@ -19,7 +19,7 @@ package aiai.ai.fixing;
 
 import aiai.ai.launchpad.repositories.ExperimentSequenceRepository;
 import aiai.ai.station.StationExperimentService;
-import aiai.ai.yaml.sequence.SequenceYamlUtils;
+import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,7 +30,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
-public class TestStationExperimentSequenceYaml {
+public class TestStationExperimentTaskParamYaml {
 
 
     @Autowired
@@ -39,16 +39,16 @@ public class TestStationExperimentSequenceYaml {
     @Autowired
     public StationExperimentService stationExperimentService;
     @Autowired
-    private SequenceYamlUtils sequenceYamlUtils;
+    private TaskParamYamlUtils taskParamYamlUtils;
 
     @Test
     public void fix() {
 /*
         for (StationExperimentSequenceOld seq : stationExperimentSequenceOldRepository.findAll()) {
-            StationExperimentSequence seqTrg = new StationExperimentSequence();
+            StationTask seqTrg = new StationTask();
             BeanUtils.copyProperties(seq, seqTrg);
 
-            final SequenceYaml sequenceYaml = sequenceYamlUtils.toSequenceYaml(seq.getParams());
+            final TaskParamYaml sequenceYaml = sequenceYamlUtils.toTaskYaml(seq.getParams());
             final long experimentId = sequenceYaml.experimentId;
             seqTrg.experimentId = experimentId;
 

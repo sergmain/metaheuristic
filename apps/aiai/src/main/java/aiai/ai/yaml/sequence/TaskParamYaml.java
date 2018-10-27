@@ -15,14 +15,23 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.launchpad.repositories;
+package aiai.ai.yaml.sequence;
 
-import aiai.ai.launchpad.beans.SnippetBase;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Repository;
+import lombok.Data;
 
-@Repository
-public interface SnippetBaseRepository extends CrudRepository<SnippetBase, Long> {
+import java.util.List;
+import java.util.Map;
 
-    SnippetBase findByNameAndSnippetVersion(String name, String snippetVersion);
+@Data
+public class TaskParamYaml {
+    public Long experimentId;
+    public List<SimpleResource> resources;
+/*
+    public SimpleDataset dataset;
+    public List<SimpleFeature> features;
+*/
+    public List<SimpleSnippet> snippets;
+    public Map<String, String> hyperParams;
+
+    public String artifactPath;
 }
