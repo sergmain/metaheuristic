@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class ExperimentService {
 
-    private static final List<Protocol.AssignedExperimentSequence.SimpleSequence> EMPTY_SIMPLE_SEQUENCES = Collections.unmodifiableList(new ArrayList<>());
+    private static final List<Protocol.AssignedTask.Sequence> EMPTY_SIMPLE_SEQUENCES = Collections.unmodifiableList(new ArrayList<>());
     private static final HashMap<String, Integer> HASH_MAP = new HashMap<>();
 
     @Data
@@ -64,7 +64,7 @@ public class ExperimentService {
     @AllArgsConstructor
     public static class SequencesAndAssignToStationResult {
         ExperimentFeature feature;
-        List<Protocol.AssignedExperimentSequence.SimpleSequence> simpleSequences;
+        List<Protocol.AssignedTask.Sequence> simpleSequences;
     }
 
     private static final SequencesAndAssignToStationResult EMPTY_RESULT = new SequencesAndAssignToStationResult(null, EMPTY_SIMPLE_SEQUENCES);
@@ -342,9 +342,9 @@ public class ExperimentService {
         else {
             seqs = experimentSequenceRepository.findAllByStationIdIsNullAndFeatureId(PageRequest.of(0, recordNumber), feature.getId());
         }
-        List<Protocol.AssignedExperimentSequence.SimpleSequence> result = new ArrayList<>(recordNumber+1);
+        List<Protocol.AssignedTask.Sequence> result = new ArrayList<>(recordNumber+1);
         for (ExperimentSequence seq : seqs) {
-            Protocol.AssignedExperimentSequence.SimpleSequence ss = new Protocol.AssignedExperimentSequence.SimpleSequence();
+            Protocol.AssignedTask.Sequence ss = new Protocol.AssignedTask.Sequence();
             ss.setExperimentSequenceId(seq.getId());
             ss.setParams(seq.getParams());
 

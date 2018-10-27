@@ -40,8 +40,8 @@ public class ExchangeData {
 
     private Protocol.Nop nop;
     private Protocol.ReportStation reportStation;
-    private Protocol.RequestExperimentSequence requestExperimentSequence;
-    private Protocol.AssignedExperimentSequence assignedExperimentSequence;
+    private Protocol.RequestTask requestTask;
+    private Protocol.AssignedTask assignedTask;
     private Protocol.RequestStationId requestStationId;
     private Protocol.AssignedStationId assignedStationId;
     private Protocol.ReAssignStationId reAssignedStationId;
@@ -113,18 +113,18 @@ public class ExchangeData {
                 }
                 this.registerInviteResult = (Protocol.RegisterInviteResult) command;
                 break;
-            case RequestExperimentSequence:
-                if (this.requestExperimentSequence != null) {
+            case RequestTask:
+                if (this.requestTask != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
-                this.requestExperimentSequence = (Protocol.RequestExperimentSequence) command;
+                this.requestTask = (Protocol.RequestTask) command;
                 break;
-            case AssignedExperimentSequence:
-                if (this.assignedExperimentSequence != null && this.assignedExperimentSequence.getSequences()!=null) {
-                    this.assignedExperimentSequence.getSequences().addAll( ((Protocol.AssignedExperimentSequence) command).getSequences());
+            case AssignedTask:
+                if (this.assignedTask != null && this.assignedTask.getSequences()!=null) {
+                    this.assignedTask.getSequences().addAll( ((Protocol.AssignedTask) command).getSequences());
                     break;
                 }
-                this.assignedExperimentSequence = (Protocol.AssignedExperimentSequence) command;
+                this.assignedTask = (Protocol.AssignedTask) command;
                 break;
             case ReportStationStatus:
                 if (this.reportStationStatus != null) {
@@ -170,7 +170,7 @@ public class ExchangeData {
     public List<Command> getCommands(boolean isExcludeNop) {
         return asListOfNonNull(isExcludeNop, nop, reportStation, requestStationId,
                 assignedStationId, reAssignedStationId, registerInvite,
-                registerInviteResult, requestExperimentSequence, assignedExperimentSequence, reportStationStatus,
+                registerInviteResult, requestTask, assignedTask, reportStationStatus,
                 reportSequenceProcessingResult, reportResultDelivering, experimentStatus, stationSequenceStatus);
     }
 

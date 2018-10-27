@@ -19,31 +19,25 @@ package aiai.ai.launchpad.dataset;
 
 import aiai.ai.Consts;
 import aiai.ai.Globals;
-import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
+import aiai.ai.exceptions.StoreNewPartOfRawFileException;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.env.EnvService;
-import aiai.ai.launchpad.repositories.*;
+import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
+import aiai.ai.launchpad.repositories.DatasetPathRepository;
+import aiai.ai.launchpad.repositories.DatasetRepository;
+import aiai.ai.launchpad.repositories.SnippetBaseRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
-import aiai.ai.snippet.SnippetCode;
 import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.utils.SimpleSelectOption;
-import aiai.ai.utils.StrUtils;
-import aiai.ai.yaml.config.DatasetPreparingConfig;
-import aiai.ai.yaml.config.DatasetPreparingConfigUtils;
-import aiai.apps.commons.utils.DirUtils;
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
@@ -53,11 +47,10 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * User: Serg
@@ -69,8 +62,6 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DatasetController {
 
-    private static final String CONFIG_YAML = "config.yaml";
-    private static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";
     private static final Set<String> exts;
 
     @Data
@@ -104,29 +95,27 @@ public class DatasetController {
     }
 
     private final Globals globals;
+    private final DatasetService datasetService;
     private final DatasetRepository datasetRepository;
     private final DatasetGroupsRepository groupsRepository;
     private final DatasetPathRepository pathRepository;
-    private final ProcessService processService;
     private final SnippetService snippetService;
     private final SnippetBaseRepository snippetBaseRepository;
     private final EnvService envService;
     private final DatasetCache datasetCache;
     private final BinaryDataService binaryDataService;
-    private BinaryDataRepository binaryDataRepository;
 
-    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetBaseRepository snippetBaseRepository, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, BinaryDataRepository binaryDataRepository) {
+    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetBaseRepository snippetBaseRepository, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, DatasetService datasetService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.groupsRepository = groupsRepository;
         this.pathRepository = pathRepository;
-        this.processService = processService;
         this.snippetService = snippetService;
         this.snippetBaseRepository = snippetBaseRepository;
         this.envService = envService;
         this.datasetCache = datasetCache;
         this.binaryDataService = binaryDataService;
-        this.binaryDataRepository = binaryDataRepository;
+        this.datasetService = datasetService;
     }
 
     @GetMapping("/datasets")
@@ -189,48 +178,8 @@ public class DatasetController {
             redirectAttributes.addFlashAttribute("errorMessage", "#174.01 dataset wasn't found, datasetId: " + datasetId);
             return "redirect:/launchpad/datasets";
         }
+        final DatasetDefinition definition = datasetService.prepareDatasetDefinition(dataset);
 
-        // path variable is for informing user about directory structure
-        final String path = String.format("<Launchpad directory>%c%s%c%06d", File.separatorChar, Consts.DATASET_DIR, File.separatorChar, dataset.getId());
-
-        final DatasetDefinition definition = new DatasetDefinition(dataset, globals.launchpadDir.getPath(), path);
-        definition.paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
-
-        final Iterable<SnippetBase> snippets = snippetBaseRepository.findAll();
-
-        final List<SnippetCode> featureCodes = new ArrayList<>();
-
-        // fix conditions for UI
-        final int groupSize = dataset.getDatasetGroups().size();
-        for (int i = 0; i < groupSize; i++) {
-            DatasetGroup group = dataset.getDatasetGroups().get(i);
-            group.setAddColumn(true);
-            if (group.getSnippet()!=null) {
-                featureCodes.add(new SnippetCode(group.getSnippet().getId(), group.getSnippet().getSnippetCode()));
-            }
-        }
-
-        // ugly but it works
-        for (DatasetGroup group : dataset.getDatasetGroups()) {
-            group.featureOptions = snippetService.getSelectOptions(snippets, featureCodes, (s) -> SnippetType.feature!=(SnippetType.valueOf(s.type)));
-        }
-
-        final List<SnippetCode> assemblyCodes = dataset.getAssemblySnippet() == null ? new ArrayList<>() : Collections.singletonList(new SnippetCode(dataset.getAssemblySnippet().getId(), dataset.getAssemblySnippet().getSnippetCode()));
-        definition.assemblyOptions = snippetService.getSelectOptions(snippets, assemblyCodes, (s) -> SnippetType.assembly!=(SnippetType.valueOf(s.type)));
-
-        final List<SnippetCode> datasetCodes = dataset.getDatasetSnippet() == null ? new ArrayList<>() : Collections.singletonList(new SnippetCode(dataset.getDatasetSnippet().getId(), dataset.getDatasetSnippet().getSnippetCode()));
-        definition.datasetOptions = snippetService.getSelectOptions(snippets, datasetCodes, (s) -> SnippetType.dataset!=(SnippetType.valueOf(s.type)));
-
-        definition.envs.putAll( envService.envsAsMap() );
-
-        definition.setStoreToDisk(globals.isStoreDataToDisk());
-        definition.setAllPathsValid(true);
-        for (DatasetPath datasetPath : definition.getPaths()) {
-            if (!datasetPath.isValid()) {
-                definition.setAllPathsValid(false);
-                break;
-            }
-        }
         model.addAttribute("result", definition);
         return "launchpad/dataset-definition";
     }
@@ -297,39 +246,11 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
         try {
-            Dataset ds = new Dataset();
-            ds.setName(StrUtils.incCopyNumber(dataset.getName()));
-            ds.setDescription(dataset.getDescription());
-            ds.setAssemblySnippet(dataset.getAssemblySnippet());
-            ds.setDatasetSnippet(dataset.getDatasetSnippet());
-            ds.setEditable(true);
-            ds.setLocked(false);
-            ds.setDatasetGroups(new ArrayList<>());
-            ds.setLength(dataset.getLength());
-            datasetCache.save(ds);
-            binaryDataService.cloneBinaryData(dataset.getId(), ds.getId(), BinaryData.Type.DATASET);
-
-            for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
-                DatasetGroup dg = new DatasetGroup();
-                BeanUtils.copyProperties(datasetGroup, dg);
-                dg.setId(null);
-                dg.setVersion(null);
-                dg.setFeatureStatus(ArtifactStatus.NONE.value);
-                dg.setDataset(ds);
-                datasetCache.saveGroup(dg);
-            }
-
-            for (DatasetPath path : pathRepository.findByDataset(dataset)) {
-                File file = new File(globals.launchpadDir, path.getPath());
-                try {
-                    storeNewPartOfRawFile(new File(path.getPath()).getName(), ds, file, false);
-                }
-                catch (IOException e) {
-                    log.error("Error while copying part of raw file: " + file.getPath(), e);
-                    redirectAttributes.addFlashAttribute("errorMessage", "#150.02 Error while copying part of raw file: " + e.toString());
-                    return "redirect:/launchpad/datasets";
-                }
-            }
+            datasetService.cloneDataset(dataset);
+        } catch (StoreNewPartOfRawFileException e) {
+            log.error("Error while copying part of raw file, src: "+e.srcPath+", trg: "+e.trgPath, e);
+            redirectAttributes.addFlashAttribute("errorMessage", "#150.02 Error while copying part of raw file: " + e.toString());
+            return "redirect:/launchpad/datasets";
         } catch (SQLException e) {
             redirectAttributes.addFlashAttribute("errorMessage", "#150.05 Error cloning binaryData, error: " + e.toString());
             return "redirect:/launchpad/datasets";
@@ -358,16 +279,7 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
 
-        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
-        int groupNumber;
-        //noinspection ConstantConditions
-        groupNumber = groups.isEmpty() ? 1 : groups.stream().mapToInt(DatasetGroup::getGroupNumber).max().getAsInt() + 1;
-
-        final DatasetGroup group = new DatasetGroup(groupNumber);
-        group.setFeature(false);
-        group.setDataset(dataset);
-
-        dataset.getDatasetGroups().add(group);
+        datasetService.addGroup(dataset, dataset.getId(), false);
 
         datasetCache.save(dataset);
         return "redirect:/launchpad/dataset-definition/" + datasetId;
@@ -380,16 +292,7 @@ public class DatasetController {
             return "redirect:/launchpad/datasets";
         }
 
-        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(datasetId);
-        int groupNumber;
-        //noinspection ConstantConditions
-        groupNumber = groups.isEmpty() ? 1 : groups.stream().mapToInt(DatasetGroup::getGroupNumber).max().getAsInt() + 1;
-
-        final DatasetGroup group = new DatasetGroup(groupNumber);
-        group.setFeature(true);
-        group.setDataset(dataset);
-
-        dataset.getDatasetGroups().add(group);
+        datasetService.addGroup(dataset, datasetId, true);
 
         datasetCache.save(dataset);
         return "redirect:/launchpad/dataset-definition/" + datasetId;
@@ -413,7 +316,7 @@ public class DatasetController {
 
             final SnippetBase snippet = group.getSnippet();
             final File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
-            final ConfigForFeature configForFeature = createYamlForFeature(group);
+            final ConfigForFeature configForFeature = datasetService.createYamlForFeature(group);
             if (!globals.isStoreDataToDisk()) {
                 snippetService.persistSnippet(snippet.getSnippetCode());
                 File datasetFile = new File(globals.launchpadDir, dataset.asDatasetFilePath());
@@ -435,11 +338,11 @@ public class DatasetController {
             }
             String cmdLine = env.value+' '+ snippetFile.file.getAbsolutePath()+' '+ snippet.params;
 
-            File yaml = configForFeature.yamlFile;
-            System.out.println("yaml file: " + yaml.getPath());
-            final ProcessService.Result result = runCommand(yaml, cmdLine, LogData.Type.FEATURE, group.getId());
+            final File yaml = configForFeature.yamlFile;
+            log.info("yaml file: {}", yaml.getPath());
+            final ProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.FEATURE, group.getId());
             boolean isOk = result.isOk();
-            updateInfoWithDatasetGroup(configForFeature, group, isOk);
+            datasetService.updateInfoWithDatasetGroup(configForFeature, group, isOk);
             if (!isOk) {
                 redirectAttributes.addFlashAttribute("errorMessage",
                         "#155.02 Error executing of feature producer. See logs for more info");
@@ -452,93 +355,6 @@ public class DatasetController {
             return "redirect:/launchpad/dataset-definition/" + datasetId;
         }
         return "redirect:/launchpad/dataset-definition/" + datasetId;
-    }
-
-    private void updateInfoWithDatasetGroup(ConfigForFeature configForFeature, DatasetGroup group, boolean isOk) throws IOException {
-        int status = isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value;
-        if (!configForFeature.featureFile.exists()) {
-            log.error("Feature file doesn't exist: {}", configForFeature.featureFile.getPath());
-            status = ArtifactStatus.ERROR.value;
-        }
-        else {
-            group.setLength(configForFeature.featureFile.length());
-        }
-        group.setFeatureStatus(status);
-        datasetCache.saveGroup(group);
-
-        if (group.getFeatureStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
-            try (InputStream is = new FileInputStream(configForFeature.featureFile)) {
-                binaryDataService.save(is, configForFeature.featureFile.length(), group.getId(), BinaryData.Type.FEATURE);
-            }
-        }
-    }
-
-    @Data
-    @AllArgsConstructor
-    private static class ConfigForFeature {
-        String rawFilePath;
-        File rawFile;
-        String featureFilePath;
-        File featureFile;
-        File yamlFile;
-    }
-
-    private ConfigForFeature createYamlForFeature(DatasetGroup group) {
-
-        long datasetId = group.getDataset().getId();
-
-        final String definitionPath = String.format("%s%c%06d", Consts.DATASET_DIR, File.separatorChar, datasetId);
-        final File definitionDir = new File(globals.launchpadDir, definitionPath);
-        if (!definitionDir.exists()) {
-            boolean status = definitionDir.mkdirs();
-            if (!status) {
-                throw new IllegalStateException("Error create directory: " + definitionDir.getAbsolutePath());
-            }
-        }
-
-        final String rawFilePath = group.getDataset().asRawFilePath();
-        final File rawFile = new File(globals.launchpadDir, rawFilePath);
-        final String featurePath = String.format("%s%c%s%c%06d", definitionPath, File.separatorChar, Consts.FEATURE_DIR, File.separatorChar, group.getId());
-        final File featureDir = new File(globals.launchpadDir, featurePath);
-        if (!featureDir.exists()) {
-            boolean status = featureDir.mkdirs();
-            if (!status) {
-                throw new IllegalStateException("Error create directory: " + featureDir.getAbsolutePath());
-            }
-        }
-
-        File yamlFile = new File(featureDir, PRODUCE_FEATURE_YAML);
-        File yamlFileBak = new File(featureDir, PRODUCE_FEATURE_YAML + ".bak");
-        //noinspection ResultOfMethodCallIgnored
-        yamlFileBak.delete();
-        if (yamlFile.exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            yamlFile.renameTo(yamlFileBak);
-        }
-
-        final String featureFilename = String.format("%s%c" + Consts.FEATURE_FILE_MASK, featurePath, File.separatorChar, group.getId());
-        File featureFile = new File(globals.launchpadDir, featureFilename);
-        File featureFileBak = new File(globals.launchpadDir, featureFilename + ".bak");
-
-        //noinspection ResultOfMethodCallIgnored
-        featureFileBak.delete();
-        if (featureFile.exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            featureFile.renameTo(featureFileBak);
-        }
-
-        String s = "";
-        s += "rawFile: " + rawFilePath + '\n';
-        s += "featureFile: " + featureFilename + '\n';
-
-        try {
-            FileUtils.write(yamlFile, s, Charsets.UTF_8, false);
-        }
-        catch (IOException e) {
-            throw new RuntimeException("error", e);
-        }
-
-        return new ConfigForFeature(rawFilePath, rawFile, featureFilename, featureFile, new File(featurePath, PRODUCE_FEATURE_YAML));
     }
 
     @PostMapping(value = "/dataset-group-id-group-commit")
@@ -563,7 +379,6 @@ public class DatasetController {
         }
         DatasetGroup group = value.get();
         group.setLabel(label);
-//        groupsRepository.save(group);
         datasetCache.saveGroup(group);
 
         return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
@@ -643,31 +458,12 @@ public class DatasetController {
         }
         String cmdLine = env.value+' '+ snippetFile.file.getAbsolutePath()+' '+dataset.getAssemblySnippet().params;
 
-        final File yaml = createConfigYaml(dataset);
-        final ProcessService.Result result = runCommand(yaml, cmdLine, LogData.Type.ASSEMBLING, dataset.getId());
+        final File yaml = datasetService.createConfigYaml(dataset);
+        final ProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.ASSEMBLING, dataset.getId());
         boolean isOk = result.isOk();
-        updateInfoWithRaw(dataset, isOk);
+        datasetService.updateInfoWithRaw(dataset, isOk);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
-    }
-
-    private void updateInfoWithRaw(Dataset dataset, boolean isOk) throws IOException {
-        final String path = dataset.asRawFilePath();
-        final File rawFile = new File(globals.launchpadDir, path);
-        if (!rawFile.exists()) {
-            isOk = false;
-        }
-        dataset.setDatasetProducingStatus(ArtifactStatus.OBSOLETE.value);
-        dataset.setRawAssemblingStatus(isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value);
-        datasetCache.save(dataset);
-
-        if (dataset.getRawAssemblingStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
-            try (InputStream is = new FileInputStream(rawFile)) {
-                binaryDataService.save(is, rawFile.length(), dataset.getId(), BinaryData.Type.ASSEMBLED_RAW);
-            }
-        }
-
-        obsoleteDatasetGroups(dataset);
     }
 
     @PostMapping(value = "/dataset-run-producing-commit")
@@ -703,115 +499,12 @@ public class DatasetController {
         String cmdLine;
         cmdLine = env.value+' '+ snippetFile.file.getAbsolutePath()+' '+ snippet.params;
 
-        File yaml = createConfigYaml(dataset);
-        final ProcessService.Result result = runCommand(yaml, cmdLine, LogData.Type.PRODUCING, dataset.getId());
+        File yaml = datasetService.createConfigYaml(dataset);
+        final ProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.PRODUCING, dataset.getId());
         boolean isOk = result.isOk();
-        updateInfoWithDataset(dataset, isOk);
+        datasetService.updateInfoWithDataset(dataset, isOk);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
-    }
-
-    private void obsoleteDatasetGroups(Dataset dataset) {
-        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(dataset.getId());
-        for (DatasetGroup group : groups) {
-            group.setFeatureStatus(ArtifactStatus.OBSOLETE.value);
-        }
-        datasetCache.saveAllGroups(groups, dataset.getId());
-    }
-
-    private void updateInfoWithDataset(Dataset dataset, boolean isOk) throws IOException {
-        final String path = dataset.asDatasetFilePath();
-        File datasetFile = new File(globals.launchpadDir, path);
-        int status = isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value;
-        if (!datasetFile.exists()) {
-            log.error("Dataset file doesn't exist: {}", datasetFile.getPath());
-            status = ArtifactStatus.ERROR.value;
-        }
-        else {
-            dataset.setLength(datasetFile.length());
-        }
-        dataset.setDatasetProducingStatus(status);
-        datasetCache.save(dataset);
-
-        if (dataset.getRawAssemblingStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
-            try (InputStream is = new FileInputStream(datasetFile)) {
-                binaryDataService.save(is, datasetFile.length(), dataset.getId(), BinaryData.Type.DATASET);
-            }
-        }
-
-        obsoleteDatasetGroups(dataset);
-    }
-
-    private ProcessService.Result runCommand(File yaml, String command, LogData.Type type, Long refId) {
-
-        // https://examples.javacodegeeks.com/core-java/lang/processbuilder/java-lang-processbuilder-example/
-        //
-        // java -jar bin\app-assembly-dataset-1.0-SNAPSHOT.jar 6
-        try {
-            List<String> cmd = Arrays.stream(command.split("\\s+")).collect(Collectors.toList());
-            cmd.add(yaml.getPath());
-            final File execDir = globals.launchpadDir.getCanonicalFile();
-
-            return processService.execCommand(type, refId, cmd, execDir);
-
-        }
-        catch (Exception e) {
-            log.error("Error", e);
-            return new ProcessService.Result(false, -1, e.getMessage());
-        }
-    }
-
-    private File createConfigYaml(Dataset dataset) throws IOException {
-        final String path = String.format("%s%c%06d", Consts.DATASET_DIR, File.separatorChar, dataset.getId());
-        final File datasetDefDir = new File(globals.launchpadDir, path);
-        if (!datasetDefDir.exists()) {
-            boolean status = datasetDefDir.mkdirs();
-            if (!status) {
-                throw new IllegalStateException("Error create directory: " + datasetDefDir.getAbsolutePath());
-            }
-        }
-
-        File yamlFile = new File(datasetDefDir, CONFIG_YAML);
-        File yamlFileBak = new File(datasetDefDir, CONFIG_YAML + ".bak");
-        yamlFileBak.delete();
-        if (yamlFile.exists()) {
-            yamlFile.renameTo(yamlFileBak);
-        }
-
-
-        File datasetDir = DirUtils.createDir(datasetDefDir, "dataset");
-        if (datasetDir == null) {
-            throw new IllegalStateException("Can't create target dir");
-        }
-        if (!datasetDir.isDirectory()) {
-            throw new IllegalStateException("Not a directory: " + datasetDir.getCanonicalPath());
-        }
-
-        File datatsetFile = new File(datasetDir, "dataset.");
-        File datatsetFileBak = new File(datasetDir, "dataset.bak");
-
-        datatsetFileBak.delete();
-        if (datatsetFile.exists()) {
-            datatsetFile.renameTo(datatsetFileBak);
-        }
-
-        List<DatasetPath> paths = pathRepository.findByDataset_OrderByPathNumber(dataset);
-
-        DatasetPreparingConfig config = new DatasetPreparingConfig();
-        for (DatasetPath datasetPath : paths) {
-            config.parts.add(datasetPath.getPath());
-        }
-        config.datasetFile = String.format("%s%cdataset%c%s", path, File.separatorChar, File.separatorChar, Consts.DATASET_FILE_NAME);
-        config.rawFile = String.format("%s%c%s", path, File.separatorChar, Consts.RAW_FILE_NAME);
-
-        try {
-            FileUtils.write(yamlFile, DatasetPreparingConfigUtils.toString(config), Charsets.UTF_8, false);
-        }
-        catch (IOException e) {
-            throw new RuntimeException("error", e);
-        }
-
-        return new File(path, CONFIG_YAML);
     }
 
     private static final Random r = new Random();
@@ -848,8 +541,8 @@ public class DatasetController {
         }
 
         try {
-            storeNewPartOfRawFile(originFilename, dataset, tempFile, true);
-        } catch (IOException e) {
+            datasetService.storeNewPartOfRawFile(originFilename, dataset, tempFile, true);
+        } catch (StoreNewPartOfRawFileException e) {
             log.error("Error", e);
             redirectAttributes.addFlashAttribute("errorMessage", "#172.04 An error while saving data to file, " + e.toString());
             return "redirect:/launchpad/dataset-definition/" + datasetId;
@@ -857,54 +550,6 @@ public class DatasetController {
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
-    private void storeNewPartOfRawFile(String originFilename, Dataset dataset, File tempFile, boolean isUsePrefix) throws IOException {
-        List<DatasetPath> paths = pathRepository.findByDataset(dataset);
-
-        //noinspection ConstantConditions
-        final String path = String.format("%s%c%06d%craws", Consts.DATASET_DIR, File.separatorChar, dataset.getId(), File.separatorChar);
-
-        File datasetDir = new File(globals.launchpadDir, path);
-        if (!datasetDir.exists()) {
-            boolean status = datasetDir.mkdirs();
-            if (!status) {
-                throw new IllegalStateException("Error create directory: " + datasetDir.getAbsolutePath());
-            }
-        }
-
-        String checksumAsJson = DatasetChecksum.getChecksumAsJson(tempFile);
-
-        int pathNumber = paths.isEmpty() ? 1 : paths.stream().mapToInt(DatasetPath::getPathNumber).max().getAsInt() + 1;
-        File datasetFile;
-        if (isUsePrefix) {
-            datasetFile = new File(datasetDir, String.format("raw-%d-%s", pathNumber, originFilename));
-        } else {
-            datasetFile = new File(datasetDir, originFilename);
-        }
-
-        DatasetPath dp = new DatasetPath();
-        String pathToDataset = path + File.separatorChar + datasetFile.getName();
-        dp.setPath(pathToDataset);
-        dp.setChecksum(checksumAsJson);
-        dp.setDataset(dataset);
-        dp.setFile(true);
-        dp.setPathNumber(pathNumber);
-        dp.setValid(true);
-        dp.setRegisterTs(new Timestamp(System.currentTimeMillis()));
-        dp.setLength(tempFile.length());
-
-        pathRepository.save(dp);
-
-        if (globals.isStoreDataToDb()) {
-            try (InputStream is = new FileInputStream(tempFile)) {
-                binaryDataService.save(is, tempFile.length(), dp.getId(), BinaryData.Type.RAW_PART);
-            }
-        }
-        if (globals.isStoreDataToDisk()) {
-            FileUtils.moveFile(tempFile, datasetFile);
-        }
-
-
-    }
 
     @PostMapping("/dataset-definition-form-commit")
     public String datasetDefinitionFormCommit(long datasetId, String name, String description, final RedirectAttributes redirectAttributes) {

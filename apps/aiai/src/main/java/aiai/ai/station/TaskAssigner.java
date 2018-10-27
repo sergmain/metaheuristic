@@ -18,11 +18,13 @@
 package aiai.ai.station;
 
 import aiai.ai.Globals;
+import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.station.actors.DownloadResourceActor;
+import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.yaml.station.StationExperimentSequence;
 import aiai.ai.station.actors.DownloadDatasetActor;
 import aiai.ai.station.actors.DownloadFeatureActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
-import aiai.ai.station.tasks.DownloadDatasetTask;
 import aiai.ai.station.tasks.DownloadFeatureTask;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.yaml.sequence.SequenceYaml;
@@ -43,15 +45,17 @@ public class TaskAssigner {
     private final DownloadDatasetActor downloadDatasetActor;
     private final DownloadFeatureActor downloadFeatureActor;
     private final DownloadSnippetActor downloadSnippetActor;
+    private final DownloadResourceActor downloadResourceActor;
     private final SequenceYamlUtils sequenceYamlUtils;
     private final CurrentExecState currentExecState;
     private final StationExperimentService stationExperimentService;
 
-    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, SequenceYamlUtils sequenceYamlUtils, CurrentExecState currentExecState, StationExperimentService stationExperimentService) {
+    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, SequenceYamlUtils sequenceYamlUtils, CurrentExecState currentExecState, StationExperimentService stationExperimentService) {
         this.globals = globals;
         this.downloadDatasetActor = downloadDatasetActor;
         this.downloadFeatureActor = downloadFeatureActor;
         this.downloadSnippetActor = downloadSnippetActor;
+        this.downloadResourceActor = downloadResourceActor;
         this.sequenceYamlUtils = sequenceYamlUtils;
         this.currentExecState = currentExecState;
         this.stationExperimentService = stationExperimentService;
@@ -96,7 +100,8 @@ public class TaskAssigner {
     }
 
     private void createDownloadDatasetTask(long datasetId) {
-        downloadDatasetActor.add(new DownloadDatasetTask(datasetId));
+//        downloadDatasetActor.add(new DownloadDatasetTask(datasetId));
+        downloadResourceActor.add(new DownloadResourceTask(datasetId, BinaryData.Type.DATASET));
     }
 
     private void createDownloadFeatureTask(long datasetId, long featureId) {

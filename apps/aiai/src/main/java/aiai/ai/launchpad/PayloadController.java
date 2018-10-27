@@ -29,6 +29,7 @@ import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
 import aiai.ai.launchpad.repositories.SnippetBaseRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
+import aiai.ai.utils.DigitUtils;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import aiai.apps.commons.utils.Checksum;
@@ -73,6 +74,23 @@ public class PayloadController {
         this.datasetCache = datasetCache;
         this.snippetService = snippetService;
         this.globals = globals;
+    }
+
+    @GetMapping("/resource/{type}/{id}")
+    public HttpEntity<AbstractResource> datasets(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("id") int id) throws IOException {
+        BinaryData.Type type = BinaryData.Type.valueOf(typeAsStr.toUpperCase());
+        File typeDir = new File(globals.launchpadResourcesDir, type.toString());
+        DigitUtils.Power power = DigitUtils.getPower(id);
+        File trgDir = new File(typeDir,
+                ""+power.power7+File.separatorChar+power.power4+File.separatorChar);
+        trgDir.mkdirs();
+        File file = new File(trgDir, ""+id+".bin");
+        try {
+            binaryDataService.storeToFile(id, type, file);
+        } catch (BinaryDataNotFoundException e) {
+            return returnEmptyAsGone(response);
+        }
+        return new HttpEntity<>(new FileSystemResource(file.toPath()), getHeader(file.length()));
     }
 
     @GetMapping("/dataset/{id}")

@@ -116,12 +116,14 @@ public class Globals {
 
     // some fields
     public File launchpadTempDir;
+    public File launchpadResourcesDir;
 
     public File stationDatasetDir;
     public File stationExperimentDir;
     public File stationSnippetDir;
     public File stationDbDir;
     public File stationSystemDir;
+    public File stationResourcesDir;
 
     public TimePeriods timePeriods;
 
@@ -168,6 +170,8 @@ public class Globals {
             stationDbDir.mkdirs();
             stationSystemDir = new File(stationDir, Consts.SYSTEM_DIR);
             stationSystemDir.mkdirs();
+            stationResourcesDir = new File(stationDir, Consts.RESOURCES_DIR);
+            stationResourcesDir.mkdirs();
 
             timePeriods = TimePeriods.from(stationActiveTime);
         }
@@ -188,6 +192,9 @@ public class Globals {
             }
             launchpadTempDir = new File(launchpadDir, "temp");
             launchpadTempDir.mkdirs();
+
+            launchpadResourcesDir = new File(launchpadDir, Consts.RESOURCES_DIR);
+            launchpadResourcesDir.mkdirs();
         }
         //noinspection unused
         int i=0;

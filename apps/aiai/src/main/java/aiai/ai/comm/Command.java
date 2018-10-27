@@ -49,8 +49,8 @@ public class Command implements Serializable {
         ReAssignStationId /*  */,
         RegisterInvite /*  */,
         RegisterInviteResult /*  */,
-        RequestExperimentSequence /*  */,
-        AssignedExperimentSequence /*  */,
+        RequestTask /*  */,
+        AssignedTask /*  */,
         ReportStationStatus /* returned after processing AssignedStationId and ReAssignStationId */,
         ReportSequenceProcessingResult /* returned result of processing sequence at station */,
         ReportResultDelivering, /* results were delivered to the launchpad */

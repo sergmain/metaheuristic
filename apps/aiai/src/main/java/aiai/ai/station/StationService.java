@@ -44,22 +44,22 @@ public class StationService {
 
     private final Globals globals;
     private final StationExperimentService stationExperimentService;
+    private final StationDatasetService stationDatasetService;
 
     private String env;
     private EnvYaml envYaml;
     private Metadata metadata;
 
-    public StationService(Globals globals, StationExperimentService stationExperimentService) {
+    public StationService(Globals globals, StationExperimentService stationExperimentService, StationDatasetService stationDatasetService) {
         this.globals = globals;
         this.stationExperimentService = stationExperimentService;
+        this.stationDatasetService = stationDatasetService;
     }
 
     Command produceReportStationStatus() {
         Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(getEnv(), globals.stationActiveTime);
-//        return reportStationStatus.isOkToReport() ? reportStationStatus : Protocol.NOP ;
         return reportStationStatus;
     }
-
 
     public String getStationId() {
         return metadata.metadata.get(StationConsts.STATION_ID);
@@ -89,7 +89,7 @@ public class StationService {
 
         final File file = new File(globals.stationDir, Consts.ENV_YAML_FILE_NAME);
         if (!file.exists()) {
-            log.warn("Station's evironment config file doesn't exist: {}", file.getPath());
+            log.warn("Station's environment config file doesn't exist: {}", file.getPath());
             return;
         }
         try {
@@ -118,12 +118,6 @@ public class StationService {
         }
         //noinspection unused
         int i=0;
-    }
-
-    public void createSequence(List<Protocol.AssignedExperimentSequence.SimpleSequence> sequences) {
-        for (Protocol.AssignedExperimentSequence.SimpleSequence sequence : sequences) {
-            stationExperimentService.createSequence(sequence.experimentSequenceId, sequence.params);
-        }
     }
 
     public void markAsDelivered(List<Long> ids) {
@@ -159,5 +153,38 @@ public class StationService {
             throw new IllegalStateException("Error while writing to file: " + metadataFile.getPath(), e);
         }
 
+    }
+
+    public void assignTasks(List<Protocol.AssignedTask.RawAssembling> rawAssemblings, List<Protocol.AssignedTask.DatasetProducing> datasetProducings, List<Protocol.AssignedTask.Sequence> sequences) {
+        createRawAssembling(rawAssemblings);
+        createDatasetProcessing(datasetProducings);
+        createSequence(sequences);
+    }
+
+    public void createSequence(List<Protocol.AssignedTask.Sequence> sequences) {
+        if (sequences==null) {
+            return;
+        }
+        for (Protocol.AssignedTask.Sequence sequence : sequences) {
+            stationExperimentService.createSequence(sequence.experimentSequenceId, sequence.params);
+        }
+    }
+
+    private void createDatasetProcessing(List<Protocol.AssignedTask.DatasetProducing> datasetProducings) {
+        if (datasetProducings==null) {
+            return;
+        }
+        for (Protocol.AssignedTask.DatasetProducing datasetProducing : datasetProducings) {
+            stationDatasetService.createDatasetProducing(datasetProducing.datasetId, datasetProducing.params);
+        }
+    }
+
+    private void createRawAssembling(List<Protocol.AssignedTask.RawAssembling> rawAssemblings) {
+        if (rawAssemblings==null) {
+            return;
+        }
+        for (Protocol.AssignedTask.RawAssembling rawAssembling : rawAssemblings) {
+            stationDatasetService.createRawAssembling(rawAssembling.datasetId, rawAssembling.params);
+        }
     }
 }

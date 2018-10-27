@@ -25,6 +25,7 @@ import lombok.EqualsAndHashCode;
 @Data
 @AllArgsConstructor
 @EqualsAndHashCode
-public class DownloadDatasetTask implements StationTask{
-    public long datasetId;
+public class DownloadResourceTask implements StationTask{
+    public long id;
+    public BinaryData.Type type;
 }

@@ -17,9 +17,9 @@
 
 package aiai.ai.comm;
 
-import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.Station;
 import aiai.ai.invite.InviteService;
+import aiai.ai.launchpad.beans.Station;
+import aiai.ai.launchpad.dataset.DatasetService;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.station.SequenceProcessor;
@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -40,22 +41,21 @@ import java.util.Objects;
 @Slf4j
 public class CommandProcessor {
 
-
     public static final int MAX_SEQUENSE_POOL_SIZE = 10;
     private final StationsRepository stationsRepository;
     private final StationService stationService;
     private final InviteService inviteService;
     private final ExperimentService experimentService;
     private final SequenceProcessor sequenceProcessor;
-    private final Globals globals;
+    private final DatasetService datasetService;
 
-    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService, SequenceProcessor sequenceProcessor, Globals globals) {
+    public CommandProcessor(StationsRepository stationsRepository, StationService stationService, InviteService inviteService, ExperimentService experimentService, SequenceProcessor sequenceProcessor, DatasetService datasetService) {
         this.stationsRepository = stationsRepository;
         this.stationService = stationService;
         this.inviteService = inviteService;
         this.experimentService = experimentService;
         this.sequenceProcessor = sequenceProcessor;
-        this.globals = globals;
+        this.datasetService = datasetService;
     }
 
     Command[] process(Command command) {
@@ -74,12 +74,12 @@ public class CommandProcessor {
                 return processInvite((Protocol.RegisterInvite) command);
             case RegisterInviteResult:
                 break;
-            case RequestExperimentSequence:
+            case RequestTask:
                 // processing on launchpad side
-                return processRequestExperimentSequence((Protocol.RequestExperimentSequence) command);
-            case AssignedExperimentSequence:
+                return processRequestTask((Protocol.RequestTask) command);
+            case AssignedTask:
                 // processing on station side
-                return processAssignedExperimentSequence((Protocol.AssignedExperimentSequence) command);
+                return processAssignedTask((Protocol.AssignedTask) command);
             case ReportStationStatus:
                 return processReportStationStatus((Protocol.ReportStationStatus) command);
             case ReportSequenceProcessingResult:
@@ -120,7 +120,7 @@ public class CommandProcessor {
         }
         final Protocol.ReportResultDelivering cmd1 = new Protocol.ReportResultDelivering(experimentService.storeAllResults(command.getResults()));
         // right now, sending new sequences with ReportResultDelivering doesn't work well.
-//        final Protocol.AssignedExperimentSequence r = getAssignedExperimentSequence(command.getStationId(), Math.min(MAX_SEQUENSE_POOL_SIZE, command.getResults().size()));
+//        final Protocol.AssignedTask r = getAssignedTask(command.getStationId(), Math.min(MAX_SEQUENSE_POOL_SIZE, command.getResults().size()));
 
         return new Command[]{cmd1};
     }
@@ -141,24 +141,33 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processAssignedExperimentSequence(Protocol.AssignedExperimentSequence command) {
+    private Command[] processAssignedTask(Protocol.AssignedTask command) {
         if (command.sequences==null) {
             return Protocol.NOP_ARRAY;
         }
-        stationService.createSequence(command.sequences);
+        stationService.assignTasks(command.rawAssemblings, command.datasetProducings, command.sequences);
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processRequestExperimentSequence(Protocol.RequestExperimentSequence command) {
+    private Command[] processRequestTask(Protocol.RequestTask command) {
         checkStationId(command);
-        Protocol.AssignedExperimentSequence r = getAssignedExperimentSequence(command.getStationId(), command.isAcceptOnlySigned(), MAX_SEQUENSE_POOL_SIZE);
+        Protocol.AssignedTask r = getAssignedTask(command.getStationId(), command.isAcceptOnlySigned(), MAX_SEQUENSE_POOL_SIZE);
         return Protocol.asArray(r);
     }
 
-    private synchronized Protocol.AssignedExperimentSequence getAssignedExperimentSequence(String stationId, boolean isAcceptOnlySigned, int recordNumber) {
-        Protocol.AssignedExperimentSequence r = new Protocol.AssignedExperimentSequence();
+    private synchronized Protocol.AssignedTask getAssignedTask(String stationId, boolean isAcceptOnlySigned, int recordNumber) {
+        Protocol.AssignedTask r = new Protocol.AssignedTask();
+        r.rawAssemblings = datasetService.getRawAssemgling();
+        if (!r.rawAssemblings.isEmpty()) {
+            return r;
+        }
+        r.datasetProducings = datasetService.getDatasetProducing();
+        if (!r.datasetProducings.isEmpty()) {
+            return r;
+        }
         ExperimentService.SequencesAndAssignToStationResult result = experimentService.getSequencesAndAssignToStation(
-                Long.parseLong(stationId), recordNumber, isAcceptOnlySigned, null);
+                Long.parseLong(stationId), recordNumber, isAcceptOnlySigned, null
+        );
         r.sequences = result.getSimpleSequences();
         return r;
     }

@@ -112,7 +112,7 @@ public class LaunchpadRequester {
             data.setCommand(stationService.produceReportStationStatus());
             final boolean b = stationExperimentService.isNeedNewExperimentSequence(stationId);
             if (b) {
-                data.setCommand(new Protocol.RequestExperimentSequence(globals.isAcceptOnlySignedSnippets));
+                data.setCommand(new Protocol.RequestTask(globals.isAcceptOnlySignedSnippets));
             }
         }
 

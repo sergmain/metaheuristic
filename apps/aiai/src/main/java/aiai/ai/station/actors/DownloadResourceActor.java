@@ -18,10 +18,9 @@
 package aiai.ai.station.actors;
 
 import aiai.ai.Globals;
-import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationDatasetUtils;
-import aiai.ai.station.StationFeatureUtils;
-import aiai.ai.station.tasks.DownloadFeatureTask;
+import aiai.ai.station.tasks.DownloadResourceTask;
+import aiai.ai.utils.DigitUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
@@ -37,20 +36,20 @@ import java.util.Map;
 
 @Service
 @Slf4j
-public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask> {
+public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTask> {
 
     private final Globals globals;
     private final Map<Long, Boolean> preparedMap = new LinkedHashMap<>();
     private String targetUrl;
 
-    public DownloadFeatureActor(Globals globals) {
+    public DownloadResourceActor(Globals globals) {
         this.globals = globals;
     }
 
     @PostConstruct
     public void postConstruct() {
         if (globals.isStationEnabled) {
-            targetUrl = globals.launchpadUrl + "/payload/feature";
+            targetUrl = globals.launchpadUrl + "/payload/resource";
         }
     }
 
@@ -62,43 +61,44 @@ public class DownloadFeatureActor extends AbstractTaskQueue<DownloadFeatureTask>
             return;
         }
 
-        File stationDir = StationDatasetUtils.checkAndCreateDatasetDir(globals.stationDir);
-        if (stationDir == null) {
-            return;
-        }
-
-        DownloadFeatureTask task;
+        DownloadResourceTask task;
         while ((task = poll()) != null) {
-            if (Boolean.TRUE.equals(preparedMap.get(task.getFeatureId()))) {
+            if (Boolean.TRUE.equals(preparedMap.get(task.getId()))) {
                 continue;
             }
-            AssetFile assetFile = StationFeatureUtils.prepareFeatureFile(stationDir, task.datasetId, task.featureId);
-            if (assetFile.isError) {
-                log.warn("Problem with asset file {}", assetFile);
-                return;
-            }
+//            AssetFile assetFile = StationDatasetUtils.prepareDatasetFile(stationDir, task.getId());
+            DigitUtils.Power power = DigitUtils.getPower(task.getId());
+            File typeDir = new File(globals.stationResourcesDir, task.getType().toString());
+            File trgDir = new File(typeDir,
+                    ""+power.power7+File.separatorChar+power.power4+File.separatorChar);
+            trgDir.mkdirs();
+            File file = new File(trgDir, ""+task.getId()+".bin");
+
+//            if (assetFile.isError) {
+//                log.warn("Problem with asset file {}", assetFile);
+//                return;
+//            }
             try {
-                Request.Get(targetUrl + '/' + task.getFeatureId())
+                Request.Get(targetUrl + '/' + task.getType() + '/' + task.getId())
                         .connectTimeout(5000)
                         .socketTimeout(5000)
-                        .execute().saveContent(assetFile.file);
-                preparedMap.put(task.getDatasetId(), true);
-                log.info("Feature #{} was loaded", task.getFeatureId());
+                        .execute().saveContent(file);
+                preparedMap.put(task.getId(), true);
+                log.info("Resource #{} was loaded", task.getId());
             } catch (HttpResponseException e) {
                 if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                    log.warn("Feature with id {} wasn't found", task.getFeatureId());
+                    log.warn("Resource with id {} wasn't found", task.getId());
                 } else if (e.getStatusCode() == HttpServletResponse.SC_CONFLICT) {
-                    log.warn("Feature with id {} is broken and need to be recreated", task.getFeatureId());
+                    log.warn("Resource with id {} is broken and need to be recreated", task.getId());
                 } else {
                     log.error("HttpResponseException.getStatusCode(): {}", e.getStatusCode());
                     log.error("HttpResponseException", e);
                 }
             } catch (SocketTimeoutException e) {
-                log.error("SocketTimeoutException", e.toString());
+                log.error("SocketTimeoutException", e);
             } catch (IOException e) {
                 log.error("IOException", e);
             }
         }
     }
-
 }

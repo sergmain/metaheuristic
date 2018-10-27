@@ -41,10 +41,10 @@ public class TestCommands {
                 return new Protocol.RegisterInvite();
             case RegisterInviteResult:
                 return new Protocol.RegisterInviteResult();
-            case RequestExperimentSequence:
-                return new Protocol.RequestExperimentSequence();
-            case AssignedExperimentSequence:
-                return new Protocol.AssignedExperimentSequence();
+            case RequestTask:
+                return new Protocol.RequestTask();
+            case AssignedTask:
+                return new Protocol.AssignedTask();
             case ReportStationStatus:
                 return new Protocol.ReportStationStatus();
             case ReportSequenceProcessingResult:

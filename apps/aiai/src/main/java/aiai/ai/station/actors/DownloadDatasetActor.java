@@ -24,8 +24,6 @@ import aiai.ai.station.tasks.DownloadDatasetTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -41,10 +39,8 @@ import java.util.Map;
 public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask> {
 
     private final Globals globals;
-
-    private String targetUrl;
-
     private final Map<Long, Boolean> preparedMap = new LinkedHashMap<>();
+    private String targetUrl;
 
     public DownloadDatasetActor(Globals globals) {
         this.globals = globals;
@@ -66,12 +62,12 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
         }
 
         File stationDir = StationDatasetUtils.checkAndCreateDatasetDir(globals.stationDir);
-        if (stationDir==null) {
+        if (stationDir == null) {
             return;
         }
 
         DownloadDatasetTask task;
-        while((task = poll())!=null) {
+        while ((task = poll()) != null) {
             if (Boolean.TRUE.equals(preparedMap.get(task.getDatasetId()))) {
                 continue;
             }
@@ -81,28 +77,24 @@ public class DownloadDatasetActor extends AbstractTaskQueue<DownloadDatasetTask>
                 return;
             }
             try {
-                Request.Get(targetUrl+'/'+task.getDatasetId())
+                Request.Get(targetUrl + '/' + task.getDatasetId())
                         .connectTimeout(5000)
                         .socketTimeout(5000)
                         .execute().saveContent(assetFile.file);
                 preparedMap.put(task.getDatasetId(), true);
                 log.info("Dataset #{} was loaded", task.getDatasetId());
-            }
-            catch (HttpResponseException e) {
-                if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
+            } catch (HttpResponseException e) {
+                if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
                     log.warn("Dataset with id {} wasn't found", task.getDatasetId());
-                }
-                else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
+                } else if (e.getStatusCode() == HttpServletResponse.SC_CONFLICT) {
                     log.warn("Dataset with id {} is broken and need to be recreated", task.getDatasetId());
-                }
-                else {
+                } else {
+                    log.error("HttpResponseException.getStatusCode(): {}", e.getStatusCode());
                     log.error("HttpResponseException", e);
                 }
-            }
-            catch (SocketTimeoutException e) {
+            } catch (SocketTimeoutException e) {
                 log.error("SocketTimeoutException", e.toString());
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 log.error("IOException", e);
             }
         }

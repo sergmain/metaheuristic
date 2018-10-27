@@ -105,17 +105,28 @@ public class Protocol {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class AssignedExperimentSequence extends Command {
-
+    public static class AssignedTask extends Command {
         @Data
-        public static class SimpleSequence {
+        public static class Sequence {
             public String params;
             public Long experimentSequenceId;
         }
-        List<SimpleSequence> sequences;
+        @Data
+        public static class RawAssembling {
+            public String params;
+            public Long datasetId;
+        }
+        @Data
+        public static class DatasetProducing {
+            public String params;
+            public Long datasetId;
+        }
+        List<Sequence> sequences;
+        List<RawAssembling> rawAssemblings;
+        List<DatasetProducing> datasetProducings;
 
-        public AssignedExperimentSequence() {
-            this.setType(Type.AssignedExperimentSequence);
+        public AssignedTask() {
+            this.setType(Type.AssignedTask);
         }
     }
 
@@ -183,16 +194,16 @@ public class Protocol {
 
     @EqualsAndHashCode(callSuper = false)
     @Data
-    public static class RequestExperimentSequence extends Command {
+    public static class RequestTask extends Command {
         private boolean isAcceptOnlySigned;
 
-        public RequestExperimentSequence(boolean isAcceptOnlySigned) {
-            this.setType(Type.RequestExperimentSequence);
+        public RequestTask(boolean isAcceptOnlySigned) {
+            this.setType(Type.RequestTask);
             this.isAcceptOnlySigned = isAcceptOnlySigned;
         }
 
-        public RequestExperimentSequence() {
-            this.setType(Type.RequestExperimentSequence);
+        public RequestTask() {
+            this.setType(Type.RequestTask);
         }
     }
 
