@@ -18,19 +18,15 @@
 package aiai.ai.station;
 
 import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.station.actors.DownloadResourceActor;
-import aiai.ai.station.tasks.DownloadResourceTask;
-import aiai.ai.yaml.station.StationTask;
-import aiai.ai.station.actors.DownloadDatasetActor;
-import aiai.ai.station.actors.DownloadFeatureActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
-import aiai.ai.station.tasks.DownloadFeatureTask;
+import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.station.tasks.DownloadSnippetTask;
+import aiai.ai.yaml.sequence.SimpleResource;
+import aiai.ai.yaml.sequence.SimpleSnippet;
 import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.sequence.TaskParamYamlUtils;
-import aiai.ai.yaml.sequence.SimpleFeature;
-import aiai.ai.yaml.sequence.SimpleSnippet;
+import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -42,23 +38,19 @@ import java.util.List;
 public class TaskAssigner {
 
     private final Globals globals;
-    private final DownloadDatasetActor downloadDatasetActor;
-    private final DownloadFeatureActor downloadFeatureActor;
     private final DownloadSnippetActor downloadSnippetActor;
     private final DownloadResourceActor downloadResourceActor;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final CurrentExecState currentExecState;
-    private final StationExperimentService stationExperimentService;
+    private final StationTaskService stationTaskService;
 
-    public TaskAssigner(Globals globals, DownloadDatasetActor downloadDatasetActor, DownloadFeatureActor downloadFeatureActor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationExperimentService stationExperimentService) {
+    public TaskAssigner(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService) {
         this.globals = globals;
-        this.downloadDatasetActor = downloadDatasetActor;
-        this.downloadFeatureActor = downloadFeatureActor;
         this.downloadSnippetActor = downloadSnippetActor;
         this.downloadResourceActor = downloadResourceActor;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.currentExecState = currentExecState;
-        this.stationExperimentService = stationExperimentService;
+        this.stationTaskService = stationTaskService;
     }
 
     public void fixedDelay() {
@@ -69,46 +61,33 @@ public class TaskAssigner {
             return;
         }
 
-        List<StationTask> seqs = stationExperimentService.findAllByFinishedOnIsNull();
-        for (StationTask seq : seqs) {
-            if (StringUtils.isBlank(seq.getParams())) {
+        List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNull();
+        for (StationTask task : tasks) {
+            if (StringUtils.isBlank(task.getParams())) {
                 // strange behaviour. this field is required in DB and can't be null
                 // is this bug in mysql or it's a spring's data bug with MEDIUMTEXT fields?
-                log.warn("Params for sequence {} is blank", seq.getTaskId());
+                // do not delete this check
+                log.warn("Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(seq.getParams());
-            if (taskParamYaml.dataset==null) {
-                log.warn("taskParamYaml.dataset is null\n{}", seq.getParams());
+            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
+            if (taskParamYaml.resources.isEmpty()) {
+                log.warn("taskParamYaml.resources is empty\n{}", task.getParams());
                 continue;
             }
 
             if (currentExecState.isInit && currentExecState.getState(taskParamYaml.getExperimentId())==null) {
-                stationExperimentService.delete(seq);
-                log.info("Deleted orphan sequence {}", seq);
+                stationTaskService.delete(task);
+                log.info("Deleted orphan sequence {}", task);
                 continue;
             }
 
-            createDownloadDatasetTask(taskParamYaml.dataset.id);
-            for (SimpleFeature simpleFeature : taskParamYaml.features) {
-                createDownloadFeatureTask(taskParamYaml.dataset.id, simpleFeature.id);
+            for (SimpleResource resource : taskParamYaml.resources) {
+                downloadResourceActor.add(new DownloadResourceTask(resource.id, resource.type));
             }
             for (SimpleSnippet snippet : taskParamYaml.getSnippets()) {
-                createDownloadSnippetTask(snippet);
+                downloadSnippetActor.add(new DownloadSnippetTask(snippet.code, snippet.filename, snippet.checksum));
             }
         }
-    }
-
-    private void createDownloadDatasetTask(long datasetId) {
-//        downloadDatasetActor.add(new DownloadDatasetTask(datasetId));
-        downloadResourceActor.add(new DownloadResourceTask(datasetId, BinaryData.Type.DATASET));
-    }
-
-    private void createDownloadFeatureTask(long datasetId, long featureId) {
-        downloadFeatureActor.add(new DownloadFeatureTask(datasetId, featureId));
-    }
-
-    private void createDownloadSnippetTask(SimpleSnippet snippet) {
-        downloadSnippetActor.add(new DownloadSnippetTask(snippet.code, snippet.filename, snippet.checksum));
     }
 }

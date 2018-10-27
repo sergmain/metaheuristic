@@ -43,16 +43,16 @@ import java.util.List;
 public class StationService {
 
     private final Globals globals;
-    private final StationExperimentService stationExperimentService;
+    private final StationTaskService stationTaskService;
     private final StationDatasetService stationDatasetService;
 
     private String env;
     private EnvYaml envYaml;
     private Metadata metadata;
 
-    public StationService(Globals globals, StationExperimentService stationExperimentService, StationDatasetService stationDatasetService) {
+    public StationService(Globals globals, StationTaskService stationTaskService, StationDatasetService stationDatasetService) {
         this.globals = globals;
-        this.stationExperimentService = stationExperimentService;
+        this.stationTaskService = stationTaskService;
         this.stationDatasetService = stationDatasetService;
     }
 
@@ -123,14 +123,14 @@ public class StationService {
     public void markAsDelivered(List<Long> ids) {
         List<StationTask> list = new ArrayList<>();
         for (Long id : ids) {
-            StationTask seq = stationExperimentService.findByExperimentSequenceId(id);
+            StationTask seq = stationTaskService.findByExperimentSequenceId(id);
             if(seq==null) {
                 continue;
             }
             seq.setDelivered(true);
             list.add(seq);
         }
-        stationExperimentService.saveAll(list);
+        stationTaskService.saveAll(list);
     }
 
     private void updateMetadataFile() {
@@ -166,7 +166,7 @@ public class StationService {
             return;
         }
         for (Protocol.AssignedTask.Sequence sequence : sequences) {
-            stationExperimentService.createSequence(sequence.experimentSequenceId, sequence.params);
+            stationTaskService.createSequence(sequence.experimentSequenceId, sequence.params);
         }
     }
 

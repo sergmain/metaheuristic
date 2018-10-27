@@ -26,6 +26,6 @@ import lombok.EqualsAndHashCode;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class DownloadResourceTask implements StationTask{
-    public long id;
+    public String id;
     public BinaryData.Type type;
 }

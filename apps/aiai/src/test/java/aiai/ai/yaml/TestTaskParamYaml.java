@@ -17,11 +17,10 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.sequence.TaskParamYaml;
+import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.yaml.sequence.*;
 import aiai.apps.commons.yaml.snippet.SnippetType;
-import aiai.ai.yaml.sequence.TaskParamYamlUtils;
-import aiai.ai.yaml.sequence.SimpleDataset;
-import aiai.ai.yaml.sequence.SimpleSnippet;
+import org.apache.commons.compress.utils.Lists;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,7 +40,7 @@ public class TestTaskParamYaml {
     @Test
     public void testSequenceYaml() {
         TaskParamYaml seq = new TaskParamYaml();
-        seq.dataset = SimpleDataset.of(1L);
+        seq.resources = Collections.singletonList(SimpleResource.of(BinaryData.Type.DATASET, "1"));
         seq.setExperimentId(2L);
         Map<String, String> map = new HashMap<>();
         map.put("key1", "#1");

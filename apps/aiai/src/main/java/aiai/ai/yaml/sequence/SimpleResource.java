@@ -27,9 +27,10 @@ public class SimpleResource {
     // it's initialized at station side
     public String path;
 
-    public static SimpleResource of(String id) {
+    public static SimpleResource of(BinaryData.Type type, String id) {
         SimpleResource sf = new SimpleResource();
         sf.id = id;
+        sf.type = type;
         return sf;
     }
 }

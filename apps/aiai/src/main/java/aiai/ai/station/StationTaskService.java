@@ -49,7 +49,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
-public class StationExperimentService {
+public class StationTaskService {
 
     private static final String EXPERIMENT_SEQUENCE_FORMAT_STR = "experiment%c%06d%csequence%c%06d";
 
@@ -59,7 +59,7 @@ public class StationExperimentService {
 
     private final Map<Long, Map<Long, StationTask>> map = new HashMap<>();
 
-    public StationExperimentService(TaskParamYamlUtils taskParamYamlUtils, Globals globals, CurrentExecState currentExecState) {
+    public StationTaskService(TaskParamYamlUtils taskParamYamlUtils, Globals globals, CurrentExecState currentExecState) {
         this.currentExecState = currentExecState;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.globals = globals;
@@ -68,6 +68,9 @@ public class StationExperimentService {
     @PostConstruct
     public void postConstruct() {
         if (!globals.stationExperimentDir.exists()) {
+            return;
+        }
+        if (globals.isUnitTesting) {
             return;
         }
         try {

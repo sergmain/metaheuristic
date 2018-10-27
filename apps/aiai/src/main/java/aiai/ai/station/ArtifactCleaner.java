@@ -35,13 +35,13 @@ import java.nio.file.Path;
 @Slf4j
 public class ArtifactCleaner {
 
-    private final StationExperimentService stationExperimentService;
+    private final StationTaskService stationTaskService;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final CurrentExecState currentExecState;
     private final Globals globals;
 
-    public ArtifactCleaner(StationExperimentService stationExperimentService, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, Globals globals) {
-        this.stationExperimentService = stationExperimentService;
+    public ArtifactCleaner(StationTaskService stationTaskService, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, Globals globals) {
+        this.stationTaskService = stationTaskService;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.currentExecState = currentExecState;
         this.globals = globals;
@@ -53,11 +53,11 @@ public class ArtifactCleaner {
             return;
         }
 
-        for (StationTask seq : stationExperimentService.findAll()) {
+        for (StationTask seq : stationTaskService.findAll()) {
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(seq.getParams());
             if (currentExecState.isState(taskParamYaml.experimentId, Enums.ExperimentExecState.DOESNT_EXIST)) {
                 log.info("Delete obsolete sequence {}", seq);
-                stationExperimentService.deleteById(seq.getTaskId());
+                stationTaskService.deleteById(seq.getTaskId());
             }
         }
 

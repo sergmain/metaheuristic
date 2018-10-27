@@ -18,9 +18,9 @@
 package aiai.ai.station.actors;
 
 import aiai.ai.Globals;
-import aiai.ai.station.StationDatasetUtils;
+import aiai.ai.station.AssetFile;
+import aiai.ai.station.StationResourceUtils;
 import aiai.ai.station.tasks.DownloadResourceTask;
-import aiai.ai.utils.DigitUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.LinkedHashMap;
@@ -39,7 +38,7 @@ import java.util.Map;
 public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTask> {
 
     private final Globals globals;
-    private final Map<Long, Boolean> preparedMap = new LinkedHashMap<>();
+    private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
     private String targetUrl;
 
     public DownloadResourceActor(Globals globals) {
@@ -66,23 +65,17 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             if (Boolean.TRUE.equals(preparedMap.get(task.getId()))) {
                 continue;
             }
-//            AssetFile assetFile = StationDatasetUtils.prepareDatasetFile(stationDir, task.getId());
-            DigitUtils.Power power = DigitUtils.getPower(task.getId());
-            File typeDir = new File(globals.stationResourcesDir, task.getType().toString());
-            File trgDir = new File(typeDir,
-                    ""+power.power7+File.separatorChar+power.power4+File.separatorChar);
-            trgDir.mkdirs();
-            File file = new File(trgDir, ""+task.getId()+".bin");
+            AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, task.type, task.id);
+            if (assetFile.isError ) {
+                log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
+                continue;
+            }
 
-//            if (assetFile.isError) {
-//                log.warn("Problem with asset file {}", assetFile);
-//                return;
-//            }
             try {
                 Request.Get(targetUrl + '/' + task.getType() + '/' + task.getId())
                         .connectTimeout(5000)
                         .socketTimeout(5000)
-                        .execute().saveContent(file);
+                        .execute().saveContent(assetFile.file);
                 preparedMap.put(task.getId(), true);
                 log.info("Resource #{} was loaded", task.getId());
             } catch (HttpResponseException e) {

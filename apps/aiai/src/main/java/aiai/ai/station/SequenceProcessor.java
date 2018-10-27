@@ -56,7 +56,7 @@ public class SequenceProcessor {
     private final ProcessService processService;
     private final StationService stationService;
     private final TaskParamYamlUtils taskParamYamlUtils;
-    private final StationExperimentService stationTaskService;
+    private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
 
     private Map<BinaryData.Type, Map<String, AssetFile>> resourceReadyMap = new HashMap<>();
@@ -64,7 +64,7 @@ public class SequenceProcessor {
 //    private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
 //    private Map<String, SnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
-    public SequenceProcessor(Globals globals, ProcessService processService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationExperimentService stationTaskService, CurrentExecState currentExecState) {
+    public SequenceProcessor(Globals globals, ProcessService processService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState) {
         this.globals = globals;
         this.processService = processService;
         this.stationService = stationService;

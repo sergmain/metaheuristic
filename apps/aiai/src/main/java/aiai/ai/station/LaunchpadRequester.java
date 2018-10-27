@@ -51,14 +51,14 @@ public class LaunchpadRequester {
     private final RestTemplate restTemplate;
 
     private final CommandProcessor commandProcessor;
-    private final StationExperimentService stationExperimentService;
+    private final StationTaskService stationTaskService;
     private final StationService stationService;
 
     @Autowired
-    public LaunchpadRequester(Globals globals, CommandProcessor commandProcessor, StationExperimentService stationExperimentService, StationService stationService) {
+    public LaunchpadRequester(Globals globals, CommandProcessor commandProcessor, StationTaskService stationTaskService, StationService stationService) {
         this.globals = globals;
         this.commandProcessor = commandProcessor;
-        this.stationExperimentService = stationExperimentService;
+        this.stationTaskService = stationTaskService;
         this.stationService = stationService;
         this.restTemplate = new RestTemplate();
     }
@@ -108,9 +108,9 @@ public class LaunchpadRequester {
 
         if (stationId!=null) {
             // always report about current active sequences, if we have actual stationId
-            data.setCommand(stationExperimentService.produceStationSequenceStatus());
+            data.setCommand(stationTaskService.produceStationSequenceStatus());
             data.setCommand(stationService.produceReportStationStatus());
-            final boolean b = stationExperimentService.isNeedNewExperimentSequence(stationId);
+            final boolean b = stationTaskService.isNeedNewExperimentSequence(stationId);
             if (b) {
                 data.setCommand(new Protocol.RequestTask(globals.isAcceptOnlySignedSnippets));
             }
@@ -162,7 +162,7 @@ public class LaunchpadRequester {
     }
 
     private void reportSequenceProcessingResult(ExchangeData data) {
-        final List<StationTask> list = stationExperimentService.getForReporting();
+        final List<StationTask> list = stationTaskService.getForReporting();
         if (list.isEmpty()) {
             return;
         }
@@ -172,7 +172,7 @@ public class LaunchpadRequester {
             seq.setReported(true);
             seq.setReportedOn(System.currentTimeMillis());
         }
-        stationExperimentService.saveReported(list);
+        stationTaskService.saveReported(list);
         data.setCommand(command);
     }
 

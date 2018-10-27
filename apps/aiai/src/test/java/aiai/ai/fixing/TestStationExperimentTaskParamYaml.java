@@ -18,7 +18,7 @@
 package aiai.ai.fixing;
 
 import aiai.ai.launchpad.repositories.ExperimentSequenceRepository;
-import aiai.ai.station.StationExperimentService;
+import aiai.ai.station.StationTaskService;
 import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -37,7 +37,7 @@ public class TestStationExperimentTaskParamYaml {
     public ExperimentSequenceRepository experimentSequenceRepository;
 
     @Autowired
-    public StationExperimentService stationExperimentService;
+    public StationTaskService stationTaskService;
     @Autowired
     private TaskParamYamlUtils taskParamYamlUtils;
 

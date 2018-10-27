@@ -739,7 +739,10 @@ public class ExperimentService {
             totalVariants += allHyperParams.size();
 
             final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
-            final List<SimpleFeature> simpleFeatures = Collections.unmodifiableList(ofVariants.values.stream().map(SimpleFeature::of).collect(Collectors.toList()));
+            final List<SimpleResource> simpleFeatureResources = Collections.unmodifiableList(
+                    ofVariants.values.stream()
+                            .map(s -> SimpleResource.of(BinaryData.Type.FEATURE, s))
+                            .collect(Collectors.toList()));
 
             Map<String, Snippet> localCache = new HashMap<>();
             boolean isNew = false;
@@ -747,8 +750,10 @@ public class ExperimentService {
                 TaskParamYaml yaml = new TaskParamYaml();
                 yaml.setHyperParams( hyperParams.toSortedMap() );
                 yaml.setExperimentId( experiment.getId() );
-                yaml.setDataset( SimpleDataset.of(experiment.getDatasetId() ));
-                yaml.setFeatures( simpleFeatures );
+
+                yaml.resources = new ArrayList<>();
+                yaml.resources.addAll(simpleFeatureResources);
+                yaml.resources.add(SimpleResource.of(BinaryData.Type.DATASET, experiment.getDatasetId().toString()));
 
                 final List<SimpleSnippet> snippets = new ArrayList<>();
                 for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
