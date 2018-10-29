@@ -41,6 +41,7 @@ public class SnippetController {
 
     private final Globals globals;
     private final SnippetRepository snippetRepository;
+    private final SnippetCache snippetCache;
     private final SnippetService snippetService;
 
     @Data
@@ -48,9 +49,10 @@ public class SnippetController {
         Iterable<Snippet> snippets;
     }
 
-    public SnippetController(Globals globals, SnippetRepository snippetRepository, SnippetService snippetService) {
+    public SnippetController(Globals globals, SnippetRepository snippetRepository, SnippetCache snippetCache, SnippetService snippetService) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
+        this.snippetCache = snippetCache;
         this.snippetService = snippetService;
     }
 
@@ -62,12 +64,13 @@ public class SnippetController {
 
     @GetMapping("/snippet-delete/{id}")
     public String delete(@ModelAttribute Result result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        final Snippet snippet = snippetRepository.findById(id).orElse(null);
+        final Snippet snippet = snippetCache.findById(id);
         if (snippet==null) {
             return "redirect:/launchpad/datasets";
         }
         redirectAttributes.addFlashAttribute("errorMessage", "#423.01 ");
 
+        // TODO !!!!! need to implement this method !!!!!
 /*
         DatasetGroup group = value.get();
         long datasetId = group.getDataset().getId();

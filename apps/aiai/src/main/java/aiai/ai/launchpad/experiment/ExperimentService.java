@@ -26,6 +26,7 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.ai.launchpad.repositories.*;
+import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.BigDecimalHolder;
 import aiai.ai.utils.permutation.Permutation;
@@ -139,19 +140,17 @@ public class ExperimentService {
     private final ExperimentRepository experimentRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
-    private final SnippetRepository snippetRepository;
-    private final DatasetRepository datasetRepository;
+    private final SnippetCache snippetCache;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final DatasetCache datasetCache;
     private final SnippetService snippetService;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, DatasetRepository datasetRepository, TaskParamYamlUtils taskParamYamlUtils, DatasetCache datasetCache, SnippetService snippetService) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, DatasetCache datasetCache, SnippetService snippetService) {
         this.globals = globals;
         this.experimentRepository = experimentRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
-        this.snippetRepository = snippetRepository;
-        this.datasetRepository = datasetRepository;
+        this.snippetCache = snippetCache;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.datasetCache = datasetCache;
         this.snippetService = snippetService;
@@ -198,7 +197,7 @@ public class ExperimentService {
             if (isAcceptOnlySigned) {
                 for (TaskSnippet taskSnippet : snippetService.getTaskSnippetsForExperiment(experiment.getId())) {
                     final SnippetVersion snippetVersion = SnippetVersion.from(taskSnippet.getSnippetCode());
-                    Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                    Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                     if (snippet!=null && !snippet.isSigned()) {
                         // this experiment with #experimentId contains non-signed snippet but we were asked for singed snippets only
                         return EMPTY_RESULT;
@@ -221,7 +220,7 @@ public class ExperimentService {
                 if (isAcceptOnlySigned) {
                     for (TaskSnippet taskSnippet : snippetService.getTaskSnippetsForExperiment(experiment.getId())) {
                         final SnippetVersion snippetVersion = SnippetVersion.from(taskSnippet.getSnippetCode());
-                        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                        Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                         if (snippet!=null && snippet.isSigned()) {
                             // add only feature for signed experiments
                             fs.add(feature);
@@ -765,7 +764,7 @@ public class ExperimentService {
                     final SnippetVersion snippetVersion = SnippetVersion.from(taskSnippet.getSnippetCode());
                     Snippet snippet =  localCache.get(taskSnippet.getSnippetCode());
                     if (snippet==null) {
-                        snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                        snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                         if (snippet!=null) {
                             localCache.put(taskSnippet.getSnippetCode(), snippet);
                         }

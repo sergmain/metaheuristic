@@ -56,12 +56,14 @@ public class SnippetService {
 
     private final Globals globals;
     private final SnippetRepository snippetRepository;
+    private final SnippetCache snippetCache;
     private final TaskSnippetRepository taskSnippetRepository;
     private final BinaryDataService binaryDataService;
 
-    public SnippetService(Globals globals, SnippetRepository snippetRepository, TaskSnippetRepository taskSnippetRepository, BinaryDataService binaryDataService) {
+    public SnippetService(Globals globals, SnippetRepository snippetRepository, SnippetCache snippetCache, TaskSnippetRepository taskSnippetRepository, BinaryDataService binaryDataService) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
+        this.snippetCache = snippetCache;
         this.taskSnippetRepository = taskSnippetRepository;
         this.binaryDataService = binaryDataService;
     }
@@ -82,7 +84,7 @@ public class SnippetService {
         List<Snippet> snippets = new ArrayList<>();
         for (TaskSnippet taskSnippet : taskSnippets) {
             SnippetVersion version = SnippetVersion.from(taskSnippet.getSnippetCode());
-            Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
+            Snippet snippet = snippetCache.findByNameAndSnippetVersion(version.name, version.version);
             if (snippet==null) {
                 log.warn("Can't find snippet for code: {}", taskSnippet.getSnippetCode());
                 continue;
@@ -145,7 +147,7 @@ public class SnippetService {
             snippetDir.mkdirs();
         }
         SnippetVersion sv = SnippetVersion.from(snippetCode);
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
+        Snippet snippet = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
         //noinspection UnnecessaryLocalVariable
         File file = persistConcreteSnippet(snippetDir, snippet);
         return file;
@@ -159,7 +161,7 @@ public class SnippetService {
         }
         if (!snippetFile.file.exists() || snippetFile.file.length()!=snippet.length) {
             log.warn("Snippet {} has the different length. On disk - {}, in db - {}. Snippet will be re-created.",snippet.getSnippetCode(), snippetFile.file.length(), snippet.length);
-            Snippet s = snippetRepository.findById(snippet.getId()).orElse(null);
+            Snippet s = snippetCache.findById(snippet.getId());
             if (s==null) {
                 throw new IllegalStateException("Can't find a snippet for Id " + snippet.getId()+", but base snippet is there");
             }
@@ -252,7 +254,7 @@ public class SnippetService {
                 sum = Checksum.Type.SHA256.getChecksum(inputStream);
             }
 
-            Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
+            Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
             if (snippet!=null) {
                 final String checksum = Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256);
                 if (!sum.equals(checksum)) {
@@ -266,7 +268,7 @@ public class SnippetService {
                         snippet.env = snippetConfig.env;
                         snippet.params = snippetConfig.params;
                         snippet.reportMetrics = snippetConfig.isMetrics();
-                        snippetRepository.save(snippet);
+                        snippetCache.save(snippet);
                         try( InputStream inputStream = new FileInputStream(file)) {
                             binaryDataService.save(inputStream, snippet.length, snippet.getId(), BinaryData.Type.SNIPPET);
                         }
@@ -287,7 +289,7 @@ public class SnippetService {
                 snippet.env = snippetConfig.env;
                 snippet.params = snippetConfig.params;
                 snippet.reportMetrics = snippetConfig.isMetrics();
-                snippetRepository.save(snippet);
+                snippetCache.save(snippet);
                 try( InputStream inputStream = new FileInputStream(file)) {
                     binaryDataService.save(inputStream, snippet.length, snippet.getId(), BinaryData.Type.SNIPPET);
                 }

@@ -28,6 +28,7 @@ import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
+import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.DigitUtils;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
@@ -58,7 +59,7 @@ import java.io.InputStream;
 public class PayloadController {
 
     private final ChecksumWithSignatureService checksumWithSignatureService;
-    private final SnippetRepository snippetRepository;
+    private final SnippetCache snippetCache;
     private final DatasetGroupsRepository datasetGroupsRepository;
     private final BinaryDataService binaryDataService;
     private final DatasetCache datasetCache;
@@ -66,8 +67,8 @@ public class PayloadController {
 
     private final Globals globals;
 
-    public PayloadController(SnippetRepository snippetRepository, DatasetGroupsRepository datasetGroupsRepository, ChecksumWithSignatureService checksumWithSignatureService, BinaryDataService binaryDataService, DatasetCache datasetCache, SnippetService snippetService, Globals globals) {
-        this.snippetRepository = snippetRepository;
+    public PayloadController(SnippetCache snippetCache, DatasetGroupsRepository datasetGroupsRepository, ChecksumWithSignatureService checksumWithSignatureService, BinaryDataService binaryDataService, DatasetCache datasetCache, SnippetService snippetService, Globals globals) {
+        this.snippetCache = snippetCache;
         this.datasetGroupsRepository = datasetGroupsRepository;
         this.checksumWithSignatureService = checksumWithSignatureService;
         this.binaryDataService = binaryDataService;
@@ -176,7 +177,7 @@ public class PayloadController {
     public HttpEntity<AbstractResource> snippets(HttpServletResponse response, @PathVariable("name") String snippetCode) throws IOException {
 
         SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             log.info("Snippet wasn't found for name {}", snippetCode);
             return returnEmptyAsGone(response);
@@ -212,7 +213,7 @@ public class PayloadController {
     public HttpEntity<String> snippetChecksum(HttpServletResponse response, @PathVariable("name") String snippetCode) throws IOException {
 
         SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             log.info("Snippet wasn't found for name {}", snippetCode);
             return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);

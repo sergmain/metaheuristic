@@ -30,6 +30,7 @@ import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.ai.launchpad.repositories.*;
+import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.metrics.MetricsUtils;
@@ -73,8 +74,13 @@ public abstract class TestFeature {
     @Autowired
     protected StationsRepository stationsRepository;
 
+/*
     @Autowired
     protected SnippetRepository snippetRepository;
+
+*/
+    @Autowired
+    protected SnippetCache snippetCache;
 
     @Autowired
     protected TaskSnippetRepository taskSnippetRepository;
@@ -119,7 +125,7 @@ public abstract class TestFeature {
             // Prepare snippets
             mills = System.currentTimeMillis();
             log.info("Start findByNameAndSnippetVersion.save()");
-            fitSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_FIT_SNIPPET, SNIPPET_VERSION_1_0);
+            fitSnippet = snippetCache.findByNameAndSnippetVersion(TEST_FIT_SNIPPET, SNIPPET_VERSION_1_0);
             log.info("findByNameAndSnippetVersion() was finished for {}", System.currentTimeMillis() - mills);
 
             byte[] bytes = "some program code".getBytes();
@@ -135,7 +141,7 @@ public abstract class TestFeature {
 
                 mills = System.currentTimeMillis();
                 log.info("Start snippetRepository.save() #1");
-                snippetRepository.save(fitSnippet);
+                snippetCache.save(fitSnippet);
                 log.info("snippetRepository.save() #1 was finished for {}", System.currentTimeMillis() - mills);
 
                 mills = System.currentTimeMillis();
@@ -144,7 +150,7 @@ public abstract class TestFeature {
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
 
-            predictSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_PREDICT_SNIPPET, SNIPPET_VERSION_1_0);
+            predictSnippet = snippetCache.findByNameAndSnippetVersion(TEST_PREDICT_SNIPPET, SNIPPET_VERSION_1_0);
             if (predictSnippet == null) {
                 predictSnippet = new Snippet();
                 predictSnippet.setName(TEST_PREDICT_SNIPPET);
@@ -157,7 +163,7 @@ public abstract class TestFeature {
 
                 mills = System.currentTimeMillis();
                 log.info("Start snippetRepository.save() #2");
-                snippetRepository.save(predictSnippet);
+                snippetCache.save(predictSnippet);
                 log.info("stationsRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
 
                 mills = System.currentTimeMillis();
@@ -313,10 +319,10 @@ public abstract class TestFeature {
             stationsRepository.deleteById(station.getId());
         }
         if (predictSnippet != null) {
-            snippetRepository.deleteById(predictSnippet.getId());
+            snippetCache.delete(predictSnippet.getId());
         }
         if (fitSnippet != null) {
-            snippetRepository.deleteById(fitSnippet.getId());
+            snippetCache.delete(fitSnippet.getId());
         }
 
         System.out.println("Was finished correctly");
@@ -340,15 +346,25 @@ public abstract class TestFeature {
     }
 
     protected void checkCurrentState_with10sequences() {
+        long mills;
+
+        mills = System.currentTimeMillis();
+        log.info("Start experimentService.getSequencesAndAssignToStation()");
         ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(
                 station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, false, experiment.getId());
+        log.info("experimentService.getSequencesAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
+
         assertNotNull(sequences);
         assertNotNull(sequences.getFeature());
         assertNotNull(sequences.getSimpleSequences());
         assertEquals(CommandProcessor.MAX_SEQUENSE_POOL_SIZE, sequences.getSimpleSequences().size());
         assertTrue(sequences.getFeature().isInProgress);
 
+        mills = System.currentTimeMillis();
+        log.info("Start experimentFeatureRepository.findById()");
         ExperimentFeature feature = experimentFeatureRepository.findById(sequences.getFeature().getId()).orElse(null);
+        log.info("experimentFeatureRepository.findById() was finished for {}", System.currentTimeMillis() - mills);
+
         assertNotNull(feature);
         assertFalse(feature.isFinished);
         assertTrue(feature.isInProgress);
