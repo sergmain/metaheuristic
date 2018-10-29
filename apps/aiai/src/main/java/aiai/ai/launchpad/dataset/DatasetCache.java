@@ -18,8 +18,8 @@
 package aiai.ai.launchpad.dataset;
 
 import aiai.ai.launchpad.beans.Dataset;
-import aiai.ai.launchpad.beans.DatasetGroup;
-import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
+import aiai.ai.launchpad.beans.Feature;
+import aiai.ai.launchpad.repositories.FeatureRepository;
 import aiai.ai.launchpad.repositories.DatasetRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -32,11 +32,11 @@ import java.util.List;
 public class DatasetCache {
 
     private final DatasetRepository datasetRepository;
-    private final DatasetGroupsRepository groupsRepository;
+    private final FeatureRepository featureRepository;
 
-    public DatasetCache(DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository) {
+    public DatasetCache(DatasetRepository datasetRepository, FeatureRepository featureRepository) {
         this.datasetRepository = datasetRepository;
-        this.groupsRepository = groupsRepository;
+        this.featureRepository = featureRepository;
     }
 
     @CachePut(cacheNames = "datasets", key = "#dataset.id")
@@ -54,9 +54,9 @@ public class DatasetCache {
         datasetRepository.deleteById(datasetId);
     }
 
-    @CacheEvict(cacheNames = "datasets", key = "#group.dataset.id")
-    public void saveGroup(DatasetGroup group) {
-        groupsRepository.save(group);
+    @CacheEvict(cacheNames = "datasets", key = "#feature.dataset.id")
+    public void saveGroup(Feature feature) {
+        featureRepository.save(feature);
     }
 
     @Cacheable(cacheNames = "datasets", unless="#result==null")
@@ -65,12 +65,12 @@ public class DatasetCache {
     }
 
     @CacheEvict(cacheNames = "datasets", key = "#datasetId")
-    public void saveAllGroups(List<DatasetGroup> groups, long datasetId) {
-        groupsRepository.saveAll(groups);
+    public void saveAllFeatures(List<Feature> features, long datasetId) {
+        featureRepository.saveAll(features);
     }
 
-    @CacheEvict(cacheNames = "datasets", key = "#group.dataset.id")
-    public void delete(DatasetGroup group) {
-        groupsRepository.delete(group);
+    @CacheEvict(cacheNames = "datasets", key = "#feature.dataset.id")
+    public void delete(Feature feature) {
+        featureRepository.delete(feature);
     }
 }

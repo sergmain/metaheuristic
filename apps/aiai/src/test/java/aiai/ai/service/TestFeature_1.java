@@ -19,10 +19,10 @@ package aiai.ai.service;
 
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Dataset;
-import aiai.ai.launchpad.beans.DatasetGroup;
+import aiai.ai.launchpad.beans.Feature;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.launchpad.dataset.DatasetCache;
-import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
+import aiai.ai.launchpad.repositories.FeatureRepository;
 import aiai.ai.launchpad.repositories.DatasetRepository;
 import org.junit.After;
 import org.junit.Before;
@@ -42,7 +42,7 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class TestDatasetGroup {
+public class TestFeature_1 {
 
     @Autowired
     private Globals globals;
@@ -51,7 +51,7 @@ public class TestDatasetGroup {
     private DatasetRepository datasetRepository;
 
     @Autowired
-    private DatasetGroupsRepository datasetGroupsRepository;
+    private FeatureRepository featureRepository;
 
     @Autowired
     private DatasetCache datasetCache;
@@ -73,28 +73,25 @@ public class TestDatasetGroup {
             dataset.setLocked(true);
             dataset.setEditable(false);
 
-            DatasetGroup dg1 = new DatasetGroup();
-            dg1.setGroupNumber(1);
-            dg1.setCommand("Test cmd #1. Must be deleted automatically");
-            dg1.setFeature(true);
+            Feature dg1 = new Feature();
+            dg1.setFeatureOrder(1);
+            dg1.setDescription("Test cmd #1. Must be deleted automatically");
             dg1.setFeatureStatus(ArtifactStatus.OK.value);
             dg1.setDataset(dataset);
 
-            DatasetGroup dg2 = new DatasetGroup();
-            dg2.setGroupNumber(2);
-            dg2.setCommand("Test cmd #2. Must be deleted automatically");
-            dg2.setFeature(true);
+            Feature dg2 = new Feature();
+            dg2.setFeatureOrder(2);
+            dg2.setDescription("Test cmd #2. Must be deleted automatically");
             dg2.setFeatureStatus(ArtifactStatus.OK.value);
             dg2.setDataset(dataset);
 
-            DatasetGroup dg3 = new DatasetGroup();
-            dg3.setGroupNumber(3);
-            dg3.setCommand("Test cmd #3. Must be deleted automatically");
-            dg3.setFeature(true);
+            Feature dg3 = new Feature();
+            dg3.setFeatureOrder(3);
+            dg3.setDescription("Test cmd #3. Must be deleted automatically");
             dg3.setFeatureStatus(ArtifactStatus.OK.value);
             dg3.setDataset(dataset);
 
-            dataset.setDatasetGroups(Arrays.asList(dg1, dg2, dg3));
+            dataset.setFeatures(Arrays.asList(dg1, dg2, dg3));
 
             datasetCache.save(dataset);
 
@@ -118,7 +115,6 @@ public class TestDatasetGroup {
             }
         }
 
-
         System.out.println("Was finished correctly");
     }
 
@@ -129,9 +125,9 @@ public class TestDatasetGroup {
         final Long datasetId = dataset.getId();
         datasetCache.delete(datasetId);
 
-        List<DatasetGroup> groups  = datasetGroupsRepository.findByDataset_Id(datasetId);
-        assertNotNull(groups);
-        assertTrue(groups.isEmpty());
+        List<Feature> features  = featureRepository.findByDataset_Id(datasetId);
+        assertNotNull(features);
+        assertTrue(features.isEmpty());
 
     }
 

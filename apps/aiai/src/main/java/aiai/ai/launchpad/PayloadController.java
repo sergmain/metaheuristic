@@ -22,12 +22,11 @@ import aiai.ai.Globals;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.Dataset;
-import aiai.ai.launchpad.beans.DatasetGroup;
+import aiai.ai.launchpad.beans.Feature;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.dataset.DatasetCache;
-import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
-import aiai.ai.launchpad.repositories.SnippetRepository;
+import aiai.ai.launchpad.repositories.FeatureRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.DigitUtils;
@@ -60,16 +59,16 @@ public class PayloadController {
 
     private final ChecksumWithSignatureService checksumWithSignatureService;
     private final SnippetCache snippetCache;
-    private final DatasetGroupsRepository datasetGroupsRepository;
+    private final FeatureRepository featureRepository;
     private final BinaryDataService binaryDataService;
     private final DatasetCache datasetCache;
     private final SnippetService snippetService;
 
     private final Globals globals;
 
-    public PayloadController(SnippetCache snippetCache, DatasetGroupsRepository datasetGroupsRepository, ChecksumWithSignatureService checksumWithSignatureService, BinaryDataService binaryDataService, DatasetCache datasetCache, SnippetService snippetService, Globals globals) {
+    public PayloadController(SnippetCache snippetCache, FeatureRepository featureRepository, ChecksumWithSignatureService checksumWithSignatureService, BinaryDataService binaryDataService, DatasetCache datasetCache, SnippetService snippetService, Globals globals) {
         this.snippetCache = snippetCache;
-        this.datasetGroupsRepository = datasetGroupsRepository;
+        this.featureRepository = featureRepository;
         this.checksumWithSignatureService = checksumWithSignatureService;
         this.binaryDataService = binaryDataService;
         this.datasetCache = datasetCache;
@@ -141,23 +140,23 @@ public class PayloadController {
     @GetMapping("/feature/{featureId}")
     @Transactional
     public HttpEntity<AbstractResource> feature(HttpServletResponse response, @PathVariable("featureId") long featureId) throws IOException {
-        final DatasetGroup datasetGroup = datasetGroupsRepository.findById(featureId).orElse(null);
-        if (datasetGroup==null) {
+        final Feature feature = featureRepository.findById(featureId).orElse(null);
+        if (feature ==null) {
             log.info("Feature wasn't found for id {}", featureId);
             return returnEmptyAsGone(response);
         }
-        final File featureFile = new File(globals.launchpadDir, datasetGroup.asFeatureFilePath());
+        final File featureFile = new File(globals.launchpadDir, feature.asFeatureFilePath());
 
         if (globals.isStoreDataToDb()) {
-            if (datasetGroup.getLength()==null || datasetGroup.getLength()==0) {
-                log.error("feature length isn't initialized, length: {}", datasetGroup.getLength());
+            if (feature.getLength()==null || feature.getLength()==0) {
+                log.error("feature length isn't initialized, length: {}", feature.getLength());
                 return returnEmptyAsGone(response);
             }
             boolean isStore = false;
             if (!featureFile.exists()) {
                 isStore = true;
             }
-            else if (featureFile.length()!=datasetGroup.getLength()) {
+            else if (featureFile.length()!= feature.getLength()) {
                 featureFile.delete();
                 isStore = true;
             }

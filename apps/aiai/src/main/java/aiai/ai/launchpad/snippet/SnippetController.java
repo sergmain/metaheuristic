@@ -72,7 +72,7 @@ public class SnippetController {
 
         // TODO !!!!! need to implement this method !!!!!
 /*
-        DatasetGroup group = value.get();
+        Feature group = value.get();
         long datasetId = group.getDataset().getId();
 
         datasetCache.delete(group);

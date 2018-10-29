@@ -125,8 +125,8 @@
             </thead>
 
             <tbody>
-            <tr th:each="g : ${experimentResult.dataset.datasetGroups}">
-                <td th:text="${g.id}">Group Id</td>
+            <tr th:each="g : ${experimentResult.dataset.features}">
+                <td th:text="${g.id}">Feature Id</td>
                 <td th:text="${g.required ? 'Yes' : 'No'}">Is required</td>
                 <td>
                     <table class="pure-table pure-table-bordered" width="100%"

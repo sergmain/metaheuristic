@@ -40,8 +40,8 @@ import java.util.List;
 @Entity
 @Table(name = "AIAI_LP_DATASET")
 @Data
-@EqualsAndHashCode(exclude = {"datasetGroups", "assemblySnippet", "datasetSnippet"})
-@ToString(exclude = {"datasetGroups", "datasetSnippet", "assemblySnippet"})
+@EqualsAndHashCode(exclude = {"features", "assemblySnippet", "datasetSnippet"})
+@ToString(exclude = {"features", "datasetSnippet", "assemblySnippet"})
 @NoArgsConstructor
 public class Dataset implements Serializable {
     private static final long serialVersionUID = -1972306380977162458L;
@@ -85,7 +85,7 @@ public class Dataset implements Serializable {
     private Long length;
 
     @OneToMany(mappedBy = "dataset", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
-    private List<DatasetGroup> datasetGroups = new ArrayList<>();
+    private List<Feature> features = new ArrayList<>();
 
     public String asRawFilePath() {
         //noinspection UnnecessaryLocalVariable

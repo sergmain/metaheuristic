@@ -19,7 +19,6 @@
 package aiai.ai.launchpad.beans;
 
 import aiai.ai.launchpad.experiment.ExperimentUtils;
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -28,7 +27,9 @@ import org.hibernate.annotations.LazyCollectionOption;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.*;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * User: Serg

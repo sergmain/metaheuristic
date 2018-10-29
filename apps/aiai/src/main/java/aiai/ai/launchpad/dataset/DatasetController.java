@@ -25,7 +25,7 @@ import aiai.ai.exceptions.StoreNewPartOfRawFileException;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.env.EnvService;
-import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
+import aiai.ai.launchpad.repositories.FeatureRepository;
 import aiai.ai.launchpad.repositories.DatasetPathRepository;
 import aiai.ai.launchpad.repositories.DatasetRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
@@ -89,14 +89,14 @@ public class DatasetController {
         }
         public boolean canBeLocked() {
             boolean state = dataset.isLocked() || dataset.getAssemblySnippet()==null ||
-                    dataset.getDatasetSnippet()==null || dataset.getDatasetGroups().isEmpty() ||
+                    dataset.getDatasetSnippet()==null || dataset.getFeatures().isEmpty() ||
                     paths.isEmpty();
             if (!state) {
                 return false;
             }
 
-            for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
-                if (datasetGroup.getSnippet()==null) {
+            for (Feature feature : dataset.getFeatures()) {
+                if (feature.getSnippet()==null) {
                     return false;
                 }
             }
@@ -112,7 +112,7 @@ public class DatasetController {
     private final Globals globals;
     private final DatasetService datasetService;
     private final DatasetRepository datasetRepository;
-    private final DatasetGroupsRepository groupsRepository;
+    private final FeatureRepository featureRepository;
     private final DatasetPathRepository pathRepository;
     private final SnippetService snippetService;
     private final SnippetCache snippetCache;
@@ -120,10 +120,10 @@ public class DatasetController {
     private final DatasetCache datasetCache;
     private final BinaryDataService binaryDataService;
 
-    public DatasetController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository groupsRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetCache snippetCache, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, DatasetService datasetService) {
+    public DatasetController(Globals globals, DatasetRepository datasetRepository, FeatureRepository featureRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetCache snippetCache, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, DatasetService datasetService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
-        this.groupsRepository = groupsRepository;
+        this.featureRepository = featureRepository;
         this.pathRepository = pathRepository;
         this.snippetService = snippetService;
         this.snippetCache = snippetCache;
@@ -254,9 +254,9 @@ public class DatasetController {
 
     @PostMapping("/dataset-group-snippet-commit/{id}")
     public String snippetGroupCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
-        final DatasetGroup group = groupsRepository.findById(id).orElse(null);
+        final Feature group = featureRepository.findById(id).orElse(null);
         if (group==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#180.01 dataset group wasn't found, datasetGroupId: " + id);
+            redirectAttributes.addFlashAttribute("errorMessage", "#180.01 dataset group wasn't found, featureId: " + id);
             return "redirect:/launchpad/datasets";
         }
         SnippetVersion snippetVersion = SnippetVersion.from(code);
@@ -293,62 +293,48 @@ public class DatasetController {
 
     @GetMapping(value = "/dataset-delete-group/{id}")
     public String deleteGroup(@PathVariable Long id) {
-        final Optional<DatasetGroup> value = groupsRepository.findById(id);
+        final Optional<Feature> value = featureRepository.findById(id);
         if (!value.isPresent()) {
             return "redirect:/launchpad/datasets";
         }
-        DatasetGroup group = value.get();
+        Feature group = value.get();
         long datasetId = group.getDataset().getId();
 
         datasetCache.delete(group);
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
-    @GetMapping(value = "/dataset-group-add-new/{id}")
-    public String addNewGroup(@PathVariable(name = "id") Long datasetId) {
-        Dataset dataset = datasetCache.findById(datasetId);
-        if (dataset==null) {
-            return "redirect:/launchpad/datasets";
-        }
-
-        datasetService.addGroup(dataset, dataset.getId(), false);
-
-        datasetCache.save(dataset);
-        return "redirect:/launchpad/dataset-definition/" + datasetId;
-    }
-
     @GetMapping(value = "/dataset-group-add-new-feature/{id}")
-    public String addNewFeatureGroup(@PathVariable(name = "id") Long datasetId) {
+    public String addNewFeature(@PathVariable(name = "id") Long datasetId, final RedirectAttributes redirectAttributes) {
         Dataset dataset = datasetCache.findById(datasetId);
         if (dataset==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#150.10 Dataset wasn't found, datasetId: " + datasetId);
             return "redirect:/launchpad/datasets";
         }
 
-        datasetService.addGroup(dataset, datasetId, true);
-
-        datasetCache.save(dataset);
+        datasetService.addEmptyFeature(dataset);
         return "redirect:/launchpad/dataset-definition/" + datasetId;
     }
 
     @GetMapping(value = "/dataset-produce-feature/{id}")
     public String produceFeatureForGroup(@PathVariable(name = "id") Long groupId, final RedirectAttributes redirectAttributes) {
-        final DatasetGroup group = groupsRepository.findById(groupId).orElse(null);
-        if (group == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#150.01 datasetGroup wasn't found, groupId: " + groupId);
+        final Feature feature = featureRepository.findById(groupId).orElse(null);
+        if (feature == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#150.01 Feature wasn't found, featureId: " + groupId);
             return "redirect:/launchpad/datasets";
         }
-        Dataset dataset = group.getDataset();
+        Dataset dataset = feature.getDataset();
         Long datasetId = dataset.getId();
         try {
-            Env env = envService.envsAsMap().get(group.getSnippet().getEnv());
+            Env env = envService.envsAsMap().get(feature.getSnippet().getEnv());
             if (env == null) {
-                redirectAttributes.addFlashAttribute("errorMessage", "#153.01 Environment definition wasn't found for feature snippet. Requested environment: " + group.getSnippet().getEnv());
+                redirectAttributes.addFlashAttribute("errorMessage", "#153.01 Environment definition wasn't found for feature snippet. Requested environment: " + feature.getSnippet().getEnv());
                 return "redirect:/launchpad/dataset-definition/" + datasetId;
             }
 
-            final Snippet snippet = group.getSnippet();
+            final Snippet snippet = feature.getSnippet();
             final File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
-            final ConfigForFeature configForFeature = datasetService.createYamlForFeature(group);
+            final ConfigForFeature configForFeature = datasetService.createYamlForFeature(feature);
             if (!globals.isStoreDataToDisk()) {
                 snippetService.persistSnippet(snippet.getSnippetCode());
                 File datasetFile = new File(globals.launchpadDir, dataset.asDatasetFilePath());
@@ -372,9 +358,9 @@ public class DatasetController {
 
             final File yaml = configForFeature.yamlFile;
             log.info("yaml file: {}", yaml.getPath());
-            final ProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.FEATURE, group.getId());
+            final ProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.FEATURE, feature.getId());
             boolean isOk = result.isOk();
-            datasetService.updateInfoWithDatasetGroup(configForFeature, group, isOk);
+            datasetService.updateInfoWithFeature(configForFeature, feature, isOk);
             if (!isOk) {
                 redirectAttributes.addFlashAttribute("errorMessage",
                         "#155.02 Error executing of feature producer. See logs for more info");
@@ -387,33 +373,6 @@ public class DatasetController {
             return "redirect:/launchpad/dataset-definition/" + datasetId;
         }
         return "redirect:/launchpad/dataset-definition/" + datasetId;
-    }
-
-    @PostMapping(value = "/dataset-group-id-group-commit")
-    public String setIdGrouppForGroup(Long id, @RequestParam(name = "id_group", required = false, defaultValue = "false") boolean isIdGroup) {
-        final Optional<DatasetGroup> value = groupsRepository.findById(id);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-        DatasetGroup group = value.get();
-        group.setIdGroup(isIdGroup);
-//        groupsRepository.save(group);
-        datasetCache.saveGroup(group);
-
-        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
-    }
-
-    @PostMapping(value = "/dataset-group-label-commit")
-    public String setLabelForGroup(Long id, boolean label) {
-        final Optional<DatasetGroup> value = groupsRepository.findById(id);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-        DatasetGroup group = value.get();
-        group.setLabel(label);
-        datasetCache.saveGroup(group);
-
-        return "redirect:/launchpad/dataset-definition/" + group.getDataset().getId();
     }
 
     @PostMapping(value = "/dataset-is-editable-commit")
@@ -430,7 +389,7 @@ public class DatasetController {
 
     @PostMapping(value = "/dataset-group-is-required-commit")
     public String isRequired(Long id, boolean required, final RedirectAttributes redirectAttributes) {
-        DatasetGroup group = groupsRepository.findById(id).orElse(null);
+        Feature group = featureRepository.findById(id).orElse(null);
         if (group == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#171.01 feature wasn't found, id: " + id);
             return "redirect:/launchpad/datasets";

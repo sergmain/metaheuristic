@@ -9,7 +9,7 @@ import aiai.ai.exceptions.StoreNewPartOfRawFileException;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.env.EnvService;
-import aiai.ai.launchpad.repositories.DatasetGroupsRepository;
+import aiai.ai.launchpad.repositories.FeatureRepository;
 import aiai.ai.launchpad.repositories.DatasetPathRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
@@ -51,10 +51,10 @@ public class DatasetService {
     private final SnippetService snippetService;
     private final EnvService envService;
     private final DatasetCache datasetCache;
-    private final DatasetGroupsRepository groupsRepository;
+    private final FeatureRepository featureRepository;
     private final ProcessService processService;
 
-    public DatasetService(DatasetPathRepository pathRepository, Globals globals, BinaryDataService binaryDataService, SnippetRepository snippetRepository, SnippetService snippetService, EnvService envService, DatasetCache datasetCache, DatasetGroupsRepository groupsRepository, ProcessService processService) {
+    public DatasetService(DatasetPathRepository pathRepository, Globals globals, BinaryDataService binaryDataService, SnippetRepository snippetRepository, SnippetService snippetService, EnvService envService, DatasetCache datasetCache, FeatureRepository featureRepository, ProcessService processService) {
         this.pathRepository = pathRepository;
         this.globals = globals;
         this.binaryDataService = binaryDataService;
@@ -62,7 +62,7 @@ public class DatasetService {
         this.snippetService = snippetService;
         this.envService = envService;
         this.datasetCache = datasetCache;
-        this.groupsRepository = groupsRepository;
+        this.featureRepository = featureRepository;
         this.processService = processService;
     }
 
@@ -74,14 +74,14 @@ public class DatasetService {
         ds.setDatasetSnippet(dataset.getDatasetSnippet());
         ds.setEditable(true);
         ds.setLocked(false);
-        ds.setDatasetGroups(new ArrayList<>());
+        ds.setFeatures(new ArrayList<>());
         ds.setLength(dataset.getLength());
         datasetCache.save(ds);
         binaryDataService.cloneBinaryData(dataset.getId(), ds.getId(), BinaryData.Type.DATASET);
 
-        for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
-            DatasetGroup dg = new DatasetGroup();
-            BeanUtils.copyProperties(datasetGroup, dg);
+        for (Feature feature : dataset.getFeatures()) {
+            Feature dg = new Feature();
+            BeanUtils.copyProperties(feature, dg);
             dg.setId(null);
             dg.setVersion(null);
             dg.setFeatureStatus(ArtifactStatus.NONE.value);
@@ -158,17 +158,17 @@ public class DatasetService {
         final List<SnippetCode> featureCodes = new ArrayList<>();
 
         // fix conditions for UI
-        final int groupSize = dataset.getDatasetGroups().size();
-        for (int i = 0; i < groupSize; i++) {
-            DatasetGroup group = dataset.getDatasetGroups().get(i);
-            group.setAddColumn(true);
-            if (group.getSnippet()!=null) {
-                featureCodes.add(new SnippetCode(group.getSnippet().getId(), group.getSnippet().getSnippetCode()));
+        final int featureSize = dataset.getFeatures().size();
+        for (int i = 0; i < featureSize; i++) {
+            Feature feature = dataset.getFeatures().get(i);
+            feature.setAddColumn(true);
+            if (feature.getSnippet()!=null) {
+                featureCodes.add(new SnippetCode(feature.getSnippet().getId(), feature.getSnippet().getSnippetCode()));
             }
         }
 
         // ugly but it works
-        for (DatasetGroup group : dataset.getDatasetGroups()) {
+        for (Feature group : dataset.getFeatures()) {
             group.featureOptions = snippetService.getSelectOptions(snippets, featureCodes, (s) -> SnippetType.feature!=(SnippetType.valueOf(s.type)));
         }
 
@@ -191,20 +191,20 @@ public class DatasetService {
         return definition;
     }
 
-    void addGroup(Dataset dataset, Long id, boolean b) {
-        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(id);
-        int groupNumber;
+    void addEmptyFeature(Dataset dataset) {
+//        List<Feature> features = featureRepository.findByDataset_Id(id);
+        List<Feature> features = dataset.getFeatures();
         //noinspection ConstantConditions
-        groupNumber = groups.isEmpty() ? 1 : groups.stream().mapToInt(DatasetGroup::getGroupNumber).max().getAsInt() + 1;
+        int featureOrder = features.isEmpty() ? 1 : features.stream().mapToInt(Feature::getFeatureOrder).max().getAsInt() + 1;
 
-        final DatasetGroup group = new DatasetGroup(groupNumber);
-        group.setFeature(b);
-        group.setDataset(dataset);
+        final Feature feature = new Feature(featureOrder);
+        feature.setDataset(dataset);
 
-        dataset.getDatasetGroups().add(group);
+        dataset.getFeatures().add(feature);
+        datasetCache.save(dataset);
     }
 
-    void updateInfoWithDatasetGroup(ConfigForFeature configForFeature, DatasetGroup group, boolean isOk) throws IOException {
+    void updateInfoWithFeature(ConfigForFeature configForFeature, Feature group, boolean isOk) throws IOException {
         int status = isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value;
         if (!configForFeature.featureFile.exists()) {
             log.error("Feature file doesn't exist: {}", configForFeature.featureFile.getPath());
@@ -223,7 +223,7 @@ public class DatasetService {
         }
     }
 
-    ConfigForFeature createYamlForFeature(DatasetGroup group) {
+    ConfigForFeature createYamlForFeature(Feature group) {
 
         long datasetId = group.getDataset().getId();
 
@@ -297,15 +297,15 @@ public class DatasetService {
             }
         }
 
-        obsoleteDatasetGroups(dataset);
+        obsoleteFeatures(dataset);
     }
 
-    private void obsoleteDatasetGroups(Dataset dataset) {
-        List<DatasetGroup> groups = groupsRepository.findByDataset_Id(dataset.getId());
-        for (DatasetGroup group : groups) {
+    private void obsoleteFeatures(Dataset dataset) {
+        List<Feature> features = featureRepository.findByDataset_Id(dataset.getId());
+        for (Feature group : features) {
             group.setFeatureStatus(ArtifactStatus.OBSOLETE.value);
         }
-        datasetCache.saveAllGroups(groups, dataset.getId());
+        datasetCache.saveAllFeatures(features, dataset.getId());
     }
 
     void updateInfoWithDataset(Dataset dataset, boolean isOk) throws IOException {
@@ -328,7 +328,7 @@ public class DatasetService {
             }
         }
 
-        obsoleteDatasetGroups(dataset);
+        obsoleteFeatures(dataset);
     }
 
     ProcessService.Result runCommand(File yaml, String command, LogData.Type type, Long refId) {

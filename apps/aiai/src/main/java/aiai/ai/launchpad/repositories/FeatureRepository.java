@@ -18,7 +18,8 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.Dataset;
-import aiai.ai.launchpad.beans.DatasetGroup;
+import aiai.ai.launchpad.beans.Feature;
+import aiai.ai.launchpad.beans.Feature;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,10 +33,10 @@ import java.util.List;
  */
 @Component
 @Transactional
-public interface DatasetGroupsRepository extends CrudRepository<DatasetGroup, Long> {
+public interface FeatureRepository extends CrudRepository<Feature, Long> {
 
     @Transactional(readOnly = true)
-    List<DatasetGroup> findByDataset_Id(Long datasetId);
+    List<Feature> findByDataset_Id(Long datasetId);
 
     void deleteByDataset(Dataset dataset);
 

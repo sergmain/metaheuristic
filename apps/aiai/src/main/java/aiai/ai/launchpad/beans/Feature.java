@@ -38,12 +38,12 @@ import java.util.List;
  * Time: 21:22
  */
 @Entity
-@Table(name = "AIAI_LP_DATASET_GROUP")
+@Table(name = "AIAI_LP_FEATURE")
 @Data
 @EqualsAndHashCode(exclude = {"dataset", "snippet"})
 @ToString(exclude = {"dataset", "snippet"})
 @NoArgsConstructor
-public class DatasetGroup implements Serializable {
+public class Feature implements Serializable {
     private static final long serialVersionUID = -3161178396332333392L;
 
     public enum FEATURE_STATUS {
@@ -63,8 +63,8 @@ public class DatasetGroup implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "GROUP_NUMBER")
-    private int groupNumber;
+    @Column(name = "FEATURE_ORDER")
+    private int featureOrder;
 
     @Column(name = "DESCRIPTION")
     private String description;
@@ -74,20 +74,8 @@ public class DatasetGroup implements Serializable {
     @NotFound(action = NotFoundAction.IGNORE)
     private Snippet snippet;
 
-    @Column(name = "CMD")
-    private String command;
-
     @Column(name = "FEATURE_FILE")
     private String featureFile;
-
-    @Column(name = "IS_ID_GROUP")
-    private boolean isIdGroup;
-
-    @Column(name = "IS_FEATURE")
-    private boolean isFeature;
-
-    @Column(name = "IS_LABEL")
-    private boolean isLabel;
 
     @Column(name = "IS_REQUIRED")
     private boolean isRequired;
@@ -111,8 +99,8 @@ public class DatasetGroup implements Serializable {
     @Transient
     public List<SimpleSelectOption> featureOptions;
 
-    public DatasetGroup(int groupNumber) {
-        this.groupNumber = groupNumber;
+    public Feature(int featureOrder) {
+        this.featureOrder = featureOrder;
     }
 
     public String asFeatureFilePath() {

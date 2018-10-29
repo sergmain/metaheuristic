@@ -839,10 +839,10 @@ public class ExperimentService {
 
         final List<Long> ids = new ArrayList<>();
         final Set<Long> requiredIds = new HashSet<>();
-        for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
-            ids.add(datasetGroup.getId());
-            if (datasetGroup.isRequired()) {
-                requiredIds.add(datasetGroup.getId());
+        for (Feature feature : dataset.getFeatures()) {
+            ids.add(feature.getId());
+            if (feature.isRequired()) {
+                requiredIds.add(feature.getId());
             }
         }
         if (!requiredIds.isEmpty()) {

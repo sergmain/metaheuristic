@@ -70,24 +70,23 @@
     <!-- ==================================== Feature section ==================================== -->
 
     <p>&nbsp;</p>
-    <h2 class="widget-header">Feature groups</h2>
+    <h2 class="widget-header">Features</h2>
 
     <a class="pure-button pure-button-primary" href="#"
        th:if="${ result.dataset.editable}"
-       th:href="${'/launchpad/dataset-group-add-new-feature/'+result.dataset.id}">Add new feature group</a>
+       th:href="${'/launchpad/dataset-group-add-new-feature/'+result.dataset.id}">Add new feature</a>
     <p></p>
 
-    <div th:if='${result.dataset.datasetGroups.isEmpty()}'>
-        <p>There isn't any feature group</p>
+    <div th:if="${result.dataset.getFeatures.isEmpty()}">
+        <p>There isn't any feature</p>
     </div>
 
-    <table class="pure-table pure-table-bordered" id="table-ds-feature-groups" th:fragment="table"
-           th:if='${not result.dataset.datasetGroups.isEmpty()}'>
+    <table class="pure-table pure-table-bordered" id="table-ds-feature-features" th:fragment="table"
+           th:if='${not result.dataset.features.isEmpty()}'>
         <thead>
         <tr>
-            <th>Group Id</th>
-            <th>Group number</th>
-            <th>Type of group</th>
+            <th>Feature Id</th>
+            <th>Feature order</th>
             <th>Is required</th>
             <th th:if="${ result.dataset.editable}">Actions</th>
             <th>Columns</th>
@@ -95,10 +94,9 @@
         </tr>
         </thead>
         <tbody>
-        <tr th:each="g,gIterStatus : ${result.dataset.datasetGroups}" th:if="${g.isFeature()}">
+        <tr th:each="g,gIterStatus : ${result.dataset.features}">
             <td><p th:text="${'' + g.id}">#Id</p></td>
-            <td><p th:text="${'Group #' + g.groupNumber}">#Id</p></td>
-            <td><p>Feature</p></td>
+            <td><p th:text="${'Feature #' + g.getFeatureOrder}">#Id</p></td>
             <td>
                 <p th:remove="tag" th:if="${ !result.dataset.editable}" th:text="${g.required ? 'Yes' : 'No'}">Is required</p>
                 <form th:if="${result.dataset.editable}" class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
@@ -112,7 +110,7 @@
                 </form>
             </td>
             <td th:if="${ result.dataset.editable}">
-                <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/dataset-delete-group/' + g.id}">Delete group</a>
+                <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/dataset-delete-group/' + g.id}">Delete feature</a>
             </td>
             <td>
                 <table class="pure-table pure-table-bordered" id="table-group-cmd-line">

@@ -179,28 +179,25 @@ public abstract class TestFeature {
             dataset.setLocked(true);
             dataset.setEditable(false);
 
-            DatasetGroup dg1 = new DatasetGroup();
-            dg1.setGroupNumber(1);
-            dg1.setCommand("Test cmd #1. Must be deleted automatically");
-            dg1.setFeature(true);
+            Feature dg1 = new Feature();
+            dg1.setFeatureOrder(1);
+            dg1.setDescription("Test cmd #1. Must be deleted automatically");
             dg1.setFeatureStatus(ArtifactStatus.OK.value);
             dg1.setDataset(dataset);
 
-            DatasetGroup dg2 = new DatasetGroup();
-            dg2.setGroupNumber(2);
-            dg2.setCommand("Test cmd #2. Must be deleted automatically");
-            dg2.setFeature(true);
+            Feature dg2 = new Feature();
+            dg2.setFeatureOrder(2);
+            dg2.setDescription("Test cmd #2. Must be deleted automatically");
             dg2.setFeatureStatus(ArtifactStatus.OK.value);
             dg2.setDataset(dataset);
 
-            DatasetGroup dg3 = new DatasetGroup();
-            dg3.setGroupNumber(3);
-            dg3.setCommand("Test cmd #3. Must be deleted automatically");
-            dg3.setFeature(true);
+            Feature dg3 = new Feature();
+            dg3.setFeatureOrder(3);
+            dg3.setDescription("Test cmd #3. Must be deleted automatically");
             dg3.setFeatureStatus(ArtifactStatus.OK.value);
             dg3.setDataset(dataset);
 
-            dataset.setDatasetGroups(Arrays.asList(dg1, dg2, dg3));
+            dataset.setFeatures(Arrays.asList(dg1, dg2, dg3));
 
             mills = System.currentTimeMillis();
             log.info("Start datasetCache.save()");
