@@ -20,7 +20,28 @@ package aiai.ai;
 public final class Enums {
 
     public enum TaskType {
-        ProduceRawFile, ProduceDataset, ProduceFeature, FitAndPredict
+        ProduceRawFile(1), ProduceDataset(2), ProduceFeature(3), Experiment(4);
+
+        public int code;
+
+        TaskType(int code) {
+            this.code = code;
+        }
+
+        public static TaskType toType(int code) {
+            switch (code) {
+                case 1:
+                    return ProduceRawFile;
+                case 2:
+                    return ProduceDataset;
+                case 3:
+                    return ProduceFeature;
+                case 4:
+                    return Experiment;
+                default:
+                    return null;
+            }
+        }
     }
 
     public enum StoreData {
@@ -41,7 +62,7 @@ public final class Enums {
         }
 
         public static ExperimentExecState toState(int code) {
-            switch(code) {
+            switch (code) {
                 case 0:
                     return NONE;
                 case 1:
@@ -59,7 +80,7 @@ public final class Enums {
 
         public static String from(int code) {
             ExperimentExecState state = toState(code);
-            return state==null ? "Unknown" : state.toString();
+            return state == null ? "Unknown" : state.toString();
         }
     }
 }

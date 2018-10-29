@@ -87,6 +87,21 @@ public class DatasetController {
             this.launchpadDirAsString = launchpadDirAsString;
             this.datasetDirAsString = datasetDirAsString;
         }
+        public boolean canBeLocked() {
+            boolean state = dataset.isLocked() || dataset.getAssemblySnippet()==null ||
+                    dataset.getDatasetSnippet()==null || dataset.getDatasetGroups().isEmpty() ||
+                    paths.isEmpty();
+            if (!state) {
+                return false;
+            }
+
+            for (DatasetGroup datasetGroup : dataset.getDatasetGroups()) {
+                if (datasetGroup.getSnippet()==null) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     static {
@@ -169,6 +184,23 @@ public class DatasetController {
         ds.setEditable(true);
         datasetCache.save(ds);
         return "redirect:/launchpad/datasets";
+    }
+
+    @PostMapping("/dataset-lock-and-process-commit/{id}")
+    public String datasetLockAndProcessCommit(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
+        Dataset dataset = datasetCache.findById(id);
+        if (dataset == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#173.05 dataset wasn't found, datasetId: " + id);
+            return "redirect:/launchpad/datasets";
+        }
+
+        dataset.setLocked(true);
+        dataset.setEditable(false);
+        datasetCache.save(dataset);
+
+
+
+        return "redirect:/launchpad/dataset-definition/"+id;
     }
 
     @GetMapping(value = "/dataset-definition/{id}")

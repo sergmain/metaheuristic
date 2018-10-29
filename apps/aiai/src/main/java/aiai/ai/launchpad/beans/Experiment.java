@@ -18,7 +18,6 @@
 
 package aiai.ai.launchpad.beans;
 
-import aiai.ai.Enums;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.Data;
@@ -39,8 +38,8 @@ import java.util.*;
 @Entity
 @Table(name = "AIAI_LP_EXPERIMENT")
 @Data
-@EqualsAndHashCode(exclude = {"hyperParams", "snippets"})
-@ToString(exclude = {"hyperParams", "snippets"})
+@EqualsAndHashCode(exclude = {"hyperParams"})
+@ToString(exclude = {"hyperParams"})
 public class Experiment implements Serializable {
     private static final long serialVersionUID = -3509391644278818781L;
 
@@ -95,39 +94,6 @@ public class Experiment implements Serializable {
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
     private List<ExperimentHyperParams> hyperParams;
-
-    @LazyCollection(LazyCollectionOption.FALSE)
-    @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
-    private List<ExperimentSnippet> snippets;
-
-    public void sortSnippetsByOrder() {
-        snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
-    }
-
-
-    public boolean hasFit() {
-        if (snippets==null || snippets.isEmpty()) {
-            return false;
-        }
-        for (ExperimentSnippet snippet : snippets) {
-            if (SnippetType.fit.toString().equals(snippet.getType())) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean hasPredict() {
-        if (snippets==null || snippets.isEmpty()) {
-            return false;
-        }
-        for (ExperimentSnippet snippet : snippets) {
-            if (SnippetType.predict.toString().equals(snippet.getType())) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public Map<String, Map<String, Integer>> getHyperParamsAsMap() {
         return getHyperParamsAsMap(true);

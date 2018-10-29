@@ -26,6 +26,7 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.feature.FeatureExecStatus;
 import aiai.ai.launchpad.repositories.*;
+import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.BigDecimalHolder;
 import aiai.ai.utils.permutation.Permutation;
 import aiai.ai.yaml.console.SnippetExec;
@@ -142,8 +143,9 @@ public class ExperimentService {
     private final DatasetRepository datasetRepository;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final DatasetCache datasetCache;
+    private final SnippetService snippetService;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, DatasetRepository datasetRepository, TaskParamYamlUtils taskParamYamlUtils, DatasetCache datasetCache) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetRepository snippetRepository, DatasetRepository datasetRepository, TaskParamYamlUtils taskParamYamlUtils, DatasetCache datasetCache, SnippetService snippetService) {
         this.globals = globals;
         this.experimentRepository = experimentRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
@@ -152,6 +154,7 @@ public class ExperimentService {
         this.datasetRepository = datasetRepository;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.datasetCache = datasetCache;
+        this.snippetService = snippetService;
     }
 
     private static class ParamFilter {
@@ -193,8 +196,8 @@ public class ExperimentService {
                 return EMPTY_RESULT;
             }
             if (isAcceptOnlySigned) {
-                for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
-                    final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
+                for (TaskSnippet taskSnippet : snippetService.getTaskSnippetsForExperiment(experiment.getId())) {
+                    final SnippetVersion snippetVersion = SnippetVersion.from(taskSnippet.getSnippetCode());
                     Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                     if (snippet!=null && !snippet.isSigned()) {
                         // this experiment with #experimentId contains non-signed snippet but we were asked for singed snippets only
@@ -216,8 +219,8 @@ public class ExperimentService {
                     continue;
                 }
                 if (isAcceptOnlySigned) {
-                    for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
-                        final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
+                    for (TaskSnippet taskSnippet : snippetService.getTaskSnippetsForExperiment(experiment.getId())) {
+                        final SnippetVersion snippetVersion = SnippetVersion.from(taskSnippet.getSnippetCode());
                         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                         if (snippet!=null && snippet.isSigned()) {
                             // add only feature for signed experiments
@@ -406,9 +409,10 @@ public class ExperimentService {
             }
 
             SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(result.getResult());
-            experiment.getSnippets().sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
+            List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
+            snippetService.sortSnippetsByOrder(taskSnippets);
             boolean isAllOk = true;
-            for (ExperimentSnippet snippet : experiment.getSnippets()) {
+            for (TaskSnippet snippet : taskSnippets) {
                 ProcessService.Result r = snippetExec.getExecs().get(snippet.getOrder());
                 if (r==null || !r.isOk()) {
                     isAllOk = false;
@@ -718,7 +722,8 @@ public class ExperimentService {
     public void produceSequences(Experiment experiment) {
         int totalVariants = 0;
 
-        experiment.sortSnippetsByOrder();
+        List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
+        snippetService.sortSnippetsByOrder(taskSnippets);
 
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         for (ExperimentFeature feature : features) {
@@ -756,26 +761,26 @@ public class ExperimentService {
                 yaml.resources.add(SimpleResource.of(BinaryData.Type.DATASET, experiment.getDatasetId().toString()));
 
                 final List<SimpleSnippet> snippets = new ArrayList<>();
-                for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
-                    final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                    Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
+                for (TaskSnippet taskSnippet : taskSnippets) {
+                    final SnippetVersion snippetVersion = SnippetVersion.from(taskSnippet.getSnippetCode());
+                    Snippet snippet =  localCache.get(taskSnippet.getSnippetCode());
                     if (snippet==null) {
                         snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                         if (snippet!=null) {
-                            localCache.put(experimentSnippet.getSnippetCode(), snippet);
+                            localCache.put(taskSnippet.getSnippetCode(), snippet);
                         }
                     }
                     if (snippet==null) {
-                        log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
+                        log.warn("Snippet wasn't found for code: {}", taskSnippet.getSnippetCode());
                         continue;
                     }
                     snippets.add(new SimpleSnippet(
-                            SnippetType.valueOf(experimentSnippet.getType()),
-                            experimentSnippet.getSnippetCode(),
+                            SnippetType.valueOf(taskSnippet.getType()),
+                            taskSnippet.getSnippetCode(),
                             snippet.getFilename(),
                             snippet.checksum,
                             snippet.env,
-                            experimentSnippet.getOrder(),
+                            taskSnippet.getOrder(),
                             snippet.reportMetrics
                     ));
                 }
@@ -800,7 +805,7 @@ public class ExperimentService {
                     try {
                         ExperimentFeature f = experimentFeatureRepository.findById(feature.getId()).orElse(null);
                         if (f==null) {
-                            log.warn("Unxpected behaviour, feature with id {} wasn't found", feature.getId());
+                            log.warn("Unexpected behaviour, feature with id {} wasn't found", feature.getId());
                             break;
                         }
                         f.setFinished(false);
@@ -818,7 +823,7 @@ public class ExperimentService {
             }
         }
         if (experiment.getNumberOfSequence() != totalVariants && experiment.getNumberOfSequence() != 0) {
-            log.warn("! Number of sequnece is different. experiment.getNumberOfSequence(): {}, totalVariants: {}", experiment.getNumberOfSequence(), totalVariants);
+            log.warn("! Number of sequence is different. experiment.getNumberOfSequence(): {}, totalVariants: {}", experiment.getNumberOfSequence(), totalVariants);
         }
         Experiment experimentTemp = experimentRepository.findById(experiment.getId()).orElse(null);
         if (experimentTemp==null) {

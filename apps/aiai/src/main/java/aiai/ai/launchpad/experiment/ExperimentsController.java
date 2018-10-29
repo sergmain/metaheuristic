@@ -34,7 +34,6 @@ import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.apps.commons.yaml.snippet.SnippetType;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -89,10 +88,10 @@ public class ExperimentsController {
     @Data
     public static class SnippetResult {
         public List<SimpleSelectOption> selectOptions = new ArrayList<>();
-        public List<ExperimentSnippet> snippets = new ArrayList<>();
+        public List<TaskSnippet> snippets = new ArrayList<>();
 
         public void sortSnippetsByOrder() {
-            snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
+            snippets.sort(Comparator.comparingInt(TaskSnippet::getOrder));
         }
     }
 
@@ -129,14 +128,14 @@ public class ExperimentsController {
     private final ExperimentRepository experimentRepository;
     private final ExperimentService experimentService;
     private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
-    private final ExperimentSnippetRepository experimentSnippetRepository;
+    private final TaskSnippetRepository taskSnippetRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final ExperimentSequenceRepository experimentSequenceRepository;
     private final ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository;
     private final DatasetCache datasetCache;
     private final EnvService envService;
 
-    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache, EnvService envService) {
+    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, DatasetGroupsRepository datasetGroupsRepository, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, TaskSnippetRepository taskSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache, EnvService envService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.datasetGroupsRepository = datasetGroupsRepository;
@@ -145,7 +144,7 @@ public class ExperimentsController {
         this.experimentHyperParamsRepository = experimentHyperParamsRepository;
         this.snippetService = snippetService;
         this.experimentService = experimentService;
-        this.experimentSnippetRepository = experimentSnippetRepository;
+        this.taskSnippetRepository = taskSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.experimentSequenceRepository = experimentSequenceRepository;
         this.experimentSequenceWithSpecRepository = experimentSequenceWithSpecRepository;
@@ -288,21 +287,24 @@ public class ExperimentsController {
     }
 
     private boolean isCanBeLaunched_FirstCheck(Experiment experiment) {
-        return experiment.getSnippets().size() > 1 && experiment.getExecState() != Enums.ExperimentExecState.FINISHED.code &&
+        List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
+        return taskSnippets.size() > 1 && experiment.getExecState() != Enums.ExperimentExecState.FINISHED.code &&
                 !experiment.isLaunched() && experiment.getDatasetId() != null;
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
-    public String edit(@PathVariable Long id, Model model) {
+    public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         final Experiment experiment = experimentRepository.findById(id).orElse(null);
         if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#275.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
         }
         Iterable<Snippet> snippets = snippetRepository.findAll();
         SnippetResult snippetResult = new SnippetResult();
-        experiment.sortSnippetsByOrder();
 
-        snippetResult.snippets = snippetService.getExperimentSnippets(snippets, experiment);
+        List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
+        snippetService.sortSnippetsByOrder(taskSnippets);
+        snippetResult.snippets = taskSnippets;
         final List<SnippetType> types = Arrays.asList(SnippetType.fit, SnippetType.predict);
         snippetResult.selectOptions = snippetService.getSelectOptions(snippets,
                 snippetResult.snippets.stream().map(o -> new SnippetCode(o.getId(), o.getSnippetCode())).collect(Collectors.toList()),
@@ -310,10 +312,10 @@ public class ExperimentsController {
                     if (!types.contains(SnippetType.valueOf(s.type)) ) {
                         return true;
                     }
-                    if (SnippetType.fit.equals(s.type) && experiment.hasFit()) {
+                    if (SnippetType.fit.equals(s.type) && snippetService.hasFit(taskSnippets)) {
                         return true;
                     }
-                    if (SnippetType.predict.equals(s.type) && experiment.hasPredict()) {
+                    if (SnippetType.predict.equals(s.type) && snippetService.hasPredict(taskSnippets)) {
                         return true;
                     }
                     return false;
@@ -378,8 +380,8 @@ public class ExperimentsController {
         return normalTarget;
     }
 
-    public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
-        snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
+    public static void sortSnippetsByType(List<TaskSnippet> snippets) {
+        snippets.sort(Comparator.comparing(TaskSnippet::getType));
     }
 
     @PostMapping("/experiment-dataset-assign-commit/{id}")
@@ -491,26 +493,23 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#290.01 experiment wasn't found, id: "+id );
             return "redirect:/launchpad/experiments";
         }
-        if (experiment.getSnippets()==null) {
-            experiment.setSnippets(new ArrayList<>());
-        }
-        ExperimentSnippet s = new ExperimentSnippet();
-        s.setExperiment(experiment);
-        s.setSnippetCode( code );
+        Long experimentId = experiment.getId();
+        List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experimentId);
+        TaskSnippet ts = new TaskSnippet();
+        ts.setRefId(experimentId);
+        ts.setTaskType(Enums.TaskType.Experiment.code);
+        ts.setSnippetCode( code );
 
-        SnippetVersion snippetVersion = SnippetVersion.from(code);
+        List<TaskSnippet> list = new ArrayList<>(taskSnippets);
+        list.add(ts);
 
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
-        s.setType(snippet.getType());
-        experiment.getSnippets().add(s);
+        sortSnippetsByType(list);
 
-        sortSnippetsByType(experiment.getSnippets());
         int order = 1;
-        for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
-            experimentSnippet.setOrder(order++);
+        for (TaskSnippet taskSnippet : list) {
+            taskSnippet.setOrder(order++);
         }
-
-        experimentRepository.save(experiment);
+        taskSnippetRepository.saveAll(list);
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
@@ -568,12 +567,12 @@ public class ExperimentsController {
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{id}")
     public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        ExperimentSnippet snippet = experimentSnippetRepository.findById(id).orElse(null);
-        if (snippet == null || experimentId != snippet.getExperiment().getId()) {
+        TaskSnippet snippet = taskSnippetRepository.findById(id).orElse(null);
+        if (snippet == null || experimentId != snippet.getRefId()) {
             redirectAttributes.addFlashAttribute("errorMessage", "#293.01 Snippet is misconfigured. Try again" );
             return "redirect:/launchpad/experiment-edit/" + experimentId;
         }
-        experimentSnippetRepository.deleteById(id);
+        taskSnippetRepository.deleteById(id);
         return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 
@@ -595,7 +594,7 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#283.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
         }
-        experimentSnippetRepository.deleteByExperimentId(id);
+        taskSnippetRepository.deleteByTaskTypeAndRefId(Enums.TaskType.Experiment.code, id);
         experimentSequenceRepository.deleteByExperimentId(id);
         experimentFeatureRepository.deleteByExperimentId(id);
         experimentRepository.deleteById(id);
@@ -621,19 +620,19 @@ public class ExperimentsController {
         trg.setCreatedOn(System.currentTimeMillis());
         trg.setLaunchedOn(null);
         trg.setLaunched(false);
-        trg.setSnippets(new ArrayList<>());
         trg.setHyperParams(new ArrayList<>());
         trg.setExecState(Enums.ExperimentExecState.NONE.code);
         experimentRepository.save(trg);
 
-        for (ExperimentSnippet snippet : experiment.getSnippets()) {
-            ExperimentSnippet trgSnippet = new ExperimentSnippet();
+        List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
+
+        for (TaskSnippet snippet : taskSnippets) {
+            TaskSnippet trgSnippet = new TaskSnippet();
             BeanUtils.copyProperties(snippet, trgSnippet);
             trgSnippet.setId(null);
             trgSnippet.setVersion(null);
-            trgSnippet.setExperiment(trg);
-            trg.getSnippets().add(trgSnippet);
-            experimentSnippetRepository.save(trgSnippet);
+            trgSnippet.setRefId(trg.getId());
+            taskSnippetRepository.save(trgSnippet);
         }
         for (ExperimentHyperParams params1 : experiment.getHyperParams()) {
             ExperimentHyperParams trgParam = new ExperimentHyperParams();
@@ -704,9 +703,11 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#284.04 experiment has broken link to dataset. Need to reassign a dataset.");
             return "redirect:/launchpad/experiments";
         }
-        dataset.setLocked(true);
-        dataset.setEditable(false);
-        datasetCache.save(dataset);
+        if (!dataset.isLocked()) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "#284.05 You have to lock and process dataset before running experiment.");
+            return "redirect:/launchpad/experiments";
+        }
 
         experiment.setLaunched(true);
         experiment.setLaunchedOn(System.currentTimeMillis());

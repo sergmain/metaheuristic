@@ -18,18 +18,16 @@
 package aiai.ai.launchpad.beans;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_LP_EXPERIMENT_SNIPPET")
+@Table(name = "AIAI_LP_TASK_SNIPPET")
 @Data
-@EqualsAndHashCode(exclude = {"experiment"})
-@ToString(exclude = {"experiment"})
-public class ExperimentSnippet implements Serializable {
+@ToString
+public class TaskSnippet implements Serializable {
     private static final long serialVersionUID = -7027988813072979346L;
 
     @Id
@@ -48,8 +46,9 @@ public class ExperimentSnippet implements Serializable {
     @Column(name = "SNIPPET_ORDER")
     private int order;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "EXPERIMENT_ID")
-    private Experiment experiment;
+    @Column(name = "TASK_TYPE")
+    private int taskType;
 
+    @Column(name = "REF_ID")
+    private long refId;
 }

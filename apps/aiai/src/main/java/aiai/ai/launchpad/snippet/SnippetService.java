@@ -18,17 +18,20 @@
 package aiai.ai.launchpad.snippet;
 
 import aiai.ai.Consts;
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.beans.ExperimentSnippet;
+import aiai.ai.launchpad.beans.TaskSnippet;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.SnippetRepository;
+import aiai.ai.launchpad.repositories.TaskSnippetRepository;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.utils.SimpleSelectOption;
 import aiai.apps.commons.utils.Checksum;
+import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import aiai.apps.commons.yaml.snippet.SnippetsConfig;
 import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
@@ -43,6 +46,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -52,11 +56,13 @@ public class SnippetService {
 
     private final Globals globals;
     private final SnippetRepository snippetRepository;
+    private final TaskSnippetRepository taskSnippetRepository;
     private final BinaryDataService binaryDataService;
 
-    public SnippetService(Globals globals, SnippetRepository snippetRepository, BinaryDataService binaryDataService) {
+    public SnippetService(Globals globals, SnippetRepository snippetRepository, TaskSnippetRepository taskSnippetRepository, BinaryDataService binaryDataService) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
+        this.taskSnippetRepository = taskSnippetRepository;
         this.binaryDataService = binaryDataService;
     }
 
@@ -66,6 +72,58 @@ public class SnippetService {
             persistSnippets();
         }
     }
+
+    public List<TaskSnippet> getTaskSnippetsForExperiment(Long experimentId) {
+        return taskSnippetRepository.findByTaskTypeAndRefId(Enums.TaskType.Experiment.code, experimentId);
+    }
+
+    public List<Snippet> getSnippets(Enums.TaskType taskType, long refId){
+        List<TaskSnippet> taskSnippets = taskSnippetRepository.findByTaskTypeAndRefId(taskType.code, refId);
+        List<Snippet> snippets = new ArrayList<>();
+        for (TaskSnippet taskSnippet : taskSnippets) {
+            SnippetVersion version = SnippetVersion.from(taskSnippet.getSnippetCode());
+            Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
+            if (snippet==null) {
+                log.warn("Can't find snippet for code: {}", taskSnippet.getSnippetCode());
+                continue;
+            }
+            snippets.add(snippet);
+        }
+        return snippets;
+    }
+
+    public void sortSnippetsByOrder(List<TaskSnippet> snippets) {
+        snippets.sort(Comparator.comparingInt(TaskSnippet::getOrder));
+    }
+
+    public void sortSnippetsByType(List<TaskSnippet> snippets) {
+        snippets.sort(Comparator.comparing(TaskSnippet::getType));
+    }
+
+    public boolean hasFit(List<TaskSnippet> taskSnippets) {
+        if (taskSnippets==null || taskSnippets.isEmpty()) {
+            return false;
+        }
+        for (TaskSnippet snippet : taskSnippets) {
+            if (SnippetType.fit.toString().equals(snippet.getType())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasPredict(List<TaskSnippet> taskSnippets) {
+        if (taskSnippets==null || taskSnippets.isEmpty()) {
+            return false;
+        }
+        for (TaskSnippet snippet : taskSnippets) {
+            if (SnippetType.predict.toString().equals(snippet.getType())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     private void persistSnippets() throws IOException {
         File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
@@ -135,18 +193,22 @@ public class SnippetService {
         return selectOptions;
     }
 
-    public List<ExperimentSnippet> getExperimentSnippets(Iterable<Snippet> snippets, Experiment experiment) {
-        List<ExperimentSnippet> experimentSnippets = new ArrayList<>();
+    public List<TaskSnippet> getTaskSnippets(Iterable<Snippet> snippets, Experiment experiment) {
+        List<TaskSnippet> taskSnippets = new ArrayList<>();
+        List<TaskSnippet> tss = getTaskSnippetsForExperiment(experiment.getId());
         for (Snippet snippet : snippets) {
-            for (ExperimentSnippet experimentSnippet : experiment.getSnippets()) {
-                if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
-                    experimentSnippet.type = snippet.type;
-                    experimentSnippets.add(experimentSnippet);
+            for (TaskSnippet taskSnippet : tss) {
+                if (snippet.getSnippetCode().equals(taskSnippet.getSnippetCode()) ) {
+                    // it should be ok without this line but just for sure
+                    taskSnippet.type = snippet.type;
+                    taskSnippets.add(taskSnippet);
                     break;
                 }
             }
+            //noinspection unused
+            int i=0;
         }
-        return experimentSnippets;
+        return taskSnippets;
     }
 
     void loadSnippetsRecursively(File startDir) throws IOException {

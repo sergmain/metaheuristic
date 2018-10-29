@@ -18,7 +18,7 @@
 
 package aiai.ai.launchpad.repositories;
 
-import aiai.ai.launchpad.beans.ExperimentSnippet;
+import aiai.ai.launchpad.beans.TaskSnippet;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,13 +26,13 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Component
-public interface ExperimentSnippetRepository extends CrudRepository<ExperimentSnippet, Long> {
+public interface TaskSnippetRepository extends CrudRepository<TaskSnippet, Long> {
 
     @Transactional(readOnly = true)
-    List<ExperimentSnippet> findByExperimentId(Long experiimentId);
+    List<TaskSnippet> findByTaskTypeAndRefId(int taskType, long refId);
 
     @Transactional
-    void deleteByExperimentId(long experimentId);
+    void deleteByTaskTypeAndRefId(int taskType, long refId);
 
 
 }

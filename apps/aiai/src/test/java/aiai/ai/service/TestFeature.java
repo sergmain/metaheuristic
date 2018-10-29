@@ -34,6 +34,7 @@ import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.apps.commons.yaml.snippet.SnippetType;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +47,7 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
+@Slf4j
 public abstract class TestFeature {
 
     private static final String TEST_FIT_SNIPPET = "test.fit.snippet";
@@ -75,6 +77,9 @@ public abstract class TestFeature {
     protected SnippetRepository snippetRepository;
 
     @Autowired
+    protected TaskSnippetRepository taskSnippetRepository;
+
+    @Autowired
     protected ExperimentSequenceRepository experimentSequenceRepository;
 
     @Autowired
@@ -97,17 +102,26 @@ public abstract class TestFeature {
     @Before
     public void before() {
         try {
+            long mills;
+
             // Prepare station
             station = new Station();
+            mills = System.currentTimeMillis();
+            log.info("Start stationsRepository.save()");
             station.setEnv("envs:\n" +
-                    "  python-3: E:\\Anaconda3\\envs\\python-36\\python.exe\n" +
+                    "  python-3: C:\\Anaconda3\\envs\\python-36\\python.exe\n" +
                     "");
             station.setDescription("Test station. Must be deleted automatically");
             stationsRepository.save(station);
+            log.info("stationsRepository.save() was finished for {}", System.currentTimeMillis() - mills);
 
 
             // Prepare snippets
+            mills = System.currentTimeMillis();
+            log.info("Start findByNameAndSnippetVersion.save()");
             fitSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_FIT_SNIPPET, SNIPPET_VERSION_1_0);
+            log.info("findByNameAndSnippetVersion() was finished for {}", System.currentTimeMillis() - mills);
+
             byte[] bytes = "some program code".getBytes();
             if (fitSnippet == null) {
                 fitSnippet = new Snippet();
@@ -118,8 +132,16 @@ public abstract class TestFeature {
                 fitSnippet.setChecksum("sha2");
                 fitSnippet.length = bytes.length;
                 fitSnippet.setFilename("fit-filename.txt");
+
+                mills = System.currentTimeMillis();
+                log.info("Start snippetRepository.save() #1");
                 snippetRepository.save(fitSnippet);
+                log.info("snippetRepository.save() #1 was finished for {}", System.currentTimeMillis() - mills);
+
+                mills = System.currentTimeMillis();
+                log.info("Start binaryDataService.save() #1");
                 binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, fitSnippet.getId(), BinaryData.Type.SNIPPET);
+                log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
 
             predictSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_PREDICT_SNIPPET, SNIPPET_VERSION_1_0);
@@ -132,8 +154,16 @@ public abstract class TestFeature {
                 predictSnippet.setChecksum("sha2");
                 predictSnippet.length = bytes.length;
                 predictSnippet.setFilename("predict-filename.txt");
+
+                mills = System.currentTimeMillis();
+                log.info("Start snippetRepository.save() #2");
                 snippetRepository.save(predictSnippet);
+                log.info("stationsRepository.save() #2 was finished for {}", System.currentTimeMillis() - mills);
+
+                mills = System.currentTimeMillis();
+                log.info("Start binaryDataService.save() #2");
                 binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, predictSnippet.getId(), BinaryData.Type.SNIPPET);
+                log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
             }
 
             // Prepare dataset
@@ -166,7 +196,10 @@ public abstract class TestFeature {
 
             dataset.setDatasetGroups(Arrays.asList(dg1, dg2, dg3));
 
+            mills = System.currentTimeMillis();
+            log.info("Start datasetCache.save()");
             datasetCache.save(dataset);
+            log.info("datasetCache.save() was finished for {}", System.currentTimeMillis() - mills);
 
             // Prepare experiment
             experiment = new Experiment();
@@ -204,35 +237,53 @@ public abstract class TestFeature {
 
             experiment.setHyperParams(Arrays.asList(ehp1, ehp2, ehp3));
 
+            mills = System.currentTimeMillis();
+            log.info("Start experimentRepository.save()");
+            experimentRepository.save(experiment);
+            log.info("experimentRepository.save() was finished for {}", System.currentTimeMillis() - mills);
+
             // set snippets for experiment
-            ExperimentSnippet es1 = new ExperimentSnippet();
-            es1.setExperiment(experiment);
+            TaskSnippet es1 = new TaskSnippet();
+            es1.setRefId(experiment.getId());
+            es1.setTaskType(Enums.TaskType.Experiment.code);
             es1.setOrder(1);
             es1.setType(SnippetType.fit.toString());
             es1.setSnippetCode(fitSnippet.getSnippetCode());
 
-            ExperimentSnippet es2 = new ExperimentSnippet();
-            es2.setExperiment(experiment);
+            TaskSnippet es2 = new TaskSnippet();
+            es2.setRefId(experiment.getId());
+            es2.setTaskType(Enums.TaskType.Experiment.code);
             es2.setOrder(2);
             es2.setType(SnippetType.predict.toString());
             es2.setSnippetCode(predictSnippet.getSnippetCode());
 
-            experiment.setSnippets(Arrays.asList(es1, es2));
-
-            experimentRepository.save(experiment);
+            mills = System.currentTimeMillis();
+            log.info("Start taskSnippetRepository.saveAll()");
+            taskSnippetRepository.saveAll(Arrays.asList(es1, es2));
+            log.info("taskSnippetRepository.saveAll() was finished for {}", System.currentTimeMillis() - mills);
 
             // produce artifacts - features, sequences,...
+            mills = System.currentTimeMillis();
+            log.info("Start experimentService.produceFeaturePermutations()");
             experimentService.produceFeaturePermutations(dataset, experiment);
+            log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
 
+            mills = System.currentTimeMillis();
+            log.info("Start experimentFeatureRepository.findByExperimentId()");
             List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
+            log.info("experimentFeatureRepository.findByExperimentId() was finished for {}", System.currentTimeMillis() - mills);
+
             assertNotNull(features);
             assertEquals(EXPECTED_FEATURE_PERMUTATIONS_NUMBER, features.size());
             for (ExperimentFeature feature : features) {
                 assertFalse(feature.isFinished);
             }
 
+            mills = System.currentTimeMillis();
+            log.info("Start experimentService.produceSequences()");
             // produce sequences
             experimentService.produceSequences(experiment);
+            log.info("experimentService.produceSequences() was finished for {}", System.currentTimeMillis() - mills);
 
             // some global final check
             assertEquals(EXPECTED_FEATURE_PERMUTATIONS_NUMBER, experimentFeatureRepository.findByExperimentId(experiment.getId()).size());
@@ -248,6 +299,8 @@ public abstract class TestFeature {
     @After
     public void after() {
 
+        long mills = System.currentTimeMillis();
+        log.info("Start after()");
         if (experiment != null) {
             experimentSequenceRepository.deleteByExperimentId(experiment.getId());
             experimentFeatureRepository.deleteByExperimentId(experiment.getId());
@@ -267,6 +320,7 @@ public abstract class TestFeature {
         }
 
         System.out.println("Was finished correctly");
+        log.info("after() was finished for {}", System.currentTimeMillis() - mills);
     }
 
     protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {

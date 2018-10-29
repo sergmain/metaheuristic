@@ -17,7 +17,7 @@
  */
 package aiai.ai.core;
 
-import aiai.ai.launchpad.beans.ExperimentSnippet;
+import aiai.ai.launchpad.beans.TaskSnippet;
 import aiai.ai.launchpad.experiment.ExperimentsController;
 import org.junit.Test;
 
@@ -32,10 +32,10 @@ public class TestSnippetSorting {
 
     @Test
     public void sort() {
-        List<ExperimentSnippet > snippets = new ArrayList<>();
-        ExperimentSnippet s1 = new ExperimentSnippet();
+        List<TaskSnippet> snippets = new ArrayList<>();
+        TaskSnippet s1 = new TaskSnippet();
         s1.type = "predict";
-        ExperimentSnippet s2 = new ExperimentSnippet();
+        TaskSnippet s2 = new TaskSnippet();
         s2.type = "fit";
         Collections.addAll(snippets, s1, s2);
         assertEquals("predict", snippets.get(0).type);

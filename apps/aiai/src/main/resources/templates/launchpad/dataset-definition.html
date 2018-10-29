@@ -11,11 +11,18 @@
 
     <p>&nbsp;</p>
     <h2 class="widget-header">General info</h2>
-    <p th:if="${result.dataset.locked}" >Dataset is locked. The editing is disabled</p>
+    <p style="font-size:20px" th:if="${result.dataset.locked}" >Dataset is locked. The editing is disabled</p>
     <p>Launchpad directory: <b><span th:text="${@environment.getProperty('aiai.launchpad.dir')}"></span></b></p>
 
     <p th:if="${result.isStoreToDisk}">Current dataset directory: <b><span th:text="${result.datasetDirAsString}"></span></b></p>
-    <p th:if="${!result.isStoreToDisk}">Persisted storing data to disk isn't enabled</p>
+    <p th:if="${!result.isStoreToDisk}">Storing data to disk isn't enabled</p>
+
+    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST"
+          th:if="${ result.canBeLocked() }"
+          th:action="${'/launchpad/dataset-lock-and-process-commit/'+result.dataset.id}" accept-charset="UTF-8"
+          id="dataset-lock-and-process-form" name="f">
+        <button type="submit" class="pure-button pure-button-primary">Lock and process</button>
+    </form>
 
     <p>&nbsp;</p>
     <h2 class="widget-header">Dataset options</h2>
