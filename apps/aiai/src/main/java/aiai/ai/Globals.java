@@ -144,9 +144,7 @@ public class Globals {
         }
 
         if (isSecureRestUrl) {
-            if (masterUsername==null || masterToken==null || masterPassword==null) {
-                throw new IllegalArgumentException("if aiai.secure-rest-url=true, then aiai.master-username, aiai.master-token, and aiai.master-password have to be not null");
-            }
+
             if (isStationEnabled) {
                 if (stationRestPassword==null) {
                     throw new IllegalArgumentException("if aiai.secure-rest-url=true and aiai.station.enabled=true, then aiai.station.server-rest-password has to be not null");
@@ -185,6 +183,10 @@ public class Globals {
         }
 
         if (isLaunchpadEnabled) {
+            if (masterUsername==null || masterToken==null || masterPassword==null) {
+                throw new IllegalArgumentException("if aiai.secure-rest-url=true, then aiai.master-username, aiai.master-token, and aiai.master-password have to be not null");
+            }
+
             String[] split = StringUtils.split(storeDataStr, ',');
             storeData = new Enums.StoreData[split.length];
             for (int i = 0; i < split.length; i++) {
