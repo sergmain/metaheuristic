@@ -48,7 +48,7 @@ public class StationService {
 
     private String env;
     private EnvYaml envYaml;
-    private Metadata metadata;
+    private Metadata metadata = new Metadata();
 
     public StationService(Globals globals, StationTaskService stationTaskService, StationDatasetService stationDatasetService) {
         this.globals = globals;
@@ -107,7 +107,6 @@ public class StationService {
         final File metadataFile = new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME);
         if (!metadataFile.exists()) {
             log.warn("Station's metadata file doesn't exist: {}", file.getPath());
-            metadata = new Metadata();
             return;
         }
         try(FileInputStream fis = new FileInputStream(metadataFile)) {
