@@ -25,6 +25,7 @@ import aiai.apps.commons.utils.ZipUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -37,6 +38,7 @@ import java.io.OutputStream;
 @Controller
 @RequestMapping("/launchpad")
 @Slf4j
+@Profile("launchpad")
 public class SnippetController {
 
     private final Globals globals;

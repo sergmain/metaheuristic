@@ -19,6 +19,7 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.ExperimentSequence;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.domain.Specification;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
+@Profile("launchpad")
 public interface ExperimentSequenceWithSpecRepository extends CrudRepository<ExperimentSequence, Long>, JpaSpecificationExecutor<ExperimentSequence> {
 
     @Transactional(readOnly = true)

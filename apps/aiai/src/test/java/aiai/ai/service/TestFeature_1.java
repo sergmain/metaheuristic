@@ -17,13 +17,11 @@
  */
 package aiai.ai.service;
 
-import aiai.ai.Globals;
+import aiai.ai.core.ArtifactStatus;
 import aiai.ai.launchpad.beans.Dataset;
 import aiai.ai.launchpad.beans.Feature;
-import aiai.ai.core.ArtifactStatus;
 import aiai.ai.launchpad.dataset.DatasetCache;
 import aiai.ai.launchpad.repositories.FeatureRepository;
-import aiai.ai.launchpad.repositories.DatasetRepository;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,6 +29,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.dao.EmptyResultDataAccessException;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.annotation.PostConstruct;
@@ -42,13 +41,8 @@ import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
+@ActiveProfiles("launchpad")
 public class TestFeature_1 {
-
-    @Autowired
-    private Globals globals;
-
-    @Autowired
-    private DatasetRepository datasetRepository;
 
     @Autowired
     private FeatureRepository featureRepository;

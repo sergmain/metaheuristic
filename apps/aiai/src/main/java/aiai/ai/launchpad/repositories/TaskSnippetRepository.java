@@ -19,6 +19,7 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.TaskSnippet;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Component
+@Profile("launchpad")
 public interface TaskSnippetRepository extends CrudRepository<TaskSnippet, Long> {
 
     @Transactional(readOnly = true)

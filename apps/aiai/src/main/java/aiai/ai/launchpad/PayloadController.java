@@ -35,6 +35,7 @@ import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
@@ -55,6 +56,7 @@ import java.io.InputStream;
 @Controller
 @RequestMapping("/payload")
 @Slf4j
+@Profile("launchpad")
 public class PayloadController {
 
     private final ChecksumWithSignatureService checksumWithSignatureService;

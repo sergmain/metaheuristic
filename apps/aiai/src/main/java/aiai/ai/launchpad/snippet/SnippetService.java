@@ -37,6 +37,7 @@ import aiai.apps.commons.yaml.snippet.SnippetsConfig;
 import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -52,6 +53,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
+@Profile("launchpad")
 public class SnippetService {
 
     private final Globals globals;

@@ -19,9 +19,11 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.ExperimentHyperParams;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("launchpad")
 public interface ExperimentHyperParamsRepository extends CrudRepository<ExperimentHyperParams, Long> {
 }

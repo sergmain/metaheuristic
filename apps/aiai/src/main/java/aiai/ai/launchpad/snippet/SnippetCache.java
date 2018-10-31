@@ -22,9 +22,11 @@ import aiai.ai.launchpad.repositories.SnippetRepository;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
+@Profile("launchpad")
 public class SnippetCache {
 
     private final SnippetRepository snippetRepository;

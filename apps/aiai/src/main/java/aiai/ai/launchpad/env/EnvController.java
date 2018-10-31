@@ -23,6 +23,7 @@ import aiai.ai.launchpad.repositories.EnvRepository;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -30,6 +31,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/launchpad")
 @Slf4j
+@Profile("launchpad")
 public class EnvController {
 
     private final Globals globals;

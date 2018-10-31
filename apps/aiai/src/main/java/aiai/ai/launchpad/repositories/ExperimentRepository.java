@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.Experiment;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.repository.CrudRepository;
@@ -33,6 +34,7 @@ import java.util.List;
  */
 @Component
 @Transactional
+@Profile("launchpad")
 public interface ExperimentRepository extends CrudRepository<Experiment, Long> {
 
     @Transactional(readOnly = true)

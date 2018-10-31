@@ -18,10 +18,12 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.Snippet;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository
+@Profile("launchpad")
 public interface SnippetRepository extends CrudRepository<Snippet, Long> {
 
     Snippet findByNameAndSnippetVersion(String name, String snippetVersion);

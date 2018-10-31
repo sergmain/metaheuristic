@@ -22,6 +22,7 @@ import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.utils.ControllerUtils;
 import lombok.Data;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -39,6 +40,7 @@ import java.util.Optional;
  */
 @Controller
 @RequestMapping("/launchpad")
+@Profile("launchpad")
 public class StationsController {
 
     private final Globals globals;

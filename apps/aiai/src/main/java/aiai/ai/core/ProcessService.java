@@ -47,11 +47,14 @@ public class ProcessService {
         private InputStream is;
     }
 
+    // TODO 2018-10-30 need to implement for sattion side
+/*
     private final LogDataRepository logDataRepository;
 
     public ProcessService(LogDataRepository logDataRepository) {
         this.logDataRepository = logDataRepository;
     }
+*/
 
     public Result execCommand(LogData.Type type, Long refId, List<String> cmd, File execDir) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder();
@@ -99,7 +102,9 @@ public class ProcessService {
         logData.setType(type);
         final String console = out.toString();
         logData.setLogData(console);
-        logDataRepository.save(logData);
+
+        // TODO 2018-10-30 need to implement for sattion side
+//        logDataRepository.save(logData);
 
         return new Result(exitCode==0, exitCode, console);
     }

@@ -19,12 +19,14 @@ package aiai.ai.launchpad.env;
 
 import aiai.ai.launchpad.beans.Env;
 import aiai.ai.launchpad.repositories.EnvRepository;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
+@Profile("launchpad")
 public class EnvService {
 
 

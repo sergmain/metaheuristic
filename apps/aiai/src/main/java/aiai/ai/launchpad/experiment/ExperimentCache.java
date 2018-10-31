@@ -21,9 +21,11 @@ import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 @Component
+@Profile("launchpad")
 public class ExperimentCache {
 
     private final ExperimentRepository experimentRepository;

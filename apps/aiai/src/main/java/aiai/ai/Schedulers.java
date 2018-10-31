@@ -17,6 +17,7 @@
  */
 package aiai.ai;
 
+import aiai.ai.launchpad.LaunchpadService;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.station.ArtifactCleaner;
 import aiai.ai.station.LaunchpadRequester;
@@ -35,23 +36,27 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class Schedulers {
 
+    private final Globals globals;
+
+    private final LaunchpadService launchpadService;
+
     private final LaunchpadRequester launchpadRequester;
     private final TaskAssigner taskAssigner;
     private final SequenceProcessor sequenceProcessor;
     private final DownloadSnippetActor downloadSnippetActor;
     private final DownloadFeatureActor downloadFeatureActor;
     private final DownloadDatasetActor downloadDatasetActor;
-    private final ExperimentService experimentService;
     private final ArtifactCleaner artifactCleaner;
 
-    public Schedulers(LaunchpadRequester launchpadRequester, TaskAssigner taskAssigner, SequenceProcessor sequenceProcessor, DownloadSnippetActor downloadSnippetActor, DownloadFeatureActor downloadFeatureActor, DownloadDatasetActor downloadDatasetActor, ExperimentService experimentService, ArtifactCleaner artifactCleaner) {
+    public Schedulers(Globals globals, LaunchpadService launchpadService, LaunchpadRequester launchpadRequester, TaskAssigner taskAssigner, SequenceProcessor sequenceProcessor, DownloadSnippetActor downloadSnippetActor, DownloadFeatureActor downloadFeatureActor, DownloadDatasetActor downloadDatasetActor, ArtifactCleaner artifactCleaner) {
+        this.globals = globals;
+        this.launchpadService = launchpadService;
         this.launchpadRequester = launchpadRequester;
         this.taskAssigner = taskAssigner;
         this.sequenceProcessor = sequenceProcessor;
         this.downloadSnippetActor = downloadSnippetActor;
         this.downloadFeatureActor = downloadFeatureActor;
         this.downloadDatasetActor = downloadDatasetActor;
-        this.experimentService = experimentService;
         this.artifactCleaner = artifactCleaner;
     }
 
@@ -59,53 +64,99 @@ public class Schedulers {
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.create-sequence'), 10, 20, 10)*1000 }")
     public void experimentService() {
+        if (globals.isUnitTesting) {
+            return;
+        }
+        if (!globals.isLaunchpadEnabled) {
+            return;
+        }
         log.info("ExperimentService.fixedDelayExperimentSequencesProducer()");
-        experimentService.fixedDelayExperimentSequencesProducer();
+        launchpadService.getExperimentService().fixedDelayExperimentSequencesProducer();
     }
 
     // Station schedulers
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.request-launchpad'), 3, 20, 10)*1000 }")
     public void launchRequester() {
+        if (globals.isUnitTesting) {
+            return;
+        }
+        if (!globals.isStationEnabled) {
+            return;
+        }
         log.info("LaunchpadRequester.fixedDelay()");
         launchpadRequester.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.task-assigner-task'), 3, 20, 10)*1000 }")
     public void taskAssigner() {
+        if (globals.isUnitTesting) {
+            return;
+        }
+        if (!globals.isStationEnabled) {
+            return;
+        }
         log.info("TaskAssigner.fixedDelay()");
         taskAssigner.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.sequence-processor'), 3, 20, 10)*1000 }")
     public void sequenceProcessor() {
+        if (globals.isUnitTesting) {
+            return;
+        }
+        if (!globals.isStationEnabled) {
+            return;
+        }
         log.info("SequenceProcessor.fixedDelay()");
         sequenceProcessor.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-snippet-task'), 3, 20, 10)*1000 }")
     public void downloadSnippetActor() {
+        if (globals.isUnitTesting) {
+            return;
+        }
+        if (!globals.isStationEnabled) {
+            return;
+        }
         log.info("DownloadSnippetActor.fixedDelay()");
         downloadSnippetActor.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-feature-task'), 3, 20, 10)*1000 }")
     public void downloadFeatureActor() {
+        if (globals.isUnitTesting) {
+            return;
+        }
+        if (!globals.isStationEnabled) {
+            return;
+        }
         log.info("DownloadSnippetActor.fixedDelay()");
         downloadFeatureActor.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-dataset-task'), 3, 20, 10)*1000 }")
     public void downloadDatasetActor() {
+        if (globals.isUnitTesting) {
+            return;
+        }
+        if (!globals.isStationEnabled) {
+            return;
+        }
         log.info("DownloadDatasetActor.fixedDelay()");
         downloadDatasetActor.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.artifact-cleaner'), 10, 60, 30)*1000 }")
     public void artifactCleaner() {
+        if (globals.isUnitTesting) {
+            return;
+        }
+        if (!globals.isStationEnabled) {
+            return;
+        }
         log.info("ArtifactCleaner.fixedDelay()");
         artifactCleaner.fixedDelay();
     }
-
-
 }

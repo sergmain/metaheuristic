@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -39,6 +40,7 @@ import java.util.stream.Collectors;
 
 @Service
 @Slf4j
+@Profile("launchpad")
 public class DatasetService {
 
     private static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";

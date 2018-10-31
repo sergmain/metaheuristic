@@ -44,6 +44,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.*;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -56,6 +57,7 @@ import java.util.stream.Collectors;
 @Service
 @EnableTransactionManagement
 @Slf4j
+@Profile("launchpad")
 public class ExperimentService {
 
     private static final List<Protocol.AssignedTask.Sequence> EMPTY_SIMPLE_SEQUENCES = Collections.unmodifiableList(new ArrayList<>());

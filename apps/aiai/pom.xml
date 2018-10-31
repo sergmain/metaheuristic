@@ -68,8 +68,16 @@
 			<version>1.4.197</version>
 		</dependency>
 -->
+        <dependency>
+            <!--based on BSD License-->
+            <groupId>org.hsqldb</groupId>
+            <artifactId>hsqldb</artifactId>
+            <version>2.4.1</version>
+            <scope>test</scope>
+        </dependency>
 
-		<dependency>
+
+        <dependency>
 			<!-- Apache 2.0 -->
 			<groupId>joda-time</groupId>
 			<artifactId>joda-time</artifactId>

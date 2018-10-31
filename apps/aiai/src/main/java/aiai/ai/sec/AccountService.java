@@ -22,10 +22,12 @@ import aiai.ai.launchpad.repositories.AccountRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
+@Profile("launchpad")
 public class AccountService {
 
     private final AccountRepository accountRepository;

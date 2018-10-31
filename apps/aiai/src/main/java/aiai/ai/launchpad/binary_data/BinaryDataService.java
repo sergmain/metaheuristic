@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -21,6 +22,7 @@ import java.sql.Timestamp;
 @Service
 @Transactional
 @Slf4j
+@Profile("launchpad")
 public class BinaryDataService {
 
     private final EntityManager em;

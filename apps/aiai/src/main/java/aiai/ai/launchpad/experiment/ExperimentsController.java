@@ -40,6 +40,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
@@ -59,6 +60,7 @@ import java.util.stream.Collectors;
 @Controller
 @RequestMapping("/launchpad")
 @Slf4j
+@Profile("launchpad")
 public class ExperimentsController {
 
     @Data

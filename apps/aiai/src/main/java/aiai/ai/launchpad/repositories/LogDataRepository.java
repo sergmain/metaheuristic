@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.LogData;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -29,6 +30,7 @@ import java.util.List;
  * Time: 15:41
  */
 @Repository
+@Profile("launchpad")
 public interface LogDataRepository extends CrudRepository<LogData, Long> {
     List<LogData> findAllByLogType(int logType);
 }
