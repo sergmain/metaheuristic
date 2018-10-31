@@ -17,12 +17,44 @@
 
 package aiai.ai;
 
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.ExitCodeGenerator;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.ApplicationContext;
+
+import java.lang.management.ManagementFactory;
 
 @SpringBootApplication
+@Slf4j
 public class AiApplication {
+//    public static void main(String[] args) {
+//        SpringApplication.run(AiApplication.class, args);
+//    }
+
+    // https://grokonez.com/java-integration/create-windows-service-spring-boot-application-procrun
+
+    private static ApplicationContext applicationContext = null;
+
     public static void main(String[] args) {
-        SpringApplication.run(AiApplication.class, args);
+        String mode = args != null && args.length > 0 ? args[0] : null;
+
+        if (log.isDebugEnabled()) {
+            log.debug("PID:" + ManagementFactory.getRuntimeMXBean().getName() + " Application mode:" + mode + " context:" + applicationContext);
+        }
+        if (applicationContext != null && "stop".equals(mode)) {
+            System.exit(SpringApplication.exit(applicationContext, new ExitCodeGenerator() {
+                @Override
+                public int getExitCode() {
+                    return 0;
+                }
+            }));
+        } else {
+            SpringApplication app = new SpringApplication(AiApplication.class);
+            applicationContext = app.run(args!=null ? args : new String[0]);
+            if (log.isDebugEnabled()) {
+                log.debug("PID:" + ManagementFactory.getRuntimeMXBean().getName() + " Application started context:" + applicationContext);
+            }
+        }
     }
 }

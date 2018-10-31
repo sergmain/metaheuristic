@@ -56,31 +56,6 @@ public class StationService {
         this.stationDatasetService = stationDatasetService;
     }
 
-    Command produceReportStationStatus() {
-        Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(getEnv(), globals.stationActiveTime);
-        return reportStationStatus;
-    }
-
-    public String getStationId() {
-        return metadata.metadata.get(StationConsts.STATION_ID);
-    }
-
-    public void setStationId(String stationId) {
-        if (stationId==null) {
-            throw new IllegalStateException("StationId is null");
-        }
-        metadata.metadata.put(StationConsts.STATION_ID, stationId);
-        updateMetadataFile();
-    }
-
-    public String getEnv() {
-        return env;
-    }
-
-    EnvYaml getEnvYaml() {
-        return envYaml;
-    }
-
     @PostConstruct
     public void init() {
         if (!globals.isStationEnabled) {
@@ -119,17 +94,36 @@ public class StationService {
         int i=0;
     }
 
-    public void markAsDelivered(List<Long> ids) {
-        List<StationTask> list = new ArrayList<>();
-        for (Long id : ids) {
-            StationTask seq = stationTaskService.findByExperimentSequenceId(id);
-            if(seq==null) {
-                continue;
-            }
-            seq.setDelivered(true);
-            list.add(seq);
+    public String getEnv() {
+        return env;
+    }
+
+    EnvYaml getEnvYaml() {
+        return envYaml;
+    }
+
+    Command produceReportStationStatus() {
+        //noinspection UnnecessaryLocalVariable
+        Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(getEnv(), globals.stationActiveTime);
+        return reportStationStatus;
+    }
+
+    private static final Object syncObj = new Object();
+
+    public String getStationId() {
+        synchronized (syncObj) {
+            return metadata.metadata.get(StationConsts.STATION_ID);
         }
-        stationTaskService.saveAll(list);
+    }
+
+    public void setStationId(String stationId) {
+        if (stationId==null) {
+            throw new IllegalStateException("StationId is null");
+        }
+        synchronized (syncObj) {
+            metadata.metadata.put(StationConsts.STATION_ID, stationId);
+            updateMetadataFile();
+        }
     }
 
     private void updateMetadataFile() {
@@ -154,13 +148,26 @@ public class StationService {
 
     }
 
+    public void markAsDelivered(List<Long> ids) {
+        List<StationTask> list = new ArrayList<>();
+        for (Long id : ids) {
+            StationTask seq = stationTaskService.findByExperimentSequenceId(id);
+            if(seq==null) {
+                continue;
+            }
+            seq.setDelivered(true);
+            list.add(seq);
+        }
+        stationTaskService.saveAll(list);
+    }
+
     public void assignTasks(List<Protocol.AssignedTask.RawAssembling> rawAssemblings, List<Protocol.AssignedTask.DatasetProducing> datasetProducings, List<Protocol.AssignedTask.Sequence> sequences) {
         createRawAssembling(rawAssemblings);
         createDatasetProcessing(datasetProducings);
         createSequence(sequences);
     }
 
-    public void createSequence(List<Protocol.AssignedTask.Sequence> sequences) {
+    private void createSequence(List<Protocol.AssignedTask.Sequence> sequences) {
         if (sequences==null) {
             return;
         }
