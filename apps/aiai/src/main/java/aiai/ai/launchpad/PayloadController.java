@@ -18,9 +18,9 @@
 
 package aiai.ai.launchpad;
 
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
-import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.Dataset;
 import aiai.ai.launchpad.beans.Feature;
 import aiai.ai.launchpad.beans.Snippet;
@@ -80,15 +80,15 @@ public class PayloadController {
 
     @GetMapping("/resource/{type}/{id}")
     public HttpEntity<AbstractResource> datasets(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("id") int id) throws IOException {
-        BinaryData.Type type = BinaryData.Type.valueOf(typeAsStr.toUpperCase());
-        File typeDir = new File(globals.launchpadResourcesDir, type.toString());
+        Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
+        File typeDir = new File(globals.launchpadResourcesDir, binaryDataType.toString());
         DigitUtils.Power power = DigitUtils.getPower(id);
         File trgDir = new File(typeDir,
                 ""+power.power7+File.separatorChar+power.power4+File.separatorChar);
         trgDir.mkdirs();
         File file = new File(trgDir, ""+id+".bin");
         try {
-            binaryDataService.storeToFile(id, type, file);
+            binaryDataService.storeToFile(id, binaryDataType, file);
         } catch (BinaryDataNotFoundException e) {
             return returnEmptyAsGone(response);
         }
@@ -120,7 +120,7 @@ public class PayloadController {
 
             if (isStore) {
                 try {
-                    binaryDataService.storeToFile(datasetId, BinaryData.Type.DATASET, datasetFile);
+                    binaryDataService.storeToFile(datasetId, Enums.BinaryDataType.DATASET, datasetFile);
                 } catch (BinaryDataNotFoundException e) {
                     return returnEmptyAsGone(response);
                 }
@@ -165,7 +165,7 @@ public class PayloadController {
 
             if (isStore) {
                 try {
-                    binaryDataService.storeToFile(featureId, BinaryData.Type.FEATURE, featureFile);
+                    binaryDataService.storeToFile(featureId, Enums.BinaryDataType.FEATURE, featureFile);
                 } catch (BinaryDataNotFoundException e) {
                     return returnEmptyAsGone(response);
                 }

@@ -65,14 +65,14 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             if (Boolean.TRUE.equals(preparedMap.get(task.getId()))) {
                 continue;
             }
-            AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, task.type, task.id);
+            AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, task.binaryDataType, task.id);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
             }
 
             try {
-                Request.Get(targetUrl + '/' + task.getType() + '/' + task.getId())
+                Request.Get(targetUrl + '/' + task.getBinaryDataType() + '/' + task.getId())
                         .connectTimeout(5000)
                         .socketTimeout(5000)
                         .execute().saveContent(assetFile.file);

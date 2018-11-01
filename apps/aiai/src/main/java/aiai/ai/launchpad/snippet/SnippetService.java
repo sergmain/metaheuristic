@@ -20,7 +20,6 @@ package aiai.ai.launchpad.snippet;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.TaskSnippet;
 import aiai.ai.launchpad.beans.Snippet;
@@ -167,7 +166,7 @@ public class SnippetService {
             if (s==null) {
                 throw new IllegalStateException("Can't find a snippet for Id " + snippet.getId()+", but base snippet is there");
             }
-            binaryDataService.storeToFile(snippet.getId(), BinaryData.Type.SNIPPET, snippetFile.file);
+            binaryDataService.storeToFile(snippet.getId(), Enums.BinaryDataType.SNIPPET, snippetFile.file);
         }
         return snippetFile.file;
     }
@@ -272,7 +271,7 @@ public class SnippetService {
                         snippet.reportMetrics = snippetConfig.isMetrics();
                         snippetCache.save(snippet);
                         try( InputStream inputStream = new FileInputStream(file)) {
-                            binaryDataService.save(inputStream, snippet.length, snippet.getId(), BinaryData.Type.SNIPPET);
+                            binaryDataService.save(inputStream, snippet.length, snippet.getId(), Enums.BinaryDataType.SNIPPET);
                         }
                     }
                     else {
@@ -293,7 +292,7 @@ public class SnippetService {
                 snippet.reportMetrics = snippetConfig.isMetrics();
                 snippetCache.save(snippet);
                 try( InputStream inputStream = new FileInputStream(file)) {
-                    binaryDataService.save(inputStream, snippet.length, snippet.getId(), BinaryData.Type.SNIPPET);
+                    binaryDataService.save(inputStream, snippet.length, snippet.getId(), Enums.BinaryDataType.SNIPPET);
                 }
             }
         }

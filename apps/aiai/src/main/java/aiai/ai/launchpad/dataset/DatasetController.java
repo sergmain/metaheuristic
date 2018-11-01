@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.dataset;
 
 import aiai.ai.Consts;
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ProcessService;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
@@ -49,7 +50,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.*;
 
@@ -200,6 +203,11 @@ public class DatasetController {
         dataset.setEditable(false);
         datasetCache.save(dataset);
 
+/*
+        try( InputStream inputStream = new FileInputStream(file)) {
+            binaryDataService.save(inputStream, snippet.length, snippet.getId(), Enums.BinaryDataType.SNIPPET);
+        }
+*/
 
 
         return "redirect:/launchpad/dataset-definition/"+id;
@@ -343,13 +351,13 @@ public class DatasetController {
                 if (datasetFile.exists()) {
                     datasetFile.delete();
                 }
-                binaryDataService.storeToFile(datasetId, BinaryData.Type.DATASET, datasetFile);
+                binaryDataService.storeToFile(datasetId, Enums.BinaryDataType.DATASET, datasetFile);
 
                 File rawFile = new File(globals.launchpadDir, dataset.asRawFilePath());
                 if (rawFile.exists()) {
                     rawFile.delete();
                 }
-                binaryDataService.storeToFile(datasetId, BinaryData.Type.ASSEMBLED_RAW, rawFile);
+                binaryDataService.storeToFile(datasetId, Enums.BinaryDataType.ASSEMBLED_RAW, rawFile);
             }
             final SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
             if (!snippetFile.file.exists()) {
@@ -431,7 +439,7 @@ public class DatasetController {
                 }
                 rawPartFile.delete();
                 try {
-                    binaryDataService.storeToFile(path.getId(), BinaryData.Type.RAW_PART, rawPartFile);
+                    binaryDataService.storeToFile(path.getId(), Enums.BinaryDataType.RAW_PART, rawPartFile);
                 } catch (BinaryDataNotFoundException e) {
                     isAllValid=false;
                     path.setValid(false);
@@ -482,7 +490,7 @@ public class DatasetController {
             if (rawFile.exists()) {
                 rawFile.delete();
             }
-            binaryDataService.storeToFile(dataset.getId(), BinaryData.Type.ASSEMBLED_RAW, rawFile);
+            binaryDataService.storeToFile(dataset.getId(), Enums.BinaryDataType.ASSEMBLED_RAW, rawFile);
         }
         final SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
         if (!snippetFile.file.exists()) {

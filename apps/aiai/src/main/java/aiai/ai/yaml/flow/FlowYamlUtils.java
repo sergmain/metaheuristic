@@ -15,60 +15,46 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.station;
+package aiai.ai.yaml.flow;
 
-import lombok.extern.slf4j.Slf4j;
+import aiai.ai.yaml.sequence.TaskParamYaml;
+import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+@Service
+public class FlowYamlUtils {
 
-/**
- * Because of xxx.class can't use generics (or don't have enough time to find out how to)
- */
-@Slf4j
-public class StationExperimentSequenceUtils {
+    private Yaml yamlFlowYaml;
 
-    private static Yaml yaml;
+    // TODO 2018.09.12. so, snakeYaml isn't thread-safe or it was a side-effect?
+    private static final Object syncObj = new Object();
 
-    static {
+    public FlowYamlUtils() {
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
         Representer representer = new Representer();
-        representer.addClassTag(StationTask.class, Tag.MAP);
+        representer.addClassTag(TaskParamYaml.class, Tag.MAP);
 
-        yaml = new Yaml(new Constructor(StationTask.class), representer, options);
+        yamlFlowYaml = new Yaml(new Constructor(FlowYaml.class), representer, options);
     }
 
-    public static String toString(StationTask config) {
-        return yaml.dump(config);
-    }
-
-    public static StationTask to(String s) {
-        if (s==null) {
-            return null;
-        }
-        return yaml.load(s);
-    }
-
-    public static StationTask to(InputStream is) {
-        return yaml.load(is);
-    }
-
-    public static StationTask to(File file) {
-        try(FileInputStream fis =  new FileInputStream(file)) {
-            return yaml.load(fis);
-        } catch (IOException e) {
-            log.error("Error", e);
-            throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
+    public String toString(FlowYaml flowYaml) {
+        synchronized (syncObj) {
+            return yamlFlowYaml.dump(flowYaml);
         }
     }
+
+    public FlowYaml toFlowYaml(String s) {
+        synchronized (syncObj) {
+            return yamlFlowYaml.load(s);
+        }
+    }
+
+
 }

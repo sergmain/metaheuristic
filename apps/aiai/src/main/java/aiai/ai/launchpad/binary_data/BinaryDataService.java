@@ -1,5 +1,6 @@
 package aiai.ai.launchpad.binary_data;
 
+import aiai.ai.Enums;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.repositories.BinaryDataRepository;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.SQLException;
@@ -52,12 +52,12 @@ public class BinaryDataService {
         }
     }
 
-    public void storeToFile(long refId, BinaryData.Type type, File trgFile) {
+    public void storeToFile(long refId, Enums.BinaryDataType binaryDataType, File trgFile) {
         try {
-            BinaryData data = binaryDataRepository.findByDataTypeAndRefId(type.value, refId);
+            BinaryData data = binaryDataRepository.findByDataTypeAndRefId(binaryDataType.value, refId);
             if (data==null) {
-                log.warn("Binary data for refId {} and type {} wasn't found", refId, type);
-                throw new BinaryDataNotFoundException("Binary data wasn't found, refId: " + refId+", type: " + type);
+                log.warn("Binary data for refId {} and type {} wasn't found", refId, binaryDataType);
+                throw new BinaryDataNotFoundException("Binary data wasn't found, refId: " + refId+", type: " + binaryDataType);
             }
             FileUtils.copyInputStreamToFile(data.getData().getBinaryStream(), trgFile);
         } catch (BinaryDataNotFoundException e) {
@@ -69,15 +69,15 @@ public class BinaryDataService {
         }
     }
 
-    public void deleteAllByType(BinaryData.Type type) {
-        binaryDataRepository.deleteAllByDataType(type.value);
+    public void deleteAllByType(Enums.BinaryDataType binaryDataType) {
+        binaryDataRepository.deleteAllByDataType(binaryDataType.value);
     }
 
-    public BinaryData save(InputStream is, long size, long refId, BinaryData.Type type) {
-        BinaryData data = binaryDataRepository.findByDataTypeAndRefId(type.value, refId);
+    public BinaryData save(InputStream is, long size, long refId, Enums.BinaryDataType binaryDataType) {
+        BinaryData data = binaryDataRepository.findByDataTypeAndRefId(binaryDataType.value, refId);
         if (data==null) {
             data = new BinaryData();
-            data.setDataType(type.value);
+            data.setDataType(binaryDataType.value);
             data.setRefId(refId);
         }
         data.setUpdateTs(new Timestamp(System.currentTimeMillis()));
@@ -99,14 +99,14 @@ public class BinaryDataService {
         binaryDataRepository.save(data);
     }
 
-    public void cloneBinaryData(Long srcRefId, Long trgRefId, BinaryData.Type type) throws SQLException {
-        BinaryData srcData = binaryDataRepository.findByDataTypeAndRefId(type.value, srcRefId);
+    public void cloneBinaryData(Long srcRefId, Long trgRefId, Enums.BinaryDataType binaryDataType) throws SQLException {
+        BinaryData srcData = binaryDataRepository.findByDataTypeAndRefId(binaryDataType.value, srcRefId);
         if (srcData==null) {
             return;
         }
 
         BinaryData data = new BinaryData();
-        data.setDataType(type.value);
+        data.setDataType(binaryDataType.value);
         data.setRefId(trgRefId);
         data.setUpdateTs(new Timestamp(System.currentTimeMillis()));
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class))

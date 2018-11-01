@@ -17,20 +17,20 @@
  */
 package aiai.ai.yaml.sequence;
 
-import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.Enums;
 import lombok.Data;
 
 @Data
 public class SimpleResource {
     public String id;
-    public BinaryData.Type type;
+    public Enums.BinaryDataType binaryDataType;
     // it's initialized at station side
     public String path;
 
-    public static SimpleResource of(BinaryData.Type type, String id) {
+    public static SimpleResource of(Enums.BinaryDataType binaryDataType, String id) {
         SimpleResource sf = new SimpleResource();
         sf.id = id;
-        sf.type = type;
+        sf.binaryDataType = binaryDataType;
         return sf;
     }
 }

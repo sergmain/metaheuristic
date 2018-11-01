@@ -1,6 +1,7 @@
 package aiai.ai.launchpad.dataset;
 
 import aiai.ai.Consts;
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ArtifactStatus;
@@ -79,7 +80,7 @@ public class DatasetService {
         ds.setFeatures(new ArrayList<>());
         ds.setLength(dataset.getLength());
         datasetCache.save(ds);
-        binaryDataService.cloneBinaryData(dataset.getId(), ds.getId(), BinaryData.Type.DATASET);
+        binaryDataService.cloneBinaryData(dataset.getId(), ds.getId(), Enums.BinaryDataType.DATASET);
 
         for (Feature feature : dataset.getFeatures()) {
             Feature dg = new Feature();
@@ -137,7 +138,7 @@ public class DatasetService {
         try {
             if (globals.isStoreDataToDb()) {
                 try (InputStream is = new FileInputStream(tempFile)) {
-                    binaryDataService.save(is, tempFile.length(), dp.getId(), BinaryData.Type.RAW_PART);
+                    binaryDataService.save(is, tempFile.length(), dp.getId(), Enums.BinaryDataType.RAW_PART);
                 }
             }
             if (globals.isStoreDataToDisk()) {
@@ -220,7 +221,7 @@ public class DatasetService {
 
         if (group.getFeatureStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
             try (InputStream is = new FileInputStream(configForFeature.featureFile)) {
-                binaryDataService.save(is, configForFeature.featureFile.length(), group.getId(), BinaryData.Type.FEATURE);
+                binaryDataService.save(is, configForFeature.featureFile.length(), group.getId(), Enums.BinaryDataType.FEATURE);
             }
         }
     }
@@ -295,7 +296,7 @@ public class DatasetService {
 
         if (dataset.getRawAssemblingStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
             try (InputStream is = new FileInputStream(rawFile)) {
-                binaryDataService.save(is, rawFile.length(), dataset.getId(), BinaryData.Type.ASSEMBLED_RAW);
+                binaryDataService.save(is, rawFile.length(), dataset.getId(), Enums.BinaryDataType.ASSEMBLED_RAW);
             }
         }
 
@@ -326,7 +327,7 @@ public class DatasetService {
 
         if (dataset.getRawAssemblingStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
             try (InputStream is = new FileInputStream(datasetFile)) {
-                binaryDataService.save(is, datasetFile.length(), dataset.getId(), BinaryData.Type.DATASET);
+                binaryDataService.save(is, datasetFile.length(), dataset.getId(), Enums.BinaryDataType.DATASET);
             }
         }
 

@@ -19,13 +19,40 @@ package aiai.ai;
 
 public final class Enums {
 
+    public enum ProcessType {
+        FILE_PROCESSING(1), EXPERIMENT(2);
+
+        private int procesType;
+
+        ProcessType(int procesType) {
+            this.procesType = procesType;
+        }
+    }
+
+    public enum BinaryDataType { DATASET(1), FEATURE(2), TEST(3), RAW_PART(4), ASSEMBLED_RAW(5), SNIPPET(6, true);
+
+        public int value;
+        public boolean idAsString;
+
+        BinaryDataType(int value, boolean idAsString) {
+            this.value = value;
+            this.idAsString = idAsString;
+        }
+
+        BinaryDataType(int value) {
+            this(value, false);
+        }
+    }
+
     public enum TaskType {
-        ProduceRawFile(1), ProduceDataset(2), ProduceFeature(3), Experiment(4);
+        ProduceRawFile(1, true), ProduceDataset(2, true), ProduceFeature(3, true), Experiment(4, false);
 
         public int code;
+        public boolean returnResult;
 
-        TaskType(int code) {
+        TaskType(int code, boolean returnResult) {
             this.code = code;
+            this.returnResult = returnResult;
         }
 
         public static TaskType toType(int code) {

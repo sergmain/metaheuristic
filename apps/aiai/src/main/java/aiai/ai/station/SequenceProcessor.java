@@ -22,7 +22,6 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
-import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.LogData;
 import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.utils.DigitUtils;
@@ -59,7 +58,7 @@ public class SequenceProcessor {
     private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
 
-    private Map<BinaryData.Type, Map<String, AssetFile>> resourceReadyMap = new HashMap<>();
+    private Map<Enums.BinaryDataType, Map<String, AssetFile>> resourceReadyMap = new HashMap<>();
 //    private Map<Long, AssetFile> isDatasetReady = new HashMap<>();
 //    private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
 //    private Map<String, SnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
@@ -73,15 +72,15 @@ public class SequenceProcessor {
         this.currentExecState = currentExecState;
     }
 
-    private AssetFile getResource(BinaryData.Type type, String id) {
-        return resourceReadyMap.containsKey(type) ? resourceReadyMap.get(type).get(id) : null;
+    private AssetFile getResource(Enums.BinaryDataType binaryDataType, String id) {
+        return resourceReadyMap.containsKey(binaryDataType) ? resourceReadyMap.get(binaryDataType).get(id) : null;
     }
 
-    private void putResource(BinaryData.Type type, String id, AssetFile assetFile) {
-        Map<String, AssetFile> map = resourceReadyMap.putIfAbsent(type, new HashMap<>());
+    private void putResource(Enums.BinaryDataType binaryDataType, String id, AssetFile assetFile) {
+        Map<String, AssetFile> map = resourceReadyMap.putIfAbsent(binaryDataType, new HashMap<>());
         if (map==null) {
             map = new HashMap<>();
-            resourceReadyMap.put(type, map);
+            resourceReadyMap.put(binaryDataType, map);
         }
         map.put(id, assetFile);
     }
@@ -114,16 +113,16 @@ public class SequenceProcessor {
             }
             boolean isResourcesOk = true;
             for (SimpleResource resource : taskParamYaml.resources) {
-                AssetFile assetFile= getResource(resource.type, resource.id);
+                AssetFile assetFile= getResource(resource.binaryDataType, resource.id);
                 if (assetFile == null) {
-                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, resource.type, resource.id);
+                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, resource.binaryDataType, resource.id);
                     // is this resource prepared?
                     if (assetFile.isError || !assetFile.isContent) {
                         log.info("Resource hasn't been prepared yet, {}", assetFile);
                         isResourcesOk = false;
                         continue;
                     }
-                    putResource(resource.type, resource.id, assetFile);
+                    putResource(resource.binaryDataType, resource.id, assetFile);
                 }
             }
             if (!isResourcesOk) {
@@ -155,16 +154,16 @@ public class SequenceProcessor {
             task.setLaunchedOn(System.currentTimeMillis());
             task = stationTaskService.save(task);
             for (SimpleSnippet snippet : taskParamYaml.getSnippets()) {
-                AssetFile assetFile= getResource(BinaryData.Type.SNIPPET, snippet.code);
+                AssetFile assetFile= getResource(Enums.BinaryDataType.SNIPPET, snippet.code);
                 if (assetFile == null) {
-                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, BinaryData.Type.SNIPPET, snippet.code);
+                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.SNIPPET, snippet.code);
                     // is this snippet prepared?
                     if (assetFile.isError || !assetFile.isContent) {
                         log.info("Resource hasn't been prepared yet, {}", assetFile);
                         isResourcesOk = false;
                         continue;
                     }
-                    putResource(BinaryData.Type.SNIPPET, snippet.code, assetFile);
+                    putResource(Enums.BinaryDataType.SNIPPET, snippet.code, assetFile);
                 }
                 if (!isResourcesOk) {
                     continue;
@@ -213,7 +212,7 @@ public class SequenceProcessor {
 
     private boolean initAllPaths(File stationResourceDir, TaskParamYaml taskParamYaml) {
         for (SimpleResource resource : taskParamYaml.resources) {
-            AssetFile assetFile = StationResourceUtils.prepareResourceFile(stationResourceDir, resource.type, resource.id);
+            AssetFile assetFile = StationResourceUtils.prepareResourceFile(stationResourceDir, resource.binaryDataType, resource.id);
             if (assetFile.isError || !assetFile.isContent ) {
                 log.warn("Resource file wasn't found. {}", assetFile);
                 return false;

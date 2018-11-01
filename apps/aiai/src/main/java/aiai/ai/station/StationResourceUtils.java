@@ -17,10 +17,8 @@
  */
 package aiai.ai.station;
 
-import aiai.ai.Consts;
-import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.Enums;
 import aiai.ai.utils.DigitUtils;
-import aiai.apps.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -28,13 +26,13 @@ import java.io.File;
 @Slf4j
 public class StationResourceUtils {
 
-    public static AssetFile prepareResourceFile(File stationResourceDir, BinaryData.Type type, String id) {
+    public static AssetFile prepareResourceFile(File stationResourceDir, Enums.BinaryDataType binaryDataType, String id) {
 
         final AssetFile assetFile = new AssetFile();
 
-        File typeDir = new File(stationResourceDir, type.toString());
+        File typeDir = new File(stationResourceDir, binaryDataType.toString());
         String subDir;
-        if (type.idAsString) {
+        if (binaryDataType.idAsString) {
             subDir = id.replace(':', '_');
         }
         else {

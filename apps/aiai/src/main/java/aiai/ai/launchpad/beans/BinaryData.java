@@ -17,9 +17,9 @@
 
 package aiai.ai.launchpad.beans;
 
+import aiai.ai.Enums;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -33,23 +33,8 @@ import java.sql.Timestamp;
 public class BinaryData implements Serializable {
     private static final long serialVersionUID = -6065599957629315147L;
 
-    public void setType(Type type) {
-        this.dataType = type.value;
-    }
-
-    public enum Type{ DATASET(1), FEATURE(2), TEST(3), RAW_PART(4), ASSEMBLED_RAW(5), SNIPPET(6, true);
-
-        public int value;
-        public boolean idAsString;
-
-        Type(int value, boolean idAsString) {
-            this.value = value;
-            this.idAsString = idAsString;
-        }
-
-        Type(int value) {
-            this(value, false);
-        }
+    public void setType(Enums.BinaryDataType binaryDataType) {
+        this.dataType = binaryDataType.value;
     }
 
     @Id

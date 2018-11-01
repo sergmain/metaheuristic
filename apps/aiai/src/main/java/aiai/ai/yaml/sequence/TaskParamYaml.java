@@ -26,10 +26,6 @@ import java.util.Map;
 public class TaskParamYaml {
     public Long experimentId;
     public List<SimpleResource> resources;
-/*
-    public SimpleDataset dataset;
-    public List<SimpleFeature> features;
-*/
     public List<SimpleSnippet> snippets;
     public Map<String, String> hyperParams;
 

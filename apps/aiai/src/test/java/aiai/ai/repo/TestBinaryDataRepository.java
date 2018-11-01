@@ -1,8 +1,8 @@
 package aiai.ai.repo;
 
+import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.repositories.BinaryDataRepository;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import javax.transaction.Transactional;
 import java.io.ByteArrayInputStream;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -31,7 +30,7 @@ public class TestBinaryDataRepository {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        BinaryData d1 = binaryDataService.save(inputStream, bytes.length, 1L, BinaryData.Type.TEST);
+        BinaryData d1 = binaryDataService.save(inputStream, bytes.length, 1L, Enums.BinaryDataType.TEST);
 
         Timestamp ts = d1.getUpdateTs();
 
@@ -52,7 +51,7 @@ public class TestBinaryDataRepository {
         assertNotEquals(ts, d2.getUpdateTs());
         assertArrayEquals(bytes, d2.bytes);
 
-        binaryDataService.deleteAllByType(BinaryData.Type.TEST);
+        binaryDataService.deleteAllByType(Enums.BinaryDataType.TEST);
 
     }
 

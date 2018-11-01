@@ -83,7 +83,7 @@ public class TaskAssigner {
             }
 
             for (SimpleResource resource : taskParamYaml.resources) {
-                downloadResourceActor.add(new DownloadResourceTask(resource.id, resource.type));
+                downloadResourceActor.add(new DownloadResourceTask(resource.id, resource.binaryDataType));
             }
             for (SimpleSnippet snippet : taskParamYaml.getSnippets()) {
                 downloadSnippetActor.add(new DownloadSnippetTask(snippet.code, snippet.filename, snippet.checksum));

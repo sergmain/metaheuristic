@@ -17,7 +17,7 @@
  */
 package aiai.ai.station.tasks;
 
-import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.Enums;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -27,5 +27,5 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode
 public class DownloadResourceTask implements StationTask{
     public String id;
-    public BinaryData.Type type;
+    public Enums.BinaryDataType binaryDataType;
 }

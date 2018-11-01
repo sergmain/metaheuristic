@@ -67,10 +67,10 @@ public class StationTaskService {
 
     @PostConstruct
     public void postConstruct() {
-        if (!globals.stationExperimentDir.exists()) {
+        if (globals.isUnitTesting) {
             return;
         }
-        if (globals.isUnitTesting) {
+        if (!globals.stationExperimentDir.exists()) {
             return;
         }
         try {

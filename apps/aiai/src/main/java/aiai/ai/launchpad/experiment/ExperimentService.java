@@ -747,7 +747,7 @@ public class ExperimentService {
             final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
             final List<SimpleResource> simpleFeatureResources = Collections.unmodifiableList(
                     ofVariants.values.stream()
-                            .map(s -> SimpleResource.of(BinaryData.Type.FEATURE, s))
+                            .map(s -> SimpleResource.of(Enums.BinaryDataType.FEATURE, s))
                             .collect(Collectors.toList()));
 
             Map<String, Snippet> localCache = new HashMap<>();
@@ -759,7 +759,7 @@ public class ExperimentService {
 
                 yaml.resources = new ArrayList<>();
                 yaml.resources.addAll(simpleFeatureResources);
-                yaml.resources.add(SimpleResource.of(BinaryData.Type.DATASET, experiment.getDatasetId().toString()));
+                yaml.resources.add(SimpleResource.of(Enums.BinaryDataType.DATASET, experiment.getDatasetId().toString()));
 
                 final List<SimpleSnippet> snippets = new ArrayList<>();
                 for (TaskSnippet taskSnippet : taskSnippets) {

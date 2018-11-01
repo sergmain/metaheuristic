@@ -146,7 +146,7 @@ public abstract class TestFeature {
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #1");
-                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, fitSnippet.getId(), BinaryData.Type.SNIPPET);
+                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, fitSnippet.getId(), Enums.BinaryDataType.SNIPPET);
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
 
@@ -168,7 +168,7 @@ public abstract class TestFeature {
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #2");
-                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, predictSnippet.getId(), BinaryData.Type.SNIPPET);
+                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, predictSnippet.getId(), Enums.BinaryDataType.SNIPPET);
                 log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
             }
 
