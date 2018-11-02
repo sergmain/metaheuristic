@@ -97,7 +97,7 @@ public class TestFlow {
             Process p = new Process();
             p.type = Enums.ProcessType.EXPERIMENT;
             p.name = "experiment";
-            p.refId = 100;
+            p.code = "experiment-code-01";
 
             flow.processes.add(p);
         }
@@ -119,7 +119,6 @@ public class TestFlow {
         Process p1 = new Process();
         p1.id=2;
         p1.name="experiment";
-        p1.refId = 100;
         p1.collectResources = false;
 
         p1.resourcePoolCode = "dataset-processing-data";

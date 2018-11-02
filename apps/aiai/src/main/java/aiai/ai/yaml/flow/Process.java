@@ -17,6 +17,5 @@ public class Process {
     public boolean parallelExec;
 
     public String resourcePoolCode;
-    public long refId;
     public String outputType;
 }
