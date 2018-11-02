@@ -12,6 +12,9 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.*;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class TestFlow {
@@ -24,6 +27,8 @@ public class TestFlow {
         Flow flow = new Flow();
         flow.id = 10L;
         {
+            // input resource will be taken from resourcePoolCode - "raw-part-data"
+            // it's actual only for 1st process in the flow
             Process p = new Process();
             p.type = Enums.ProcessType.FILE_PROCESSING;
             p.name = "assembly raw file";
@@ -33,6 +38,8 @@ public class TestFlow {
             p.snippetCodes = Collections.singletonList("snippet-01:1.1");
             p.collectResources = true;
             p.outputType = "assembled-raw";
+
+            flow.processes.add(p);
         }
         // output resource code: flow-10-assembly-raw-file-snippet-01
         //
@@ -48,6 +55,8 @@ public class TestFlow {
             p.snippetCodes = Collections.singletonList("snippet-02:1.1");
             p.collectResources = true;
             p.outputType = "dataset-processing";
+
+            flow.processes.add(p);
         }
         // output resource code: flow-10-dataset-processing-snippet-02
         //
@@ -66,6 +75,8 @@ public class TestFlow {
             p.parallelExec = true;
             p.collectResources = true;
             p.outputType = "feature";
+
+            flow.processes.add(p);
         }
         // output resource code: flow-10-feature-processing-snippet-03
         // output resource code: flow-10-feature-processing-snippet-04
@@ -87,11 +98,17 @@ public class TestFlow {
             p.type = Enums.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.refId = 100;
+
+            flow.processes.add(p);
         }
 
-        String s = flowYamlUtils.toString(flow);
+        String yaml = flowYamlUtils.toString(flow);
+        System.out.println(yaml);
 
-        System.out.println(s);
+        Flow f1 = flowYamlUtils.toFlowYaml(yaml);
+        assertNotNull(f1);
+        assertNotNull(f1.processes);
+        assertFalse(f1.processes.isEmpty());
     }
 
     @Test

@@ -39,7 +39,7 @@ public class FlowYamlUtils {
         options.setPrettyFlow(true);
 
         Representer representer = new Representer();
-        representer.addClassTag(TaskParamYaml.class, Tag.MAP);
+        representer.addClassTag(Flow.class, Tag.MAP);
 
         yamlFlowYaml = new Yaml(new Constructor(Flow.class), representer, options);
     }

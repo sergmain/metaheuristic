@@ -13,7 +13,7 @@ public class Process {
     public String code;
     public Enums.ProcessType type;
     public boolean collectResources = false;
-    public List<String> snippetCodes = new ArrayList<>();
+    public List<String> snippetCodes;
     public boolean parallelExec;
 
     public String resourcePoolCode;
