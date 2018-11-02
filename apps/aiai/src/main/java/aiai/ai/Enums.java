@@ -20,16 +20,19 @@ package aiai.ai;
 public final class Enums {
 
     public enum ProcessType {
-        FILE_PROCESSING(1), EXPERIMENT(2);
+        FILE_PROCESSING(1, false), EXPERIMENT(2, true);
 
-        private int procesType;
+        private int processType;
+        private boolean snippetProvided;
 
-        ProcessType(int procesType) {
-            this.procesType = procesType;
+        ProcessType(int processType, boolean snippetProvided) {
+            this.processType = processType;
+            this.snippetProvided = snippetProvided;
         }
     }
 
-    public enum BinaryDataType { DATASET(1), FEATURE(2), TEST(3), RAW_PART(4), ASSEMBLED_RAW(5), SNIPPET(6, true);
+    public enum BinaryDataType { DATASET(1), FEATURE(2), TEST(3), RAW_PART(4),
+        ASSEMBLED_RAW(5), SNIPPET(6, true), COMMON(7, true);
 
         public int value;
         public boolean idAsString;

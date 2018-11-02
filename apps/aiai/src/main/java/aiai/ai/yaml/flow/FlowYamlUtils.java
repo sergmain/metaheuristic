@@ -41,16 +41,16 @@ public class FlowYamlUtils {
         Representer representer = new Representer();
         representer.addClassTag(TaskParamYaml.class, Tag.MAP);
 
-        yamlFlowYaml = new Yaml(new Constructor(FlowYaml.class), representer, options);
+        yamlFlowYaml = new Yaml(new Constructor(Flow.class), representer, options);
     }
 
-    public String toString(FlowYaml flowYaml) {
+    public String toString(Flow flow) {
         synchronized (syncObj) {
-            return yamlFlowYaml.dump(flowYaml);
+            return yamlFlowYaml.dump(flow);
         }
     }
 
-    public FlowYaml toFlowYaml(String s) {
+    public Flow toFlowYaml(String s) {
         synchronized (syncObj) {
             return yamlFlowYaml.load(s);
         }

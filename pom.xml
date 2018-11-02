@@ -21,7 +21,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>aiai</groupId>
-    <artifactId>root</artifactId>
+    <artifactId>aiai-root</artifactId>
     <version>1.0</version>
     <packaging>pom</packaging>
 
