@@ -119,6 +119,6 @@ public class ServerController {
     }
 
     private static Protocol.ExperimentStatus.SimpleStatus to(Experiment experiment) {
-        return new Protocol.ExperimentStatus.SimpleStatus(experiment.getId(), Enums.ExperimentExecState.toState(experiment.getExecState()));
+        return new Protocol.ExperimentStatus.SimpleStatus(experiment.getId(), Enums.TaskExecState.toState(experiment.getExecState()));
     }
 }

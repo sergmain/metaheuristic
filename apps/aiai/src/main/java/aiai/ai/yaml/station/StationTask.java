@@ -22,8 +22,6 @@ import lombok.Data;
 
 @Data
 public class StationTask {
-    public long experimentId;
-
     public long taskId;
 
     public long createdOn;
@@ -40,13 +38,9 @@ public class StationTask {
 
     public Enums.ProcessType processType;
 
-    // TODO right not there will be 2 the same properties in yaml file - isReported and reported.
-    // Won't fix this at this moment
-    public boolean isReported;
+    public boolean reported;
 
-    // TODO right not there will be 2 the same properties in yaml file - isDelivered and delivered.
-    // Won't fix this at this moment
-    public boolean isDelivered;
+    public boolean delivered;
 
     public String snippetExecResults;
 }

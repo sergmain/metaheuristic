@@ -119,7 +119,6 @@ public class Globals {
     public File launchpadResourcesDir;
 
     public File stationDatasetDir;
-    public File stationExperimentDir;
     public File stationSnippetDir;
     public File stationDbDir;
     public File stationSystemDir;
@@ -161,8 +160,6 @@ public class Globals {
         else {
             stationDatasetDir = new File(stationDir, Consts.DATASET_DIR);
             stationDatasetDir.mkdirs();
-            stationExperimentDir = new File(stationDir, Consts.EXPERIMENT_DIR);
-            stationExperimentDir.mkdirs();
             stationSnippetDir = new File(stationDir, Consts.SNIPPET_DIR);
             stationSnippetDir.mkdirs();
             stationDbDir = new File(stationDir, Consts.DATABASE_DIR);

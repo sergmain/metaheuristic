@@ -70,15 +70,14 @@ public class TaskAssigner {
                 log.warn("Params for task {} is blank", task.getTaskId());
                 continue;
             }
+            if (currentExecState.isInit && currentExecState.getState(task.taskId)==null) {
+                stationTaskService.delete(task);
+                log.info("Deleted orphan sequence {}", task);
+                continue;
+            }
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             if (taskParamYaml.resources.isEmpty()) {
                 log.warn("taskParamYaml.resources is empty\n{}", task.getParams());
-                continue;
-            }
-
-            if (currentExecState.isInit && currentExecState.getState(taskParamYaml.getExperimentId())==null) {
-                stationTaskService.delete(task);
-                log.info("Deleted orphan sequence {}", task);
                 continue;
             }
 

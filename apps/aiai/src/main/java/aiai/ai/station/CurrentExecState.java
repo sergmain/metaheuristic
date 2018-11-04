@@ -28,36 +28,36 @@ import java.util.Map;
 @Component
 public class CurrentExecState {
 
-    private final Map<Long, Enums.ExperimentExecState> experimentState = new HashMap<>();
+    private final Map<Long, Enums.TaskExecState> taskState = new HashMap<>();
     boolean isInit = false;
 
     void register(List<Protocol.ExperimentStatus.SimpleStatus> statuses) {
         if (statuses==null) {
             return;
         }
-        synchronized(experimentState) {
+        synchronized(taskState) {
             for (Protocol.ExperimentStatus.SimpleStatus status : statuses) {
-                experimentState.put(status.experimentId, status.state);
+                taskState.put(status.taskId, status.state);
             }
             isInit = true;
         }
     }
 
-    Enums.ExperimentExecState getState(long experimentId) {
-        synchronized(experimentState) {
+    Enums.TaskExecState getState(long taskId) {
+        synchronized(taskState) {
             if (!isInit) {
                 return null;
             }
-            return experimentState.getOrDefault(experimentId, Enums.ExperimentExecState.DOESNT_EXIST);
+            return taskState.getOrDefault(taskId, Enums.TaskExecState.DOESNT_EXIST);
         }
     }
 
-    boolean isState(long experimentId, Enums.ExperimentExecState state) {
-        Enums.ExperimentExecState currState = getState(experimentId);
+    boolean isState(long taskId, Enums.TaskExecState state) {
+        Enums.TaskExecState currState = getState(taskId);
         return currState!=null && currState==state;
     }
 
-    boolean isStarted(long experimentId) {
-        return isState(experimentId, Enums.ExperimentExecState.STARTED);
+    boolean isStarted(long taskId) {
+        return isState(taskId, Enums.TaskExecState.STARTED);
     }
 }

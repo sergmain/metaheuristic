@@ -19,9 +19,7 @@ package aiai.ai.station;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.station.StationTask;
-import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
@@ -36,13 +34,11 @@ import java.nio.file.Path;
 public class ArtifactCleaner {
 
     private final StationTaskService stationTaskService;
-    private final TaskParamYamlUtils taskParamYamlUtils;
     private final CurrentExecState currentExecState;
     private final Globals globals;
 
-    public ArtifactCleaner(StationTaskService stationTaskService, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, Globals globals) {
+    public ArtifactCleaner(StationTaskService stationTaskService, CurrentExecState currentExecState, Globals globals) {
         this.stationTaskService = stationTaskService;
-        this.taskParamYamlUtils = taskParamYamlUtils;
         this.currentExecState = currentExecState;
         this.globals = globals;
     }
@@ -53,19 +49,18 @@ public class ArtifactCleaner {
             return;
         }
 
-        for (StationTask seq : stationTaskService.findAll()) {
-            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(seq.getParams());
-            if (currentExecState.isState(taskParamYaml.experimentId, Enums.ExperimentExecState.DOESNT_EXIST)) {
-                log.info("Delete obsolete sequence {}", seq);
-                stationTaskService.deleteById(seq.getTaskId());
+        for (StationTask task : stationTaskService.findAll()) {
+            if (currentExecState.isState(task.taskId, Enums.TaskExecState.DOESNT_EXIST)) {
+                log.info("Delete obsolete task {}", task);
+                stationTaskService.deleteById(task.getTaskId());
             }
         }
 
         try {
-            Files.newDirectoryStream(globals.stationExperimentDir.toPath()).forEach((Path path) -> {
+            Files.newDirectoryStream(globals.stationTaskDir.toPath()).forEach((Path path) -> {
                         final File file = path.toFile();
                         if (file.isFile()) {
-                            log.warn("Found file {} in {}, should be directoru only", file.getPath());
+                            log.warn("Found file {} in {}, should be directory only", file.getPath());
                             return;
                         }
                         int experimentId = Integer.parseInt(file.getName());
@@ -78,8 +73,8 @@ public class ArtifactCleaner {
             );
         }
         catch (IOException e) {
-            log.error("Erorr", e);
-            throw new RuntimeException("erorr", e);
+            log.error("Error", e);
+            throw new RuntimeException("error", e);
         }
     }
 

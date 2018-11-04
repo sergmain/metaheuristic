@@ -163,8 +163,8 @@ public class StationService {
         if (tasks ==null) {
             return;
         }
-        for (Protocol.AssignedTask.Task sequence : tasks) {
-            stationTaskService.createTask(sequence.taskId, sequence.params);
+        for (Protocol.AssignedTask.Task task : tasks) {
+            stationTaskService.createTask(task.taskId, task.params);
         }
     }
 }

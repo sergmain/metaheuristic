@@ -52,7 +52,7 @@ public class TestFeatureWithAllError extends TestFeature {
         log.info("experimentService.getSequencesAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
         assertNotNull(sequences);
         // sequences is empty cos we still didn't finish those sequences
-        assertTrue(sequences.getSimpleSequences().isEmpty());
+        assertTrue(sequences.getSimpleTasks().isEmpty());
 
         mills = System.currentTimeMillis();
         log.info("Start finishCurrentWithError()");
@@ -72,8 +72,8 @@ public class TestFeatureWithAllError extends TestFeature {
         log.info("sequences1.getFeature() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(feature);
-        assertNotNull(sequences1.getSimpleSequences());
-        assertEquals(2, sequences1.getSimpleSequences().size());
+        assertNotNull(sequences1.getSimpleTasks());
+        assertEquals(2, sequences1.getSimpleTasks().size());
         assertTrue(feature.isInProgress);
 
         mills = System.currentTimeMillis();

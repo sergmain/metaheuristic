@@ -65,8 +65,8 @@ public class Protocol {
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SimpleStatus {
-            public long experimentId;
-            public Enums.ExperimentExecState state;
+            public long taskId;
+            public Enums.TaskExecState state;
         }
         List<SimpleStatus> statuses;
 

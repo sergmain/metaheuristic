@@ -21,6 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
+import aiai.ai.utils.DigitUtils;
 import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
@@ -42,10 +43,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -57,7 +55,7 @@ public class StationTaskService {
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final CurrentExecState currentExecState;
 
-    private final Map<Long, Map<Long, StationTask>> map = new HashMap<>();
+    private final Map<Long, StationTask> map = new HashMap<>();
 
     public StationTaskService(TaskParamYamlUtils taskParamYamlUtils, Globals globals, CurrentExecState currentExecState) {
         this.currentExecState = currentExecState;
@@ -70,26 +68,23 @@ public class StationTaskService {
         if (globals.isUnitTesting) {
             return;
         }
-        if (!globals.stationExperimentDir.exists()) {
+        if (!globals.stationTaskDir.exists()) {
             return;
         }
         try {
-            Files.list(globals.stationExperimentDir.toPath()).forEach(p -> {
-                final File file = p.toFile();
-                long experimentId = Long.parseLong(file.getName());
-                Map<Long, StationTask> seqs = map.computeIfAbsent(experimentId, k -> new HashMap<>());
-                File seqDir = new File(file, "sequence");
-                if (!seqDir.exists()) {
+            Files.list(globals.stationTaskDir.toPath()).forEach(p -> {
+                final File topDir = p.toFile();
+                if (!topDir.isDirectory()) {
                     return;
                 }
                 try {
-                    Files.list(seqDir.toPath()).forEach(s -> {
-                        long seqId = Long.parseLong(s.toFile().getName());
-                        File sequenceYamlFile = new File(s.toFile(), Consts.TASK_YAML);
-                        if (sequenceYamlFile.exists()) {
-                            try(FileInputStream fis = new FileInputStream(sequenceYamlFile)) {
-                                StationTask seq = StationTaskUtils.to(fis);
-                                seqs.put(seqId, seq);
+                    Files.list(topDir.toPath()).forEach(s -> {
+                        long taskId = Long.parseLong(s.toFile().getName());
+                        File taskYamlFile = new File(s.toFile(), Consts.TASK_YAML);
+                        if (taskYamlFile.exists()) {
+                            try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
+                                StationTask task = StationTaskUtils.to(fis);
+                                map.put(taskId, task);
                             }
                             catch (IOException e) {
                                 log.error("Error #3", e);
@@ -112,42 +107,39 @@ public class StationTaskService {
         int i=0;
     }
 
-    private void putInMap(StationTask seq) {
-        Map<Long, StationTask> seqs = map.computeIfAbsent(seq.experimentId, k -> new HashMap<>());
-        seqs.put(seq.taskId, seq);
+    private void putInMap(StationTask task) {
+        map.put(task.taskId, task);
     }
 
-    private void deleteFromMap(StationTask seq) {
-        Map<Long, StationTask> seqs = map.get(seq.experimentId);
-        if (seqs==null) {
-            return;
-        }
-        seqs.remove(seq.taskId);
+    private void deleteFromMap(StationTask task) {
+        map.remove(task.taskId);
     }
 
     List<StationTask> getForReporting() {
         List<StationTask> list = findAllByFinishedOnIsNotNull();
         List<StationTask> result = new ArrayList<>();
-        for (StationTask seq : list) {
-            if (!seq.isReported() || (seq.isReported() && !seq.isDelivered() && (seq.getReportedOn()==null || (System.currentTimeMillis() - seq.getReportedOn())>60_000)) ) {
-                result.add(seq);
+        for (StationTask stationTask : list) {
+            if (!stationTask.isReported() ||
+                    (stationTask.isReported() && !stationTask.isDelivered() &&
+                            (stationTask.getReportedOn()==null || (System.currentTimeMillis() - stationTask.getReportedOn())>60_000)) ) {
+                result.add(stationTask);
             }
         }
         return result;
     }
 
-    void markAsFinishedIfAllOk(Long seqId, TaskParamYaml taskParamYaml) {
-        log.info("markAsFinished({})", seqId);
-        StationTask seqTemp = findById(seqId);
-        if (seqTemp == null) {
-            log.error("StationTask wasn't found for Id " + seqId);
+    void markAsFinishedIfAllOk(Long taskId, TaskParamYaml taskParamYaml) {
+        log.info("markAsFinished({})", taskId);
+        StationTask taskTemp = findById(taskId);
+        if (taskTemp == null) {
+            log.error("StationTask wasn't found for Id " + taskId);
         } else {
-            if (StringUtils.isBlank(seqTemp.getSnippetExecResults())) {
-                seqTemp.setSnippetExecResults(SnippetExecUtils.toString(new SnippetExec()));
-                save(seqTemp);
+            if (StringUtils.isBlank(taskTemp.getSnippetExecResults())) {
+                taskTemp.setSnippetExecResults(SnippetExecUtils.toString(new SnippetExec()));
+                save(taskTemp);
             }
             else {
-                SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
+                SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(taskTemp.getSnippetExecResults());
                 final int execSize = snippetExec.getExecs().size();
                 if (taskParamYaml.getSnippets().size() != execSize) {
                     // if last exec Ok?
@@ -156,8 +148,8 @@ public class StationTaskService {
                         return;
                     }
                 }
-                seqTemp.setFinishedOn(System.currentTimeMillis());
-                save(seqTemp);
+                taskTemp.setFinishedOn(System.currentTimeMillis());
+                save(taskTemp);
             }
         }
     }
@@ -178,26 +170,20 @@ public class StationTaskService {
         if (stationId==null) {
             return false;
         }
-        List<StationTask> seqs = findAllByFinishedOnIsNull();
-        for (StationTask seq : seqs) {
-            if (StringUtils.isBlank(seq.getParams())) {
-                log.warn("Params for sequence {} is blank", seq.getTaskId());
-                continue;
-            }
-            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(seq.getParams());
-            if (currentExecState.isStarted(taskParamYaml.experimentId)) {
+        List<StationTask> tasks = findAllByFinishedOnIsNull();
+        for (StationTask task : tasks) {
+            if (currentExecState.isStarted(task.taskId)) {
                 return false;
             }
-
         }
         return true;
     }
 
-    void storeExecResult(Long seqId, SimpleSnippet snippet, ProcessService.Result result, long experimentId, File artifactDir) {
-        log.info("storeExecResult(experimentId: {}, seqId: {}, snippetOrder: {})", experimentId, seqId, snippet.order);
-        StationTask seqTemp = findById(seqId);
+    void storeExecResult(Long taskId, SimpleSnippet snippet, ProcessService.Result result, File artifactDir) {
+        log.info("storeExecResult(taskId: {}, snippetOrder: {})", taskId, snippet.order);
+        StationTask seqTemp = findById(taskId);
         if (seqTemp == null) {
-            log.error("StationTask wasn't found for Id " + seqId);
+            log.error("StationTask wasn't found for Id " + taskId);
         } else {
             // store metrics after predict only
             if (snippet.isMetrics()) {
@@ -233,22 +219,18 @@ public class StationTaskService {
 
     List<StationTask> findAllByFinishedOnIsNull() {
         List<StationTask> list = new ArrayList<>();
-        for (Map<Long, StationTask> value : map.values()) {
-            for (StationTask sequence : value.values()) {
-                if (sequence.finishedOn==null) {
-                    list.add(sequence);
-                }
+        for (StationTask sequence : map.values()) {
+            if (sequence.finishedOn==null) {
+                list.add(sequence);
             }
         }
         return list;
     }
 
     StationTask findByTaskId(Long id) {
-        for (Map<Long, StationTask> value : map.values()) {
-            for (StationTask sequence : value.values()) {
-                if (sequence.getTaskId()==id) {
-                    return sequence;
-                }
+        for (StationTask sequence : map.values()) {
+            if (sequence.getTaskId()==id) {
+                return sequence;
             }
         }
         return null;
@@ -256,11 +238,9 @@ public class StationTaskService {
 
     private List<StationTask> findAllByFinishedOnIsNotNull() {
         List<StationTask> list = new ArrayList<>();
-        for (Map<Long, StationTask> value : map.values()) {
-            for (StationTask sequence : value.values()) {
-                if (sequence.finishedOn != null) {
-                    list.add(sequence);
-                }
+        for (StationTask sequence : map.values()) {
+            if (sequence.finishedOn != null) {
+                list.add(sequence);
             }
         }
         return list;
@@ -275,22 +255,19 @@ public class StationTaskService {
         return status;
     }
 
-    void createTask(Long taskId, String params) {
+    void createTask(long taskId, String params) {
 
         final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
-        final long experimentId = taskParamYaml.experimentId;
 
-        Map<Long, StationTask> seqs = map.computeIfAbsent(experimentId, k -> new HashMap<>());
-        StationTask seq = seqs.computeIfAbsent(taskId, k -> new StationTask());
+        StationTask seq = map.computeIfAbsent(taskId, k -> new StationTask());
 
-        seq.experimentId = experimentId;
         seq.taskId = taskId;
         seq.createdOn = System.currentTimeMillis();
         seq.params = params;
         seq.finishedOn = null;
 
-        String path = String.format("experiment%c%06d%csequence%c%06d", File.separatorChar, experimentId, File.separatorChar, File.separatorChar, taskId);
-        File systemDir = new File(globals.stationDir, path);
+        String path = getTaskPath(taskId);
+        File systemDir = new File(globals.stationTaskDir, path);
         try {
             if (systemDir.exists()) {
                 FileUtils.deleteDirectory(systemDir);
@@ -307,9 +284,14 @@ public class StationTaskService {
         }
     }
 
-    public StationTask save(StationTask seq) {
-        String path = String.format("experiment%c%06d%csequence%c%06d", File.separatorChar, seq.experimentId, File.separatorChar, File.separatorChar, seq.taskId);
-        File sequenceDir = new File(globals.stationDir, path);
+    private String getTaskPath(long taskId) {
+        DigitUtils.Power power = DigitUtils.getPower(taskId);
+        return ""+power.power7+File.separatorChar+power.power4+File.separatorChar;
+    }
+
+    public StationTask save(StationTask task) {
+        String path = String.format("%06d", task.taskId);
+        File sequenceDir = new File(globals.stationTaskDir, path);
         if (!sequenceDir.exists()) {
             //noinspection ResultOfMethodCallIgnored
             sequenceDir.mkdirs();
@@ -329,12 +311,12 @@ public class StationTaskService {
         }
 
         try {
-            FileUtils.write(sequenceYaml, StationTaskUtils.toString(seq), Charsets.UTF_8, false);
+            FileUtils.write(sequenceYaml, StationTaskUtils.toString(task), Charsets.UTF_8, false);
         } catch (IOException e) {
             log.error("Error", e);
             throw new IllegalStateException("Error while writing to file: " + sequenceYaml.getPath(), e);
         }
-        return seq;
+        return task;
     }
 
     void saveAll(List<StationTask> list) {
@@ -343,44 +325,38 @@ public class StationTaskService {
         }
     }
 
-    public StationTask findById(Long experimentSequenceId) {
-        for (Map<Long, StationTask> value : map.values()) {
-            for (StationTask sequence : value.values()) {
-                if (sequence.taskId == experimentSequenceId) {
-                    return sequence;
-                }
+    public StationTask findById(Long taskId) {
+        for (StationTask task : map.values()) {
+            if (task.taskId == taskId) {
+                return task;
             }
         }
         return null;
     }
 
-    public List<StationTask> findAll() {
-        List<StationTask> list = new ArrayList<>();
-        for (Map<Long, StationTask> entry : map.values()) {
-            list.addAll(entry.values());
-        }
-        return list;
+    public Collection<StationTask> findAll() {
+        return map.values();
     }
 
-    void deleteById(long experimentSequenceId) {
-        delete( findById(experimentSequenceId) );
+    void deleteById(long taskId) {
+        delete( findById(taskId) );
     }
 
-    public void delete(StationTask seq) {
-        if (seq==null) {
+    public void delete(final StationTask task) {
+        if (task==null) {
             return;
         }
-        String path = String.format(EXPERIMENT_SEQUENCE_FORMAT_STR, File.separatorChar, seq.experimentId, File.separatorChar, File.separatorChar, seq.taskId);
+        final String path = getTaskPath(task.taskId);
 
-        File systemDir = new File(globals.stationDir, path);
+        final File systemDir = new File(globals.stationDir, path);
         try {
             if (systemDir.exists()) {
                 FileUtils.deleteDirectory(systemDir);
-                deleteFromMap(seq);
+                deleteFromMap(task);
             }
         }
         catch( Throwable th) {
-            log.error("Error deleting sequence "+ seq.taskId, th);
+            log.error("Error deleting task "+ task.taskId, th);
         }
     }
 }

@@ -44,7 +44,7 @@ public class TestFeatureWithSomeOk extends TestFeature {
                 station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, false, experiment.getId());
         assertNotNull(sequences);
         // sequences is empty cos we still didn't finish those sequences
-        assertTrue(sequences.getSimpleSequences().isEmpty());
+        assertTrue(sequences.getSimpleTasks().isEmpty());
 
         finishCurrentWithError(CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
 
@@ -53,8 +53,8 @@ public class TestFeatureWithSomeOk extends TestFeature {
         assertNotNull(sequences1);
         final ExperimentFeature feature = sequences1.getFeature();
         assertNotNull(feature);
-        assertNotNull(sequences1.getSimpleSequences());
-        assertEquals(2, sequences1.getSimpleSequences().size());
+        assertNotNull(sequences1.getSimpleTasks());
+        assertEquals(2, sequences1.getSimpleTasks().size());
         assertTrue(feature.isInProgress);
 
         finishCurrentWithOk(2);

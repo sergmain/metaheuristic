@@ -68,7 +68,7 @@ public class ExperimentService {
     @AllArgsConstructor
     public static class SequencesAndAssignToStationResult {
         ExperimentFeature feature;
-        List<Protocol.AssignedTask.Task> simpleSequences;
+        List<Protocol.AssignedTask.Task> simpleTasks;
     }
 
     private static final SequencesAndAssignToStationResult EMPTY_RESULT = new SequencesAndAssignToStationResult(null, EMPTY_SIMPLE_SEQUENCES);
@@ -188,7 +188,7 @@ public class ExperimentService {
     public synchronized SequencesAndAssignToStationResult getSequencesAndAssignToStation(long stationId, int recordNumber, boolean isAcceptOnlySigned, Long experimentId) {
 
         // check and mark all completed features
-        List<ExperimentFeature> fsTemp = experimentFeatureRepository.findAllForLaunchedExperiments( Enums.ExperimentExecState.STARTED.code);
+        List<ExperimentFeature> fsTemp = experimentFeatureRepository.findAllForLaunchedExperiments( Enums.TaskExecState.STARTED.code);
         List<ExperimentFeature> fs = new ArrayList<>();
         if (experimentId!=null) {
             Experiment experiment = findById(experimentId);
@@ -300,18 +300,18 @@ public class ExperimentService {
         // main part, prepare new batch of sequences for station
 
         // is there any feature which was started(or in progress) and not finished yet for specific station?
-        List<ExperimentFeature> features = taskRepository.findAnyStartedButNotFinished(Consts.PAGE_REQUEST_1_REC, stationId, Enums.ExperimentExecState.STARTED.code);
+        List<ExperimentFeature> features = taskRepository.findAnyStartedButNotFinished(Consts.PAGE_REQUEST_1_REC, stationId, Enums.TaskExecState.STARTED.code);
         ExperimentFeature feature = null;
         // all sequences, which were assigned to station, are finished
         if (features == null || features.isEmpty()) {
             if (experimentId!=null) {
-                features = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrueAndExperimentId(Consts.PAGE_REQUEST_1_REC, Enums.ExperimentExecState.STARTED.code, experimentId);
+                features = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrueAndExperimentId(Consts.PAGE_REQUEST_1_REC, Enums.TaskExecState.STARTED.code, experimentId);
                 if (!features.isEmpty()) {
                     feature = features.get(0);
                 }
             }
             else {
-                features = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue(Consts.PAGE_REQUEST_1_REC, Enums.ExperimentExecState.STARTED.code);
+                features = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue(Consts.PAGE_REQUEST_1_REC, Enums.TaskExecState.STARTED.code);
                 if (!features.isEmpty()) {
                     feature = features.get(0);
                 }
@@ -349,7 +349,7 @@ public class ExperimentService {
         List<Protocol.AssignedTask.Task> result = new ArrayList<>(recordNumber+1);
         for (Task seq : seqs) {
             Protocol.AssignedTask.Task ss = new Protocol.AssignedTask.Task();
-            ss.setExperimentSequenceId(seq.getId());
+            ss.setTaskId(seq.getId());
             ss.setParams(seq.getParams());
 
             seq.setAssignedOn(System.currentTimeMillis());
@@ -367,7 +367,7 @@ public class ExperimentService {
     }
 
     private void checkForFinished() {
-        List<ExperimentFeature> features = experimentFeatureRepository.findAllForActiveExperiments(Enums.ExperimentExecState.FINISHED.code);
+        List<ExperimentFeature> features = experimentFeatureRepository.findAllForActiveExperiments(Enums.TaskExecState.FINISHED.code);
         Set<Long> ids = new HashSet<>();
         // ugly but ok for first version
         for (ExperimentFeature feature : features) {
@@ -386,7 +386,7 @@ public class ExperimentService {
                 if (experiment==null) {
                     continue;
                 }
-                experiment.setExecState(Enums.ExperimentExecState.FINISHED.code);
+                experiment.setExecState(Enums.TaskExecState.FINISHED.code);
                 experimentRepository.save(experiment);
             }
         }
@@ -755,7 +755,6 @@ public class ExperimentService {
             for (HyperParams hyperParams : allHyperParams) {
                 TaskParamYaml yaml = new TaskParamYaml();
                 yaml.setHyperParams( hyperParams.toSortedMap() );
-                yaml.setExperimentId( experiment.getId() );
 
                 yaml.resources = new ArrayList<>();
                 yaml.resources.addAll(simpleFeatureResources);

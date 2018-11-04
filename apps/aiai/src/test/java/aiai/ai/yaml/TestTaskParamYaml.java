@@ -40,7 +40,6 @@ public class TestTaskParamYaml {
     public void testSequenceYaml() {
         TaskParamYaml seq = new TaskParamYaml();
         seq.resources = Collections.singletonList(SimpleResource.of(Enums.BinaryDataType.DATASET, "1"));
-        seq.setExperimentId(2L);
         Map<String, String> map = new HashMap<>();
         map.put("key1", "#1");
         map.put("key2", "#1");

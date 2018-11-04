@@ -24,7 +24,6 @@ import java.util.Map;
 
 @Data
 public class TaskParamYaml {
-    public Long experimentId;
     public List<SimpleResource> resources;
     public List<SimpleSnippet> snippets;
     public Map<String, String> hyperParams;

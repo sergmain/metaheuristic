@@ -78,7 +78,7 @@ public final class Enums {
         DISK, DB
     }
 
-    public enum ExperimentExecState {
+    public enum TaskExecState {
         NONE(0),            // just created experiment
         STARTED(1),         // started
         STOPPED(2),         // stopped
@@ -87,11 +87,11 @@ public final class Enums {
 
         public int code;
 
-        ExperimentExecState(int code) {
+        TaskExecState(int code) {
             this.code = code;
         }
 
-        public static ExperimentExecState toState(int code) {
+        public static TaskExecState toState(int code) {
             switch (code) {
                 case 0:
                     return NONE;
@@ -109,7 +109,7 @@ public final class Enums {
         }
 
         public static String from(int code) {
-            ExperimentExecState state = toState(code);
+            TaskExecState state = toState(code);
             return state == null ? "Unknown" : state.toString();
         }
     }

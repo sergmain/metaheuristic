@@ -107,10 +107,10 @@ public class TaskProcessor {
                 log.warn("Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
-            if (!currentExecState.isStarted(taskParamYaml.experimentId)) {
+            if (!currentExecState.isStarted(task.taskId)) {
                 continue;
             }
+            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean isResourcesOk = true;
             for (SimpleResource resource : taskParamYaml.resources) {
                 AssetFile assetFile= getResource(resource.binaryDataType, resource.id);
@@ -197,7 +197,7 @@ public class TaskProcessor {
 
                     final File execDir = paramFile.getParentFile();
                     ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, task.getTaskId(), cmd, execDir);
-                    stationTaskService.storeExecResult(task.getTaskId(), snippet, result, taskParamYaml.experimentId, artifactDir);
+                    stationTaskService.storeExecResult(task.getTaskId(), snippet, result, artifactDir);
                     if (!result.isOk()) {
                         break;
                     }

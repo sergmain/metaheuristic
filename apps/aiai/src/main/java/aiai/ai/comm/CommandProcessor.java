@@ -153,18 +153,10 @@ public class CommandProcessor {
 
     private synchronized Protocol.AssignedTask getAssignedTask(String stationId, boolean isAcceptOnlySigned, int recordNumber) {
         Protocol.AssignedTask r = new Protocol.AssignedTask();
-        r.rawAssemblings = launchpadService.getDatasetService().getRawAssemgling();
-        if (!r.rawAssemblings.isEmpty()) {
-            return r;
-        }
-        r.datasetProducings = launchpadService.getDatasetService().getDatasetProducing();
-        if (!r.datasetProducings.isEmpty()) {
-            return r;
-        }
         ExperimentService.SequencesAndAssignToStationResult result = launchpadService.getExperimentService().getSequencesAndAssignToStation(
                 Long.parseLong(stationId), recordNumber, isAcceptOnlySigned, null
         );
-        r.tasks = result.getSimpleSequences();
+        r.tasks = result.getSimpleTasks();
         return r;
     }
 

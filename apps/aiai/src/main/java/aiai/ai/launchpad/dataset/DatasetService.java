@@ -405,20 +405,4 @@ public class DatasetService {
 
         return new File(path, CONFIG_YAML);
     }
-
-    public List<Protocol.AssignedTask.RawAssembling> getRawAssemgling() {
-        List<Protocol.AssignedTask.RawAssembling> list = new ArrayList<>();
-
-
-
-        return list;
-    }
-
-    public List<Protocol.AssignedTask.DatasetProducing> getDatasetProducing() {
-        List<Protocol.AssignedTask.DatasetProducing> list = new ArrayList<>();
-
-
-
-        return list;
-    }
 }

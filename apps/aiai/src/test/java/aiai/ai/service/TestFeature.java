@@ -216,7 +216,7 @@ public abstract class TestFeature {
             experiment.setName("Test experiment.");
             experiment.setDescription("Test experiment. Must be deleted automatically.");
             experiment.setSeed(42);
-            experiment.setExecState(Enums.ExperimentExecState.STARTED.code);
+            experiment.setExecState(Enums.TaskExecState.STARTED.code);
             experiment.setLaunched(true);
             experiment.setLaunchedOn(System.currentTimeMillis());
             experiment.setAllSequenceProduced(false);
@@ -331,7 +331,7 @@ public abstract class TestFeature {
         ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getSequencesAndAssignToStation(
                 station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, false, experiment.getId());
         assertNotNull(sequences2);
-        assertTrue(sequences2.getSimpleSequences().isEmpty());
+        assertTrue(sequences2.getSimpleTasks().isEmpty());
         assertNull(sequences2.getFeature());
 
 
@@ -353,8 +353,8 @@ public abstract class TestFeature {
 
         assertNotNull(sequences);
         assertNotNull(sequences.getFeature());
-        assertNotNull(sequences.getSimpleSequences());
-        assertEquals(CommandProcessor.MAX_SEQUENSE_POOL_SIZE, sequences.getSimpleSequences().size());
+        assertNotNull(sequences.getSimpleTasks());
+        assertEquals(CommandProcessor.MAX_SEQUENSE_POOL_SIZE, sequences.getSimpleTasks().size());
         assertTrue(sequences.getFeature().isInProgress);
 
         mills = System.currentTimeMillis();
