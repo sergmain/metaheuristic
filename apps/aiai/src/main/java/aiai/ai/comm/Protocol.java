@@ -197,31 +197,6 @@ public class Protocol {
 
     @EqualsAndHashCode(callSuper = false)
     @Data
-    public static class RegisterInvite extends Command {
-        private String invite;
-
-        public RegisterInvite(String invite) {
-            this.setType(Type.RegisterInvite);
-            this.invite = invite;
-        }
-
-        public RegisterInvite() {
-            this.setType(Type.RegisterInvite);
-        }
-    }
-
-    @EqualsAndHashCode(callSuper = false)
-    @Data
-    public static class RegisterInviteResult extends Command {
-        private InviteResult inviteResult;
-
-        public RegisterInviteResult() {
-            this.setType(Type.RegisterInviteResult);
-        }
-    }
-
-    @EqualsAndHashCode(callSuper = false)
-    @Data
     public static class ReportSequenceProcessingResult extends Command {
         private List<SimpleSequenceExecResult> results = new ArrayList<>();
 

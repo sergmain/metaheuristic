@@ -36,8 +36,6 @@ public class StationTask {
 
     public String metrics;
 
-    public Enums.ProcessType processType;
-
     public boolean reported;
 
     public boolean delivered;

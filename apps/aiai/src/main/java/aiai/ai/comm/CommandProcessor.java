@@ -66,10 +66,6 @@ public class CommandProcessor {
                 return storeStationId((Protocol.AssignedStationId) command);
             case ReAssignStationId:
                 return reAssignStationId((Protocol.ReAssignStationId) command);
-            case RegisterInvite:
-                return processInvite((Protocol.RegisterInvite) command);
-            case RegisterInviteResult:
-                break;
             case RequestTask:
                 // processing on launchpad side
                 return processRequestTask((Protocol.RequestTask) command);
@@ -176,16 +172,6 @@ public class CommandProcessor {
     private Command[] reAssignStationId(Protocol.ReAssignStationId command) {
         System.out.println("New station Id: " + command.getReAssignedStationId());
         stationService.setStationId(command.getReAssignedStationId());
-        return Protocol.NOP_ARRAY;
-    }
-
-    private Command[] processInvite(Protocol.RegisterInvite command) {
-        // TODO not implemented yet
-/*
-        Protocol.RegisterInviteResult result = new Protocol.RegisterInviteResult();
-        result.setInviteResult(inviteService.processInvite(command.getInvite()));
-        return Protocol.asArray(result);
-*/
         return Protocol.NOP_ARRAY;
     }
 

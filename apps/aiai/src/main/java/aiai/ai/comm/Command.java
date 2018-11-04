@@ -47,8 +47,6 @@ public class Command implements Serializable {
         RequestStationId /*  */,
         AssignedStationId /*  */,
         ReAssignStationId /*  */,
-        RegisterInvite /*  */,
-        RegisterInviteResult /*  */,
         RequestTask /*  */,
         AssignedTask /*  */,
         ReportStationStatus /* returned after processing AssignedStationId and ReAssignStationId */,

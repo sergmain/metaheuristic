@@ -45,8 +45,6 @@ public class ExchangeData {
     private Protocol.RequestStationId requestStationId;
     private Protocol.AssignedStationId assignedStationId;
     private Protocol.ReAssignStationId reAssignedStationId;
-    private Protocol.RegisterInvite registerInvite;
-    private Protocol.RegisterInviteResult registerInviteResult;
     private Protocol.ReportStationStatus reportStationStatus;
     private Protocol.ReportSequenceProcessingResult reportSequenceProcessingResult;
     private Protocol.ReportResultDelivering reportResultDelivering;
@@ -100,18 +98,6 @@ public class ExchangeData {
                 break;
             case ReAssignStationId:
                 this.reAssignedStationId = (Protocol.ReAssignStationId) command;
-                break;
-            case RegisterInvite:
-                if (this.registerInvite != null) {
-                    throw new IllegalStateException("Was already initialized");
-                }
-                this.registerInvite = (Protocol.RegisterInvite) command;
-                break;
-            case RegisterInviteResult:
-                if (this.registerInviteResult != null) {
-                    throw new IllegalStateException("Was already initialized");
-                }
-                this.registerInviteResult = (Protocol.RegisterInviteResult) command;
                 break;
             case RequestTask:
                 if (this.requestTask != null) {
@@ -169,8 +155,7 @@ public class ExchangeData {
     @JsonIgnore
     public List<Command> getCommands(boolean isExcludeNop) {
         return asListOfNonNull(isExcludeNop, nop, reportStation, requestStationId,
-                assignedStationId, reAssignedStationId, registerInvite,
-                registerInviteResult, requestTask, assignedTask, reportStationStatus,
+                assignedStationId, reAssignedStationId, requestTask, assignedTask, reportStationStatus,
                 reportSequenceProcessingResult, reportResultDelivering, experimentStatus, stationSequenceStatus);
     }
 
