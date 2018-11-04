@@ -46,16 +46,6 @@ import java.util.List;
 public class Feature implements Serializable {
     private static final long serialVersionUID = -3161178396332333392L;
 
-    public enum FEATURE_STATUS {
-        NONE(0), OK(1), ERROR(2), OBSOLETE(3);
-
-        public final int value;
-
-        FEATURE_STATUS(int value) {
-            this.value = value;
-        }
-    }
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

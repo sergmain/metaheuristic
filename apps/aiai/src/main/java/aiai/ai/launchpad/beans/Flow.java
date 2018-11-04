@@ -17,16 +17,19 @@
  */
 package aiai.ai.launchpad.beans;
 
+import aiai.ai.yaml.flow.FlowYaml;
+import aiai.ai.yaml.flow.FlowYamlUtils;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_LP_EXPERIMENT_SEQUENCE")
+@Table(name = "AIAI_LP_FLOW")
 @Data
-public class ExperimentSequence implements Serializable {
-    private static final long serialVersionUID = -7027988813072979346L;
+public class Flow implements Serializable {
+    private static final long serialVersionUID = 6601353088739518179L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,35 +38,13 @@ public class ExperimentSequence implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "EXPERIMENT_ID")
-    public Long experimentId;
-
-    @Column(name = "FEATURE_ID")
-    public Long featureId;
+    @Column(name = "CODE")
+    public String code;
 
     @Column(name = "PARAMS")
     public String params;
 
-    @Column(name = "STATION_ID")
-    public Long stationId;
-
-    @Column(name = "ASSIGNED_ON")
-    public Long assignedOn;
-
-    @Column(name = "COMPLETED_ON")
-    public Long completedOn;
-
-    @Column(name = "IS_COMPLETED")
-    public boolean isCompleted;
-
-    @Column(name = "IS_ALL_SNIPPETS_OK")
-    public boolean isAllSnippetsOk;
-
-    @Column(name = "SNIPPET_EXEC_RESULTS")
-    public String snippetExecResults;
-
-    @Column(name = "METRICS")
-    public String metrics;
-
+    @Column(name = "INPUT_POOL_CODE")
+    public String inputPoolCode;
 
 }

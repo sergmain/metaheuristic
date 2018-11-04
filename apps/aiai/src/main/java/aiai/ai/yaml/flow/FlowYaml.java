@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class Flow {
-    public Long id;
+public class FlowYaml {
     public List<Process> processes = new ArrayList<>();
 }

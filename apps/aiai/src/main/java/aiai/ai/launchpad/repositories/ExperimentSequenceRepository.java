@@ -19,7 +19,7 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.ExperimentFeature;
-import aiai.ai.launchpad.beans.ExperimentSequence;
+import aiai.ai.launchpad.beans.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -32,53 +32,53 @@ import java.util.List;
 
 @Component
 @Profile("launchpad")
-public interface ExperimentSequenceRepository extends CrudRepository<ExperimentSequence, Long> {
+public interface ExperimentSequenceRepository extends CrudRepository<Task, Long> {
 
     @Transactional(readOnly = true)
-    Slice<ExperimentSequence> findAll(Pageable pageable);
+    Slice<Task> findAll(Pageable pageable);
 
-    List<ExperimentSequence> findByExperimentId(long experimentId);
-
-    @Transactional(readOnly = true)
-    List<ExperimentSequence> findByIsCompletedIsTrueAndFeatureId(long featureId);
+    List<Task> findByExperimentId(long experimentId);
 
     @Transactional(readOnly = true)
-    Slice<ExperimentSequence> findByIsCompletedIsTrueAndFeatureId(Pageable pageable, long featureId);
+    List<Task> findByIsCompletedIsTrueAndFeatureId(long featureId);
 
     @Transactional(readOnly = true)
-    List<ExperimentSequence> findByExperimentIdAndFeatureId(long experiimentId, long featureId);
+    Slice<Task> findByIsCompletedIsTrueAndFeatureId(Pageable pageable, long featureId);
 
     @Transactional(readOnly = true)
-    Slice<ExperimentSequence> findAllByStationIdIsNullAndFeatureId(Pageable pageable, long featureId);
+    List<Task> findByExperimentIdAndFeatureId(long experiimentId, long featureId);
 
     @Transactional(readOnly = true)
-    Slice<ExperimentSequence> findAllByStationIdIsNullAndFeatureIdAndExperimentId(Pageable pageable, long featureId, long experimentId);
+    Slice<Task> findAllByStationIdIsNullAndFeatureId(Pageable pageable, long featureId);
 
     @Transactional(readOnly = true)
-    ExperimentSequence findTop1ByStationIdAndIsCompletedIsFalseAndFeatureId(long stationId, long featureId);
+    Slice<Task> findAllByStationIdIsNullAndFeatureIdAndExperimentId(Pageable pageable, long featureId, long experimentId);
 
     @Transactional(readOnly = true)
-    List<ExperimentSequence> findByStationIdAndIsCompletedIsFalse(long stationId);
+    Task findTop1ByStationIdAndIsCompletedIsFalseAndFeatureId(long stationId, long featureId);
 
     @Transactional(readOnly = true)
-    ExperimentSequence findTop1ByFeatureId(Long featureId);
+    List<Task> findByStationIdAndIsCompletedIsFalse(long stationId);
 
     @Transactional(readOnly = true)
-    ExperimentSequence findTop1ByIsCompletedIsFalseAndFeatureId(Long featureId);
+    Task findTop1ByFeatureId(Long featureId);
 
     @Transactional(readOnly = true)
-    ExperimentSequence findTop1ByIsAllSnippetsOkIsTrueAndFeatureId(long featureId);
+    Task findTop1ByIsCompletedIsFalseAndFeatureId(Long featureId);
+
+    @Transactional(readOnly = true)
+    Task findTop1ByIsAllSnippetsOkIsTrueAndFeatureId(long featureId);
 
     @Transactional
     void deleteByExperimentId(long experimentId);
 
     @Transactional(readOnly = true)
-    @Query("SELECT f FROM ExperimentSequence s, ExperimentFeature f, Experiment e  where s.stationId=:stationId and s.featureId=f.id and f.experimentId=e.id and  " +
+    @Query("SELECT f FROM Task s, ExperimentFeature f, Experiment e  where s.stationId=:stationId and s.featureId=f.id and f.experimentId=e.id and  " +
             "f.isFinished=false and f.isInProgress=true and e.isLaunched=true and e.execState=:state")
     List<ExperimentFeature> findAnyStartedButNotFinished(Pageable limit, long stationId, int state);
 
     @Transactional(readOnly = true)
-    List<ExperimentSequence> findByStationIdAndIsCompletedIsFalse(Long stationId);
+    List<Task> findByStationIdAndIsCompletedIsFalse(Long stationId);
 
 
 }

@@ -18,7 +18,7 @@
 
 package aiai.ai.launchpad.repositories;
 
-import aiai.ai.launchpad.beans.ExperimentSequence;
+import aiai.ai.launchpad.beans.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -30,8 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @Profile("launchpad")
-public interface ExperimentSequenceWithSpecRepository extends CrudRepository<ExperimentSequence, Long>, JpaSpecificationExecutor<ExperimentSequence> {
+public interface ExperimentSequenceWithSpecRepository extends CrudRepository<Task, Long>, JpaSpecificationExecutor<Task> {
 
     @Transactional(readOnly = true)
-    Slice<ExperimentSequence> findByIsCompletedIsTrueAndFeatureId(Specification<ExperimentSequence> spec, Pageable pageable, long featureId);
+    Slice<Task> findByIsCompletedIsTrueAndFeatureId(Specification<Task> spec, Pageable pageable, long featureId);
 }

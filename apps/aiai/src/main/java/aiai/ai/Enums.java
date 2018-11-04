@@ -113,4 +113,14 @@ public final class Enums {
             return state == null ? "Unknown" : state.toString();
         }
     }
+
+    public enum FEATURE_STATUS {
+        NONE(0), OK(1), ERROR(2), OBSOLETE(3);
+
+        public final int value;
+
+        FEATURE_STATUS(int value) {
+            this.value = value;
+        }
+    }
 }

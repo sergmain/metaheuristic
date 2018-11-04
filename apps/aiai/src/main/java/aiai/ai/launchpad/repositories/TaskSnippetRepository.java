@@ -18,7 +18,7 @@
 
 package aiai.ai.launchpad.repositories;
 
-import aiai.ai.launchpad.beans.TaskSnippet;
+import aiai.ai.launchpad.beans.ExperimentSnippet;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
@@ -28,10 +28,10 @@ import java.util.List;
 
 @Component
 @Profile("launchpad")
-public interface TaskSnippetRepository extends CrudRepository<TaskSnippet, Long> {
+public interface TaskSnippetRepository extends CrudRepository<ExperimentSnippet, Long> {
 
     @Transactional(readOnly = true)
-    List<TaskSnippet> findByTaskTypeAndRefId(int taskType, long refId);
+    List<ExperimentSnippet> findByTaskTypeAndRefId(int taskType, long refId);
 
     @Transactional
     void deleteByTaskTypeAndRefId(int taskType, long refId);

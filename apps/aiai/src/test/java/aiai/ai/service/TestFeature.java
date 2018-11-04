@@ -246,14 +246,14 @@ public abstract class TestFeature {
             log.info("experimentRepository.save() was finished for {}", System.currentTimeMillis() - mills);
 
             // set snippets for experiment
-            TaskSnippet es1 = new TaskSnippet();
+            ExperimentSnippet es1 = new ExperimentSnippet();
             es1.setRefId(experiment.getId());
             es1.setTaskType(Enums.TaskType.Experiment.code);
             es1.setOrder(1);
             es1.setType(SnippetType.fit.toString());
             es1.setSnippetCode(fitSnippet.getSnippetCode());
 
-            TaskSnippet es2 = new TaskSnippet();
+            ExperimentSnippet es2 = new ExperimentSnippet();
             es2.setRefId(experiment.getId());
             es2.setTaskType(Enums.TaskType.Experiment.code);
             es2.setOrder(2);
@@ -370,17 +370,17 @@ public abstract class TestFeature {
     protected void finishCurrentWithError(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<SimpleSequenceExecResult> results = new ArrayList<>();
-        List<ExperimentSequence> experimentSequences = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
+        List<Task> tasks = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
         if (expectedSeqs!=0) {
-            assertEquals(expectedSeqs, experimentSequences.size());
+            assertEquals(expectedSeqs, tasks.size());
         }
-        for (ExperimentSequence experimentSequence : experimentSequences) {
+        for (Task task : tasks) {
             ProcessService.Result result = new ProcessService.Result(false, -1, "This is sample console output");
             SnippetExec snippetExec = new SnippetExec();
             snippetExec.getExecs().put(1, result);
             String yaml = SnippetExecUtils.toString(snippetExec);
 
-            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(experimentSequence.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
+            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(sser);
         }
 
@@ -390,17 +390,17 @@ public abstract class TestFeature {
     protected void finishCurrentWithOk(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<SimpleSequenceExecResult> results = new ArrayList<>();
-        List<ExperimentSequence> experimentSequences = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
+        List<Task> tasks = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
         if (expectedSeqs!=0) {
-            assertEquals(expectedSeqs, experimentSequences.size());
+            assertEquals(expectedSeqs, tasks.size());
         }
-        for (ExperimentSequence experimentSequence : experimentSequences) {
+        for (Task task : tasks) {
             SnippetExec snippetExec = new SnippetExec();
             snippetExec.getExecs().put(1, new ProcessService.Result(true, 0, "This is sample console output. fit"));
             snippetExec.getExecs().put(2, new ProcessService.Result(true, 0, "This is sample console output. predict"));
             String yaml = SnippetExecUtils.toString(snippetExec);
 
-            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(experimentSequence.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
+            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(sser);
         }
 

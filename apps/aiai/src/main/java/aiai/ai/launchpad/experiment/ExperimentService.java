@@ -197,8 +197,8 @@ public class ExperimentService {
                 return EMPTY_RESULT;
             }
             if (isAcceptOnlySigned) {
-                for (TaskSnippet taskSnippet : snippetService.getTaskSnippetsForExperiment(experiment.getId())) {
-                    final SnippetVersion snippetVersion = SnippetVersion.from(taskSnippet.getSnippetCode());
+                for (ExperimentSnippet experimentSnippet : snippetService.getTaskSnippetsForExperiment(experiment.getId())) {
+                    final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                     Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                     if (snippet!=null && !snippet.isSigned()) {
                         // this experiment with #experimentId contains non-signed snippet but we were asked for singed snippets only
@@ -220,8 +220,8 @@ public class ExperimentService {
                     continue;
                 }
                 if (isAcceptOnlySigned) {
-                    for (TaskSnippet taskSnippet : snippetService.getTaskSnippetsForExperiment(experiment.getId())) {
-                        final SnippetVersion snippetVersion = SnippetVersion.from(taskSnippet.getSnippetCode());
+                    for (ExperimentSnippet experimentSnippet : snippetService.getTaskSnippetsForExperiment(experiment.getId())) {
+                        final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                         Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                         if (snippet!=null && snippet.isSigned()) {
                             // add only feature for signed experiments
@@ -334,12 +334,12 @@ public class ExperimentService {
         }
 
         //
-        ExperimentSequence sequence = experimentSequenceRepository.findTop1ByStationIdAndIsCompletedIsFalseAndFeatureId(stationId, feature.getId());
+        Task sequence = experimentSequenceRepository.findTop1ByStationIdAndIsCompletedIsFalseAndFeatureId(stationId, feature.getId());
         if (sequence!=null) {
             return EMPTY_RESULT;
         }
 
-        Slice<ExperimentSequence> seqs;
+        Slice<Task> seqs;
         if (experimentId!=null) {
             seqs = experimentSequenceRepository.findAllByStationIdIsNullAndFeatureIdAndExperimentId(PageRequest.of(0, recordNumber), feature.getId(), experimentId);
         }
@@ -347,7 +347,7 @@ public class ExperimentService {
             seqs = experimentSequenceRepository.findAllByStationIdIsNullAndFeatureId(PageRequest.of(0, recordNumber), feature.getId());
         }
         List<Protocol.AssignedTask.Sequence> result = new ArrayList<>(recordNumber+1);
-        for (ExperimentSequence seq : seqs) {
+        for (Task seq : seqs) {
             Protocol.AssignedTask.Sequence ss = new Protocol.AssignedTask.Sequence();
             ss.setExperimentSequenceId(seq.getId());
             ss.setParams(seq.getParams());
@@ -393,13 +393,13 @@ public class ExperimentService {
     }
 
     public List<Long> storeAllResults(List<SimpleSequenceExecResult> results) {
-        List<ExperimentSequence> list = new ArrayList<>();
+        List<Task> list = new ArrayList<>();
         List<Long> ids = new ArrayList<>();
         for (SimpleSequenceExecResult result : results) {
             ids.add(result.sequenceId);
-            ExperimentSequence seq = experimentSequenceRepository.findById(result.sequenceId).orElse(null);
+            Task seq = experimentSequenceRepository.findById(result.sequenceId).orElse(null);
             if (seq==null) {
-                log.warn("Can't find ExperimentSequence for Id: {}", result.sequenceId);
+                log.warn("Can't find Task for Id: {}", result.sequenceId);
                 continue;
             }
 
@@ -410,10 +410,10 @@ public class ExperimentService {
             }
 
             SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(result.getResult());
-            List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-            snippetService.sortSnippetsByOrder(taskSnippets);
+            List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
+            snippetService.sortSnippetsByOrder(experimentSnippets);
             boolean isAllOk = true;
-            for (TaskSnippet snippet : taskSnippets) {
+            for (ExperimentSnippet snippet : experimentSnippets) {
                 ProcessService.Result r = snippetExec.getExecs().get(snippet.getOrder());
                 if (r==null || !r.isOk()) {
                     isAllOk = false;
@@ -433,8 +433,8 @@ public class ExperimentService {
 
     public void reconcileStationSequences(String stationIdAsStr, List<Protocol.StationSequenceStatus.SimpleStatus> statuses) {
         final long stationId = Long.parseLong(stationIdAsStr);
-        List<ExperimentSequence> seqs = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(stationId);
-        for (ExperimentSequence seq : seqs) {
+        List<Task> seqs = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(stationId);
+        for (Task seq : seqs) {
             boolean isFound = false;
             for (Protocol.StationSequenceStatus.SimpleStatus status : statuses) {
                 if (status.experimentSequenceId ==seq.getId()) {
@@ -450,17 +450,17 @@ public class ExperimentService {
         }
     }
 
-    Slice<ExperimentSequence> findExperimentSequence(Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
+    Slice<Task> findExperimentSequence(Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
         if (experiment == null || feature == null) {
             return Page.empty();
         } else {
             if (isEmpty(params)) {
                 return experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(pageable, feature.getId());
             } else {
-                List<ExperimentSequence> selected = findExperimentSequenceWithFilter(experiment, feature.getId(), params);
-                List<ExperimentSequence> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
+                List<Task> selected = findExperimentSequenceWithFilter(experiment, feature.getId(), params);
+                List<Task> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
                 //noinspection UnnecessaryLocalVariable
-                final PageImpl<ExperimentSequence> page = new PageImpl<>(subList, pageable, selected.size());
+                final PageImpl<Task> page = new PageImpl<>(subList, pageable, selected.size());
                 return page;
 
             }
@@ -471,7 +471,7 @@ public class ExperimentService {
         if (experiment == null || feature == null) {
             return EMPTY_PLOT_DATA;
         } else {
-            List<ExperimentSequence> selected;
+            List<Task> selected;
             if (isEmpty(params)) {
                 selected = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(feature.getId());
             } else {
@@ -481,7 +481,7 @@ public class ExperimentService {
         }
     }
 
-    private PlotData collectDataForPlotting(Experiment experiment, List<ExperimentSequence> selected, String[] paramsAxis) {
+    private PlotData collectDataForPlotting(Experiment experiment, List<Task> selected, String[] paramsAxis) {
         final PlotData data = new PlotData();
         final List<String> paramCleared = new ArrayList<>();
         for (String param : paramsAxis) {
@@ -518,7 +518,7 @@ public class ExperimentService {
         }
 
         String metricKey = null;
-        for (ExperimentSequence sequence : selected) {
+        for (Task sequence : selected) {
 
             MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(sequence.metrics) );
             if (metricValues==null) {
@@ -542,7 +542,7 @@ public class ExperimentService {
     }
 
 
-    private List<ExperimentSequence> findExperimentSequenceWithFilter(Experiment experiment, long featureId, String[] params) {
+    private List<Task> findExperimentSequenceWithFilter(Experiment experiment, long featureId, String[] params) {
         final Set<String> paramSet = new HashSet<>();
         final Set<String> paramFilterKeys = new HashSet<>();
         for (String param : params) {
@@ -554,10 +554,10 @@ public class ExperimentService {
         }
         final Map<String, Map<String, Integer>> paramByIndex = experiment.getHyperParamsAsMap();
 
-        List<ExperimentSequence> list = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
+        List<Task> list = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
 
-        List<ExperimentSequence> selected = new ArrayList<>();
-        for (ExperimentSequence sequence : list) {
+        List<Task> selected = new ArrayList<>();
+        for (Task sequence : list) {
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(sequence.getParams());
             boolean[] isOk = new boolean[taskParamYaml.hyperParams.size()];
             int idx = 0;
@@ -602,9 +602,9 @@ public class ExperimentService {
         return true;
     }
 
-    public Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature feature) {
+    public Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
         ExperimentsController.SequencesResult result = new ExperimentsController.SequencesResult();
-        result.items = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), feature.getId());
+        result.items = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), experimentFeature.getId());
 
         HyperParamResult hyperParamResult = new HyperParamResult();
         for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
@@ -622,8 +622,8 @@ public class ExperimentService {
         MetricsResult metricsResult = new MetricsResult();
         List<Map<String, BigDecimal>> values = new ArrayList<>();
 
-        List<ExperimentSequence> seqs = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(feature.getId());
-        for (ExperimentSequence seq : seqs) {
+        List<Task> seqs = experimentSequenceRepository.findByIsCompletedIsTrueAndFeatureId(experimentFeature.getId());
+        for (Task seq : seqs) {
             MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.metrics) );
             if (metricValues==null) {
                 continue;
@@ -653,7 +653,7 @@ public class ExperimentService {
         map.put("params", hyperParamResult);
         map.put("result", result);
         map.put("experiment", experiment);
-        map.put("feature", feature);
+        map.put("feature", experimentFeature);
         map.put("consoleResult", new ExperimentsController.ConsoleResult());
 
         return map;
@@ -723,21 +723,21 @@ public class ExperimentService {
     public void produceSequences(Experiment experiment) {
         int totalVariants = 0;
 
-        List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-        snippetService.sortSnippetsByOrder(taskSnippets);
+        List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
+        snippetService.sortSnippetsByOrder(experimentSnippets);
 
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         for (ExperimentFeature feature : features) {
             Set<String> sequnces = new LinkedHashSet<>();
 
-            for (ExperimentSequence experimentSequence : experimentSequenceRepository.findByExperimentIdAndFeatureId(experiment.getId(), feature.getId())) {
-                if (sequnces.contains(experimentSequence.getParams())) {
+            for (Task task : experimentSequenceRepository.findByExperimentIdAndFeatureId(experiment.getId(), feature.getId())) {
+                if (sequnces.contains(task.getParams())) {
                     // delete doubles records
-                    log.warn("!!! Found doubles. ExperimentId: {}, featureId: {}, hyperParams: {}", experiment.getId(), feature.getId(), experimentSequence.getParams());
-                    experimentSequenceRepository.delete(experimentSequence);
+                    log.warn("!!! Found doubles. ExperimentId: {}, experimentFeatureId: {}, hyperParams: {}", experiment.getId(), feature.getId(), task.getParams());
+                    experimentSequenceRepository.delete(task);
                     continue;
                 }
-                sequnces.add(experimentSequence.getParams());
+                sequnces.add(task.getParams());
             }
 
             final Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
@@ -762,26 +762,26 @@ public class ExperimentService {
                 yaml.resources.add(SimpleResource.of(Enums.BinaryDataType.DATASET, experiment.getDatasetId().toString()));
 
                 final List<SimpleSnippet> snippets = new ArrayList<>();
-                for (TaskSnippet taskSnippet : taskSnippets) {
-                    final SnippetVersion snippetVersion = SnippetVersion.from(taskSnippet.getSnippetCode());
-                    Snippet snippet =  localCache.get(taskSnippet.getSnippetCode());
+                for (ExperimentSnippet experimentSnippet : experimentSnippets) {
+                    final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
+                    Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
                     if (snippet==null) {
                         snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                         if (snippet!=null) {
-                            localCache.put(taskSnippet.getSnippetCode(), snippet);
+                            localCache.put(experimentSnippet.getSnippetCode(), snippet);
                         }
                     }
                     if (snippet==null) {
-                        log.warn("Snippet wasn't found for code: {}", taskSnippet.getSnippetCode());
+                        log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
                         continue;
                     }
                     snippets.add(new SimpleSnippet(
-                            SnippetType.valueOf(taskSnippet.getType()),
-                            taskSnippet.getSnippetCode(),
+                            SnippetType.valueOf(experimentSnippet.getType()),
+                            experimentSnippet.getSnippetCode(),
                             snippet.getFilename(),
                             snippet.checksum,
                             snippet.env,
-                            taskSnippet.getOrder(),
+                            experimentSnippet.getOrder(),
                             snippet.reportMetrics
                     ));
                 }
@@ -793,10 +793,10 @@ public class ExperimentService {
                     continue;
                 }
 
-                ExperimentSequence sequence = new ExperimentSequence();
+                Task sequence = new Task();
                 sequence.setExperimentId(experiment.getId());
                 sequence.setParams(sequenceParams);
-                sequence.setFeatureId(feature.getId());
+                sequence.setExperimentFeatureId(feature.getId());
                 experimentSequenceRepository.save(sequence);
                 isNew = true;
             }

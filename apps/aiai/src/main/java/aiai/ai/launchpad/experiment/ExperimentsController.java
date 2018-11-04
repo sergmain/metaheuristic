@@ -70,7 +70,7 @@ public class ExperimentsController {
 
     @Data
     public static class SequencesResult {
-        public Slice<ExperimentSequence> items;
+        public Slice<Task> items;
     }
 
     @Data
@@ -90,10 +90,10 @@ public class ExperimentsController {
     @Data
     public static class SnippetResult {
         public List<SimpleSelectOption> selectOptions = new ArrayList<>();
-        public List<TaskSnippet> snippets = new ArrayList<>();
+        public List<ExperimentSnippet> snippets = new ArrayList<>();
 
         public void sortSnippetsByOrder() {
-            snippets.sort(Comparator.comparingInt(TaskSnippet::getOrder));
+            snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
         }
     }
 
@@ -199,7 +199,7 @@ public class ExperimentsController {
     @PostMapping("/experiment-feature-progress-console-part/{id}")
     public String getSequncesConsolePart(Model model, @PathVariable(name="id") Long sequenceId) {
         ConsoleResult result = new ConsoleResult();
-        ExperimentSequence sequence = experimentSequenceRepository.findById(sequenceId).orElse(null);
+        Task sequence = experimentSequenceRepository.findById(sequenceId).orElse(null);
         if (sequence!=null) {
             SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(sequence.getSnippetExecResults());
             for (Map.Entry<Integer, ProcessService.Result> entry : snippetExec.getExecs().entrySet()) {
@@ -220,13 +220,13 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
 
-        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
-        if (feature == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.02 feature wasn't found, featureId: " + featureId);
+        ExperimentFeature experimentFeature = experimentFeatureRepository.findById(featureId).orElse(null);
+        if (experimentFeature == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#280.02 feature wasn't found, experimentFeatureId: " + featureId);
             return "redirect:/launchpad/experiments";
         }
 
-        Map<String, Object> map = experimentService.prepareExperimentFeatures(experiment, feature);
+        Map<String, Object> map = experimentService.prepareExperimentFeatures(experiment, experimentFeature);
         model.addAllAttributes(map);
 
         return "launchpad/experiment-feature-progress";
@@ -289,8 +289,8 @@ public class ExperimentsController {
     }
 
     private boolean isCanBeLaunched_FirstCheck(Experiment experiment) {
-        List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-        return taskSnippets.size() > 1 && experiment.getExecState() != Enums.ExperimentExecState.FINISHED.code &&
+        List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
+        return experimentSnippets.size() > 1 && experiment.getExecState() != Enums.ExperimentExecState.FINISHED.code &&
                 !experiment.isLaunched() && experiment.getDatasetId() != null;
     }
 
@@ -304,9 +304,9 @@ public class ExperimentsController {
         Iterable<Snippet> snippets = snippetRepository.findAll();
         SnippetResult snippetResult = new SnippetResult();
 
-        List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-        snippetService.sortSnippetsByOrder(taskSnippets);
-        snippetResult.snippets = taskSnippets;
+        List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
+        snippetService.sortSnippetsByOrder(experimentSnippets);
+        snippetResult.snippets = experimentSnippets;
         final List<SnippetType> types = Arrays.asList(SnippetType.fit, SnippetType.predict);
         snippetResult.selectOptions = snippetService.getSelectOptions(snippets,
                 snippetResult.snippets.stream().map(o -> new SnippetCode(o.getId(), o.getSnippetCode())).collect(Collectors.toList()),
@@ -314,10 +314,10 @@ public class ExperimentsController {
                     if (!types.contains(SnippetType.valueOf(s.type)) ) {
                         return true;
                     }
-                    if (SnippetType.fit.equals(s.type) && snippetService.hasFit(taskSnippets)) {
+                    if (SnippetType.fit.equals(s.type) && snippetService.hasFit(experimentSnippets)) {
                         return true;
                     }
-                    if (SnippetType.predict.equals(s.type) && snippetService.hasPredict(taskSnippets)) {
+                    if (SnippetType.predict.equals(s.type) && snippetService.hasPredict(experimentSnippets)) {
                         return true;
                     }
                     return false;
@@ -382,8 +382,8 @@ public class ExperimentsController {
         return normalTarget;
     }
 
-    public static void sortSnippetsByType(List<TaskSnippet> snippets) {
-        snippets.sort(Comparator.comparing(TaskSnippet::getType));
+    public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
+        snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
     }
 
     @PostMapping("/experiment-dataset-assign-commit/{id}")
@@ -496,20 +496,20 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
         Long experimentId = experiment.getId();
-        List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experimentId);
-        TaskSnippet ts = new TaskSnippet();
+        List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experimentId);
+        ExperimentSnippet ts = new ExperimentSnippet();
         ts.setRefId(experimentId);
         ts.setTaskType(Enums.TaskType.Experiment.code);
         ts.setSnippetCode( code );
 
-        List<TaskSnippet> list = new ArrayList<>(taskSnippets);
+        List<ExperimentSnippet> list = new ArrayList<>(experimentSnippets);
         list.add(ts);
 
         sortSnippetsByType(list);
 
         int order = 1;
-        for (TaskSnippet taskSnippet : list) {
-            taskSnippet.setOrder(order++);
+        for (ExperimentSnippet experimentSnippet : list) {
+            experimentSnippet.setOrder(order++);
         }
         taskSnippetRepository.saveAll(list);
         return "redirect:/launchpad/experiment-edit/"+id;
@@ -569,7 +569,7 @@ public class ExperimentsController {
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{id}")
     public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        TaskSnippet snippet = taskSnippetRepository.findById(id).orElse(null);
+        ExperimentSnippet snippet = taskSnippetRepository.findById(id).orElse(null);
         if (snippet == null || experimentId != snippet.getRefId()) {
             redirectAttributes.addFlashAttribute("errorMessage", "#293.01 Snippet is misconfigured. Try again" );
             return "redirect:/launchpad/experiment-edit/" + experimentId;
@@ -626,10 +626,10 @@ public class ExperimentsController {
         trg.setExecState(Enums.ExperimentExecState.NONE.code);
         experimentRepository.save(trg);
 
-        List<TaskSnippet> taskSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
+        List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
 
-        for (TaskSnippet snippet : taskSnippets) {
-            TaskSnippet trgSnippet = new TaskSnippet();
+        for (ExperimentSnippet snippet : experimentSnippets) {
+            ExperimentSnippet trgSnippet = new ExperimentSnippet();
             BeanUtils.copyProperties(snippet, trgSnippet);
             trgSnippet.setId(null);
             trgSnippet.setVersion(null);
@@ -651,12 +651,12 @@ public class ExperimentsController {
 
     @PostMapping("/experiment-sequence-rerun/{id}")
     public @ResponseBody boolean rerunSequence(@PathVariable long id) {
-        ExperimentSequence seq = experimentSequenceRepository.findById(id).orElse(null);
+        Task seq = experimentSequenceRepository.findById(id).orElse(null);
         if (seq == null) {
             log.warn("#291.01 Can't re-run sequence {}, sequence with such id wasn't found", id);
             return false;
         }
-        ExperimentFeature feature = experimentFeatureRepository.findById(seq.featureId).orElse(null);
+        ExperimentFeature feature = experimentFeatureRepository.findById(seq.experimentFeatureId).orElse(null);
         if (feature == null) {
             log.warn("#292.01 Can't re-run sequence {}, ExperimentFeature wasn't found for this sequence", id);
             return false;

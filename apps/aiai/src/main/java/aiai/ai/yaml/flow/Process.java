@@ -8,7 +8,6 @@ import java.util.List;
 
 @Data
 public class Process {
-    public long id;
     public String name;
     public String code;
     public Enums.ProcessType type;
@@ -16,6 +15,6 @@ public class Process {
     public List<String> snippetCodes;
     public boolean parallelExec;
 
-    public String resourcePoolCode;
+    public String inputType;
     public String outputType;
 }

@@ -21,7 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.beans.TaskSnippet;
+import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.SnippetRepository;
@@ -76,18 +76,18 @@ public class SnippetService {
         }
     }
 
-    public List<TaskSnippet> getTaskSnippetsForExperiment(Long experimentId) {
+    public List<ExperimentSnippet> getTaskSnippetsForExperiment(Long experimentId) {
         return taskSnippetRepository.findByTaskTypeAndRefId(Enums.TaskType.Experiment.code, experimentId);
     }
 
     public List<Snippet> getSnippets(Enums.TaskType taskType, long refId){
-        List<TaskSnippet> taskSnippets = taskSnippetRepository.findByTaskTypeAndRefId(taskType.code, refId);
+        List<ExperimentSnippet> experimentSnippets = taskSnippetRepository.findByTaskTypeAndRefId(taskType.code, refId);
         List<Snippet> snippets = new ArrayList<>();
-        for (TaskSnippet taskSnippet : taskSnippets) {
-            SnippetVersion version = SnippetVersion.from(taskSnippet.getSnippetCode());
+        for (ExperimentSnippet experimentSnippet : experimentSnippets) {
+            SnippetVersion version = SnippetVersion.from(experimentSnippet.getSnippetCode());
             Snippet snippet = snippetCache.findByNameAndSnippetVersion(version.name, version.version);
             if (snippet==null) {
-                log.warn("Can't find snippet for code: {}", taskSnippet.getSnippetCode());
+                log.warn("Can't find snippet for code: {}", experimentSnippet.getSnippetCode());
                 continue;
             }
             snippets.add(snippet);
@@ -95,19 +95,19 @@ public class SnippetService {
         return snippets;
     }
 
-    public void sortSnippetsByOrder(List<TaskSnippet> snippets) {
-        snippets.sort(Comparator.comparingInt(TaskSnippet::getOrder));
+    public void sortSnippetsByOrder(List<ExperimentSnippet> snippets) {
+        snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
     }
 
-    public void sortSnippetsByType(List<TaskSnippet> snippets) {
-        snippets.sort(Comparator.comparing(TaskSnippet::getType));
+    public void sortSnippetsByType(List<ExperimentSnippet> snippets) {
+        snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
     }
 
-    public boolean hasFit(List<TaskSnippet> taskSnippets) {
-        if (taskSnippets==null || taskSnippets.isEmpty()) {
+    public boolean hasFit(List<ExperimentSnippet> experimentSnippets) {
+        if (experimentSnippets ==null || experimentSnippets.isEmpty()) {
             return false;
         }
-        for (TaskSnippet snippet : taskSnippets) {
+        for (ExperimentSnippet snippet : experimentSnippets) {
             if (SnippetType.fit.toString().equals(snippet.getType())) {
                 return true;
             }
@@ -115,11 +115,11 @@ public class SnippetService {
         return false;
     }
 
-    public boolean hasPredict(List<TaskSnippet> taskSnippets) {
-        if (taskSnippets==null || taskSnippets.isEmpty()) {
+    public boolean hasPredict(List<ExperimentSnippet> experimentSnippets) {
+        if (experimentSnippets ==null || experimentSnippets.isEmpty()) {
             return false;
         }
-        for (TaskSnippet snippet : taskSnippets) {
+        for (ExperimentSnippet snippet : experimentSnippets) {
             if (SnippetType.predict.toString().equals(snippet.getType())) {
                 return true;
             }
@@ -196,22 +196,22 @@ public class SnippetService {
         return selectOptions;
     }
 
-    public List<TaskSnippet> getTaskSnippets(Iterable<Snippet> snippets, Experiment experiment) {
-        List<TaskSnippet> taskSnippets = new ArrayList<>();
-        List<TaskSnippet> tss = getTaskSnippetsForExperiment(experiment.getId());
+    public List<ExperimentSnippet> getTaskSnippets(Iterable<Snippet> snippets, Experiment experiment) {
+        List<ExperimentSnippet> experimentSnippets = new ArrayList<>();
+        List<ExperimentSnippet> tss = getTaskSnippetsForExperiment(experiment.getId());
         for (Snippet snippet : snippets) {
-            for (TaskSnippet taskSnippet : tss) {
-                if (snippet.getSnippetCode().equals(taskSnippet.getSnippetCode()) ) {
+            for (ExperimentSnippet experimentSnippet : tss) {
+                if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
                     // it should be ok without this line but just for sure
-                    taskSnippet.type = snippet.type;
-                    taskSnippets.add(taskSnippet);
+                    experimentSnippet.type = snippet.type;
+                    experimentSnippets.add(experimentSnippet);
                     break;
                 }
             }
             //noinspection unused
             int i=0;
         }
-        return taskSnippets;
+        return experimentSnippets;
     }
 
     void loadSnippetsRecursively(File startDir) throws IOException {

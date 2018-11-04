@@ -17,7 +17,6 @@
  */
 package aiai.ai.yaml.flow;
 
-import aiai.ai.yaml.sequence.TaskParamYaml;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -39,18 +38,18 @@ public class FlowYamlUtils {
         options.setPrettyFlow(true);
 
         Representer representer = new Representer();
-        representer.addClassTag(Flow.class, Tag.MAP);
+        representer.addClassTag(FlowYaml.class, Tag.MAP);
 
-        yamlFlowYaml = new Yaml(new Constructor(Flow.class), representer, options);
+        yamlFlowYaml = new Yaml(new Constructor(FlowYaml.class), representer, options);
     }
 
-    public String toString(Flow flow) {
+    public String toString(FlowYaml flowYaml) {
         synchronized (syncObj) {
-            return yamlFlowYaml.dump(flow);
+            return yamlFlowYaml.dump(flowYaml);
         }
     }
 
-    public Flow toFlowYaml(String s) {
+    public FlowYaml toFlowYaml(String s) {
         synchronized (syncObj) {
             return yamlFlowYaml.load(s);
         }

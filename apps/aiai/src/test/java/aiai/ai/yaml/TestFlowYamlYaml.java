@@ -1,7 +1,7 @@
 package aiai.ai.yaml;
 
 import aiai.ai.Enums;
-import aiai.ai.yaml.flow.Flow;
+import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import aiai.ai.yaml.flow.Process;
 import org.junit.Test;
@@ -17,29 +17,26 @@ import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-public class TestFlow {
+public class TestFlowYamlYaml {
 
     @Autowired
     private FlowYamlUtils flowYamlUtils;
 
     @Test
     public void testYaml() {
-        Flow flow = new Flow();
-        flow.id = 10L;
+        FlowYaml flowYaml = new FlowYaml();
         {
-            // input resource will be taken from resourcePoolCode - "raw-part-data"
-            // it's actual only for 1st process in the flow
             Process p = new Process();
             p.type = Enums.ProcessType.FILE_PROCESSING;
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
-            p.resourcePoolCode = "raw-part-data";
+            p.inputType = "raw-part-data";
             p.snippetCodes = Collections.singletonList("snippet-01:1.1");
             p.collectResources = true;
             p.outputType = "assembled-raw";
 
-            flow.processes.add(p);
+            flowYaml.processes.add(p);
         }
         // output resource code: flow-10-assembly-raw-file-snippet-01
         //
@@ -56,7 +53,7 @@ public class TestFlow {
             p.collectResources = true;
             p.outputType = "dataset-processing";
 
-            flow.processes.add(p);
+            flowYaml.processes.add(p);
         }
         // output resource code: flow-10-dataset-processing-snippet-02
         //
@@ -76,7 +73,7 @@ public class TestFlow {
             p.collectResources = true;
             p.outputType = "feature";
 
-            flow.processes.add(p);
+            flowYaml.processes.add(p);
         }
         // output resource code: flow-10-feature-processing-snippet-03
         // output resource code: flow-10-feature-processing-snippet-04
@@ -99,13 +96,13 @@ public class TestFlow {
             p.name = "experiment";
             p.code = "experiment-code-01";
 
-            flow.processes.add(p);
+            flowYaml.processes.add(p);
         }
 
-        String yaml = flowYamlUtils.toString(flow);
+        String yaml = flowYamlUtils.toString(flowYaml);
         System.out.println(yaml);
 
-        Flow f1 = flowYamlUtils.toFlowYaml(yaml);
+        FlowYaml f1 = flowYamlUtils.toFlowYaml(yaml);
         assertNotNull(f1);
         assertNotNull(f1.processes);
         assertFalse(f1.processes.isEmpty());
@@ -113,20 +110,19 @@ public class TestFlow {
 
     @Test
     public void testYaml_2() {
-        Flow flow = new Flow();
+        FlowYaml flowYaml = new FlowYaml();
 
 
         Process p1 = new Process();
-        p1.id=2;
         p1.name="experiment";
         p1.collectResources = false;
 
-        p1.resourcePoolCode = "dataset-processing-data";
+        p1.inputType = "dataset";
         p1.type = Enums.ProcessType.EXPERIMENT;
 
-        flow.processes = Collections.singletonList(p1);
+        flowYaml.processes = Collections.singletonList(p1);
 
-        String s = flowYamlUtils.toString(flow);
+        String s = flowYamlUtils.toString(flowYaml);
 
         System.out.println(s);
 

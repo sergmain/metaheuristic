@@ -266,7 +266,7 @@ public class DatasetController {
     public String snippetGroupCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
         final Feature group = featureRepository.findById(id).orElse(null);
         if (group==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#180.01 dataset group wasn't found, featureId: " + id);
+            redirectAttributes.addFlashAttribute("errorMessage", "#180.01 dataset group wasn't found, experimentFeatureId: " + id);
             return "redirect:/launchpad/datasets";
         }
         SnippetVersion snippetVersion = SnippetVersion.from(code);
@@ -330,7 +330,7 @@ public class DatasetController {
     public String produceFeatureForGroup(@PathVariable(name = "id") Long groupId, final RedirectAttributes redirectAttributes) {
         final Feature feature = featureRepository.findById(groupId).orElse(null);
         if (feature == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#150.01 Feature wasn't found, featureId: " + groupId);
+            redirectAttributes.addFlashAttribute("errorMessage", "#150.01 Feature wasn't found, experimentFeatureId: " + groupId);
             return "redirect:/launchpad/datasets";
         }
         Dataset dataset = feature.getDataset();
