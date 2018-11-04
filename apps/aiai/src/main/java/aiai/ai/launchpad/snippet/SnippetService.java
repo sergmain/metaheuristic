@@ -25,7 +25,7 @@ import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.SnippetRepository;
-import aiai.ai.launchpad.repositories.TaskSnippetRepository;
+import aiai.ai.launchpad.repositories.ExperimentSnippetRepository;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.utils.SimpleSelectOption;
@@ -58,14 +58,14 @@ public class SnippetService {
     private final Globals globals;
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
-    private final TaskSnippetRepository taskSnippetRepository;
+    private final ExperimentSnippetRepository experimentSnippetRepository;
     private final BinaryDataService binaryDataService;
 
-    public SnippetService(Globals globals, SnippetRepository snippetRepository, SnippetCache snippetCache, TaskSnippetRepository taskSnippetRepository, BinaryDataService binaryDataService) {
+    public SnippetService(Globals globals, SnippetRepository snippetRepository, SnippetCache snippetCache, ExperimentSnippetRepository experimentSnippetRepository, BinaryDataService binaryDataService) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
         this.snippetCache = snippetCache;
-        this.taskSnippetRepository = taskSnippetRepository;
+        this.experimentSnippetRepository = experimentSnippetRepository;
         this.binaryDataService = binaryDataService;
     }
 
@@ -77,11 +77,11 @@ public class SnippetService {
     }
 
     public List<ExperimentSnippet> getTaskSnippetsForExperiment(Long experimentId) {
-        return taskSnippetRepository.findByTaskTypeAndRefId(Enums.TaskType.Experiment.code, experimentId);
+        return experimentSnippetRepository.findByTaskTypeAndRefId(Enums.TaskType.Experiment.code, experimentId);
     }
 
     public List<Snippet> getSnippets(Enums.TaskType taskType, long refId){
-        List<ExperimentSnippet> experimentSnippets = taskSnippetRepository.findByTaskTypeAndRefId(taskType.code, refId);
+        List<ExperimentSnippet> experimentSnippets = experimentSnippetRepository.findByTaskTypeAndRefId(taskType.code, refId);
         List<Snippet> snippets = new ArrayList<>();
         for (ExperimentSnippet experimentSnippet : experimentSnippets) {
             SnippetVersion version = SnippetVersion.from(experimentSnippet.getSnippetCode());

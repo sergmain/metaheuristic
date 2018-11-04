@@ -61,6 +61,6 @@ public class Consts {
     public static final String FEATURE_FILE_MASK = "feature-%04d.txt";
 
     public static final String PARAMS_YAML = "params.yaml";
-    public static final String SEQUENCE_YAML = "sequence.yaml";
+    public static final String TASK_YAML = "task.yaml";
 
 }

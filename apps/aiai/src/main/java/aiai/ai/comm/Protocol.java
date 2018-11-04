@@ -107,23 +107,11 @@ public class Protocol {
     @EqualsAndHashCode(callSuper = false)
     public static class AssignedTask extends Command {
         @Data
-        public static class Sequence {
+        public static class Task {
             public String params;
-            public Long experimentSequenceId;
+            public Long taskId;
         }
-        @Data
-        public static class RawAssembling {
-            public String params;
-            public Long datasetId;
-        }
-        @Data
-        public static class DatasetProducing {
-            public String params;
-            public Long datasetId;
-        }
-        List<Sequence> sequences;
-        List<RawAssembling> rawAssemblings;
-        List<DatasetProducing> datasetProducings;
+        List<Task> tasks;
 
         public AssignedTask() {
             this.setType(Type.AssignedTask);

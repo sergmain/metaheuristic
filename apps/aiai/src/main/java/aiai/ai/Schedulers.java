@@ -18,10 +18,9 @@
 package aiai.ai;
 
 import aiai.ai.launchpad.LaunchpadService;
-import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.station.ArtifactCleaner;
 import aiai.ai.station.LaunchpadRequester;
-import aiai.ai.station.SequenceProcessor;
+import aiai.ai.station.TaskProcessor;
 import aiai.ai.station.TaskAssigner;
 import aiai.ai.station.actors.DownloadDatasetActor;
 import aiai.ai.station.actors.DownloadFeatureActor;
@@ -42,18 +41,18 @@ public class Schedulers {
 
     private final LaunchpadRequester launchpadRequester;
     private final TaskAssigner taskAssigner;
-    private final SequenceProcessor sequenceProcessor;
+    private final TaskProcessor taskProcessor;
     private final DownloadSnippetActor downloadSnippetActor;
     private final DownloadFeatureActor downloadFeatureActor;
     private final DownloadDatasetActor downloadDatasetActor;
     private final ArtifactCleaner artifactCleaner;
 
-    public Schedulers(Globals globals, LaunchpadService launchpadService, LaunchpadRequester launchpadRequester, TaskAssigner taskAssigner, SequenceProcessor sequenceProcessor, DownloadSnippetActor downloadSnippetActor, DownloadFeatureActor downloadFeatureActor, DownloadDatasetActor downloadDatasetActor, ArtifactCleaner artifactCleaner) {
+    public Schedulers(Globals globals, LaunchpadService launchpadService, LaunchpadRequester launchpadRequester, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadFeatureActor downloadFeatureActor, DownloadDatasetActor downloadDatasetActor, ArtifactCleaner artifactCleaner) {
         this.globals = globals;
         this.launchpadService = launchpadService;
         this.launchpadRequester = launchpadRequester;
         this.taskAssigner = taskAssigner;
-        this.sequenceProcessor = sequenceProcessor;
+        this.taskProcessor = taskProcessor;
         this.downloadSnippetActor = downloadSnippetActor;
         this.downloadFeatureActor = downloadFeatureActor;
         this.downloadDatasetActor = downloadDatasetActor;
@@ -109,7 +108,7 @@ public class Schedulers {
             return;
         }
         log.info("SequenceProcessor.fixedDelay()");
-        sequenceProcessor.fixedDelay();
+        taskProcessor.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-snippet-task'), 3, 20, 10)*1000 }")

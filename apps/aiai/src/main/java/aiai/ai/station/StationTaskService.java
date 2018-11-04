@@ -29,7 +29,7 @@ import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import aiai.ai.yaml.sequence.SimpleSnippet;
 import aiai.ai.yaml.station.StationTask;
-import aiai.ai.yaml.station.StationExperimentSequenceUtils;
+import aiai.ai.yaml.station.StationTaskUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -85,10 +85,10 @@ public class StationTaskService {
                 try {
                     Files.list(seqDir.toPath()).forEach(s -> {
                         long seqId = Long.parseLong(s.toFile().getName());
-                        File sequenceYamlFile = new File(s.toFile(), Consts.SEQUENCE_YAML);
+                        File sequenceYamlFile = new File(s.toFile(), Consts.TASK_YAML);
                         if (sequenceYamlFile.exists()) {
                             try(FileInputStream fis = new FileInputStream(sequenceYamlFile)) {
-                                StationTask seq = StationExperimentSequenceUtils.to(fis);
+                                StationTask seq = StationTaskUtils.to(fis);
                                 seqs.put(seqId, seq);
                             }
                             catch (IOException e) {
@@ -243,7 +243,7 @@ public class StationTaskService {
         return list;
     }
 
-    StationTask findByExperimentSequenceId(Long id) {
+    StationTask findByTaskId(Long id) {
         for (Map<Long, StationTask> value : map.values()) {
             for (StationTask sequence : value.values()) {
                 if (sequence.getTaskId()==id) {
@@ -275,21 +275,21 @@ public class StationTaskService {
         return status;
     }
 
-    void createSequence(Long experimentSequenceId, String params) {
+    void createTask(Long taskId, String params) {
 
         final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
         final long experimentId = taskParamYaml.experimentId;
 
         Map<Long, StationTask> seqs = map.computeIfAbsent(experimentId, k -> new HashMap<>());
-        StationTask seq = seqs.computeIfAbsent(experimentSequenceId, k -> new StationTask());
+        StationTask seq = seqs.computeIfAbsent(taskId, k -> new StationTask());
 
         seq.experimentId = experimentId;
-        seq.taskId = experimentSequenceId;
+        seq.taskId = taskId;
         seq.createdOn = System.currentTimeMillis();
         seq.params = params;
         seq.finishedOn = null;
 
-        String path = String.format("experiment%c%06d%csequence%c%06d", File.separatorChar, experimentId, File.separatorChar, File.separatorChar, experimentSequenceId);
+        String path = String.format("experiment%c%06d%csequence%c%06d", File.separatorChar, experimentId, File.separatorChar, File.separatorChar, taskId);
         File systemDir = new File(globals.stationDir, path);
         try {
             if (systemDir.exists()) {
@@ -297,8 +297,8 @@ public class StationTaskService {
             }
             //noinspection ResultOfMethodCallIgnored
             systemDir.mkdirs();
-            File sequenceYamlFile = new File(systemDir, Consts.SEQUENCE_YAML);
-            FileUtils.write(sequenceYamlFile, StationExperimentSequenceUtils.toString(seq), Charsets.UTF_8, false);
+            File sequenceYamlFile = new File(systemDir, Consts.TASK_YAML);
+            FileUtils.write(sequenceYamlFile, StationTaskUtils.toString(seq), Charsets.UTF_8, false);
             putInMap(seq);
         }
         catch( Throwable th) {
@@ -314,12 +314,12 @@ public class StationTaskService {
             //noinspection ResultOfMethodCallIgnored
             sequenceDir.mkdirs();
         }
-        File sequenceYaml = new File(sequenceDir, Consts.SEQUENCE_YAML);
+        File sequenceYaml = new File(sequenceDir, Consts.TASK_YAML);
 
 
         if (sequenceYaml.exists()) {
             log.debug("{} file exists. Make backup", sequenceYaml.getPath());
-            File yamlFileBak = new File(sequenceDir, Consts.SEQUENCE_YAML + ".bak");
+            File yamlFileBak = new File(sequenceDir, Consts.TASK_YAML + ".bak");
             //noinspection ResultOfMethodCallIgnored
             yamlFileBak.delete();
             if (sequenceYaml.exists()) {
@@ -329,7 +329,7 @@ public class StationTaskService {
         }
 
         try {
-            FileUtils.write(sequenceYaml, StationExperimentSequenceUtils.toString(seq), Charsets.UTF_8, false);
+            FileUtils.write(sequenceYaml, StationTaskUtils.toString(seq), Charsets.UTF_8, false);
         } catch (IOException e) {
             log.error("Error", e);
             throw new IllegalStateException("Error while writing to file: " + sequenceYaml.getPath(), e);

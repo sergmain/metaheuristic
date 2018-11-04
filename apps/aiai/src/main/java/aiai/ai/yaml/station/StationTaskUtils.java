@@ -33,7 +33,7 @@ import java.io.InputStream;
  * Because of xxx.class can't use generics (or don't have enough time to find out how to)
  */
 @Slf4j
-public class StationExperimentSequenceUtils {
+public class StationTaskUtils {
 
     private static Yaml yaml;
 

@@ -19,10 +19,8 @@ package aiai.ai.comm;
 
 import aiai.ai.launchpad.LaunchpadService;
 import aiai.ai.launchpad.beans.Station;
-import aiai.ai.launchpad.dataset.DatasetService;
 import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.launchpad.repositories.StationsRepository;
-import aiai.ai.station.SequenceProcessor;
+import aiai.ai.station.TaskProcessor;
 import aiai.ai.station.StationService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -45,15 +43,15 @@ public class CommandProcessor {
     private final LaunchpadService launchpadService;
 
     private final StationService stationService;
-    private final SequenceProcessor sequenceProcessor;
+    private final TaskProcessor taskProcessor;
 
     // TODO not implemented yet
 //    private final InviteService inviteService;
 
-    public CommandProcessor(StationService stationService, SequenceProcessor sequenceProcessor, LaunchpadService launchpadService) {
+    public CommandProcessor(StationService stationService, TaskProcessor taskProcessor, LaunchpadService launchpadService) {
         this.launchpadService = launchpadService;
         this.stationService = stationService;
-        this.sequenceProcessor = sequenceProcessor;
+        this.taskProcessor = taskProcessor;
     }
 
     Command[] process(Command command) {
@@ -103,7 +101,7 @@ public class CommandProcessor {
     }
 
     private Command[] processExperimentStatus(Protocol.ExperimentStatus command) {
-        sequenceProcessor.processExperimentStatus(command.statuses);
+        taskProcessor.processExperimentStatus(command.statuses);
         return Protocol.NOP_ARRAY;
     }
 
@@ -140,10 +138,10 @@ public class CommandProcessor {
     }
 
     private Command[] processAssignedTask(Protocol.AssignedTask command) {
-        if (command.sequences==null) {
+        if (command.tasks ==null) {
             return Protocol.NOP_ARRAY;
         }
-        stationService.assignTasks(command.rawAssemblings, command.datasetProducings, command.sequences);
+        stationService.assignTasks(command.tasks);
         return Protocol.NOP_ARRAY;
     }
 
@@ -166,7 +164,7 @@ public class CommandProcessor {
         ExperimentService.SequencesAndAssignToStationResult result = launchpadService.getExperimentService().getSequencesAndAssignToStation(
                 Long.parseLong(stationId), recordNumber, isAcceptOnlySigned, null
         );
-        r.sequences = result.getSimpleSequences();
+        r.tasks = result.getSimpleSequences();
         return r;
     }
 

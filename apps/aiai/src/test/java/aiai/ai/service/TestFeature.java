@@ -83,10 +83,10 @@ public abstract class TestFeature {
     protected SnippetCache snippetCache;
 
     @Autowired
-    protected TaskSnippetRepository taskSnippetRepository;
+    protected ExperimentSnippetRepository experimentSnippetRepository;
 
     @Autowired
-    protected ExperimentSequenceRepository experimentSequenceRepository;
+    protected TaskRepository taskRepository;
 
     @Autowired
     private DatasetCache datasetCache;
@@ -262,7 +262,7 @@ public abstract class TestFeature {
 
             mills = System.currentTimeMillis();
             log.info("Start taskSnippetRepository.saveAll()");
-            taskSnippetRepository.saveAll(Arrays.asList(es1, es2));
+            experimentSnippetRepository.saveAll(Arrays.asList(es1, es2));
             log.info("taskSnippetRepository.saveAll() was finished for {}", System.currentTimeMillis() - mills);
 
             // produce artifacts - features, sequences,...
@@ -283,10 +283,10 @@ public abstract class TestFeature {
             }
 
             mills = System.currentTimeMillis();
-            log.info("Start experimentService.produceSequences()");
+            log.info("Start experimentService.produceTasks()");
             // produce sequences
-            experimentService.produceSequences(experiment);
-            log.info("experimentService.produceSequences() was finished for {}", System.currentTimeMillis() - mills);
+            experimentService.produceTasks(experiment);
+            log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
             // some global final check
             assertEquals(EXPECTED_FEATURE_PERMUTATIONS_NUMBER, experimentFeatureRepository.findByExperimentId(experiment.getId()).size());
@@ -305,7 +305,7 @@ public abstract class TestFeature {
         long mills = System.currentTimeMillis();
         log.info("Start after()");
         if (experiment != null) {
-            experimentSequenceRepository.deleteByExperimentId(experiment.getId());
+            taskRepository.deleteByExperimentId(experiment.getId());
             experimentFeatureRepository.deleteByExperimentId(experiment.getId());
             experimentRepository.deleteById(experiment.getId());
         }
@@ -370,7 +370,7 @@ public abstract class TestFeature {
     protected void finishCurrentWithError(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<SimpleSequenceExecResult> results = new ArrayList<>();
-        List<Task> tasks = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
+        List<Task> tasks = taskRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
         if (expectedSeqs!=0) {
             assertEquals(expectedSeqs, tasks.size());
         }
@@ -390,7 +390,7 @@ public abstract class TestFeature {
     protected void finishCurrentWithOk(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<SimpleSequenceExecResult> results = new ArrayList<>();
-        List<Task> tasks = experimentSequenceRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
+        List<Task> tasks = taskRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
         if (expectedSeqs!=0) {
             assertEquals(expectedSeqs, tasks.size());
         }

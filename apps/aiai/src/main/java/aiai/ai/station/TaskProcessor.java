@@ -48,7 +48,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
-public class SequenceProcessor {
+public class TaskProcessor {
 
     private final Globals globals;
 
@@ -63,7 +63,7 @@ public class SequenceProcessor {
 //    private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
 //    private Map<String, SnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
-    public SequenceProcessor(Globals globals, ProcessService processService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState) {
+    public TaskProcessor(Globals globals, ProcessService processService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState) {
         this.globals = globals;
         this.processService = processService;
         this.stationService = stationService;
@@ -134,7 +134,7 @@ public class SequenceProcessor {
                 continue;
             }
 
-            File taskDir = prepareTaskDir(task.taskId, task.taskType);
+            File taskDir = prepareTaskDir(task.taskId, task.processType);
 
             File artifactDir = prepareTaskSubDir(taskDir, "artifacts");
             if (artifactDir == null) {
@@ -257,8 +257,8 @@ public class SequenceProcessor {
         return paramFile;
     }
 
-    private File prepareTaskDir(Long taskId, Enums.TaskType taskType) {
-        File typeDir = new File(globals.stationTaskDir, taskType.toString());
+    private File prepareTaskDir(Long taskId, Enums.ProcessType processType) {
+        File typeDir = new File(globals.stationTaskDir, processType.toString());
         DigitUtils.Power power = DigitUtils.getPower(taskId);
         File taskDir = new File(typeDir,
                 ""+power.power7+File.separatorChar+power.power4+File.separatorChar);

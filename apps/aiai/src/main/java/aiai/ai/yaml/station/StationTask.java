@@ -38,7 +38,7 @@ public class StationTask {
 
     public String metrics;
 
-    public Enums.TaskType taskType;
+    public Enums.ProcessType processType;
 
     // TODO right not there will be 2 the same properties in yaml file - isReported and reported.
     // Won't fix this at this moment

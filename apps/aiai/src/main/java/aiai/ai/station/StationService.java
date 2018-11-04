@@ -44,16 +44,14 @@ public class StationService {
 
     private final Globals globals;
     private final StationTaskService stationTaskService;
-    private final StationDatasetService stationDatasetService;
 
     private String env;
     private EnvYaml envYaml;
     private Metadata metadata = new Metadata();
 
-    public StationService(Globals globals, StationTaskService stationTaskService, StationDatasetService stationDatasetService) {
+    public StationService(Globals globals, StationTaskService stationTaskService) {
         this.globals = globals;
         this.stationTaskService = stationTaskService;
-        this.stationDatasetService = stationDatasetService;
     }
 
     @PostConstruct
@@ -151,7 +149,7 @@ public class StationService {
     public void markAsDelivered(List<Long> ids) {
         List<StationTask> list = new ArrayList<>();
         for (Long id : ids) {
-            StationTask seq = stationTaskService.findByExperimentSequenceId(id);
+            StationTask seq = stationTaskService.findByTaskId(id);
             if(seq==null) {
                 continue;
             }
@@ -161,36 +159,12 @@ public class StationService {
         stationTaskService.saveAll(list);
     }
 
-    public void assignTasks(List<Protocol.AssignedTask.RawAssembling> rawAssemblings, List<Protocol.AssignedTask.DatasetProducing> datasetProducings, List<Protocol.AssignedTask.Sequence> sequences) {
-        createRawAssembling(rawAssemblings);
-        createDatasetProcessing(datasetProducings);
-        createSequence(sequences);
-    }
-
-    private void createSequence(List<Protocol.AssignedTask.Sequence> sequences) {
-        if (sequences==null) {
+    public void assignTasks(List<Protocol.AssignedTask.Task> tasks) {
+        if (tasks ==null) {
             return;
         }
-        for (Protocol.AssignedTask.Sequence sequence : sequences) {
-            stationTaskService.createSequence(sequence.experimentSequenceId, sequence.params);
-        }
-    }
-
-    private void createDatasetProcessing(List<Protocol.AssignedTask.DatasetProducing> datasetProducings) {
-        if (datasetProducings==null) {
-            return;
-        }
-        for (Protocol.AssignedTask.DatasetProducing datasetProducing : datasetProducings) {
-            stationDatasetService.createDatasetProducing(datasetProducing.datasetId, datasetProducing.params);
-        }
-    }
-
-    private void createRawAssembling(List<Protocol.AssignedTask.RawAssembling> rawAssemblings) {
-        if (rawAssemblings==null) {
-            return;
-        }
-        for (Protocol.AssignedTask.RawAssembling rawAssembling : rawAssemblings) {
-            stationDatasetService.createRawAssembling(rawAssembling.datasetId, rawAssembling.params);
+        for (Protocol.AssignedTask.Task sequence : tasks) {
+            stationTaskService.createTask(sequence.taskId, sequence.params);
         }
     }
 }

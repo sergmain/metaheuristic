@@ -120,8 +120,8 @@ public class ExchangeData {
                 this.requestTask = (Protocol.RequestTask) command;
                 break;
             case AssignedTask:
-                if (this.assignedTask != null && this.assignedTask.getSequences()!=null) {
-                    this.assignedTask.getSequences().addAll( ((Protocol.AssignedTask) command).getSequences());
+                if (this.assignedTask != null && this.assignedTask.getTasks()!=null) {
+                    this.assignedTask.getTasks().addAll( ((Protocol.AssignedTask) command).getTasks());
                     break;
                 }
                 this.assignedTask = (Protocol.AssignedTask) command;

@@ -28,7 +28,7 @@ import java.util.List;
 
 @Component
 @Profile("launchpad")
-public interface TaskSnippetRepository extends CrudRepository<ExperimentSnippet, Long> {
+public interface ExperimentSnippetRepository extends CrudRepository<ExperimentSnippet, Long> {
 
     @Transactional(readOnly = true)
     List<ExperimentSnippet> findByTaskTypeAndRefId(int taskType, long refId);

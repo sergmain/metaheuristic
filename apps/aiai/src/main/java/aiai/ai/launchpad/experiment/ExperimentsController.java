@@ -130,14 +130,14 @@ public class ExperimentsController {
     private final ExperimentRepository experimentRepository;
     private final ExperimentService experimentService;
     private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
-    private final TaskSnippetRepository taskSnippetRepository;
+    private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
-    private final ExperimentSequenceRepository experimentSequenceRepository;
+    private final TaskRepository taskRepository;
     private final ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository;
     private final DatasetCache datasetCache;
     private final EnvService envService;
 
-    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, FeatureRepository featureRepository, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, TaskSnippetRepository taskSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentSequenceRepository experimentSequenceRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache, EnvService envService) {
+    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, FeatureRepository featureRepository, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache, EnvService envService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.featureRepository = featureRepository;
@@ -146,9 +146,9 @@ public class ExperimentsController {
         this.experimentHyperParamsRepository = experimentHyperParamsRepository;
         this.snippetService = snippetService;
         this.experimentService = experimentService;
-        this.taskSnippetRepository = taskSnippetRepository;
+        this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
-        this.experimentSequenceRepository = experimentSequenceRepository;
+        this.taskRepository = taskRepository;
         this.experimentSequenceWithSpecRepository = experimentSequenceWithSpecRepository;
         this.datasetCache = datasetCache;
         this.envService = envService;
@@ -199,7 +199,7 @@ public class ExperimentsController {
     @PostMapping("/experiment-feature-progress-console-part/{id}")
     public String getSequncesConsolePart(Model model, @PathVariable(name="id") Long sequenceId) {
         ConsoleResult result = new ConsoleResult();
-        Task sequence = experimentSequenceRepository.findById(sequenceId).orElse(null);
+        Task sequence = taskRepository.findById(sequenceId).orElse(null);
         if (sequence!=null) {
             SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(sequence.getSnippetExecResults());
             for (Map.Entry<Integer, ProcessService.Result> entry : snippetExec.getExecs().entrySet()) {
@@ -511,7 +511,7 @@ public class ExperimentsController {
         for (ExperimentSnippet experimentSnippet : list) {
             experimentSnippet.setOrder(order++);
         }
-        taskSnippetRepository.saveAll(list);
+        experimentSnippetRepository.saveAll(list);
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
@@ -569,12 +569,12 @@ public class ExperimentsController {
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{id}")
     public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        ExperimentSnippet snippet = taskSnippetRepository.findById(id).orElse(null);
+        ExperimentSnippet snippet = experimentSnippetRepository.findById(id).orElse(null);
         if (snippet == null || experimentId != snippet.getRefId()) {
             redirectAttributes.addFlashAttribute("errorMessage", "#293.01 Snippet is misconfigured. Try again" );
             return "redirect:/launchpad/experiment-edit/" + experimentId;
         }
-        taskSnippetRepository.deleteById(id);
+        experimentSnippetRepository.deleteById(id);
         return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 
@@ -596,8 +596,8 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#283.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
         }
-        taskSnippetRepository.deleteByTaskTypeAndRefId(Enums.TaskType.Experiment.code, id);
-        experimentSequenceRepository.deleteByExperimentId(id);
+        experimentSnippetRepository.deleteByTaskTypeAndRefId(Enums.TaskType.Experiment.code, id);
+        taskRepository.deleteByExperimentId(id);
         experimentFeatureRepository.deleteByExperimentId(id);
         experimentRepository.deleteById(id);
         return "redirect:/launchpad/experiments";
@@ -634,7 +634,7 @@ public class ExperimentsController {
             trgSnippet.setId(null);
             trgSnippet.setVersion(null);
             trgSnippet.setRefId(trg.getId());
-            taskSnippetRepository.save(trgSnippet);
+            experimentSnippetRepository.save(trgSnippet);
         }
         for (ExperimentHyperParams params1 : experiment.getHyperParams()) {
             ExperimentHyperParams trgParam = new ExperimentHyperParams();
@@ -651,7 +651,7 @@ public class ExperimentsController {
 
     @PostMapping("/experiment-sequence-rerun/{id}")
     public @ResponseBody boolean rerunSequence(@PathVariable long id) {
-        Task seq = experimentSequenceRepository.findById(id).orElse(null);
+        Task seq = taskRepository.findById(id).orElse(null);
         if (seq == null) {
             log.warn("#291.01 Can't re-run sequence {}, sequence with such id wasn't found", id);
             return false;
@@ -674,7 +674,7 @@ public class ExperimentsController {
         seq.setSnippetExecResults(null);
         seq.setStationId(null);
         seq.setAssignedOn(null);
-        experimentSequenceRepository.save(seq);
+        taskRepository.save(seq);
 
         feature.setExecStatus(FeatureExecStatus.unknown.code);
         feature.setFinished(false);
