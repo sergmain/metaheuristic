@@ -142,7 +142,6 @@ public class TaskProcessor {
                 continue;
             }
 
-
             // at this point dataset and all features have to be downloaded from server
 
             taskParamYaml.artifactPath = artifactDir.getAbsolutePath();

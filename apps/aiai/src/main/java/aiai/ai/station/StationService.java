@@ -29,6 +29,7 @@ import aiai.ai.yaml.metadata.MetadataUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -115,7 +116,7 @@ public class StationService {
     }
 
     public void setStationId(String stationId) {
-        if (stationId==null) {
+        if (StringUtils.isBlank(stationId)) {
             throw new IllegalStateException("StationId is null");
         }
         synchronized (syncObj) {

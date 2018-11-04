@@ -17,7 +17,6 @@
  */
 package aiai.ai.yaml.metrics;
 
-import aiai.ai.yaml.config.DatasetPreparingConfig;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -28,8 +27,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.math.BigDecimal;
-import java.util.Map;
 
 /**
  * Because of xxx.class can't use generics (or don't have enough time to find out how to)

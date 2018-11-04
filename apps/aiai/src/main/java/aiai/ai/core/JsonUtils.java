@@ -20,7 +20,6 @@ package aiai.ai.core;
 import aiai.ai.comm.ExchangeData;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 
@@ -37,13 +36,9 @@ public class JsonUtils {
     }
 
     public static ExchangeData getExchangeData(String json) throws IOException {
-//        try {
-            //noinspection UnnecessaryLocalVariable
-            ExchangeData data = mapper.readValue(json, ExchangeData.class);
-            return data;
-//        } catch (IOException e) {
-//            return null;
-//        }
+        //noinspection UnnecessaryLocalVariable
+        ExchangeData data = mapper.readValue(json, ExchangeData.class);
+        return data;
     }
 
     public static String toJson(ExchangeData data) throws IOException {

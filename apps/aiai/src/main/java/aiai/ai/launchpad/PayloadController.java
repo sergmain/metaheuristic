@@ -21,12 +21,8 @@ package aiai.ai.launchpad;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
-import aiai.ai.launchpad.beans.Dataset;
-import aiai.ai.launchpad.beans.Feature;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.dataset.DatasetCache;
-import aiai.ai.launchpad.repositories.FeatureRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.DigitUtils;
@@ -47,7 +43,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.transaction.Transactional;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -61,19 +56,15 @@ public class PayloadController {
 
     private final ChecksumWithSignatureService checksumWithSignatureService;
     private final SnippetCache snippetCache;
-    private final FeatureRepository featureRepository;
     private final BinaryDataService binaryDataService;
-    private final DatasetCache datasetCache;
     private final SnippetService snippetService;
 
     private final Globals globals;
 
-    public PayloadController(SnippetCache snippetCache, FeatureRepository featureRepository, ChecksumWithSignatureService checksumWithSignatureService, BinaryDataService binaryDataService, DatasetCache datasetCache, SnippetService snippetService, Globals globals) {
+    public PayloadController(SnippetCache snippetCache, ChecksumWithSignatureService checksumWithSignatureService, BinaryDataService binaryDataService, SnippetService snippetService, Globals globals) {
         this.snippetCache = snippetCache;
-        this.featureRepository = featureRepository;
         this.checksumWithSignatureService = checksumWithSignatureService;
         this.binaryDataService = binaryDataService;
-        this.datasetCache = datasetCache;
         this.snippetService = snippetService;
         this.globals = globals;
     }
@@ -95,40 +86,6 @@ public class PayloadController {
         return new HttpEntity<>(new FileSystemResource(file.toPath()), getHeader(file.length()));
     }
 
-    @GetMapping("/dataset/{id}")
-    @Transactional
-    public HttpEntity<AbstractResource> datasets(HttpServletResponse response, @PathVariable("id") long datasetId) throws IOException {
-        Dataset dataset = datasetCache.findById(datasetId);
-        if (dataset==null) {
-            return returnEmptyAsGone(response);
-        }
-        File datasetFile = new File(globals.launchpadDir, dataset.asDatasetFilePath());
-        if (globals.isStoreDataToDb()) {
-
-            if (dataset.getLength()==null || dataset.getLength()==0) {
-                log.error("dataset length isn't initialized, length: {}", dataset.getLength());
-                return returnEmptyAsGone(response);
-            }
-            boolean isStore = false;
-            if (!datasetFile.exists()) {
-                isStore = true;
-            }
-            else if (datasetFile.length()!=dataset.getLength()) {
-                datasetFile.delete();
-                isStore = true;
-            }
-
-            if (isStore) {
-                try {
-                    binaryDataService.storeToFile(datasetId, Enums.BinaryDataType.DATASET, datasetFile);
-                } catch (BinaryDataNotFoundException e) {
-                    return returnEmptyAsGone(response);
-                }
-            }
-        }
-        return new HttpEntity<>(new FileSystemResource(datasetFile.toPath()), getHeader(datasetFile.length()));
-    }
-
     private HttpEntity<AbstractResource> returnEmptyAsGone(HttpServletResponse response) throws IOException {
         response.sendError(HttpServletResponse.SC_GONE);
         return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
@@ -137,41 +94,6 @@ public class PayloadController {
     private HttpEntity<AbstractResource> returnEmptyAsConflict(HttpServletResponse response) throws IOException {
         response.sendError(HttpServletResponse.SC_CONFLICT);
         return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
-    }
-
-    @GetMapping("/feature/{featureId}")
-    @Transactional
-    public HttpEntity<AbstractResource> feature(HttpServletResponse response, @PathVariable("featureId") long featureId) throws IOException {
-        final Feature feature = featureRepository.findById(featureId).orElse(null);
-        if (feature ==null) {
-            log.info("Feature wasn't found for id {}", featureId);
-            return returnEmptyAsGone(response);
-        }
-        final File featureFile = new File(globals.launchpadDir, feature.asFeatureFilePath());
-
-        if (globals.isStoreDataToDb()) {
-            if (feature.getLength()==null || feature.getLength()==0) {
-                log.error("feature length isn't initialized, length: {}", feature.getLength());
-                return returnEmptyAsGone(response);
-            }
-            boolean isStore = false;
-            if (!featureFile.exists()) {
-                isStore = true;
-            }
-            else if (featureFile.length()!= feature.getLength()) {
-                featureFile.delete();
-                isStore = true;
-            }
-
-            if (isStore) {
-                try {
-                    binaryDataService.storeToFile(featureId, Enums.BinaryDataType.FEATURE, featureFile);
-                } catch (BinaryDataNotFoundException e) {
-                    return returnEmptyAsGone(response);
-                }
-            }
-        }
-        return new HttpEntity<>(new FileSystemResource(featureFile.toPath()), getHeader(featureFile.length()));
     }
 
     @GetMapping("/snippet/{name}")

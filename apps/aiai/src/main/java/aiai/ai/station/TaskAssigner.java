@@ -64,15 +64,12 @@ public class TaskAssigner {
         List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNull();
         for (StationTask task : tasks) {
             if (StringUtils.isBlank(task.getParams())) {
-                // strange behaviour. this field is required in DB and can't be null
-                // is this bug in mysql or it's a spring's data bug with MEDIUMTEXT fields?
-                // do not delete this check
-                log.warn("Params for task {} is blank", task.getTaskId());
+                log.error("Params for task {} is blank", task.getTaskId());
                 continue;
             }
             if (currentExecState.isInit && currentExecState.getState(task.taskId)==null) {
                 stationTaskService.delete(task);
-                log.info("Deleted orphan sequence {}", task);
+                log.info("Deleted orphan task {}", task);
                 continue;
             }
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());

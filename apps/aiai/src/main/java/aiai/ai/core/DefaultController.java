@@ -20,11 +20,6 @@ package aiai.ai.core;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.util.WebUtils;
-
-import javax.servlet.http.HttpServletRequest;
-import java.util.Map;
 
 /**
  * User: Serg
@@ -35,12 +30,12 @@ import java.util.Map;
 public class DefaultController {
 
     @RequestMapping("/")
-    public String index1(Map<String, Object> model) {
+    public String index1() {
         return "index";
     }
 
     @GetMapping("/index")
-    public String index2(Map<String, Object> model) {
+    public String index2() {
         return "index";
     }
 

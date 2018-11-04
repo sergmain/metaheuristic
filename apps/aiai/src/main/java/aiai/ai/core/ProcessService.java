@@ -18,7 +18,6 @@
 package aiai.ai.core;
 
 import aiai.ai.launchpad.beans.LogData;
-import aiai.ai.launchpad.repositories.LogDataRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -47,7 +46,7 @@ public class ProcessService {
         private InputStream is;
     }
 
-    // TODO 2018-10-30 need to implement for sattion side
+    // TODO 2018-10-30 need to implement for station side
 /*
     private final LogDataRepository logDataRepository;
 
@@ -103,7 +102,7 @@ public class ProcessService {
         final String console = out.toString();
         logData.setLogData(console);
 
-        // TODO 2018-10-30 need to implement for sattion side
+        // TODO 2018-10-30 need to implement for station side
 //        logDataRepository.save(logData);
 
         return new Result(exitCode==0, exitCode, console);
