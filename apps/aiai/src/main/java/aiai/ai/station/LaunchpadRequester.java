@@ -166,7 +166,7 @@ public class LaunchpadRequester {
         if (list.isEmpty()) {
             return;
         }
-        final Protocol.ReportSequenceProcessingResult command = new Protocol.ReportSequenceProcessingResult();
+        final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask seq : list) {
             command.getResults().add(new SimpleSequenceExecResult(seq.getTaskId(), seq.getSnippetExecResults(), seq.getMetrics()));
             seq.setReported(true);

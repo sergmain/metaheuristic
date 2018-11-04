@@ -431,12 +431,12 @@ public class ExperimentService {
         return ids;
     }
 
-    public void reconcileStationSequences(String stationIdAsStr, List<Protocol.StationSequenceStatus.SimpleStatus> statuses) {
+    public void reconcileStationSequences(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
         final long stationId = Long.parseLong(stationIdAsStr);
         List<Task> seqs = taskRepository.findByStationIdAndIsCompletedIsFalse(stationId);
         for (Task seq : seqs) {
             boolean isFound = false;
-            for (Protocol.StationSequenceStatus.SimpleStatus status : statuses) {
+            for (Protocol.StationTaskStatus.SimpleStatus status : statuses) {
                 if (status.experimentSequenceId ==seq.getId()) {
                     isFound = true;
                 }

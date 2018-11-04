@@ -38,7 +38,6 @@ public class Command implements Serializable {
 
     private Type type;
     private Map<String, String> params = new HashMap<>();
-    private Map<String, String> sysParams;
     private Map<String, String> response = new HashMap<>();
 
     public enum Type {
@@ -50,10 +49,10 @@ public class Command implements Serializable {
         RequestTask /*  */,
         AssignedTask /*  */,
         ReportStationStatus /* returned after processing AssignedStationId and ReAssignStationId */,
-        ReportSequenceProcessingResult /* returned result of processing sequence at station */,
+        ReportTaskProcessingResult /* returned result of processing sequence at station */,
         ReportResultDelivering, /* results were delivered to the launchpad */
         ExperimentStatus, /* current exec status of experiments sended by launchpad every iteration with station */
-        StationSequenceStatus /* sent by station, contains all active taskId which is present as station side . neede to elimi*/
+        StationTaskStatus /* sent by station, contains all active taskId which is present as station side . neede to elimi*/
     }
 
 }

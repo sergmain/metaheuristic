@@ -134,7 +134,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            File taskDir = prepareTaskDir(task.taskId, task.processType);
+            File taskDir = prepareTaskDir(task.taskId);
 
             File artifactDir = prepareTaskSubDir(taskDir, "artifacts");
             if (artifactDir == null) {
@@ -257,10 +257,9 @@ public class TaskProcessor {
         return paramFile;
     }
 
-    private File prepareTaskDir(Long taskId, Enums.ProcessType processType) {
-        File typeDir = new File(globals.stationTaskDir, processType.toString());
+    private File prepareTaskDir(Long taskId) {
         DigitUtils.Power power = DigitUtils.getPower(taskId);
-        File taskDir = new File(typeDir,
+        File taskDir = new File(globals.stationTaskDir,
                 ""+power.power7+File.separatorChar+power.power4+File.separatorChar);
         taskDir.mkdirs();
         return taskDir;

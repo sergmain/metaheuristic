@@ -17,7 +17,6 @@
 
 package aiai.ai.rest;
 
-import aiai.ai.AiApplication;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
@@ -27,14 +26,8 @@ import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.io.IOException;
-import java.util.LinkedHashMap;
 
 public class TestJson {
 
@@ -53,8 +46,6 @@ public class TestJson {
     public void testDontSerializeSysParams() throws IOException {
         ExchangeData ed = new ExchangeData();
         final Protocol.Nop nop = new Protocol.Nop();
-        nop.setSysParams( new LinkedHashMap<>());
-        nop.getSysParams().put("test", "42");
         nop.getParams().put("key", "13");
         ed.setSuccess(true);
         ed.setCommand(nop);
@@ -75,7 +66,6 @@ public class TestJson {
         Assert.assertEquals(1, data.getCommands().size());
         Command command = data.getCommands().get(0);
         Assert.assertEquals(Command.Type.Nop, command.getType());
-        Assert.assertNull(command.getSysParams());
         Assert.assertNotNull(command.getParams());
         Assert.assertEquals(1, command.getParams().size());
         Assert.assertEquals("13", command.getParams().get("key"));

@@ -46,10 +46,10 @@ public class ExchangeData {
     private Protocol.AssignedStationId assignedStationId;
     private Protocol.ReAssignStationId reAssignedStationId;
     private Protocol.ReportStationStatus reportStationStatus;
-    private Protocol.ReportSequenceProcessingResult reportSequenceProcessingResult;
+    private Protocol.ReportTaskProcessingResult reportTaskProcessingResult;
     private Protocol.ReportResultDelivering reportResultDelivering;
     private Protocol.ExperimentStatus experimentStatus;
-    private Protocol.StationSequenceStatus stationSequenceStatus;
+    private Protocol.StationTaskStatus stationTaskStatus;
 
     @JsonProperty(value = "success")
     private boolean isSuccess = true;
@@ -84,8 +84,8 @@ public class ExchangeData {
             case ExperimentStatus:
                 this.experimentStatus = (Protocol.ExperimentStatus) command;
                 break;
-            case StationSequenceStatus:
-                this.stationSequenceStatus = (Protocol.StationSequenceStatus) command;
+            case StationTaskStatus:
+                this.stationTaskStatus = (Protocol.StationTaskStatus) command;
                 break;
             case RequestStationId:
                 if (this.requestStationId != null) {
@@ -118,11 +118,11 @@ public class ExchangeData {
                 }
                 this.reportStationStatus = (Protocol.ReportStationStatus) command;
                 break;
-            case ReportSequenceProcessingResult:
-                if (this.reportSequenceProcessingResult != null) {
+            case ReportTaskProcessingResult:
+                if (this.reportTaskProcessingResult != null) {
                     throw new IllegalStateException("Was already initialized");
                 }
-                this.reportSequenceProcessingResult = (Protocol.ReportSequenceProcessingResult) command;
+                this.reportTaskProcessingResult = (Protocol.ReportTaskProcessingResult) command;
                 break;
             case ReportResultDelivering:
                 if (this.reportResultDelivering != null) {
@@ -156,7 +156,7 @@ public class ExchangeData {
     public List<Command> getCommands(boolean isExcludeNop) {
         return asListOfNonNull(isExcludeNop, nop, reportStation, requestStationId,
                 assignedStationId, reAssignedStationId, requestTask, assignedTask, reportStationStatus,
-                reportSequenceProcessingResult, reportResultDelivering, experimentStatus, stationSequenceStatus);
+                reportTaskProcessingResult, reportResultDelivering, experimentStatus, stationTaskStatus);
     }
 
     @JsonIgnore

@@ -74,24 +74,24 @@ public class CommandProcessor {
                 return processAssignedTask((Protocol.AssignedTask) command);
             case ReportStationStatus:
                 return processReportStationStatus((Protocol.ReportStationStatus) command);
-            case ReportSequenceProcessingResult:
+            case ReportTaskProcessingResult:
                 // processing on launchpad side
-                return processReportSequenceProcessingResult((Protocol.ReportSequenceProcessingResult) command);
+                return processReportSequenceProcessingResult((Protocol.ReportTaskProcessingResult) command);
             case ReportResultDelivering:
                 return processReportResultDelivering((Protocol.ReportResultDelivering) command);
             case ExperimentStatus:
                 // processing on station side
                 return processExperimentStatus((Protocol.ExperimentStatus) command);
-            case StationSequenceStatus:
+            case StationTaskStatus:
                 // processing on launchpad side
-                return processStationSequenceStatus((Protocol.StationSequenceStatus) command);
+                return processStationSequenceStatus((Protocol.StationTaskStatus) command);
             default:
                 System.out.println("There is new command which isn't processed: " + command.getType());
         }
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processStationSequenceStatus(Protocol.StationSequenceStatus command) {
+    private Command[] processStationSequenceStatus(Protocol.StationTaskStatus command) {
         launchpadService.getExperimentService().reconcileStationSequences(command.stationId, command.statuses!=null ? command.statuses : new ArrayList<>());
         return Protocol.NOP_ARRAY;
     }
@@ -106,7 +106,7 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processReportSequenceProcessingResult(Protocol.ReportSequenceProcessingResult command) {
+    private Command[] processReportSequenceProcessingResult(Protocol.ReportTaskProcessingResult command) {
         if (command.getResults().isEmpty()) {
             return Protocol.NOP_ARRAY;
         }
@@ -183,16 +183,11 @@ public class CommandProcessor {
     }
 
     public ExchangeData processExchangeData(ExchangeData data) {
-        return processExchangeData(null, data);
-    }
-
-    private ExchangeData processExchangeData(Map<String, String> sysParams, ExchangeData data) {
         ExchangeData responses = new ExchangeData();
         for (Command command : data.getCommands()) {
             if (command.getType()== Command.Type.Nop) {
                 continue;
             }
-            command.setSysParams(sysParams);
             responses.setCommands(process(command));
         }
         return responses;

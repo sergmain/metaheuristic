@@ -22,8 +22,7 @@ import aiai.ai.station.ArtifactCleaner;
 import aiai.ai.station.LaunchpadRequester;
 import aiai.ai.station.TaskProcessor;
 import aiai.ai.station.TaskAssigner;
-import aiai.ai.station.actors.DownloadDatasetActor;
-import aiai.ai.station.actors.DownloadFeatureActor;
+import aiai.ai.station.actors.DownloadResourceActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -43,19 +42,17 @@ public class Schedulers {
     private final TaskAssigner taskAssigner;
     private final TaskProcessor taskProcessor;
     private final DownloadSnippetActor downloadSnippetActor;
-    private final DownloadFeatureActor downloadFeatureActor;
-    private final DownloadDatasetActor downloadDatasetActor;
+    private final DownloadResourceActor downloadResourceActor;
     private final ArtifactCleaner artifactCleaner;
 
-    public Schedulers(Globals globals, LaunchpadService launchpadService, LaunchpadRequester launchpadRequester, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadFeatureActor downloadFeatureActor, DownloadDatasetActor downloadDatasetActor, ArtifactCleaner artifactCleaner) {
+    public Schedulers(Globals globals, LaunchpadService launchpadService, LaunchpadRequester launchpadRequester, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, ArtifactCleaner artifactCleaner) {
         this.globals = globals;
         this.launchpadService = launchpadService;
         this.launchpadRequester = launchpadRequester;
         this.taskAssigner = taskAssigner;
         this.taskProcessor = taskProcessor;
         this.downloadSnippetActor = downloadSnippetActor;
-        this.downloadFeatureActor = downloadFeatureActor;
-        this.downloadDatasetActor = downloadDatasetActor;
+        this.downloadResourceActor = downloadResourceActor;
         this.artifactCleaner = artifactCleaner;
     }
 
@@ -87,7 +84,7 @@ public class Schedulers {
         launchpadRequester.fixedDelay();
     }
 
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.task-assigner-task'), 3, 20, 10)*1000 }")
+    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.task-assigner'), 3, 20, 10)*1000 }")
     public void taskAssigner() {
         if (globals.isUnitTesting) {
             return;
@@ -99,8 +96,8 @@ public class Schedulers {
         taskAssigner.fixedDelay();
     }
 
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.sequence-processor'), 3, 20, 10)*1000 }")
-    public void sequenceProcessor() {
+    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.task-processor'), 3, 20, 10)*1000 }")
+    public void taskProcessor() {
         if (globals.isUnitTesting) {
             return;
         }
@@ -111,7 +108,7 @@ public class Schedulers {
         taskProcessor.fixedDelay();
     }
 
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-snippet-task'), 3, 20, 10)*1000 }")
+    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-snippet'), 3, 20, 10)*1000 }")
     public void downloadSnippetActor() {
         if (globals.isUnitTesting) {
             return;
@@ -123,8 +120,8 @@ public class Schedulers {
         downloadSnippetActor.fixedDelay();
     }
 
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-feature-task'), 3, 20, 10)*1000 }")
-    public void downloadFeatureActor() {
+    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-resource'), 3, 20, 10)*1000 }")
+    public void downloadResourceActor() {
         if (globals.isUnitTesting) {
             return;
         }
@@ -132,19 +129,7 @@ public class Schedulers {
             return;
         }
         log.info("DownloadSnippetActor.fixedDelay()");
-        downloadFeatureActor.fixedDelay();
-    }
-
-    @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-dataset-task'), 3, 20, 10)*1000 }")
-    public void downloadDatasetActor() {
-        if (globals.isUnitTesting) {
-            return;
-        }
-        if (!globals.isStationEnabled) {
-            return;
-        }
-        log.info("DownloadDatasetActor.fixedDelay()");
-        downloadDatasetActor.fixedDelay();
+        downloadResourceActor.fixedDelay();
     }
 
     @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.artifact-cleaner'), 10, 60, 30)*1000 }")

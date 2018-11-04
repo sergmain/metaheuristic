@@ -37,24 +37,20 @@ public class TestCommands {
                 return new Protocol.AssignedStationId();
             case ReAssignStationId:
                 return new Protocol.ReAssignStationId();
-            case RegisterInvite:
-                return new Protocol.RegisterInvite();
-            case RegisterInviteResult:
-                return new Protocol.RegisterInviteResult();
             case RequestTask:
                 return new Protocol.RequestTask();
             case AssignedTask:
                 return new Protocol.AssignedTask();
             case ReportStationStatus:
                 return new Protocol.ReportStationStatus();
-            case ReportSequenceProcessingResult:
-                return new Protocol.ReportSequenceProcessingResult();
+            case ReportTaskProcessingResult:
+                return new Protocol.ReportTaskProcessingResult();
             case ReportResultDelivering:
                 return new Protocol.ReportResultDelivering();
             case ExperimentStatus:
                 return new Protocol.ExperimentStatus();
-            case StationSequenceStatus:
-                return new Protocol.StationSequenceStatus();
+            case StationTaskStatus:
+                return new Protocol.StationTaskStatus();
             default:
                 throw new IllegalStateException("unknown command type: " + type);
         }

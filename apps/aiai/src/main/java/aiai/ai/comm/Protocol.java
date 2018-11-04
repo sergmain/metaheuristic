@@ -18,7 +18,6 @@
 package aiai.ai.comm;
 
 import aiai.ai.Enums;
-import aiai.ai.launchpad.beans.InviteResult;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -82,7 +81,7 @@ public class Protocol {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class StationSequenceStatus extends Command {
+    public static class StationTaskStatus extends Command {
 
         @Data
         @AllArgsConstructor
@@ -93,13 +92,13 @@ public class Protocol {
         }
         List<SimpleStatus> statuses;
 
-        public StationSequenceStatus(List<SimpleStatus> statuses) {
-            this.setType(Type.StationSequenceStatus);
+        public StationTaskStatus(List<SimpleStatus> statuses) {
+            this.setType(Type.StationTaskStatus);
             this.statuses = statuses;
         }
 
-        public StationSequenceStatus() {
-            this.setType(Type.StationSequenceStatus);
+        public StationTaskStatus() {
+            this.setType(Type.StationTaskStatus);
         }
     }
 
@@ -197,11 +196,11 @@ public class Protocol {
 
     @EqualsAndHashCode(callSuper = false)
     @Data
-    public static class ReportSequenceProcessingResult extends Command {
+    public static class ReportTaskProcessingResult extends Command {
         private List<SimpleSequenceExecResult> results = new ArrayList<>();
 
-        public ReportSequenceProcessingResult() {
-            this.setType(Type.ReportSequenceProcessingResult);
+        public ReportTaskProcessingResult() {
+            this.setType(Type.ReportTaskProcessingResult);
         }
     }
 

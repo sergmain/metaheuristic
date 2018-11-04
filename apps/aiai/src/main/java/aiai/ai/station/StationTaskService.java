@@ -22,13 +22,12 @@ import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
 import aiai.ai.utils.DigitUtils;
-import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.metrics.Metrics;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import aiai.ai.yaml.sequence.SimpleSnippet;
+import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.station.StationTaskUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -49,17 +48,13 @@ import java.util.*;
 @Slf4j
 public class StationTaskService {
 
-    private static final String EXPERIMENT_SEQUENCE_FORMAT_STR = "experiment%c%06d%csequence%c%06d";
-
     private final Globals globals;
-    private final TaskParamYamlUtils taskParamYamlUtils;
     private final CurrentExecState currentExecState;
 
     private final Map<Long, StationTask> map = new HashMap<>();
 
-    public StationTaskService(TaskParamYamlUtils taskParamYamlUtils, Globals globals, CurrentExecState currentExecState) {
+    public StationTaskService(Globals globals, CurrentExecState currentExecState) {
         this.currentExecState = currentExecState;
-        this.taskParamYamlUtils = taskParamYamlUtils;
         this.globals = globals;
     }
 
@@ -246,18 +241,16 @@ public class StationTaskService {
         return list;
     }
 
-    Protocol.StationSequenceStatus produceStationSequenceStatus() {
-        Protocol.StationSequenceStatus status = new Protocol.StationSequenceStatus(new ArrayList<>());
+    Protocol.StationTaskStatus produceStationSequenceStatus() {
+        Protocol.StationTaskStatus status = new Protocol.StationTaskStatus(new ArrayList<>());
         List<StationTask> list = findAllByFinishedOnIsNull();
         for (StationTask sequence : list) {
-            status.getStatuses().add( new Protocol.StationSequenceStatus.SimpleStatus(sequence.getTaskId()));
+            status.getStatuses().add( new Protocol.StationTaskStatus.SimpleStatus(sequence.getTaskId()));
         }
         return status;
     }
 
     void createTask(long taskId, String params) {
-
-        final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
 
         StationTask seq = map.computeIfAbsent(taskId, k -> new StationTask());
 
