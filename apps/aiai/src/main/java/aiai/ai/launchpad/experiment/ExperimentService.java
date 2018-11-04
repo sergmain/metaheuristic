@@ -23,8 +23,8 @@ import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.beans.*;
-import aiai.ai.launchpad.dataset.DatasetCache;
-import aiai.ai.launchpad.feature.FeatureExecStatus;
+import aiai.ai.launchpad.experiment.dataset.DatasetCache;
+import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
@@ -185,7 +185,7 @@ public class ExperimentService {
         return experimentRepository.findById(id).orElse(null);
     }
 
-    public synchronized SequencesAndAssignToStationResult getSequencesAndAssignToStation(long stationId, int recordNumber, boolean isAcceptOnlySigned, Long experimentId) {
+    public synchronized SequencesAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long experimentId) {
 
         // check and mark all completed features
         List<ExperimentFeature> fsTemp = experimentFeatureRepository.findAllForLaunchedExperiments( Enums.TaskExecState.STARTED.code);
@@ -341,12 +341,12 @@ public class ExperimentService {
 
         Slice<Task> seqs;
         if (experimentId!=null) {
-            seqs = taskRepository.findAllByStationIdIsNullAndFeatureIdAndExperimentId(PageRequest.of(0, recordNumber), feature.getId(), experimentId);
+            seqs = taskRepository.findAllByStationIdIsNullAndFeatureIdAndExperimentId(Consts.PAGE_REQUEST_1_REC, feature.getId(), experimentId);
         }
         else {
-            seqs = taskRepository.findAllByStationIdIsNullAndFeatureId(PageRequest.of(0, recordNumber), feature.getId());
+            seqs = taskRepository.findAllByStationIdIsNullAndFeatureId(Consts.PAGE_REQUEST_1_REC, feature.getId());
         }
-        List<Protocol.AssignedTask.Task> result = new ArrayList<>(recordNumber+1);
+        List<Protocol.AssignedTask.Task> result = new ArrayList<>(2);
         for (Task seq : seqs) {
             Protocol.AssignedTask.Task ss = new Protocol.AssignedTask.Task();
             ss.setTaskId(seq.getId());

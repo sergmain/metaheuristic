@@ -125,7 +125,8 @@ CREATE TABLE AIAI_LP_TASK (
   COMPLETED_ON   bigint,
   SNIPPET_EXEC_RESULTS  TEXT,
   METRICS      TEXT,
-  IS_ALL_SNIPPETS_OK  BOOLEAN not null default false
+  IS_ALL_SNIPPETS_OK  BOOLEAN not null default false,
+  TASK_ORDER   smallint not null
 );
 
 CREATE INDEX AIAI_LP_TASK_FEATURE_ID_IDX
@@ -179,5 +180,13 @@ CREATE TABLE AIAI_LP_FLOW (
   CODE      varchar(50)  NOT NULL,
   PARAMS        TEXT not null,
   INPUT_POOL_CODE  varchar(50) NOT NULL
+);
+
+CREATE TABLE AIAI_LP_FLOW_INSTANCE (
+  ID            SERIAL PRIMARY KEY,
+  VERSION       NUMERIC(5, 0)  NOT NULL,
+  FLOW_ID       NUMERIC(10, 0) NOT NULL,
+  IS_COMPLETED  BOOLEAN not null default false,
+  COMPLETED_ON  bigint
 );
 

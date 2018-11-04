@@ -37,8 +37,6 @@ import java.util.Objects;
 @Slf4j
 public class CommandProcessor {
 
-    public static final int MAX_SEQUENSE_POOL_SIZE = 10;
-
     private final LaunchpadService launchpadService;
 
     private final StationService stationService;
@@ -75,7 +73,7 @@ public class CommandProcessor {
                 return processReportStationStatus((Protocol.ReportStationStatus) command);
             case ReportTaskProcessingResult:
                 // processing on launchpad side
-                return processReportSequenceProcessingResult((Protocol.ReportTaskProcessingResult) command);
+                return processReportTaskProcessingResult((Protocol.ReportTaskProcessingResult) command);
             case ReportResultDelivering:
                 return processReportResultDelivering((Protocol.ReportResultDelivering) command);
             case ExperimentStatus:
@@ -105,13 +103,13 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processReportSequenceProcessingResult(Protocol.ReportTaskProcessingResult command) {
+    private Command[] processReportTaskProcessingResult(Protocol.ReportTaskProcessingResult command) {
         if (command.getResults().isEmpty()) {
             return Protocol.NOP_ARRAY;
         }
         final Protocol.ReportResultDelivering cmd1 = new Protocol.ReportResultDelivering(launchpadService.getExperimentService().storeAllResults(command.getResults()));
         // right now, sending new sequences with ReportResultDelivering doesn't work well.
-//        final Protocol.AssignedTask r = getAssignedTask(command.getStationId(), Math.min(MAX_SEQUENSE_POOL_SIZE, command.getResults().size()));
+//        final Protocol.AssignedTask r = assignTaskToStation(command.getStationId(), Math.min(MAX_SEQUENSE_POOL_SIZE, command.getResults().size()));
 
         return new Command[]{cmd1};
     }
@@ -142,15 +140,16 @@ public class CommandProcessor {
 
     private Command[] processRequestTask(Protocol.RequestTask command) {
         checkStationId(command);
-        Protocol.AssignedTask r = getAssignedTask(command.getStationId(), command.isAcceptOnlySigned(), MAX_SEQUENSE_POOL_SIZE);
+        Protocol.AssignedTask r = assignTaskToStation(command.getStationId(), command.isAcceptOnlySigned());
         return Protocol.asArray(r);
     }
 
-    private synchronized Protocol.AssignedTask getAssignedTask(String stationId, boolean isAcceptOnlySigned, int recordNumber) {
+    private synchronized Protocol.AssignedTask assignTaskToStation(String stationId, boolean isAcceptOnlySigned) {
         Protocol.AssignedTask r = new Protocol.AssignedTask();
-        ExperimentService.SequencesAndAssignToStationResult result = launchpadService.getExperimentService().getSequencesAndAssignToStation(
-                Long.parseLong(stationId), recordNumber, isAcceptOnlySigned, null
-        );
+        ExperimentService.SequencesAndAssignToStationResult result =
+                launchpadService.getExperimentService().getTaskAndAssignToStation(
+                        Long.parseLong(stationId), isAcceptOnlySigned, null
+                );
         r.tasks = result.getSimpleTasks();
         return r;
     }

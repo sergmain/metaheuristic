@@ -20,7 +20,7 @@ package aiai.ai.service;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.launchpad.beans.Dataset;
 import aiai.ai.launchpad.beans.Feature;
-import aiai.ai.launchpad.dataset.DatasetCache;
+import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.repositories.FeatureRepository;
 import org.junit.After;
 import org.junit.Before;

@@ -7,14 +7,8 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Profile("!launchpad")
-public class NullLaunchpadService implements LaunchpadService {
+public class FileProcessService implements ProcessService {
     @Override
-    public StationsRepository getStationsRepository() {
-        return null;
-    }
-
-    @Override
-    public ExperimentService getExperimentService() {
-        return null;
+    public void produceTasks(Process process) {
     }
 }

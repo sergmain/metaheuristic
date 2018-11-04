@@ -1,4 +1,4 @@
-package aiai.ai.yaml.flow;
+package aiai.ai.launchpad;
 
 import aiai.ai.Enums;
 import lombok.Data;

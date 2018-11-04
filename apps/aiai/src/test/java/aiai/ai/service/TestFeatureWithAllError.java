@@ -17,8 +17,7 @@
  */
 package aiai.ai.service;
 
-import aiai.ai.launchpad.beans.*;
-import aiai.ai.comm.CommandProcessor;
+import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -45,25 +44,25 @@ public class TestFeatureWithAllError extends TestFeature {
         log.info("checkCurrentState_with10sequences() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();
-        log.info("Start experimentService.getSequencesAndAssignToStation()");
+        log.info("Start experimentService.getTaskAndAssignToStation()");
         // this station already got sequences, so don't provide any new
-        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(
-                station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, false, experiment.getId());
-        log.info("experimentService.getSequencesAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
+        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
+                station.getId(), false, experiment.getId());
+        log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
         assertNotNull(sequences);
         // sequences is empty cos we still didn't finish those sequences
         assertTrue(sequences.getSimpleTasks().isEmpty());
 
         mills = System.currentTimeMillis();
         log.info("Start finishCurrentWithError()");
-        finishCurrentWithError(CommandProcessor.MAX_SEQUENSE_POOL_SIZE);
+        finishCurrentWithError(1);
         log.info("finishCurrentWithError() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();
-        log.info("Start experimentService.getSequencesAndAssignToStation()");
-        ExperimentService.SequencesAndAssignToStationResult sequences1 = experimentService.getSequencesAndAssignToStation(
-                station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, false, experiment.getId());
-        log.info("experimentService.getSequencesAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("Start experimentService.getTaskAndAssignToStation()");
+        ExperimentService.SequencesAndAssignToStationResult sequences1 = experimentService.getTaskAndAssignToStation(
+                station.getId(), false, experiment.getId());
+        log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(sequences1);
         mills = System.currentTimeMillis();

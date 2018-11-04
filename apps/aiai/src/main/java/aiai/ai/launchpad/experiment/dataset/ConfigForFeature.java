@@ -1,4 +1,4 @@
-package aiai.ai.launchpad.dataset;
+package aiai.ai.launchpad.experiment.dataset;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

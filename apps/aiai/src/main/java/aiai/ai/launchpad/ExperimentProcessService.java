@@ -9,13 +9,19 @@ import org.springframework.stereotype.Service;
 @Service
 @Getter
 @Profile("launchpad")
-public class RealLaunchpadService implements LaunchpadService{
+public class ExperimentProcessService implements ProcessService{
+
     private final StationsRepository stationsRepository;
     private final ExperimentService experimentService;
 
-    public RealLaunchpadService(StationsRepository stationsRepository, ExperimentService experimentService) {
+    public ExperimentProcessService(StationsRepository stationsRepository, ExperimentService experimentService) {
         this.stationsRepository = stationsRepository;
         this.experimentService = experimentService;
+    }
+
+    @Override
+    public void produceTasks(Process process) {
+
     }
 }
 

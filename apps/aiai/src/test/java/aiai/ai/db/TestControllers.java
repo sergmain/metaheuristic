@@ -19,7 +19,7 @@ package aiai.ai.db;
 
 import aiai.ai.launchpad.beans.LogData;
 import aiai.ai.launchpad.beans.Dataset;
-import aiai.ai.launchpad.dataset.DatasetCache;
+import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.repositories.DatasetRepository;
 import aiai.ai.launchpad.repositories.LogDataRepository;
 import org.junit.Assert;

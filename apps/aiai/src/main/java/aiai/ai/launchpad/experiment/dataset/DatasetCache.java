@@ -15,7 +15,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.launchpad.dataset;
+package aiai.ai.launchpad.experiment.dataset;
 
 import aiai.ai.launchpad.beans.Dataset;
 import aiai.ai.launchpad.beans.Feature;

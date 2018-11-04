@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.dataset;
+package aiai.ai.launchpad.experiment.dataset;
 
 import aiai.apps.commons.utils.Checksum;
 

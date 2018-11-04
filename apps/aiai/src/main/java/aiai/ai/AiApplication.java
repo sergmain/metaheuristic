@@ -28,9 +28,6 @@ import java.lang.management.ManagementFactory;
 @SpringBootApplication
 @Slf4j
 public class AiApplication {
-//    public static void main(String[] args) {
-//        SpringApplication.run(AiApplication.class, args);
-//    }
 
     // https://grokonez.com/java-integration/create-windows-service-spring-boot-application-procrun
 
@@ -39,9 +36,7 @@ public class AiApplication {
     public static void main(String[] args) {
         String mode = args != null && args.length > 0 ? args[0] : null;
 
-        if (log.isDebugEnabled()) {
-            log.debug("PID:" + ManagementFactory.getRuntimeMXBean().getName() + " Application mode:" + mode + " context:" + applicationContext);
-        }
+        log.debug("PID: {}, Application mode: {}, context: {}", ManagementFactory.getRuntimeMXBean().getName(), mode, applicationContext);
         if (applicationContext != null && "stop".equals(mode)) {
             System.exit(SpringApplication.exit(applicationContext, new ExitCodeGenerator() {
                 @Override
@@ -52,9 +47,7 @@ public class AiApplication {
         } else {
             SpringApplication app = new SpringApplication(AiApplication.class);
             applicationContext = app.run(args!=null ? args : new String[0]);
-            if (log.isDebugEnabled()) {
-                log.debug("PID:" + ManagementFactory.getRuntimeMXBean().getName() + " Application started context:" + applicationContext);
-            }
+            log.debug("PID: {}, Application started context: {}", ManagementFactory.getRuntimeMXBean().getName(), applicationContext);
         }
     }
 }

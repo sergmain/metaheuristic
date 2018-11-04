@@ -6,7 +6,7 @@ import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
-import aiai.ai.yaml.flow.Process;
+import aiai.ai.launchpad.Process;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;

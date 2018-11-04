@@ -15,10 +15,10 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.launchpad.feature;
+package aiai.ai.launchpad.experiment.feature;
 
 public enum FeatureExecStatus {
-    unknown(0, "Unknown"), ok(1, "Ok"), error(2, "All are errors"), empty(3, "No sequenses");
+    unknown(0, "Unknown"), ok(1, "Ok"), error(2, "All are errors"), empty(3, "No tasks");
 
     public final int code;
     public final String info;

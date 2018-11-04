@@ -19,16 +19,15 @@ package aiai.ai.service;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.comm.CommandProcessor;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.dataset.DatasetCache;
+import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
-import aiai.ai.launchpad.feature.FeatureExecStatus;
+import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.console.SnippetExec;
@@ -95,11 +94,12 @@ public abstract class TestFeature {
     private BinaryDataService binaryDataService;
 
     Station station = null;
+    Experiment experiment = null;
+    boolean isCorrectInit = true;
+
     private Dataset dataset = null;
-    protected Experiment experiment = null;
     private Snippet fitSnippet = null;
     private Snippet predictSnippet = null;
-    boolean isCorrectInit = true;
 
     @PostConstruct
     public void preapre_1() {
@@ -328,8 +328,8 @@ public abstract class TestFeature {
 
     protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
         assertEquals(sequences1Feature.experimentId, experiment.getId());
-        ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getSequencesAndAssignToStation(
-                station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, false, experiment.getId());
+        ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getTaskAndAssignToStation(
+                station.getId(), false, experiment.getId());
         assertNotNull(sequences2);
         assertTrue(sequences2.getSimpleTasks().isEmpty());
         assertNull(sequences2.getFeature());
@@ -346,15 +346,15 @@ public abstract class TestFeature {
         long mills;
 
         mills = System.currentTimeMillis();
-        log.info("Start experimentService.getSequencesAndAssignToStation()");
-        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getSequencesAndAssignToStation(
-                station.getId(), CommandProcessor.MAX_SEQUENSE_POOL_SIZE, false, experiment.getId());
-        log.info("experimentService.getSequencesAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("Start experimentService.getTaskAndAssignToStation()");
+        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
+                station.getId(), false, experiment.getId());
+        log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(sequences);
         assertNotNull(sequences.getFeature());
         assertNotNull(sequences.getSimpleTasks());
-        assertEquals(CommandProcessor.MAX_SEQUENSE_POOL_SIZE, sequences.getSimpleTasks().size());
+        assertEquals(1, sequences.getSimpleTasks().size());
         assertTrue(sequences.getFeature().isInProgress);
 
         mills = System.currentTimeMillis();

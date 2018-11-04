@@ -3,7 +3,7 @@ package aiai.ai.yaml;
 import aiai.ai.Enums;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
-import aiai.ai.yaml.flow.Process;
+import aiai.ai.launchpad.Process;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
