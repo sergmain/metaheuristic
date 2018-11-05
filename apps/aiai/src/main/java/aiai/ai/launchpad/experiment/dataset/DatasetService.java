@@ -10,7 +10,6 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.repositories.FeatureRepository;
-import aiai.ai.launchpad.repositories.DatasetPathRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetCode;
@@ -46,7 +45,6 @@ public class DatasetService {
     private static final String PRODUCE_FEATURE_YAML = "produce-feature.yaml";
     private static final String CONFIG_YAML = "config.yaml";
 
-    private final DatasetPathRepository pathRepository;
     private final Globals globals;
     private final BinaryDataService binaryDataService;
     private final SnippetRepository snippetRepository;
@@ -56,8 +54,7 @@ public class DatasetService {
     private final FeatureRepository featureRepository;
     private final ExecProcessService execProcessService;
 
-    public DatasetService(DatasetPathRepository pathRepository, Globals globals, BinaryDataService binaryDataService, SnippetRepository snippetRepository, SnippetService snippetService, EnvService envService, DatasetCache datasetCache, FeatureRepository featureRepository, ExecProcessService execProcessService) {
-        this.pathRepository = pathRepository;
+    public DatasetService(Globals globals, BinaryDataService binaryDataService, SnippetRepository snippetRepository, SnippetService snippetService, EnvService envService, DatasetCache datasetCache, FeatureRepository featureRepository, ExecProcessService execProcessService) {
         this.globals = globals;
         this.binaryDataService = binaryDataService;
         this.snippetRepository = snippetRepository;
@@ -79,7 +76,7 @@ public class DatasetService {
         ds.setFeatures(new ArrayList<>());
         ds.setLength(dataset.getLength());
         datasetCache.save(ds);
-        binaryDataService.cloneBinaryData(dataset.getId(), ds.getId(), Enums.BinaryDataType.DATASET);
+        binaryDataService.cloneBinaryData(dataset.getId(), ds.getId(), Enums.BinaryDataType.DATA);
 
         for (Feature feature : dataset.getFeatures()) {
             Feature dg = new Feature();
@@ -137,7 +134,7 @@ public class DatasetService {
         try {
             if (globals.isStoreDataToDb()) {
                 try (InputStream is = new FileInputStream(tempFile)) {
-                    binaryDataService.save(is, tempFile.length(), dp.getId(), Enums.BinaryDataType.RAW_PART);
+                    binaryDataService.save(is, tempFile.length(), dp.getId(), Enums.BinaryDataType.DATA);
                 }
             }
             if (globals.isStoreDataToDisk()) {
@@ -220,7 +217,7 @@ public class DatasetService {
 
         if (group.getFeatureStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
             try (InputStream is = new FileInputStream(configForFeature.featureFile)) {
-                binaryDataService.save(is, configForFeature.featureFile.length(), group.getId(), Enums.BinaryDataType.FEATURE);
+                binaryDataService.save(is, configForFeature.featureFile.length(), group.getId(), Enums.BinaryDataType.DATA);
             }
         }
     }
@@ -295,7 +292,7 @@ public class DatasetService {
 
         if (dataset.getRawAssemblingStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
             try (InputStream is = new FileInputStream(rawFile)) {
-                binaryDataService.save(is, rawFile.length(), dataset.getId(), Enums.BinaryDataType.ASSEMBLED_RAW);
+                binaryDataService.save(is, rawFile.length(), dataset.getId(), Enums.BinaryDataType.DATA);
             }
         }
 
@@ -326,7 +323,7 @@ public class DatasetService {
 
         if (dataset.getRawAssemblingStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
             try (InputStream is = new FileInputStream(datasetFile)) {
-                binaryDataService.save(is, datasetFile.length(), dataset.getId(), Enums.BinaryDataType.DATASET);
+                binaryDataService.save(is, datasetFile.length(), dataset.getId(), Enums.BinaryDataType.DATA);
             }
         }
 

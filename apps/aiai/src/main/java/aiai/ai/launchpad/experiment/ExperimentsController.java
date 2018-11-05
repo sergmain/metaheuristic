@@ -649,7 +649,7 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiments";
     }
 
-    @PostMapping("/experiment-sequence-rerun/{id}")
+    @PostMapping("/task-rerun/{id}")
     public @ResponseBody boolean rerunSequence(@PathVariable long id) {
         Task seq = taskRepository.findById(id).orElse(null);
         if (seq == null) {

@@ -321,14 +321,14 @@
             // console.log("Start rerunSequence()");
             my_confirm('Do you really want to re-run this sequnce?', 'Re-run sequence?', function() {
                 console.log("re-run was confirmet.");
-                $.post('/launchpad/experiment-sequence-rerun/' + id, function(status) {
-                    // console.log("experiment-sequence-rerun is finished, Status: " + status);
+                $.post('/launchpad/task-rerun/' + id, function(status) {
+                    // console.log("task-rerun is finished, Status: " + status);
                     if (status===true) {
-                        // console.log("experiment-sequence-rerun is finished, status " + status);
+                        // console.log("task-rerun is finished, status " + status);
                         my_alert('Sequence was prepared for re-run. You need update page to see changes', 'Status');
                     }
                     else {
-                        // console.log("experiment-sequence-rerun is finished, status " + status);
+                        // console.log("task-rerun is finished, status " + status);
                         my_alert('There is some problem with re-run this sequence. Status: '+status+'. Try to reload this page', 'Status');
                     }
                 });

@@ -24,9 +24,7 @@ import java.util.Map;
 
 @Data
 public class TaskParamYaml {
-    public List<SimpleResource> resources;
-    public List<SimpleSnippet> snippets;
+    public List<String> inputResourceCodes;
+    public SimpleSnippet snippet;
     public Map<String, String> hyperParams;
-
-    public String artifactPath;
 }

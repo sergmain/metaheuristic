@@ -16,5 +16,7 @@ public class Process {
     public boolean parallelExec;
 
     public String inputType;
+    public String inputResourceCode;
     public String outputType;
+    public String outputResourceCode;
 }

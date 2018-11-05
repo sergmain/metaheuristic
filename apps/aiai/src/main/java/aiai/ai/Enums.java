@@ -31,19 +31,12 @@ public final class Enums {
         }
     }
 
-    public enum BinaryDataType { DATASET(1), FEATURE(2), TEST(3), RAW_PART(4),
-        ASSEMBLED_RAW(5), SNIPPET(6, true), COMMON(7, true);
+    public enum BinaryDataType { DATA(1), SNIPPET(2), TEST(3);
 
         public int value;
-        public boolean idAsString;
-
-        BinaryDataType(int value, boolean idAsString) {
-            this.value = value;
-            this.idAsString = idAsString;
-        }
 
         BinaryDataType(int value) {
-            this(value, false);
+            this.value = value;
         }
     }
 

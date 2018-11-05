@@ -36,12 +36,12 @@ public class FlowInstance implements Serializable {
     private Integer version;
 
     @Column(name = "FLOW_ID")
-    private Long flowId;
+    public Long flowId;
 
     @Column(name = "IS_COMPLETED")
-    private boolean completed;
+    public boolean completed;
 
     @Column(name="COMPLETED_ON")
-    private long createdOn;
+    public long createdOn;
 
 }

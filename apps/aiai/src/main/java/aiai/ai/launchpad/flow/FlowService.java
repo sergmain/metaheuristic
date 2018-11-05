@@ -49,6 +49,7 @@ public class FlowService {
         SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR,
         PROCESS_CODE_NOT_FOUND_ERROR,
         TOO_MANY_SNIPPET_CODES_ERROR,
+        INPUT_CODE_NOT_SPECIFIED_ERROR,
     }
 
     public enum FlowProducingStatus { OK,

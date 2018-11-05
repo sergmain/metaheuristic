@@ -27,7 +27,6 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.repositories.FeatureRepository;
-import aiai.ai.launchpad.repositories.DatasetPathRepository;
 import aiai.ai.launchpad.repositories.DatasetRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
@@ -76,7 +75,6 @@ public class DatasetController {
     @ToString(exclude = {"dataset"})
     public static class DatasetDefinition {
         public Dataset dataset;
-        public List<DatasetPath> paths = new ArrayList<>();
         public String launchpadDirAsString;
         public String datasetDirAsString;
         public List<SimpleSelectOption> assemblyOptions;
@@ -116,18 +114,16 @@ public class DatasetController {
     private final DatasetService datasetService;
     private final DatasetRepository datasetRepository;
     private final FeatureRepository featureRepository;
-    private final DatasetPathRepository pathRepository;
     private final SnippetService snippetService;
     private final SnippetCache snippetCache;
     private final EnvService envService;
     private final DatasetCache datasetCache;
     private final BinaryDataService binaryDataService;
 
-    public DatasetController(Globals globals, DatasetRepository datasetRepository, FeatureRepository featureRepository, DatasetPathRepository pathRepository, ExecProcessService execProcessService, SnippetService snippetService, SnippetCache snippetCache, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, DatasetService datasetService) {
+    public DatasetController(Globals globals, DatasetRepository datasetRepository, FeatureRepository featureRepository, ExecProcessService execProcessService, SnippetService snippetService, SnippetCache snippetCache, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, DatasetService datasetService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.featureRepository = featureRepository;
-        this.pathRepository = pathRepository;
         this.snippetService = snippetService;
         this.snippetCache = snippetCache;
         this.envService = envService;
@@ -349,13 +345,13 @@ public class DatasetController {
                 if (datasetFile.exists()) {
                     datasetFile.delete();
                 }
-                binaryDataService.storeToFile(datasetId, Enums.BinaryDataType.DATASET, datasetFile);
+                binaryDataService.storeToFile(datasetId, Enums.BinaryDataType.DATA, datasetFile);
 
                 File rawFile = new File(globals.launchpadDir, dataset.asRawFilePath());
                 if (rawFile.exists()) {
                     rawFile.delete();
                 }
-                binaryDataService.storeToFile(datasetId, Enums.BinaryDataType.ASSEMBLED_RAW, rawFile);
+                binaryDataService.storeToFile(datasetId, Enums.BinaryDataType.DATA, rawFile);
             }
             final SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
             if (!snippetFile.file.exists()) {
@@ -437,7 +433,7 @@ public class DatasetController {
                 }
                 rawPartFile.delete();
                 try {
-                    binaryDataService.storeToFile(path.getId(), Enums.BinaryDataType.RAW_PART, rawPartFile);
+                    binaryDataService.storeToFile(path.getId(), Enums.BinaryDataType.DATA, rawPartFile);
                 } catch (BinaryDataNotFoundException e) {
                     isAllValid=false;
                     path.setValid(false);
@@ -488,7 +484,7 @@ public class DatasetController {
             if (rawFile.exists()) {
                 rawFile.delete();
             }
-            binaryDataService.storeToFile(dataset.getId(), Enums.BinaryDataType.ASSEMBLED_RAW, rawFile);
+            binaryDataService.storeToFile(dataset.getId(), Enums.BinaryDataType.DATA, rawFile);
         }
         final SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
         if (!snippetFile.file.exists()) {

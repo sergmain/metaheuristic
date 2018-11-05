@@ -31,7 +31,7 @@ import java.sql.Timestamp;
 @Data
 @EqualsAndHashCode(of = {"id", "version", "refId", "dataType"})
 public class BinaryData implements Serializable {
-    private static final long serialVersionUID = -6065599957629315147L;
+    private static final long serialVersionUID = 7768428475142175426L;
 
     public void setType(Enums.BinaryDataType binaryDataType) {
         this.dataType = binaryDataType.value;
@@ -50,9 +50,11 @@ public class BinaryData implements Serializable {
     @Column(name = "UPDATE_TS")
     private Timestamp updateTs;
 
+    @Column(name = "POOL_CODE")
+    private String poolCode;
+
     @Column(name = "DATA")
     @Lob
-//    @org.hibernate.annotations.Type(type="org.hibernate.type.BinaryType")
     private Blob data;
 
     @Column(name = "DATA_TYPE")

@@ -747,7 +747,7 @@ public class ExperimentService {
             final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
             final List<SimpleResource> simpleFeatureResources = Collections.unmodifiableList(
                     ofVariants.values.stream()
-                            .map(s -> SimpleResource.of(Enums.BinaryDataType.FEATURE, s))
+                            .map(s -> SimpleResource.of(Enums.BinaryDataType.DATA, s))
                             .collect(Collectors.toList()));
 
             Map<String, Snippet> localCache = new HashMap<>();
@@ -758,7 +758,7 @@ public class ExperimentService {
 
                 yaml.resources = new ArrayList<>();
                 yaml.resources.addAll(simpleFeatureResources);
-                yaml.resources.add(SimpleResource.of(Enums.BinaryDataType.DATASET, experiment.getDatasetId().toString()));
+                yaml.resources.add(SimpleResource.of(Enums.BinaryDataType.DATA, experiment.getDatasetId().toString()));
 
                 final List<SimpleSnippet> snippets = new ArrayList<>();
                 for (ExperimentSnippet experimentSnippet : experimentSnippets) {
@@ -786,17 +786,15 @@ public class ExperimentService {
                 }
                 yaml.snippets = snippets;
 
-                String sequenceParams = taskParamYamlUtils.toString(yaml);
+                String taskParams = taskParamYamlUtils.toString(yaml);
 
-                if (sequences.contains(sequenceParams)) {
+                if (sequences.contains(taskParams)) {
                     continue;
                 }
 
-                Task sequence = new Task();
-                sequence.setExperimentId(experiment.getId());
-                sequence.setParams(sequenceParams);
-                sequence.setExperimentFeatureId(feature.getId());
-                taskRepository.save(sequence);
+                Task task = new Task();
+                task.setParams(taskParams);
+                taskRepository.save(task);
                 isNew = true;
             }
             if (isNew) {

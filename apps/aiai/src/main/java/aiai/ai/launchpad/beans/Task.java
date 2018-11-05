@@ -35,12 +35,6 @@ public class Task implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "EXPERIMENT_ID")
-    public Long experimentId;
-
-    @Column(name = "FEATURE_ID")
-    public Long experimentFeatureId;
-
     @Column(name = "PARAMS")
     public String params;
 
