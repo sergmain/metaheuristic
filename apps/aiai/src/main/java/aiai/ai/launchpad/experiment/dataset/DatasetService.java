@@ -4,7 +4,7 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ArtifactStatus;
-import aiai.ai.core.ProcessService;
+import aiai.ai.core.ExecProcessService;
 import aiai.ai.exceptions.StoreNewPartOfRawFileException;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
@@ -54,9 +54,9 @@ public class DatasetService {
     private final EnvService envService;
     private final DatasetCache datasetCache;
     private final FeatureRepository featureRepository;
-    private final ProcessService processService;
+    private final ExecProcessService execProcessService;
 
-    public DatasetService(DatasetPathRepository pathRepository, Globals globals, BinaryDataService binaryDataService, SnippetRepository snippetRepository, SnippetService snippetService, EnvService envService, DatasetCache datasetCache, FeatureRepository featureRepository, ProcessService processService) {
+    public DatasetService(DatasetPathRepository pathRepository, Globals globals, BinaryDataService binaryDataService, SnippetRepository snippetRepository, SnippetService snippetService, EnvService envService, DatasetCache datasetCache, FeatureRepository featureRepository, ExecProcessService execProcessService) {
         this.pathRepository = pathRepository;
         this.globals = globals;
         this.binaryDataService = binaryDataService;
@@ -65,7 +65,7 @@ public class DatasetService {
         this.envService = envService;
         this.datasetCache = datasetCache;
         this.featureRepository = featureRepository;
-        this.processService = processService;
+        this.execProcessService = execProcessService;
     }
 
     void cloneDataset(Dataset dataset) throws SQLException {
@@ -333,7 +333,7 @@ public class DatasetService {
         obsoleteFeatures(dataset);
     }
 
-    ProcessService.Result runCommand(File yaml, String command, LogData.Type type, Long refId) {
+    ExecProcessService.Result runCommand(File yaml, String command, LogData.Type type, Long refId) {
 
         // https://examples.javacodegeeks.com/core-java/lang/processbuilder/java-lang-processbuilder-example/
         //
@@ -343,12 +343,12 @@ public class DatasetService {
             cmd.add(yaml.getPath());
             final File execDir = globals.launchpadDir.getCanonicalFile();
 
-            return processService.execCommand(type, refId, cmd, execDir);
+            return execProcessService.execCommand(type, refId, cmd, execDir);
 
         }
         catch (Exception e) {
             log.error("Error", e);
-            return new ProcessService.Result(false, -1, e.getMessage());
+            return new ExecProcessService.Result(false, -1, e.getMessage());
         }
     }
 

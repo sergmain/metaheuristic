@@ -20,7 +20,7 @@ package aiai.ai.launchpad.experiment.dataset;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.core.ProcessService;
+import aiai.ai.core.ExecProcessService;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.exceptions.StoreNewPartOfRawFileException;
 import aiai.ai.launchpad.beans.*;
@@ -123,7 +123,7 @@ public class DatasetController {
     private final DatasetCache datasetCache;
     private final BinaryDataService binaryDataService;
 
-    public DatasetController(Globals globals, DatasetRepository datasetRepository, FeatureRepository featureRepository, DatasetPathRepository pathRepository, ProcessService processService, SnippetService snippetService, SnippetCache snippetCache, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, DatasetService datasetService) {
+    public DatasetController(Globals globals, DatasetRepository datasetRepository, FeatureRepository featureRepository, DatasetPathRepository pathRepository, ExecProcessService execProcessService, SnippetService snippetService, SnippetCache snippetCache, EnvService envService, DatasetCache datasetCache, BinaryDataService binaryDataService, DatasetService datasetService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.featureRepository = featureRepository;
@@ -366,7 +366,7 @@ public class DatasetController {
 
             final File yaml = configForFeature.yamlFile;
             log.info("yaml file: {}", yaml.getPath());
-            final ProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.FEATURE, feature.getId());
+            final ExecProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.FEATURE, feature.getId());
             boolean isOk = result.isOk();
             datasetService.updateInfoWithFeature(configForFeature, feature, isOk);
             if (!isOk) {
@@ -458,7 +458,7 @@ public class DatasetController {
         String cmdLine = env.value+' '+ snippetFile.file.getAbsolutePath()+' '+dataset.getAssemblySnippet().params;
 
         final File yaml = datasetService.createConfigYaml(dataset);
-        final ProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.ASSEMBLING, dataset.getId());
+        final ExecProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.ASSEMBLING, dataset.getId());
         boolean isOk = result.isOk();
         datasetService.updateInfoWithRaw(dataset, isOk);
 
@@ -499,7 +499,7 @@ public class DatasetController {
         cmdLine = env.value+' '+ snippetFile.file.getAbsolutePath()+' '+ snippet.params;
 
         File yaml = datasetService.createConfigYaml(dataset);
-        final ProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.PRODUCING, dataset.getId());
+        final ExecProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.PRODUCING, dataset.getId());
         boolean isOk = result.isOk();
         datasetService.updateInfoWithDataset(dataset, isOk);
 

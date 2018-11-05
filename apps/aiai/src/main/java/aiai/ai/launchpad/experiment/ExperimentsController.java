@@ -20,7 +20,7 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ArtifactStatus;
-import aiai.ai.core.ProcessService;
+import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.env.EnvService;
@@ -202,8 +202,8 @@ public class ExperimentsController {
         Task sequence = taskRepository.findById(sequenceId).orElse(null);
         if (sequence!=null) {
             SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(sequence.getSnippetExecResults());
-            for (Map.Entry<Integer, ProcessService.Result> entry : snippetExec.getExecs().entrySet()) {
-                final ProcessService.Result value = entry.getValue();
+            for (Map.Entry<Integer, ExecProcessService.Result> entry : snippetExec.getExecs().entrySet()) {
+                final ExecProcessService.Result value = entry.getValue();
                 result.items.add( new ConsoleResult.SimpleConsoleOutput(entry.getKey(), value.exitCode, value.isOk, value.console));
             }
         }

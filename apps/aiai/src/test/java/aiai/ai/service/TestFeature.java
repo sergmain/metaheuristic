@@ -20,7 +20,7 @@ package aiai.ai.service;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ArtifactStatus;
-import aiai.ai.core.ProcessService;
+import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.dataset.DatasetCache;
@@ -375,7 +375,7 @@ public abstract class TestFeature {
             assertEquals(expectedSeqs, tasks.size());
         }
         for (Task task : tasks) {
-            ProcessService.Result result = new ProcessService.Result(false, -1, "This is sample console output");
+            ExecProcessService.Result result = new ExecProcessService.Result(false, -1, "This is sample console output");
             SnippetExec snippetExec = new SnippetExec();
             snippetExec.getExecs().put(1, result);
             String yaml = SnippetExecUtils.toString(snippetExec);
@@ -396,8 +396,8 @@ public abstract class TestFeature {
         }
         for (Task task : tasks) {
             SnippetExec snippetExec = new SnippetExec();
-            snippetExec.getExecs().put(1, new ProcessService.Result(true, 0, "This is sample console output. fit"));
-            snippetExec.getExecs().put(2, new ProcessService.Result(true, 0, "This is sample console output. predict"));
+            snippetExec.getExecs().put(1, new ExecProcessService.Result(true, 0, "This is sample console output. fit"));
+            snippetExec.getExecs().put(2, new ExecProcessService.Result(true, 0, "This is sample console output. predict"));
             String yaml = SnippetExecUtils.toString(snippetExec);
 
             SimpleSequenceExecResult sser = new SimpleSequenceExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));

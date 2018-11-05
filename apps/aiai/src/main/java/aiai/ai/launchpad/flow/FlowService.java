@@ -1,6 +1,9 @@
 package aiai.ai.launchpad.flow;
 
+import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.launchpad.experiment.ExperimentProcessService;
+import aiai.ai.launchpad.file_process.FileProcessService;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.repositories.FlowRepository;
@@ -22,10 +25,15 @@ public class FlowService {
     private final FlowRepository flowRepository;
     private final FlowYamlUtils flowYamlUtils;
 
-    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils) {
+    private final ExperimentProcessService experimentProcessService;
+    private final FileProcessService fileProcessService;
+
+    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService) {
         this.globals = globals;
         this.flowRepository = flowRepository;
         this.flowYamlUtils = flowYamlUtils;
+        this.experimentProcessService = experimentProcessService;
+        this.fileProcessService = fileProcessService;
     }
 
     public enum TaskProducingStatus { OK, VERIFY_ERROR, PRODUCING_ERROR }
@@ -38,6 +46,9 @@ public class FlowService {
         NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR,
         SNIPPET_NOT_FOUND_ERROR,
         FLOW_PARAMS_EMPTY_ERROR,
+        SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR,
+        PROCESS_CODE_NOT_FOUND_ERROR,
+        TOO_MANY_SNIPPET_CODES_ERROR,
     }
 
     public enum FlowProducingStatus { OK,
@@ -109,17 +120,40 @@ public class FlowService {
             if (process.parallelExec && process.snippetCodes.size()<2) {
                 return FlowVerifyStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
             }
+            if (process.type == Enums.ProcessType.EXPERIMENT) {
+                if (process.snippetCodes.size() > 0) {
+                    return FlowVerifyStatus.SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR;
+                }
+                if (StringUtils.isBlank(process.code)) {
+                    return FlowVerifyStatus.SNIPPET_NOT_FOUND_ERROR;
+                }
+            }
+            if (process.type== Enums.ProcessType.FILE_PROCESSING) {
+                if (!process.parallelExec && process.snippetCodes.size()>1) {
+                    return FlowVerifyStatus.TOO_MANY_SNIPPET_CODES_ERROR;
+                }
+            }
         }
-        
         return FlowVerifyStatus.OK;
     }
 
     private void produce(TaskProducingResult result, Flow flow) {
         result.flowYaml = flowYamlUtils.toFlowYaml(flow.getParams());
+        Process prev = null;
+        int idx = 0;
         for (Process process : result.flowYaml.getProcesses()) {
-            for (String snippetCode : process.snippetCodes) {
-
+            ++idx;
+            switch(process.type) {
+                case FILE_PROCESSING:
+                    fileProcessService.produceTasks(flow, prev, process, idx);
+                    break;
+                case EXPERIMENT:
+                    experimentProcessService.produceTasks(flow, prev, process, idx);
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown process type");
             }
+            prev = process;
         }
     }
 }

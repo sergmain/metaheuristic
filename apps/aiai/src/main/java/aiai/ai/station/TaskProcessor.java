@@ -21,7 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
-import aiai.ai.core.ProcessService;
+import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.LogData;
 import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.utils.DigitUtils;
@@ -52,7 +52,7 @@ public class TaskProcessor {
 
     private final Globals globals;
 
-    private final ProcessService processService;
+    private final ExecProcessService execProcessService;
     private final StationService stationService;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final StationTaskService stationTaskService;
@@ -63,9 +63,9 @@ public class TaskProcessor {
 //    private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
 //    private Map<String, SnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
-    public TaskProcessor(Globals globals, ProcessService processService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState) {
+    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState) {
         this.globals = globals;
-        this.processService = processService;
+        this.execProcessService = execProcessService;
         this.stationService = stationService;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.stationTaskService = stationTaskService;
@@ -195,7 +195,7 @@ public class TaskProcessor {
                     cmd.add(assetFile.file.getAbsolutePath());
 
                     final File execDir = paramFile.getParentFile();
-                    ProcessService.Result result = processService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, task.getTaskId(), cmd, execDir);
+                    ExecProcessService.Result result = execProcessService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, task.getTaskId(), cmd, execDir);
                     stationTaskService.storeExecResult(task.getTaskId(), snippet, result, artifactDir);
                     if (!result.isOk()) {
                         break;
@@ -232,7 +232,7 @@ public class TaskProcessor {
         if (snippetExec ==null) {
             return false;
         }
-        final ProcessService.Result result = snippetExec.execs.get(snippet.order);
+        final ExecProcessService.Result result = snippetExec.execs.get(snippet.order);
         return result!=null && !result.isOk();
     }
 

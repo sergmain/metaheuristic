@@ -21,7 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
-import aiai.ai.core.ProcessService;
+import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
@@ -414,7 +414,7 @@ public class ExperimentService {
             snippetService.sortSnippetsByOrder(experimentSnippets);
             boolean isAllOk = true;
             for (ExperimentSnippet snippet : experimentSnippets) {
-                ProcessService.Result r = snippetExec.getExecs().get(snippet.getOrder());
+                ExecProcessService.Result r = snippetExec.getExecs().get(snippet.getOrder());
                 if (r==null || !r.isOk()) {
                     isAllOk = false;
                     break;

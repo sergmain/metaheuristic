@@ -20,7 +20,7 @@ package aiai.ai.station;
 import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
-import aiai.ai.core.ProcessService;
+import aiai.ai.core.ExecProcessService;
 import aiai.ai.utils.DigitUtils;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
@@ -174,7 +174,7 @@ public class StationTaskService {
         return true;
     }
 
-    void storeExecResult(Long taskId, SimpleSnippet snippet, ProcessService.Result result, File artifactDir) {
+    void storeExecResult(Long taskId, SimpleSnippet snippet, ExecProcessService.Result result, File artifactDir) {
         log.info("storeExecResult(taskId: {}, snippetOrder: {})", taskId, snippet.order);
         StationTask seqTemp = findById(taskId);
         if (seqTemp == null) {

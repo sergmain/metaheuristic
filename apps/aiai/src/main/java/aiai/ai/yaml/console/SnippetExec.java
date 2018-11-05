@@ -17,12 +17,12 @@
  */
 package aiai.ai.yaml.console;
 
-import aiai.ai.core.ProcessService;
+import aiai.ai.core.ExecProcessService;
 import lombok.Data;
 
 import java.util.LinkedHashMap;
 
 @Data
 public class SnippetExec {
-    public LinkedHashMap<Integer, ProcessService.Result > execs = new LinkedHashMap<>();
+    public LinkedHashMap<Integer, ExecProcessService.Result > execs = new LinkedHashMap<>();
 }

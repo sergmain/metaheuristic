@@ -17,7 +17,7 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.core.ProcessService;
+import aiai.ai.core.ExecProcessService;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import org.junit.Assert;
@@ -35,8 +35,8 @@ public class TestSnippetExec {
     @Test
     public void testMarshaling() {
         SnippetExec output = new SnippetExec();
-        output.execs.put(1, new ProcessService.Result(true, 0, "output#1"));
-        output.execs.put(2, new ProcessService.Result(true, 0, "output#2"));
+        output.execs.put(1, new ExecProcessService.Result(true, 0, "output#1"));
+        output.execs.put(2, new ExecProcessService.Result(true, 0, "output#2"));
 
         String yaml = SnippetExecUtils.toString(output);
         SnippetExec output1 = SnippetExecUtils.toSnippetExec(yaml);
