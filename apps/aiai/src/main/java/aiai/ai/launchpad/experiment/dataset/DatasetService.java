@@ -5,19 +5,14 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ExecProcessService;
-import aiai.ai.exceptions.StoreNewPartOfRawFileException;
-import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.beans.Dataset;
+import aiai.ai.launchpad.beans.Feature;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.repositories.FeatureRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
-import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.StrUtils;
-import aiai.ai.yaml.config.DatasetPreparingConfig;
-import aiai.ai.yaml.config.DatasetPreparingConfigUtils;
-import aiai.apps.commons.utils.DirUtils;
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -30,10 +25,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -88,14 +81,10 @@ public class DatasetService {
             datasetCache.saveGroup(dg);
         }
 
-        for (DatasetPath path : pathRepository.findByDataset(dataset)) {
-            File file = new File(globals.launchpadDir, path.getPath());
-            storeNewPartOfRawFile(new File(path.getPath()).getName(), ds, file, false);
-        }
     }
 
+/*
     void storeNewPartOfRawFile(String originFilename, Dataset dataset, File tempFile, boolean isUsePrefix) {
-        List<DatasetPath> paths = pathRepository.findByDataset(dataset);
 
         //noinspection ConstantConditions
         final String path = String.format("%s%c%06d%craws", Consts.DATASET_DIR, File.separatorChar, dataset.getId(), File.separatorChar);
@@ -144,7 +133,9 @@ public class DatasetService {
             throw new StoreNewPartOfRawFileException(tempFile.getPath(), datasetFile.getPath());
         }
     }
+*/
 
+/*
     DatasetController.DatasetDefinition prepareDatasetDefinition(Dataset dataset) {
         // path variable is for informing user about directory structure
         final String path = String.format("<Launchpad directory>%c%s%c%06d", File.separatorChar, Consts.DATASET_DIR, File.separatorChar, dataset.getId());
@@ -189,9 +180,9 @@ public class DatasetService {
         }
         return definition;
     }
+*/
 
     void addEmptyFeature(Dataset dataset) {
-//        List<Feature> features = featureRepository.findByDataset_Id(id);
         List<Feature> features = dataset.getFeatures();
         //noinspection ConstantConditions
         int featureOrder = features.isEmpty() ? 1 : features.stream().mapToInt(Feature::getFeatureOrder).max().getAsInt() + 1;
@@ -330,7 +321,7 @@ public class DatasetService {
         obsoleteFeatures(dataset);
     }
 
-    ExecProcessService.Result runCommand(File yaml, String command, LogData.Type type, Long refId) {
+    ExecProcessService.Result runCommand(File yaml, String command) {
 
         // https://examples.javacodegeeks.com/core-java/lang/processbuilder/java-lang-processbuilder-example/
         //
@@ -340,7 +331,7 @@ public class DatasetService {
             cmd.add(yaml.getPath());
             final File execDir = globals.launchpadDir.getCanonicalFile();
 
-            return execProcessService.execCommand(type, refId, cmd, execDir);
+            return execProcessService.execCommand(cmd, execDir);
 
         }
         catch (Exception e) {
@@ -349,6 +340,7 @@ public class DatasetService {
         }
     }
 
+/*
     File createConfigYaml(Dataset dataset) throws IOException {
         final String path = String.format("%s%c%06d", Consts.DATASET_DIR, File.separatorChar, dataset.getId());
         final File datasetDefDir = new File(globals.launchpadDir, path);
@@ -401,4 +393,5 @@ public class DatasetService {
 
         return new File(path, CONFIG_YAML);
     }
+*/
 }

@@ -21,13 +21,15 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
-import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.exceptions.StoreNewPartOfRawFileException;
-import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.beans.Dataset;
+import aiai.ai.launchpad.beans.Env;
+import aiai.ai.launchpad.beans.Feature;
+import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.env.EnvService;
-import aiai.ai.launchpad.repositories.FeatureRepository;
 import aiai.ai.launchpad.repositories.DatasetRepository;
+import aiai.ai.launchpad.repositories.FeatureRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetUtils;
@@ -89,19 +91,8 @@ public class DatasetController {
             this.datasetDirAsString = datasetDirAsString;
         }
         public boolean canBeLocked() {
-            boolean state = dataset.isLocked() || dataset.getAssemblySnippet()==null ||
-                    dataset.getDatasetSnippet()==null || dataset.getFeatures().isEmpty() ||
-                    paths.isEmpty();
-            if (!state) {
-                return false;
-            }
-
-            for (Feature feature : dataset.getFeatures()) {
-                if (feature.getSnippet()==null) {
-                    return false;
-                }
-            }
-            return true;
+            // TODO this method has to be deleted in the future
+            return false;
         }
     }
 
@@ -214,7 +205,9 @@ public class DatasetController {
             redirectAttributes.addFlashAttribute("errorMessage", "#174.01 dataset wasn't found, datasetId: " + datasetId);
             return "redirect:/launchpad/datasets";
         }
-        final DatasetDefinition definition = datasetService.prepareDatasetDefinition(dataset);
+        if (true) throw new IllegalStateException("Not implemented yet");
+        DatasetDefinition definition = null;
+//        final DatasetDefinition definition = datasetService.prepareDatasetDefinition(dataset);
 
         model.addAttribute("result", definition);
         return "launchpad/dataset-definition";
@@ -362,7 +355,7 @@ public class DatasetController {
 
             final File yaml = configForFeature.yamlFile;
             log.info("yaml file: {}", yaml.getPath());
-            final ExecProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.FEATURE, feature.getId());
+            final ExecProcessService.Result result = datasetService.runCommand(yaml, cmdLine);
             boolean isOk = result.isOk();
             datasetService.updateInfoWithFeature(configForFeature, feature, isOk);
             if (!isOk) {
@@ -420,6 +413,8 @@ public class DatasetController {
             redirectAttributes.addFlashAttribute("errorMessage", "#103.01 Environment definition wasn't found for assembly snippet. Requested environment: " + dataset.getAssemblySnippet().getEnv());
             return "redirect:/launchpad/dataset-definition/" + dataset.getId();
         }
+        if (true) throw new IllegalStateException("Not implemented yet");
+/*
 
         File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
         if (!globals.isStoreDataToDisk()) {
@@ -454,15 +449,21 @@ public class DatasetController {
         String cmdLine = env.value+' '+ snippetFile.file.getAbsolutePath()+' '+dataset.getAssemblySnippet().params;
 
         final File yaml = datasetService.createConfigYaml(dataset);
-        final ExecProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.ASSEMBLING, dataset.getId());
+        final ExecProcessService.Result result = datasetService.runCommand(yaml, cmdLine);
         boolean isOk = result.isOk();
         datasetService.updateInfoWithRaw(dataset, isOk);
+*/
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
     }
 
     @PostMapping(value = "/dataset-run-producing-commit")
     public String runProducingOfDatasetFile(Long id, final RedirectAttributes redirectAttributes) throws IOException {
+        if (true) throw new IllegalStateException("Not implemented yet");
+        // TODO change code for using aiai_lp_data table
+        return "redirect:/launchpad/datasets";
+
+/*
         Dataset dataset = datasetCache.findById(id);
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#190.01 dataset wasn't found, datasetId: " + id);
@@ -495,11 +496,12 @@ public class DatasetController {
         cmdLine = env.value+' '+ snippetFile.file.getAbsolutePath()+' '+ snippet.params;
 
         File yaml = datasetService.createConfigYaml(dataset);
-        final ExecProcessService.Result result = datasetService.runCommand(yaml, cmdLine, LogData.Type.PRODUCING, dataset.getId());
+        final ExecProcessService.Result result = datasetService.runCommand(yaml, cmdLine);
         boolean isOk = result.isOk();
         datasetService.updateInfoWithDataset(dataset, isOk);
 
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+*/
     }
 
     private static final Random r = new Random();
@@ -536,7 +538,8 @@ public class DatasetController {
         }
 
         try {
-            datasetService.storeNewPartOfRawFile(originFilename, dataset, tempFile, true);
+            if (true) throw new IllegalStateException("Not implemented yet");
+//            datasetService.storeNewPartOfRawFile(originFilename, dataset, tempFile, true);
         } catch (StoreNewPartOfRawFileException e) {
             log.error("Error", e);
             redirectAttributes.addFlashAttribute("errorMessage", "#172.04 An error while saving data to file, " + e.toString());
@@ -577,13 +580,16 @@ public class DatasetController {
             redirectAttributes.addFlashAttribute("errorMessage", "#182.01 dataset wasn't found, datasetId: " + id);
             return "redirect:/launchpad/experiments";
         }
-        pathRepository.deleteByDataset(dataset);
         datasetCache.delete(id);
         return "redirect:/launchpad/datasets";
     }
 
     @GetMapping("/dataset-path-delete/{id}")
     public String deletePath(@PathVariable Long id) {
+        if (true) throw new IllegalStateException("Not implemented yet");
+        // TODO change code for using aiai_lp_data table
+        return "redirect:/launchpad/datasets";
+/*
         final Optional<DatasetPath> value = pathRepository.findById(id);
         if (!value.isPresent()) {
             return "redirect:/launchpad/datasets";
@@ -592,10 +598,15 @@ public class DatasetController {
         Dataset dataset = path.getDataset();
         pathRepository.delete(path);
         return "redirect:/launchpad/dataset-definition/" + dataset.getId();
+*/
     }
 
     @GetMapping("/dataset-path-delete-all-not-valid/{id}")
     public String deleteAllNotValidPath(@PathVariable("id") Long datasetId, final RedirectAttributes redirectAttributes) {
+        if (true) throw new IllegalStateException("Not implemented yet");
+        // TODO change code for using aiai_lp_data table
+        return "redirect:/launchpad/datasets";
+/*
         Dataset dataset = datasetCache.findById(datasetId);
         if (dataset == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#183.01 dataset wasn't found, datasetId: " + datasetId);
@@ -608,6 +619,7 @@ public class DatasetController {
             }
         }
         return "redirect:/launchpad/dataset-definition/" + datasetId;
+*/
     }
 
     private static boolean checkExtension(String filename) {

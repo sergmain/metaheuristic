@@ -249,14 +249,12 @@ public abstract class TestFeature {
             ExperimentSnippet es1 = new ExperimentSnippet();
             es1.setRefId(experiment.getId());
             es1.setTaskType(Enums.TaskType.Experiment.code);
-            es1.setOrder(1);
             es1.setType(SnippetType.fit.toString());
             es1.setSnippetCode(fitSnippet.getSnippetCode());
 
             ExperimentSnippet es2 = new ExperimentSnippet();
             es2.setRefId(experiment.getId());
             es2.setTaskType(Enums.TaskType.Experiment.code);
-            es2.setOrder(2);
             es2.setType(SnippetType.predict.toString());
             es2.setSnippetCode(predictSnippet.getSnippetCode());
 
@@ -285,7 +283,8 @@ public abstract class TestFeature {
             mills = System.currentTimeMillis();
             log.info("Start experimentService.produceTasks()");
             // produce sequences
-            experimentService.produceTasks(experiment);
+            List<String> codes = new ArrayList<>();
+            experimentService.produceTasks(experiment, codes);
             log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
             // some global final check
@@ -377,7 +376,7 @@ public abstract class TestFeature {
         for (Task task : tasks) {
             ExecProcessService.Result result = new ExecProcessService.Result(false, -1, "This is sample console output");
             SnippetExec snippetExec = new SnippetExec();
-            snippetExec.getExecs().put(1, result);
+            snippetExec.setExec(result);
             String yaml = SnippetExecUtils.toString(snippetExec);
 
             SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
@@ -396,8 +395,7 @@ public abstract class TestFeature {
         }
         for (Task task : tasks) {
             SnippetExec snippetExec = new SnippetExec();
-            snippetExec.getExecs().put(1, new ExecProcessService.Result(true, 0, "This is sample console output. fit"));
-            snippetExec.getExecs().put(2, new ExecProcessService.Result(true, 0, "This is sample console output. predict"));
+            snippetExec.setExec( new ExecProcessService.Result(true, 0, "This is sample console output. fit"));
             String yaml = SnippetExecUtils.toString(snippetExec);
 
             SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));

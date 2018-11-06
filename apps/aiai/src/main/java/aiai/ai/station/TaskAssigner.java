@@ -17,13 +17,12 @@
  */
 package aiai.ai.station;
 
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.station.actors.DownloadResourceActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.station.tasks.DownloadSnippetTask;
-import aiai.ai.yaml.sequence.SimpleResource;
-import aiai.ai.yaml.sequence.SimpleSnippet;
 import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import aiai.ai.yaml.station.StationTask;
@@ -73,17 +72,15 @@ public class TaskAssigner {
                 continue;
             }
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
-            if (taskParamYaml.resources.isEmpty()) {
+            if (taskParamYaml.inputResourceCodes.isEmpty()) {
                 log.warn("taskParamYaml.resources is empty\n{}", task.getParams());
                 continue;
             }
 
-            for (SimpleResource resource : taskParamYaml.resources) {
-                downloadResourceActor.add(new DownloadResourceTask(resource.id, resource.binaryDataType));
+            for (String code : taskParamYaml.inputResourceCodes) {
+                downloadResourceActor.add(new DownloadResourceTask(code, Enums.BinaryDataType.DATA));
             }
-            for (SimpleSnippet snippet : taskParamYaml.getSnippets()) {
-                downloadSnippetActor.add(new DownloadSnippetTask(snippet.code, snippet.filename, snippet.checksum));
-            }
+            downloadSnippetActor.add(new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum));
         }
     }
 }

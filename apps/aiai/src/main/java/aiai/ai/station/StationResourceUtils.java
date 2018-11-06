@@ -18,7 +18,6 @@
 package aiai.ai.station;
 
 import aiai.ai.Enums;
-import aiai.ai.utils.DigitUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
@@ -32,6 +31,8 @@ public class StationResourceUtils {
 
         File typeDir = new File(stationResourceDir, binaryDataType.toString());
         String subDir;
+        subDir = id.replace(':', '_');
+/*
         if (binaryDataType.idAsString) {
             subDir = id.replace(':', '_');
         }
@@ -39,6 +40,7 @@ public class StationResourceUtils {
             DigitUtils.Power power = DigitUtils.getPower(Long.parseLong(id));
             subDir = "" + power.power7 + File.separatorChar + power.power4 + File.separatorChar;
         }
+*/
         File trgDir;
         trgDir = new File(typeDir, subDir);
         if (!trgDir.mkdirs()) {

@@ -25,7 +25,6 @@ import org.junit.Test;
 
 public class TestSnippetExec {
 
-
     @Test
     public void testEmptyString() {
         Assert.assertNull(SnippetExecUtils.toSnippetExec(""));
@@ -35,8 +34,7 @@ public class TestSnippetExec {
     @Test
     public void testMarshaling() {
         SnippetExec output = new SnippetExec();
-        output.execs.put(1, new ExecProcessService.Result(true, 0, "output#1"));
-        output.execs.put(2, new ExecProcessService.Result(true, 0, "output#2"));
+        output.exec = new ExecProcessService.Result(true, 0, "output#1");
 
         String yaml = SnippetExecUtils.toString(output);
         SnippetExec output1 = SnippetExecUtils.toSnippetExec(yaml);
