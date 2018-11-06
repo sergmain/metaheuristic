@@ -40,5 +40,5 @@ public class StationTask {
 
     public boolean delivered;
 
-    public String snippetExecResults;
+    public String snippetExecResult;
 }

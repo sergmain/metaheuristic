@@ -41,7 +41,7 @@ public class Checksum {
     }
 
     public enum Type {
-        MD5(false), SHA256(false), SHA256WithSign(true);
+        MD5(false), SHA256(false), SHA256WithSignature(true);
 
         public boolean isSign;
 
@@ -65,7 +65,7 @@ public class Checksum {
                     return DigestUtils.md5Hex(inputStream);
                 case SHA256:
                     return DigestUtils.sha256Hex(inputStream);
-                case SHA256WithSign:
+                case SHA256WithSignature:
                     throw new IllegalStateException("Shouldn't be created here. Use external methods");
                 default:
                     throw new IllegalStateException("Not implemented: " + this);

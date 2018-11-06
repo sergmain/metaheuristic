@@ -17,6 +17,7 @@
  */
 package aiai.apps.commons.yaml.snippet;
 
+import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
@@ -28,6 +29,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+@Slf4j
 public class SnippetsConfigUtils {
 
     private static Yaml yaml;
@@ -63,18 +65,8 @@ public class SnippetsConfigUtils {
             return yaml.load(fis);
         }
         catch (IOException e) {
-            e.printStackTrace();
+            log.error("Error", e);
             throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
         }
    }
-
-/*
-    public static SnippetsConfig loadSnippetYaml(InputStream is) {
-
-        Yaml yaml = new Yaml(new Constructor(SnippetsConfig.class));
-
-        SnippetsConfig config = yaml.load(is);
-        return config;
-    }
-*/
 }

@@ -18,7 +18,7 @@
 package aiai.ai.comm;
 
 import aiai.ai.Enums;
-import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
+import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -197,7 +197,7 @@ public class Protocol {
     @EqualsAndHashCode(callSuper = false)
     @Data
     public static class ReportTaskProcessingResult extends Command {
-        private List<SimpleSequenceExecResult> results = new ArrayList<>();
+        private List<SimpleTaskExecResult> results = new ArrayList<>();
 
         public ReportTaskProcessingResult() {
             this.setType(Type.ReportTaskProcessingResult);

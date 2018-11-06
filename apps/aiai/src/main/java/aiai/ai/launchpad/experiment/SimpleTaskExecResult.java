@@ -24,8 +24,8 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SimpleSequenceExecResult {
-    public long sequenceId;
+public class SimpleTaskExecResult {
+    public long taskId;
     public String result;
     public String metrics;
 }

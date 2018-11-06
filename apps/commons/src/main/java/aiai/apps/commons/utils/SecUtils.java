@@ -28,7 +28,7 @@ import java.security.spec.X509EncodedKeySpec;
 
 public class SecUtils {
 
-    public static final String SIGN_DELIMITER = "###";
+    public static final String SIGNATURE_DELIMITER = "###";
 
     public static String getSignature(String data, PrivateKey privateKey) throws GeneralSecurityException {
         return getSignature(data, privateKey, false);

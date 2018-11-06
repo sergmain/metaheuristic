@@ -33,7 +33,6 @@ import aiai.ai.yaml.station.StationTaskUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -129,23 +128,8 @@ public class StationTaskService {
         if (taskTemp == null) {
             log.error("StationTask wasn't found for Id " + taskId);
         } else {
-            if (StringUtils.isBlank(taskTemp.getSnippetExecResults())) {
-                taskTemp.setSnippetExecResults(SnippetExecUtils.toString(new SnippetExec()));
-                save(taskTemp);
-            }
-            else {
-                SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(taskTemp.getSnippetExecResults());
-                final int execSize = snippetExec.getExecs().size();
-                if (taskParamYaml.getSnippets().size() != execSize) {
-                    // if last exec Ok?
-                    if (snippetExec.getExecs().get(execSize).isOk()) {
-                        log.warn("Don't mark this experimentSequence as finished because not all snippets were processed");
-                        return;
-                    }
-                }
-                taskTemp.setFinishedOn(System.currentTimeMillis());
-                save(taskTemp);
-            }
+            taskTemp.setSnippetExecResult(SnippetExecUtils.toString(new SnippetExec()));
+            save(taskTemp);
         }
     }
 
@@ -153,7 +137,7 @@ public class StationTaskService {
         log.warn(es);
         seq.setLaunchedOn(System.currentTimeMillis());
         seq.setFinishedOn(System.currentTimeMillis());
-        seq.setSnippetExecResults(es);
+        seq.setSnippetExecResult(es);
         save(seq);
     }
 
@@ -175,7 +159,7 @@ public class StationTaskService {
     }
 
     void storeExecResult(Long taskId, SimpleSnippet snippet, ExecProcessService.Result result, File artifactDir) {
-        log.info("storeExecResult(taskId: {}, snippetOrder: {})", taskId, snippet.order);
+        log.info("storeExecResult(taskId: {}, snippet code: {})", taskId, snippet.code);
         StationTask seqTemp = findById(taskId);
         if (seqTemp == null) {
             log.error("StationTask wasn't found for Id " + taskId);
@@ -201,13 +185,13 @@ public class StationTaskService {
                 }
                 seqTemp.setMetrics(MetricsUtils.toString(metrics));
             }
-            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResults());
+            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(seqTemp.getSnippetExecResult());
             if (snippetExec==null) {
                 snippetExec = new SnippetExec();
             }
-            snippetExec.getExecs().put(snippet.order, result);
+            snippetExec.setExec(result);
             String yaml = SnippetExecUtils.toString(snippetExec);
-            seqTemp.setSnippetExecResults(yaml);
+            seqTemp.setSnippetExecResult(yaml);
             save(seqTemp);
         }
     }

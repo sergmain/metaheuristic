@@ -21,7 +21,7 @@ package aiai.ai.station;
 import aiai.ai.Globals;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.comm.*;
-import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
+import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -168,7 +168,7 @@ public class LaunchpadRequester {
         }
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask seq : list) {
-            command.getResults().add(new SimpleSequenceExecResult(seq.getTaskId(), seq.getSnippetExecResults(), seq.getMetrics()));
+            command.getResults().add(new SimpleTaskExecResult(seq.getTaskId(), seq.getSnippetExecResult(), seq.getMetrics()));
             seq.setReported(true);
             seq.setReportedOn(System.currentTimeMillis());
         }

@@ -22,17 +22,12 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
-import aiai.ai.launchpad.beans.LogData;
 import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.utils.DigitUtils;
-import aiai.ai.yaml.console.SnippetExec;
-import aiai.ai.yaml.console.SnippetExecUtils;
-import aiai.ai.yaml.sequence.SimpleResource;
 import aiai.ai.yaml.sequence.SimpleSnippet;
 import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import aiai.ai.yaml.station.StationTask;
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -59,9 +54,6 @@ public class TaskProcessor {
     private final CurrentExecState currentExecState;
 
     private Map<Enums.BinaryDataType, Map<String, AssetFile>> resourceReadyMap = new HashMap<>();
-//    private Map<Long, AssetFile> isDatasetReady = new HashMap<>();
-//    private Map<Long, AssetFile> isFeatureReady = new HashMap<>();
-//    private Map<String, SnippetUtils.SnippetFile> isSnippetsReady = new HashMap<>();
 
     public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState) {
         this.globals = globals;
@@ -112,25 +104,25 @@ public class TaskProcessor {
             }
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean isResourcesOk = true;
-            for (SimpleResource resource : taskParamYaml.resources) {
-                AssetFile assetFile= getResource(resource.binaryDataType, resource.id);
+            for (String resourceCode : taskParamYaml.inputResourceCodes) {
+                AssetFile assetFile= getResource(Enums.BinaryDataType.DATA, resourceCode);
                 if (assetFile == null) {
-                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, resource.binaryDataType, resource.id);
+                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.DATA, resourceCode);
                     // is this resource prepared?
                     if (assetFile.isError || !assetFile.isContent) {
                         log.info("Resource hasn't been prepared yet, {}", assetFile);
                         isResourcesOk = false;
                         continue;
                     }
-                    putResource(resource.binaryDataType, resource.id, assetFile);
+                    putResource(Enums.BinaryDataType.DATA, resourceCode, assetFile);
                 }
             }
             if (!isResourcesOk) {
                 continue;
             }
 
-            if (taskParamYaml.snippets.isEmpty()) {
-                stationTaskService.finishAndWriteToLog(task, "Broken task. List of snippets is empty");
+            if (taskParamYaml.snippet==null) {
+                stationTaskService.finishAndWriteToLog(task, "Broken task. Snippet isn't defined");
                 continue;
             }
 
@@ -142,85 +134,73 @@ public class TaskProcessor {
                 continue;
             }
 
-            // at this point dataset and all features have to be downloaded from server
+            // at this point all required resources have to be downloaded from server
 
             taskParamYaml.artifactPath = artifactDir.getAbsolutePath();
-            if (!initAllPaths(globals.stationResourcesDir, taskParamYaml) ){
-                log.warn("Some resource files wasn't initialized. Can't execute the task {}", task);
-            }
             final String params = taskParamYamlUtils.toString(taskParamYaml);
 
             task.setLaunchedOn(System.currentTimeMillis());
             task = stationTaskService.save(task);
-            for (SimpleSnippet snippet : taskParamYaml.getSnippets()) {
-                AssetFile assetFile= getResource(Enums.BinaryDataType.SNIPPET, snippet.code);
-                if (assetFile == null) {
-                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.SNIPPET, snippet.code);
-                    // is this snippet prepared?
-                    if (assetFile.isError || !assetFile.isContent) {
-                        log.info("Resource hasn't been prepared yet, {}", assetFile);
-                        isResourcesOk = false;
-                        continue;
-                    }
+            SimpleSnippet snippet = taskParamYaml.getSnippet();
+            AssetFile assetFile= getResource(Enums.BinaryDataType.SNIPPET, snippet.code);
+            if (assetFile == null) {
+                assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.SNIPPET, snippet.code);
+                // is this snippet prepared?
+                if (assetFile.isError || !assetFile.isContent) {
+                    log.info("Resource hasn't been prepared yet, {}", assetFile);
+                    isResourcesOk = false;
+                }
+                else {
                     putResource(Enums.BinaryDataType.SNIPPET, snippet.code, assetFile);
                 }
-                if (!isResourcesOk) {
-                    continue;
-                }
+            }
+            if (!isResourcesOk) {
+                continue;
+            }
 
-                SnippetExec snippetExec =  SnippetExecUtils.toSnippetExec(task.getSnippetExecResults());
-                if (isThisSnippetCompletedWithError(snippet, snippetExec)) {
-                    // stop processing this sequence because last snippet was finished with an error
+/*
+            SnippetExec snippetExec =  SnippetExecUtils.toSnippetExec(task.getSnippetExecResult());
+            if (isThisSnippetCompletedWithError(snippet, snippetExec)) {
+                // stop processing this task because last snippet was finished with an error
+                break;
+            }
+            if (isThisSnippetCompleted(snippet, snippetExec)) {
+                continue;
+            }
+*/
+
+            final File paramFile = prepareParamFile(taskDir, snippet.getType(), params);
+            if (paramFile == null) {
+                break;
+            }
+            String interpreter = stationService.getEnvYaml().getEnvs().get(snippet.env);
+            if (interpreter == null) {
+                log.warn("Can't process sequence, interpreter wasn't found for env: {}", snippet.env);
+                break;
+            }
+
+            log.info("all system are checked, lift off");
+
+            try {
+                List<String> cmd = new ArrayList<>();
+                cmd.add(interpreter);
+                cmd.add(assetFile.file.getAbsolutePath());
+
+                final File execDir = paramFile.getParentFile();
+                ExecProcessService.Result result = execProcessService.execCommand(cmd, execDir);
+                stationTaskService.storeExecResult(task.getTaskId(), snippet, result, artifactDir);
+                if (!result.isOk()) {
                     break;
                 }
-                if (isThisSnippetCompleted(snippet, snippetExec)) {
-                    continue;
-                }
 
-                final File paramFile = prepareParamFile(taskDir, snippet.getType(), params);
-                if (paramFile == null) {
-                    break;
-                }
-                String intepreter = stationService.getEnvYaml().getEnvs().get(snippet.env);
-                if (intepreter == null) {
-                    log.warn("Can't process sequence, interpreter wasn't found for env: {}", snippet.env);
-                    break;
-                }
-
-                log.info("all system are checked, lift off");
-
-                try {
-                    List<String> cmd = new ArrayList<>();
-                    cmd.add(intepreter);
-                    cmd.add(assetFile.file.getAbsolutePath());
-
-                    final File execDir = paramFile.getParentFile();
-                    ExecProcessService.Result result = execProcessService.execCommand(snippet.type == SnippetType.fit ? LogData.Type.FIT : LogData.Type.PREDICT, task.getTaskId(), cmd, execDir);
-                    stationTaskService.storeExecResult(task.getTaskId(), snippet, result, artifactDir);
-                    if (!result.isOk()) {
-                        break;
-                    }
-
-                } catch (Exception err) {
-                    log.error("Error exec process " + intepreter, err);
-                }
+            } catch (Exception err) {
+                log.error("Error exec process " + interpreter, err);
             }
             stationTaskService.markAsFinishedIfAllOk(task.getTaskId(), taskParamYaml);
         }
     }
 
-    private boolean initAllPaths(File stationResourceDir, TaskParamYaml taskParamYaml) {
-        for (SimpleResource resource : taskParamYaml.resources) {
-            AssetFile assetFile = StationResourceUtils.prepareResourceFile(stationResourceDir, resource.binaryDataType, resource.id);
-            if (assetFile.isError || !assetFile.isContent ) {
-                log.warn("Resource file wasn't found. {}", assetFile);
-                return false;
-            }
-            resource.path = assetFile.file.getAbsolutePath();
-        }
-        return true;
-    }
-
+    /*
     private boolean isThisSnippetCompleted(SimpleSnippet snippet, SnippetExec snippetExec) {
         if (snippetExec ==null) {
             return false;
@@ -236,8 +216,9 @@ public class TaskProcessor {
         return result!=null && !result.isOk();
     }
 
-    private File prepareParamFile(File taskDir, SnippetType type, String params) {
-        File snippetTypeDir = prepareTaskSubDir(taskDir, type.toString());
+*/
+    private File prepareParamFile(File taskDir, String snippetType, String params) {
+        File snippetTypeDir = prepareTaskSubDir(taskDir, snippetType);
         if (snippetTypeDir == null) {
             return null;
         }

@@ -17,8 +17,9 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.Enums;
-import aiai.ai.yaml.sequence.*;
+import aiai.ai.yaml.sequence.SimpleSnippet;
+import aiai.ai.yaml.sequence.TaskParamYaml;
+import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetType;
 import org.junit.Assert;
 import org.junit.Test;
@@ -27,7 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -39,15 +42,12 @@ public class TestTaskParamYaml {
     @Test
     public void testSequenceYaml() {
         TaskParamYaml seq = new TaskParamYaml();
-        seq.resources = Collections.singletonList(SimpleResource.of(Enums.BinaryDataType.DATA, "1"));
+        seq.inputResourceCodes = Arrays.asList("1", "2", "3");
         Map<String, String> map = new HashMap<>();
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.setHyperParams(map);
-        List<SimpleSnippet> list = new ArrayList<>();
-        list.add(new SimpleSnippet(SnippetType.fit, "123", "file.txt", "112233", "python.exe", 1, false));
-        list.add(new SimpleSnippet(SnippetType.predict, "456", "file.txt", "112233", "python.exe", 2, true));
-        seq.setSnippets(list);
+        seq.setSnippet(new SimpleSnippet(SnippetType.fit, "123", "file.txt", "112233", "python.exe", 1, false));
 
         String s = taskParamYamlUtils.toString(seq);
 

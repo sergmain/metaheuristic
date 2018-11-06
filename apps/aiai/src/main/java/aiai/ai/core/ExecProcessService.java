@@ -17,7 +17,6 @@
  */
 package aiai.ai.core;
 
-import aiai.ai.launchpad.beans.LogData;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -55,7 +54,7 @@ public class ExecProcessService {
     }
 */
 
-    public Result execCommand(LogData.Type type, Long refId, List<String> cmd, File execDir) throws IOException, InterruptedException {
+    public Result execCommand(List<String> cmd, File execDir) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder();
         pb.command(cmd);
         pb.directory(execDir);
@@ -96,15 +95,8 @@ public class ExecProcessService {
 
         log.info("Any errors of execution? {}", (exitCode == 0 ? "No" : "Yes"));
         log.debug("Console output: {}",out);
-        LogData logData = new LogData();
-        logData.setRefId(refId);
-        logData.setType(type);
+
         final String console = out.toString();
-        logData.setLogData(console);
-
-        // TODO 2018-10-30 need to implement for station side
-//        logDataRepository.save(logData);
-
         return new Result(exitCode==0, exitCode, console);
     }
 

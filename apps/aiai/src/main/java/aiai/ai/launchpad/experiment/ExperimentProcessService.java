@@ -19,7 +19,7 @@ public class ExperimentProcessService {
         this.experimentService = experimentService;
     }
 
-    public void produceTasks(Flow flow, Process prevProcess, Process process, int idx) {
+    public void produceTasks(Flow flow, Process process, int idx, String inputResourcePoolCode, String outputResourcePoolCode) {
 
     }
 }

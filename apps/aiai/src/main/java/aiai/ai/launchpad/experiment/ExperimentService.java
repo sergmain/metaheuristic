@@ -36,7 +36,6 @@ import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.sequence.*;
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -392,40 +391,21 @@ public class ExperimentService {
         }
     }
 
-    public List<Long> storeAllResults(List<SimpleSequenceExecResult> results) {
+    public List<Long> storeAllResults(List<SimpleTaskExecResult> results) {
         List<Task> list = new ArrayList<>();
         List<Long> ids = new ArrayList<>();
-        for (SimpleSequenceExecResult result : results) {
-            ids.add(result.sequenceId);
-            Task seq = taskRepository.findById(result.sequenceId).orElse(null);
-            if (seq==null) {
-                log.warn("Can't find Task for Id: {}", result.sequenceId);
+        for (SimpleTaskExecResult result : results) {
+            ids.add(result.taskId);
+            Task task = taskRepository.findById(result.taskId).orElse(null);
+            if (task==null) {
+                log.warn("Can't find Task for Id: {}", result.taskId);
                 continue;
             }
-
-            Experiment experiment = experimentRepository.findById(seq.getExperimentId()).orElse(null);
-            if (experiment==null) {
-                log.warn("Can't find Experiment for Id: {}", seq.getId());
-                continue;
-            }
-
-            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(result.getResult());
-            List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-            snippetService.sortSnippetsByOrder(experimentSnippets);
-            boolean isAllOk = true;
-            for (ExperimentSnippet snippet : experimentSnippets) {
-                ExecProcessService.Result r = snippetExec.getExecs().get(snippet.getOrder());
-                if (r==null || !r.isOk()) {
-                    isAllOk = false;
-                    break;
-                }
-            }
-            seq.setAllSnippetsOk(isAllOk);
-            seq.setSnippetExecResults(result.getResult());
-            seq.setMetrics(result.getMetrics());
-            seq.setCompleted(true);
-            seq.setCompletedOn(System.currentTimeMillis());
-            list.add(seq);
+            task.setSnippetExecResults(result.getResult());
+            task.setMetrics(result.getMetrics());
+            task.setCompleted(true);
+            task.setCompletedOn(System.currentTimeMillis());
+            list.add(task);
         }
         taskRepository.saveAll(list);
         return ids;
@@ -714,17 +694,17 @@ public class ExperimentService {
                 continue;
             }
 
-            produceFeaturePermutations(dataset, experiment);
-
-            produceTasks(experiment);
+            if (true) throw new IllegalStateException("Not implemented yet");
+//            produceFeaturePermutations(dataset, experiment);
+//            produceTasks(experiment);
         }
     }
 
-    public void produceTasks(Experiment experiment) {
+    public void produceTasks(Experiment experiment, List<String> inputResourceCode) {
         int totalVariants = 0;
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-        snippetService.sortSnippetsByOrder(experimentSnippets);
+//        snippetService.sortSnippetsByOrder(experimentSnippets);
 
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         for (ExperimentFeature feature : features) {
@@ -753,15 +733,12 @@ public class ExperimentService {
             Map<String, Snippet> localCache = new HashMap<>();
             boolean isNew = false;
             for (HyperParams hyperParams : allHyperParams) {
-                TaskParamYaml yaml = new TaskParamYaml();
-                yaml.setHyperParams( hyperParams.toSortedMap() );
 
-                yaml.resources = new ArrayList<>();
-                yaml.resources.addAll(simpleFeatureResources);
-                yaml.resources.add(SimpleResource.of(Enums.BinaryDataType.DATA, experiment.getDatasetId().toString()));
-
-                final List<SimpleSnippet> snippets = new ArrayList<>();
                 for (ExperimentSnippet experimentSnippet : experimentSnippets) {
+                    TaskParamYaml yaml = new TaskParamYaml();
+                    yaml.setHyperParams( hyperParams.toSortedMap() );
+                    yaml.inputResourceCodes = inputResourceCode;
+
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                     Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
                     if (snippet==null) {
@@ -774,28 +751,26 @@ public class ExperimentService {
                         log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
                         continue;
                     }
-                    snippets.add(new SimpleSnippet(
-                            SnippetType.valueOf(experimentSnippet.getType()),
+                    yaml.snippet = new SimpleSnippet(
+                            experimentSnippet.getType(),
                             experimentSnippet.getSnippetCode(),
                             snippet.getFilename(),
                             snippet.checksum,
                             snippet.env,
-                            experimentSnippet.getOrder(),
                             snippet.reportMetrics
-                    ));
+                    );
+
+                    String taskParams = taskParamYamlUtils.toString(yaml);
+
+                    if (sequences.contains(taskParams)) {
+                        continue;
+                    }
+
+                    Task task = new Task();
+                    task.setParams(taskParams);
+                    taskRepository.save(task);
+                    isNew = true;
                 }
-                yaml.snippets = snippets;
-
-                String taskParams = taskParamYamlUtils.toString(yaml);
-
-                if (sequences.contains(taskParams)) {
-                    continue;
-                }
-
-                Task task = new Task();
-                task.setParams(taskParams);
-                taskRepository.save(task);
-                isNew = true;
             }
             if (isNew) {
                 boolean isOk = false;

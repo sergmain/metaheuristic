@@ -52,7 +52,7 @@ public class ChecksumWithSignatureService {
         status.isSignatureOk = null;
         for (Map.Entry<Checksum.Type, String> entry : checksum.checksums.entrySet()) {
             String sum, entrySum;
-            if (entry.getKey()==Checksum.Type.SHA256WithSign) {
+            if (entry.getKey()==Checksum.Type.SHA256WithSignature) {
                 ChecksumWithSignature checksumWithSignature = parse(entry.getValue());
                 entrySum = checksumWithSignature.checksum;
 
@@ -83,12 +83,12 @@ public class ChecksumWithSignatureService {
     }
 
     public static ChecksumWithSignature parse(String data) {
-        final int idx = data.indexOf(SecUtils.SIGN_DELIMITER);
+        final int idx = data.indexOf(SecUtils.SIGNATURE_DELIMITER);
         if (idx == -1) {
             throw new IllegalStateException("Wrong format of checksum with signature");
         }
         //noinspection UnnecessaryLocalVariable
-        ChecksumWithSignature checksumWithSignature = new ChecksumWithSignature(data.substring(0, idx), data.substring(idx + SecUtils.SIGN_DELIMITER.length()));
+        ChecksumWithSignature checksumWithSignature = new ChecksumWithSignature(data.substring(0, idx), data.substring(idx + SecUtils.SIGNATURE_DELIMITER.length()));
         return checksumWithSignature;
     }
 

@@ -43,9 +43,6 @@ public class ExperimentSnippet implements Serializable {
     @Column(name = "SNIPPET_TYPE")
     public String type;
 
-    @Column(name = "SNIPPET_ORDER")
-    private int order;
-
     @Column(name = "TASK_TYPE")
     private int taskType;
 

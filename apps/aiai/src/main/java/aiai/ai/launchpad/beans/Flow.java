@@ -29,7 +29,7 @@ import java.io.Serializable;
 @Table(name = "AIAI_LP_FLOW")
 @Data
 public class Flow implements Serializable {
-    private static final long serialVersionUID = 6601353088739518179L;
+    private static final long serialVersionUID = -2376802137016366569L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,8 +43,4 @@ public class Flow implements Serializable {
 
     @Column(name = "PARAMS")
     public String params;
-
-    @Column(name = "INPUT_POOL_CODE")
-    public String inputPoolCode;
-
 }

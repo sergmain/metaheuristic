@@ -2,16 +2,22 @@ package aiai.ai.launchpad.flow;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.experiment.ExperimentProcessService;
 import aiai.ai.launchpad.file_process.FileProcessService;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.Task;
+import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
+import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import aiai.ai.launchpad.Process;
+import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 public class FlowService {
 
     private final Globals globals;
@@ -27,13 +34,17 @@ public class FlowService {
 
     private final ExperimentProcessService experimentProcessService;
     private final FileProcessService fileProcessService;
+    private final FlowInstanceRepository flowInstanceRepository;
+    private final SnippetCache snippetCache;
 
-    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService) {
+    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache) {
         this.globals = globals;
         this.flowRepository = flowRepository;
         this.flowYamlUtils = flowYamlUtils;
         this.experimentProcessService = experimentProcessService;
         this.fileProcessService = fileProcessService;
+        this.flowInstanceRepository = flowInstanceRepository;
+        this.snippetCache = snippetCache;
     }
 
     public enum TaskProducingStatus { OK, VERIFY_ERROR, PRODUCING_ERROR }
@@ -44,12 +55,13 @@ public class FlowService {
         NO_ANY_PROCESSES_ERROR,
         INPUT_TYPE_EMPTY_ERROR,
         NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR,
-        SNIPPET_NOT_FOUND_ERROR,
+        SNIPPET_NOT_DEFINED_ERROR,
         FLOW_PARAMS_EMPTY_ERROR,
         SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR,
         PROCESS_CODE_NOT_FOUND_ERROR,
         TOO_MANY_SNIPPET_CODES_ERROR,
         INPUT_CODE_NOT_SPECIFIED_ERROR,
+        SNIPPET_NOT_FOUND_ERROR,
     }
 
     public enum FlowProducingStatus { OK,
@@ -76,19 +88,15 @@ public class FlowService {
         }
     }
 
-    public TaskProducingResult createTasks(Flow flow) {
+    public TaskProducingResult createTasks(Flow flow, String startWithResourcePoolCode) {
         TaskProducingResult result = new TaskProducingResult();
         result.flowVerifyStatus = verify(flow);
         if (result.flowVerifyStatus != FlowVerifyStatus.OK) {
             return result;
         }
-        result.flowProducingStatus = produce(flow);
+        produce(result, flow, startWithResourcePoolCode);
 
         return result;
-    }
-
-    private FlowProducingStatus produce(Flow flow) {
-        return null;
     }
 
     private FlowVerifyStatus verify(Flow flow) {
@@ -100,9 +108,6 @@ public class FlowService {
         }
         if (StringUtils.isBlank(flow.params)) {
             return FlowVerifyStatus.FLOW_PARAMS_EMPTY_ERROR;
-        }
-        if (StringUtils.isBlank(flow.inputPoolCode) ) {
-            return FlowVerifyStatus.NO_INPUT_POOL_CODE_ERROR;
         }
         FlowYaml flowYaml = flowYamlUtils.toFlowYaml(flow.params);
         if (flowYaml.getProcesses().isEmpty()) {
@@ -116,7 +121,7 @@ public class FlowService {
 
         for (Process process : fl.getProcesses()) {
             if (process.getSnippetCodes()==null || process.getSnippetCodes().isEmpty()) {
-                return FlowVerifyStatus.SNIPPET_NOT_FOUND_ERROR;
+                return FlowVerifyStatus.SNIPPET_NOT_DEFINED_ERROR;
             }
             if (process.parallelExec && process.snippetCodes.size()<2) {
                 return FlowVerifyStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
@@ -126,7 +131,7 @@ public class FlowService {
                     return FlowVerifyStatus.SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR;
                 }
                 if (StringUtils.isBlank(process.code)) {
-                    return FlowVerifyStatus.SNIPPET_NOT_FOUND_ERROR;
+                    return FlowVerifyStatus.SNIPPET_NOT_DEFINED_ERROR;
                 }
             }
             if (process.type== Enums.ProcessType.FILE_PROCESSING) {
@@ -134,27 +139,52 @@ public class FlowService {
                     return FlowVerifyStatus.TOO_MANY_SNIPPET_CODES_ERROR;
                 }
             }
+            for (String snippetCode : process.snippetCodes) {
+                SnippetVersion sv = SnippetVersion.from(snippetCode);
+                Snippet snippet = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
+                if (snippet==null) {
+                    log.warn("Snippet wasn't found for code: {}, process: {}", snippetCode, process);
+                    return FlowVerifyStatus.SNIPPET_NOT_FOUND_ERROR;
+                }
+            }
         }
         return FlowVerifyStatus.OK;
     }
 
-    private void produce(TaskProducingResult result, Flow flow) {
+    private void produce(TaskProducingResult result, Flow flow, String startWithResourcePoolCode) {
+
+        FlowInstance fi = new FlowInstance();
+        fi.setFlowId(flow.getId());
+        fi.setCompleted(false);
+        fi.setCreatedOn( System.currentTimeMillis() );
+        fi.setInputResourcePoolCode(startWithResourcePoolCode);
+
+        flowInstanceRepository.save(fi);
+
         result.flowYaml = flowYamlUtils.toFlowYaml(flow.getParams());
-        Process prev = null;
         int idx = 0;
+        String inputResourcePoolCode = startWithResourcePoolCode;
         for (Process process : result.flowYaml.getProcesses()) {
             ++idx;
+
+            String outputResourcePoolCode = getResourcePoolCode(flow.code, flow.getId(), process.code, idx);
+
             switch(process.type) {
                 case FILE_PROCESSING:
-                    fileProcessService.produceTasks(flow, prev, process, idx);
+                    fileProcessService.produceTasks(flow, process, idx, inputResourcePoolCode, outputResourcePoolCode);
                     break;
                 case EXPERIMENT:
-                    experimentProcessService.produceTasks(flow, prev, process, idx);
+                    experimentProcessService.produceTasks(flow, process, idx, inputResourcePoolCode, outputResourcePoolCode);
                     break;
                 default:
                     throw new IllegalStateException("Unknown process type");
             }
-            prev = process;
+            inputResourcePoolCode = outputResourcePoolCode;
         }
     }
+
+    private String getResourcePoolCode(String flowCode, long flowId, String processCode, int idx) {
+        return String.format("%s-%d-%d-%s", flowCode, flowId, idx, processCode);
+    }
+
 }

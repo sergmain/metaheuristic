@@ -18,9 +18,17 @@
 package aiai.apps.commons.yaml.snippet;
 
 public enum SnippetType {
-    fit, predict, custom, assembly, dataset, feature;
+    fit, predict, assembly, dataset, feature, unknown_type;
 
     public boolean equals(String type) {
         return this.toString().equals(type);
+    }
+
+    public static SnippetType asSnippetType(String typeAsStr) {
+        try {
+            return SnippetType.valueOf(typeAsStr);
+        } catch (IllegalArgumentException e) {
+            return unknown_type;
+        }
     }
 }

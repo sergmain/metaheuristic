@@ -27,6 +27,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -100,22 +101,24 @@ public class PackageSnippet implements CommandLineRunner {
                 System.out.println(verify.error);
                 isError=true;
             }
-            File sn = new File(snippetYamlFile.getParent(), snippet.file);
-            if (!sn.exists()) {
-                System.out.println("File "+sn.getPath()+" wasn't found");
-                isError=true;
-            }
+            if (!snippet.fileProvided) {
+                File sn = new File(snippetYamlFile.getParent(), snippet.file);
+                if (!sn.exists()) {
+                    System.out.println("File " + sn.getPath() + " wasn't found");
+                    isError = true;
+                }
 
-            final String o = snippet.name + ':' + snippet.version;
-            if (set.contains(o)) {
-                System.out.println("Found duplicate snippet: " +o);
-                isError=true;
-            }
-            set.add(o);
-            File f = new File(snippet.file);
-            if (!f.getPath().equals(snippet.file)) {
-                System.out.println("Relative path for snippet file isn't supported, file: " + snippet.file);
-                isError=true;
+                final String o = snippet.name + ':' + snippet.version;
+                if (set.contains(o)) {
+                    System.out.println("Found duplicate snippet: " + o);
+                    isError = true;
+                }
+                set.add(o);
+                File f = new File(snippet.file);
+                if (!f.getPath().equals(snippet.file)) {
+                    System.out.println("Relative path for snippet file isn't supported, file: " + snippet.file);
+                    isError = true;
+                }
             }
         }
         if (isError) {
@@ -124,18 +127,21 @@ public class PackageSnippet implements CommandLineRunner {
 
         // Process
         for (SnippetsConfig.SnippetConfig snippet : snippetsConfig.getSnippets()) {
-            final File snippetFile = new File(targetDir, snippet.file);
-            FileUtils.copyFile(new File(snippet.file), snippetFile);
-
             String sum;
-            try(FileInputStream fis = new FileInputStream(snippetFile)) {
-                sum = Checksum.Type.SHA256.getChecksum(fis);
+            if (snippet.fileProvided) {
+                sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippet.env.getBytes()));
             }
-
+            else {
+                final File snippetFile = new File(targetDir, snippet.file);
+                FileUtils.copyFile(new File(snippet.file), snippetFile);
+                try (FileInputStream fis = new FileInputStream(snippetFile)) {
+                    sum = Checksum.Type.SHA256.getChecksum(fis);
+                }
+            }
             snippet.checksums = new HashMap<>();
             if (privateKey!=null) {
                 String signature = SecUtils.getSignature(sum, privateKey);
-                snippet.checksums.put(Checksum.Type.SHA256WithSign, sum + SecUtils.SIGN_DELIMITER + signature);
+                snippet.checksums.put(Checksum.Type.SHA256WithSignature, sum + SecUtils.SIGNATURE_DELIMITER + signature);
             }
             else {
                 snippet.checksums.put(Checksum.Type.SHA256, sum);

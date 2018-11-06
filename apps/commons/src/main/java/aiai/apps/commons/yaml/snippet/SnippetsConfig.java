@@ -49,12 +49,19 @@ public class SnippetsConfig {
         public String params;
         public String version;
         public String env;
+        public boolean fileProvided;
         public boolean metrics = false;
         public Map<Checksum.Type, String> checksums;
 
         public SnippetConfigStatus verify() {
-            if (StringUtils.isBlank(name) || StringUtils.isBlank(type.toString()) || StringUtils.isBlank(file) || StringUtils.isBlank(version) || StringUtils.isBlank(env)) {
+            if (StringUtils.isBlank(name) || StringUtils.isBlank(type.toString()) || StringUtils.isBlank(version) || StringUtils.isBlank(env)) {
                 return new SnippetConfigStatus(false, "A field is null or empty: " + this.toString());
+            }
+            if (!fileProvided && StringUtils.isBlank(file)) {
+                return new SnippetConfigStatus(false, "fileProvided is false but file is empty: " + this.toString());
+            }
+            if (fileProvided && StringUtils.isNoneBlank(file)) {
+                return new SnippetConfigStatus(false, "fileProvided is true but file is not empty: " + this.toString());
             }
             if (name.indexOf(':')!=-1 || version.indexOf(':')!=-1) {
                 return new SnippetConfigStatus(false, "Fields 'name' and 'version' can't contain ':'" + this.toString());

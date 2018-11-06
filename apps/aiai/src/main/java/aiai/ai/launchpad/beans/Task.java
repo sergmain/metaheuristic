@@ -50,9 +50,6 @@ public class Task implements Serializable {
     @Column(name = "IS_COMPLETED")
     public boolean isCompleted;
 
-    @Column(name = "IS_ALL_SNIPPETS_OK")
-    public boolean isAllSnippetsOk;
-
     @Column(name = "SNIPPET_EXEC_RESULTS")
     public String snippetExecResults;
 
@@ -64,4 +61,7 @@ public class Task implements Serializable {
 
     @Column(name = "TASK_ORDER")
     public String order;
+
+    @Column(name = "FLOW_INSTANCE_ID")
+    public Long flowInstanceId;
 }

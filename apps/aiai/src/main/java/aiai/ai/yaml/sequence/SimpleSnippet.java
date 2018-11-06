@@ -17,7 +17,6 @@
  */
 package aiai.ai.yaml.sequence;
 
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,11 +25,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class SimpleSnippet {
-    public SnippetType type;
+    public String type;
     public String code;
     public String filename;
     public String checksum;
     public String env;
-    public int order;
     public boolean metrics;
 }

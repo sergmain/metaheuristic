@@ -26,7 +26,7 @@ import java.io.Serializable;
 @Table(name = "AIAI_LP_FLOW_INSTANCE")
 @Data
 public class FlowInstance implements Serializable {
-    private static final long serialVersionUID = -1141708065039251410L;
+    private static final long serialVersionUID = -8071135733968387755L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,5 +43,8 @@ public class FlowInstance implements Serializable {
 
     @Column(name="COMPLETED_ON")
     public long createdOn;
+
+    @Column(name = "INPUT_POOL_CODE")
+    public String inputResourcePoolCode;
 
 }

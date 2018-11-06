@@ -24,5 +24,5 @@ import java.util.LinkedHashMap;
 
 @Data
 public class SnippetExec {
-    public LinkedHashMap<Integer, ExecProcessService.Result > execs = new LinkedHashMap<>();
+    public ExecProcessService.Result exec;
 }

@@ -79,7 +79,6 @@ public class ExperimentsController {
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SimpleConsoleOutput {
-            public int order;
             public int exitCode;
             public boolean isOk;
             public String console;
@@ -93,7 +92,7 @@ public class ExperimentsController {
         public List<ExperimentSnippet> snippets = new ArrayList<>();
 
         public void sortSnippetsByOrder() {
-            snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
+//            snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
         }
     }
 
@@ -197,15 +196,13 @@ public class ExperimentsController {
     }
 
     @PostMapping("/experiment-feature-progress-console-part/{id}")
-    public String getSequncesConsolePart(Model model, @PathVariable(name="id") Long sequenceId) {
+    public String getSequencesConsolePart(Model model, @PathVariable(name="id") Long sequenceId) {
         ConsoleResult result = new ConsoleResult();
         Task sequence = taskRepository.findById(sequenceId).orElse(null);
         if (sequence!=null) {
             SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(sequence.getSnippetExecResults());
-            for (Map.Entry<Integer, ExecProcessService.Result> entry : snippetExec.getExecs().entrySet()) {
-                final ExecProcessService.Result value = entry.getValue();
-                result.items.add( new ConsoleResult.SimpleConsoleOutput(entry.getKey(), value.exitCode, value.isOk, value.console));
-            }
+            final ExecProcessService.Result execResult = snippetExec.getExec();
+            result.items.add( new ConsoleResult.SimpleConsoleOutput(execResult.exitCode, execResult.isOk, execResult.console));
         }
         model.addAttribute("consoleResult", result);
 
@@ -305,7 +302,7 @@ public class ExperimentsController {
         SnippetResult snippetResult = new SnippetResult();
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-        snippetService.sortSnippetsByOrder(experimentSnippets);
+//        snippetService.sortSnippetsByOrder(experimentSnippets);
         snippetResult.snippets = experimentSnippets;
         final List<SnippetType> types = Arrays.asList(SnippetType.fit, SnippetType.predict);
         snippetResult.selectOptions = snippetService.getSelectOptions(snippets,
@@ -507,10 +504,6 @@ public class ExperimentsController {
 
         sortSnippetsByType(list);
 
-        int order = 1;
-        for (ExperimentSnippet experimentSnippet : list) {
-            experimentSnippet.setOrder(order++);
-        }
         experimentSnippetRepository.saveAll(list);
         return "redirect:/launchpad/experiment-edit/"+id;
     }
@@ -651,6 +644,8 @@ public class ExperimentsController {
 
     @PostMapping("/task-rerun/{id}")
     public @ResponseBody boolean rerunSequence(@PathVariable long id) {
+        if (true) throw new IllegalStateException("Not implemented yet");
+/*
         Task seq = taskRepository.findById(id).orElse(null);
         if (seq == null) {
             log.warn("#291.01 Can't re-run sequence {}, sequence with such id wasn't found", id);
@@ -670,7 +665,6 @@ public class ExperimentsController {
         seq.setCompletedOn(null);
         seq.setCompleted(false);
         seq.setMetrics(null);
-        seq.setAllSnippetsOk(false);
         seq.setSnippetExecResults(null);
         seq.setStationId(null);
         seq.setAssignedOn(null);
@@ -681,6 +675,7 @@ public class ExperimentsController {
         feature.setInProgress(true);
         experimentFeatureRepository.save(feature);
 
+*/
         return true;
     }
 

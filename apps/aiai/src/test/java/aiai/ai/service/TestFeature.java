@@ -26,7 +26,7 @@ import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
-import aiai.ai.launchpad.experiment.SimpleSequenceExecResult;
+import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
 import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
@@ -369,7 +369,7 @@ public abstract class TestFeature {
 
     protected void finishCurrentWithError(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
-        List<SimpleSequenceExecResult> results = new ArrayList<>();
+        List<SimpleTaskExecResult> results = new ArrayList<>();
         List<Task> tasks = taskRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
         if (expectedSeqs!=0) {
             assertEquals(expectedSeqs, tasks.size());
@@ -380,7 +380,7 @@ public abstract class TestFeature {
             snippetExec.getExecs().put(1, result);
             String yaml = SnippetExecUtils.toString(snippetExec);
 
-            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
+            SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(sser);
         }
 
@@ -389,7 +389,7 @@ public abstract class TestFeature {
 
     protected void finishCurrentWithOk(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
-        List<SimpleSequenceExecResult> results = new ArrayList<>();
+        List<SimpleTaskExecResult> results = new ArrayList<>();
         List<Task> tasks = taskRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
         if (expectedSeqs!=0) {
             assertEquals(expectedSeqs, tasks.size());
@@ -400,7 +400,7 @@ public abstract class TestFeature {
             snippetExec.getExecs().put(2, new ExecProcessService.Result(true, 0, "This is sample console output. predict"));
             String yaml = SnippetExecUtils.toString(snippetExec);
 
-            SimpleSequenceExecResult sser = new SimpleSequenceExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
+            SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(sser);
         }
 

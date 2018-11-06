@@ -54,7 +54,7 @@ public class TestChecksumWithSignature {
 
         String signature = SecUtils.getSignature(checksum, privateKey);
 
-        String forVerifying = checksum + SecUtils.SIGN_DELIMITER + signature;
+        String forVerifying = checksum + SecUtils.SIGNATURE_DELIMITER + signature;
 
         ChecksumWithSignatureService.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureService.parse(forVerifying);
 

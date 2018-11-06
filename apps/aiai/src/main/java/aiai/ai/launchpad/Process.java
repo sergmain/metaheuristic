@@ -2,11 +2,13 @@ package aiai.ai.launchpad;
 
 import aiai.ai.Enums;
 import lombok.Data;
+import lombok.ToString;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
+@ToString
 public class Process {
     public String name;
     public String code;

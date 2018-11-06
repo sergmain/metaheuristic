@@ -95,10 +95,6 @@ public class SnippetService {
         return snippets;
     }
 
-    public void sortSnippetsByOrder(List<ExperimentSnippet> snippets) {
-        snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
-    }
-
     public void sortSnippetsByType(List<ExperimentSnippet> snippets) {
         snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
     }
