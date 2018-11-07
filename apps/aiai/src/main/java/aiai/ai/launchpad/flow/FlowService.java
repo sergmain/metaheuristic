@@ -99,7 +99,7 @@ public class FlowService {
         return result;
     }
 
-    private FlowVerifyStatus verify(Flow flow) {
+    public FlowVerifyStatus verify(Flow flow) {
         if (flow==null) {
             return FlowVerifyStatus.NO_ANY_PROCESSES_ERROR;
         }

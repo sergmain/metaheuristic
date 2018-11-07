@@ -36,6 +36,7 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
 
     @Transactional(readOnly = true)
     Slice<Task> findAll(Pageable pageable);
+/*
 
     List<Task> findByExperimentId(long experimentId);
 
@@ -71,14 +72,17 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
 
     @Transactional
     void deleteByExperimentId(long experimentId);
+*/
 
     @Transactional(readOnly = true)
     @Query("SELECT f FROM Task s, ExperimentFeature f, Experiment e  where s.stationId=:stationId and s.featureId=f.id and f.experimentId=e.id and  " +
             "f.isFinished=false and f.isInProgress=true and e.isLaunched=true and e.execState=:state")
     List<ExperimentFeature> findAnyStartedButNotFinished(Pageable limit, long stationId, int state);
 
+/*
     @Transactional(readOnly = true)
     List<Task> findByStationIdAndIsCompletedIsFalse(Long stationId);
+*/
 
 
 }
