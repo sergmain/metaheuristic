@@ -21,17 +21,13 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
-import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.experiment.dataset.DatasetCache;
-import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.BigDecimalHolder;
 import aiai.ai.utils.permutation.Permutation;
-import aiai.ai.yaml.console.SnippetExec;
-import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.MetricsUtils;
@@ -65,12 +61,11 @@ public class ExperimentService {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class SequencesAndAssignToStationResult {
-        ExperimentFeature feature;
-        List<Protocol.AssignedTask.Task> simpleTasks;
+    public static class TasksAndAssignToStationResult {
+        Protocol.AssignedTask.Task simpleTask;
     }
 
-    private static final SequencesAndAssignToStationResult EMPTY_RESULT = new SequencesAndAssignToStationResult(null, EMPTY_SIMPLE_SEQUENCES);
+    private static final TasksAndAssignToStationResult EMPTY_RESULT = new TasksAndAssignToStationResult(null);
 
     @Data
     @NoArgsConstructor
@@ -184,7 +179,11 @@ public class ExperimentService {
         return experimentRepository.findById(id).orElse(null);
     }
 
-    public synchronized SequencesAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long experimentId) {
+    public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long experimentId) {
+
+        if (true) throw new IllegalStateException("Not implemented yet");
+        Protocol.AssignedTask.Task task = new Protocol.AssignedTask.Task();
+/*
 
         // check and mark all completed features
         List<ExperimentFeature> fsTemp = experimentFeatureRepository.findAllForLaunchedExperiments( Enums.TaskExecState.STARTED.code);
@@ -361,7 +360,8 @@ public class ExperimentService {
         }
         taskRepository.saveAll(seqs);
 
-        return new SequencesAndAssignToStationResult(feature, result);
+*/
+        return new TasksAndAssignToStationResult(task);
 
     }
 
@@ -411,7 +411,7 @@ public class ExperimentService {
         return ids;
     }
 
-    public void reconcileStationSequences(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
+    public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
         final long stationId = Long.parseLong(stationIdAsStr);
         List<Task> seqs = taskRepository.findByStationIdAndIsCompletedIsFalse(stationId);
         for (Task seq : seqs) {
@@ -430,14 +430,16 @@ public class ExperimentService {
         }
     }
 
-    Slice<Task> findExperimentSequence(Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
+    Slice<Task> findTasks(Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
         if (experiment == null || feature == null) {
             return Page.empty();
         } else {
             if (isEmpty(params)) {
-                return taskRepository.findByIsCompletedIsTrueAndFeatureId(pageable, feature.getId());
+                if (true) throw new IllegalStateException("Not implemented yet");
+                return null;
+//                return taskRepository.findByIsCompletedIsTrueAndFeatureId(pageable, feature.getId());
             } else {
-                List<Task> selected = findExperimentSequenceWithFilter(experiment, feature.getId(), params);
+                List<Task> selected = findTaskWithFilter(experiment, feature.getId(), params);
                 List<Task> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
                 //noinspection UnnecessaryLocalVariable
                 final PageImpl<Task> page = new PageImpl<>(subList, pageable, selected.size());
@@ -453,9 +455,11 @@ public class ExperimentService {
         } else {
             List<Task> selected;
             if (isEmpty(params)) {
-                selected = taskRepository.findByIsCompletedIsTrueAndFeatureId(feature.getId());
+                if (true) throw new IllegalStateException("Not implemented yet");
+                selected = null;
+//                selected = taskRepository.findByIsCompletedIsTrueAndFeatureId(feature.getId());
             } else {
-                selected = findExperimentSequenceWithFilter(experiment, feature.getId(), params);
+                selected = findTaskWithFilter(experiment, feature.getId(), params);
             }
             return collectDataForPlotting(experiment, selected, paramsAxis);
         }
@@ -522,7 +526,7 @@ public class ExperimentService {
     }
 
 
-    private List<Task> findExperimentSequenceWithFilter(Experiment experiment, long featureId, String[] params) {
+    private List<Task> findTaskWithFilter(Experiment experiment, long featureId, String[] params) {
         final Set<String> paramSet = new HashSet<>();
         final Set<String> paramFilterKeys = new HashSet<>();
         for (String param : params) {
@@ -534,7 +538,9 @@ public class ExperimentService {
         }
         final Map<String, Map<String, Integer>> paramByIndex = experiment.getHyperParamsAsMap();
 
-        List<Task> list = taskRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
+        if (true) throw new IllegalStateException("Not implemented yet");
+        List<Task> list = null;
+//        List<Task> list = taskRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
 
         List<Task> selected = new ArrayList<>();
         for (Task sequence : list) {
@@ -583,8 +589,9 @@ public class ExperimentService {
     }
 
     public Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
-        ExperimentsController.SequencesResult result = new ExperimentsController.SequencesResult();
-        result.items = taskRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), experimentFeature.getId());
+        ExperimentsController.TasksResult result = new ExperimentsController.TasksResult();
+        if (true) throw new IllegalStateException("Not implemented yet");
+//        result.items = taskRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), experimentFeature.getId());
 
         HyperParamResult hyperParamResult = new HyperParamResult();
         for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
@@ -602,7 +609,9 @@ public class ExperimentService {
         MetricsResult metricsResult = new MetricsResult();
         List<Map<String, BigDecimal>> values = new ArrayList<>();
 
-        List<Task> seqs = taskRepository.findByIsCompletedIsTrueAndFeatureId(experimentFeature.getId());
+        if (true) throw new IllegalStateException("Not implemented yet");
+        List<Task> seqs = null;
+//        List<Task> seqs = taskRepository.findByIsCompletedIsTrueAndFeatureId(experimentFeature.getId());
         for (Task seq : seqs) {
             MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.metrics) );
             if (metricValues==null) {
@@ -710,7 +719,9 @@ public class ExperimentService {
         for (ExperimentFeature feature : features) {
             Set<String> sequences = new LinkedHashSet<>();
 
-            for (Task task : taskRepository.findByExperimentIdAndFeatureId(experiment.getId(), feature.getId())) {
+            if (true) throw new IllegalStateException("Not implemented yet");
+            for (Task task : new Task[0]){
+//            for (Task task : taskRepository.findByExperimentIdAndFeatureId(experiment.getId(), feature.getId())) {
                 if (sequences.contains(task.getParams())) {
                     // delete doubles records
                     log.warn("!!! Found doubles. ExperimentId: {}, experimentFeatureId: {}, hyperParams: {}", experiment.getId(), feature.getId(), task.getParams());

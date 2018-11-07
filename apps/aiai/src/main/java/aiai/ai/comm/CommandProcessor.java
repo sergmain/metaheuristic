@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
@@ -81,15 +82,15 @@ public class CommandProcessor {
                 return processExperimentStatus((Protocol.ExperimentStatus) command);
             case StationTaskStatus:
                 // processing on launchpad side
-                return processStationSequenceStatus((Protocol.StationTaskStatus) command);
+                return processStationTaskStatus((Protocol.StationTaskStatus) command);
             default:
                 System.out.println("There is new command which isn't processed: " + command.getType());
         }
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processStationSequenceStatus(Protocol.StationTaskStatus command) {
-        launchpadService.getExperimentService().reconcileStationSequences(command.stationId, command.statuses!=null ? command.statuses : new ArrayList<>());
+    private Command[] processStationTaskStatus(Protocol.StationTaskStatus command) {
+        launchpadService.getExperimentService().reconcileStationTasks(command.stationId, command.statuses!=null ? command.statuses : new ArrayList<>());
         return Protocol.NOP_ARRAY;
     }
 
@@ -146,11 +147,11 @@ public class CommandProcessor {
 
     private synchronized Protocol.AssignedTask assignTaskToStation(String stationId, boolean isAcceptOnlySigned) {
         Protocol.AssignedTask r = new Protocol.AssignedTask();
-        ExperimentService.SequencesAndAssignToStationResult result =
+        ExperimentService.TasksAndAssignToStationResult result =
                 launchpadService.getExperimentService().getTaskAndAssignToStation(
                         Long.parseLong(stationId), isAcceptOnlySigned, null
                 );
-        r.tasks = result.getSimpleTasks();
+        r.tasks = Collections.singletonList(result.getSimpleTask());
         return r;
     }
 

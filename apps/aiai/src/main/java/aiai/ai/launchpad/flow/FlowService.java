@@ -120,31 +120,33 @@ public class FlowService {
         FlowYaml fl = flowYamlUtils.toFlowYaml(flow.getParams());
 
         for (Process process : fl.getProcesses()) {
-            if (process.getSnippetCodes()==null || process.getSnippetCodes().isEmpty()) {
-                return FlowVerifyStatus.SNIPPET_NOT_DEFINED_ERROR;
-            }
-            if (process.parallelExec && process.snippetCodes.size()<2) {
-                return FlowVerifyStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
-            }
             if (process.type == Enums.ProcessType.EXPERIMENT) {
-                if (process.snippetCodes.size() > 0) {
+                if (process.snippetCodes!=null && process.snippetCodes.size() > 0) {
                     return FlowVerifyStatus.SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR;
                 }
                 if (StringUtils.isBlank(process.code)) {
                     return FlowVerifyStatus.SNIPPET_NOT_DEFINED_ERROR;
                 }
             }
+            else {
+                if (process.getSnippetCodes() == null || process.getSnippetCodes().isEmpty()) {
+                    return FlowVerifyStatus.SNIPPET_NOT_DEFINED_ERROR;
+                }
+                for (String snippetCode : process.snippetCodes) {
+                    SnippetVersion sv = SnippetVersion.from(snippetCode);
+                    Snippet snippet = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
+                    if (snippet==null) {
+                        log.warn("Snippet wasn't found for code: {}, process: {}", snippetCode, process);
+                        return FlowVerifyStatus.SNIPPET_NOT_FOUND_ERROR;
+                    }
+                }
+            }
+            if (process.parallelExec && (process.snippetCodes==null || process.snippetCodes.size()<2)) {
+                return FlowVerifyStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
+            }
             if (process.type== Enums.ProcessType.FILE_PROCESSING) {
                 if (!process.parallelExec && process.snippetCodes.size()>1) {
                     return FlowVerifyStatus.TOO_MANY_SNIPPET_CODES_ERROR;
-                }
-            }
-            for (String snippetCode : process.snippetCodes) {
-                SnippetVersion sv = SnippetVersion.from(snippetCode);
-                Snippet snippet = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
-                if (snippet==null) {
-                    log.warn("Snippet wasn't found for code: {}, process: {}", snippetCode, process);
-                    return FlowVerifyStatus.SNIPPET_NOT_FOUND_ERROR;
                 }
             }
         }

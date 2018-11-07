@@ -46,12 +46,12 @@ public class TestFeatureWithAllError extends TestFeature {
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
         // this station already got sequences, so don't provide any new
-        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
+        ExperimentService.TasksAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
         assertNotNull(sequences);
         // sequences is empty cos we still didn't finish those sequences
-        assertTrue(sequences.getSimpleTasks().isEmpty());
+        assertNull(sequences.getSimpleTask());
 
         mills = System.currentTimeMillis();
         log.info("Start finishCurrentWithError()");
@@ -60,19 +60,21 @@ public class TestFeatureWithAllError extends TestFeature {
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
-        ExperimentService.SequencesAndAssignToStationResult sequences1 = experimentService.getTaskAndAssignToStation(
+        ExperimentService.TasksAndAssignToStationResult sequences1 = experimentService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(sequences1);
         mills = System.currentTimeMillis();
         log.info("Start sequences1.getFeature()");
-        final ExperimentFeature feature = sequences1.getFeature();
+        if (true) throw new IllegalStateException("Not implemented yet");
+        final ExperimentFeature feature = null;
+//        final ExperimentFeature feature = sequences1.getFeature();
         log.info("sequences1.getFeature() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(feature);
-        assertNotNull(sequences1.getSimpleTasks());
-        assertEquals(2, sequences1.getSimpleTasks().size());
+        assertNotNull(sequences1.getSimpleTask());
+        assertNotNull(sequences1.getSimpleTask());
         assertTrue(feature.isInProgress);
 
         mills = System.currentTimeMillis();

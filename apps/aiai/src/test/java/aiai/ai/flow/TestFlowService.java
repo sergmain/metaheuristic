@@ -3,10 +3,13 @@ package aiai.ai.flow;
 import aiai.ai.Enums;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
+import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.FlowRepository;
+import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
+import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -26,31 +29,9 @@ import static org.junit.Assert.assertEquals;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("launchpad")
-public class TestFlowService {
+public class TestFlowService extends TestFlowServiceAbstract{
 
-    @Autowired
-    public FlowRepository flowRepository;
-
-    @Autowired
-    public FlowService flowService;
-
-    @Autowired
-    public FlowYamlUtils flowYamlUtils;
-
-    private Flow flow=null;
-
-    @Before
-    public void init() {
-        flow = new Flow();
-        flow.setCode("test-flow-code");
-
-        String params = getFlowParamsAsYaml();
-        flow.setParams(params);
-
-        flowRepository.save(flow);
-    }
-
-    private String getFlowParamsAsYaml() {
+    String getFlowParamsAsYaml() {
         FlowYaml flowYaml = new FlowYaml();
         {
             Process p = new Process();
@@ -101,13 +82,6 @@ public class TestFlowService {
 
         String yaml = flowYamlUtils.toString(flowYaml);
         return yaml;
-    }
-
-    @After
-    public void finish() {
-        if (flow!=null) {
-            flowRepository.delete(flow);
-        }
     }
 
     @Test

@@ -94,6 +94,7 @@ public abstract class TestFeature {
     private BinaryDataService binaryDataService;
 
     Station station = null;
+    FlowInstance flowInstance = null;
     Experiment experiment = null;
     boolean isCorrectInit = true;
 
@@ -304,7 +305,7 @@ public abstract class TestFeature {
         long mills = System.currentTimeMillis();
         log.info("Start after()");
         if (experiment != null) {
-            taskRepository.deleteByExperimentId(experiment.getId());
+            taskRepository.deleteByFlowInstanceId(flowInstance.getId());
             experimentFeatureRepository.deleteByExperimentId(experiment.getId());
             experimentRepository.deleteById(experiment.getId());
         }
@@ -327,12 +328,10 @@ public abstract class TestFeature {
 
     protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
         assertEquals(sequences1Feature.experimentId, experiment.getId());
-        ExperimentService.SequencesAndAssignToStationResult sequences2 = experimentService.getTaskAndAssignToStation(
+        ExperimentService.TasksAndAssignToStationResult sequences2 = experimentService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         assertNotNull(sequences2);
-        assertTrue(sequences2.getSimpleTasks().isEmpty());
-        assertNull(sequences2.getFeature());
-
+        assertNotNull(sequences2.getSimpleTask());
 
         ExperimentFeature feature = experimentFeatureRepository.findById(sequences1Feature.getId()).orElse(null);
         assertNotNull(feature);
@@ -346,24 +345,27 @@ public abstract class TestFeature {
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
-        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
+        ExperimentService.TasksAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(sequences);
-        assertNotNull(sequences.getFeature());
-        assertNotNull(sequences.getSimpleTasks());
-        assertEquals(1, sequences.getSimpleTasks().size());
-        assertTrue(sequences.getFeature().isInProgress);
+        assertNotNull(sequences.getSimpleTask());
+        assertNotNull(sequences.getSimpleTask());
 
         mills = System.currentTimeMillis();
         log.info("Start experimentFeatureRepository.findById()");
-        ExperimentFeature feature = experimentFeatureRepository.findById(sequences.getFeature().getId()).orElse(null);
+
+        if (true) throw new IllegalStateException("Not implemented yet");
+/*
+        ExperimentFeature feature =
+                experimentFeatureRepository.findById(sequences.getFeature().getId()).orElse(null);
         log.info("experimentFeatureRepository.findById() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(feature);
         assertFalse(feature.isFinished);
         assertTrue(feature.isInProgress);
+*/
     }
 
     protected void finishCurrentWithError(int expectedSeqs) {

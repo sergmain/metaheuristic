@@ -18,7 +18,6 @@
 package aiai.ai.service;
 
 import aiai.ai.launchpad.beans.*;
-import aiai.ai.comm.CommandProcessor;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,21 +39,23 @@ public class TestFeatureWithSomeOk extends TestFeature {
         checkCurrentState_with10sequences();
 
         // this station already got sequences, so don't provide any new
-        ExperimentService.SequencesAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
+        ExperimentService.TasksAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         assertNotNull(sequences);
         // sequences is empty cos we still didn't finish those sequences
-        assertTrue(sequences.getSimpleTasks().isEmpty());
+        assertNull(sequences.getSimpleTask());
 
         finishCurrentWithError(1);
 
-        ExperimentService.SequencesAndAssignToStationResult sequences1 = experimentService.getTaskAndAssignToStation(
+        ExperimentService.TasksAndAssignToStationResult sequences1 = experimentService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         assertNotNull(sequences1);
-        final ExperimentFeature feature = sequences1.getFeature();
+        if (true) throw new IllegalStateException("Not implemented yet");
+        final ExperimentFeature feature = null;
+//        final ExperimentFeature feature = sequences1.getFeature();
         assertNotNull(feature);
-        assertNotNull(sequences1.getSimpleTasks());
-        assertEquals(2, sequences1.getSimpleTasks().size());
+        assertNotNull(sequences1.getSimpleTask());
+        assertNotNull(sequences1.getSimpleTask());
         assertTrue(feature.isInProgress);
 
         finishCurrentWithOk(2);

@@ -67,6 +67,9 @@ public class Snippet implements Serializable {
     @Column(name = "CODE_LENGTH")
     public long length;
 
+    @Column(name = "IS_FILE_PROVIDED")
+    public boolean fileProvided;
+
     public String getSnippetCode() {
         return ""+ name + ':' + snippetVersion;
     }

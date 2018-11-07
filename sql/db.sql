@@ -141,7 +141,8 @@ CREATE TABLE AIAI_LP_SNIPPET (
   IS_REPORT_METRICS   tinyint(1) not null default 0,
   ENV         VARCHAR(50) not null,
   PARAMS         VARCHAR(1000),
-  CODE_LENGTH integer not null
+  CODE_LENGTH integer not null,
+  IS_FILE_PROVIDED   tinyint(1) not null default 0
 );
 
 CREATE UNIQUE INDEX AIAI_LP_SNIPPET_UNQ_IDX

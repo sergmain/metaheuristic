@@ -140,7 +140,8 @@ CREATE TABLE AIAI_LP_SNIPPET (
   IS_REPORT_METRICS   BOOLEAN not null default false,
   ENV         VARCHAR(50) not null,
   PARAMS         VARCHAR(1000),
-  CODE_LENGTH integer not null
+  CODE_LENGTH integer not null,
+  IS_FILE_PROVIDED   BOOLEAN not null default false
 );
 
 CREATE UNIQUE INDEX AIAI_LP_SNIPPET_UNQ_IDX

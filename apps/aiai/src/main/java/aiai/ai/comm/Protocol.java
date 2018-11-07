@@ -110,7 +110,7 @@ public class Protocol {
             public String params;
             public Long taskId;
         }
-        List<Task> tasks;
+        public List<Task> tasks;
 
         public AssignedTask() {
             this.setType(Type.AssignedTask);

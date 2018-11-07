@@ -24,7 +24,6 @@ import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.env.EnvService;
-import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetCode;
@@ -69,7 +68,7 @@ public class ExperimentsController {
     }
 
     @Data
-    public static class SequencesResult {
+    public static class TasksResult {
         public Slice<Task> items;
     }
 
@@ -132,11 +131,10 @@ public class ExperimentsController {
     private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final TaskRepository taskRepository;
-    private final ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository;
     private final DatasetCache datasetCache;
     private final EnvService envService;
 
-    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, FeatureRepository featureRepository, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, ExperimentSequenceWithSpecRepository experimentSequenceWithSpecRepository, DatasetCache datasetCache, EnvService envService) {
+    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, FeatureRepository featureRepository, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, DatasetCache datasetCache, EnvService envService) {
         this.globals = globals;
         this.datasetRepository = datasetRepository;
         this.featureRepository = featureRepository;
@@ -148,7 +146,6 @@ public class ExperimentsController {
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.taskRepository = taskRepository;
-        this.experimentSequenceWithSpecRepository = experimentSequenceWithSpecRepository;
         this.datasetCache = datasetCache;
         this.envService = envService;
     }
@@ -173,8 +170,8 @@ public class ExperimentsController {
         Experiment experiment= experimentRepository.findById(experimentId).orElse(null);
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
 
-        SequencesResult result = new SequencesResult();
-        result.items = experimentService.findExperimentSequence(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
+        TasksResult result = new TasksResult();
+        result.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
         model.addAttribute("result", result);
         model.addAttribute("experiment", experiment);
@@ -590,7 +587,6 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
         experimentSnippetRepository.deleteByTaskTypeAndRefId(Enums.TaskType.Experiment.code, id);
-        taskRepository.deleteByExperimentId(id);
         experimentFeatureRepository.deleteByExperimentId(id);
         experimentRepository.deleteById(id);
         return "redirect:/launchpad/experiments";
