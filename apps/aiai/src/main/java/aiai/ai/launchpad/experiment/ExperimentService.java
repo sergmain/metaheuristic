@@ -704,8 +704,8 @@ public class ExperimentService {
             }
 
             if (true) throw new IllegalStateException("Not implemented yet");
-//            produceFeaturePermutations(dataset, experiment);
-//            produceTasks(experiment);
+            produceFeaturePermutations(dataset, experiment, List<String> inputResourceCode);
+            produceTasks(experiment);
         }
     }
 
@@ -713,7 +713,7 @@ public class ExperimentService {
         int totalVariants = 0;
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-//        snippetService.sortSnippetsByOrder(experimentSnippets);
+        snippetService.sortSnippetsByType(experimentSnippets);
 
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         for (ExperimentFeature feature : features) {
@@ -819,47 +819,19 @@ public class ExperimentService {
         experimentRepository.save(experimentTemp);
     }
 
-    public void produceFeaturePermutations(Dataset dataset, Experiment experiment) {
+    public void produceFeaturePermutations(Dataset da1taset, Experiment experiment, List<String> inputResourceCodes) {
         final List<ExperimentFeature> list = experimentFeatureRepository.findByExperimentId(experiment.getId());
 
-        final List<Long> ids = new ArrayList<>();
-        final Set<Long> requiredIds = new HashSet<>();
-        for (Feature feature : dataset.getFeatures()) {
-            ids.add(feature.getId());
-            if (feature.isRequired()) {
-                requiredIds.add(feature.getId());
-            }
-        }
-        if (!requiredIds.isEmpty()) {
-            for (ExperimentFeature feature : list) {
-                final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
-                boolean isFound = false;
-                for (String value : ofVariants.values) {
-                    if (requiredIds.contains(Long.parseLong(value))) {
-                        isFound = true;
-                        break;
-                    }
-                }
-                if (!isFound){
-                    experimentFeatureRepository.delete(feature);
-                }
-            }
-        }
-
-        Permutation<Long> permutation = new Permutation<>();
+        final List<String> ids = new ArrayList<>(inputResourceCodes);
+        Permutation<String> permutation = new Permutation<>();
         for (int i = 0; i < ids.size(); i++) {
             permutation.printCombination(ids, i+1,
                     data -> {
-                        if (isSkip(data, requiredIds)) {
-                            return true;
-                        }
                         final String idsAsStr = String.valueOf(data);
                         if (isExist(list, idsAsStr)) {
                             return true;
                         }
-                        if (isNotAll(requiredIds, data)) {
-                            return true;
-                        }
+
                         final ExperimentFeature feature = new ExperimentFeature();
                         feature.setExperimentId(experiment.getId());
                         feature.setFeatureIds(idsAsStr);
@@ -870,29 +842,6 @@ public class ExperimentService {
         }
         experiment.setFeatureProduced(true);
         experimentRepository.save(experiment);
-    }
-
-    private boolean isNotAll(Set<Long> requiredIds, List<Long> data) {
-        for (Long requiredId : requiredIds) {
-            if (!data.contains(requiredId)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean isSkip(List<Long> data, Set<Long> requiredIds) {
-        if (requiredIds.isEmpty()) {
-            return false;
-        }
-        boolean isFound = false;
-        for (Long datum : data) {
-            if (requiredIds.contains(datum)) {
-                isFound = true;
-                break;
-            }
-        }
-        return !isFound;
     }
 
     private boolean isExist(List<ExperimentFeature> features, String f) {
