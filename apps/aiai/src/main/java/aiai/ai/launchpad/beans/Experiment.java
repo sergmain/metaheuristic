@@ -60,6 +60,9 @@ public class Experiment implements Serializable {
     @Column(name = "DESCRIPTION")
     private String description;
 
+    @Column(name = "CODE")
+    private String code;
+
     @Column(name = "EPOCH")
     private String epoch;
 

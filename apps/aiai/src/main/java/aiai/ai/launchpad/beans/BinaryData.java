@@ -29,10 +29,24 @@ import java.sql.Timestamp;
 @Entity
 @Table(name = "AIAI_LP_DATA")
 @Data
-@EqualsAndHashCode(of = {"id", "version", "refId", "dataType"})
+@EqualsAndHashCode(of = {"id", "version", "dataType"})
 public class BinaryData implements Serializable {
     private static final long serialVersionUID = 7768428475142175426L;
 
+/*
+    CREATE TABLE AIAI_LP_DATA (
+        ID          SERIAL PRIMARY KEY,
+        CODE        VARCHAR(100),
+        POOL_CODE   VARCHAR(250),
+        DATA_TYPE   NUMERIC(2, 0) NOT NULL,
+        VERSION     NUMERIC(5, 0) NOT NULL,
+        UPDATE_TS   TIMESTAMP DEFAULT to_timestamp(0),
+        DATA        OID,
+        CHECKSUM    VARCHAR(2048),
+        IS_VALID    BOOLEAN not null default false
+    );
+
+*/
     public void setType(Enums.BinaryDataType binaryDataType) {
         this.dataType = binaryDataType.value;
     }
@@ -44,21 +58,27 @@ public class BinaryData implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "REF_ID")
-    private Long refId;
-
-    @Column(name = "UPDATE_TS")
-    private Timestamp updateTs;
+    @Column(name = "CODE")
+    private String code;
 
     @Column(name = "POOL_CODE")
     private String poolCode;
+
+    @Column(name = "DATA_TYPE")
+    private int dataType;
+
+    @Column(name = "UPDATE_TS")
+    private Timestamp updateTs;
 
     @Column(name = "DATA")
     @Lob
     private Blob data;
 
-    @Column(name = "DATA_TYPE")
-    private int dataType;
+    @Column(name = "CHECKSUM")
+    public String checksum;
+
+    @Column(name = "IS_VALID")
+    public boolean valid;
 
     @Transient
     public byte[] bytes;

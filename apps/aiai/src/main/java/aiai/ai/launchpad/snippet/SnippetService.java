@@ -71,9 +71,6 @@ public class SnippetService {
 
     @PostConstruct
     public void init() throws IOException {
-        if (globals.isStoreDataToDisk()) {
-            persistSnippets();
-        }
     }
 
     public List<ExperimentSnippet> getTaskSnippetsForExperiment(Long experimentId) {
@@ -124,6 +121,7 @@ public class SnippetService {
     }
 
 
+/*
     private void persistSnippets() throws IOException {
         File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
         if (!snippetDir.exists()) {
@@ -137,7 +135,9 @@ public class SnippetService {
         //noinspection unused
         int i=0;
     }
+*/
 
+/*
     public File persistSnippet(String snippetCode) throws IOException {
         File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
         if (!snippetDir.exists()) {
@@ -149,7 +149,9 @@ public class SnippetService {
         File file = persistConcreteSnippet(snippetDir, snippet);
         return file;
     }
+*/
 
+/*
     private File persistConcreteSnippet(File snippetDir, Snippet snippet) {
         SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
         if (snippetFile.file==null) {
@@ -166,6 +168,7 @@ public class SnippetService {
         }
         return snippetFile.file;
     }
+*/
 
     public interface SnippetFilter {
         boolean filter(Snippet snippet);
@@ -267,7 +270,8 @@ public class SnippetService {
                         snippet.reportMetrics = snippetConfig.isMetrics();
                         snippetCache.save(snippet);
                         try( InputStream inputStream = new FileInputStream(file)) {
-                            binaryDataService.save(inputStream, snippet.length, snippet.getId(), Enums.BinaryDataType.SNIPPET);
+                            String snippetCode = snippet.getSnippetCode();
+                            binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode);
                         }
                     }
                     else {
@@ -288,7 +292,8 @@ public class SnippetService {
                 snippet.reportMetrics = snippetConfig.isMetrics();
                 snippetCache.save(snippet);
                 try( InputStream inputStream = new FileInputStream(file)) {
-                    binaryDataService.save(inputStream, snippet.length, snippet.getId(), Enums.BinaryDataType.SNIPPET);
+                    String snippetCode = snippet.getSnippetCode();
+                    binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode);
                 }
             }
         }

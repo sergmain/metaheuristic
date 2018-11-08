@@ -25,7 +25,8 @@ import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
-import aiai.ai.utils.DigitUtils;
+import aiai.ai.station.AssetFile;
+import aiai.ai.station.StationResourceUtils;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import aiai.apps.commons.utils.Checksum;
@@ -69,21 +70,21 @@ public class PayloadController {
         this.globals = globals;
     }
 
-    @GetMapping("/resource/{type}/{id}")
-    public HttpEntity<AbstractResource> datasets(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("id") int id) throws IOException {
+    @GetMapping("/resource/{type}/{code}")
+    public HttpEntity<AbstractResource> datasets(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
         Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
         File typeDir = new File(globals.launchpadResourcesDir, binaryDataType.toString());
-        DigitUtils.Power power = DigitUtils.getPower(id);
-        File trgDir = new File(typeDir,
-                ""+power.power7+File.separatorChar+power.power4+File.separatorChar);
-        trgDir.mkdirs();
-        File file = new File(trgDir, ""+id+".bin");
+        AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.DATA, code);
+
+        if (assetFile==null) {
+            return returnEmptyAsGone(response);
+        }
         try {
-            binaryDataService.storeToFile(id, binaryDataType, file);
+            binaryDataService.storeToFile(code, assetFile.file);
         } catch (BinaryDataNotFoundException e) {
             return returnEmptyAsGone(response);
         }
-        return new HttpEntity<>(new FileSystemResource(file.toPath()), getHeader(file.length()));
+        return new HttpEntity<>(new FileSystemResource(assetFile.file.toPath()), getHeader(assetFile.file.length()));
     }
 
     private HttpEntity<AbstractResource> returnEmptyAsGone(HttpServletResponse response) throws IOException {
@@ -96,45 +97,12 @@ public class PayloadController {
         return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
     }
 
-    @GetMapping("/snippet/{name}")
-    public HttpEntity<AbstractResource> snippets(HttpServletResponse response, @PathVariable("name") String snippetCode) throws IOException {
-
-        SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
-        Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
-        if (snippet==null) {
-            log.info("Snippet wasn't found for name {}", snippetCode);
-            return returnEmptyAsGone(response);
-        }
-
-        File snippetFile;
-        try {
-            snippetFile = snippetService.persistSnippet(snippetCode);
-        } catch (BinaryDataNotFoundException e) {
-            return returnEmptyAsGone(response);
-        }
-        if (snippetFile==null) {
-            log.info("Snippet wasn't found for name {}", snippetCode);
-            return returnEmptyAsGone(response);
-        }
-
-        Checksum checksum = Checksum.fromJson(snippet.getChecksum());
-        try (InputStream is = new FileInputStream(snippetFile)) {
-            CheckSumAndSignatureStatus status = checksumWithSignatureService.verifyChecksumAndSignature(
-                    checksum, snippetCode, is, false
-            );
-            if (!status.isOk) {
-                return returnEmptyAsConflict(response);
-            }
-        }
-        final long length = snippet.getLength();
-        log.info("Send snippet, length: {}", length);
-
-        return new HttpEntity<>(new FileSystemResource(snippetFile.toPath()), getHeader(length));
-    }
-
     @GetMapping("/snippet-checksum/{name}")
     public HttpEntity<String> snippetChecksum(HttpServletResponse response, @PathVariable("name") String snippetCode) throws IOException {
 
+        if (true) throw new IllegalStateException("Not implemented yet");
+        return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);
+/*
         SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
         Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
@@ -166,6 +134,7 @@ public class PayloadController {
         log.info("Send checksum for snippet {}, length: {}", snippet.getSnippetCode(), length);
 
         return new HttpEntity<>(snippet.getChecksum(), getHeader(length) );
+*/
     }
 
     private HttpEntity<String> returnEmptyStringWithStatus(HttpServletResponse response, int status) throws IOException {

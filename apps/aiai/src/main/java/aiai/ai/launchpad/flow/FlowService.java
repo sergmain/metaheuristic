@@ -2,12 +2,10 @@ package aiai.ai.launchpad.flow;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.FlowInstance;
-import aiai.ai.launchpad.beans.Snippet;
+import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.experiment.ExperimentProcessService;
 import aiai.ai.launchpad.file_process.FileProcessService;
-import aiai.ai.launchpad.beans.Flow;
-import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
@@ -31,16 +29,18 @@ public class FlowService {
     private final Globals globals;
     private final FlowRepository flowRepository;
     private final FlowYamlUtils flowYamlUtils;
+    private final ExperimentCache experimentCache;
 
     private final ExperimentProcessService experimentProcessService;
     private final FileProcessService fileProcessService;
     private final FlowInstanceRepository flowInstanceRepository;
     private final SnippetCache snippetCache;
 
-    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache) {
+    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache) {
         this.globals = globals;
         this.flowRepository = flowRepository;
         this.flowYamlUtils = flowYamlUtils;
+        this.experimentCache = experimentCache;
         this.experimentProcessService = experimentProcessService;
         this.fileProcessService = fileProcessService;
         this.flowInstanceRepository = flowInstanceRepository;
@@ -62,6 +62,7 @@ public class FlowService {
         TOO_MANY_SNIPPET_CODES_ERROR,
         INPUT_CODE_NOT_SPECIFIED_ERROR,
         SNIPPET_NOT_FOUND_ERROR,
+        EXPERIMENT_NOT_FOUND_ERROR,
     }
 
     public enum FlowProducingStatus { OK,
@@ -126,6 +127,10 @@ public class FlowService {
                 }
                 if (StringUtils.isBlank(process.code)) {
                     return FlowVerifyStatus.SNIPPET_NOT_DEFINED_ERROR;
+                }
+                Experiment e = experimentCache.findByCode(process.code);
+                if (e==null) {
+                    return FlowVerifyStatus.EXPERIMENT_NOT_FOUND_ERROR;
                 }
             }
             else {

@@ -52,12 +52,12 @@ public class BinaryDataService {
         }
     }
 
-    public void storeToFile(long refId, Enums.BinaryDataType binaryDataType, File trgFile) {
+    public void storeToFile(String code, File trgFile) {
         try {
-            BinaryData data = binaryDataRepository.findByDataTypeAndRefId(binaryDataType.value, refId);
+            BinaryData data = binaryDataRepository.findByCode(code);
             if (data==null) {
-                log.warn("Binary data for refId {} and type {} wasn't found", refId, binaryDataType);
-                throw new BinaryDataNotFoundException("Binary data wasn't found, refId: " + refId+", type: " + binaryDataType);
+                log.warn("Binary data for code {} wasn't found", code);
+                throw new BinaryDataNotFoundException("Binary data wasn't found, code: " + code);
             }
             FileUtils.copyInputStreamToFile(data.getData().getBinaryStream(), trgFile);
         } catch (BinaryDataNotFoundException e) {
@@ -73,12 +73,21 @@ public class BinaryDataService {
         binaryDataRepository.deleteAllByDataType(binaryDataType.value);
     }
 
-    public BinaryData save(InputStream is, long size, long refId, Enums.BinaryDataType binaryDataType) {
-        BinaryData data = binaryDataRepository.findByDataTypeAndRefId(binaryDataType.value, refId);
+    public BinaryData save(InputStream is, long size,
+                           Enums.BinaryDataType binaryDataType, String code, String poolCode) {
+        BinaryData data = binaryDataRepository.findByCode(code);
         if (data==null) {
             data = new BinaryData();
             data.setDataType(binaryDataType.value);
-            data.setRefId(refId);
+            data.setValid(true);
+            data.setCode(code);
+            data.setPoolCode(poolCode);
+        }
+        else {
+            if (!poolCode.equals(data.getPoolCode())) {
+                throw new IllegalStateException(
+                        "Pool code is different, old: " + data.getPoolCode()+", new: "+ poolCode);
+            }
         }
         data.setUpdateTs(new Timestamp(System.currentTimeMillis()));
 
@@ -99,6 +108,7 @@ public class BinaryDataService {
         binaryDataRepository.save(data);
     }
 
+/*
     public void cloneBinaryData(Long srcRefId, Long trgRefId, Enums.BinaryDataType binaryDataType) throws SQLException {
         BinaryData srcData = binaryDataRepository.findByDataTypeAndRefId(binaryDataType.value, srcRefId);
         if (srcData==null) {
@@ -107,7 +117,6 @@ public class BinaryDataService {
 
         BinaryData data = new BinaryData();
         data.setDataType(binaryDataType.value);
-        data.setRefId(trgRefId);
         data.setUpdateTs(new Timestamp(System.currentTimeMillis()));
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class))
                 .createBlob(srcData.getData().getBinaryStream(), srcData.getData().length());
@@ -115,4 +124,5 @@ public class BinaryDataService {
 
         binaryDataRepository.save(data);
     }
+*/
 }

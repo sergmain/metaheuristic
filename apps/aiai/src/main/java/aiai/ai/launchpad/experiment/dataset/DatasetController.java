@@ -320,6 +320,9 @@ public class DatasetController {
             redirectAttributes.addFlashAttribute("errorMessage", "#150.01 Feature wasn't found, experimentFeatureId: " + groupId);
             return "redirect:/launchpad/datasets";
         }
+        if (true) throw new IllegalStateException("Not implemented yet");
+
+/*
         Dataset dataset = feature.getDataset();
         Long datasetId = dataset.getId();
         try {
@@ -357,7 +360,8 @@ public class DatasetController {
             log.info("yaml file: {}", yaml.getPath());
             final ExecProcessService.Result result = datasetService.runCommand(yaml, cmdLine);
             boolean isOk = result.isOk();
-            datasetService.updateInfoWithFeature(configForFeature, feature, isOk);
+            if (true) throw new IllegalStateException("Not implemented yet");
+//            datasetService.updateInfoWithFeature(configForFeature, feature, isOk);
             if (!isOk) {
                 redirectAttributes.addFlashAttribute("errorMessage",
                         "#155.02 Error executing of feature producer. See logs for more info");
@@ -370,6 +374,8 @@ public class DatasetController {
             return "redirect:/launchpad/dataset-definition/" + datasetId;
         }
         return "redirect:/launchpad/dataset-definition/" + datasetId;
+*/
+        return "redirect:/launchpad/datasets" ;
     }
 
     @PostMapping(value = "/dataset-is-editable-commit")

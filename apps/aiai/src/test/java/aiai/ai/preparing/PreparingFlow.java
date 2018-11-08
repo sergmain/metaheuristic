@@ -1,31 +1,22 @@
-package aiai.ai.flow;
+package aiai.ai.preparing;
 
-import aiai.ai.Enums;
-import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
-import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.junit4.SpringRunner;
-
-import java.util.Arrays;
-import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 
-public abstract class TestFlowServiceAbstract {
+@Slf4j
+public abstract class PreparingFlow extends PreparingExperiment {
 
     @Autowired
     public FlowRepository flowRepository;
@@ -45,6 +36,8 @@ public abstract class TestFlowServiceAbstract {
     public Snippet s3 = null;
     public Snippet s4 = null;
     public Snippet s5 = null;
+
+    public abstract String getFlowParamsAsYaml();
 
     @Before
     public void init() {
@@ -106,8 +99,6 @@ public abstract class TestFlowServiceAbstract {
         return s;
     }
 
-    abstract String getFlowParamsAsYaml();
-
     @After
     public void finish() {
         if (flow!=null) {
@@ -128,12 +119,5 @@ public abstract class TestFlowServiceAbstract {
                 log.error("Error", th);
             }
         }
-    }
-
-    @Test
-    public void testCreateTasks() {
-        FlowService.FlowVerifyStatus status = flowService.verify(flow);
-        assertEquals(FlowService.FlowVerifyStatus.OK, status);
-
     }
 }

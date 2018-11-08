@@ -69,7 +69,8 @@ public class DatasetService {
         ds.setFeatures(new ArrayList<>());
         ds.setLength(dataset.getLength());
         datasetCache.save(ds);
-        binaryDataService.cloneBinaryData(dataset.getId(), ds.getId(), Enums.BinaryDataType.DATA);
+        if (true) throw new IllegalStateException("Not implemented yet");
+//        binaryDataService.cloneBinaryData(dataset.getId(), ds.getId(), Enums.BinaryDataType.DATA);
 
         for (Feature feature : dataset.getFeatures()) {
             Feature dg = new Feature();
@@ -194,6 +195,7 @@ public class DatasetService {
         datasetCache.save(dataset);
     }
 
+/*
     void updateInfoWithFeature(ConfigForFeature configForFeature, Feature group, boolean isOk) throws IOException {
         int status = isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value;
         if (!configForFeature.featureFile.exists()) {
@@ -208,10 +210,11 @@ public class DatasetService {
 
         if (group.getFeatureStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
             try (InputStream is = new FileInputStream(configForFeature.featureFile)) {
-                binaryDataService.save(is, configForFeature.featureFile.length(), group.getId(), Enums.BinaryDataType.DATA);
+                binaryDataService.save(is, configForFeature.featureFile.length(), Enums.BinaryDataType.DATA, , );
             }
         }
     }
+*/
 
     ConfigForFeature createYamlForFeature(Feature group) {
 
@@ -271,6 +274,7 @@ public class DatasetService {
         return new ConfigForFeature(rawFilePath, rawFile, featureFilename, featureFile, new File(featurePath, PRODUCE_FEATURE_YAML));
     }
 
+/*
     void updateInfoWithRaw(Dataset dataset, boolean isOk) throws IOException {
         final String path = dataset.asRawFilePath();
         final File rawFile = new File(globals.launchpadDir, path);
@@ -283,12 +287,13 @@ public class DatasetService {
 
         if (dataset.getRawAssemblingStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
             try (InputStream is = new FileInputStream(rawFile)) {
-                binaryDataService.save(is, rawFile.length(), dataset.getId(), Enums.BinaryDataType.DATA);
+                binaryDataService.save(is, rawFile.length(), Enums.BinaryDataType.DATA, , );
             }
         }
 
         obsoleteFeatures(dataset);
     }
+*/
 
     private void obsoleteFeatures(Dataset dataset) {
         List<Feature> features = featureRepository.findByDataset_Id(dataset.getId());
@@ -298,6 +303,7 @@ public class DatasetService {
         datasetCache.saveAllFeatures(features, dataset.getId());
     }
 
+/*
     void updateInfoWithDataset(Dataset dataset, boolean isOk) throws IOException {
         final String path = dataset.asDatasetFilePath();
         File datasetFile = new File(globals.launchpadDir, path);
@@ -314,12 +320,13 @@ public class DatasetService {
 
         if (dataset.getRawAssemblingStatus()==ArtifactStatus.OK.value && globals.isStoreDataToDb()) {
             try (InputStream is = new FileInputStream(datasetFile)) {
-                binaryDataService.save(is, datasetFile.length(), dataset.getId(), Enums.BinaryDataType.DATA);
+                binaryDataService.save(is, datasetFile.length(), Enums.BinaryDataType.DATA, ,);
             }
         }
 
         obsoleteFeatures(dataset);
     }
+*/
 
     ExecProcessService.Result runCommand(File yaml, String command) {
 

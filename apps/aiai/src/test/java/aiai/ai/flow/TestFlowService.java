@@ -2,20 +2,12 @@ package aiai.ai.flow;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.Process;
-import aiai.ai.launchpad.beans.Flow;
-import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.flow.FlowService;
-import aiai.ai.launchpad.repositories.FlowRepository;
-import aiai.ai.launchpad.snippet.SnippetCache;
+import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.yaml.flow.FlowYaml;
-import aiai.ai.yaml.flow.FlowYamlUtils;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -29,9 +21,10 @@ import static org.junit.Assert.assertEquals;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("launchpad")
-public class TestFlowService extends TestFlowServiceAbstract{
+public class TestFlowService extends PreparingFlow {
 
-    String getFlowParamsAsYaml() {
+    @Override
+    public String getFlowParamsAsYaml() {
         FlowYaml flowYaml = new FlowYaml();
         {
             Process p = new Process();
@@ -75,7 +68,7 @@ public class TestFlowService extends TestFlowServiceAbstract{
             Process p = new Process();
             p.type = Enums.ProcessType.EXPERIMENT;
             p.name = "experiment";
-            p.code = "experiment-code-01";
+            p.code = "test-experiment-code-01";
 
             flowYaml.processes.add(p);
         }

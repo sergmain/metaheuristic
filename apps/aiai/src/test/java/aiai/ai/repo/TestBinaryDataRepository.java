@@ -30,7 +30,7 @@ public class TestBinaryDataRepository {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        BinaryData d1 = binaryDataService.save(inputStream, bytes.length, 1L, Enums.BinaryDataType.TEST);
+        BinaryData d1 = binaryDataService.save(inputStream, bytes.length, Enums.BinaryDataType.TEST, "test-01", "test-01");
 
         Timestamp ts = d1.getUpdateTs();
 

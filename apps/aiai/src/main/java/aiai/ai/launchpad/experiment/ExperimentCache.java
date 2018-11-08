@@ -19,6 +19,7 @@ package aiai.ai.launchpad.experiment;
 
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -42,5 +43,15 @@ public class ExperimentCache {
     @Cacheable(cacheNames = "experiments", unless="#result==null")
     public Experiment findById(long id) {
         return experimentRepository.findById(id).orElse(null);
+    }
+
+    @Cacheable(cacheNames = "experimentsByCode", unless="#result==null")
+    public Experiment findByCode(String code) {
+        return experimentRepository.findByCode(code);
+    }
+
+    @CacheEvict(cacheNames = {"experiments", "experimentsByCode"}, allEntries=true)
+    public void delete(Experiment experiment) {
+        experimentRepository.delete(experiment);
     }
 }

@@ -15,31 +15,25 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.service;
+package aiai.ai.preparing;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ArtifactStatus;
-import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.experiment.dataset.DatasetCache;
+import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
-import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
-import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
+import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
-import aiai.ai.yaml.console.SnippetExec;
-import aiai.ai.yaml.console.SnippetExecUtils;
-import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,7 +42,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 @Slf4j
-public abstract class TestFeature {
+public abstract class PreparingExperiment {
 
     private static final String TEST_FIT_SNIPPET = "test.fit.snippet";
     private static final String SNIPPET_VERSION_1_0 = "1.0";
@@ -73,11 +67,6 @@ public abstract class TestFeature {
     @Autowired
     protected StationsRepository stationsRepository;
 
-/*
-    @Autowired
-    protected SnippetRepository snippetRepository;
-
-*/
     @Autowired
     protected SnippetCache snippetCache;
 
@@ -91,6 +80,9 @@ public abstract class TestFeature {
     private DatasetCache datasetCache;
 
     @Autowired
+    private ExperimentCache experimentCache;
+
+    @Autowired
     private BinaryDataService binaryDataService;
 
     Station station = null;
@@ -102,14 +94,15 @@ public abstract class TestFeature {
     private Snippet fitSnippet = null;
     private Snippet predictSnippet = null;
 
-    @PostConstruct
-    public void preapre_1() {
-    }
-
     @Before
     public void before() {
         try {
             long mills;
+
+            Experiment e = experimentCache.findByCode("test-experiment-code-01");
+            if (e!=null) {
+                experimentCache.delete(e);
+            }
 
             // Prepare station
             station = new Station();
@@ -130,7 +123,6 @@ public abstract class TestFeature {
             log.info("findByNameAndSnippetVersion() was finished for {}", System.currentTimeMillis() - mills);
 
             byte[] bytes = "some program code".getBytes();
-            String snippetCode = fitSnippet.getSnippetCode();
             if (fitSnippet == null) {
                 fitSnippet = new Snippet();
                 fitSnippet.setName(TEST_FIT_SNIPPET);
@@ -148,12 +140,11 @@ public abstract class TestFeature {
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #1");
-                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode);
+                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, fitSnippet.getSnippetCode(), fitSnippet.getSnippetCode());
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
 
             predictSnippet = snippetCache.findByNameAndSnippetVersion(TEST_PREDICT_SNIPPET, SNIPPET_VERSION_1_0);
-            String predictSnippetCode = predictSnippet.getSnippetCode();
             if (predictSnippet == null) {
                 predictSnippet = new Snippet();
                 predictSnippet.setName(TEST_PREDICT_SNIPPET);
@@ -171,7 +162,7 @@ public abstract class TestFeature {
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #2");
-                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, predictSnippetCode, predictSnippetCode);
+                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, predictSnippet.getSnippetCode(), predictSnippet.getSnippetCode());
                 log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
             }
 
@@ -218,6 +209,7 @@ public abstract class TestFeature {
             experiment.setEpochVariant(numberOfVariants.getCount());
             experiment.setName("Test experiment.");
             experiment.setDescription("Test experiment. Must be deleted automatically.");
+            experiment.setCode("test-experiment-code-01");
             experiment.setSeed(42);
             experiment.setExecState(Enums.TaskExecState.STARTED.code);
             experiment.setLaunched(true);
@@ -253,13 +245,13 @@ public abstract class TestFeature {
             es1.setRefId(experiment.getId());
             es1.setTaskType(Enums.TaskType.Experiment.code);
             es1.setType(SnippetType.fit.toString());
-            es1.setSnippetCode(snippetCode);
+            es1.setSnippetCode(fitSnippet.getSnippetCode());
 
             ExperimentSnippet es2 = new ExperimentSnippet();
             es2.setRefId(experiment.getId());
             es2.setTaskType(Enums.TaskType.Experiment.code);
             es2.setType(SnippetType.predict.toString());
-            es2.setSnippetCode(predictSnippetCode);
+            es2.setSnippetCode(predictSnippet.getSnippetCode());
 
             mills = System.currentTimeMillis();
             log.info("Start taskSnippetRepository.saveAll()");
@@ -307,9 +299,11 @@ public abstract class TestFeature {
         long mills = System.currentTimeMillis();
         log.info("Start after()");
         if (experiment != null) {
-            taskRepository.deleteByFlowInstanceId(flowInstance.getId());
             experimentFeatureRepository.deleteByExperimentId(experiment.getId());
             experimentRepository.deleteById(experiment.getId());
+        }
+        if (flowInstance!=null) {
+            taskRepository.deleteByFlowInstanceId(flowInstance.getId());
         }
         if (dataset != null) {
             datasetCache.delete(dataset.getId());
@@ -327,87 +321,4 @@ public abstract class TestFeature {
         System.out.println("Was finished correctly");
         log.info("after() was finished for {}", System.currentTimeMillis() - mills);
     }
-
-    protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
-        assertEquals(sequences1Feature.experimentId, experiment.getId());
-        ExperimentService.TasksAndAssignToStationResult sequences2 = experimentService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getId());
-        assertNotNull(sequences2);
-        assertNotNull(sequences2.getSimpleTask());
-
-        ExperimentFeature feature = experimentFeatureRepository.findById(sequences1Feature.getId()).orElse(null);
-        assertNotNull(feature);
-        assertTrue(feature.isFinished);
-        assertFalse(feature.isInProgress);
-        assertEquals(FeatureExecStatus.error.code, feature.execStatus);
-    }
-
-    protected void checkCurrentState_with10sequences() {
-        long mills;
-
-        mills = System.currentTimeMillis();
-        log.info("Start experimentService.getTaskAndAssignToStation()");
-        ExperimentService.TasksAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getId());
-        log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
-
-        assertNotNull(sequences);
-        assertNotNull(sequences.getSimpleTask());
-        assertNotNull(sequences.getSimpleTask());
-
-        mills = System.currentTimeMillis();
-        log.info("Start experimentFeatureRepository.findById()");
-
-        if (true) throw new IllegalStateException("Not implemented yet");
-/*
-        ExperimentFeature feature =
-                experimentFeatureRepository.findById(sequences.getFeature().getId()).orElse(null);
-        log.info("experimentFeatureRepository.findById() was finished for {}", System.currentTimeMillis() - mills);
-
-        assertNotNull(feature);
-        assertFalse(feature.isFinished);
-        assertTrue(feature.isInProgress);
-*/
-    }
-
-    protected void finishCurrentWithError(int expectedSeqs) {
-        // lets report about sequences that all finished with error (errorCode!=0)
-        List<SimpleTaskExecResult> results = new ArrayList<>();
-        List<Task> tasks = taskRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
-        if (expectedSeqs!=0) {
-            assertEquals(expectedSeqs, tasks.size());
-        }
-        for (Task task : tasks) {
-            ExecProcessService.Result result = new ExecProcessService.Result(false, -1, "This is sample console output");
-            SnippetExec snippetExec = new SnippetExec();
-            snippetExec.setExec(result);
-            String yaml = SnippetExecUtils.toString(snippetExec);
-
-            SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
-            results.add(sser);
-        }
-
-        experimentService.storeAllResults(results);
-    }
-
-    protected void finishCurrentWithOk(int expectedSeqs) {
-        // lets report about sequences that all finished with error (errorCode!=0)
-        List<SimpleTaskExecResult> results = new ArrayList<>();
-        List<Task> tasks = taskRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
-        if (expectedSeqs!=0) {
-            assertEquals(expectedSeqs, tasks.size());
-        }
-        for (Task task : tasks) {
-            SnippetExec snippetExec = new SnippetExec();
-            snippetExec.setExec( new ExecProcessService.Result(true, 0, "This is sample console output. fit"));
-            String yaml = SnippetExecUtils.toString(snippetExec);
-
-            SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
-            results.add(sser);
-        }
-
-        experimentService.storeAllResults(results);
-    }
-
-
 }

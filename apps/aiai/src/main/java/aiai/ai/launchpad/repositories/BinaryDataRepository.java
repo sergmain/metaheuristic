@@ -36,7 +36,7 @@ import java.util.List;
 public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     List<BinaryData> findAllByDataType(int dataType);
 
-    BinaryData findByDataTypeAndRefId(int dataType, long refId);
+    BinaryData findByCode(String code);
 
     @Transactional
     void deleteAllByDataType(int dataType);
