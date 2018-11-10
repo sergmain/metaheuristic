@@ -30,7 +30,7 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
-public class TestFeatureWithSomeOk extends TestFeature {
+public class TestFeatureWithSomeOk extends FeatureMethods {
 
     @Test
     public void testFeatureCompletionWithPartialError() {

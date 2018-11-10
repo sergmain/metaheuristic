@@ -47,7 +47,6 @@ public abstract class PreparingExperiment {
     private static final String TEST_FIT_SNIPPET = "test.fit.snippet";
     private static final String SNIPPET_VERSION_1_0 = "1.0";
     private static final String TEST_PREDICT_SNIPPET = "test.predict.snippet";
-    private static final int EXPECTED_FEATURE_PERMUTATIONS_NUMBER = 7;
 
     @Autowired
     protected Globals globals;
@@ -85,14 +84,14 @@ public abstract class PreparingExperiment {
     @Autowired
     private BinaryDataService binaryDataService;
 
-    Station station = null;
-    FlowInstance flowInstance = null;
-    Experiment experiment = null;
-    boolean isCorrectInit = true;
+    public Station station = null;
+    public FlowInstance flowInstance = null;
+    public Experiment experiment = null;
+    public boolean isCorrectInit = true;
 
-    private Dataset dataset = null;
-    private Snippet fitSnippet = null;
-    private Snippet predictSnippet = null;
+    public Dataset dataset = null;
+    public Snippet fitSnippet = null;
+    public Snippet predictSnippet = null;
 
     @Before
     public void before() {
@@ -257,33 +256,6 @@ public abstract class PreparingExperiment {
             log.info("Start taskSnippetRepository.saveAll()");
             experimentSnippetRepository.saveAll(Arrays.asList(es1, es2));
             log.info("taskSnippetRepository.saveAll() was finished for {}", System.currentTimeMillis() - mills);
-
-            // produce artifacts - features, sequences,...
-            mills = System.currentTimeMillis();
-            log.info("Start experimentService.produceFeaturePermutations()");
-            experimentService.produceFeaturePermutations(dataset, experiment);
-            log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
-
-            mills = System.currentTimeMillis();
-            log.info("Start experimentFeatureRepository.findByExperimentId()");
-            List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
-            log.info("experimentFeatureRepository.findByExperimentId() was finished for {}", System.currentTimeMillis() - mills);
-
-            assertNotNull(features);
-            assertEquals(EXPECTED_FEATURE_PERMUTATIONS_NUMBER, features.size());
-            for (ExperimentFeature feature : features) {
-                assertFalse(feature.isFinished);
-            }
-
-            mills = System.currentTimeMillis();
-            log.info("Start experimentService.produceTasks()");
-            // produce sequences
-            List<String> codes = new ArrayList<>();
-            experimentService.produceTasks(experiment, codes);
-            log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);
-
-            // some global final check
-            assertEquals(EXPECTED_FEATURE_PERMUTATIONS_NUMBER, experimentFeatureRepository.findByExperimentId(experiment.getId()).size());
 
             System.out.println("Was inited correctly");
         }

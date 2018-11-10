@@ -19,6 +19,7 @@ package aiai.ai.service;
 
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.launchpad.experiment.ExperimentService;
+import aiai.ai.preparing.PreparingExperiment;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -32,7 +33,7 @@ import static org.junit.Assert.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("launchpad")
-public class TestFeatureWithAllError extends TestFeature {
+public class TestFeatureWithAllError extends FeatureMethods {
 
     @Test
     public void testFeatureCompletionWithAllError() {

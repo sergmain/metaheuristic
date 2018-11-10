@@ -704,8 +704,9 @@ public class ExperimentService {
             }
 
             if (true) throw new IllegalStateException("Not implemented yet");
-            produceFeaturePermutations(dataset, experiment, List<String> inputResourceCode);
-            produceTasks(experiment);
+            List<String> inputResourceCode = new ArrayList<>();
+            produceFeaturePermutations(dataset, experiment, inputResourceCode);
+            produceTasks(experiment, inputResourceCode);
         }
     }
 
