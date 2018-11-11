@@ -2,7 +2,6 @@ package aiai.ai.flow;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.Process;
-import aiai.ai.launchpad.beans.Dataset;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.launchpad.flow.FlowService;
@@ -99,8 +98,7 @@ public class TestFeatures extends PreparingFlow {
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
         Experiment experiment = new Experiment();
-        Dataset dataset = null;
-        experimentService.produceFeaturePermutations(dataset, experiment, null);
+        experimentService.produceFeaturePermutations(experiment, null);
         log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();

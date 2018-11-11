@@ -22,7 +22,6 @@ import aiai.ai.Globals;
 import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
-import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
@@ -97,7 +96,6 @@ public class ExperimentsController {
 
     @Data
     public static class ExperimentResult {
-        public Dataset dataset;
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeature> features;
         public boolean isCanBeLaunched;
@@ -121,8 +119,6 @@ public class ExperimentsController {
 
     private final Globals globals;
 
-    private final DatasetRepository datasetRepository;
-    private final FeatureRepository featureRepository;
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
@@ -131,13 +127,10 @@ public class ExperimentsController {
     private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final TaskRepository taskRepository;
-    private final DatasetCache datasetCache;
     private final EnvService envService;
 
-    public ExperimentsController(Globals globals, DatasetRepository datasetRepository, FeatureRepository featureRepository, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, DatasetCache datasetCache, EnvService envService) {
+    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, EnvService envService) {
         this.globals = globals;
-        this.datasetRepository = datasetRepository;
-        this.featureRepository = featureRepository;
         this.snippetRepository = snippetRepository;
         this.experimentRepository = experimentRepository;
         this.experimentHyperParamsRepository = experimentHyperParamsRepository;
@@ -146,7 +139,6 @@ public class ExperimentsController {
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.taskRepository = taskRepository;
-        this.datasetCache = datasetCache;
         this.envService = envService;
     }
 
@@ -247,45 +239,19 @@ public class ExperimentsController {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParams.getValues());
             hyperParams.setVariants( variants.status ?variants.count : 0 );
         }
-        if (experiment.getDatasetId()==null) {
+        if (experiment.getFlowInstanceId()==null) {
             model.addAttribute("infoMessages", Collections.singleton("Launch is disabled, dataset isn't assigned"));
         }
 
         ExperimentResult experimentResult = new ExperimentResult();
-        Dataset dataset = getDatasetAndCheck(experiment);
-        experimentResult.dataset = dataset;
         experimentResult.features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         experimentResult.features.sort( (ExperimentFeature o1, ExperimentFeature o2) -> (Boolean.compare(o2.isFinished, o1.isFinished)));
 
-        experimentResult.isCanBeLaunched = isCanBeLaunched_FirstCheck(experiment);
-        if (experimentResult.isCanBeLaunched) {
-            if (dataset.getAssemblySnippet()==null || dataset.getDatasetSnippet()==null ||
-                dataset.getRawAssemblingStatus()!= ArtifactStatus.OK.value ||
-                dataset.getDatasetProducingStatus()!= ArtifactStatus.OK.value ||
-                    dataset.getFeatures()==null || dataset.getFeatures().isEmpty()
-            ) {
-                experimentResult.isCanBeLaunched = false;
-            }
-            else {
-                for (Feature feature : dataset.getFeatures()) {
-                    if (feature.getFeatureStatus()!=ArtifactStatus.OK.value) {
-                        experimentResult.isCanBeLaunched = false;
-                        break;
-                    }
-                }
-            }
-        }
         experimentResult.envs.putAll( envService.envsAsMap() );
 
         model.addAttribute("experiment", experiment);
         model.addAttribute("experimentResult", experimentResult);
         return "launchpad/experiment-info";
-    }
-
-    private boolean isCanBeLaunched_FirstCheck(Experiment experiment) {
-        List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-        return experimentSnippets.size() > 1 && experiment.getExecState() != Enums.TaskExecState.FINISHED.code &&
-                !experiment.isLaunched() && experiment.getDatasetId() != null;
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
@@ -318,32 +284,13 @@ public class ExperimentsController {
                 });
 
         ExperimentResult experimentResult = new ExperimentResult();
-        Dataset dataset = getDatasetAndCheck(experiment);
-        if (dataset==null) {
-            for (Dataset ds : datasetRepository.findAll()) {
-                experimentResult.allDatasetOptions.add(new SimpleSelectOption(ds.getId().toString(), String.format("Id: %d; %s", ds.getId(), ds.getName())));
-            }
-        }
-        experimentResult.dataset = dataset;
+
         snippetResult.sortSnippetsByOrder();
         model.addAttribute("experiment", experiment);
         model.addAttribute("simpleExperiment", SimpleExperiment.to(experiment));
         model.addAttribute("experimentResult", experimentResult);
         model.addAttribute("snippetResult", snippetResult);
         return "launchpad/experiment-edit-form";
-    }
-
-    private Dataset getDatasetAndCheck(Experiment experiment) {
-        Dataset dataset = null;
-        if (experiment.getDatasetId()!=null) {
-            dataset = datasetCache.findById(experiment.getDatasetId());
-            if (dataset == null) {
-                log.warn("dataset wasn't found for id {}", experiment.getDatasetId());
-                experiment.setDatasetId(null);
-                experimentRepository.save(experiment);
-            }
-        }
-        return dataset;
     }
 
     @PostMapping("/experiment-add-form-commit")
@@ -378,44 +325,6 @@ public class ExperimentsController {
 
     public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
         snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
-    }
-
-    @PostMapping("/experiment-dataset-assign-commit/{id}")
-    public String datasetAddCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes ) {
-        Experiment experiment = experimentRepository.findById(id).orElse(null);
-        if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#287.01 experiment wasn't found, experimentId: " + id);
-            return "redirect:/launchpad/experiments";
-        }
-        if (experiment.getDatasetId()!=null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#287.02 Dataset is already assigned to this experiment, experimentId: " + id);
-            return "redirect:/launchpad/experiment-edit/"+id;
-        }
-        Dataset dataset = datasetCache.findById(Long.parseLong(code));
-        if (dataset==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#287.03 Wrong datasetId: "+code+", experimentId: " + id);
-            return "redirect:/launchpad/experiment-edit/"+id;
-        }
-
-        experiment.setDatasetId(dataset.getId());
-        experimentRepository.save(experiment);
-        return "redirect:/launchpad/experiment-edit/"+id;
-    }
-
-    @GetMapping("/experiment-dataset-unassign-commit/{id}")
-    public String datasetAddCommit(@PathVariable Long id, final RedirectAttributes redirectAttributes ) {
-        Experiment experiment = experimentRepository.findById(id).orElse(null);
-        if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#288.01 experiment wasn't found, experimentId: " + id);
-            return "redirect:/launchpad/experiments";
-        }
-        if (experiment.getDatasetId()==null) {
-            // dataset was already unassigned
-            return "redirect:/launchpad/experiment-edit/"+id;
-        }
-        experiment.setDatasetId(null);
-        experimentRepository.save(experiment);
-        return "redirect:/launchpad/experiment-edit/"+id;
     }
 
     @PostMapping("/experiment-metadata-add-commit/{id}")
@@ -592,52 +501,6 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiments";
     }
 
-    @PostMapping("/experiment-clone-commit")
-    public String cloneCommit(Long id, final RedirectAttributes redirectAttributes) {
-        Experiment experiment = experimentRepository.findById(id).orElse(null);
-        if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#284.01 experiment wasn't found, experimentId: " + id);
-            return "redirect:/launchpad/experiments";
-        }
-        Experiment trg = new Experiment();
-        trg.setDatasetId(experiment.getDatasetId());
-        trg.setEpoch(experiment.getEpoch());
-        trg.setEpochVariant(experiment.getEpochVariant());
-        trg.setSeed(experiment.getSeed());
-        trg.setName( StrUtils.incCopyNumber(experiment.getName()) );
-        trg.setDescription( experiment.getDescription() );
-        trg.setAllSequenceProduced(false);
-        trg.setFeatureProduced(false);
-        trg.setCreatedOn(System.currentTimeMillis());
-        trg.setLaunchedOn(null);
-        trg.setLaunched(false);
-        trg.setHyperParams(new ArrayList<>());
-        trg.setExecState(Enums.TaskExecState.NONE.code);
-        experimentRepository.save(trg);
-
-        List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-
-        for (ExperimentSnippet snippet : experimentSnippets) {
-            ExperimentSnippet trgSnippet = new ExperimentSnippet();
-            BeanUtils.copyProperties(snippet, trgSnippet);
-            trgSnippet.setId(null);
-            trgSnippet.setVersion(null);
-            trgSnippet.setRefId(trg.getId());
-            experimentSnippetRepository.save(trgSnippet);
-        }
-        for (ExperimentHyperParams params1 : experiment.getHyperParams()) {
-            ExperimentHyperParams trgParam = new ExperimentHyperParams();
-            BeanUtils.copyProperties(params1, trgParam);
-            trgParam.setId(null);
-            trgParam.setVersion(null);
-            trgParam.setExperiment(trg);
-            trg.getHyperParams().add(trgParam);
-            experimentHyperParamsRepository.save(trgParam);
-        }
-
-        return "redirect:/launchpad/experiments";
-    }
-
     @PostMapping("/task-rerun/{id}")
     public @ResponseBody boolean rerunSequence(@PathVariable long id) {
         if (true) throw new IllegalStateException("Not implemented yet");
@@ -687,21 +550,6 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiment-info/"+experimentId;
         }
 
-        if (experiment.getDatasetId()==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#284.03 dataset wasn't assigned, experimentId: " + experimentId);
-            return "redirect:/launchpad/experiments";
-        }
-        Dataset dataset = datasetCache.findById(experiment.getDatasetId());
-        if (dataset == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#284.04 experiment has broken link to dataset. Need to reassign a dataset.");
-            return "redirect:/launchpad/experiments";
-        }
-        if (!dataset.isLocked()) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "#284.05 You have to lock and process dataset before running experiment.");
-            return "redirect:/launchpad/experiments";
-        }
-
         experiment.setLaunched(true);
         experiment.setLaunchedOn(System.currentTimeMillis());
         experiment.setExecState(Enums.TaskExecState.STARTED.code);
@@ -717,7 +565,7 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#285.01 experiment wasn't found, experimentId: " + experimentId);
             return "redirect:/launchpad/experiments";
         }
-        if (experiment.getDatasetId()==null) {
+        if (experiment.getFlowInstanceId()==null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#285.03 dataset wasn't assigned, experimentId: " + experimentId);
             return "redirect:/launchpad/experiments";
         }

@@ -51,8 +51,8 @@ public class Experiment implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "DATASET_ID")
-    private Long datasetId;
+    @Column(name = "FLOW_INSTANCE_ID")
+    private Long flowInstanceId;
 
     @Column(name = "NAME")
     private String name;

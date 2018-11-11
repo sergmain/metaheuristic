@@ -19,13 +19,11 @@ package aiai.ai.preparing;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.core.ArtifactStatus;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
-import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.apps.commons.yaml.snippet.SnippetType;
@@ -35,11 +33,7 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-
-import static org.junit.Assert.*;
 
 @Slf4j
 public abstract class PreparingExperiment {
@@ -61,9 +55,6 @@ public abstract class PreparingExperiment {
     protected ExperimentFeatureRepository experimentFeatureRepository;
 
     @Autowired
-    protected DatasetRepository datasetRepository;
-
-    @Autowired
     protected StationsRepository stationsRepository;
 
     @Autowired
@@ -76,9 +67,6 @@ public abstract class PreparingExperiment {
     protected TaskRepository taskRepository;
 
     @Autowired
-    private DatasetCache datasetCache;
-
-    @Autowired
     private ExperimentCache experimentCache;
 
     @Autowired
@@ -89,7 +77,6 @@ public abstract class PreparingExperiment {
     public Experiment experiment = null;
     public boolean isCorrectInit = true;
 
-    public Dataset dataset = null;
     public Snippet fitSnippet = null;
     public Snippet predictSnippet = null;
 
@@ -165,37 +152,8 @@ public abstract class PreparingExperiment {
                 log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
             }
 
-            // Prepare dataset
-            dataset = new Dataset();
-            dataset.setName("Test dataset");
-            dataset.setDescription("Test dataset. must be deleted automatically");
-            dataset.setLocked(true);
-            dataset.setEditable(false);
-
-            Feature dg1 = new Feature();
-            dg1.setFeatureOrder(1);
-            dg1.setDescription("Test cmd #1. Must be deleted automatically");
-            dg1.setFeatureStatus(ArtifactStatus.OK.value);
-            dg1.setDataset(dataset);
-
-            Feature dg2 = new Feature();
-            dg2.setFeatureOrder(2);
-            dg2.setDescription("Test cmd #2. Must be deleted automatically");
-            dg2.setFeatureStatus(ArtifactStatus.OK.value);
-            dg2.setDataset(dataset);
-
-            Feature dg3 = new Feature();
-            dg3.setFeatureOrder(3);
-            dg3.setDescription("Test cmd #3. Must be deleted automatically");
-            dg3.setFeatureStatus(ArtifactStatus.OK.value);
-            dg3.setDataset(dataset);
-
-            dataset.setFeatures(Arrays.asList(dg1, dg2, dg3));
 
             mills = System.currentTimeMillis();
-            log.info("Start datasetCache.save()");
-            datasetCache.save(dataset);
-            log.info("datasetCache.save() was finished for {}", System.currentTimeMillis() - mills);
 
             // Prepare experiment
             experiment = new Experiment();
@@ -214,7 +172,7 @@ public abstract class PreparingExperiment {
             experiment.setLaunched(true);
             experiment.setLaunchedOn(System.currentTimeMillis());
             experiment.setAllSequenceProduced(false);
-            experiment.setDatasetId(dataset.getId());
+            experiment.setFlowInstanceId(flowInstance.getId());
 
             // set hyper params for experiment
             ExperimentHyperParams ehp1 = new ExperimentHyperParams();
@@ -276,9 +234,6 @@ public abstract class PreparingExperiment {
         }
         if (flowInstance!=null) {
             taskRepository.deleteByFlowInstanceId(flowInstance.getId());
-        }
-        if (dataset != null) {
-            datasetCache.delete(dataset.getId());
         }
         if (station != null) {
             stationsRepository.deleteById(station.getId());

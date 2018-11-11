@@ -1,31 +1,16 @@
 package aiai.ai.launchpad.experiment.dataset;
 
-import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ExecProcessService;
-import aiai.ai.launchpad.beans.Dataset;
-import aiai.ai.launchpad.beans.Feature;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.env.EnvService;
-import aiai.ai.launchpad.repositories.FeatureRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
-import aiai.ai.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.Charsets;
-import org.apache.commons.io.FileUtils;
-import org.springframework.beans.BeanUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,45 +28,15 @@ public class DatasetService {
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
     private final EnvService envService;
-    private final DatasetCache datasetCache;
-    private final FeatureRepository featureRepository;
     private final ExecProcessService execProcessService;
 
-    public DatasetService(Globals globals, BinaryDataService binaryDataService, SnippetRepository snippetRepository, SnippetService snippetService, EnvService envService, DatasetCache datasetCache, FeatureRepository featureRepository, ExecProcessService execProcessService) {
+    public DatasetService(Globals globals, BinaryDataService binaryDataService, SnippetRepository snippetRepository, SnippetService snippetService, EnvService envService, ExecProcessService execProcessService) {
         this.globals = globals;
         this.binaryDataService = binaryDataService;
         this.snippetRepository = snippetRepository;
         this.snippetService = snippetService;
         this.envService = envService;
-        this.datasetCache = datasetCache;
-        this.featureRepository = featureRepository;
         this.execProcessService = execProcessService;
-    }
-
-    void cloneDataset(Dataset dataset) throws SQLException {
-        Dataset ds = new Dataset();
-        ds.setName(StrUtils.incCopyNumber(dataset.getName()));
-        ds.setDescription(dataset.getDescription());
-        ds.setAssemblySnippet(dataset.getAssemblySnippet());
-        ds.setDatasetSnippet(dataset.getDatasetSnippet());
-        ds.setEditable(true);
-        ds.setLocked(false);
-        ds.setFeatures(new ArrayList<>());
-        ds.setLength(dataset.getLength());
-        datasetCache.save(ds);
-        if (true) throw new IllegalStateException("Not implemented yet");
-//        binaryDataService.cloneBinaryData(dataset.getId(), ds.getId(), Enums.BinaryDataType.DATA);
-
-        for (Feature feature : dataset.getFeatures()) {
-            Feature dg = new Feature();
-            BeanUtils.copyProperties(feature, dg);
-            dg.setId(null);
-            dg.setVersion(null);
-            dg.setFeatureStatus(ArtifactStatus.NONE.value);
-            dg.setDataset(ds);
-            datasetCache.saveGroup(dg);
-        }
-
     }
 
 /*
@@ -183,18 +138,6 @@ public class DatasetService {
     }
 */
 
-    void addEmptyFeature(Dataset dataset) {
-        List<Feature> features = dataset.getFeatures();
-        //noinspection ConstantConditions
-        int featureOrder = features.isEmpty() ? 1 : features.stream().mapToInt(Feature::getFeatureOrder).max().getAsInt() + 1;
-
-        final Feature feature = new Feature(featureOrder);
-        feature.setDataset(dataset);
-
-        dataset.getFeatures().add(feature);
-        datasetCache.save(dataset);
-    }
-
 /*
     void updateInfoWithFeature(ConfigForFeature configForFeature, Feature group, boolean isOk) throws IOException {
         int status = isOk ? ArtifactStatus.OK.value : ArtifactStatus.ERROR.value;
@@ -216,6 +159,7 @@ public class DatasetService {
     }
 */
 
+/*
     ConfigForFeature createYamlForFeature(Feature group) {
 
         long datasetId = group.getDataset().getId();
@@ -273,6 +217,7 @@ public class DatasetService {
 
         return new ConfigForFeature(rawFilePath, rawFile, featureFilename, featureFile, new File(featurePath, PRODUCE_FEATURE_YAML));
     }
+*/
 
 /*
     void updateInfoWithRaw(Dataset dataset, boolean isOk) throws IOException {
@@ -294,14 +239,6 @@ public class DatasetService {
         obsoleteFeatures(dataset);
     }
 */
-
-    private void obsoleteFeatures(Dataset dataset) {
-        List<Feature> features = featureRepository.findByDataset_Id(dataset.getId());
-        for (Feature group : features) {
-            group.setFeatureStatus(ArtifactStatus.OBSOLETE.value);
-        }
-        datasetCache.saveAllFeatures(features, dataset.getId());
-    }
 
 /*
     void updateInfoWithDataset(Dataset dataset, boolean isOk) throws IOException {

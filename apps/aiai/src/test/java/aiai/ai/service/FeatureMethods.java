@@ -17,15 +17,11 @@
  */
 package aiai.ai.service;
 
-import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.core.ArtifactStatus;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
 import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
 import aiai.ai.launchpad.repositories.*;
@@ -34,16 +30,10 @@ import aiai.ai.preparing.PreparingExperiment;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.annotation.PostConstruct;
-import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -69,9 +59,6 @@ public abstract class FeatureMethods extends PreparingExperiment {
     protected ExperimentFeatureRepository experimentFeatureRepository;
 
     @Autowired
-    protected DatasetRepository datasetRepository;
-
-    @Autowired
     protected StationsRepository stationsRepository;
 
     @Autowired
@@ -84,19 +71,12 @@ public abstract class FeatureMethods extends PreparingExperiment {
     protected TaskRepository taskRepository;
 
     @Autowired
-    private DatasetCache datasetCache;
-
-    @Autowired
     private BinaryDataService binaryDataService;
 
     Station station = null;
     FlowInstance flowInstance = null;
     Experiment experiment = null;
     boolean isCorrectInit = true;
-
-    private Dataset dataset = null;
-    private Snippet fitSnippet = null;
-    private Snippet predictSnippet = null;
 
     protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
         assertEquals(sequences1Feature.experimentId, experiment.getId());

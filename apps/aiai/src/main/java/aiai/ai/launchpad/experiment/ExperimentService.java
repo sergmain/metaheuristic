@@ -22,7 +22,6 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.beans.*;
-import aiai.ai.launchpad.experiment.dataset.DatasetCache;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
@@ -138,17 +137,15 @@ public class ExperimentService {
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final SnippetCache snippetCache;
     private final TaskParamYamlUtils taskParamYamlUtils;
-    private final DatasetCache datasetCache;
     private final SnippetService snippetService;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, TaskRepository taskRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, DatasetCache datasetCache, SnippetService snippetService) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, TaskRepository taskRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService) {
         this.globals = globals;
         this.experimentRepository = experimentRepository;
         this.taskRepository = taskRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.snippetCache = snippetCache;
         this.taskParamYamlUtils = taskParamYamlUtils;
-        this.datasetCache = datasetCache;
         this.snippetService = snippetService;
     }
 
@@ -686,26 +683,9 @@ public class ExperimentService {
         }
 
         for (final Experiment experiment : experimentRepository.findByIsLaunchedIsTrueAndIsAllSequenceProducedIsFalse()) {
-            if (experiment.getDatasetId()==null) {
-                experiment.setLaunched(false);
-                experiment.setNumberOfSequence(0);
-                experiment.setAllSequenceProduced(false);
-                experimentRepository.save(experiment);
-                continue;
-            }
-
-            Dataset dataset = datasetCache.findById(experiment.getDatasetId());
-            if (dataset == null) {
-                experiment.setDatasetId(null);
-                experiment.setNumberOfSequence(0);
-                experiment.setAllSequenceProduced(false);
-                experimentRepository.save(experiment);
-                continue;
-            }
-
             if (true) throw new IllegalStateException("Not implemented yet");
             List<String> inputResourceCode = new ArrayList<>();
-            produceFeaturePermutations(dataset, experiment, inputResourceCode);
+            produceFeaturePermutations(experiment, inputResourceCode);
             produceTasks(experiment, inputResourceCode);
         }
     }
@@ -820,7 +800,7 @@ public class ExperimentService {
         experimentRepository.save(experimentTemp);
     }
 
-    public void produceFeaturePermutations(Dataset da1taset, Experiment experiment, List<String> inputResourceCodes) {
+    public void produceFeaturePermutations(Experiment experiment, List<String> inputResourceCodes) {
         final List<ExperimentFeature> list = experimentFeatureRepository.findByExperimentId(experiment.getId());
 
         final List<String> ids = new ArrayList<>(inputResourceCodes);

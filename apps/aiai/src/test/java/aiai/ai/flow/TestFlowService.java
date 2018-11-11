@@ -92,14 +92,15 @@ public class TestFlowService extends PreparingFlow {
         FlowService.FlowVerifyStatus status = flowService.verify(flow);
         assertEquals(FlowService.FlowVerifyStatus.OK, status);
         FlowService.TaskProducingResult result = flowService.createTasks(flow, "raw-parts-pool");
-        assertNotNull(result);
-        assertNotNull(result.flowInstance);
         List<Task> tasks = taskRepository.findByFlowInstanceId(result.flowInstance.getId());
-
-        assertNotNull(tasks);
-        assertFalse(tasks.isEmpty());
-
-        taskRepository.deleteAll(tasks);
+        try {
+            assertNotNull(result);
+            assertNotNull(result.flowInstance);
+            assertNotNull(tasks);
+            assertFalse(tasks.isEmpty());
+        } finally {
+            taskRepository.deleteAll(tasks);
+        }
 
     }
 }
