@@ -20,15 +20,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("launchpad")
-public class TestFlowService extends PreparingFlow {
+public class TestFeatures extends PreparingFlow {
 
     @Override
     public String getFlowParamsAsYaml() {
@@ -89,9 +87,40 @@ public class TestFlowService extends PreparingFlow {
     }
 
     @Test
-    public void testCreateTasks() {
+    public void testFeatures() {
         FlowService.FlowVerifyStatus status = flowService.verify(flow);
         assertEquals(FlowService.FlowVerifyStatus.OK, status);
+
+
+        // produce artifacts - features, sequences,...
+        long mills = System.currentTimeMillis();
+        log.info("Start experimentService.produceFeaturePermutations()");
+        Experiment experiment = new Experiment();
+        Dataset dataset = null;
+        experimentService.produceFeaturePermutations(dataset, experiment, null);
+        log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
+
+        mills = System.currentTimeMillis();
+        log.info("Start experimentFeatureRepository.findByExperimentId()");
+        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
+        log.info("experimentFeatureRepository.findByExperimentId() was finished for {}", System.currentTimeMillis() - mills);
+
+        assertNotNull(features);
+        assertEquals(777, features.size());
+        for (ExperimentFeature feature : features) {
+            assertFalse(feature.isFinished);
+        }
+
+        mills = System.currentTimeMillis();
+        log.info("Start experimentService.produceTasks()");
+        // produce sequences
+        List<String> codes = new ArrayList<>();
+        experimentService.produceTasks(experiment, codes);
+        log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);
+
+        // some global final check
+        assertEquals(777, experimentFeatureRepository.findByExperimentId(experiment.getId()).size());
+
 
     }
 }

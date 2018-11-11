@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 @Service
 @Slf4j
@@ -63,6 +64,10 @@ public class FlowService {
         INPUT_CODE_NOT_SPECIFIED_ERROR,
         SNIPPET_NOT_FOUND_ERROR,
         EXPERIMENT_NOT_FOUND_ERROR,
+        EXPERIMENT_META_NOT_FOUND_ERROR,
+        EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR,
+        EXPERIMENT_META_DATASET_NOT_FOUND_ERROR,
+        EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR,
     }
 
     public enum FlowProducingStatus { OK,
@@ -131,6 +136,20 @@ public class FlowService {
                 Experiment e = experimentCache.findByCode(process.code);
                 if (e==null) {
                     return FlowVerifyStatus.EXPERIMENT_NOT_FOUND_ERROR;
+                }
+                if (StringUtils.isBlank(process.meta)) {
+                    return FlowVerifyStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
+                }
+                Properties prop = process.getMetaAsProp();
+
+                if (StringUtils.isBlank(prop.getProperty("dataset"))) {
+                    return FlowVerifyStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
+                }
+                if (StringUtils.isBlank(prop.getProperty("assembled-raw"))) {
+                    return FlowVerifyStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
+                }
+                if (StringUtils.isBlank(prop.getProperty("feature"))) {
+                    return FlowVerifyStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
                 }
             }
             else {

@@ -15,11 +15,13 @@ public class TestProcess {
         Process p = new Process();
         p.meta =
                 "dataset:dataset-processing\n" +
-                        "raw-file:assembled-raw\n" +
+                        "assembled-raw:assembled-raw\n" +
                         "feature:feature";
         Properties prop = p.getMetaAsProp();
         assertEquals("dataset-processing", prop.getProperty("dataset"));
-        assertEquals("assembled-raw", prop.getProperty("raw-file"));
+        assertEquals("assembled-raw", prop.getProperty("assembled-raw"));
         assertEquals("feature", prop.getProperty("feature"));
     }
+
+    
 }
