@@ -12,6 +12,8 @@ import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import aiai.ai.launchpad.Process;
+import aiai.ai.yaml.process.ProcessMetaYaml;
+import aiai.ai.yaml.process.ProcessMetaYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,7 +23,6 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 @Service
 @Slf4j
@@ -30,6 +31,7 @@ public class FlowService {
     private final Globals globals;
     private final FlowRepository flowRepository;
     private final FlowYamlUtils flowYamlUtils;
+    private final ProcessMetaYamlUtils processMetaYamlUtils;
     private final ExperimentCache experimentCache;
 
     private final ExperimentProcessService experimentProcessService;
@@ -37,10 +39,11 @@ public class FlowService {
     private final FlowInstanceRepository flowInstanceRepository;
     private final SnippetCache snippetCache;
 
-    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache) {
+    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ProcessMetaYamlUtils processMetaYamlUtils, ExperimentCache experimentCache, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache) {
         this.globals = globals;
         this.flowRepository = flowRepository;
         this.flowYamlUtils = flowYamlUtils;
+        this.processMetaYamlUtils = processMetaYamlUtils;
         this.experimentCache = experimentCache;
         this.experimentProcessService = experimentProcessService;
         this.fileProcessService = fileProcessService;
@@ -140,15 +143,18 @@ public class FlowService {
                 if (StringUtils.isBlank(process.meta)) {
                     return FlowVerifyStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
                 }
-                Properties prop = process.getMetaAsProp();
 
-                if (StringUtils.isBlank(prop.getProperty("dataset"))) {
+                ProcessMetaYaml yaml = processMetaYamlUtils.toProcessYaml(process.meta);
+                ProcessMetaYaml.ProcessMeta m1 = yaml.get("dataset");
+                if (m1 ==null || StringUtils.isBlank(m1.getValue())) {
                     return FlowVerifyStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
                 }
-                if (StringUtils.isBlank(prop.getProperty("assembled-raw"))) {
+                ProcessMetaYaml.ProcessMeta m2 = yaml.get("assembled-raw");
+                if (m2 ==null || StringUtils.isBlank(m2.getValue())) {
                     return FlowVerifyStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
                 }
-                if (StringUtils.isBlank(prop.getProperty("feature"))) {
+                ProcessMetaYaml.ProcessMeta m3 = yaml.get("feature");
+                if (m3 ==null || StringUtils.isBlank(m3.getValue())) {
                     return FlowVerifyStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
                 }
             }

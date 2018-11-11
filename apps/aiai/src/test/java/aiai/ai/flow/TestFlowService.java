@@ -2,31 +2,22 @@ package aiai.ai.flow;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.Process;
-import aiai.ai.launchpad.beans.Dataset;
-import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.yaml.flow.FlowYaml;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@Slf4j
 @ActiveProfiles("launchpad")
 public class TestFlowService extends PreparingFlow {
 
@@ -76,10 +67,13 @@ public class TestFlowService extends PreparingFlow {
             p.type = Enums.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "test-experiment-code-01";
-            p.meta =
-                    "dataset:dataset-processing\n" +
-                    "assembled-raw:assembled-raw\n" +
-                    "feature:feature";
+            p.meta = "metas:\n" +
+                "- key: assembled-raw\n" +
+                "  value: assembled-raw\n" +
+                "- key: dataset\n" +
+                "  value: dataset-processing\n" +
+                "- key: feature\n" +
+                "  value: feature";
 
             flowYaml.processes.add(p);
         }

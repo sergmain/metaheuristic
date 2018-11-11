@@ -17,7 +17,6 @@
  */
 package aiai.ai.yaml.process;
 
-import aiai.ai.yaml.flow.FlowYaml;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -50,7 +49,7 @@ public class ProcessMetaYamlUtils {
         }
     }
 
-    public ProcessMetaYaml toFlowYaml(String s) {
+    public ProcessMetaYaml toProcessYaml(String s) {
         synchronized (syncObj) {
             return yamlProcessMetaYaml.load(s);
         }
