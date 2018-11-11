@@ -56,11 +56,13 @@ public class Task implements Serializable {
     @Column(name = "METRICS")
     public String metrics;
 
+/*
     @Column(name = "TASK_TYPE")
     public String taskType;
+*/
 
     @Column(name = "TASK_ORDER")
-    public String order;
+    public int order;
 
     @Column(name = "FLOW_INSTANCE_ID")
     public Long flowInstanceId;

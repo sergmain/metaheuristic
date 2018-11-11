@@ -2,6 +2,7 @@ package aiai.ai.launchpad.flow;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.experiment.ExperimentProcessService;
@@ -11,9 +12,6 @@ import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
-import aiai.ai.launchpad.Process;
-import aiai.ai.yaml.process.ProcessMetaYaml;
-import aiai.ai.yaml.process.ProcessMetaYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -31,7 +29,6 @@ public class FlowService {
     private final Globals globals;
     private final FlowRepository flowRepository;
     private final FlowYamlUtils flowYamlUtils;
-    private final ProcessMetaYamlUtils processMetaYamlUtils;
     private final ExperimentCache experimentCache;
 
     private final ExperimentProcessService experimentProcessService;
@@ -39,11 +36,10 @@ public class FlowService {
     private final FlowInstanceRepository flowInstanceRepository;
     private final SnippetCache snippetCache;
 
-    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ProcessMetaYamlUtils processMetaYamlUtils, ExperimentCache experimentCache, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache) {
+    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache) {
         this.globals = globals;
         this.flowRepository = flowRepository;
         this.flowYamlUtils = flowYamlUtils;
-        this.processMetaYamlUtils = processMetaYamlUtils;
         this.experimentCache = experimentCache;
         this.experimentProcessService = experimentProcessService;
         this.fileProcessService = fileProcessService;
@@ -85,6 +81,7 @@ public class FlowService {
         public FlowProducingStatus flowProducingStatus = FlowProducingStatus.NOT_PRODUCING_YET_ERROR;
         public List<Task> tasks = new ArrayList<>();
         public FlowYaml flowYaml;
+        public FlowInstance flowInstance;
 
         public TaskProducingStatus getStatus() {
             if (flowVerifyStatus != FlowVerifyStatus.OK) {
@@ -140,20 +137,19 @@ public class FlowService {
                 if (e==null) {
                     return FlowVerifyStatus.EXPERIMENT_NOT_FOUND_ERROR;
                 }
-                if (StringUtils.isBlank(process.meta)) {
+                if (process.metas==null || process.metas.isEmpty()) {
                     return FlowVerifyStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
                 }
 
-                ProcessMetaYaml yaml = processMetaYamlUtils.toProcessYaml(process.meta);
-                ProcessMetaYaml.ProcessMeta m1 = yaml.get("dataset");
+                Process.Meta m1 = process.getMeta("dataset");
                 if (m1 ==null || StringUtils.isBlank(m1.getValue())) {
                     return FlowVerifyStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
                 }
-                ProcessMetaYaml.ProcessMeta m2 = yaml.get("assembled-raw");
+                Process.Meta m2 = process.getMeta("assembled-raw");
                 if (m2 ==null || StringUtils.isBlank(m2.getValue())) {
                     return FlowVerifyStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
                 }
-                ProcessMetaYaml.ProcessMeta m3 = yaml.get("feature");
+                Process.Meta m3 = process.getMeta("feature");
                 if (m3 ==null || StringUtils.isBlank(m3.getValue())) {
                     return FlowVerifyStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
                 }
@@ -192,6 +188,7 @@ public class FlowService {
         fi.setInputResourcePoolCode(startWithResourcePoolCode);
 
         flowInstanceRepository.save(fi);
+        result.flowInstance = fi;
 
         result.flowYaml = flowYamlUtils.toFlowYaml(flow.getParams());
         int idx = 0;
@@ -203,10 +200,10 @@ public class FlowService {
 
             switch(process.type) {
                 case FILE_PROCESSING:
-                    fileProcessService.produceTasks(flow, process, idx, inputResourcePoolCode, outputResourcePoolCode);
+                    fileProcessService.produceTasks(flow, fi, process, idx, inputResourcePoolCode, outputResourcePoolCode);
                     break;
                 case EXPERIMENT:
-                    experimentProcessService.produceTasks(flow, process, idx, inputResourcePoolCode, outputResourcePoolCode);
+                    experimentProcessService.produceTasks(flow, fi, process, idx, inputResourcePoolCode, outputResourcePoolCode);
                     break;
                 default:
                     throw new IllegalStateException("Unknown process type");

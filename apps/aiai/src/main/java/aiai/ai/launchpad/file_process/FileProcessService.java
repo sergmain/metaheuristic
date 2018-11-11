@@ -2,6 +2,7 @@ package aiai.ai.launchpad.file_process;
 
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
+import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
@@ -33,7 +34,7 @@ public class FileProcessService {
         this.taskRepository = taskRepository;
     }
 
-    public void produceTasks(Flow flow, Process process, int idx, String inputResourcePoolCode, String outputResourcePoolCode) {
+    public void produceTasks(Flow flow, FlowInstance flowInstance, Process process, int idx, String inputResourcePoolCode, String outputResourcePoolCode) {
 
         // output resource code: flow-10-assembly-raw-file-snippet-01
         //
@@ -45,16 +46,16 @@ public class FileProcessService {
 
         if (process.parallelExec) {
             for (String snippetCode : process.snippetCodes) {
-                createTaskInternal(flow, process, idx, inputResourceCode, snippetCode);
+                createTaskInternal(flow, flowInstance, process, idx, inputResourceCode, snippetCode);
             }
         }
         else {
             String snippetCode = process.snippetCodes.get(0);
-            createTaskInternal(flow, process, idx, inputResourceCode, snippetCode);
+            createTaskInternal(flow, flowInstance, process, idx, inputResourceCode, snippetCode);
         }
     }
 
-    private void createTaskInternal(Flow flow, Process process, int idx, List<String> inputResourceCode, String snippetCode) {
+    private void createTaskInternal(Flow flow, FlowInstance flowInstance, Process process, int idx, List<String> inputResourceCode, String snippetCode) {
         SnippetVersion sv = SnippetVersion.from(snippetCode);
         String outputResource = getResourceCode( flow.code, flow.getId(), process.code, sv.name, idx);
 
@@ -79,6 +80,8 @@ public class FileProcessService {
         String taskParams = taskParamYamlUtils.toString(yaml);
 
         Task task = new Task();
+        task.setFlowInstanceId(flowInstance.getId());
+        task.setOrder(idx);
         task.setParams(taskParams);
         taskRepository.save(task);
     }

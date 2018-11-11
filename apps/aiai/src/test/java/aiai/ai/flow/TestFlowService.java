@@ -2,6 +2,7 @@ package aiai.ai.flow;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.Process;
+import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.yaml.flow.FlowYaml;
@@ -13,8 +14,11 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -67,13 +71,14 @@ public class TestFlowService extends PreparingFlow {
             p.type = Enums.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "test-experiment-code-01";
-            p.meta = "metas:\n" +
-                "- key: assembled-raw\n" +
-                "  value: assembled-raw\n" +
-                "- key: dataset\n" +
-                "  value: dataset-processing\n" +
-                "- key: feature\n" +
-                "  value: feature";
+
+            p.metas.addAll(
+                    Arrays.asList(
+                            new Process.Meta("assembled-raw", "assembled-raw", null),
+                            new Process.Meta("dataset", "dataset-processing", null),
+                            new Process.Meta("feature", "feature", null)
+                    )
+            );
 
             flowYaml.processes.add(p);
         }
@@ -86,6 +91,15 @@ public class TestFlowService extends PreparingFlow {
     public void testCreateTasks() {
         FlowService.FlowVerifyStatus status = flowService.verify(flow);
         assertEquals(FlowService.FlowVerifyStatus.OK, status);
+        FlowService.TaskProducingResult result = flowService.createTasks(flow, "raw-parts-pool");
+        assertNotNull(result);
+        assertNotNull(result.flowInstance);
+        List<Task> tasks = taskRepository.findByFlowInstanceId(result.flowInstance.getId());
+
+        assertNotNull(tasks);
+        assertFalse(tasks.isEmpty());
+
+        taskRepository.deleteAll(tasks);
 
     }
 }

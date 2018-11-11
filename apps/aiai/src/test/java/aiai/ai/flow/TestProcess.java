@@ -1,14 +1,16 @@
 package aiai.ai.flow;
 
 import aiai.ai.launchpad.Process;
-import aiai.ai.yaml.process.ProcessMetaYaml;
-import aiai.ai.yaml.process.ProcessMetaYamlUtils;
+import aiai.ai.yaml.flow.FlowYaml;
+import aiai.ai.yaml.flow.FlowYamlUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -19,30 +21,36 @@ import static org.junit.Assert.assertNotNull;
 public class TestProcess {
 
     @Autowired
-    public ProcessMetaYamlUtils processMetaYamlUtils;
+    public FlowYamlUtils flowYamlUtils;
 
     @Test
     public void testProcessMeta() {
         Process p = new Process();
 
-        p.meta = "metas:\n" +
-                "- key: assembled-raw\n" +
-                "  value: assembled-raw\n" +
-                "- key: dataset\n" +
-                "  value: dataset-processing\n" +
-                "- key: feature\n" +
-                "  value: feature";
+        p.metas.addAll(
+                Arrays.asList(
+                        new Process.Meta("assembled-raw", "assembled-raw", null),
+                        new Process.Meta("dataset", "dataset-processing", null),
+                        new Process.Meta("feature", "feature", null)
+                )
+        );
+        FlowYaml flowYaml = new FlowYaml();
+        flowYaml.processes.add(p);
 
-        ProcessMetaYaml yaml = processMetaYamlUtils.toProcessYaml(p.meta);
+        String s = flowYamlUtils.toString(flowYaml);
 
-        assertNotNull(yaml.get("dataset"));
-        assertEquals("dataset-processing", yaml.get("dataset").getValue());
+        FlowYaml flowYaml1 = flowYamlUtils.toFlowYaml(s);
 
-        assertNotNull(yaml.get("assembled-raw"));
-        assertEquals("assembled-raw", yaml.get("assembled-raw").getValue());
+        Process p1 = flowYaml1.getProcesses().get(0);
 
-        assertNotNull(yaml.get("feature"));
-        assertEquals("feature", yaml.get("feature").getValue());
+        assertNotNull(p.getMeta("dataset"));
+        assertEquals("dataset-processing", p.getMeta("dataset").getValue());
+
+        assertNotNull(p.getMeta("assembled-raw"));
+        assertEquals("assembled-raw", p.getMeta("assembled-raw").getValue());
+
+        assertNotNull(p.getMeta("feature"));
+        assertEquals("feature", p.getMeta("feature").getValue());
     }
 
 }

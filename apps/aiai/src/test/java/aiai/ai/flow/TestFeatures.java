@@ -74,10 +74,13 @@ public class TestFeatures extends PreparingFlow {
             p.type = Enums.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "test-experiment-code-01";
-            p.meta =
-                    "dataset:dataset-processing\n" +
-                    "assembled-raw:assembled-raw\n" +
-                    "feature:feature";
+            p.metas.addAll(
+                    Arrays.asList(
+                            new Process.Meta("assembled-raw", "assembled-raw", null),
+                            new Process.Meta("dataset", "dataset-processing", null),
+                            new Process.Meta("feature", "feature", null)
+                    )
+            );
 
             flowYaml.processes.add(p);
         }

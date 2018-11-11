@@ -82,7 +82,10 @@ public abstract class PreparingFlow extends PreparingExperiment {
         IS_FILE_PROVIDED   BOOLEAN not null default false
 
 */
-
+        Snippet sn = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
+        if (sn!=null) {
+            snippetCache.delete(sn);
+        }
         s.setName(sv.name);
         s.setSnippetVersion(sv.version);
         s.setType(snippetCode + "-type");

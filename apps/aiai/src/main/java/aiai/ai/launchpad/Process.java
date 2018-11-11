@@ -1,16 +1,20 @@
 package aiai.ai.launchpad;
 
 import aiai.ai.Enums;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @ToString
 @Slf4j
 public class Process {
+
     public String name;
     public String code;
     public Enums.ProcessType type;
@@ -22,5 +26,26 @@ public class Process {
     public String inputResourceCode;
     public String outputType;
     public String outputResourceCode;
-    public String meta;
+    public List<Meta> metas = new ArrayList<>();
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class Meta {
+        String key;
+        String value;
+        String ext;
+    }
+
+    public Meta getMeta(String key) {
+        if (metas==null) {
+            return null;
+        }
+        for (Meta meta : metas) {
+            if (meta.key.equals(key)) {
+                return meta;
+            }
+        }
+        return null;
+    }
 }

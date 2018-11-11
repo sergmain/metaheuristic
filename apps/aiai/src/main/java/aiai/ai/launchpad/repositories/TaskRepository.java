@@ -18,12 +18,10 @@
 
 package aiai.ai.launchpad.repositories;
 
-import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.launchpad.beans.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
-import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,6 +40,9 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
 
     @Transactional
     void deleteByFlowInstanceId(long flowInstanceId);
+
+    @Transactional(readOnly = true)
+    List<Task> findByFlowInstanceId(long flowInstanceId);
 
 /*
 

@@ -124,12 +124,12 @@ CREATE TABLE AIAI_LP_TASK (
   PARAMS          TEXT not null,
   STATION_ID          NUMERIC(10, 0),
   ASSIGNED_ON   bigint,
-  IS_COMPLETED  BOOLEAN not null default false,
+  IS_COMPLETED  BOOLEAN default false not null ,
   COMPLETED_ON   bigint,
   SNIPPET_EXEC_RESULTS  TEXT,
   METRICS      TEXT,
   TASK_ORDER   smallint not null,
-  FLOW_INSTANCE_ID          NUMERIC(10, 0)
+  FLOW_INSTANCE_ID          NUMERIC(10, 0)   NOT NULL
 );
 
 CREATE TABLE AIAI_LP_SNIPPET (
