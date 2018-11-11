@@ -172,7 +172,6 @@ public abstract class PreparingExperiment {
             experiment.setLaunched(true);
             experiment.setLaunchedOn(System.currentTimeMillis());
             experiment.setAllSequenceProduced(false);
-            experiment.setFlowInstanceId(flowInstance.getId());
 
             // set hyper params for experiment
             ExperimentHyperParams ehp1 = new ExperimentHyperParams();

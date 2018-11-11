@@ -1,6 +1,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.launchpad.Process;
+import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.experiment.ExperimentService;
@@ -20,7 +21,9 @@ public class ExperimentProcessService {
         this.experimentService = experimentService;
     }
 
-    public void produceTasks(Flow flow, FlowInstance fi, Process process, int idx, String inputResourcePoolCode, String outputResourcePoolCode) {
+    public void produceTasks(Flow flow, FlowInstance flowInstance, Process process, int idx, String inputResourcePoolCode, String outputResourcePoolCode) {
+        Experiment experiment = new Experiment();
+        experiment.setFlowInstanceId(flowInstance.getId());
 
     }
 }
