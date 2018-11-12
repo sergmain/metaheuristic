@@ -43,9 +43,6 @@ public class ExperimentSnippet implements Serializable {
     @Column(name = "SNIPPET_TYPE")
     public String type;
 
-    @Column(name = "TASK_TYPE")
-    private int taskType;
-
-    @Column(name = "REF_ID")
-    private long refId;
+    @Column(name = "EXPERIMENT_ID")
+    private long experimentId;
 }

@@ -73,6 +73,10 @@ public class BinaryDataService {
         binaryDataRepository.deleteAllByDataType(binaryDataType.value);
     }
 
+    public void deleteByCodeAndDataType(String code, Enums.BinaryDataType binaryDataType) {
+        binaryDataRepository.deleteByCodeAndDataType(code, binaryDataType.value);
+    }
+
     public BinaryData save(InputStream is, long size,
                            Enums.BinaryDataType binaryDataType, String code, String poolCode) {
         BinaryData data = binaryDataRepository.findByCode(code);

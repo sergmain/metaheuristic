@@ -41,4 +41,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     @Transactional
     void deleteAllByDataType(int dataType);
 
+    @Transactional
+    void deleteByCodeAndDataType(String code, int dataType);
+
 }

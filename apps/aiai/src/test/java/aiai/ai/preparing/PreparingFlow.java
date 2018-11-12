@@ -1,8 +1,10 @@
 package aiai.ai.preparing;
 
 import aiai.ai.launchpad.beans.Flow;
+import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.flow.FlowService;
+import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.flow.FlowYamlUtils;
@@ -10,16 +12,16 @@ import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import static org.junit.Assert.assertEquals;
 
 @Slf4j
 public abstract class PreparingFlow extends PreparingExperiment {
 
     @Autowired
     public FlowRepository flowRepository;
+
+    @Autowired
+    public FlowInstanceRepository flowInstanceRepository;
 
     @Autowired
     public FlowService flowService;
@@ -36,6 +38,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
     public Snippet s3 = null;
     public Snippet s4 = null;
     public Snippet s5 = null;
+    public FlowInstance flowInstance = null;
 
     public abstract String getFlowParamsAsYaml();
 
@@ -112,6 +115,9 @@ public abstract class PreparingFlow extends PreparingExperiment {
         deleteSnippet(s3);
         deleteSnippet(s4);
         deleteSnippet(s5);
+        if (flowInstance!=null) {
+            flowInstanceRepository.delete(flowInstance);
+        }
     }
 
     private void deleteSnippet(Snippet s) {

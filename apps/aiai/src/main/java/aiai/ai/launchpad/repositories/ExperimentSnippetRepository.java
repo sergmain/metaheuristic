@@ -31,10 +31,10 @@ import java.util.List;
 public interface ExperimentSnippetRepository extends CrudRepository<ExperimentSnippet, Long> {
 
     @Transactional(readOnly = true)
-    List<ExperimentSnippet> findByTaskTypeAndRefId(int taskType, long refId);
+    List<ExperimentSnippet> findByExperimentId(long experimentId);
 
     @Transactional
-    void deleteByTaskTypeAndRefId(int taskType, long refId);
+    void deleteByExperimentId(long experimentId);
 
 
 }

@@ -401,8 +401,7 @@ public class ExperimentsController {
         Long experimentId = experiment.getId();
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experimentId);
         ExperimentSnippet ts = new ExperimentSnippet();
-        ts.setRefId(experimentId);
-        ts.setTaskType(Enums.TaskType.Experiment.code);
+        ts.setExperimentId(experimentId);
         ts.setSnippetCode( code );
 
         List<ExperimentSnippet> list = new ArrayList<>(experimentSnippets);
@@ -469,7 +468,7 @@ public class ExperimentsController {
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{id}")
     public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         ExperimentSnippet snippet = experimentSnippetRepository.findById(id).orElse(null);
-        if (snippet == null || experimentId != snippet.getRefId()) {
+        if (snippet == null || experimentId != snippet.getExperimentId()) {
             redirectAttributes.addFlashAttribute("errorMessage", "#293.01 Snippet is misconfigured. Try again" );
             return "redirect:/launchpad/experiment-edit/" + experimentId;
         }
@@ -495,7 +494,7 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#283.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
         }
-        experimentSnippetRepository.deleteByTaskTypeAndRefId(Enums.TaskType.Experiment.code, id);
+        experimentSnippetRepository.deleteByExperimentId(id);
         experimentFeatureRepository.deleteByExperimentId(id);
         experimentRepository.deleteById(id);
         return "redirect:/launchpad/experiments";

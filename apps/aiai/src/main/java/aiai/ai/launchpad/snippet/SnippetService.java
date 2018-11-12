@@ -74,11 +74,11 @@ public class SnippetService {
     }
 
     public List<ExperimentSnippet> getTaskSnippetsForExperiment(Long experimentId) {
-        return experimentSnippetRepository.findByTaskTypeAndRefId(Enums.TaskType.Experiment.code, experimentId);
+        return experimentSnippetRepository.findByExperimentId(experimentId);
     }
 
-    public List<Snippet> getSnippets(Enums.TaskType taskType, long refId){
-        List<ExperimentSnippet> experimentSnippets = experimentSnippetRepository.findByTaskTypeAndRefId(taskType.code, refId);
+    public List<Snippet> getSnippets(long experimentId){
+        List<ExperimentSnippet> experimentSnippets = experimentSnippetRepository.findByExperimentId(experimentId);
         List<Snippet> snippets = new ArrayList<>();
         for (ExperimentSnippet experimentSnippet : experimentSnippets) {
             SnippetVersion version = SnippetVersion.from(experimentSnippet.getSnippetCode());

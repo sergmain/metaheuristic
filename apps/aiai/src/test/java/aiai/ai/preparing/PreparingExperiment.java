@@ -198,14 +198,12 @@ public abstract class PreparingExperiment {
 
             // set snippets for experiment
             ExperimentSnippet es1 = new ExperimentSnippet();
-            es1.setRefId(experiment.getId());
-            es1.setTaskType(Enums.TaskType.Experiment.code);
+            es1.setExperimentId(experiment.getId());
             es1.setType(SnippetType.fit.toString());
             es1.setSnippetCode(fitSnippet.getSnippetCode());
 
             ExperimentSnippet es2 = new ExperimentSnippet();
-            es2.setRefId(experiment.getId());
-            es2.setTaskType(Enums.TaskType.Experiment.code);
+            es2.setExperimentId(experiment.getId());
             es2.setType(SnippetType.predict.toString());
             es2.setSnippetCode(predictSnippet.getSnippetCode());
 
@@ -228,22 +226,52 @@ public abstract class PreparingExperiment {
         long mills = System.currentTimeMillis();
         log.info("Start after()");
         if (experiment != null) {
-            experimentFeatureRepository.deleteByExperimentId(experiment.getId());
-            experimentRepository.deleteById(experiment.getId());
+            try {
+                experimentFeatureRepository.deleteByExperimentId(experiment.getId());
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+            try {
+                experimentRepository.deleteById(experiment.getId());
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+            try {
+                experimentSnippetRepository.deleteByExperimentId(experiment.getId());
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
         }
         if (flowInstance!=null) {
-            taskRepository.deleteByFlowInstanceId(flowInstance.getId());
+            try {
+                taskRepository.deleteByFlowInstanceId(flowInstance.getId());
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
         }
         if (station != null) {
-            stationsRepository.deleteById(station.getId());
+            try {
+                stationsRepository.deleteById(station.getId());
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
         }
         if (predictSnippet != null) {
-            snippetCache.delete(predictSnippet.getId());
+            try {
+                snippetCache.delete(predictSnippet.getId());
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+            binaryDataService.deleteByCodeAndDataType(predictSnippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
         }
         if (fitSnippet != null) {
-            snippetCache.delete(fitSnippet.getId());
+            try {
+                snippetCache.delete(fitSnippet.getId());
+            } catch (Throwable throwable) {
+                throwable.printStackTrace();
+            }
+            binaryDataService.deleteByCodeAndDataType(fitSnippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
         }
-
         System.out.println("Was finished correctly");
         log.info("after() was finished for {}", System.currentTimeMillis() - mills);
     }
