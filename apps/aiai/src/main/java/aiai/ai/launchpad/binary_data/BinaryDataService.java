@@ -18,6 +18,8 @@ import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -71,6 +73,11 @@ public class BinaryDataService {
 
     public void deleteAllByType(Enums.BinaryDataType binaryDataType) {
         binaryDataRepository.deleteAllByDataType(binaryDataType.value);
+    }
+
+    public List<String> getResourceCodesInPool(String inputResourcePoolCode) {
+        return binaryDataRepository.findAllByPoolCode(inputResourcePoolCode)
+                .stream().map(BinaryData::getCode).collect(Collectors.toList());
     }
 
     public void deleteByCodeAndDataType(String code, Enums.BinaryDataType binaryDataType) {

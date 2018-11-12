@@ -41,6 +41,7 @@ public abstract class PreparingExperiment {
     private static final String TEST_FIT_SNIPPET = "test.fit.snippet";
     private static final String SNIPPET_VERSION_1_0 = "1.0";
     private static final String TEST_PREDICT_SNIPPET = "test.predict.snippet";
+    public static final String TEST_EXPERIMENT_CODE_01 = "test-experiment-code-01";
 
     @Autowired
     protected Globals globals;
@@ -85,7 +86,7 @@ public abstract class PreparingExperiment {
         try {
             long mills;
 
-            Experiment e = experimentCache.findByCode("test-experiment-code-01");
+            Experiment e = experimentCache.findByCode(TEST_EXPERIMENT_CODE_01);
             if (e!=null) {
                 experimentCache.delete(e);
             }
@@ -166,11 +167,11 @@ public abstract class PreparingExperiment {
             experiment.setEpochVariant(numberOfVariants.getCount());
             experiment.setName("Test experiment.");
             experiment.setDescription("Test experiment. Must be deleted automatically.");
-            experiment.setCode("test-experiment-code-01");
+            experiment.setCode(TEST_EXPERIMENT_CODE_01);
             experiment.setSeed(42);
-            experiment.setExecState(Enums.TaskExecState.STARTED.code);
-            experiment.setLaunched(true);
-            experiment.setLaunchedOn(System.currentTimeMillis());
+            experiment.setExecState(Enums.TaskExecState.NONE.code);
+            experiment.setLaunched(false);
+            experiment.setLaunchedOn(null);
             experiment.setAllSequenceProduced(false);
 
             // set hyper params for experiment

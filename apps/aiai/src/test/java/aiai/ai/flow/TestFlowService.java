@@ -4,8 +4,10 @@ import aiai.ai.Enums;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.flow.FlowService;
+import aiai.ai.preparing.PreparingExperiment;
 import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.yaml.flow.FlowYaml;
+import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -70,7 +72,7 @@ public class TestFlowService extends PreparingFlow {
             Process p = new Process();
             p.type = Enums.ProcessType.EXPERIMENT;
             p.name = "experiment";
-            p.code = "test-experiment-code-01";
+            p.code = PreparingExperiment.TEST_EXPERIMENT_CODE_01;
 
             p.metas.addAll(
                     Arrays.asList(
@@ -87,21 +89,28 @@ public class TestFlowService extends PreparingFlow {
         return yaml;
     }
 
+    @After
+    public void after() {
+        if (flowInstance!=null) {
+            try {
+                taskRepository.deleteByFlowInstanceId(flowInstance.getId());
+            } catch (Throwable th) {
+                th.printStackTrace();
+            }
+        }
+    }
+
     @Test
     public void testCreateTasks() {
-        FlowService.FlowVerifyStatus status = flowService.verify(flow);
-        assertEquals(FlowService.FlowVerifyStatus.OK, status);
+        Enums.FlowVerifyStatus status = flowService.verify(flow);
+        assertEquals(Enums.FlowVerifyStatus.OK, status);
         FlowService.TaskProducingResult result = flowService.createTasks(flow, "raw-parts-pool");
         flowInstance = result.flowInstance;
         List<Task> tasks = taskRepository.findByFlowInstanceId(result.flowInstance.getId());
-        try {
-            assertNotNull(result);
-            assertNotNull(result.flowInstance);
-            assertNotNull(tasks);
-            assertFalse(tasks.isEmpty());
-        } finally {
-            taskRepository.deleteAll(tasks);
-        }
+        assertNotNull(result);
+        assertNotNull(result.flowInstance);
+        assertNotNull(tasks);
+        assertFalse(tasks.isEmpty());
 
     }
 }

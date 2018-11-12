@@ -36,6 +36,8 @@ import java.util.List;
 public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     List<BinaryData> findAllByDataType(int dataType);
 
+    List<BinaryData> findAllByPoolCode(String poolCode);
+
     BinaryData findByCode(String code);
 
     @Transactional

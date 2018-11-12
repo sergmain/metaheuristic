@@ -47,57 +47,30 @@ public class FlowService {
         this.snippetCache = snippetCache;
     }
 
-    public enum TaskProducingStatus { OK, VERIFY_ERROR, PRODUCING_ERROR }
-    public enum FlowVerifyStatus { OK,
-        NOT_VERIFIED_YET_ERROR,
-        FLOW_CODE_EMPTY_ERROR,
-        NO_INPUT_POOL_CODE_ERROR,
-        NO_ANY_PROCESSES_ERROR,
-        INPUT_TYPE_EMPTY_ERROR,
-        NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR,
-        SNIPPET_NOT_DEFINED_ERROR,
-        FLOW_PARAMS_EMPTY_ERROR,
-        SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR,
-        PROCESS_CODE_NOT_FOUND_ERROR,
-        TOO_MANY_SNIPPET_CODES_ERROR,
-        INPUT_CODE_NOT_SPECIFIED_ERROR,
-        SNIPPET_NOT_FOUND_ERROR,
-        EXPERIMENT_NOT_FOUND_ERROR,
-        EXPERIMENT_META_NOT_FOUND_ERROR,
-        EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR,
-        EXPERIMENT_META_DATASET_NOT_FOUND_ERROR,
-        EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR,
-    }
-
-    public enum FlowProducingStatus { OK,
-        NOT_PRODUCING_YET_ERROR,
-        ERROR,
-    }
-
     @Data
     @NoArgsConstructor
     public static class TaskProducingResult {
-        public FlowVerifyStatus flowVerifyStatus = FlowVerifyStatus.NOT_VERIFIED_YET_ERROR ;
-        public FlowProducingStatus flowProducingStatus = FlowProducingStatus.NOT_PRODUCING_YET_ERROR;
+        public Enums.FlowVerifyStatus flowVerifyStatus = Enums.FlowVerifyStatus.NOT_VERIFIED_YET_ERROR ;
+        public Enums.FlowProducingStatus flowProducingStatus = Enums.FlowProducingStatus.NOT_PRODUCING_YET_ERROR;
         public List<Task> tasks = new ArrayList<>();
         public FlowYaml flowYaml;
         public FlowInstance flowInstance;
 
-        public TaskProducingStatus getStatus() {
-            if (flowVerifyStatus != FlowVerifyStatus.OK) {
-                return TaskProducingStatus.VERIFY_ERROR;
+        public Enums.TaskProducingStatus getStatus() {
+            if (flowVerifyStatus != Enums.FlowVerifyStatus.OK) {
+                return Enums.TaskProducingStatus.VERIFY_ERROR;
             }
-            if (flowProducingStatus!=FlowProducingStatus.OK) {
-                return TaskProducingStatus.PRODUCING_ERROR;
+            if (flowProducingStatus!= Enums.FlowProducingStatus.OK) {
+                return Enums.TaskProducingStatus.PRODUCING_ERROR;
             }
-            return TaskProducingStatus.OK;
+            return Enums.TaskProducingStatus.OK;
         }
     }
 
     public TaskProducingResult createTasks(Flow flow, String startWithResourcePoolCode) {
         TaskProducingResult result = new TaskProducingResult();
         result.flowVerifyStatus = verify(flow);
-        if (result.flowVerifyStatus != FlowVerifyStatus.OK) {
+        if (result.flowVerifyStatus != Enums.FlowVerifyStatus.OK) {
             return result;
         }
         produce(result, flow, startWithResourcePoolCode);
@@ -105,78 +78,85 @@ public class FlowService {
         return result;
     }
 
-    public FlowVerifyStatus verify(Flow flow) {
+    public Enums.FlowVerifyStatus verify(Flow flow) {
         if (flow==null) {
-            return FlowVerifyStatus.NO_ANY_PROCESSES_ERROR;
+            return Enums.FlowVerifyStatus.NO_ANY_PROCESSES_ERROR;
         }
         if (StringUtils.isBlank(flow.code)) {
-            return FlowVerifyStatus.FLOW_CODE_EMPTY_ERROR;
+            return Enums.FlowVerifyStatus.FLOW_CODE_EMPTY_ERROR;
         }
         if (StringUtils.isBlank(flow.params)) {
-            return FlowVerifyStatus.FLOW_PARAMS_EMPTY_ERROR;
+            return Enums.FlowVerifyStatus.FLOW_PARAMS_EMPTY_ERROR;
         }
         FlowYaml flowYaml = flowYamlUtils.toFlowYaml(flow.params);
         if (flowYaml.getProcesses().isEmpty()) {
-            return FlowVerifyStatus.NO_ANY_PROCESSES_ERROR;
+            return Enums.FlowVerifyStatus.NO_ANY_PROCESSES_ERROR;
         }
         if (StringUtils.isBlank(flowYaml.getProcesses().get(0).inputType)) {
-            return FlowVerifyStatus.INPUT_TYPE_EMPTY_ERROR;
+            return Enums.FlowVerifyStatus.INPUT_TYPE_EMPTY_ERROR;
         }
 
         FlowYaml fl = flowYamlUtils.toFlowYaml(flow.getParams());
 
+        Process lastProcess = null;
+        boolean experimentPresent = false;
         for (Process process : fl.getProcesses()) {
+            lastProcess = process;
             if (process.type == Enums.ProcessType.EXPERIMENT) {
+                experimentPresent = true;
                 if (process.snippetCodes!=null && process.snippetCodes.size() > 0) {
-                    return FlowVerifyStatus.SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR;
+                    return Enums.FlowVerifyStatus.SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR;
                 }
                 if (StringUtils.isBlank(process.code)) {
-                    return FlowVerifyStatus.SNIPPET_NOT_DEFINED_ERROR;
+                    return Enums.FlowVerifyStatus.SNIPPET_NOT_DEFINED_ERROR;
                 }
                 Experiment e = experimentCache.findByCode(process.code);
                 if (e==null) {
-                    return FlowVerifyStatus.EXPERIMENT_NOT_FOUND_ERROR;
+                    return Enums.FlowVerifyStatus.EXPERIMENT_NOT_FOUND_ERROR;
                 }
                 if (process.metas==null || process.metas.isEmpty()) {
-                    return FlowVerifyStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
+                    return Enums.FlowVerifyStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
                 }
 
                 Process.Meta m1 = process.getMeta("dataset");
                 if (m1 ==null || StringUtils.isBlank(m1.getValue())) {
-                    return FlowVerifyStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
+                    return Enums.FlowVerifyStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
                 }
                 Process.Meta m2 = process.getMeta("assembled-raw");
                 if (m2 ==null || StringUtils.isBlank(m2.getValue())) {
-                    return FlowVerifyStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
+                    return Enums.FlowVerifyStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
                 }
                 Process.Meta m3 = process.getMeta("feature");
                 if (m3 ==null || StringUtils.isBlank(m3.getValue())) {
-                    return FlowVerifyStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
+                    return Enums.FlowVerifyStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
                 }
             }
             else {
                 if (process.getSnippetCodes() == null || process.getSnippetCodes().isEmpty()) {
-                    return FlowVerifyStatus.SNIPPET_NOT_DEFINED_ERROR;
+                    return Enums.FlowVerifyStatus.SNIPPET_NOT_DEFINED_ERROR;
                 }
                 for (String snippetCode : process.snippetCodes) {
                     SnippetVersion sv = SnippetVersion.from(snippetCode);
                     Snippet snippet = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
                     if (snippet==null) {
                         log.warn("Snippet wasn't found for code: {}, process: {}", snippetCode, process);
-                        return FlowVerifyStatus.SNIPPET_NOT_FOUND_ERROR;
+                        return Enums.FlowVerifyStatus.SNIPPET_NOT_FOUND_ERROR;
                     }
                 }
             }
             if (process.parallelExec && (process.snippetCodes==null || process.snippetCodes.size()<2)) {
-                return FlowVerifyStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
+                return Enums.FlowVerifyStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
             }
             if (process.type== Enums.ProcessType.FILE_PROCESSING) {
                 if (!process.parallelExec && process.snippetCodes.size()>1) {
-                    return FlowVerifyStatus.TOO_MANY_SNIPPET_CODES_ERROR;
+                    return Enums.FlowVerifyStatus.TOO_MANY_SNIPPET_CODES_ERROR;
                 }
             }
         }
-        return FlowVerifyStatus.OK;
+        if (experimentPresent && lastProcess.type!=Enums.ProcessType.EXPERIMENT) {
+            return  Enums.FlowVerifyStatus.EXPERIMENT_MUST_BE_LAST_PROCESS_ERROR;
+        }
+        return Enums.FlowVerifyStatus.OK;
     }
 
     private void produce(TaskProducingResult result, Flow flow, String startWithResourcePoolCode) {
@@ -193,20 +173,26 @@ public class FlowService {
         result.flowYaml = flowYamlUtils.toFlowYaml(flow.getParams());
         int idx = 0;
         String inputResourcePoolCode = startWithResourcePoolCode;
+        result.flowProducingStatus = Enums.FlowProducingStatus.OK;
         for (Process process : result.flowYaml.getProcesses()) {
             ++idx;
 
             String outputResourcePoolCode = getResourcePoolCode(flow.code, flow.getId(), process.code, idx);
 
+            Enums.FlowProducingStatus status;
             switch(process.type) {
                 case FILE_PROCESSING:
-                    fileProcessService.produceTasks(flow, fi, process, idx, inputResourcePoolCode, outputResourcePoolCode);
+                    status = fileProcessService.produceTasks(flow, fi, process, idx, inputResourcePoolCode, outputResourcePoolCode);
                     break;
                 case EXPERIMENT:
-                    experimentProcessService.produceTasks(flow, fi, process, idx, inputResourcePoolCode, outputResourcePoolCode);
+                    status = experimentProcessService.produceTasks(flow, fi, process, idx, inputResourcePoolCode, outputResourcePoolCode);
                     break;
                 default:
                     throw new IllegalStateException("Unknown process type");
+            }
+            if (status!= Enums.FlowProducingStatus.OK) {
+                result.flowProducingStatus = status;
+                return;
             }
             inputResourcePoolCode = outputResourcePoolCode;
         }

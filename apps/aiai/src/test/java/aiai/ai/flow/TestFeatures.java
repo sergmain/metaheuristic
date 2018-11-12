@@ -4,7 +4,6 @@ import aiai.ai.Enums;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentFeature;
-import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.yaml.flow.FlowYaml;
 import lombok.extern.slf4j.Slf4j;
@@ -90,8 +89,8 @@ public class TestFeatures extends PreparingFlow {
 
     @Test
     public void testFeatures() {
-        FlowService.FlowVerifyStatus status = flowService.verify(flow);
-        assertEquals(FlowService.FlowVerifyStatus.OK, status);
+        Enums.FlowVerifyStatus status = flowService.verify(flow);
+        assertEquals(Enums.FlowVerifyStatus.OK, status);
 
 
         // produce artifacts - features, sequences,...

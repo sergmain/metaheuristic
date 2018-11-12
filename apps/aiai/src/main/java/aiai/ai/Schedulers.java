@@ -66,8 +66,8 @@ public class Schedulers {
         if (!globals.isLaunchpadEnabled) {
             return;
         }
-        log.info("ExperimentService.fixedDelayExperimentSequencesProducer()");
-        launchpadService.getExperimentService().fixedDelayExperimentSequencesProducer();
+        log.info("ExperimentService.fixedDelayTaskProducer()");
+        launchpadService.getExperimentService().fixedDelayTaskProducer();
     }
 
     // Station schedulers

@@ -671,10 +671,9 @@ public class ExperimentService {
     /**
      * this scheduler is being run at launchpad side
      *
-     * long fixedDelay()
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
-    public void fixedDelayExperimentSequencesProducer() {
+    public void fixedDelayTaskProducer() {
         if (globals.isUnitTesting) {
             return;
         }
@@ -683,12 +682,12 @@ public class ExperimentService {
         }
 
         for (final Experiment experiment : experimentRepository.findByIsLaunchedIsTrueAndIsAllSequenceProducedIsFalse()) {
-            if (true) throw new IllegalStateException("Not implemented yet");
-            List<String> inputResourceCode = new ArrayList<>();
-            produceFeaturePermutations(experiment, inputResourceCode);
-            produceTasks(experiment, inputResourceCode);
+            List<String> inputResourceCodes = new ArrayList<>();
+            produceFeaturePermutations(experiment, inputResourceCodes);
+            produceTasks(experiment, inputResourceCodes);
         }
     }
+
 
     public void produceTasks(Experiment experiment, List<String> inputResourceCode) {
         int totalVariants = 0;

@@ -1,10 +1,12 @@
 package aiai.ai.launchpad.file_process;
 
+import aiai.ai.Enums;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.beans.Task;
+import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
@@ -26,42 +28,39 @@ public class FileProcessService {
     private final SnippetCache snippetCache;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final TaskRepository taskRepository;
+    private final BinaryDataService binaryDataService;
 
-    public FileProcessService(FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, TaskRepository taskRepository) {
+    public FileProcessService(FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, TaskRepository taskRepository, BinaryDataService binaryDataService) {
         this.flowInstanceRepository = flowInstanceRepository;
         this.snippetCache = snippetCache;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.taskRepository = taskRepository;
+        this.binaryDataService = binaryDataService;
     }
 
-    public void produceTasks(Flow flow, FlowInstance flowInstance, Process process, int idx, String inputResourcePoolCode, String outputResourcePoolCode) {
+    public Enums.FlowProducingStatus produceTasks(Flow flow, FlowInstance flowInstance, Process process, int idx, String inputResourcePoolCode, String outputResourcePoolCode) {
 
-        // output resource code: flow-10-assembly-raw-file-snippet-01
-        //
-        // input resource:
-        // - code: flow-10-assembly-raw-file-snippet-01
-        //   type: assembled-raw
-
-        List<String> inputResourceCode = getResourceCodesInPool(inputResourcePoolCode);
+        List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(inputResourcePoolCode);
 
         if (process.parallelExec) {
             for (String snippetCode : process.snippetCodes) {
-                createTaskInternal(flow, flowInstance, process, idx, inputResourceCode, snippetCode);
+                createTaskInternal(flow, flowInstance, process, idx, inputResourceCodes, snippetCode);
             }
         }
         else {
             String snippetCode = process.snippetCodes.get(0);
-            createTaskInternal(flow, flowInstance, process, idx, inputResourceCode, snippetCode);
+            createTaskInternal(flow, flowInstance, process, idx, inputResourceCodes, snippetCode);
         }
+        return Enums.FlowProducingStatus.OK;
     }
 
-    private void createTaskInternal(Flow flow, FlowInstance flowInstance, Process process, int idx, List<String> inputResourceCode, String snippetCode) {
+    private void createTaskInternal(Flow flow, FlowInstance flowInstance, Process process, int idx, List<String> inputResourceCodes, String snippetCode) {
         SnippetVersion sv = SnippetVersion.from(snippetCode);
         String outputResource = getResourceCode( flow.code, flow.getId(), process.code, sv.name, idx);
 
         TaskParamYaml yaml = new TaskParamYaml();
         yaml.setHyperParams( Collections.emptyMap() );
-        yaml.inputResourceCodes = inputResourceCode;
+        yaml.inputResourceCodes = inputResourceCodes;
 
         Snippet snippet = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
         if (snippet==null) {
@@ -84,10 +83,6 @@ public class FileProcessService {
         task.setOrder(idx);
         task.setParams(taskParams);
         taskRepository.save(task);
-    }
-
-    private List<String> getResourceCodesInPool(String inputResourcePoolCode) {
-        return null;
     }
 
     private String getResourceCode(String flowCode, long flowId, String processCode, String snippetName, int idx) {
