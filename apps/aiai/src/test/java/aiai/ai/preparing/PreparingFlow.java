@@ -1,8 +1,10 @@
 package aiai.ai.preparing;
 
+import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
+import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
@@ -13,6 +15,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
+
+import java.io.ByteArrayInputStream;
 
 @Slf4j
 public abstract class PreparingFlow extends PreparingExperiment {
@@ -42,6 +46,12 @@ public abstract class PreparingFlow extends PreparingExperiment {
 
     public abstract String getFlowParamsAsYaml();
 
+    @Autowired
+    private BinaryDataService binaryDataService;
+
+    public static final String INPUT_POOL_CODE = "test-input-pool-code";
+    public static final String INPUT_RESOURCE_CODE = "test-input-resource-code-";
+
     @Before
     public void init() {
         // snippet-01:1.1
@@ -63,6 +73,19 @@ public abstract class PreparingFlow extends PreparingExperiment {
         flow.setParams(params);
 
         flowRepository.save(flow);
+
+        byte[] bytes = "A resource for input pool".getBytes();
+
+        binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
+                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE
+        );
+        binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
+                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE
+        );
+        binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
+                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE
+        );
+
     }
 
     private Snippet createSnippet(String snippetCode) {
@@ -108,7 +131,11 @@ public abstract class PreparingFlow extends PreparingExperiment {
     @After
     public void finish() {
         if (flow!=null) {
-            flowRepository.delete(flow);
+            try {
+                flowRepository.delete(flow);
+            } catch (Throwable th) {
+                th.printStackTrace();
+            }
         }
         deleteSnippet(s1);
         deleteSnippet(s2);
@@ -116,7 +143,16 @@ public abstract class PreparingFlow extends PreparingExperiment {
         deleteSnippet(s4);
         deleteSnippet(s5);
         if (flowInstance!=null) {
-            flowInstanceRepository.delete(flowInstance);
+            try {
+                flowInstanceRepository.delete(flowInstance);
+            } catch (Throwable th) {
+                th.printStackTrace();
+            }
+        }
+        try {
+            binaryDataService.deleteByPoolCodeAndDataType(INPUT_POOL_CODE, Enums.BinaryDataType.DATA);
+        } catch (Throwable th) {
+            th.printStackTrace();
         }
     }
 

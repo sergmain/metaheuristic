@@ -4,6 +4,7 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.experiment.ExperimentProcessService;
 import aiai.ai.launchpad.file_process.FileProcessService;
@@ -30,17 +31,19 @@ public class FlowService {
     private final FlowRepository flowRepository;
     private final FlowYamlUtils flowYamlUtils;
     private final ExperimentCache experimentCache;
+    private final BinaryDataService binaryDataService;
 
     private final ExperimentProcessService experimentProcessService;
     private final FileProcessService fileProcessService;
     private final FlowInstanceRepository flowInstanceRepository;
     private final SnippetCache snippetCache;
 
-    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache) {
+    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache) {
         this.globals = globals;
         this.flowRepository = flowRepository;
         this.flowYamlUtils = flowYamlUtils;
         this.experimentCache = experimentCache;
+        this.binaryDataService = binaryDataService;
         this.experimentProcessService = experimentProcessService;
         this.fileProcessService = fileProcessService;
         this.flowInstanceRepository = flowInstanceRepository;
@@ -102,6 +105,15 @@ public class FlowService {
         boolean experimentPresent = false;
         for (Process process : fl.getProcesses()) {
             lastProcess = process;
+            if (StringUtils.containsWhitespace(process.code) || StringUtils.contains(process.code, ',') ){
+                return Enums.FlowVerifyStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
+            }
+            if (StringUtils.containsWhitespace(process.inputResourceCode) || StringUtils.contains(process.inputResourceCode, ',') ){
+                return Enums.FlowVerifyStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
+            }
+            if (StringUtils.containsWhitespace(process.outputResourceCode) || StringUtils.contains(process.outputResourceCode, ',') ){
+                return Enums.FlowVerifyStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
+            }
             if (process.type == Enums.ProcessType.EXPERIMENT) {
                 experimentPresent = true;
                 if (process.snippetCodes!=null && process.snippetCodes.size() > 0) {
@@ -159,7 +171,18 @@ public class FlowService {
         return Enums.FlowVerifyStatus.OK;
     }
 
+    @Data
+    public static class ProduceTaskResult {
+        public Enums.FlowProducingStatus status;
+        public List<String> outputResourceCodes;
+    }
+
     private void produce(TaskProducingResult result, Flow flow, String startWithResourcePoolCode) {
+        List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(startWithResourcePoolCode);
+        if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
+            result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_DOESNT_EXIST_ERROR;
+            return;
+        }
 
         FlowInstance fi = new FlowInstance();
         fi.setFlowId(flow.getId());
@@ -172,34 +195,29 @@ public class FlowService {
 
         result.flowYaml = flowYamlUtils.toFlowYaml(flow.getParams());
         int idx = 0;
-        String inputResourcePoolCode = startWithResourcePoolCode;
         result.flowProducingStatus = Enums.FlowProducingStatus.OK;
+        List<String> outputResourceCode;
         for (Process process : result.flowYaml.getProcesses()) {
             ++idx;
 
-            String outputResourcePoolCode = getResourcePoolCode(flow.code, flow.getId(), process.code, idx);
-
-            Enums.FlowProducingStatus status;
+            ProduceTaskResult produceTaskResult;
             switch(process.type) {
                 case FILE_PROCESSING:
-                    status = fileProcessService.produceTasks(flow, fi, process, idx, inputResourcePoolCode, outputResourcePoolCode);
+                    produceTaskResult = fileProcessService.produceTasks(flow, fi, process, idx, inputResourceCodes);
+
                     break;
                 case EXPERIMENT:
-                    status = experimentProcessService.produceTasks(flow, fi, process, idx, inputResourcePoolCode, outputResourcePoolCode);
+                    produceTaskResult = experimentProcessService.produceTasks(flow, fi, process, idx, inputResourceCodes);
                     break;
                 default:
                     throw new IllegalStateException("Unknown process type");
             }
-            if (status!= Enums.FlowProducingStatus.OK) {
-                result.flowProducingStatus = status;
+            if (produceTaskResult.status!= Enums.FlowProducingStatus.OK) {
+                result.flowProducingStatus = produceTaskResult.status;
                 return;
             }
-            inputResourcePoolCode = outputResourcePoolCode;
+            inputResourceCodes = produceTaskResult.outputResourceCodes;
         }
-    }
-
-    private String getResourcePoolCode(String flowCode, long flowId, String processCode, int idx) {
-        return String.format("%s-%d-%d-%s", flowCode, flowId, idx, processCode);
     }
 
 }

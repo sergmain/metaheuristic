@@ -6,6 +6,7 @@ import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
+import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import org.springframework.stereotype.Service;
@@ -27,22 +28,21 @@ public class ExperimentProcessService {
         this.binaryDataService = binaryDataService;
     }
 
-    public Enums.FlowProducingStatus produceTasks(Flow flow, FlowInstance flowInstance, Process process, int idx, String inputResourcePoolCode, String outputResourcePoolCode) {
-        Experiment experiment = new Experiment();
-        experiment.setFlowInstanceId(flowInstance.getId());
-
+    public FlowService.ProduceTaskResult produceTasks(Flow flow, FlowInstance flowInstance, Process process, int idx, List<String> inputResourceCodes) {
         Experiment e = experimentRepository.findByCode(process.code);
+        FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
         if (e==null) {
-            return Enums.FlowProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
+            result.status = Enums.FlowProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
+            return result;
         }
 
-        List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(inputResourcePoolCode);
+        e.setFlowInstanceId(flowInstance.getId());
 
-        experimentService.produceFeaturePermutations(experiment, inputResourceCodes);
-        experimentService.produceTasks(experiment, inputResourceCodes);
+        experimentService.produceFeaturePermutations(e, inputResourceCodes);
+        experimentService.produceTasks(e, inputResourceCodes);
 
-        return Enums.FlowProducingStatus.OK;
-
+        result.status = Enums.FlowProducingStatus.OK;
+        return result;
     }
 
 }

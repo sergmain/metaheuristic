@@ -38,6 +38,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.omg.CORBA.IntHolder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.*;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -699,9 +700,7 @@ public class ExperimentService {
         for (ExperimentFeature feature : features) {
             Set<String> sequences = new LinkedHashSet<>();
 
-            if (true) throw new IllegalStateException("Not implemented yet");
-            for (Task task : new Task[0]){
-//            for (Task task : taskRepository.findByExperimentIdAndFeatureId(experiment.getId(), feature.getId())) {
+            for (Task task : taskRepository.findByExperimentIdAndFeatureId(experiment.getId(), feature.getId())) {
                 if (sequences.contains(task.getParams())) {
                     // delete doubles records
                     log.warn("!!! Found doubles. ExperimentId: {}, experimentFeatureId: {}, hyperParams: {}", experiment.getId(), feature.getId(), task.getParams());
@@ -715,7 +714,7 @@ public class ExperimentService {
             final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
             totalVariants += allHyperParams.size();
 
-            final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getFeatureIds());
+            final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getResourceCodes());
             final List<SimpleResource> simpleFeatureResources = Collections.unmodifiableList(
                     ofVariants.values.stream()
                             .map(s -> SimpleResource.of(Enums.BinaryDataType.DATA, s))
@@ -802,20 +801,22 @@ public class ExperimentService {
     public void produceFeaturePermutations(Experiment experiment, List<String> inputResourceCodes) {
         final List<ExperimentFeature> list = experimentFeatureRepository.findByExperimentId(experiment.getId());
 
-        final List<String> ids = new ArrayList<>(inputResourceCodes);
-        Permutation<String> permutation = new Permutation<>();
-        for (int i = 0; i < ids.size(); i++) {
-            permutation.printCombination(ids, i+1,
+        final List<String> codes = new ArrayList<>(inputResourceCodes);
+        final Permutation<String> permutation = new Permutation<>();
+        final IntHolder total = new IntHolder();
+        for (int i = 0; i < codes.size(); i++) {
+            permutation.printCombination(codes, i+1,
                     data -> {
-                        final String idsAsStr = String.valueOf(data);
-                        if (isExist(list, idsAsStr)) {
+                        final String listAsStr = String.valueOf(data);
+                        if (isExist(list, listAsStr)) {
                             return true;
                         }
 
                         final ExperimentFeature feature = new ExperimentFeature();
                         feature.setExperimentId(experiment.getId());
-                        feature.setFeatureIds(idsAsStr);
+                        feature.setResourceCodes(listAsStr);
                         experimentFeatureRepository.save(feature);
+                        total.value++;
                         return true;
                     }
             );
@@ -826,7 +827,7 @@ public class ExperimentService {
 
     private boolean isExist(List<ExperimentFeature> features, String f) {
         for (ExperimentFeature feature : features) {
-            if (feature.getFeatureIds().equals(f)) {
+            if (feature.getResourceCodes().equals(f)) {
                 return true;
             }
         }

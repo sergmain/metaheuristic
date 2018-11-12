@@ -35,8 +35,8 @@ public class ExperimentFeature implements Serializable {
     @Version
     public Integer version;
 
-    @Column(name = "FEATURE_IDS")
-    public String featureIds;
+    @Column(name = "RESOURCE_CODES")
+    public String resourceCodes;
 
     @Column(name = "IS_IN_PROGRESS")
     public boolean isInProgress;

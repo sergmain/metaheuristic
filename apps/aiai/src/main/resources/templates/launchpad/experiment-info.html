@@ -168,7 +168,7 @@
             <tbody>
             <tr th:each="f : ${experimentResult.features}" >
                 <td th:text="${f.id}">Feature Id</td>
-                <td th:text="${f.featureIds}">Ids</td>
+                <td th:text="${f.resourceCodes}">Ids</td>
                 <td th:text="${f.inProgress}">Is InProgress?</td>
                 <td th:text="${f.finished}">Is finished?</td>
                 <td th:text="${f.execStatusAsString()}">Exec status</td>

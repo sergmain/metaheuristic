@@ -104,7 +104,7 @@ public class TestFlowService extends PreparingFlow {
     public void testCreateTasks() {
         Enums.FlowVerifyStatus status = flowService.verify(flow);
         assertEquals(Enums.FlowVerifyStatus.OK, status);
-        FlowService.TaskProducingResult result = flowService.createTasks(flow, "raw-parts-pool");
+        FlowService.TaskProducingResult result = flowService.createTasks(flow, PreparingFlow.INPUT_POOL_CODE);
         flowInstance = result.flowInstance;
         List<Task> tasks = taskRepository.findByFlowInstanceId(result.flowInstance.getId());
         assertNotNull(result);

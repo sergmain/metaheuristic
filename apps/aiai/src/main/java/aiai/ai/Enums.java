@@ -120,6 +120,7 @@ public final class Enums {
     public enum FlowProducingStatus { OK,
         NOT_PRODUCING_YET_ERROR,
         EXPERIMENT_NOT_FOUND_BY_CODE_ERROR,
+        INPUT_POOL_DOESNT_EXIST_ERROR,
         ERROR,
     }
 
@@ -143,6 +144,8 @@ public final class Enums {
         EXPERIMENT_META_DATASET_NOT_FOUND_ERROR,
         EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR,
         EXPERIMENT_MUST_BE_LAST_PROCESS_ERROR,
+        RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR,
+        PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR,
     }
 
     public enum TaskProducingStatus { OK, VERIFY_ERROR, PRODUCING_ERROR }
