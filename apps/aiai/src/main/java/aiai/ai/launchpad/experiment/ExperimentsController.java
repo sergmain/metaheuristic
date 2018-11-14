@@ -263,17 +263,17 @@ public class ExperimentsController {
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
 //        snippetService.sortSnippetsByOrder(experimentSnippets);
         snippetResult.snippets = experimentSnippets;
-        final List<SnippetType> types = Arrays.asList(SnippetType.fit, SnippetType.predict);
+        final List<String> types = Arrays.asList("fit", "predict");
         snippetResult.selectOptions = snippetService.getSelectOptions(snippets,
                 snippetResult.snippets.stream().map(o -> new SnippetCode(o.getId(), o.getSnippetCode())).collect(Collectors.toList()),
                 (s) -> {
-                    if (!types.contains(SnippetType.valueOf(s.type)) ) {
+                    if (!types.contains(s.type) ) {
                         return true;
                     }
-                    if (SnippetType.fit.equals(s.type) && snippetService.hasFit(experimentSnippets)) {
+                    if ("fit".equals(s.type) && snippetService.hasFit(experimentSnippets)) {
                         return true;
                     }
-                    if (SnippetType.predict.equals(s.type) && snippetService.hasPredict(experimentSnippets)) {
+                    if ("predict".equals(s.type) && snippetService.hasPredict(experimentSnippets)) {
                         return true;
                     }
                     return false;

@@ -33,7 +33,7 @@ public class TestSnippetYaml {
 
         SnippetsConfig.SnippetConfig config = new SnippetsConfig.SnippetConfig();
         config.name = "aiai.fit.default.snippet";
-        config.type = SnippetType.fit;
+        config.type = "fit";
         config.file = "fit-model.py";
         config.version = "1.0";
 

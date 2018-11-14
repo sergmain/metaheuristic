@@ -89,7 +89,11 @@ public class ResourceController {
 
     private static final Random r = new Random();
     @PostMapping(value = "/resource-upload-from-file")
-    public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "code") long resourceCode, final RedirectAttributes redirectAttributes) {
+    public String createDefinitionFromFile(
+            MultipartFile file,
+            @RequestParam(name = "code") String resourceCode,
+            @RequestParam(name = "poolCode") String resourcePoolCode,
+            final RedirectAttributes redirectAttributes) {
         File tempFile = globals.createTempFileForLaunchpad("temp-raw-file-");
         if (tempFile.exists()) {
             tempFile.delete();
@@ -115,7 +119,7 @@ public class ResourceController {
 
 
         try {
-            resourceService.storeNewPartOfRawFile(originFilename, tempFile, true);
+            resourceService.storeNewPartOfRawFile(originFilename, tempFile, true, resourceCode, resourcePoolCode);
         } catch (StoreNewPartOfRawFileException e) {
             log.error("Error", e);
             redirectAttributes.addFlashAttribute("errorMessage", "#172.04 An error while saving data to file, " + e.toString());

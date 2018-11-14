@@ -114,7 +114,7 @@ public abstract class PreparingExperiment {
                 fitSnippet.setName(TEST_FIT_SNIPPET);
                 fitSnippet.setSnippetVersion(SNIPPET_VERSION_1_0);
                 fitSnippet.setEnv("python-3");
-                fitSnippet.setType(SnippetType.fit.toString());
+                fitSnippet.setType("fit");
                 fitSnippet.setChecksum("sha2");
                 fitSnippet.length = bytes.length;
                 fitSnippet.setFilename("fit-filename.txt");
@@ -136,7 +136,7 @@ public abstract class PreparingExperiment {
                 predictSnippet.setName(TEST_PREDICT_SNIPPET);
                 predictSnippet.setSnippetVersion(SNIPPET_VERSION_1_0);
                 predictSnippet.setEnv("python-3");
-                predictSnippet.setType(SnippetType.predict.toString());
+                predictSnippet.setType("predict");
                 predictSnippet.setChecksum("sha2");
                 predictSnippet.length = bytes.length;
                 predictSnippet.setFilename("predict-filename.txt");
@@ -199,12 +199,12 @@ public abstract class PreparingExperiment {
             // set snippets for experiment
             ExperimentSnippet es1 = new ExperimentSnippet();
             es1.setExperimentId(experiment.getId());
-            es1.setType(SnippetType.fit.toString());
+            es1.setType("fit");
             es1.setSnippetCode(fitSnippet.getSnippetCode());
 
             ExperimentSnippet es2 = new ExperimentSnippet();
             es2.setExperimentId(experiment.getId());
-            es2.setType(SnippetType.predict.toString());
+            es2.setType("predict");
             es2.setSnippetCode(predictSnippet.getSnippetCode());
 
             mills = System.currentTimeMillis();

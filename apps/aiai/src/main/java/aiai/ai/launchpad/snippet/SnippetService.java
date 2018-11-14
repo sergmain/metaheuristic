@@ -102,7 +102,7 @@ public class SnippetService {
             return false;
         }
         for (ExperimentSnippet snippet : experimentSnippets) {
-            if (SnippetType.fit.toString().equals(snippet.getType())) {
+            if ("fit".equals(snippet.getType())) {
                 return true;
             }
         }
@@ -114,7 +114,7 @@ public class SnippetService {
             return false;
         }
         for (ExperimentSnippet snippet : experimentSnippets) {
-            if (SnippetType.predict.toString().equals(snippet.getType())) {
+            if ("predict".equals(snippet.getType())) {
                 return true;
             }
         }
@@ -263,7 +263,7 @@ public class SnippetService {
                         setChecksum(snippetConfig, sum, snippet);
                         snippet.name = snippetConfig.name;
                         snippet.snippetVersion = snippetConfig.version;
-                        snippet.type = snippetConfig.type.toString();
+                        snippet.type = snippetConfig.type;
                         snippet.filename = snippetConfig.file;
                         snippet.length = file.length();
                         snippet.env = snippetConfig.env;
@@ -285,7 +285,7 @@ public class SnippetService {
                 setChecksum(snippetConfig, sum, snippet);
                 snippet.name = snippetConfig.name;
                 snippet.snippetVersion = snippetConfig.version;
-                snippet.type = snippetConfig.type.toString();
+                snippet.type = snippetConfig.type;
                 snippet.filename = snippetConfig.file;
                 snippet.length = file.length();
                 snippet.env = snippetConfig.env;
