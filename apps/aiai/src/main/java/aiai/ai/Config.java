@@ -72,7 +72,7 @@ public class Config {
     /*
     @Configuration
     @EnableTransactionManagement
-    @EnableJpaRepositories(basePackageClasses = { DatasetRepository.class })
+    @EnableJpaRepositories(basePackageClasses = { RefToLaunchpadRepositories.class })
     public class LaunchpadDbConfig {
 
         private final Environment env;

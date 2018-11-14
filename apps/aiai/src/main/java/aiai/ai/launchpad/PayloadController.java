@@ -71,7 +71,7 @@ public class PayloadController {
     }
 
     @GetMapping("/resource/{type}/{code}")
-    public HttpEntity<AbstractResource> datasets(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
+    public HttpEntity<AbstractResource> resources(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
         Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
         File typeDir = new File(globals.launchpadResourcesDir, binaryDataType.toString());
         AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.DATA, code);

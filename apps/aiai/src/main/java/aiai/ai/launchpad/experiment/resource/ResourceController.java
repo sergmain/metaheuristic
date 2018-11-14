@@ -72,24 +72,24 @@ public class ResourceController {
     }
 
     private final Globals globals;
-    private final ResourceService datasetService;
+    private final ResourceService resourceService;
     private final SnippetService snippetService;
     private final SnippetCache snippetCache;
     private final EnvService envService;
     private final BinaryDataService binaryDataService;
 
-    public ResourceController(Globals globals, ExecProcessService execProcessService, SnippetService snippetService, SnippetCache snippetCache, EnvService envService, BinaryDataService binaryDataService, ResourceService datasetService) {
+    public ResourceController(Globals globals, ExecProcessService execProcessService, SnippetService snippetService, SnippetCache snippetCache, EnvService envService, BinaryDataService binaryDataService, ResourceService resourceService) {
         this.globals = globals;
         this.snippetService = snippetService;
         this.snippetCache = snippetCache;
         this.envService = envService;
         this.binaryDataService = binaryDataService;
-        this.datasetService = datasetService;
+        this.resourceService = resourceService;
     }
 
     private static final Random r = new Random();
-    @PostMapping(value = "/dataset-upload-part-raw-from-file")
-    public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "id") long datasetId, final RedirectAttributes redirectAttributes) {
+    @PostMapping(value = "/resource-upload-from-file")
+    public String createDefinitionFromFile(MultipartFile file, @RequestParam(name = "code") long resourceCode, final RedirectAttributes redirectAttributes) {
         File tempFile = globals.createTempFileForLaunchpad("temp-raw-file-");
         if (tempFile.exists()) {
             tempFile.delete();
@@ -100,29 +100,28 @@ public class ResourceController {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "#173.06 can't persist uploaded file as " +
                             tempFile.getAbsolutePath()+", error: " + e.toString());
-            return "redirect:/launchpad/dataset-definition/" + datasetId;
+            return "redirect:/launchpad/resources";
         }
 
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#172.01 name of uploaded file is null");
-            return "redirect:/launchpad/dataset-definition/" + datasetId;
+            return "redirect:/launchpad/resources";
         }
         if (!checkExtension(originFilename)) {
             redirectAttributes.addFlashAttribute("errorMessage", "#172.03 not supported extension, filename: " + originFilename);
-            return "redirect:/launchpad/dataset-definition/" + datasetId;
+            return "redirect:/launchpad/resources";
         }
 
 
         try {
-            if (true) throw new IllegalStateException("Not implemented yet");
-//            datasetService.storeNewPartOfRawFile(originFilename, dataset, tempFile, true);
+            resourceService.storeNewPartOfRawFile(originFilename, tempFile, true);
         } catch (StoreNewPartOfRawFileException e) {
             log.error("Error", e);
             redirectAttributes.addFlashAttribute("errorMessage", "#172.04 An error while saving data to file, " + e.toString());
-            return "redirect:/launchpad/dataset-definition/" + datasetId;
+            return "redirect:/launchpad/resources";
         }
-        return "redirect:/launchpad/dataset-definition/" + datasetId;
+        return "redirect:/launchpad/resources";
     }
 
 
