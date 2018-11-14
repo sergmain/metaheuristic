@@ -76,8 +76,8 @@ public class Globals {
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.launchpad.dir' )) }")
     public File launchpadDir;
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.dataset-table-rows-limit'), 5, 100, 20) }")
-    public int datasetRowsLimit;
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.resource-table-rows-limit'), 5, 100, 20) }")
+    public int resourceRowsLimit;
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.experiment-table-rows-limit'), 5, 30, 10) }")
     public int experimentRowsLimit;
@@ -118,7 +118,6 @@ public class Globals {
     public File launchpadTempDir;
     public File launchpadResourcesDir;
 
-    public File stationDatasetDir;
     public File stationSnippetDir;
     public File stationDbDir;
     public File stationSystemDir;
@@ -158,8 +157,6 @@ public class Globals {
             isStationEnabled = false;
         }
         else {
-            stationDatasetDir = new File(stationDir, Consts.DATASET_DIR);
-            stationDatasetDir.mkdirs();
             stationSnippetDir = new File(stationDir, Consts.SNIPPET_DIR);
             stationSnippetDir.mkdirs();
             stationDbDir = new File(stationDir, Consts.DATABASE_DIR);

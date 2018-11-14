@@ -42,10 +42,8 @@ public class Consts {
 
     public static final String SNAPSHOT_SUFFIX = "-SNAPSHOT";
 
-    public static final String DATASET_DIR = "dataset";
     public static final String SNIPPET_DIR = "snippet";
     public static final String DATABASE_DIR = "database";
-    public static final String FEATURE_DIR = "feature";
     public static final String EXPERIMENT_DIR = "experiment";
     public static final String SYSTEM_DIR = "system";
     public static final String RESOURCES_DIR = "resources";
@@ -56,9 +54,6 @@ public class Consts {
     public static final String ENV_YAML_FILE_NAME = "env.yaml";
 
     public static final String METRICS_FILE_NAME = "metrics.yaml";
-    public static final String DATASET_FILE_NAME = "dataset.txt";
-    public static final String DATASET_FILE_MASK = "dataset-%04d.txt";
-    public static final String FEATURE_FILE_MASK = "feature-%04d.txt";
 
     public static final String PARAMS_YAML = "params.yaml";
     public static final String TASK_YAML = "task.yaml";

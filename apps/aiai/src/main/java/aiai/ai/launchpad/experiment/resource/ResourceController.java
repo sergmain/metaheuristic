@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.experiment.dataset;
+package aiai.ai.launchpad.experiment.resource;
 
 import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
@@ -48,27 +48,21 @@ import java.util.*;
 @RequestMapping("/launchpad")
 @Slf4j
 @Profile("launchpad")
-public class DatasetController {
+public class ResourceController {
 
     private static final Set<String> exts;
 
     @Data
     public static class DatasetDefinition {
         public String launchpadDirAsString;
-        public String datasetDirAsString;
         public List<SimpleSelectOption> assemblyOptions;
         public List<SimpleSelectOption> datasetOptions;
         public Map<String, Env> envs = new HashMap<>();
         public boolean isStoreToDisk;
         public boolean isAllPathsValid;
 
-        public DatasetDefinition(String launchpadDirAsString, String datasetDirAsString) {
+        public DatasetDefinition(String launchpadDirAsString) {
             this.launchpadDirAsString = launchpadDirAsString;
-            this.datasetDirAsString = datasetDirAsString;
-        }
-        public boolean canBeLocked() {
-            // TODO this method has to be deleted in the future
-            return false;
         }
     }
 
@@ -78,13 +72,13 @@ public class DatasetController {
     }
 
     private final Globals globals;
-    private final DatasetService datasetService;
+    private final ResourceService datasetService;
     private final SnippetService snippetService;
     private final SnippetCache snippetCache;
     private final EnvService envService;
     private final BinaryDataService binaryDataService;
 
-    public DatasetController(Globals globals, ExecProcessService execProcessService, SnippetService snippetService, SnippetCache snippetCache, EnvService envService, BinaryDataService binaryDataService, DatasetService datasetService) {
+    public ResourceController(Globals globals, ExecProcessService execProcessService, SnippetService snippetService, SnippetCache snippetCache, EnvService envService, BinaryDataService binaryDataService, ResourceService datasetService) {
         this.globals = globals;
         this.snippetService = snippetService;
         this.snippetCache = snippetCache;

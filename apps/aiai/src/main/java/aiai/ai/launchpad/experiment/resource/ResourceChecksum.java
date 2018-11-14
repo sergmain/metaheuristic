@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.experiment.dataset;
+package aiai.ai.launchpad.experiment.resource;
 
 import aiai.apps.commons.utils.Checksum;
 
@@ -28,7 +28,7 @@ import java.io.InputStream;
  * Date: 03.08.2017
  * Time: 18:07
  */
-public class DatasetChecksum {
+public class ResourceChecksum {
 
 
     public static String getChecksumAsJson(File file) {

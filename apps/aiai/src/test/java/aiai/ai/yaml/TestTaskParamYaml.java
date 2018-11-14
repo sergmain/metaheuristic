@@ -20,7 +20,6 @@ package aiai.ai.yaml;
 import aiai.ai.yaml.sequence.SimpleSnippet;
 import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.sequence.TaskParamYamlUtils;
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

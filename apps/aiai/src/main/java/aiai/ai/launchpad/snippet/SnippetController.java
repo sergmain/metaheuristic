@@ -70,22 +70,13 @@ public class SnippetController {
         if (snippet==null) {
             return "redirect:/launchpad/datasets";
         }
-        redirectAttributes.addFlashAttribute("errorMessage", "#423.01 ");
+        redirectAttributes.addFlashAttribute("errorMessage", "#423.01 need to implement this method");
 
         // TODO !!!!! need to implement this method !!!!!
-/*
-        Feature group = value.get();
-        long datasetId = group.getDataset().getId();
-
-        datasetCache.delete(group);
-        return "redirect:/launchpad/dataset-definition/" + datasetId;
-*/
 
         result.snippets = snippetRepository.findAll();
         return "launchpad/snippets";
     }
-
-
 
     @PostMapping(value = "/snippet-upload-from-file")
     public String uploadSnippet(MultipartFile file, final RedirectAttributes redirectAttributes) {

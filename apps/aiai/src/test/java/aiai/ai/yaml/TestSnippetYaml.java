@@ -18,7 +18,6 @@
 package aiai.ai.yaml;
 
 import aiai.apps.commons.utils.Checksum;
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.apps.commons.yaml.snippet.SnippetsConfig;
 import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
 import org.junit.Test;

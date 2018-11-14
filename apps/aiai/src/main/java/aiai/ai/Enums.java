@@ -40,33 +40,6 @@ public final class Enums {
         }
     }
 
-    public enum TaskType {
-        ProduceRawFile(1, true), ProduceDataset(2, true), ProduceFeature(3, true), Experiment(4, false);
-
-        public int code;
-        public boolean returnResult;
-
-        TaskType(int code, boolean returnResult) {
-            this.code = code;
-            this.returnResult = returnResult;
-        }
-
-        public static TaskType toType(int code) {
-            switch (code) {
-                case 1:
-                    return ProduceRawFile;
-                case 2:
-                    return ProduceDataset;
-                case 3:
-                    return ProduceFeature;
-                case 4:
-                    return Experiment;
-                default:
-                    return null;
-            }
-        }
-    }
-
     public enum StoreData {
         DISK, DB
     }

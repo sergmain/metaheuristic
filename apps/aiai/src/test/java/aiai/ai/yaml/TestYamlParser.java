@@ -17,7 +17,6 @@
 
 package aiai.ai.yaml;
 
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.apps.commons.yaml.snippet.SnippetsConfig;
 import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
 import lombok.Data;

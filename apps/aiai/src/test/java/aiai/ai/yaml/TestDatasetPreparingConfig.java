@@ -17,7 +17,6 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.config.DatasetPreparingConfig;
 import aiai.ai.yaml.config.DatasetPreparingConfigUtils;
 import org.junit.Assert;
 import org.junit.Test;

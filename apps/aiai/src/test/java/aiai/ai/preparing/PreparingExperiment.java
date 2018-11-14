@@ -26,7 +26,6 @@ import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;

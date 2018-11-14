@@ -44,7 +44,7 @@ public class SnippetsConfig {
     @ToString
     public static class SnippetConfig {
         public String name;
-        public SnippetType type;
+        public String type;
         public String file;
         public String params;
         public String version;
@@ -54,7 +54,7 @@ public class SnippetsConfig {
         public Map<Checksum.Type, String> checksums;
 
         public SnippetConfigStatus verify() {
-            if (StringUtils.isBlank(name) || StringUtils.isBlank(type.toString()) || StringUtils.isBlank(version) || StringUtils.isBlank(env)) {
+            if (StringUtils.isBlank(name) || StringUtils.isBlank(type) || StringUtils.isBlank(version) || StringUtils.isBlank(env)) {
                 return new SnippetConfigStatus(false, "A field is null or empty: " + this.toString());
             }
             if (!fileProvided && StringUtils.isBlank(file)) {

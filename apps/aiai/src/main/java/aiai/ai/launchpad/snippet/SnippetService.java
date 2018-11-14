@@ -30,7 +30,6 @@ import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.SimpleSelectOption;
 import aiai.apps.commons.utils.Checksum;
-import aiai.apps.commons.yaml.snippet.SnippetType;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import aiai.apps.commons.yaml.snippet.SnippetsConfig;
 import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
