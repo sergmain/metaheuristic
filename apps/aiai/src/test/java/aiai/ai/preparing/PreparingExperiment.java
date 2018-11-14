@@ -82,7 +82,7 @@ public abstract class PreparingExperiment {
     public Snippet predictSnippet = null;
 
     @Before
-    public void before() {
+    public void beforePreparingExperiment() {
         try {
             long mills;
 
@@ -172,7 +172,7 @@ public abstract class PreparingExperiment {
             experiment.setExecState(Enums.TaskExecState.NONE.code);
             experiment.setLaunched(false);
             experiment.setLaunchedOn(null);
-            experiment.setAllSequenceProduced(false);
+            experiment.setAllTaskProduced(false);
 
             // set hyper params for experiment
             ExperimentHyperParams ehp1 = new ExperimentHyperParams();
@@ -222,8 +222,7 @@ public abstract class PreparingExperiment {
     }
 
     @After
-    public void after() {
-
+    public void afterPreparingExperiment() {
         long mills = System.currentTimeMillis();
         log.info("Start after()");
         if (experiment != null) {
@@ -263,7 +262,11 @@ public abstract class PreparingExperiment {
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
-            binaryDataService.deleteByCodeAndDataType(predictSnippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
+            try {
+                binaryDataService.deleteByCodeAndDataType(predictSnippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
+            } catch (Throwable th) {
+                th.printStackTrace();
+            }
         }
         if (fitSnippet != null) {
             try {
@@ -271,7 +274,11 @@ public abstract class PreparingExperiment {
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }
-            binaryDataService.deleteByCodeAndDataType(fitSnippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
+            try {
+                binaryDataService.deleteByCodeAndDataType(fitSnippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
+            } catch (Throwable th) {
+                th.printStackTrace();
+            }
         }
         System.out.println("Was finished correctly");
         log.info("after() was finished for {}", System.currentTimeMillis() - mills);

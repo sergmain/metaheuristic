@@ -56,11 +56,6 @@ public class Task implements Serializable {
     @Column(name = "METRICS")
     public String metrics;
 
-/*
-    @Column(name = "TASK_TYPE")
-    public String taskType;
-*/
-
     @Column(name = "TASK_ORDER")
     public int order;
 

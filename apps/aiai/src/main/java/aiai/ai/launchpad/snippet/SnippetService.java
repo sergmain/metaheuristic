@@ -24,6 +24,7 @@ import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
+import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.repositories.ExperimentSnippetRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.snippet.SnippetCode;
@@ -73,7 +74,9 @@ public class SnippetService {
     }
 
     public List<ExperimentSnippet> getTaskSnippetsForExperiment(Long experimentId) {
-        return experimentSnippetRepository.findByExperimentId(experimentId);
+        List<ExperimentSnippet> experimentSnippets = experimentSnippetRepository.findByExperimentId(experimentId);
+        ExperimentUtils.sortExperimentSnippets(experimentSnippets);
+        return experimentSnippets;
     }
 
     public List<Snippet> getSnippets(long experimentId){

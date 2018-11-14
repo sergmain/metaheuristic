@@ -16,16 +16,12 @@ import java.util.List;
 @Service
 public class ExperimentProcessService {
 
-    private final StationsRepository stationsRepository;
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
-    private final BinaryDataService binaryDataService;
 
-    public ExperimentProcessService(StationsRepository stationsRepository, ExperimentService experimentService, ExperimentRepository experimentRepository, BinaryDataService binaryDataService) {
-        this.stationsRepository = stationsRepository;
+    public ExperimentProcessService(ExperimentService experimentService, ExperimentRepository experimentRepository) {
         this.experimentService = experimentService;
         this.experimentRepository = experimentRepository;
-        this.binaryDataService = binaryDataService;
     }
 
     public FlowService.ProduceTaskResult produceTasks(Flow flow, FlowInstance flowInstance, Process process, int idx, List<String> inputResourceCodes) {
@@ -39,11 +35,10 @@ public class ExperimentProcessService {
         e.setFlowInstanceId(flowInstance.getId());
 
         experimentService.produceFeaturePermutations(e, inputResourceCodes);
-        experimentService.produceTasks(e, inputResourceCodes);
+        experimentService.produceTasks(flowInstance, idx, e);
 
         result.status = Enums.FlowProducingStatus.OK;
         return result;
     }
-
 }
 

@@ -9,6 +9,7 @@ import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
+import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +38,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
     public FlowYamlUtils flowYamlUtils;
 
     public Flow flow = null;
+    public FlowYaml flowYaml = null;
     public Snippet s1 = null;
     public Snippet s2 = null;
     public Snippet s3 = null;
@@ -53,7 +55,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
     public static final String INPUT_RESOURCE_CODE = "test-input-resource-code-";
 
     @Before
-    public void init() {
+    public void beforePreparingFlow() {
         // snippet-01:1.1
         // snippet-02:1.1
         // snippet-03:1.1
@@ -129,7 +131,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
     }
 
     @After
-    public void finish() {
+    public void afterPreparingFlow() {
         if (flow!=null) {
             try {
                 flowRepository.delete(flow);

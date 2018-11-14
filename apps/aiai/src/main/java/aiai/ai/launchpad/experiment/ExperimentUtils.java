@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Consts;
+import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -31,13 +32,21 @@ public class ExperimentUtils {
     private static final String RANGE = "range";
     private static final NumberOfVariants ZERO_VARIANT = new NumberOfVariants(true, null, 0);
 
+    public static void sortExperimentSnippets(List<ExperimentSnippet> experimentSnippets) {
+        experimentSnippets.sort((o1, o2) -> {
+                    if (o1.getType().equals(o2.getType())) return 0;
+                    return "fit".equals(o1.getType().toLowerCase()) ? 1 : -1;
+                }
+        );
+    }
+
     @Data
     @AllArgsConstructor
     @EqualsAndHashCode
     public static class NumberOfVariants {
         public boolean status;
-        String error;
-        int count;
+        public String error;
+        public int count;
         public final List<String> values = new ArrayList<>();
 
         public static NumberOfVariants instanceOf(boolean status, String error, int count) {

@@ -18,9 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -29,7 +27,7 @@ public class TestFlowService extends PreparingFlow {
 
     @Override
     public String getFlowParamsAsYaml() {
-        FlowYaml flowYaml = new FlowYaml();
+        flowYaml = new FlowYaml();
         {
             Process p = new Process();
             p.type = Enums.ProcessType.FILE_PROCESSING;
@@ -86,11 +84,12 @@ public class TestFlowService extends PreparingFlow {
         }
 
         String yaml = flowYamlUtils.toString(flowYaml);
+        System.out.println(yaml);
         return yaml;
     }
 
     @After
-    public void after() {
+    public void afterTestFlowService() {
         if (flowInstance!=null) {
             try {
                 taskRepository.deleteByFlowInstanceId(flowInstance.getId());
@@ -98,13 +97,20 @@ public class TestFlowService extends PreparingFlow {
                 th.printStackTrace();
             }
         }
+        System.out.println("Finished TestFlowService.afterTestFlowService()");
     }
 
     @Test
     public void testCreateTasks() {
+        assertFalse(flowYaml.processes.isEmpty());
+        assertEquals(Enums.ProcessType.EXPERIMENT, flowYaml.processes.get(flowYaml.processes.size()-1).type);
+
         Enums.FlowVerifyStatus status = flowService.verify(flow);
         assertEquals(Enums.FlowVerifyStatus.OK, status);
+
         FlowService.TaskProducingResult result = flowService.createTasks(flow, PreparingFlow.INPUT_POOL_CODE);
+        experiment = experimentService.findById(experiment.getId());
+
         flowInstance = result.flowInstance;
         List<Task> tasks = taskRepository.findByFlowInstanceId(result.flowInstance.getId());
         assertNotNull(result);
@@ -112,5 +118,16 @@ public class TestFlowService extends PreparingFlow {
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
 
+        int taskNumber = 0;
+        for (Process process : flowYaml.processes) {
+            if (process.type== Enums.ProcessType.EXPERIMENT) {
+                continue;
+            }
+            taskNumber += process.snippetCodes.size();
+        }
+
+        assertEquals( 1+1+3+ 2*12*7, taskNumber +  experiment.getNumberOfTask());
+
+        int i=0;
     }
 }

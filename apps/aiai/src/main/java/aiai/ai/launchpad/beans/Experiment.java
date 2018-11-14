@@ -72,8 +72,8 @@ public class Experiment implements Serializable {
     @Column(name = "SEED")
     private int seed;
 
-    @Column(name = "IS_ALL_SEQUENCE_PRODUCED")
-    private boolean isAllSequenceProduced;
+    @Column(name = "IS_ALL_TASK_PRODUCED")
+    private boolean isAllTaskProduced;
 
     @Column(name = "IS_FEATURE_PRODUCED")
     private boolean isFeatureProduced;
@@ -90,8 +90,8 @@ public class Experiment implements Serializable {
     @Column(name="LAUNCHED_ON")
     private Long launchedOn;
 
-    @Column(name = "NUMBER_OF_SEQUENCE")
-    private int numberOfSequence;
+    @Column(name = "NUMBER_OF_TASK")
+    private int numberOfTask;
 
     // we need eager because of @Scheduled and cache
 

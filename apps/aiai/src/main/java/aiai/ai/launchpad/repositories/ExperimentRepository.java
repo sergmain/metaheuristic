@@ -44,7 +44,7 @@ public interface ExperimentRepository extends CrudRepository<Experiment, Long> {
     List<Experiment> findAll();
 
     @Transactional
-    List<Experiment> findByIsLaunchedIsTrueAndIsAllSequenceProducedIsFalse();
+    List<Experiment> findByIsLaunchedIsTrueAndIsAllTaskProducedIsFalse();
 
     Experiment findByCode(String code);
 }

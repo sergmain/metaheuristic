@@ -235,7 +235,7 @@ public class ExperimentService {
         Boolean isContinue = null;
         for (ExperimentFeature feature : fs) {
             final Experiment e = findById(feature.experimentId);
-            if (!e.isAllSequenceProduced() || !e.isFeatureProduced()) {
+            if (!e.isAllTaskProduced() || !e.isFeatureProduced()) {
                 continue;
             }
             // collect all experiment which has feature with FeatureExecStatus.error
@@ -681,16 +681,16 @@ public class ExperimentService {
         if (!globals.isLaunchpadEnabled) {
             return;
         }
-
-        for (final Experiment experiment : experimentRepository.findByIsLaunchedIsTrueAndIsAllSequenceProducedIsFalse()) {
+/*
+        for (final Experiment experiment : experimentRepository.findByIsLaunchedIsTrueAndIsAllTaskProducedIsFalse()) {
             List<String> inputResourceCodes = new ArrayList<>();
             produceFeaturePermutations(experiment, inputResourceCodes);
             produceTasks(experiment, inputResourceCodes);
         }
+*/
     }
 
-
-    public void produceTasks(Experiment experiment, List<String> inputResourceCode) {
+    public void produceTasks(FlowInstance flowInstance, int order, Experiment experiment) {
         int totalVariants = 0;
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
@@ -698,21 +698,29 @@ public class ExperimentService {
 
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         for (ExperimentFeature feature : features) {
-            Set<String> sequences = new LinkedHashSet<>();
+            ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(feature.getResourceCodes());
+            if (!numberOfVariants.status) {
+                log.warn("empty list of feature, feature: {}", feature);
+                continue;
+            }
+            List<String> inputResourceCodes = numberOfVariants.values;
+            Set<String> taskParams = new LinkedHashSet<>();
 
-            for (Task task : taskRepository.findByExperimentIdAndFeatureId(experiment.getId(), feature.getId())) {
-                if (sequences.contains(task.getParams())) {
+            for (Task task : taskRepository.findByFlowInstanceId(flowInstance.getId())) {
+                if (taskParams.contains(task.getParams())) {
                     // delete doubles records
                     log.warn("!!! Found doubles. ExperimentId: {}, experimentFeatureId: {}, hyperParams: {}", experiment.getId(), feature.getId(), task.getParams());
                     taskRepository.delete(task);
                     continue;
                 }
-                sequences.add(task.getParams());
+                taskParams.add(task.getParams());
             }
 
-            final Map<String, String> map = ExperimentService.toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
+            final Map<String, String> map = toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
             final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
-            totalVariants += allHyperParams.size();
+
+            // there is 2 because we have 2 snippets - fit and predict
+            totalVariants += allHyperParams.size() * 2;
 
             final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getResourceCodes());
             final List<SimpleResource> simpleFeatureResources = Collections.unmodifiableList(
@@ -724,10 +732,11 @@ public class ExperimentService {
             boolean isNew = false;
             for (HyperParams hyperParams : allHyperParams) {
 
+                int orderAdd = 0;
                 for (ExperimentSnippet experimentSnippet : experimentSnippets) {
                     TaskParamYaml yaml = new TaskParamYaml();
                     yaml.setHyperParams( hyperParams.toSortedMap() );
-                    yaml.inputResourceCodes = inputResourceCode;
+                    yaml.inputResourceCodes = inputResourceCodes;
 
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                     Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
@@ -750,14 +759,18 @@ public class ExperimentService {
                             snippet.reportMetrics
                     );
 
-                    String taskParams = taskParamYamlUtils.toString(yaml);
+                    String currTaskParams = taskParamYamlUtils.toString(yaml);
 
-                    if (sequences.contains(taskParams)) {
+                    if (taskParams.contains(currTaskParams)) {
                         continue;
                     }
 
                     Task task = new Task();
-                    task.setParams(taskParams);
+                    task.setParams(currTaskParams);
+                    task.setFlowInstanceId(flowInstance.getId());
+                    // we can just increment order here
+                    // because experiment is always last process in flow
+                    task.setOrder(order + (orderAdd++));
                     taskRepository.save(task);
                     isNew = true;
                 }
@@ -785,16 +798,16 @@ public class ExperimentService {
                 }
             }
         }
-        if (experiment.getNumberOfSequence() != totalVariants && experiment.getNumberOfSequence() != 0) {
-            log.warn("! Number of sequence is different. experiment.getNumberOfSequence(): {}, totalVariants: {}", experiment.getNumberOfSequence(), totalVariants);
+        if (experiment.getNumberOfTask() != totalVariants && experiment.getNumberOfTask() != 0) {
+            log.warn("! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", experiment.getNumberOfTask(), totalVariants);
         }
         Experiment experimentTemp = experimentRepository.findById(experiment.getId()).orElse(null);
         if (experimentTemp==null) {
             log.warn("Experiment for id {} doesn't exist anymore", experiment.getId());
             return;
         }
-        experimentTemp.setNumberOfSequence(totalVariants);
-        experimentTemp.setAllSequenceProduced(true);
+        experimentTemp.setNumberOfTask(totalVariants);
+        experimentTemp.setAllTaskProduced(true);
         experimentRepository.save(experimentTemp);
     }
 
