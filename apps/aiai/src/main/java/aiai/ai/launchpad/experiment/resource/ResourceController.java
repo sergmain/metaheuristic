@@ -20,24 +20,28 @@ package aiai.ai.launchpad.experiment.resource;
 import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.exceptions.StoreNewPartOfRawFileException;
-import aiai.ai.launchpad.beans.Env;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
-import aiai.ai.utils.SimpleSelectOption;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 
 /**
  * User: Serg
@@ -53,15 +57,11 @@ public class ResourceController {
     private static final Set<String> exts;
 
     @Data
-    public static class DatasetDefinition {
+    public static class ResourceDefinition {
         public String launchpadDirAsString;
-        public List<SimpleSelectOption> assemblyOptions;
-        public List<SimpleSelectOption> datasetOptions;
-        public Map<String, Env> envs = new HashMap<>();
-        public boolean isStoreToDisk;
         public boolean isAllPathsValid;
 
-        public DatasetDefinition(String launchpadDirAsString) {
+        public ResourceDefinition(String launchpadDirAsString) {
             this.launchpadDirAsString = launchpadDirAsString;
         }
     }
@@ -128,43 +128,11 @@ public class ResourceController {
         return "redirect:/launchpad/resources";
     }
 
-
-    @GetMapping("/dataset-path-delete/{id}")
+    @PostMapping("/resource-delete-commit/{id}")
     public String deletePath(@PathVariable Long id) {
         if (true) throw new IllegalStateException("Not implemented yet");
         // TODO change code for using aiai_lp_data table
-        return "redirect:/launchpad/datasets";
-/*
-        final Optional<DatasetPath> value = pathRepository.findById(id);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/datasets";
-        }
-        DatasetPath path = value.get();
-        Dataset dataset = path.getDataset();
-        pathRepository.delete(path);
-        return "redirect:/launchpad/dataset-definition/" + dataset.getId();
-*/
-    }
-
-    @GetMapping("/dataset-path-delete-all-not-valid/{id}")
-    public String deleteAllNotValidPath(@PathVariable("id") Long datasetId, final RedirectAttributes redirectAttributes) {
-        if (true) throw new IllegalStateException("Not implemented yet");
-        // TODO change code for using aiai_lp_data table
-        return "redirect:/launchpad/datasets";
-/*
-        Dataset dataset = datasetCache.findById(datasetId);
-        if (dataset == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#183.01 dataset wasn't found, datasetId: " + datasetId);
-            return "redirect:/launchpad/dataset-definition/" + datasetId;
-        }
-        final List<DatasetPath> paths = pathRepository.findByDataset(dataset);
-        for (DatasetPath path : paths) {
-            if (!path.isValid()) {
-                pathRepository.delete(path);
-            }
-        }
-        return "redirect:/launchpad/dataset-definition/" + datasetId;
-*/
+        return "redirect:/launchpad/resources";
     }
 
     private static boolean checkExtension(String filename) {

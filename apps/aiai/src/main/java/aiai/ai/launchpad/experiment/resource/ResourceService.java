@@ -1,6 +1,5 @@
 package aiai.ai.launchpad.experiment.resource;
 
-import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
@@ -10,7 +9,6 @@ import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -60,10 +58,10 @@ public class ResourceService {
         }
     }
 
-    ResourceController.DatasetDefinition prepareDatasetDefinition() {
+    ResourceController.ResourceDefinition prepareResourceDefinition() {
         // path variable is for informing user about directory structure
 
-        final ResourceController.DatasetDefinition definition = new ResourceController.DatasetDefinition(globals.launchpadDir.getPath());
+        final ResourceController.ResourceDefinition definition = new ResourceController.ResourceDefinition(globals.launchpadDir.getPath());
         if (true) throw new IllegalStateException("Not implemented");
         return definition;
     }

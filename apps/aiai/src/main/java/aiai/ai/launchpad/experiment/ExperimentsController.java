@@ -561,7 +561,7 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
         if (experiment.getFlowInstanceId()==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#285.03 dataset wasn't assigned, experimentId: " + experimentId);
+            redirectAttributes.addFlashAttribute("errorMessage", "#285.03 Flow instance wasn't assigned, experimentId: " + experimentId);
             return "redirect:/launchpad/experiments";
         }
         if(!experiment.isLaunched()) {

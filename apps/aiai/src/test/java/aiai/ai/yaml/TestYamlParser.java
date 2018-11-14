@@ -19,17 +19,14 @@ package aiai.ai.yaml;
 
 import aiai.apps.commons.yaml.snippet.SnippetsConfig;
 import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
-import lombok.Data;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.List;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -50,30 +47,6 @@ public class TestYamlParser {
         assertThat(yamlParsers.keySet(), CoreMatchers.hasItems("JYaml", "JvYaml", "YamlBeans", "SnakeYAML"));
     }
 
-    @Data
-    public static class DatasetConfig {
-        List<String> input;
-        List<String> labels;
-        String output;
-    }
-
-    @Data
-    public static class SampleYamlConfig {
-        DatasetConfig dataset;
-/*
-dataset:
-  input:
-    - file_01.txt
-    - file_02.txt
-    - file_03.txt
-  labels:
-    - file_04.txt
-    - file_05.txt
-  output: dataset_06.txt
-*/
-
-    }
-
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
@@ -89,24 +62,6 @@ dataset:
             SnippetsConfig.SnippetConfig snippet = config.getSnippets().get(0);
             SnippetsConfig.SnippetConfigStatus status = snippet.verify();
             assertFalse(status.isOk);
-        }
-    }
-
-    @Test
-    public void loadYmlAsMapFromStream() throws IOException {
-
-        try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/simple.yaml")) {
-
-            Yaml yaml = new Yaml(new Constructor(SampleYamlConfig.class));
-
-            SampleYamlConfig config = yaml.load(is);
-            assertNotNull(config.dataset);
-            assertNotNull(config.dataset.input);
-            assertNotNull(config.dataset.labels);
-            assertNotNull(config.dataset.output);
-
-            assertEquals(3, config.dataset.input.size());
-            assertEquals(2, config.dataset.labels.size());
         }
     }
 
