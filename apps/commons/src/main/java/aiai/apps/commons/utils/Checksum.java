@@ -68,7 +68,7 @@ public class Checksum {
                 case SHA256WithSignature:
                     throw new IllegalStateException("Shouldn't be created here. Use external methods");
                 default:
-                    throw new IllegalStateException("Not implemented: " + this);
+                    throw new IllegalStateException("Checksum for " + this +"  isn't supported yet");
             }
         }
     }

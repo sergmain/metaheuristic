@@ -588,8 +588,7 @@ public class ExperimentService {
 
     public Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
         ExperimentsController.TasksResult result = new ExperimentsController.TasksResult();
-        if (true) throw new IllegalStateException("Not implemented yet");
-//        result.items = taskRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), experimentFeature.getId());
+        result.items = taskRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), experimentFeature.getId());
 
         HyperParamResult hyperParamResult = new HyperParamResult();
         for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {

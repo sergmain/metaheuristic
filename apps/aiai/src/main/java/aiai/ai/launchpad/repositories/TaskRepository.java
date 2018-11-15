@@ -44,15 +44,15 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     @Transactional(readOnly = true)
     List<Task> findByFlowInstanceId(long flowInstanceId);
 
+    @Transactional(readOnly = true)
+    Slice<Task> findByIsCompletedIsTrueAndFeatureId(Pageable pageable, long featureId);
+
 /*
 
     List<Task> findByExperimentId(long experimentId);
 
     @Transactional(readOnly = true)
     List<Task> findByIsCompletedIsTrueAndFeatureId(long featureId);
-
-    @Transactional(readOnly = true)
-    Slice<Task> findByIsCompletedIsTrueAndFeatureId(Pageable pageable, long featureId);
 
     @Transactional(readOnly = true)
     List<Task> findByExperimentIdAndFeatureId(long experiimentId, long featureId);
