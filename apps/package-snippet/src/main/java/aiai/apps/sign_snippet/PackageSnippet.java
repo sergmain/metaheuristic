@@ -40,8 +40,8 @@ import java.util.Set;
 @SpringBootApplication
 public class PackageSnippet implements CommandLineRunner {
 
-    public static final String SNIPPETS_YAML = "snippets.yaml";
-    public static final String ZIP_EXTENSION = ".zip";
+    private static final String SNIPPETS_YAML = "snippets.yaml";
+    private static final String ZIP_EXTENSION = ".zip";
 
     public static void main(String[] args) {
             SpringApplication.run(PackageSnippet.class, args);

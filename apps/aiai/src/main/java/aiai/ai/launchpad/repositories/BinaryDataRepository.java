@@ -18,8 +18,11 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.LogData;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -39,6 +42,9 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     List<BinaryData> findAllByPoolCode(String poolCode);
 
     BinaryData findByCode(String code);
+
+    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    Slice<BinaryData> findAll(Pageable pageable);
 
     @Transactional
     void deleteAllByDataType(int dataType);

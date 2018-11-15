@@ -21,7 +21,6 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
-import aiai.ai.launchpad.env.EnvService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetCode;
@@ -95,7 +94,6 @@ public class ExperimentsController {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeature> features;
         public boolean isCanBeLaunched;
-        public Map<String, Env> envs = new HashMap<>();
     }
 
     @Data
@@ -123,9 +121,8 @@ public class ExperimentsController {
     private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final TaskRepository taskRepository;
-    private final EnvService envService;
 
-    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, EnvService envService) {
+    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
         this.experimentRepository = experimentRepository;
@@ -135,7 +132,6 @@ public class ExperimentsController {
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.taskRepository = taskRepository;
-        this.envService = envService;
     }
 
     @GetMapping("/experiments")
@@ -242,8 +238,6 @@ public class ExperimentsController {
         ExperimentResult experimentResult = new ExperimentResult();
         experimentResult.features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         experimentResult.features.sort( (ExperimentFeature o1, ExperimentFeature o2) -> (Boolean.compare(o2.isFinished, o1.isFinished)));
-
-        experimentResult.envs.putAll( envService.envsAsMap() );
 
         model.addAttribute("experiment", experiment);
         model.addAttribute("experimentResult", experimentResult);

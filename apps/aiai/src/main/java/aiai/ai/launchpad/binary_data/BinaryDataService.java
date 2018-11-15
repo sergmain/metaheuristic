@@ -9,6 +9,8 @@ import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
@@ -93,7 +95,7 @@ public class BinaryDataService {
         BinaryData data = binaryDataRepository.findByCode(code);
         if (data==null) {
             data = new BinaryData();
-            data.setDataType(binaryDataType.value);
+            data.setType(binaryDataType);
             data.setValid(true);
             data.setCode(code);
             data.setPoolCode(poolCode);
@@ -104,7 +106,7 @@ public class BinaryDataService {
                         "Pool code is different, old: " + data.getPoolCode()+", new: "+ poolCode);
             }
         }
-        data.setUpdateTs(new Timestamp(System.currentTimeMillis()));
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
         data.setData(blob);
@@ -115,12 +117,16 @@ public class BinaryDataService {
     }
 
     public void update(InputStream is, long size, BinaryData data) {
-        data.setUpdateTs(new Timestamp(System.currentTimeMillis()));
+        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
 
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
         data.setData(blob);
 
         binaryDataRepository.save(data);
+    }
+
+    public Slice<BinaryData> findAll(Pageable pageable) {
+        return binaryDataRepository.findAll(pageable);
     }
 
 /*

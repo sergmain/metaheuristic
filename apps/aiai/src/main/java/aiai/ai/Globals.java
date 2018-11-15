@@ -221,6 +221,7 @@ public class Globals {
         if (StringUtils.isBlank(prefix)) {
             throw new IllegalStateException("Prefix is blank");
         }
+        //noinspection UnnecessaryLocalVariable
         File tempFile = new File(launchpadTempDir,
                 prefix + r.nextInt(99999999) + '-' + System.nanoTime()
         );

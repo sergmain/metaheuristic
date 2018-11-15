@@ -24,6 +24,6 @@ import lombok.Data;
 @AllArgsConstructor
 public class SnippetCode {
     public Long id;
-    // this is name + vertion
+    // this is (name + version)
     public String snippetCode;
 }

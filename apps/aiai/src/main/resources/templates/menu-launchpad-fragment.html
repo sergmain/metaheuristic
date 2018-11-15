@@ -11,16 +11,13 @@
             <a class="pure-menu-link" href="launchpad/stations.html" th:href="@{/launchpad/stations}">Stations</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/datasets' || #httpServletRequest.requestURI.startsWith('/launchpad/dataset-definition')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/datasets.html" th:href="@{/launchpad/datasets}">Datasets</a>
+            <a class="pure-menu-link" href="launchpad/resources.html" th:href="@{/launchpad/resources}">Resources</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/experiments'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/experiments.html" th:href="@{/launchpad/experiments}">Experiments</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/snippets'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/snippets.html" th:href="@{/launchpad/snippets}">Snippets</a>
-        </li>
-        <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/envs'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/envs.html" th:href="@{/launchpad/envs}">Environment</a>
         </li>
     </ul>
 </div>

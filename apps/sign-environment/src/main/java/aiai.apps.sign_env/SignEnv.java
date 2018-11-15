@@ -38,13 +38,13 @@ public class SignEnv  implements CommandLineRunner {
     public void run(String... args) throws IOException, GeneralSecurityException {
 
         if (args.length<2) {
-            System.out.println("PackageSnippet <file with env string> <private key file>");
+            System.out.println("SignEnv <file with env string> <private key file>");
             return;
         }
 
         File srcFile = new File(args[0]);
         if (!srcFile.exists()) {
-            System.out.println("Source file with evnironment doesn't exist");
+            System.out.println("Source file with environment doesn't exist");
             return;
         }
 
@@ -58,7 +58,7 @@ public class SignEnv  implements CommandLineRunner {
 
 
         // Process
-        String env = FileUtils.readFileToString(srcFile, StandardCharsets.UTF_8);
+        String env = FileUtils.readFileToString(srcFile, StandardCharsets.UTF_8).trim();
         String signature = SecUtils.getSignature(env, privateKey, true);
 
         System.out.println("Env:\n" + env);

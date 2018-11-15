@@ -33,20 +33,6 @@ import java.sql.Timestamp;
 public class BinaryData implements Serializable {
     private static final long serialVersionUID = 7768428475142175426L;
 
-/*
-    CREATE TABLE AIAI_LP_DATA (
-        ID          SERIAL PRIMARY KEY,
-        CODE        VARCHAR(100),
-        POOL_CODE   VARCHAR(250),
-        DATA_TYPE   NUMERIC(2, 0) NOT NULL,
-        VERSION     NUMERIC(5, 0) NOT NULL,
-        UPDATE_TS   TIMESTAMP DEFAULT to_timestamp(0),
-        DATA        OID,
-        CHECKSUM    VARCHAR(2048),
-        IS_VALID    BOOLEAN not null default false
-    );
-
-*/
     public void setType(Enums.BinaryDataType binaryDataType) {
         this.dataType = binaryDataType.value;
     }
@@ -67,8 +53,8 @@ public class BinaryData implements Serializable {
     @Column(name = "DATA_TYPE")
     private int dataType;
 
-    @Column(name = "UPDATE_TS")
-    private Timestamp updateTs;
+    @Column(name = "UPLOAD_TS")
+    private Timestamp uploadTs;
 
     @Column(name = "DATA")
     @Lob

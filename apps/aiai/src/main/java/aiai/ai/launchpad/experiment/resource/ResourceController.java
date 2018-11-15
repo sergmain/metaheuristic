@@ -18,21 +18,23 @@
 package aiai.ai.launchpad.experiment.resource;
 
 import aiai.ai.Globals;
-import aiai.ai.core.ExecProcessService;
 import aiai.ai.exceptions.StoreNewPartOfRawFileException;
+import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.env.EnvService;
+import aiai.ai.launchpad.experiment.ExperimentsController;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
+import aiai.ai.utils.ControllerUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -71,25 +73,42 @@ public class ResourceController {
         Collections.addAll(exts, ".json", ".csv", ".txt", ".xml", ".yaml");
     }
 
+    @Data
+    public static class Result {
+        public Slice<BinaryData> items;
+    }
+
     private final Globals globals;
     private final ResourceService resourceService;
     private final SnippetService snippetService;
     private final SnippetCache snippetCache;
-    private final EnvService envService;
     private final BinaryDataService binaryDataService;
 
-    public ResourceController(Globals globals, ExecProcessService execProcessService, SnippetService snippetService, SnippetCache snippetCache, EnvService envService, BinaryDataService binaryDataService, ResourceService resourceService) {
+    public ResourceController(Globals globals, SnippetService snippetService, SnippetCache snippetCache, BinaryDataService binaryDataService, ResourceService resourceService) {
         this.globals = globals;
         this.snippetService = snippetService;
         this.snippetCache = snippetCache;
-        this.envService = envService;
         this.binaryDataService = binaryDataService;
         this.resourceService = resourceService;
     }
 
-    private static final Random r = new Random();
+    @GetMapping("/resources")
+    public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
+        pageable = ControllerUtils.fixPageSize(globals.resourceRowsLimit, pageable);
+        result.items = binaryDataService.findAll(pageable);
+        return "launchpad/resources";
+    }
+
+    // for AJAX
+    @PostMapping("/resources-part")
+    public String getExperiments(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
+        pageable = ControllerUtils.fixPageSize(globals.resourceRowsLimit, pageable);
+        result.items = binaryDataService.findAll(pageable);
+        return "launchpad/resources :: table";
+    }
+
     @PostMapping(value = "/resource-upload-from-file")
-    public String createDefinitionFromFile(
+    public String createResourceFromFile(
             MultipartFile file,
             @RequestParam(name = "code") String resourceCode,
             @RequestParam(name = "poolCode") String resourcePoolCode,
@@ -119,7 +138,7 @@ public class ResourceController {
 
 
         try {
-            resourceService.storeNewPartOfRawFile(originFilename, tempFile, true, resourceCode, resourcePoolCode);
+            resourceService.storeNewPartOfRawFile(originFilename, tempFile, resourceCode, resourcePoolCode);
         } catch (StoreNewPartOfRawFileException e) {
             log.error("Error", e);
             redirectAttributes.addFlashAttribute("errorMessage", "#172.04 An error while saving data to file, " + e.toString());
@@ -129,7 +148,7 @@ public class ResourceController {
     }
 
     @PostMapping("/resource-delete-commit/{id}")
-    public String deletePath(@PathVariable Long id) {
+    public String deleteResource(@PathVariable Long id) {
         if (true) throw new IllegalStateException("Not implemented yet");
         // TODO change code for using aiai_lp_data table
         return "redirect:/launchpad/resources";
