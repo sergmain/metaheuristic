@@ -52,10 +52,6 @@ public final class Enums {
         }
     }
 
-    public enum StoreData {
-        DISK, DB
-    }
-
     public enum TaskExecState {
         NONE(0),            // just created experiment
         STARTED(1),         // started

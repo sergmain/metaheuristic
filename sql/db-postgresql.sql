@@ -4,7 +4,7 @@ CREATE TABLE AIAI_LP_STATION (
   IP          VARCHAR(30),
   UPDATE_TS   TIMESTAMP DEFAULT to_timestamp(0),
   DESCRIPTION VARCHAR(250),
-  ENV       TEXT,
+  ENV         TEXT,
   ACTIVE_TIME VARCHAR(250)
 );
 
@@ -26,7 +26,9 @@ CREATE TABLE AIAI_LP_DATA (
   UPLOAD_TS   TIMESTAMP DEFAULT to_timestamp(0),
   DATA        OID,
   CHECKSUM    VARCHAR(2048),
-  IS_VALID    BOOLEAN not null default false
+  IS_VALID    BOOLEAN not null default false,
+  IS_MANUAL   BOOLEAN not null default false,
+  FILENAME    VARCHAR(150)
 );
 
 CREATE UNIQUE INDEX AIAI_LP_DATA_CODE_UNQ_IDX

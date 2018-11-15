@@ -91,7 +91,8 @@ public class BinaryDataService {
     }
 
     public BinaryData save(InputStream is, long size,
-                           Enums.BinaryDataType binaryDataType, String code, String poolCode) {
+                           Enums.BinaryDataType binaryDataType, String code, String poolCode,
+                           boolean isManual, String filename) {
         BinaryData data = binaryDataRepository.findByCode(code);
         if (data==null) {
             data = new BinaryData();
@@ -99,9 +100,12 @@ public class BinaryDataService {
             data.setValid(true);
             data.setCode(code);
             data.setPoolCode(poolCode);
+            data.setManual(isManual);
+            data.setFilename(filename);
         }
         else {
             if (!poolCode.equals(data.getPoolCode())) {
+                // TODO what is this exception about?
                 throw new IllegalStateException(
                         "Pool code is different, old: " + data.getPoolCode()+", new: "+ poolCode);
             }

@@ -66,6 +66,12 @@ public class BinaryData implements Serializable {
     @Column(name = "IS_VALID")
     public boolean valid;
 
+    @Column(name = "IS_MANUAL")
+    public boolean manual;
+
+    @Column(name = "FILENAME")
+    public String filename;
+
     @Transient
     public byte[] bytes;
 

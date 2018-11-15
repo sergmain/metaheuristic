@@ -91,9 +91,6 @@ public class Globals {
     @Value("${aiai.launchpad.accept-only-signed-env:#{true}}")
     public boolean isAcceptOnlySignedEnv;
 
-    @Value("${aiai.launchpad.store-data:#{'disk'}}")
-    public String storeDataStr;
-
     // Station's globals
 
     @Value("${aiai.station.enabled:#{false}}")
@@ -128,8 +125,6 @@ public class Globals {
 
     public String serverRestUrl;
     public PublicKey publicKey = null;
-
-    public Enums.StoreData[] storeData = new Enums.StoreData[0];
 
     @PostConstruct
     public void init() throws GeneralSecurityException {
@@ -181,14 +176,6 @@ public class Globals {
                 throw new IllegalArgumentException("if aiai.secure-rest-url=true, then aiai.master-username, aiai.master-token, and aiai.master-password have to be not null");
             }
 
-            String[] split = StringUtils.split(storeDataStr, ',');
-            storeData = new Enums.StoreData[split.length];
-            for (int i = 0; i < split.length; i++) {
-                storeData[i] = Enums.StoreData.valueOf(split[i].toUpperCase());
-            }
-            if (storeData.length==0) {
-                throw new IllegalStateException("You have to define at least one storage type");
-            }
             launchpadTempDir = new File(launchpadDir, "temp");
             launchpadTempDir.mkdirs();
 
@@ -197,23 +184,6 @@ public class Globals {
         }
         //noinspection unused
         int i=0;
-    }
-
-    public boolean isStoreDataToDisk() {
-        return isLaunchpadEnabled && isStoreDataTo(Enums.StoreData.DISK);
-    }
-
-    public boolean isStoreDataToDb() {
-        return isLaunchpadEnabled && isStoreDataTo(Enums.StoreData.DB);
-    }
-
-    private boolean isStoreDataTo(Enums.StoreData type) {
-        for (Enums.StoreData storeData : this.storeData) {
-            if (storeData ==type) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private static final Random r = new Random();

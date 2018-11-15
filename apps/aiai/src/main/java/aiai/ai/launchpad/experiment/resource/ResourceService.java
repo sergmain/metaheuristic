@@ -26,13 +26,13 @@ public class ResourceService {
         this.binaryDataService = binaryDataService;
     }
 
-    void storeNewPartOfRawFile(String originFilename, File tempFile, String code, String poolCode) {
+    void storeNewPartOfRawFile(
+            String originFilename, File tempFile, String code, String poolCode, boolean isManual, String filename) {
 
         try {
-            if (globals.isStoreDataToDb()) {
-                try (InputStream is = new FileInputStream(tempFile)) {
-                    binaryDataService.save(is, tempFile.length(), Enums.BinaryDataType.DATA, code, poolCode);
-                }
+            try (InputStream is = new FileInputStream(tempFile)) {
+                binaryDataService.save(
+                        is, tempFile.length(), Enums.BinaryDataType.DATA, code, poolCode, isManual, filename);
             }
         } catch (IOException e) {
             throw new StoreNewPartOfRawFileException(tempFile.getPath(), originFilename);

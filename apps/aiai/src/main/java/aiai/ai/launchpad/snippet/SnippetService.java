@@ -272,7 +272,7 @@ public class SnippetService {
                         snippetCache.save(snippet);
                         try( InputStream inputStream = new FileInputStream(file)) {
                             String snippetCode = snippet.getSnippetCode();
-                            binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode);
+                            binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null);
                         }
                     }
                     else {
@@ -294,7 +294,7 @@ public class SnippetService {
                 snippetCache.save(snippet);
                 try( InputStream inputStream = new FileInputStream(file)) {
                     String snippetCode = snippet.getSnippetCode();
-                    binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode);
+                    binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null);
                 }
             }
         }

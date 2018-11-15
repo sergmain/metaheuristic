@@ -79,6 +79,8 @@
             <th>Checksum</th>
             <th>Code</th>
             <th>Pool code</th>
+            <th>Is manual</th>
+            <th>Filename</th>
             <th colspan="1">&nbsp;</th>
         </tr>
         </thead>
@@ -86,15 +88,17 @@
         <tr th:each="p : ${result.items}">
             <td th:text="${p.id}">#Id</td>
             <td th:text="${p.isValid() ? 'True' : 'False'}">Is valid?</td>
-            <td th:text="${#dates.formatISO(p.uploadTs)}">Upload date</td>
+            <td th:text="${#dates.format(p.uploadTs, 'dd-MMM-yy HH:mm')}">Upload date</td>
             <td th:text="${p.getDataTypeAsStr()}">Type of data</td>
             <td th:text="${p.checksum}">Checksum</td>
             <td th:text="${p.code}">Code</td>
             <td th:text="${p.poolCode}">Pool code</td>
+            <td th:text="${p.manual}">is manual</td>
+            <td th:text="${p.filename}">Filename</td>
             <td>Buttons will be here</td>
         </tr>
         <tr>
-            <td colspan="8">
+            <td colspan="10">
                 <div>
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">

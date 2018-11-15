@@ -25,7 +25,9 @@ CREATE TABLE AIAI_LP_DATA (
   UPLOAD_TS   TIMESTAMP DEFAULT 0 ON UPDATE CURRENT_TIMESTAMP,
   DATA        BLOB,
   CHECKSUM    VARCHAR(2048),
-  IS_VALID    tinyint(1) not null default 0
+  IS_VALID    tinyint(1) not null default 0,
+  IS_MANUAL   tinyint(1) not null default 0,
+  FILENAME    VARCHAR(150)
 );
 
 CREATE TABLE AIAI_LP_EXPERIMENT (

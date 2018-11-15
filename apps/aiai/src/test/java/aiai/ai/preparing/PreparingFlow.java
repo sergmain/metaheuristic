@@ -79,13 +79,16 @@ public abstract class PreparingFlow extends PreparingExperiment {
         byte[] bytes = "A resource for input pool".getBytes();
 
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE
+                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE,
+                true, "file-01.txt"
         );
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE
+                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE,
+                true, "file-02.txt"
         );
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE
+                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE,
+                true, "file-03.txt"
         );
 
     }
