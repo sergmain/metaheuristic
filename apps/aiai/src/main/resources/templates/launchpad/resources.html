@@ -75,7 +75,7 @@
             <th>#</th>
             <th>Is valid?</th>
             <th>Upload date</th>
-            <th>Type of data</th>
+            <th>Type of resource</th>
             <th>Checksum</th>
             <th>Code</th>
             <th>Pool code</th>
@@ -95,7 +95,7 @@
             <td th:text="${p.poolCode}">Pool code</td>
             <td th:text="${p.manual}">is manual</td>
             <td th:text="${p.filename}">Filename</td>
-            <td>Buttons will be here</td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/resource-delete/' + p.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="10">

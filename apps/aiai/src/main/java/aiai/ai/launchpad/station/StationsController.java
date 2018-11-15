@@ -90,7 +90,6 @@ public class StationsController {
             return "redirect:/launchpad/stations";
         }
         model.addAttribute("station", value.get());
-//        model.addAttribute("station", repository.findById(id));
         return "launchpad/station-delete";
     }
 

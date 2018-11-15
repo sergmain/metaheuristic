@@ -21,6 +21,7 @@ import aiai.ai.Globals;
 import aiai.ai.exceptions.StoreNewPartOfRawFileException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.Experiment;
+import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.ExperimentsController;
 import aiai.ai.launchpad.snippet.SnippetCache;
@@ -34,16 +35,14 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: Serg
@@ -149,10 +148,25 @@ public class ResourceController {
         return "redirect:/launchpad/resources";
     }
 
-    @PostMapping("/resource-delete-commit/{id}")
-    public String deleteResource(@PathVariable Long id) {
-        if (true) throw new IllegalStateException("Not implemented yet");
-        // TODO change code for using aiai_lp_data table
+    @GetMapping("/resource-delete/{id}")
+    public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
+        final BinaryData data = binaryDataService.findById(id).orElse(null);
+        if (data==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#172.10 Resource wasn't found for id: " + id);
+            return "redirect:/launchpad/resources";
+        }
+        model.addAttribute("resource", data);
+        return "launchpad/resource-delete";
+    }
+
+    @PostMapping("/resource-delete-commit")
+    public String deleteResource(Long id, final RedirectAttributes redirectAttributes) {
+        final BinaryData data = binaryDataService.findById(id).orElse(null);
+        if (data==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#172.20 Resource wasn't found for id: " + id);
+            return "redirect:/launchpad/resources";
+        }
+        binaryDataService.deleteById(id);
         return "redirect:/launchpad/resources";
     }
 

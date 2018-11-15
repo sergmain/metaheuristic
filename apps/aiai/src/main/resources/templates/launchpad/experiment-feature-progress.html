@@ -319,8 +319,8 @@
          */
         function rerunSequence(id) {
             // console.log("Start rerunSequence()");
-            my_confirm('Do you really want to re-run this sequnce?', 'Re-run sequence?', function() {
-                console.log("re-run was confirmet.");
+            my_confirm('Do you really want to re-run this sequence?', 'Re-run sequence?', function() {
+                console.log("re-run was confirmed.");
                 $.post('/launchpad/task-rerun/' + id, function(status) {
                     // console.log("task-rerun is finished, Status: " + status);
                     if (status===true) {

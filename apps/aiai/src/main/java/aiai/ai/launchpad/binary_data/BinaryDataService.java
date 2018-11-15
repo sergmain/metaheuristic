@@ -21,6 +21,7 @@ import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -131,5 +132,13 @@ public class BinaryDataService {
 
     public Slice<BinaryData> findAll(Pageable pageable) {
         return binaryDataRepository.findAll(pageable);
+    }
+
+    public void deleteById(Long id) {
+        binaryDataRepository.deleteById(id);
+    }
+
+    public Optional<BinaryData> findById(Long id) {
+        return binaryDataRepository.findById(id);
     }
 }
