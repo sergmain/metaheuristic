@@ -32,7 +32,7 @@ public class TestBinaryDataRepository {
 
         BinaryData d1 = binaryDataService.save(inputStream, bytes.length, Enums.BinaryDataType.TEST, "test-01", "test-01");
 
-        Timestamp ts = d1.getUpdateTs();
+        Timestamp ts = d1.getUploadTs();
 
         BinaryData d2 = binaryDataService.getBinaryData(d1.getId());
         assertNotNull(d2);
@@ -48,7 +48,7 @@ public class TestBinaryDataRepository {
 
         d2 = binaryDataService.getBinaryData(d2.getId());
         assertNotNull(d2);
-        assertNotEquals(ts, d2.getUpdateTs());
+        assertNotEquals(ts, d2.getUploadTs());
         assertArrayEquals(bytes, d2.bytes);
 
         binaryDataService.deleteAllByType(Enums.BinaryDataType.TEST);
