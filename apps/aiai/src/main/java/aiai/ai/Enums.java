@@ -34,9 +34,21 @@ public final class Enums {
     public enum BinaryDataType { DATA(1), SNIPPET(2), TEST(3);
 
         public int value;
-
         BinaryDataType(int value) {
             this.value = value;
+        }
+
+        public static BinaryDataType from(int type) {
+            switch(type) {
+                case 1:
+                    return DATA;
+                case 2:
+                    return SNIPPET;
+                case 3:
+                    return TEST;
+                default:
+                    throw new IllegalStateException("Unknown type : " + type);
+            }
         }
     }
 

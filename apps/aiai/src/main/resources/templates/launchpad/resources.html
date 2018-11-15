@@ -27,7 +27,10 @@
 
     <h1 class="widget-header">Resources</h1>
 
+    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
+    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
     <p>&nbsp;</p>
+
     <h2 class="widget-header">Parts of raw file and assembled raw file</h2>
     <p>&nbsp;</p>
 
@@ -50,7 +53,7 @@
                     </fieldset>
                     <fieldset>
                         <label for="poolCode">Resource pool code</label>
-                        <input name="sepoolCodeed" id="poolCode" type="text" placeholder="poolCode">
+                        <input name="poolCode" id="poolCode" type="text" placeholder="poolCode">
                         <span class="pure-form-message">This is a required field.</span>
                     </fieldset>
         <p></p>
@@ -65,9 +68,6 @@
 
     <p>&nbsp;</p>
 
-    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
     <!--/*@thymesVar id="result" type="aiai.ai.launchpad.experiment.resource.ResourceController.Result"*/-->
     <table class="pure-table pure-table-bordered" id="fragment-table" th:fragment="fragment-table">
         <thead>
@@ -77,6 +77,8 @@
             <th>Upload date</th>
             <th>Type of data</th>
             <th>Checksum</th>
+            <th>Code</th>
+            <th>Pool code</th>
             <th colspan="1">&nbsp;</th>
         </tr>
         </thead>
@@ -85,12 +87,14 @@
             <td th:text="${p.id}">#Id</td>
             <td th:text="${p.isValid() ? 'True' : 'False'}">Is valid?</td>
             <td th:text="${#dates.formatISO(p.uploadTs)}">Upload date</td>
-            <td th:text="${p.dataType}">Type of data</td>
+            <td th:text="${p.getDataTypeAsStr()}">Type of data</td>
             <td th:text="${p.checksum}">Checksum</td>
+            <td th:text="${p.code}">Code</td>
+            <td th:text="${p.poolCode}">Pool code</td>
             <td>Buttons will be here</td>
         </tr>
         <tr>
-            <td colspan="5">
+            <td colspan="8">
                 <div>
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">

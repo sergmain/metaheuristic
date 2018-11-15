@@ -104,7 +104,7 @@ public class ResourceController {
     public String getExperiments(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.resourceRowsLimit, pageable);
         result.items = binaryDataService.findAll(pageable);
-        return "launchpad/resources :: table";
+        return "launchpad/resources :: fragment-table";
     }
 
     @PostMapping(value = "/resource-upload-from-file")
@@ -131,11 +131,12 @@ public class ResourceController {
             redirectAttributes.addFlashAttribute("errorMessage", "#172.01 name of uploaded file is null");
             return "redirect:/launchpad/resources";
         }
+/*
         if (!checkExtension(originFilename)) {
             redirectAttributes.addFlashAttribute("errorMessage", "#172.03 not supported extension, filename: " + originFilename);
             return "redirect:/launchpad/resources";
         }
-
+*/
 
         try {
             resourceService.storeNewPartOfRawFile(originFilename, tempFile, resourceCode, resourcePoolCode);

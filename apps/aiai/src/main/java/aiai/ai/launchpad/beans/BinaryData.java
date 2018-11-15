@@ -69,4 +69,7 @@ public class BinaryData implements Serializable {
     @Transient
     public byte[] bytes;
 
+    public String getDataTypeAsStr() {
+        return Enums.BinaryDataType.from(dataType).toString();
+    }
 }
