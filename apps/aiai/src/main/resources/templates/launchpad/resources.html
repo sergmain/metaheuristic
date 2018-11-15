@@ -5,7 +5,7 @@
 
     <script>
         var table = function (html) {
-            $('#table').html(html).find('.ajax-elem').each(function () {
+            $('#fragment-table').html(html).find('.ajax-elem').each(function () {
                 $(this).click(function () {
                     $.post($(this).attr('href'), table);
                     return false;
@@ -32,11 +32,8 @@
     <p>&nbsp;</p>
 
     <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-          th:action="@{/launchpad/dataset-upload-part-raw-from-file}"
+          th:action="@{/launchpad/resource-upload-from-file}"
     >
-        <table>
-            <tr>
-                <td valign="top">
                     <fieldset>
                         <label for="uploadFile">Part of raw file</label>
                         <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:size="100" style="color:black; background-color:white"/>
@@ -56,9 +53,6 @@
                         <input name="sepoolCodeed" id="poolCode" type="text" placeholder="poolCode">
                         <span class="pure-form-message">This is a required field.</span>
                     </fieldset>
-                </td>
-            </tr>
-        </table>
         <p></p>
         <button type="submit" class="pure-button pure-button-primary">Start uploading part of raw file</button>
     </form>
@@ -75,16 +69,14 @@
     <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
     <!--/*@thymesVar id="result" type="aiai.ai.launchpad.experiment.resource.ResourceController.Result"*/-->
-    <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+    <table class="pure-table pure-table-bordered" id="fragment-table" th:fragment="fragment-table">
         <thead>
         <tr>
             <th>#</th>
             <th>Is valid?</th>
-            <th>Date</th>
-            <th>Part number</th>
-            <th>Path</th>
+            <th>Upload date</th>
+            <th>Type of data</th>
             <th>Checksum</th>
-            <th>Is file?</th>
             <th colspan="1">&nbsp;</th>
         </tr>
         </thead>
@@ -95,6 +87,7 @@
             <td th:text="${#dates.formatISO(p.uploadTs)}">Upload date</td>
             <td th:text="${p.dataType}">Type of data</td>
             <td th:text="${p.checksum}">Checksum</td>
+            <td>Buttons will be here</td>
         </tr>
         <tr>
             <td colspan="5">

@@ -128,22 +128,4 @@ public class BinaryDataService {
     public Slice<BinaryData> findAll(Pageable pageable) {
         return binaryDataRepository.findAll(pageable);
     }
-
-/*
-    public void cloneBinaryData(Long srcRefId, Long trgRefId, Enums.BinaryDataType binaryDataType) throws SQLException {
-        BinaryData srcData = binaryDataRepository.findByDataTypeAndRefId(binaryDataType.value, srcRefId);
-        if (srcData==null) {
-            return;
-        }
-
-        BinaryData data = new BinaryData();
-        data.setDataType(binaryDataType.value);
-        data.setUpdateTs(new Timestamp(System.currentTimeMillis()));
-        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class))
-                .createBlob(srcData.getData().getBinaryStream(), srcData.getData().length());
-        data.setData(blob);
-
-        binaryDataRepository.save(data);
-    }
-*/
 }

@@ -38,12 +38,7 @@ public class AiApplication {
 
         log.debug("PID: {}, Application mode: {}, context: {}", ManagementFactory.getRuntimeMXBean().getName(), mode, applicationContext);
         if (applicationContext != null && "stop".equals(mode)) {
-            System.exit(SpringApplication.exit(applicationContext, new ExitCodeGenerator() {
-                @Override
-                public int getExitCode() {
-                    return 0;
-                }
-            }));
+            System.exit(SpringApplication.exit(applicationContext, (ExitCodeGenerator) () -> 0));
         } else {
             SpringApplication app = new SpringApplication(AiApplication.class);
             applicationContext = app.run(args!=null ? args : new String[0]);
