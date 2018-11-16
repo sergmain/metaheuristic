@@ -558,7 +558,7 @@ public class ExperimentService {
      *
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
-    public void fixedDelayTaskProducer() {
+    public void produceTasksForFlowInstances() {
         if (globals.isUnitTesting) {
             return;
         }

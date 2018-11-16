@@ -20,7 +20,6 @@ package aiai.ai.comm;
 import aiai.ai.launchpad.LaunchpadService;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
 import aiai.ai.station.StationService;
 import aiai.ai.station.TaskProcessor;
 import lombok.extern.slf4j.Slf4j;
@@ -135,9 +134,6 @@ public class CommandProcessor {
     }
 
     private Command[] processAssignedTask(Protocol.AssignedTask command) {
-        if (command.tasks ==null) {
-            return Protocol.NOP_ARRAY;
-        }
         stationService.assignTasks(command.tasks);
         return Protocol.NOP_ARRAY;
     }
@@ -153,7 +149,9 @@ public class CommandProcessor {
         ExperimentService.TasksAndAssignToStationResult result = launchpadService.getExperimentService()
                 .getTaskAndAssignToStation(Long.parseLong(stationId), isAcceptOnlySigned, null);
 
-        r.tasks = Collections.singletonList(result.getSimpleTask());
+        if (result.getSimpleTask()!=null) {
+            r.tasks = Collections.singletonList(result.getSimpleTask());
+        }
         return r;
     }
 

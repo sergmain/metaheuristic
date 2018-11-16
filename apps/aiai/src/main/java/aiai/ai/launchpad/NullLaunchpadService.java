@@ -1,6 +1,7 @@
 package aiai.ai.launchpad;
 
 import aiai.ai.launchpad.experiment.ExperimentService;
+import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.launchpad.task.TaskService;
 import org.springframework.context.annotation.Profile;
@@ -21,6 +22,11 @@ public class NullLaunchpadService implements LaunchpadService {
 
     @Override
     public TaskService getTaskService() {
+        return null;
+    }
+
+    @Override
+    public FlowService getFlowService() {
         return null;
     }
 }

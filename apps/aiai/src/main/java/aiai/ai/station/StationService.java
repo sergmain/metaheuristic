@@ -161,7 +161,7 @@ public class StationService {
     }
 
     public void assignTasks(List<Protocol.AssignedTask.Task> tasks) {
-        if (tasks ==null) {
+        if (tasks==null || tasks.isEmpty()) {
             return;
         }
         for (Protocol.AssignedTask.Task task : tasks) {
