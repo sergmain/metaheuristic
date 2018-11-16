@@ -73,6 +73,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
 
         String params = getFlowParamsAsYaml();
         flow.setParams(params);
+        flow.setCreatedOn(System.currentTimeMillis());
 
         flowRepository.save(flow);
 

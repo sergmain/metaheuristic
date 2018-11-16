@@ -127,6 +127,7 @@ CREATE TABLE AIAI_LP_FLOW (
   ID            SERIAL PRIMARY KEY,
   VERSION       NUMERIC(5, 0)  NOT NULL,
   CODE      varchar(50)  NOT NULL,
+  CREATED_ON    bigint NOT NULL,
   PARAMS        TEXT not null
 );
 
