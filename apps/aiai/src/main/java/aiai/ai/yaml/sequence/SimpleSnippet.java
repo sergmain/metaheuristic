@@ -31,4 +31,5 @@ public class SimpleSnippet {
     public String checksum;
     public String env;
     public boolean metrics;
+
 }

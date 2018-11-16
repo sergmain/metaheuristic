@@ -22,7 +22,10 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.beans.*;
-import aiai.ai.launchpad.repositories.*;
+import aiai.ai.launchpad.repositories.ExperimentFeatureRepository;
+import aiai.ai.launchpad.repositories.ExperimentRepository;
+import aiai.ai.launchpad.repositories.FlowInstanceRepository;
+import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.BigDecimalHolder;
@@ -30,7 +33,10 @@ import aiai.ai.utils.permutation.Permutation;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.sequence.*;
+import aiai.ai.yaml.sequence.SimpleResource;
+import aiai.ai.yaml.sequence.SimpleSnippet;
+import aiai.ai.yaml.sequence.TaskParamYaml;
+import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -133,21 +139,23 @@ public class ExperimentService {
     }
 
     private final Globals globals;
-    private final ExperimentRepository experimentRepository;
+    private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final SnippetCache snippetCache;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetService snippetService;
+    private final FlowInstanceRepository flowInstanceRepository;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, TaskRepository taskRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository) {
         this.globals = globals;
-        this.experimentRepository = experimentRepository;
+        this.experimentCache = experimentCache;
         this.taskRepository = taskRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.snippetCache = snippetCache;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.snippetService = snippetService;
+        this.flowInstanceRepository = flowInstanceRepository;
     }
 
     private static class ParamFilter {
@@ -172,195 +180,90 @@ public class ExperimentService {
         return true;
     }
 
-    // for implementing cache later. there is ExperimentCache class for that
-    public Experiment findById(long id) {
-        return experimentRepository.findById(id).orElse(null);
-    }
+    public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long flowInstanceId) {
 
-    public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long experimentId) {
-
-        if (true) throw new IllegalStateException("Not implemented yet");
-        Protocol.AssignedTask.Task task = new Protocol.AssignedTask.Task();
-/*
-
-        // check and mark all completed features
-        List<ExperimentFeature> fsTemp = experimentFeatureRepository.findAllForLaunchedExperiments( Enums.TaskExecState.STARTED.code);
-        List<ExperimentFeature> fs = new ArrayList<>();
-        if (experimentId!=null) {
-            Experiment experiment = findById(experimentId);
-            if (experiment==null) {
-                log.warn("there isn't the experiment for #id {}", experimentId);
+        List<FlowInstance> flowInstances;
+        if (flowInstanceId==null) {
+            flowInstances = flowInstanceRepository.findByCompletedFalseOrderByCreatedOnAsc();
+        }
+        else {
+            FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
+            if (flowInstance==null) {
+                log.warn("Flow instance wasn't found for id: {}", flowInstanceId);
                 return EMPTY_RESULT;
             }
-            if (isAcceptOnlySigned) {
-                for (ExperimentSnippet experimentSnippet : snippetService.getTaskSnippetsForExperiment(experiment.getId())) {
-                    final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                    Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
-                    if (snippet!=null && !snippet.isSigned()) {
-                        // this experiment with #experimentId contains non-signed snippet but we were asked for singed snippets only
-                        return EMPTY_RESULT;
-                    }
-                }
-            }
-            for (ExperimentFeature feature : fsTemp) {
-                if (feature.experimentId.equals(experimentId)) {
-                    fs.add(feature);
-                }
+            flowInstances = Collections.singletonList(flowInstance);
+        }
+
+        for (FlowInstance flowInstance : flowInstances) {
+            TasksAndAssignToStationResult result = findUnassignedTaskAndAssign(flowInstance, stationId, isAcceptOnlySigned);
+            if (!result.equals(EMPTY_RESULT)) {
+                return result;
             }
         }
-        else {
-            for (ExperimentFeature feature : fsTemp) {
-                Experiment experiment = findById(feature.experimentId);
-                if (experiment==null) {
-                    log.warn("there isn't the experiment for #id {}", feature.experimentId);
-                    continue;
-                }
+        return EMPTY_RESULT;
+    }
+
+    private TasksAndAssignToStationResult findUnassignedTaskAndAssign(FlowInstance flowInstance, long stationId, boolean isAcceptOnlySigned) {
+
+        List<Task> tasks = taskRepository.findForAssigning(flowInstance.getId(), flowInstance.completedOrder);
+        if (currentLevelIsntFinished(tasks, flowInstance.completedOrder)) {
+            return EMPTY_RESULT;
+        }
+        Task resultTask = null;
+        for (Task task : tasks) {
+            if (!task.isCompleted) {
                 if (isAcceptOnlySigned) {
-                    for (ExperimentSnippet experimentSnippet : snippetService.getTaskSnippetsForExperiment(experiment.getId())) {
-                        final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                        Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
-                        if (snippet!=null && snippet.isSigned()) {
-                            // add only feature for signed experiments
-                            fs.add(feature);
-                        }
+                    final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
+
+                    SnippetVersion version = SnippetVersion.from(taskParamYaml.snippet.getCode());
+                    Snippet snippet = snippetCache.findByNameAndSnippetVersion(version.name, version.version);
+                    if (snippet==null) {
+                        log.warn("Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
+                        continue;
                     }
+
+                    if (!snippet.isSigned()) {
+                        continue;
+                    }
+                    resultTask = task;
+                    break;
                 }
                 else {
-                    fs.add(feature);
+                    resultTask = task;
+                    break;
                 }
             }
         }
-        Set<Long> idsForError = new HashSet<>();
-        Set<Long> idsForOk = new HashSet<>();
-        Boolean isContinue = null;
-        for (ExperimentFeature feature : fs) {
-            final Experiment e = findById(feature.experimentId);
-            if (!e.isAllTaskProduced() || !e.isFeatureProduced()) {
-                continue;
-            }
-            // collect all experiment which has feature with FeatureExecStatus.error
-            if (feature.getExecStatus()==FeatureExecStatus.error.code) {
-                idsForOk.remove(feature.getExperimentId());
-                idsForError.add(feature.getExperimentId());
-            }
-
-            // skip this feature from follow processing if it was finished
-            if (feature.isFinished) {
-                continue;
-            }
-
-            if (taskRepository.findTop1ByFeatureId(feature.getId())==null) {
-                feature.setExecStatus(FeatureExecStatus.empty.code);
-                feature.setFinished(true);
-                feature.setInProgress(false);
-                experimentFeatureRepository.save(feature);
-                continue;
-            }
-
-            // collect this experiment if it wasn't marked as erorr before
-            if (!idsForError.contains(feature.getExperimentId())) {
-                idsForOk.add(feature.getExperimentId());
-            }
-
-            if (taskRepository.findTop1ByIsCompletedIsFalseAndFeatureId(feature.getId())==null) {
-
-                // 'good results' meaning that at least one sequence was finished without system error (all snippets returned exit code 0)
-                feature.setExecStatus(
-                        taskRepository.findTop1ByIsAllSnippetsOkIsTrueAndFeatureId(feature.getId())!=null
-                                ? FeatureExecStatus.ok.code
-                                : FeatureExecStatus.error.code
-                );
-
-                if (isContinue==null || !isContinue) {
-                    isContinue = feature.getExecStatus() == FeatureExecStatus.ok.code;
-                }
-
-                feature.setFinished(true);
-                feature.setInProgress(false);
-                experimentFeatureRepository.save(feature);
-            }
-        }
-
-        checkForFinished();
-
-        // check that there isn't feature with FeatureExecStatus.error
-        if (Boolean.FALSE.equals(isContinue)) {
+        if (resultTask==null) {
             return EMPTY_RESULT;
         }
+        Protocol.AssignedTask.Task assignedTask = new Protocol.AssignedTask.Task();
+        assignedTask.setTaskId(resultTask.getId());
+        assignedTask.setParams(resultTask.getParams());
 
-        // check for case when there is feature with FeatureExecStatus.error and there is only one experiment (which has feature with FeatureExecStatus.error)
-        if (idsForOk.isEmpty()) {
-            return EMPTY_RESULT;
-        }
+        resultTask.setAssignedOn(System.currentTimeMillis());
+        resultTask.setStationId(stationId);
 
-        // main part, prepare new batch of sequences for station
-
-        // is there any feature which was started(or in progress) and not finished yet for specific station?
-        List<ExperimentFeature> features = taskRepository.findAnyStartedButNotFinished(Consts.PAGE_REQUEST_1_REC, stationId, Enums.TaskExecState.STARTED.code);
-        ExperimentFeature feature = null;
-        // all sequences, which were assigned to station, are finished
-        if (features == null || features.isEmpty()) {
-            if (experimentId!=null) {
-                features = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrueAndExperimentId(Consts.PAGE_REQUEST_1_REC, Enums.TaskExecState.STARTED.code, experimentId);
-                if (!features.isEmpty()) {
-                    feature = features.get(0);
-                }
-            }
-            else {
-                features = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue(Consts.PAGE_REQUEST_1_REC, Enums.TaskExecState.STARTED.code);
-                if (!features.isEmpty()) {
-                    feature = features.get(0);
-                }
-            }
-            if (feature==null) {
-                // is there any feature which wasn't started and not finished yet?
-                List<ExperimentFeature> fTemp = experimentFeatureRepository.findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse(Consts.PAGE_REQUEST_1_REC);
-                if (fTemp!=null && !fTemp.isEmpty()) {
-                    feature = fTemp.get(0);
-                }
-            }
-        } else {
-            feature = features.get(0);
-        }
-
-
-        // there isn't any feature to process
-        if (feature==null) {
-            return EMPTY_RESULT;
-        }
-
-        //
-        Task sequence = taskRepository.findTop1ByStationIdAndIsCompletedIsFalseAndFeatureId(stationId, feature.getId());
-        if (sequence!=null) {
-            return EMPTY_RESULT;
-        }
-
-        Slice<Task> seqs;
-        if (experimentId!=null) {
-            seqs = taskRepository.findAllByStationIdIsNullAndFeatureIdAndExperimentId(Consts.PAGE_REQUEST_1_REC, feature.getId(), experimentId);
-        }
-        else {
-            seqs = taskRepository.findAllByStationIdIsNullAndFeatureId(Consts.PAGE_REQUEST_1_REC, feature.getId());
-        }
-        List<Protocol.AssignedTask.Task> result = new ArrayList<>(2);
-        for (Task seq : seqs) {
-            Protocol.AssignedTask.Task ss = new Protocol.AssignedTask.Task();
-            ss.setTaskId(seq.getId());
-            ss.setParams(seq.getParams());
-
-            seq.setAssignedOn(System.currentTimeMillis());
-            seq.setStationId(stationId);
-            result.add(ss);
-        }
+/*
         if (!feature.isInProgress) {
             feature.setInProgress(true);
             experimentFeatureRepository.save(feature);
         }
-        taskRepository.saveAll(seqs);
-
 */
-        return new TasksAndAssignToStationResult(task);
+        taskRepository.save(resultTask);
 
+        return new TasksAndAssignToStationResult(assignedTask);
+    }
+
+    private boolean currentLevelIsntFinished(List<Task> tasks, int completedOrder) {
+        for (Task task : tasks) {
+            if (task.getOrder()==completedOrder && !task.isCompleted) {
+                log.error("!!!!!!!!!  Found isn't completed task {}", task);
+                return true;
+            }
+        }
+        return false;
     }
 
     private void checkForFinished() {
@@ -379,34 +282,14 @@ public class ExperimentService {
                 }
             }
             if (isFinished) {
-                Experiment experiment = experimentRepository.findById(id).orElse(null);
+                Experiment experiment = experimentCache.findById(id);
                 if (experiment==null) {
                     continue;
                 }
                 experiment.setExecState(Enums.TaskExecState.FINISHED.code);
-                experimentRepository.save(experiment);
+                experimentCache.save(experiment);
             }
         }
-    }
-
-    public List<Long> storeAllResults(List<SimpleTaskExecResult> results) {
-        List<Task> list = new ArrayList<>();
-        List<Long> ids = new ArrayList<>();
-        for (SimpleTaskExecResult result : results) {
-            ids.add(result.taskId);
-            Task task = taskRepository.findById(result.taskId).orElse(null);
-            if (task==null) {
-                log.warn("Can't find Task for Id: {}", result.taskId);
-                continue;
-            }
-            task.setSnippetExecResults(result.getResult());
-            task.setMetrics(result.getMetrics());
-            task.setCompleted(true);
-            task.setCompletedOn(System.currentTimeMillis());
-            list.add(task);
-        }
-        taskRepository.saveAll(list);
-        return ids;
     }
 
     public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
@@ -588,7 +471,8 @@ public class ExperimentService {
 
     public Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
         ExperimentsController.TasksResult result = new ExperimentsController.TasksResult();
-        result.items = taskRepository.findByIsCompletedIsTrueAndFeatureId(PageRequest.of(0, 10), experimentFeature.getId());
+        if (true) throw new IllegalStateException("Not implemented yet");
+//        result.items = taskRepository.findByIsCompletedIsTrueAndFeatureId(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
 
         HyperParamResult hyperParamResult = new HyperParamResult();
         for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
@@ -800,14 +684,14 @@ public class ExperimentService {
         if (experiment.getNumberOfTask() != totalVariants && experiment.getNumberOfTask() != 0) {
             log.warn("! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", experiment.getNumberOfTask(), totalVariants);
         }
-        Experiment experimentTemp = experimentRepository.findById(experiment.getId()).orElse(null);
+        Experiment experimentTemp = experimentCache.findById(experiment.getId());
         if (experimentTemp==null) {
             log.warn("Experiment for id {} doesn't exist anymore", experiment.getId());
             return;
         }
         experimentTemp.setNumberOfTask(totalVariants);
         experimentTemp.setAllTaskProduced(true);
-        experimentRepository.save(experimentTemp);
+        experimentCache.save(experimentTemp);
     }
 
     public void produceFeaturePermutations(Experiment experiment, List<String> inputResourceCodes) {
@@ -834,7 +718,7 @@ public class ExperimentService {
             );
         }
         experiment.setFeatureProduced(true);
-        experimentRepository.save(experiment);
+        experimentCache.save(experiment);
     }
 
     private boolean isExist(List<ExperimentFeature> features, String f) {

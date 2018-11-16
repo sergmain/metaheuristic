@@ -18,10 +18,12 @@
 
 package aiai.ai.launchpad.repositories;
 
+import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,8 +46,14 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     @Transactional(readOnly = true)
     List<Task> findByFlowInstanceId(long flowInstanceId);
 
+    @Query("SELECT t FROM Task t where t.stationId=null and " +
+            "t.flowInstanceId=:flowInstanceId and (t.order =:taskOrder or t.order=(:taskOrder + 1))")
+    List<Task> findForAssigning(long flowInstanceId, int taskOrder);
+
+/*
     @Transactional(readOnly = true)
     Slice<Task> findByIsCompletedIsTrueAndFeatureId(Pageable pageable, long featureId);
+*/
 
 /*
 

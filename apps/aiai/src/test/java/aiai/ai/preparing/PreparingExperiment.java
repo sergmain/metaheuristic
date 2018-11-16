@@ -67,7 +67,7 @@ public abstract class PreparingExperiment {
     protected TaskRepository taskRepository;
 
     @Autowired
-    private ExperimentCache experimentCache;
+    protected ExperimentCache experimentCache;
 
     @Autowired
     private BinaryDataService binaryDataService;

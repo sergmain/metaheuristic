@@ -37,6 +37,7 @@ public class Consts {
     public static final String EPOCH = "epoch";
 
     public static final PageRequest PAGE_REQUEST_1_REC = PageRequest.of(0, 1);
+    public static final PageRequest PAGE_REQUEST_10_REC = PageRequest.of(0, 10);
 
     public static final Map<String, String> EMPTY_UNMODIFIABLE_MAP = Collections.unmodifiableMap(new HashMap<>(0));
 

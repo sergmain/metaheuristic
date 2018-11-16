@@ -26,6 +26,7 @@ import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
 import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
+import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingExperiment;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
@@ -71,10 +72,12 @@ public abstract class FeatureMethods extends PreparingExperiment {
     protected TaskRepository taskRepository;
 
     @Autowired
+    protected TaskService taskService;
+
+    @Autowired
     private BinaryDataService binaryDataService;
 
     Station station = null;
-    FlowInstance flowInstance = null;
     Experiment experiment = null;
     boolean isCorrectInit = true;
 
@@ -137,7 +140,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
             results.add(sser);
         }
 
-        experimentService.storeAllResults(results);
+        taskService.storeAllResults(results);
     }
 
     protected void finishCurrentWithOk(int expectedSeqs) {
@@ -156,7 +159,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
             results.add(sser);
         }
 
-        experimentService.storeAllResults(results);
+        taskService.storeAllResults(results);
     }
 
 

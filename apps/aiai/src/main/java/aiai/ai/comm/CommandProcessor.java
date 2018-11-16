@@ -20,6 +20,7 @@ package aiai.ai.comm;
 import aiai.ai.launchpad.LaunchpadService;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.experiment.ExperimentService;
+import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
 import aiai.ai.station.StationService;
 import aiai.ai.station.TaskProcessor;
 import lombok.extern.slf4j.Slf4j;
@@ -108,9 +109,11 @@ public class CommandProcessor {
         if (command.getResults().isEmpty()) {
             return Protocol.NOP_ARRAY;
         }
-        final Protocol.ReportResultDelivering cmd1 = new Protocol.ReportResultDelivering(launchpadService.getExperimentService().storeAllResults(command.getResults()));
-        // right now, sending new sequences with ReportResultDelivering doesn't work well.
-//        final Protocol.AssignedTask r = assignTaskToStation(command.getStationId(), Math.min(MAX_SEQUENSE_POOL_SIZE, command.getResults().size()));
+        final Protocol.ReportResultDelivering cmd1 = new Protocol.ReportResultDelivering(
+                launchpadService.getTaskService().storeAllResults(command.getResults())
+        );
+        // we can't return immediately task because we have to receive some params from station,
+        // like has snippet to be signed or not
 
         return new Command[]{cmd1};
     }
@@ -147,10 +150,9 @@ public class CommandProcessor {
 
     private synchronized Protocol.AssignedTask assignTaskToStation(String stationId, boolean isAcceptOnlySigned) {
         Protocol.AssignedTask r = new Protocol.AssignedTask();
-        ExperimentService.TasksAndAssignToStationResult result =
-                launchpadService.getExperimentService().getTaskAndAssignToStation(
-                        Long.parseLong(stationId), isAcceptOnlySigned, null
-                );
+        ExperimentService.TasksAndAssignToStationResult result = launchpadService.getExperimentService()
+                .getTaskAndAssignToStation(Long.parseLong(stationId), isAcceptOnlySigned, null);
+
         r.tasks = Collections.singletonList(result.getSimpleTask());
         return r;
     }
@@ -174,6 +176,7 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
+    @SuppressWarnings("unused")
     private Command[] getNewStationId(Protocol.RequestStationId command) {
         final Station st = new Station();
         launchpadService.getStationsRepository().save(st);

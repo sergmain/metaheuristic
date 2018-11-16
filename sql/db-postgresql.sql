@@ -133,8 +133,11 @@ CREATE TABLE AIAI_LP_FLOW_INSTANCE (
   ID            SERIAL PRIMARY KEY,
   VERSION       NUMERIC(5, 0)  NOT NULL,
   FLOW_ID       NUMERIC(10, 0) NOT NULL,
-  IS_COMPLETED  BOOLEAN not null default false,
+  CREATED_ON    bigint NOT NULL,
   COMPLETED_ON  bigint,
-  INPUT_POOL_CODE  varchar(50) NOT NULL
+  IS_COMPLETED  BOOLEAN not null default false,
+  INPUT_POOL_CODE  varchar(50) NOT NULL,
+  COMPLETED_ORDER integer not null NOT NULL
+
 );
 

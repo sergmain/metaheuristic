@@ -35,9 +35,9 @@ public class ExperimentCache {
         this.experimentRepository = experimentRepository;
     }
 
-    @CachePut(cacheNames = "experiments", key = "#experiment.id")
-    public void save(Experiment experiment) {
-        experimentRepository.save(experiment);
+    @CachePut(cacheNames = "experiments", key = "#result.id")
+    public Experiment save(Experiment experiment) {
+        return experimentRepository.save(experiment);
     }
 
     @Cacheable(cacheNames = "experiments", unless="#result==null")

@@ -186,9 +186,11 @@ public class FlowService {
 
         FlowInstance fi = new FlowInstance();
         fi.setFlowId(flow.getId());
+        fi.setCreatedOn(System.currentTimeMillis());
         fi.setCompleted(false);
-        fi.setCreatedOn( System.currentTimeMillis() );
+        fi.setCompletedOn(null);
         fi.setInputResourcePoolCode(startWithResourcePoolCode);
+        fi.setCompletedOrder(0);
 
         flowInstanceRepository.save(fi);
         result.flowInstance = fi;

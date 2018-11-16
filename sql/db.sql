@@ -89,8 +89,8 @@ CREATE TABLE AIAI_LP_TASK (
   VERSION       NUMERIC(5, 0)  NOT NULL,
   PARAMS          MEDIUMTEXT not null,
   STATION_ID          NUMERIC(10, 0),
-  ASSIGNED_ON   bigint,
-  IS_COMPLETED  tinyint(1) not null default 0,
+  ASSIGNED_ON    bigint,
+  IS_COMPLETED   tinyint(1) not null default 0,
   COMPLETED_ON   bigint,
   SNIPPET_EXEC_RESULTS  MEDIUMTEXT,
   METRICS      MEDIUMTEXT,
@@ -128,3 +128,15 @@ CREATE TABLE AIAI_LP_FLOW (
   PARAMS        TEXT not null,
   INPUT_POOL_CODE  varchar(50) NOT NULL
 );
+
+CREATE TABLE AIAI_LP_FLOW_INSTANCE (
+  ID            SERIAL PRIMARY KEY,
+  VERSION       NUMERIC(5, 0)  NOT NULL,
+  FLOW_ID       NUMERIC(10, 0) NOT NULL,
+  CREATED_ON    TIMESTAMP NOT NULL,
+  COMPLETED_ON  TIMESTAMP,
+  IS_COMPLETED  BOOLEAN not null default false,
+  INPUT_POOL_CODE  varchar(50) NOT NULL,
+  COMPLETED_ORDER integer not null NOT NULL
+);
+
