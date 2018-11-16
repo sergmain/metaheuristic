@@ -9,5 +9,7 @@ import java.util.List;
 public interface FlowInstanceRepository extends CrudRepository<FlowInstance, Long> {
 
     List<FlowInstance> findByCompletedFalseOrderByCreatedOnAsc();
+
+    List<FlowInstance> findByCompletedFalse();
 }
 

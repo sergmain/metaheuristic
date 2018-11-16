@@ -22,7 +22,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -163,7 +162,7 @@ public class TestFlowService extends PreparingFlow {
         r.setResult("Everything is Ok.");
         r.setResult(getExecResult(true));
         taskService.markAsCompleted(r);
-        flowService.markOrderAsCompleted(flowInstance);
+        flowService.markOrderAsCompleted();
 
         ExperimentService.TasksAndAssignToStationResult assignToStation3 =
                 experimentService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
@@ -179,7 +178,7 @@ public class TestFlowService extends PreparingFlow {
                 experimentService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
         assertNull(assignToStation4.getSimpleTask());
 
-        flowService.markOrderAsCompleted(flowInstance);
+        flowService.markOrderAsCompleted();
 
         ExperimentService.TasksAndAssignToStationResult assignToStation51 =
                 experimentService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());

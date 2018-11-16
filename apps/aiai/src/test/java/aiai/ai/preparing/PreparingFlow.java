@@ -149,7 +149,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
         deleteSnippet(s5);
         if (flowInstance!=null) {
             try {
-                flowInstanceRepository.delete(flowInstance);
+                flowInstanceRepository.deleteById(flowInstance.getId());
             } catch (Throwable th) {
                 th.printStackTrace();
             }

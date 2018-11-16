@@ -225,7 +225,13 @@ public class FlowService {
         }
     }
 
-    public void markOrderAsCompleted(FlowInstance flowInstance) {
+    public void markOrderAsCompleted() {
+        List<FlowInstance> flowInstances = flowInstanceRepository.findByCompletedFalse();
+        for (FlowInstance flowInstance : flowInstances) {
+            markOrderAsCompleted(flowInstance);
+        }
+    }
+    private void markOrderAsCompleted(FlowInstance flowInstance) {
         for (Task task : taskRepository.findForCompletion(flowInstance.getId(), flowInstance.getCompletedOrder())) {
             if (!task.isCompleted) {
                 return;
