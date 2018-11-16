@@ -13,12 +13,12 @@
         <form class="pure-form pure-form-stacked" th:object="${flow}" method="post" action="#" th:method="POST" th:action="@{/launchpad/flow/flow-add-form-commit}" accept-charset="UTF-8" id="flow-form" name="f">
             <fieldset>
 
-                <label for="code">Code</label>
-                <input name="code" id="code" type="text" placeholder="code" th:field="*{code}">
+                <label for="code">Code of flow</label>
+                <input name="code" id="code" type="text" placeholder="Code of flow" th:field="*{code}">
                 <span class="pure-form-message">This is a required field.</span>
 
-                <label for="params">Flow params</label>
-                <textarea name="params" id="params" placeholder="params" cols="40" rows="30" th:field="*{params}" maxlength="10000"></textarea>
+                <label for="params">Parameters of flow</label>
+                <textarea name="params" id="params" placeholder="Parameters of flow" cols="70" rows="15" th:field="*{params}" maxlength="10000"></textarea>
                 <span class="pure-form-message">This is a required field.</span>
 
                 <table>

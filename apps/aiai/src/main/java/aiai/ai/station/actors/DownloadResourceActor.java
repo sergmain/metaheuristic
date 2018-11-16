@@ -48,7 +48,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
     @PostConstruct
     public void postConstruct() {
         if (globals.isStationEnabled) {
-            targetUrl = globals.launchpadUrl + "/payload/resource";
+            targetUrl = globals.payloadRestUrl + "/resource";
         }
     }
 

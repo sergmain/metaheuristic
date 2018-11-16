@@ -54,7 +54,7 @@ public final class Enums {
         }
     }
 
-    public enum BinaryDataType { DATA(1), SNIPPET(2), TEST(3);
+    public enum BinaryDataType { UNKNOWN(0), DATA(1), SNIPPET(2), TEST(3);
 
         public int value;
         BinaryDataType(int value) {
@@ -70,8 +70,12 @@ public final class Enums {
                 case 3:
                     return TEST;
                 default:
-                    throw new IllegalStateException("Unknown type : " + type);
+                    return UNKNOWN;
             }
+        }
+
+        public boolean isProd() {
+            return this==DATA || this==SNIPPET;
         }
     }
 

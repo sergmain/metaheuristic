@@ -52,7 +52,7 @@ public class CommandProcessor {
         this.taskProcessor = taskProcessor;
     }
 
-    Command[] process(Command command) {
+    public Command[] process(Command command) {
         switch (command.getType()) {
             case Nop:
                 break;

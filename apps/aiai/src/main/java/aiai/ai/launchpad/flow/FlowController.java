@@ -63,7 +63,7 @@ public class FlowController {
             return "redirect:/launchpad/flow/flows";
         }
         model.addAttribute("flow", flow);
-        return "launchpad/flow/flows-edit-form";
+        return "launchpad/flow/flow-edit-form";
     }
 
     @PostMapping("/flow-add-form-commit")

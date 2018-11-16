@@ -59,8 +59,8 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
     @PostConstruct
     public void postConstruct() {
         if (globals.isStationEnabled) {
-            targetUrl = globals.launchpadUrl + "/payload/snippet";
-            snippetChecksumUrl = globals.launchpadUrl + "/payload/snippet-checksum";
+            targetUrl = globals.payloadRestUrl + "/snippet";
+            snippetChecksumUrl = globals.payloadRestUrl + "/snippet-checksum";
         }
     }
 

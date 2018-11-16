@@ -38,7 +38,7 @@
         <thead>
         <tr>
             <th>Id</th>
-            <th>Code</th>
+            <th>Code of flow</th>
             <th>Created on</th>
             <th colspan="2">&nbsp;</th>
         </tr>
@@ -46,7 +46,7 @@
         <tbody>
         <tr th:each="f : ${result.items}">
             <td th:text="${f.id}">#Id</td>
-            <td th:text="${f.code}">Code</td>
+            <td th:text="${f.code}">Code of flow</td>
             <td th:text="${#dates.format(f.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-edit/' + f.id}">Edit</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-delete/' + f.id}">Delete</a></td>

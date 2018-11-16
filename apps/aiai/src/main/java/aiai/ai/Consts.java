@@ -28,8 +28,12 @@ import java.util.Map;
 public class Consts {
     public static final String SESSIONID_NAME = "JSESSIONID";
 
-    public static final String SERVER_REST_ANON_URL = "/rest-anon/srv";
-    public static final String SERVER_REST_AUTH_URL = "/rest-auth/srv";
+    public static final String REST_ANON_URL = "/rest-anon";
+    public static final String REST_AUTH_URL = "/rest-auth";
+
+    public static final String SERVER_REST_URL = "/srv";
+    public static final String PAYLOAD_REST_URL = "/payload";
+    public static final String UPLOAD_REST_URL = "/upload";
 
     public static final MediaType APPLICATION_JSON_UTF8 = new MediaType(MediaType.APPLICATION_JSON.getType(), MediaType.APPLICATION_JSON.getSubtype(), Charset.forName("utf8"));
 

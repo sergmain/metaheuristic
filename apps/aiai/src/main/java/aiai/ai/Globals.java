@@ -127,6 +127,8 @@ public class Globals {
     public TimePeriods timePeriods;
 
     public String serverRestUrl;
+    public String payloadRestUrl;
+    public String uploadRestUrl;
     public PublicKey publicKey = null;
 
     @PostConstruct
@@ -148,7 +150,11 @@ public class Globals {
             }
         }
 
-        serverRestUrl = launchpadUrl + (isSecureRestUrl ? Consts.SERVER_REST_AUTH_URL : Consts.SERVER_REST_ANON_URL );
+        final String restUrl = launchpadUrl + (isSecureRestUrl ? Consts.SERVER_REST_URL : Consts.SERVER_REST_URL );
+
+        serverRestUrl  = restUrl + Consts.SERVER_REST_URL;
+        payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL;
+        uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
 
         if (stationDir==null) {
             log.warn("Station is disabled, stationDir: {}, isStationEnabled: {}", stationDir, isStationEnabled);

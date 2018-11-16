@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -96,22 +95,6 @@ public class MultiHttpSecurityConfig {
     }
 
     @Configuration
-    @Order(3)
-    public class PayloadSecurityConfig extends WebSecurityConfigurerAdapter {
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-
-            http
-                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                    .and()
-                    .antMatcher("/payload/**").authorizeRequests().anyRequest().anonymous()
-                    .and()
-                    .csrf().disable();
-        }
-    }
-
-    @Configuration
     @Order
     public static class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
@@ -136,8 +119,7 @@ public class MultiHttpSecurityConfig {
                     .authorizeRequests()
                     .antMatchers("/manager/html").denyAll()
                     .antMatchers("/static/**/**", "/css/**", "/js/**", "/webjars/**").permitAll()
-                    .antMatchers("/favicon.ico", "/", "/index", "/about", "/login", "/jssc", "/srv/**").permitAll()
-                    .antMatchers("/", "/index", "/jssc", "/error/**").permitAll()
+                    .antMatchers("/favicon.ico", "/", "/index", "/about", "/login", "/jssc", "/error/**").permitAll()
                     .antMatchers("/login").anonymous()
                     .antMatchers("/logout", "/launchpad/**", "/station/**").authenticated()
                     .antMatchers("/admin/**").hasAnyRole("ADMIN")
