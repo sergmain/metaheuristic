@@ -25,7 +25,7 @@ public class TaskService {
         List<Long> ids = new ArrayList<>();
         for (SimpleTaskExecResult result : results) {
             ids.add(result.taskId);
-            Task t = markAsCompleted(result);
+            Task t = prepareTask(result);
             if (t!=null) {
                 list.add(t);
             }
@@ -34,7 +34,14 @@ public class TaskService {
         return ids;
     }
 
-    public Task markAsCompleted(SimpleTaskExecResult result) {
+    public void markAsCompleted(SimpleTaskExecResult result) {
+        Task t = prepareTask(result);
+        if (t!=null) {
+            taskRepository.save(t);
+        }
+    }
+
+    private Task prepareTask(SimpleTaskExecResult result) {
         Task task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
             log.warn("Can't find Task for Id: {}", result.taskId);
