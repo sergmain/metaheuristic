@@ -61,4 +61,7 @@ public class Task implements Serializable {
 
     @Column(name = "FLOW_INSTANCE_ID")
     public Long flowInstanceId;
+
+    @Column(name = "EXEC_STATE")
+    public int execState;
 }

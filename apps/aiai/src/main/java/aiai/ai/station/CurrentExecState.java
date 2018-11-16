@@ -28,7 +28,7 @@ import java.util.Map;
 @Component
 public class CurrentExecState {
 
-    private final Map<Long, Enums.TaskExecState> taskState = new HashMap<>();
+    private final Map<Long, Enums.ExperimentExecState> taskState = new HashMap<>();
     boolean isInit = false;
 
     void register(List<Protocol.ExperimentStatus.SimpleStatus> statuses) {
@@ -43,21 +43,21 @@ public class CurrentExecState {
         }
     }
 
-    Enums.TaskExecState getState(long taskId) {
+    Enums.ExperimentExecState getState(long taskId) {
         synchronized(taskState) {
             if (!isInit) {
                 return null;
             }
-            return taskState.getOrDefault(taskId, Enums.TaskExecState.DOESNT_EXIST);
+            return taskState.getOrDefault(taskId, Enums.ExperimentExecState.DOESNT_EXIST);
         }
     }
 
-    boolean isState(long taskId, Enums.TaskExecState state) {
-        Enums.TaskExecState currState = getState(taskId);
+    boolean isState(long taskId, Enums.ExperimentExecState state) {
+        Enums.ExperimentExecState currState = getState(taskId);
         return currState!=null && currState==state;
     }
 
     boolean isStarted(long taskId) {
-        return isState(taskId, Enums.TaskExecState.STARTED);
+        return isState(taskId, Enums.ExperimentExecState.STARTED);
     }
 }

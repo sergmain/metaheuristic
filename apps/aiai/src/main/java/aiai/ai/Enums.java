@@ -31,6 +31,29 @@ public final class Enums {
         }
     }
 
+    public enum TaskExecState { NONE(0), IN_PROGRESS(1), ERROR(2), OK(3);
+
+        public final int value;
+        TaskExecState(int value) {
+            this.value = value;
+        }
+
+        public static TaskExecState from(int type) {
+            switch(type) {
+                case 0:
+                    return NONE;
+                case 1:
+                    return IN_PROGRESS;
+                case 2:
+                    return ERROR;
+                case 3:
+                    return OK;
+                default:
+                    throw new IllegalStateException("Unknown type : " + type);
+            }
+        }
+    }
+
     public enum BinaryDataType { DATA(1), SNIPPET(2), TEST(3);
 
         public int value;
@@ -52,20 +75,20 @@ public final class Enums {
         }
     }
 
-    public enum TaskExecState {
+    public enum ExperimentExecState {
         NONE(0),            // just created experiment
         STARTED(1),         // started
         STOPPED(2),         // stopped
         FINISHED(3),        // finished
-        DOESNT_EXIST(4);    // doesn't exist. this state is needed at station side to reconsile list of experiments
+        DOESNT_EXIST(4);    // doesn't exist. this state is needed at station side to reconcile list of experiments
 
         public int code;
 
-        TaskExecState(int code) {
+        ExperimentExecState(int code) {
             this.code = code;
         }
 
-        public static TaskExecState toState(int code) {
+        public static ExperimentExecState toState(int code) {
             switch (code) {
                 case 0:
                     return NONE;
@@ -83,7 +106,7 @@ public final class Enums {
         }
 
         public static String from(int code) {
-            TaskExecState state = toState(code);
+            ExperimentExecState state = toState(code);
             return state == null ? "Unknown" : state.toString();
         }
     }

@@ -10,6 +10,7 @@ import aiai.ai.launchpad.experiment.ExperimentProcessService;
 import aiai.ai.launchpad.file_process.FileProcessService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
+import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
@@ -37,8 +38,9 @@ public class FlowService {
     private final FileProcessService fileProcessService;
     private final FlowInstanceRepository flowInstanceRepository;
     private final SnippetCache snippetCache;
+    private final TaskRepository taskRepository;
 
-    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache) {
+    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache, TaskRepository taskRepository) {
         this.globals = globals;
         this.flowRepository = flowRepository;
         this.flowYamlUtils = flowYamlUtils;
@@ -48,6 +50,7 @@ public class FlowService {
         this.fileProcessService = fileProcessService;
         this.flowInstanceRepository = flowInstanceRepository;
         this.snippetCache = snippetCache;
+        this.taskRepository = taskRepository;
     }
 
     @Data
@@ -221,5 +224,16 @@ public class FlowService {
             inputResourceCodes = produceTaskResult.outputResourceCodes;
         }
     }
+
+    public void markOrderAsCompleted(FlowInstance flowInstance) {
+        for (Task task : taskRepository.findForCompletion(flowInstance.getId(), flowInstance.getCompletedOrder())) {
+            if (!task.isCompleted) {
+                return;
+            }
+        }
+        flowInstance.setCompletedOrder(flowInstance.getCompletedOrder()+1);
+        flowInstanceRepository.save(flowInstance);
+    }
+
 
 }

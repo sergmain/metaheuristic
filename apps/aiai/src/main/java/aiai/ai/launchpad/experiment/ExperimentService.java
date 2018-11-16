@@ -244,6 +244,7 @@ public class ExperimentService {
 
         resultTask.setAssignedOn(System.currentTimeMillis());
         resultTask.setStationId(stationId);
+        resultTask.setExecState(Enums.TaskExecState.IN_PROGRESS.value);
 
 /*
         if (!feature.isInProgress) {
@@ -259,7 +260,7 @@ public class ExperimentService {
     private boolean currentLevelIsntFinished(List<Task> tasks, int completedOrder) {
         for (Task task : tasks) {
             if (task.getOrder()==completedOrder && !task.isCompleted) {
-                log.error("!!!!!!!!!  Found isn't completed task {}", task);
+                log.error("!!!!!!!!! Not completed task was found {}", task);
                 return true;
             }
         }
@@ -267,7 +268,7 @@ public class ExperimentService {
     }
 
     private void checkForFinished() {
-        List<ExperimentFeature> features = experimentFeatureRepository.findAllForActiveExperiments(Enums.TaskExecState.FINISHED.code);
+        List<ExperimentFeature> features = experimentFeatureRepository.findAllForActiveExperiments(Enums.ExperimentExecState.FINISHED.code);
         Set<Long> ids = new HashSet<>();
         // ugly but ok for first version
         for (ExperimentFeature feature : features) {
@@ -286,7 +287,7 @@ public class ExperimentService {
                 if (experiment==null) {
                     continue;
                 }
-                experiment.setExecState(Enums.TaskExecState.FINISHED.code);
+                experiment.setExecState(Enums.ExperimentExecState.FINISHED.code);
                 experimentCache.save(experiment);
             }
         }

@@ -541,7 +541,7 @@ public class ExperimentsController {
 
         experiment.setLaunched(true);
         experiment.setLaunchedOn(System.currentTimeMillis());
-        experiment.setExecState(Enums.TaskExecState.STARTED.code);
+        experiment.setExecState(Enums.ExperimentExecState.STARTED.code);
         experimentRepository.save(experiment);
 
         return "redirect:/launchpad/experiment-info/"+experimentId;
@@ -562,14 +562,14 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#285.04 Experiment wasn't started yet, experimentId: " + experimentId);
             return "redirect:/launchpad/experiment-info/"+experimentId;
         }
-        Enums.TaskExecState execState = Enums.TaskExecState.valueOf(state.toUpperCase());
+        Enums.ExperimentExecState execState = Enums.ExperimentExecState.valueOf(state.toUpperCase());
 
-        if ((execState== Enums.TaskExecState.STARTED && experiment.getExecState()== Enums.TaskExecState.STARTED.code) ||
-                (execState== Enums.TaskExecState.STOPPED && experiment.getExecState()== Enums.TaskExecState.STOPPED.code)) {
+        if ((execState== Enums.ExperimentExecState.STARTED && experiment.getExecState()== Enums.ExperimentExecState.STARTED.code) ||
+                (execState==Enums.ExperimentExecState.STOPPED && experiment.getExecState()== Enums.ExperimentExecState.STOPPED.code)) {
             redirectAttributes.addFlashAttribute("errorMessage", "#285.05 Experiment is already in target state: " + execState.toString());
             return "redirect:/launchpad/experiment-info/"+experimentId;
-
         }
+
         experiment.setExecState(execState.code);
         experimentRepository.save(experiment);
 

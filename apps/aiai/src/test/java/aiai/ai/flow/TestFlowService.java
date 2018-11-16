@@ -2,6 +2,7 @@ package aiai.ai.flow;
 
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
+import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.experiment.ExperimentService;
@@ -10,6 +11,8 @@ import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingExperiment;
 import aiai.ai.preparing.PreparingFlow;
+import aiai.ai.yaml.console.SnippetExec;
+import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.flow.FlowYaml;
 import org.junit.After;
 import org.junit.Test;
@@ -138,6 +141,8 @@ public class TestFlowService extends PreparingFlow {
         assertEquals( 1+1+3+ 2*12*7, taskNumber +  experiment.getNumberOfTask());
 
 
+        // ======================
+
         ExperimentService.TasksAndAssignToStationResult assignToStation =
                 experimentService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
 
@@ -156,7 +161,9 @@ public class TestFlowService extends PreparingFlow {
         r.setTaskId(simpleTask.getTaskId());
         r.setMetrics(null);
         r.setResult("Everything is Ok.");
+        r.setResult(getExecResult(true));
         taskService.markAsCompleted(r);
+        flowService.markOrderAsCompleted(flowInstance);
 
         ExperimentService.TasksAndAssignToStationResult assignToStation3 =
                 experimentService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
@@ -166,42 +173,44 @@ public class TestFlowService extends PreparingFlow {
         assertNotNull(simpleTask3.getTaskId());
         Task task3 = taskRepository.findById(simpleTask3.getTaskId()). orElse(null);
         assertNotNull(task3);
-        assertEquals(1, task3.getOrder());
-//        assertNotEquals(task.getId(), task3.getId());
+        assertEquals(2, task3.getOrder());
 
         ExperimentService.TasksAndAssignToStationResult assignToStation4 =
                 experimentService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
         assertNull(assignToStation4.getSimpleTask());
 
-        maskAsCompletedOrder(flowInstance.getId(), 1);
+        flowService.markOrderAsCompleted(flowInstance);
 
-        Protocol.AssignedTask.Task simpleTask5 = assignToStation.getSimpleTask();
-        assertNotNull(simpleTask5);
-        assertNotNull(simpleTask5.getTaskId());
-        Task task5 = taskRepository.findById(simpleTask5.getTaskId()). orElse(null);
-        assertNotNull(task5);
-        assertEquals(2, task5.getOrder());
-
-        ExperimentService.TasksAndAssignToStationResult assignToStation6 =
+        ExperimentService.TasksAndAssignToStationResult assignToStation51 =
                 experimentService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
-        assertNull(assignToStation6.getSimpleTask());
+
+        Protocol.AssignedTask.Task simpleTask51 = assignToStation51.getSimpleTask();
+        assertNotNull(simpleTask51);
+        assertNotNull(simpleTask51.getTaskId());
+        Task task51 = taskRepository.findById(simpleTask51.getTaskId()). orElse(null);
+        assertNotNull(task51);
+        assertEquals(3, task51.getOrder());
+
+        ExperimentService.TasksAndAssignToStationResult assignToStation52 =
+                experimentService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
+
+        Protocol.AssignedTask.Task simpleTask52 = assignToStation52.getSimpleTask();
+        assertNotNull(simpleTask52);
+        assertNotNull(simpleTask52.getTaskId());
+        Task task52 = taskRepository.findById(simpleTask52.getTaskId()). orElse(null);
+        assertNotNull(task52);
+        assertEquals(3, task52.getOrder());
+
 
         int i=0;
     }
 
-    private void maskAsCompletedOrder(long flowInstanceId, int order) {
-        List<Task> tasks = taskRepository.findForAssigning(flowInstanceId, order);
-        List<SimpleTaskExecResult> results = new ArrayList<>();
-        for (Task task : tasks) {
-            if (task.getOrder()==order) {
-                SimpleTaskExecResult r = new SimpleTaskExecResult();
-                r.setTaskId(task.getId());
-                r.setMetrics(null);
-                r.setResult("Everything is Ok.");
-
-                results.add(r);
-            }
-        }
-        taskService.storeAllResults(results);
+    private String getExecResult(boolean isOk) {
+        SnippetExec snippetExec = new SnippetExec();
+        ExecProcessService.Result execResult = new ExecProcessService.Result();
+        execResult.setOk(isOk);
+        execResult.setExitCode(0);
+        snippetExec.setExec(execResult);
+        return SnippetExecUtils.toString(snippetExec);
     }
 }
