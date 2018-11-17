@@ -50,7 +50,6 @@
             <td th:text="${#dates.format(f.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-edit/' + f.id}">Edit</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-delete/' + f.id}">Delete</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-instances/' + f.id}">Instances</a></td>
         </tr>
         <tr>
             <td colspan="7">

@@ -2,6 +2,8 @@ package aiai.ai.launchpad.flow;
 
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Flow;
+import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.utils.ControllerUtils;
 import lombok.Data;
@@ -25,18 +27,21 @@ public class FlowController {
     @Data
     public static class Result {
         public Slice<Flow> items;
+        public Slice<FlowInstance> instances;
     }
 
     private final Globals globals;
     private final FlowRepository flowRepository;
+    private final FlowInstanceRepository flowInstanceRepository;
 
-    public FlowController(Globals globals, FlowRepository flowRepository) {
+    public FlowController(Globals globals, FlowRepository flowRepository, FlowInstanceRepository flowInstanceRepository) {
         this.globals = globals;
         this.flowRepository = flowRepository;
+        this.flowInstanceRepository = flowInstanceRepository;
     }
 
     @GetMapping("/flows")
-    public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
+    public String flows(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
         pageable = ControllerUtils.fixPageSize(globals.flowRowsLimit, pageable);
         result.items = flowRepository.findAll(pageable);
         return "launchpad/flow/flows";
@@ -44,7 +49,7 @@ public class FlowController {
 
     // for AJAX
     @PostMapping("/flows-part")
-    public String getExperiments(@ModelAttribute Result result, @PageableDefault(size = 10) Pageable pageable) {
+    public String flowsPart(@ModelAttribute Result result, @PageableDefault(size = 10) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.flowRowsLimit, pageable);
         result.items = flowRepository.findAll(pageable);
         return "launchpad/flow/flows :: table";
@@ -68,7 +73,7 @@ public class FlowController {
 
     @PostMapping("/flow-add-form-commit")
     public String addFormCommit(Model model, Flow flow) {
-        return processCommit(model, flow, "launchpad/flow-add-form", "redirect:/launchpad/flow/flows");
+        return processFlowCommit(model, flow, "launchpad/flow-add-form", "redirect:/launchpad/flow/flows");
     }
 
     @PostMapping("/flow-edit-form-commit")
@@ -80,10 +85,10 @@ public class FlowController {
         }
         flow.setCode(flowModel.getCode());
         flow.setParams(flowModel.getParams());
-        return processCommit(model, flow,"launchpad/flow/flow-edit-form","redirect:/launchpad/flow/flow-edit/"+flow.getId());
+        return processFlowCommit(model, flow,"launchpad/flow/flow-edit-form","redirect:/launchpad/flow/flow-edit/"+flow.getId());
     }
 
-    private String processCommit(Model model, Flow flow, String errorTarget, String normalTarget) {
+    private String processFlowCommit(Model model, Flow flow, String errorTarget, String normalTarget) {
         if (StringUtils.isBlank(flow.code)) {
             model.addAttribute("errorMessage", "#595.10 code of flow is empty");
             return errorTarget;
@@ -117,4 +122,54 @@ public class FlowController {
         flowRepository.deleteById(id);
         return "redirect:/launchpad/flow/flows";
     }
+
+    // ============= Flow instances =============
+
+    @GetMapping("/flow-instances/{id}")
+    public String flowInstances(@ModelAttribute Result result, @PathVariable Long id, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
+        pageable = ControllerUtils.fixPageSize(globals.flowInstanceRowsLimit, pageable);
+        result.instances = flowInstanceRepository.findByFlowId(pageable, id);
+        return "launchpad/flow/flow-instances";
+    }
+
+    // for AJAX
+    @PostMapping("/flow-instances-part/{id}")
+    public String flowInstancesPart(@ModelAttribute Result result, @PathVariable Long id, @PageableDefault(size = 10) Pageable pageable) {
+        pageable = ControllerUtils.fixPageSize(globals.flowInstanceRowsLimit, pageable);
+        result.instances = flowInstanceRepository.findByFlowId(pageable, id);
+        return "launchpad/flow/flow-instances :: table";
+    }
+
+    @GetMapping(value = "/flow-instance-add")
+    public String flowInstanceAdd(@ModelAttribute("flowInstance") FlowInstance flowInstance) {
+        return "launchpad/flow/flow-instance-add-form";
+    }
+
+    @GetMapping(value = "/flow-instance-edit/{flowId}/{flowInstanceId}")
+    public String flowInstanceEdit(@PathVariable Long flowId, @PathVariable Long flowInstanceId, Model model, final RedirectAttributes redirectAttributes) {
+        final FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
+        if (flowInstance == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#585.01 flow wasn't found, flowId: " + flowId);
+            return "redirect:/launchpad/flow/flow-instances";
+        }
+        model.addAttribute("flowInstance", flowInstance);
+        return "launchpad/flow/flow-instance-edit-form/" + flowId +'/' + flowInstanceId;
+    }
+
+    @PostMapping("/flow-instance-add-form-commit")
+    public String flowInstanceAddCommit(Model model, Long flowId, String poolCode) {
+        if (StringUtils.isBlank(poolCode)) {
+            model.addAttribute("errorMessage", "#585.10 inputResourcePoolCode of FlowInstance is empty");
+            return "launchpad/flow-instance-add-form";
+        }
+
+        FlowInstance flowInstance = new FlowInstance();
+        flowInstance.setCompletedOrder(0);
+        flowInstance.setInputResourcePoolCode(poolCode);
+        flowInstance.flowId = flowId;
+        flowInstanceRepository.save(flowInstance);
+
+        return "redirect:/launchpad/flow/flow-instances";
+    }
+
 }

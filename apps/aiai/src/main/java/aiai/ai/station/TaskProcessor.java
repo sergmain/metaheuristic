@@ -158,17 +158,6 @@ public class TaskProcessor {
                 continue;
             }
 
-/*
-            SnippetExec snippetExec =  SnippetExecUtils.toSnippetExec(task.getSnippetExecResult());
-            if (isThisSnippetCompletedWithError(snippet, snippetExec)) {
-                // stop processing this task because last snippet was finished with an error
-                break;
-            }
-            if (isThisSnippetCompleted(snippet, snippetExec)) {
-                continue;
-            }
-*/
-
             final File paramFile = prepareParamFile(taskDir, snippet.getType(), params);
             if (paramFile == null) {
                 break;
@@ -200,23 +189,6 @@ public class TaskProcessor {
         }
     }
 
-    /*
-    private boolean isThisSnippetCompleted(SimpleSnippet snippet, SnippetExec snippetExec) {
-        if (snippetExec ==null) {
-            return false;
-        }
-        return snippetExec.execs.get(snippet.order)!=null;
-    }
-
-    private boolean isThisSnippetCompletedWithError(SimpleSnippet snippet, SnippetExec snippetExec) {
-        if (snippetExec ==null) {
-            return false;
-        }
-        final ExecProcessService.Result result = snippetExec.execs.get(snippet.order);
-        return result!=null && !result.isOk();
-    }
-
-*/
     private File prepareParamFile(File taskDir, String snippetType, String params) {
         File snippetTypeDir = prepareTaskSubDir(taskDir, snippetType);
         if (snippetTypeDir == null) {
