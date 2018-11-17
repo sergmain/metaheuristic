@@ -18,6 +18,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Controller
 @RequestMapping("/launchpad/flow")
 @Slf4j
@@ -27,16 +30,28 @@ public class FlowController {
     @Data
     public static class Result {
         public Slice<Flow> items;
+    }
+
+    @Data
+    public static class FlowInstancesResult {
         public Slice<FlowInstance> instances;
+        public Map<Long,String> flowCodes = new HashMap<>();
+    }
+
+    @Data
+    public static class FlowListResult {
+        public Iterable<Flow> items;
     }
 
     private final Globals globals;
+    private final FlowCache flowCache;
     private final FlowRepository flowRepository;
     private final FlowInstanceRepository flowInstanceRepository;
 
-    public FlowController(Globals globals, FlowRepository flowRepository, FlowInstanceRepository flowInstanceRepository) {
+    public FlowController(Globals globals, FlowRepository flowRepository, FlowCache flowCache, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository) {
         this.globals = globals;
-        this.flowRepository = flowRepository;
+        this.flowCache = flowCache;
+        this.flowRepository = flowRepository1;
         this.flowInstanceRepository = flowInstanceRepository;
     }
 
@@ -62,9 +77,9 @@ public class FlowController {
 
     @GetMapping(value = "/flow-edit/{id}")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        final Flow flow = flowRepository.findById(id).orElse(null);
+        final Flow flow = flowCache.findById(id);
         if (flow == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#575.01 flow wasn't found, flowId: " + id);
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.01 flow wasn't found, flowId: " + id);
             return "redirect:/launchpad/flow/flows";
         }
         model.addAttribute("flow", flow);
@@ -78,9 +93,9 @@ public class FlowController {
 
     @PostMapping("/flow-edit-form-commit")
     public String editFormCommit(Model model, Flow flowModel, final RedirectAttributes redirectAttributes) {
-        Flow flow = flowRepository.findById(flowModel.getId()).orElse(null);
+        Flow flow = flowCache.findById(flowModel.getId());
         if (flow == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#581.01 flow wasn't found, flowId: " + flowModel.getId());
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.10 flow wasn't found, flowId: " + flowModel.getId());
             return "redirect:/launchpad/flow/flows";
         }
         flow.setCode(flowModel.getCode());
@@ -90,22 +105,22 @@ public class FlowController {
 
     private String processFlowCommit(Model model, Flow flow, String errorTarget, String normalTarget) {
         if (StringUtils.isBlank(flow.code)) {
-            model.addAttribute("errorMessage", "#595.10 code of flow is empty");
+            model.addAttribute("errorMessage", "#560.20 code of flow is empty");
             return errorTarget;
         }
         if (StringUtils.isBlank(flow.code)) {
-            model.addAttribute("errorMessage", "#595.30 flow is empty");
+            model.addAttribute("errorMessage", "#560.30 flow is empty");
             return errorTarget;
         }
-        flowRepository.save(flow);
+        flowCache.save(flow);
         return normalTarget;
     }
 
     @GetMapping("/flow-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        Flow flow = flowRepository.findById(id).orElse(null);
+        Flow flow = flowCache.findById(id);
         if (flow == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#594.01 experiment wasn't found, id: "+id );
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.40 experiment wasn't found, id: "+id );
             return "redirect:/launchpad/flow/flows";
         }
         model.addAttribute("flow", flow);
@@ -114,53 +129,62 @@ public class FlowController {
 
     @PostMapping("/flow-delete-commit")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
-        Flow flow = flowRepository.findById(id).orElse(null);
+        Flow flow = flowCache.findById(id);
         if (flow == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#583.01 flow wasn't found, flowId: " + id);
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.50 flow wasn't found, flowId: " + id);
             return "redirect:/launchpad/flow/flows";
         }
-        flowRepository.deleteById(id);
+        flowCache.deleteById(id);
         return "redirect:/launchpad/flow/flows";
     }
 
     // ============= Flow instances =============
 
     @GetMapping("/flow-instances/{id}")
-    public String flowInstances(@ModelAttribute Result result, @PathVariable Long id, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
-        pageable = ControllerUtils.fixPageSize(globals.flowInstanceRowsLimit, pageable);
-        result.instances = flowInstanceRepository.findByFlowId(pageable, id);
+    public String flowInstances(@ModelAttribute(name = "result") FlowInstancesResult result, @PathVariable Long id, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
+        prepareFlowInsatnceResult(result, id, pageable);
         return "launchpad/flow/flow-instances";
     }
 
     // for AJAX
     @PostMapping("/flow-instances-part/{id}")
-    public String flowInstancesPart(@ModelAttribute Result result, @PathVariable Long id, @PageableDefault(size = 10) Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.flowInstanceRowsLimit, pageable);
-        result.instances = flowInstanceRepository.findByFlowId(pageable, id);
+    public String flowInstancesPart(@ModelAttribute(name = "result") FlowInstancesResult result, @PathVariable Long id, @PageableDefault(size = 10) Pageable pageable) {
+        prepareFlowInsatnceResult(result, id, pageable);
         return "launchpad/flow/flow-instances :: table";
     }
 
+    private void prepareFlowInsatnceResult(FlowInstancesResult result, @PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
+        pageable = ControllerUtils.fixPageSize(globals.flowInstanceRowsLimit, pageable);
+        result.instances = flowInstanceRepository.findByFlowId(pageable, id);
+
+        for (FlowInstance flowInstance : result.instances) {
+            Flow flow = flowCache.findById(flowInstance.getFlowId());
+            if (flow==null) {
+                log.warn("Found flowInstance with wrong flowId. flowId: {}", flowInstance.getFlowId());
+                continue;
+            }
+            result.flowCodes.put(flow.id, flow.code);
+        }
+        int i=0;
+    }
+
     @GetMapping(value = "/flow-instance-add")
-    public String flowInstanceAdd(@ModelAttribute("flowInstance") FlowInstance flowInstance) {
+    public String flowInstanceAdd(@ModelAttribute("result") FlowListResult result) {
+        result.items = flowRepository.findAll();
         return "launchpad/flow/flow-instance-add-form";
     }
 
-    @GetMapping(value = "/flow-instance-edit/{flowId}/{flowInstanceId}")
-    public String flowInstanceEdit(@PathVariable Long flowId, @PathVariable Long flowInstanceId, Model model, final RedirectAttributes redirectAttributes) {
-        final FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
-        if (flowInstance == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#585.01 flow wasn't found, flowId: " + flowId);
-            return "redirect:/launchpad/flow/flow-instances";
-        }
-        model.addAttribute("flowInstance", flowInstance);
-        return "launchpad/flow/flow-instance-edit-form/" + flowId +'/' + flowInstanceId;
-    }
-
     @PostMapping("/flow-instance-add-form-commit")
-    public String flowInstanceAddCommit(Model model, Long flowId, String poolCode) {
+    public String flowInstanceAddCommit(Model model, Long flowId, String poolCode, final RedirectAttributes redirectAttributes) {
         if (StringUtils.isBlank(poolCode)) {
-            model.addAttribute("errorMessage", "#585.10 inputResourcePoolCode of FlowInstance is empty");
+            model.addAttribute("errorMessage", "#560.60 inputResourcePoolCode of FlowInstance is empty");
             return "launchpad/flow-instance-add-form";
+        }
+
+        Flow flow = flowCache.findById(flowId);
+        if (flow == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.70 flow wasn't found, flowId: " + flowId);
+            return "redirect:/launchpad/flow/flows";
         }
 
         FlowInstance flowInstance = new FlowInstance();
@@ -169,7 +193,18 @@ public class FlowController {
         flowInstance.flowId = flowId;
         flowInstanceRepository.save(flowInstance);
 
-        return "redirect:/launchpad/flow/flow-instances";
+        return "redirect:/launchpad/flow/flow-instances/" + flowId;
+    }
+
+    @GetMapping(value = "/flow-instance-edit/{flowId}/{flowInstanceId}")
+    public String flowInstanceEdit(@PathVariable Long flowId, @PathVariable Long flowInstanceId, Model model, final RedirectAttributes redirectAttributes) {
+        final FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
+        if (flowInstance == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.80 flow wasn't found, flowId: " + flowId);
+            return "redirect:/launchpad/flow/flow-instances";
+        }
+        model.addAttribute("flowInstance", flowInstance);
+        return "launchpad/flow/flow-instance-edit-form/" + flowId +'/' + flowInstanceId;
     }
 
 }

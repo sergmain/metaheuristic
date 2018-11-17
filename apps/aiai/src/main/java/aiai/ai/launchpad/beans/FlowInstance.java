@@ -26,7 +26,7 @@ import java.io.Serializable;
 @Table(name = "AIAI_LP_FLOW_INSTANCE")
 @Data
 public class FlowInstance implements Serializable {
-    private static final long serialVersionUID = -8071135733968387755L;
+    private static final long serialVersionUID = -8687758209537096490L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,7 +50,10 @@ public class FlowInstance implements Serializable {
     @Column(name = "INPUT_POOL_CODE")
     public String inputResourcePoolCode;
 
-    @Column(name = "  COMPLETED_ORDER")
+    @Column(name = "COMPLETED_ORDER")
     public int completedOrder;
+
+    @Column(name = "IS_STARTED")
+    public boolean started;
 
 }
