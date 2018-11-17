@@ -154,7 +154,7 @@ public class Globals {
 
         serverRestUrl  = restUrl + Consts.SERVER_REST_URL;
         payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL;
-        uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
+        uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL +"/data";
 
         if (stationDir==null) {
             log.warn("Station is disabled, stationDir: {}, isStationEnabled: {}", stationDir, isStationEnabled);

@@ -20,7 +20,6 @@ package aiai.ai.station.actors;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.server.ServerService;
 import aiai.ai.station.tasks.UploadResourceTask;
-import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
@@ -39,8 +38,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @Service
 @Slf4j
@@ -54,13 +51,9 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
     }
 
     private final Globals globals;
-    private final ChecksumWithSignatureService checksumWithSignatureService;
 
-    private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
-
-    public UploadResourceActor(Globals globals, ChecksumWithSignatureService checksumWithSignatureService) {
+    public UploadResourceActor(Globals globals) {
         this.globals = globals;
-        this.checksumWithSignatureService = checksumWithSignatureService;
     }
 
     @PostConstruct
@@ -90,9 +83,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
 
         UploadResourceTask task;
         while((task = poll())!=null) {
-
             try (InputStream is = new FileInputStream(task.file)) {
-
                 HttpEntity entity = MultipartEntityBuilder.create()
                         .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                         .setCharset(StandardCharsets.UTF_8)
@@ -121,17 +112,4 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             }
         }
     }
-
-    private void logError(String snippetCode, HttpResponseException e) {
-        if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
-            log.warn("Snippet with code {} wasn't found", snippetCode);
-        }
-        else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-            log.warn("Snippet with id {} is broken and need to be recreated", snippetCode);
-        }
-        else {
-            log.error("HttpResponseException", e);
-        }
-    }
-
 }

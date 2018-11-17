@@ -118,7 +118,7 @@ public class ServerController {
         if (originFilename == null) {
             return new ServerService.UploadResult(false, "#442.01 name of uploaded file is null");
         }
-        Enums.BinaryDataType type = Enums.BinaryDataType.valueOf(typeAsStr.toLowerCase());
+        Enums.BinaryDataType type = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
         if(!type.isProd()) {
             return new ServerService.UploadResult(false,
                     "#442.90 type of uploaded resource isn't acceptable, type: " + typeAsStr);
