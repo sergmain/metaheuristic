@@ -1,0 +1,40 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+     layout:decorate="~{layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">New flow</h1>
+
+        <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
+        <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
+
+        <!--/*@thymesVar id="flow" type="aiai.ai.launchpad.beans.Flow"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${flow}" method="post" action="#" th:method="POST" th:action="@{/launchpad/flow/flow-add-form-commit}" accept-charset="UTF-8" id="flow-form" name="f">
+            <fieldset>
+
+                <label for="code">Code of flow</label>
+                <input name="code" id="code" type="text" placeholder="Code of flow" th:field="*{code}">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="params">Parameters of flow</label>
+                <textarea name="params" id="params" placeholder="Parameters of flow" cols="70" rows="15" th:field="*{params}" maxlength="10000"></textarea>
+                <span class="pure-form-message">This is a required field.</span>
+
+                <table>
+                    <tr>
+                        <td>
+                            <button type="submit" class="pure-button pure-button-primary">Create</button>
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td>
+                            <a class="pure-button pure-button-primary" href="flows.html" th:href="${'/launchpad/flow/flows'}">Cancel</a>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+    </div>
+</div>

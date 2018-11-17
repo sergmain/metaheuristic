@@ -153,7 +153,7 @@ public class Globals {
             }
         }
 
-        final String restUrl = launchpadUrl + (isSecureRestUrl ? Consts.SERVER_REST_URL : Consts.SERVER_REST_URL );
+        final String restUrl = launchpadUrl + (isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
 
         serverRestUrl  = restUrl + Consts.SERVER_REST_URL;
         payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL;
