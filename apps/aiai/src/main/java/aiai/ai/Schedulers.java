@@ -70,19 +70,19 @@ public class Schedulers {
                 return;
             }
             log.info("FlowService.markOrderAsCompleted()");
-            launchpadService.getFlowService().createAllTasks();
+            launchpadService.getFlowService().markOrderAsCompleted();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.producing-flow-instance'), 5, 40, 5)*1000 }")
-        public void producingFlowInstances() {
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.create-all-tasks'), 5, 40, 5)*1000 }")
+        public void createAllTasks() {
             if (globals.isUnitTesting) {
                 return;
             }
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("FlowService.markOrderAsCompleted()");
-            launchpadService.getFlowService().markOrderAsCompleted();
+            log.info("FlowService.producingFlowInstances()");
+            launchpadService.getFlowService().createAllTasks();
         }
     }
 

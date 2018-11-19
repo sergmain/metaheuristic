@@ -68,11 +68,9 @@ public class FlowService {
         return flowInstanceRepository.save(fi);
     }
 
-
-
     public synchronized void createAllTasks() {
         List<FlowInstance> flowInstances = flowInstanceRepository.findByExecState(
-                Enums.FlowInstanceExecState.STARTED.code);
+                Enums.FlowInstanceExecState.PRODUCING.code);
         for (FlowInstance flowInstance : flowInstances) {
             Flow flow = flowCache.findById(flowInstance.getFlowId());
             if (flow==null) {
