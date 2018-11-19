@@ -33,7 +33,7 @@
     <a class="pure-button pure-button-primary" href="flow-instance-add-form.html" th:href="@{/launchpad/flow/flow-instance-add}">Add new flow instance</a>
     <p></p>
 
-    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController.FlowInstanceResult"*/-->
+    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController.FlowInstancesResult"*/-->
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>
@@ -55,10 +55,20 @@
             <td th:text="${i.inputResourcePoolCode}">Pool code</td>
             <td th:text="${#dates.format(i.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
             <td th:text="${i.valid}">Is valid</td>
-            <td th:text="${i.started}">Is started</td>
-            <td th:text="${i.completed}">Is completed</td>
+            <td th:text="${T(aiai.ai.Enums.FlowInstanceExecState).from(i.execState)}">Exec state</td>
             <td th:text="${#dates.format(i.completedOn, 'dd-MMM-yy HH:mm')}">Completed on</td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-instance-start/' + i.id}">Start</a></td>
+            <td>
+                <a class="pure-button pure-button-primary"
+                   th:if="${i.execState==T(aiai.ai.Enums.FlowInstanceExecState).NONE.code}"
+                   th:href="${'/launchpad/flow/flow-instance-target-exec-state/'+i.flowId+'/producing/' + i.id}">Produce</a>
+                <a class="pure-button pure-button-primary"
+                   th:if="${i.execState==T(aiai.ai.Enums.FlowInstanceExecState).PRODUCED.code or
+                   i.execState==T(aiai.ai.Enums.FlowInstanceExecState).STOPPED.code}"
+                   th:href="${'/launchpad/flow/flow-instance-target-exec-state/'+i.flowId+'/started/' + i.id}">Start</a>
+                <a class="pure-button pure-button-primary"
+                   th:if="${i.execState==T(aiai.ai.Enums.FlowInstanceExecState).STARTED.code}"
+                   th:href="${'/launchpad/flow/flow-instance-target-exec-state/'+i.flowId+'/stopped/' + i.id}">Stop</a>
+            </td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-instance-edit/' + i.id}">Edit</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-instance-delete/' + i.id}">Delete</a></td>
         </tr>

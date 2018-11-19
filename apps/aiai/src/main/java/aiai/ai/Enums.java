@@ -103,13 +103,19 @@ public final class Enums {
                 case 1:
                     return PRODUCING;
                 case 2:
-                    return STARTED;
+                    return PRODUCED;
                 case 3:
-                    return STOPPED;
+                    return STARTED;
                 case 4:
-                    return FINISHED;
+                    return STOPPED;
                 case 5:
+                    return FINISHED;
+                case 6:
                     return DOESNT_EXIST;
+                case -1:
+                    return UNKNOWN;
+                case -2:
+                    return ERROR;
                 default:
                     return UNKNOWN;
             }

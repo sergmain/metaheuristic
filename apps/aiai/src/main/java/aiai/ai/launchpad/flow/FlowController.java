@@ -1,5 +1,6 @@
 package aiai.ai.launchpad.flow;
 
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
@@ -36,13 +37,13 @@ public class FlowController {
     @Data
     public static class FlowInstancesResult {
         public Slice<FlowInstance> instances;
-        public Map<Long,String> flowCodes = new HashMap<>();
+        public Map<Long, String> flowCodes = new HashMap<>();
     }
 
     @Data
     @AllArgsConstructor
     public static class FlowInstanceResult {
-        public FlowInstance instances;
+        public FlowInstance flowInstance;
         public Flow flow;
     }
 
@@ -255,15 +256,23 @@ public class FlowController {
         return "redirect:/launchpad/flow/flow-instances";
     }
 
-    @PostMapping("/flow-instance-start-commit")
-    public String flowInstanceStartCommit(Long flowId, Long flowInstanceId, Model model, final RedirectAttributes redirectAttributes) {
-        String redirectUrl = prepareModel(flowId, flowInstanceId, model, redirectAttributes);
-        if (redirectUrl != null) {
-            return redirectUrl;
+    @GetMapping("/flow-instance-target-exec-state/{flowId}/{state}/{id}")
+    public String flowInstanceTargetExecStatet(@PathVariable Long flowId, @PathVariable String state, @PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
+        Enums.FlowInstanceExecState execState = Enums.FlowInstanceExecState.valueOf(state.toUpperCase());
+        if (execState== Enums.FlowInstanceExecState.UNKNOWN) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "#560.73 Unknown exec state, state: " + state);
+            return "redirect:/launchpad/flow/flow-instances/" + flowId;
         }
-        FlowInstanceResult result = (FlowInstanceResult) model.asMap().get("result");
 
-
-        return "redirect:/launchpad/flow/flow-instances";
+        FlowInstance flowInstance = flowInstanceRepository.findById(id).orElse(null);
+        if (flowInstance==null) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "#560.73 FlowInstance wasn't foound, id: " + id);
+            return "redirect:/launchpad/flow/flow-instances/" + flowId;
+        }
+        flowInstance.setExecState(execState.code);
+        flowInstanceRepository.save(flowInstance);
+        return "redirect:/launchpad/flow/flow-instances/" + flowId;
     }
 }

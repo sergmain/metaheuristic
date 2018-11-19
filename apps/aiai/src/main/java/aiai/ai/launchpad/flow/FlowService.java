@@ -58,9 +58,17 @@ public class FlowService {
             log.error(es);
             throw new IllegalStateException(es);
         }
+        Flow flow = flowCache.findById(fi.getFlowId());
+        if (flow==null) {
+            flowInstance.setExecState(Enums.FlowInstanceExecState.ERROR.code);
+            flowInstanceRepository.save(fi);
+            return null;
+        }
         fi.setExecState(Enums.FlowInstanceExecState.STARTED.code);
         return flowInstanceRepository.save(fi);
     }
+
+
 
     public synchronized void createAllTasks() {
         List<FlowInstance> flowInstances = flowInstanceRepository.findByExecState(
