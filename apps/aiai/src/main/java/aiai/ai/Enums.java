@@ -87,7 +87,8 @@ public final class Enums {
         STOPPED(4),         // stopped
         FINISHED(5),        // finished
         DOESNT_EXIST(6),    // doesn't exist. this state is needed at station side to reconcile list of experiments
-        UNKNOWN(-1);        // unknown state
+        UNKNOWN(-1),        // unknown state
+        ERROR(-2);        // some error in sonfiguration
 
         public int code;
 

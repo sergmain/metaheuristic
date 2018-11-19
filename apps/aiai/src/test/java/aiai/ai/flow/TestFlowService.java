@@ -131,6 +131,7 @@ public class TestFlowService extends PreparingFlow {
         assertEquals(Enums.FlowInstanceExecState.PRODUCING.code, flowInstance.execState);
 
         result = flowService.createTasks(flow, flowInstance);
+        flowInstance = result.flowInstance;
         assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
         assertEquals(Enums.FlowInstanceExecState.PRODUCED.code, flowInstance.execState);
 
@@ -154,6 +155,13 @@ public class TestFlowService extends PreparingFlow {
 
 
         // ======================
+        TaskService.TasksAndAssignToStationResult assignToStation0 =
+                taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
+
+        Protocol.AssignedTask.Task simpleTask0 = assignToStation0.getSimpleTask();
+        assertNull(simpleTask0);
+
+        flowInstance = flowService.startFlowInstance(flowInstance);
 
         TaskService.TasksAndAssignToStationResult assignToStation =
                 taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());

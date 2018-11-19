@@ -91,12 +91,16 @@ public class TaskService {
         List<FlowInstance> flowInstances;
         if (flowInstanceId==null) {
             flowInstances = flowInstanceRepository.findByExecStateOrderByCreatedOnAsc(
-                    Enums.FlowInstanceExecState.PRODUCING.code);
+                    Enums.FlowInstanceExecState.STARTED.code);
         }
         else {
             FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
             if (flowInstance==null) {
                 log.warn("Flow instance wasn't found for id: {}", flowInstanceId);
+                return EMPTY_RESULT;
+            }
+            if (flowInstance.execState!=Enums.FlowInstanceExecState.STARTED.code) {
+                log.warn("Flow instance wasn't started.Current exec state: {}", Enums.FlowInstanceExecState.toState(flowInstance.execState));
                 return EMPTY_RESULT;
             }
             flowInstances = Collections.singletonList(flowInstance);

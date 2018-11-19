@@ -37,8 +37,9 @@ public class FlowService {
     private final FlowInstanceRepository flowInstanceRepository;
     private final SnippetCache snippetCache;
     private final TaskRepository taskRepository;
+    private final FlowCache flowCache;
 
-    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache, TaskRepository taskRepository) {
+    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache, TaskRepository taskRepository, FlowCache flowCache) {
         this.flowYamlUtils = flowYamlUtils;
         this.experimentCache = experimentCache;
         this.binaryDataService = binaryDataService;
@@ -47,6 +48,32 @@ public class FlowService {
         this.flowInstanceRepository = flowInstanceRepository;
         this.snippetCache = snippetCache;
         this.taskRepository = taskRepository;
+        this.flowCache = flowCache;
+    }
+
+    public FlowInstance startFlowInstance(FlowInstance flowInstance) {
+        FlowInstance fi = flowInstanceRepository.findById(flowInstance.getId()).orElse(null);
+        if (fi==null) {
+            String es = "Can't change exec state to PRODUCED for flowInstance #" + flowInstance.getId();
+            log.error(es);
+            throw new IllegalStateException(es);
+        }
+        fi.setExecState(Enums.FlowInstanceExecState.STARTED.code);
+        return flowInstanceRepository.save(fi);
+    }
+
+    public synchronized void createAllTasks() {
+        List<FlowInstance> flowInstances = flowInstanceRepository.findByExecState(
+                Enums.FlowInstanceExecState.STARTED.code);
+        for (FlowInstance flowInstance : flowInstances) {
+            Flow flow = flowCache.findById(flowInstance.getFlowId());
+            if (flow==null) {
+                flowInstance.setExecState(Enums.FlowInstanceExecState.ERROR.code);
+                flowInstanceRepository.save(flowInstance);
+                continue;
+            }
+            createTasks(flow, flowInstance);
+        }
     }
 
     @Data
@@ -245,8 +272,16 @@ public class FlowService {
             }
             inputResourceCodes = produceTaskResult.outputResourceCodes;
         }
-        fi.setExecState(Enums.FlowInstanceExecState.PRODUCED.code);
-        flowInstanceRepository.save(fi);
+        Long id = fi.getId();
+        result.flowInstance = flowInstanceRepository.findById(id).orElse(null);
+        if (result.flowInstance==null) {
+            String es = "Can't change exec state to PRODUCED for flowInstance #" + id;
+            log.error(es);
+            throw new IllegalStateException(es);
+        }
+        result.flowInstance.setExecState(Enums.FlowInstanceExecState.PRODUCED.code);
+        flowInstanceRepository.save(result.flowInstance);
+
         result.flowProducingStatus = Enums.FlowProducingStatus.OK;
 
     }
