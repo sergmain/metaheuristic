@@ -44,16 +44,15 @@ public class FlowInstance implements Serializable {
     @Column(name="COMPLETED_ON")
     public Long completedOn;
 
-    @Column(name = "IS_COMPLETED")
-    public boolean completed;
-
     @Column(name = "INPUT_POOL_CODE")
     public String inputResourcePoolCode;
 
-    @Column(name = "COMPLETED_ORDER")
-    public int completedOrder;
+    @Column(name = "PRODUCING_ORDER")
+    public int producingOrder;
 
-    @Column(name = "IS_STARTED")
-    public boolean started;
+    @Column(name = "IS_VALID")
+    public boolean valid;
 
+    @Column(name = "EXEC_STATE")
+    public int execState;
 }

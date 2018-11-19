@@ -1,6 +1,5 @@
 package aiai.ai.launchpad.repositories;
 
-import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -10,9 +9,9 @@ import java.util.List;
 
 public interface FlowInstanceRepository extends CrudRepository<FlowInstance, Long> {
 
-    List<FlowInstance> findByCompletedFalseOrderByCreatedOnAsc();
+    List<FlowInstance> findByExecStateOrderByCreatedOnAsc(int execSate);
 
-    List<FlowInstance> findByCompletedFalse();
+    List<FlowInstance> findByExecState(int execState);
 
     Slice<FlowInstance> findByFlowId(Pageable pageable, long flowId);
 }

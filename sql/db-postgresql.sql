@@ -137,9 +137,9 @@ CREATE TABLE AIAI_LP_FLOW_INSTANCE (
   FLOW_ID       NUMERIC(10, 0) NOT NULL,
   CREATED_ON    bigint NOT NULL,
   COMPLETED_ON  bigint,
-  IS_COMPLETED  BOOLEAN not null default false,
   INPUT_POOL_CODE  varchar(50) NOT NULL,
-  COMPLETED_ORDER integer not null NOT NULL,
-  IS_STARTED    BOOLEAN not null default false
+  PRODUCING_ORDER integer not null NOT NULL,
+  IS_VALID      BOOLEAN not null default false,
+  EXEC_STATE   smallint not null default 0
 );
 

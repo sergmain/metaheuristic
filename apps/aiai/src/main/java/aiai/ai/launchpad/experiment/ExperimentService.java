@@ -61,17 +61,7 @@ import java.util.stream.Collectors;
 @Profile("launchpad")
 public class ExperimentService {
 
-    private static final List<Protocol.AssignedTask.Task> EMPTY_SIMPLE_SEQUENCES = Collections.unmodifiableList(new ArrayList<>());
     private static final HashMap<String, Integer> HASH_MAP = new HashMap<>();
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class TasksAndAssignToStationResult {
-        Protocol.AssignedTask.Task simpleTask;
-    }
-
-    private static final TasksAndAssignToStationResult EMPTY_RESULT = new TasksAndAssignToStationResult(null);
 
     @Data
     @NoArgsConstructor
@@ -145,7 +135,6 @@ public class ExperimentService {
     private final SnippetCache snippetCache;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetService snippetService;
-    private final FlowInstanceRepository flowInstanceRepository;
 
     public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository) {
         this.globals = globals;
@@ -155,7 +144,6 @@ public class ExperimentService {
         this.snippetCache = snippetCache;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.snippetService = snippetService;
-        this.flowInstanceRepository = flowInstanceRepository;
     }
 
     private static class ParamFilter {
@@ -178,93 +166,6 @@ public class ExperimentService {
             }
         }
         return true;
-    }
-
-    public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long flowInstanceId) {
-
-        List<FlowInstance> flowInstances;
-        if (flowInstanceId==null) {
-            flowInstances = flowInstanceRepository.findByCompletedFalseOrderByCreatedOnAsc();
-        }
-        else {
-            FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
-            if (flowInstance==null) {
-                log.warn("Flow instance wasn't found for id: {}", flowInstanceId);
-                return EMPTY_RESULT;
-            }
-            flowInstances = Collections.singletonList(flowInstance);
-        }
-
-        for (FlowInstance flowInstance : flowInstances) {
-            TasksAndAssignToStationResult result = findUnassignedTaskAndAssign(flowInstance, stationId, isAcceptOnlySigned);
-            if (!result.equals(EMPTY_RESULT)) {
-                return result;
-            }
-        }
-        return EMPTY_RESULT;
-    }
-
-    private TasksAndAssignToStationResult findUnassignedTaskAndAssign(FlowInstance flowInstance, long stationId, boolean isAcceptOnlySigned) {
-
-        List<Task> tasks = taskRepository.findForAssigning(flowInstance.getId(), flowInstance.completedOrder);
-        if (currentLevelIsntFinished(tasks, flowInstance.completedOrder)) {
-            return EMPTY_RESULT;
-        }
-        Task resultTask = null;
-        for (Task task : tasks) {
-            if (!task.isCompleted) {
-                if (isAcceptOnlySigned) {
-                    final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
-
-                    SnippetVersion version = SnippetVersion.from(taskParamYaml.snippet.getCode());
-                    Snippet snippet = snippetCache.findByNameAndSnippetVersion(version.name, version.version);
-                    if (snippet==null) {
-                        log.warn("Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
-                        continue;
-                    }
-
-                    if (!snippet.isSigned()) {
-                        continue;
-                    }
-                    resultTask = task;
-                    break;
-                }
-                else {
-                    resultTask = task;
-                    break;
-                }
-            }
-        }
-        if (resultTask==null) {
-            return EMPTY_RESULT;
-        }
-        Protocol.AssignedTask.Task assignedTask = new Protocol.AssignedTask.Task();
-        assignedTask.setTaskId(resultTask.getId());
-        assignedTask.setParams(resultTask.getParams());
-
-        resultTask.setAssignedOn(System.currentTimeMillis());
-        resultTask.setStationId(stationId);
-        resultTask.setExecState(Enums.TaskExecState.IN_PROGRESS.value);
-
-/*
-        if (!feature.isInProgress) {
-            feature.setInProgress(true);
-            experimentFeatureRepository.save(feature);
-        }
-*/
-        taskRepository.save(resultTask);
-
-        return new TasksAndAssignToStationResult(assignedTask);
-    }
-
-    private boolean currentLevelIsntFinished(List<Task> tasks, int completedOrder) {
-        for (Task task : tasks) {
-            if (task.getOrder()==completedOrder && !task.isCompleted) {
-                log.error("!!!!!!!!! Not completed task was found {}", task);
-                return true;
-            }
-        }
-        return false;
     }
 
     private void checkForFinished() {

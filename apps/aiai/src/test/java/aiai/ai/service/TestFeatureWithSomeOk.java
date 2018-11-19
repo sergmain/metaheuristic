@@ -19,6 +19,7 @@ package aiai.ai.service;
 
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.experiment.ExperimentService;
+import aiai.ai.launchpad.task.TaskService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -39,7 +40,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         checkCurrentState_with10sequences();
 
         // this station already got sequences, so don't provide any new
-        ExperimentService.TasksAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
+        TaskService.TasksAndAssignToStationResult sequences = taskService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         assertNotNull(sequences);
         // sequences is empty cos we still didn't finish those sequences
@@ -47,7 +48,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         finishCurrentWithError(1);
 
-        ExperimentService.TasksAndAssignToStationResult sequences1 = experimentService.getTaskAndAssignToStation(
+        TaskService.TasksAndAssignToStationResult sequences1 = taskService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         assertNotNull(sequences1);
         if (true) throw new IllegalStateException("Not implemented yet");

@@ -41,6 +41,7 @@
             <th>Flow code</th>
             <th>Pool code</th>
             <th>Created on</th>
+            <th>Is valid</th>
             <th>Is started</th>
             <th>Is completed</th>
             <th>Completed on</th>
@@ -53,15 +54,16 @@
             <td th:text="${result.flowCodes.get(i.id)}">Flow code</td>
             <td th:text="${i.inputResourcePoolCode}">Pool code</td>
             <td th:text="${#dates.format(i.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
+            <td th:text="${i.valid}">Is valid</td>
             <td th:text="${i.started}">Is started</td>
             <td th:text="${i.completed}">Is completed</td>
             <td th:text="${#dates.format(i.completedOn, 'dd-MMM-yy HH:mm')}">Completed on</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-instance-start/' + i.id}">Start</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-edit/' + i.id}">Edit</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-delete/' + i.id}">Delete</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-instance-edit/' + i.id}">Edit</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-instance-delete/' + i.id}">Delete</a></td>
         </tr>
         <tr>
-            <td colspan="10">
+            <td colspan="11">
                 <div>
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">

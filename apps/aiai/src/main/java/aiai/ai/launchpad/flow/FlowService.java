@@ -28,8 +28,6 @@ import java.util.List;
 @Slf4j
 public class FlowService {
 
-    private final Globals globals;
-    private final FlowRepository flowRepository;
     private final FlowYamlUtils flowYamlUtils;
     private final ExperimentCache experimentCache;
     private final BinaryDataService binaryDataService;
@@ -41,8 +39,6 @@ public class FlowService {
     private final TaskRepository taskRepository;
 
     public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache, TaskRepository taskRepository) {
-        this.globals = globals;
-        this.flowRepository = flowRepository;
         this.flowYamlUtils = flowYamlUtils;
         this.experimentCache = experimentCache;
         this.binaryDataService = binaryDataService;
@@ -73,13 +69,17 @@ public class FlowService {
         }
     }
 
-    public TaskProducingResult createTasks(Flow flow, String startWithResourcePoolCode) {
+    public TaskProducingResult createTasks(Flow flow, FlowInstance flowInstance ) {
         TaskProducingResult result = new TaskProducingResult();
+        if (flowInstance.getExecState()!=Enums.FlowInstanceExecState.PRODUCING.code) {
+            result.flowVerifyStatus = Enums.FlowVerifyStatus.ALREADY_PRODUCED_ERROR;
+            return result;
+        }
         result.flowVerifyStatus = verify(flow);
         if (result.flowVerifyStatus != Enums.FlowVerifyStatus.OK) {
             return result;
         }
-        produce(result, flow, startWithResourcePoolCode);
+        produce(result, flow, flowInstance);
 
         return result;
     }
@@ -180,22 +180,45 @@ public class FlowService {
         public List<String> outputResourceCodes;
     }
 
-    private void produce(TaskProducingResult result, Flow flow, String startWithResourcePoolCode) {
+    public FlowService.TaskProducingResult createFlowInstance(Flow flow, String startWithResourcePoolCode) {
+        FlowService.TaskProducingResult result = new TaskProducingResult();
         List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(startWithResourcePoolCode);
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_DOESNT_EXIST_ERROR;
-            return;
+            return result;
         }
 
         FlowInstance fi = new FlowInstance();
         fi.setFlowId(flow.getId());
         fi.setCreatedOn(System.currentTimeMillis());
-        fi.setCompleted(false);
+        fi.setExecState(Enums.FlowInstanceExecState.NONE.code);
         fi.setCompletedOn(null);
         fi.setInputResourcePoolCode(startWithResourcePoolCode);
-        fi.setCompletedOrder(0);
+        fi.setProducingOrder(0);
+        fi.setValid(true);
 
         flowInstanceRepository.save(fi);
+        result.flowProducingStatus = Enums.FlowProducingStatus.OK;
+        result.flowInstance = fi;
+
+        return result;
+    }
+
+    public Enums.FlowProducingStatus toProducing(FlowInstance fi) {
+        fi.setExecState(Enums.FlowInstanceExecState.PRODUCING.code);
+        fi.setProducingOrder(0);
+        flowInstanceRepository.save(fi);
+        return Enums.FlowProducingStatus.OK;
+    }
+
+    public void produce(TaskProducingResult result, Flow flow, FlowInstance fi) {
+
+        List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCode);
+        if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
+            result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_DOESNT_EXIST_ERROR;
+            return;
+        }
+
         result.flowInstance = fi;
 
         result.flowYaml = flowYamlUtils.toFlowYaml(flow.getParams());
@@ -209,7 +232,6 @@ public class FlowService {
             switch(process.type) {
                 case FILE_PROCESSING:
                     produceTaskResult = fileProcessService.produceTasks(flow, fi, process, idx, inputResourceCodes);
-
                     break;
                 case EXPERIMENT:
                     produceTaskResult = experimentProcessService.produceTasks(flow, fi, process, idx, inputResourceCodes);
@@ -223,21 +245,26 @@ public class FlowService {
             }
             inputResourceCodes = produceTaskResult.outputResourceCodes;
         }
+        fi.setExecState(Enums.FlowInstanceExecState.PRODUCED.code);
+        flowInstanceRepository.save(fi);
+        result.flowProducingStatus = Enums.FlowProducingStatus.OK;
+
     }
 
     public void markOrderAsCompleted() {
-        List<FlowInstance> flowInstances = flowInstanceRepository.findByCompletedFalse();
+        List<FlowInstance> flowInstances = flowInstanceRepository.findByExecState(
+                Enums.FlowInstanceExecState.STARTED.code);
         for (FlowInstance flowInstance : flowInstances) {
             markOrderAsCompleted(flowInstance);
         }
     }
     private void markOrderAsCompleted(FlowInstance flowInstance) {
-        for (Task task : taskRepository.findForCompletion(flowInstance.getId(), flowInstance.getCompletedOrder())) {
+        for (Task task : taskRepository.findForCompletion(flowInstance.getId(), flowInstance.getProducingOrder())) {
             if (!task.isCompleted) {
                 return;
             }
         }
-        flowInstance.setCompletedOrder(flowInstance.getCompletedOrder()+1);
+        flowInstance.setProducingOrder(flowInstance.getProducingOrder()+1);
         flowInstanceRepository.save(flowInstance);
     }
 

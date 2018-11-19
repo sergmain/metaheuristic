@@ -79,6 +79,47 @@ public final class Enums {
         }
     }
 
+    public enum FlowInstanceExecState {
+        NONE(0),            // just created flow instance
+        PRODUCING(1),       // producing was just started
+        PRODUCED(2),        // producing was finished
+        STARTED(3),         // started
+        STOPPED(4),         // stopped
+        FINISHED(5),        // finished
+        DOESNT_EXIST(6),    // doesn't exist. this state is needed at station side to reconcile list of experiments
+        UNKNOWN(-1);        // unknown state
+
+        public int code;
+
+        FlowInstanceExecState(int code) {
+            this.code = code;
+        }
+
+        public static FlowInstanceExecState toState(int code) {
+            switch (code) {
+                case 0:
+                    return NONE;
+                case 1:
+                    return PRODUCING;
+                case 2:
+                    return STARTED;
+                case 3:
+                    return STOPPED;
+                case 4:
+                    return FINISHED;
+                case 5:
+                    return DOESNT_EXIST;
+                default:
+                    return UNKNOWN;
+            }
+        }
+
+        public static String from(int code) {
+            FlowInstanceExecState state = toState(code);
+            return toState(code).toString();
+        }
+    }
+
     public enum ExperimentExecState {
         NONE(0),            // just created experiment
         STARTED(1),         // started
@@ -133,6 +174,7 @@ public final class Enums {
     }
 
     public enum FlowVerifyStatus { OK,
+        ALREADY_PRODUCED_ERROR,
         NOT_VERIFIED_YET_ERROR,
         FLOW_CODE_EMPTY_ERROR,
         NO_INPUT_POOL_CODE_ERROR,

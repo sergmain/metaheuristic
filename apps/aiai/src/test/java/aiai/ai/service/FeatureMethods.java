@@ -83,7 +83,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
     protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
         assertEquals(sequences1Feature.experimentId, experiment.getId());
-        ExperimentService.TasksAndAssignToStationResult sequences2 = experimentService.getTaskAndAssignToStation(
+        TaskService.TasksAndAssignToStationResult sequences2 = taskService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         assertNotNull(sequences2);
         assertNotNull(sequences2.getSimpleTask());
@@ -100,7 +100,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
-        ExperimentService.TasksAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
+        TaskService.TasksAndAssignToStationResult sequences = taskService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 

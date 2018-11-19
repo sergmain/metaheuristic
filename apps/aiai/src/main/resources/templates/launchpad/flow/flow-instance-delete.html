@@ -1,0 +1,51 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+     layout:decorate="~{layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">Station</h1>
+
+        <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
+        <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
+
+        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController.FlowInstanceResult"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${flow}">
+            <fieldset>
+                <label for="code">Code of flow</label>
+                <input name="code" id="code" type="text" placeholder="code" th:field="*{code}">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="params">Parameters of flow</label>
+                <textarea name="params" id="params" placeholder="Parameters of flow" cols="70" rows="15" th:field="*{params}" maxlength="10000"></textarea>
+                <span class="pure-form-message">This is a required field.</span>
+            </fieldset>
+        </form>
+
+        <table>
+            <tr>
+                <td>
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${flow}" th:method="post" th:action="@{/launchpad/flow/flow-delete-commit}"
+                          accept-charset="UTF-8"
+                          id="flow-delete-commit"
+                          name="f">
+                        <input type="hidden" th:field="*{id}"/>
+                        <fieldset>
+                            <button type="submit" class="pure-button pure-button-primary">Delete</button>
+                        </fieldset>
+                    </form>
+                </td>
+                <td>
+                    &nbsp;
+                </td>
+                <td>
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/flow/flows}" accept-charset="UTF-8" id="flow-delete-cancel" name="f">
+                        <fieldset>
+                            <button type="submit" class="pure-button pure-button-primary">Cancel</button>
+                        </fieldset>
+                    </form>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

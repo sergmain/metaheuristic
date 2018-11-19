@@ -19,6 +19,7 @@ package aiai.ai.service;
 
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.launchpad.experiment.ExperimentService;
+import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingExperiment;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -47,7 +48,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
         // this station already got sequences, so don't provide any new
-        ExperimentService.TasksAndAssignToStationResult sequences = experimentService.getTaskAndAssignToStation(
+        TaskService.TasksAndAssignToStationResult sequences = taskService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
         assertNotNull(sequences);
@@ -61,7 +62,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
-        ExperimentService.TasksAndAssignToStationResult sequences1 = experimentService.getTaskAndAssignToStation(
+        TaskService.TasksAndAssignToStationResult sequences1 = taskService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 

@@ -138,6 +138,8 @@ CREATE TABLE AIAI_LP_FLOW_INSTANCE (
   COMPLETED_ON  TIMESTAMP,
   IS_COMPLETED  BOOLEAN not null default false,
   INPUT_POOL_CODE  varchar(50) NOT NULL,
-  COMPLETED_ORDER integer not null NOT NULL
+  COMPLETED_ORDER integer not null NOT NULL,
+  IS_STARTED    BOOLEAN not null default false,
+  IS_VALID    BOOLEAN not null default false
 );
 

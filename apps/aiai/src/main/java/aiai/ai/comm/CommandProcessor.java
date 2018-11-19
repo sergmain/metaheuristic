@@ -19,7 +19,7 @@ package aiai.ai.comm;
 
 import aiai.ai.launchpad.LaunchpadService;
 import aiai.ai.launchpad.beans.Station;
-import aiai.ai.launchpad.experiment.ExperimentService;
+import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.station.StationService;
 import aiai.ai.station.TaskProcessor;
 import lombok.extern.slf4j.Slf4j;
@@ -146,7 +146,8 @@ public class CommandProcessor {
 
     private synchronized Protocol.AssignedTask assignTaskToStation(String stationId, boolean isAcceptOnlySigned) {
         Protocol.AssignedTask r = new Protocol.AssignedTask();
-        ExperimentService.TasksAndAssignToStationResult result = launchpadService.getExperimentService()
+        TaskService.TasksAndAssignToStationResult result =
+            launchpadService.getTaskService()
                 .getTaskAndAssignToStation(Long.parseLong(stationId), isAcceptOnlySigned, null);
 
         if (result.getSimpleTask()!=null) {
