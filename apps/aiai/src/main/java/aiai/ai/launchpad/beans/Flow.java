@@ -46,4 +46,11 @@ public class Flow implements Serializable {
 
     @Column(name = "PARAMS")
     public String params;
+
+    @Column(name = "IS_LOCKED")
+    public boolean locked;
+
+    @Column(name = "IS_VALID")
+    public boolean valid;
+
 }

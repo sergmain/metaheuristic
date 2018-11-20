@@ -180,9 +180,9 @@ public final class Enums {
         ERROR,
     }
 
-    public enum FlowVerifyStatus { OK,
+    public enum FlowValidateStatus { OK,
         ALREADY_PRODUCED_ERROR,
-        NOT_VERIFIED_YET_ERROR,
+        NOT_VALIDATED_YET_ERROR,
         FLOW_CODE_EMPTY_ERROR,
         NO_INPUT_POOL_CODE_ERROR,
         NO_ANY_PROCESSES_ERROR,

@@ -6,6 +6,7 @@ import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
+import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.utils.ControllerUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -57,13 +58,15 @@ public class FlowController {
     private final FlowService flowService;
     private final FlowRepository flowRepository;
     private final FlowInstanceRepository flowInstanceRepository;
+    private final TaskRepository taskRepository;
 
-    public FlowController(Globals globals, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository) {
+    public FlowController(Globals globals, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository) {
         this.globals = globals;
         this.flowCache = flowCache;
         this.flowService = flowService;
         this.flowRepository = flowRepository1;
         this.flowInstanceRepository = flowInstanceRepository;
+        this.taskRepository = taskRepository;
     }
 
     @GetMapping("/flows")
@@ -83,7 +86,7 @@ public class FlowController {
 
     @GetMapping(value = "/flow-add")
     public String add(@ModelAttribute("flow") Flow flow) {
-        return "launchpad/flow/flow-add-form";
+        return "launchpad/flow/flow-add";
     }
 
     @GetMapping(value = "/flow-edit/{id}")
@@ -94,15 +97,36 @@ public class FlowController {
             return "redirect:/launchpad/flow/flows";
         }
         model.addAttribute("flow", flow);
-        return "launchpad/flow/flow-edit-form";
+        return "launchpad/flow/flow-edit";
     }
 
-    @PostMapping("/flow-add-form-commit")
+    @GetMapping(value = "/flow-validate/{id}")
+    public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
+        final Flow flow = flowCache.findById(id);
+        if (flow == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.01 flow wasn't found, flowId: " + id);
+            return "redirect:/launchpad/flow/flows";
+        }
+        model.addAttribute("flow", flow);
+
+        Enums.FlowValidateStatus flowValidateStatus = flowService.verify(flow);
+        if (flowValidateStatus == Enums.FlowValidateStatus.OK) {
+            flow.valid = true;
+            flowCache.save(flow);
+            return "launchpad/flow/flows";
+        }
+        log.error("Validation error: {}", flowValidateStatus);
+        model.addAttribute("errorMessage", "#560.01 Validation error: : " + flowValidateStatus);
+        model.addAttribute("flow", flow);
+        return "launchpad/flow/flow-validate";
+    }
+
+    @PostMapping("/flow-add-commit")
     public String addFormCommit(Model model, Flow flow) {
-        return processFlowCommit(model, flow, "launchpad/flow-add-form", "redirect:/launchpad/flow/flows");
+        return processFlowCommit(model, flow, "launchpad/flow-add", "redirect:/launchpad/flow/flows");
     }
 
-    @PostMapping("/flow-edit-form-commit")
+    @PostMapping("/flow-edit-commit")
     public String editFormCommit(Model model, Flow flowModel, final RedirectAttributes redirectAttributes) {
         Flow flow = flowCache.findById(flowModel.getId());
         if (flow == null) {
@@ -111,7 +135,7 @@ public class FlowController {
         }
         flow.setCode(flowModel.getCode());
         flow.setParams(flowModel.getParams());
-        return processFlowCommit(model, flow,"launchpad/flow/flow-edit-form","redirect:/launchpad/flow/flow-edit/"+flow.getId());
+        return processFlowCommit(model, flow,"launchpad/flow/flow-edit","redirect:/launchpad/flow/flow-edit/"+flow.getId());
     }
 
     private String processFlowCommit(Model model, Flow flow, String errorTarget, String normalTarget) {
@@ -182,14 +206,14 @@ public class FlowController {
     @GetMapping(value = "/flow-instance-add")
     public String flowInstanceAdd(@ModelAttribute("result") FlowListResult result) {
         result.items = flowRepository.findAll();
-        return "launchpad/flow/flow-instance-add-form";
+        return "launchpad/flow/flow-instance-add";
     }
 
-    @PostMapping("/flow-instance-add-form-commit")
+    @PostMapping("/flow-instance-add-commit")
     public String flowInstanceAddCommit(@ModelAttribute("result") FlowListResult result, Model model, Long flowId, String poolCode, final RedirectAttributes redirectAttributes) {
         if (StringUtils.isBlank(poolCode)) {
             model.addAttribute("errorMessage", "#560.60 inputResourcePoolCode of FlowInstance is empty");
-            return "launchpad/flow/flow-instance-add-form";
+            return "launchpad/flow/flow-instance-add";
         }
 
         Flow flow = flowCache.findById(flowId);
@@ -201,7 +225,7 @@ public class FlowController {
         if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
             result.items = flowRepository.findAll();
             model.addAttribute("errorMessage", "#560.60 Error creating flowInstance: " + producingResult.flowProducingStatus);
-            return "launchpad/flow/flow-instance-add-form";
+            return "launchpad/flow/flow-instance-add";
 
         }
         return "redirect:/launchpad/flow/flow-instances/" + flowId;
@@ -213,19 +237,27 @@ public class FlowController {
         if (redirectUrl != null) {
             return redirectUrl;
         }
-        return "launchpad/flow/flow-instance-edit-form/" + flowId +'/' + flowInstanceId;
+        return "launchpad/flow/flow-instance-edit/" + flowId +'/' + flowInstanceId;
     }
 
-    @GetMapping("/flow-instance-delete/{flowId}/{flowInstanceId")
+    @GetMapping("/flow-instance-delete/{flowId}/{flowInstanceId}")
     public String flowInstanceDelete(@PathVariable Long flowId, @PathVariable Long flowInstanceId, Model model, final RedirectAttributes redirectAttributes) {
         String redirectUrl = prepareModel(flowId, flowInstanceId, model, redirectAttributes);
         if (redirectUrl != null) {
             return redirectUrl;
         }
-        return "launchpad/flowInstance/flow-instance-delete";
+        return "launchpad/flow/flow-instance-delete";
     }
 
     private String prepareModel(@PathVariable Long flowId, @PathVariable Long flowInstanceId, Model model, RedirectAttributes redirectAttributes) {
+        if (flowId==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.83 flow wasn't found, flowId: " + flowId);
+            return "redirect:/launchpad/flow/flows";
+        }
+        if (flowInstanceId==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.80 flow wasn't found, flowId: " + flowId);
+            return "redirect:/launchpad/flow/flows";
+        }
         final FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
         if (flowInstance == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#560.80 flow wasn't found, flowId: " + flowId);
@@ -257,27 +289,34 @@ public class FlowController {
             return redirectUrl;
         }
 
+        taskRepository.deleteByFlowInstanceId(flowInstanceId);
         flowInstanceRepository.deleteById(flowInstanceId);
-        return "redirect:/launchpad/flow/flow-instances";
+        return "redirect:/launchpad/flow/flow-instances/"+ flowId;
     }
 
     @GetMapping("/flow-instance-target-exec-state/{flowId}/{state}/{id}")
-    public String flowInstanceTargetExecStatet(@PathVariable Long flowId, @PathVariable String state, @PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
+    public String flowInstanceTargetExecState(@PathVariable Long flowId, @PathVariable String state, @PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         Enums.FlowInstanceExecState execState = Enums.FlowInstanceExecState.valueOf(state.toUpperCase());
         if (execState== Enums.FlowInstanceExecState.UNKNOWN) {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "#560.73 Unknown exec state, state: " + state);
             return "redirect:/launchpad/flow/flow-instances/" + flowId;
         }
-
-        FlowInstance flowInstance = flowInstanceRepository.findById(id).orElse(null);
-        if (flowInstance==null) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "#560.73 FlowInstance wasn't foound, id: " + id);
-            return "redirect:/launchpad/flow/flow-instances/" + flowId;
+        String redirectUrl = prepareModel(flowId, id, model, redirectAttributes);
+        if (redirectUrl != null) {
+            return redirectUrl;
         }
-        flowInstance.setExecState(execState.code);
-        flowInstanceRepository.save(flowInstance);
+        FlowInstanceResult result = (FlowInstanceResult) model.asMap().get("results");
+        if (result==null) {
+            throw new IllegalStateException("FlowInstanceResult is null");
+        }
+
+        result.flowInstance.setExecState(execState.code);
+        flowInstanceRepository.save(result.flowInstance);
+
+        result.flow.locked = true;
+        flowCache.save(result.flow);
+
         return "redirect:/launchpad/flow/flow-instances/" + flowId;
     }
 }

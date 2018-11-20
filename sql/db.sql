@@ -125,7 +125,9 @@ CREATE TABLE AIAI_LP_FLOW (
   VERSION       NUMERIC(5, 0)  NOT NULL,
   CODE      varchar(50)  NOT NULL,
   CREATED_ON    bigint NOT NULL,
-  PARAMS        TEXT not null
+  PARAMS        TEXT not null,
+  IS_LOCKED      BOOLEAN not null default false,
+  IS_VALID      BOOLEAN not null default false
 );
 
 CREATE TABLE AIAI_LP_FLOW_INSTANCE (

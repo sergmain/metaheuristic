@@ -68,13 +68,10 @@ public class SnippetController {
     public String delete(@ModelAttribute Result result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         final Snippet snippet = snippetCache.findById(id);
         if (snippet==null) {
-            return "redirect:/launchpad/resources";
+            return "redirect:/launchpad/snippets";
         }
-        redirectAttributes.addFlashAttribute("errorMessage", "#423.01 need to implement this method");
 
-        // TODO !!!!! need to implement this method !!!!!
-
-        result.snippets = snippetRepository.findAll();
+        snippetCache.delete(snippet.getId());
         return "launchpad/snippets";
     }
 

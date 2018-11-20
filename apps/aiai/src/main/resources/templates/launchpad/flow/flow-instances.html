@@ -70,7 +70,7 @@
                    th:href="${'/launchpad/flow/flow-instance-target-exec-state/'+i.flowId+'/stopped/' + i.id}">Stop</a>
             </td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-instance-edit/' + i.id}">Edit</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-instance-delete/' + i.id}">Delete</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-instance-delete/'+i.flowId+'/' + i.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="11">
