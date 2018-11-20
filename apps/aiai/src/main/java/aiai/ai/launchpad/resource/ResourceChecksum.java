@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.experiment.resource;
+package aiai.ai.launchpad.resource;
 
 import aiai.apps.commons.utils.Checksum;
 

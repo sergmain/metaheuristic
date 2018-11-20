@@ -101,38 +101,6 @@
         <p>&nbsp;</p>
 
 
-        <!--/*@thymesVar id="datasets" type="aiai.ai.launchpad.experiment.ExperimentsController.AllDatasetResult"*/-->
-        <h1 class="widget-header">Dataset</h1>
-        <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-dataset-assign-commit/'+experiment.id}" accept-charset="UTF-8"
-              th:if="${experimentResult.dataset==null}">
-            <select class="pure-input-medium" th:name="code">
-                <option  th:each="o : ${experimentResult.allDatasetOptions}" th:value="${o.value}" th:text="${o.desc} "></option>
-            </select>
-            <button class="pure-button pure-button-primary" type="submit">Assign dataset</button>
-            <p>&nbsp;</p>
-        </form>
-
-        <table  th:if="${experimentResult.dataset!=null}" class="pure-table pure-table-bordered" id="table-datasets">
-            <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th colspan="1">&nbsp;</th>
-            </tr>
-            </thead>
-
-            <tbody>
-            <tr>
-                <td th:text="${experimentResult.dataset.id}">datasetId</td>
-                <td th:text="${experimentResult.dataset.name}">name</td>
-                <td th:text="${experimentResult.dataset.description}">description</td>
-                <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment-dataset-unassign-commit/' + experiment.id}">Unassign</a></td>
-            </tr>
-            </tbody>
-        </table>
-        <p>&nbsp;</p>
-
         <!--/*@thymesVar id="snippetResult" type="aiai.ai.launchpad.experiment.ExperimentsController.SnippetResult"*/-->
         <h1 class="widget-header">Snippets</h1>
         <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-add-commit/'+experiment.id}" accept-charset="UTF-8"

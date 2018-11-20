@@ -23,6 +23,10 @@
                 <input name="description" id="description" type="text" placeholder="description"  th:field="*{description}">
                 <span class="pure-form-message">This is a required field.</span>
 
+                <label for="code">Experiment code</label>
+                <input name="code" id="code" type="text" placeholder="Experiment code"  th:field="*{code}">
+                <span class="pure-form-message">This is a required field.</span>
+
                 <label for="seed">Seed</label>
                 <input name="seed" id="seed" type="text" placeholder="seed"  th:field="*{seed}">
                 <span class="pure-form-message">Default value will be used if not defined. Which is 1.</span>

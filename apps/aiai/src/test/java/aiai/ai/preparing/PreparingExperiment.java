@@ -227,7 +227,7 @@ public abstract class PreparingExperiment {
     public void afterPreparingExperiment() {
         long mills = System.currentTimeMillis();
         log.info("Start after()");
-        if (experiment != null) {
+        if (experiment != null && experiment.getId() != null) {
             try {
                 experimentFeatureRepository.deleteByExperimentId(experiment.getId());
             } catch (Throwable throwable) {

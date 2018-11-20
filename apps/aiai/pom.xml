@@ -234,14 +234,13 @@
 			<artifactId>postgresql</artifactId>
 			<version>42.2.4</version>
 		</dependency>
-<!--
+
 		<dependency>
-            &lt;!&ndash;License	GPL 2.0 with FOSS license exceeption &ndash;&gt;
+            <!--License	GPL 2.0 with FOSS license exceeption -->
 			<groupId>mysql</groupId>
 			<artifactId>mysql-connector-java</artifactId>
 			<version>8.0.12</version>
 		</dependency>
--->
 
         <!-- https://mvnrepository.com/artifact/org.mockito/mockito-core -->
         <dependency>
@@ -323,7 +322,7 @@
                 <!-- to check which libraries have new versions -->
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>versions-maven-plugin</artifactId>
-				<version>2.5</version>
+				<version>2.7</version>
 				<configuration>
 					<generateBackupPoms>false</generateBackupPoms>
 				</configuration>

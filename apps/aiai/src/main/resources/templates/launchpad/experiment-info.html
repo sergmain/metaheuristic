@@ -55,7 +55,7 @@
         </table>
         <p>&nbsp;</p>
 
-        <!--/*@thymesVar id="datasets" type="aiai.ai.launchpad.experiment.ExperimentsController.AllDatasetResult"*/-->
+<!--        &lt;!&ndash;/*@thymesVar id="datasets" type="aiai.ai.launchpad.experiment.ExperimentsController.AllDatasetResult"*/&ndash;&gt;
         <h1 class="widget-header">Dataset</h1>
         <table th:if="${experimentResult.dataset!=null}" class="pure-table pure-table-bordered" id="table-datasets">
             <thead>
@@ -74,7 +74,7 @@
             </tbody>
         </table>
         <p th:if="${experimentResult.dataset==null}">Dataset isn't assigned</p>
-        <p>&nbsp;</p>
+        <p>&nbsp;</p>-->
 
         <h1 class="widget-header">Snippets</h1>
         <table class="pure-table pure-table-bordered" id="table-snippet" th:fragment="table-snippet">
@@ -114,6 +114,7 @@
         </table>
         <p>&nbsp;</p>
 
+<!--
         <h1 class="widget-header">Dataset features</h1>
         <table class="pure-table pure-table-bordered" id="table-group" th:fragment="table-group" th:if="${experimentResult.dataset!=null}">
             <thead>
@@ -132,6 +133,7 @@
             </tbody>
         </table>
         <p th:if="${experimentResult.dataset==null}">Dataset isn't assigned</p>
+-->
 
         <p>&nbsp;</p>
 

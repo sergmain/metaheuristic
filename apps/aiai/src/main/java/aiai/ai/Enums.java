@@ -176,7 +176,7 @@ public final class Enums {
     public enum FlowProducingStatus { OK,
         NOT_PRODUCING_YET_ERROR,
         EXPERIMENT_NOT_FOUND_BY_CODE_ERROR,
-        INPUT_POOL_DOESNT_EXIST_ERROR,
+        INPUT_POOL_CODE_DOESNT_EXIST_ERROR,
         ERROR,
     }
 

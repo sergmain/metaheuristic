@@ -15,21 +15,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.experiment.resource;
+package aiai.ai.launchpad.resource;
 
 import aiai.ai.Globals;
 import aiai.ai.exceptions.StoreNewPartOfRawFileException;
 import aiai.ai.launchpad.beans.BinaryData;
-import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.experiment.ExperimentsController;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.ControllerUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -130,16 +128,13 @@ public class ResourceController {
             redirectAttributes.addFlashAttribute("errorMessage", "#172.01 name of uploaded file is null");
             return "redirect:/launchpad/resources";
         }
-/*
-        if (!checkExtension(originFilename)) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#172.03 not supported extension, filename: " + originFilename);
-            return "redirect:/launchpad/resources";
-        }
-*/
+        String code = StringUtils.isNotBlank(resourceCode)
+                ? resourceCode
+                : resourcePoolCode + '-' + originFilename;
 
         try {
             resourceService.storeNewPartOfRawFile(
-                    originFilename, tempFile, resourceCode, resourcePoolCode, true, originFilename);
+                    originFilename, tempFile, code, resourcePoolCode, true, originFilename);
         } catch (StoreNewPartOfRawFileException e) {
             log.error("Error", e);
             redirectAttributes.addFlashAttribute("errorMessage", "#172.04 An error while saving data to file, " + e.toString());

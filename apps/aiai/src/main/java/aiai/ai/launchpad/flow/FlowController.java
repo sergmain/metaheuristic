@@ -186,10 +186,10 @@ public class FlowController {
     }
 
     @PostMapping("/flow-instance-add-form-commit")
-    public String flowInstanceAddCommit(Model model, Long flowId, String poolCode, final RedirectAttributes redirectAttributes) {
+    public String flowInstanceAddCommit(@ModelAttribute("result") FlowListResult result, Model model, Long flowId, String poolCode, final RedirectAttributes redirectAttributes) {
         if (StringUtils.isBlank(poolCode)) {
             model.addAttribute("errorMessage", "#560.60 inputResourcePoolCode of FlowInstance is empty");
-            return "launchpad/flow-instance-add-form";
+            return "launchpad/flow/flow-instance-add-form";
         }
 
         Flow flow = flowCache.findById(flowId);
@@ -197,8 +197,13 @@ public class FlowController {
             redirectAttributes.addFlashAttribute("errorMessage", "#560.70 flow wasn't found, flowId: " + flowId);
             return "redirect:/launchpad/flow/flows";
         }
-        flowService.createFlowInstance(flow, poolCode);
+        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, poolCode);
+        if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
+            result.items = flowRepository.findAll();
+            model.addAttribute("errorMessage", "#560.60 Error creating flowInstance: " + producingResult.flowProducingStatus);
+            return "launchpad/flow/flow-instance-add-form";
 
+        }
         return "redirect:/launchpad/flow/flow-instances/" + flowId;
     }
 

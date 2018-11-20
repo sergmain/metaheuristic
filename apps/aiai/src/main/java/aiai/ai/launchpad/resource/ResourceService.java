@@ -1,4 +1,4 @@
-package aiai.ai.launchpad.experiment.resource;
+package aiai.ai.launchpad.resource;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;

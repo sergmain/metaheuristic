@@ -110,6 +110,7 @@ public class FlowService {
         }
         result.flowVerifyStatus = verify(flow);
         if (result.flowVerifyStatus != Enums.FlowVerifyStatus.OK) {
+            log.error("Can't produce tasks, error: {}", result.flowVerifyStatus);
             return result;
         }
         produce(result, flow, flowInstance);
@@ -217,7 +218,7 @@ public class FlowService {
         FlowService.TaskProducingResult result = new TaskProducingResult();
         List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(startWithResourcePoolCode);
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
-            result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_DOESNT_EXIST_ERROR;
+            result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return result;
         }
 
@@ -248,7 +249,7 @@ public class FlowService {
 
         List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCode);
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
-            result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_DOESNT_EXIST_ERROR;
+            result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return;
         }
 

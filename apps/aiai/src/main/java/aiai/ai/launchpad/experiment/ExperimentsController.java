@@ -22,12 +22,14 @@ import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.repositories.*;
+import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.utils.SimpleSelectOption;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
+import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -121,8 +123,9 @@ public class ExperimentsController {
     private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final TaskRepository taskRepository;
+    private final SnippetCache snippetCache;
 
-    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository) {
+    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, SnippetCache snippetCache) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
         this.experimentRepository = experimentRepository;
@@ -132,6 +135,7 @@ public class ExperimentsController {
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.taskRepository = taskRepository;
+        this.snippetCache = snippetCache;
     }
 
     @GetMapping("/experiments")
@@ -390,9 +394,14 @@ public class ExperimentsController {
         }
         Long experimentId = experiment.getId();
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experimentId);
+
+        SnippetVersion version = SnippetVersion.from(code);
+        Snippet snippet = snippetCache.findByNameAndSnippetVersion(version.name, version.version);
+
         ExperimentSnippet ts = new ExperimentSnippet();
         ts.setExperimentId(experimentId);
         ts.setSnippetCode( code );
+        ts.setType( snippet.type );
 
         List<ExperimentSnippet> list = new ArrayList<>(experimentSnippets);
         list.add(ts);
