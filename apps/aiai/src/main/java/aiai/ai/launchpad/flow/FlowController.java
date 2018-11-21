@@ -110,15 +110,17 @@ public class FlowController {
         model.addAttribute("flow", flow);
 
         Enums.FlowValidateStatus flowValidateStatus = flowService.verify(flow);
-        if (flowValidateStatus == Enums.FlowValidateStatus.OK) {
-            flow.valid = true;
-            flowCache.save(flow);
-            return "launchpad/flow/flows";
+        flow.valid = flowValidateStatus == Enums.FlowValidateStatus.OK;
+        flowCache.save(flow);
+        if (flow.valid) {
+            model.addAttribute("infoMessages", "Validation result: OK");
         }
-        log.error("Validation error: {}", flowValidateStatus);
-        model.addAttribute("errorMessage", "#560.01 Validation error: : " + flowValidateStatus);
+        else {
+            log.error("Validation error: {}", flowValidateStatus);
+            model.addAttribute("errorMessage", "#560.01 Validation error: : " + flowValidateStatus);
+        }
         model.addAttribute("flow", flow);
-        return "launchpad/flow/flow-validate";
+        return "launchpad/flow/flow-edit";
     }
 
     @PostMapping("/flow-add-commit")

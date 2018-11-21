@@ -22,6 +22,7 @@ import aiai.ai.launchpad.experiment.ExperimentUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -98,6 +99,12 @@ public class Experiment implements Serializable {
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
     private List<ExperimentHyperParams> hyperParams;
+
+    public void strip() {
+        name = StringUtils.strip(name);
+        description = StringUtils.strip(description);
+        code = StringUtils.strip(code);
+    }
 
     public Map<String, Map<String, Integer>> getHyperParamsAsMap() {
         return getHyperParamsAsMap(true);

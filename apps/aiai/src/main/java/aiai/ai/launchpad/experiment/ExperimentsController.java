@@ -104,12 +104,13 @@ public class ExperimentsController {
     public static class SimpleExperiment {
         public String name;
         public String description;
+        public String code;
         public int seed;
         public String epoch;
         public long id;
 
         public static SimpleExperiment to(Experiment e) {
-            return new SimpleExperiment(e.getName(), e.getDescription(), e.getSeed(), e.getEpoch(), e.getId());
+            return new SimpleExperiment(e.getName(), e.getDescription(), e.getCode(), e.getSeed(), e.getEpoch(), e.getId());
         }
     }
 
@@ -249,7 +250,7 @@ public class ExperimentsController {
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
-    public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
+    public String edit(@PathVariable Long id, Model model, @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes) {
         final Experiment experiment = experimentRepository.findById(id).orElse(null);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#275.01 experiment wasn't found, experimentId: " + id);
@@ -288,8 +289,8 @@ public class ExperimentsController {
     }
 
     @PostMapping("/experiment-add-form-commit")
-    public String addFormCommit(Model model, Experiment experiment) {
-        return processCommit(model, experiment,  "launchpad/experiment-add-form", "redirect:/launchpad/experiments");
+    public String addFormCommit(Model model, Experiment experiment, final RedirectAttributes redirectAttributes) {
+        return processCommit(model, experiment,  "launchpad/experiment-add-form", "redirect:/launchpad/experiments", false, redirectAttributes);
     }
 
     @PostMapping("/experiment-edit-form-commit")
@@ -303,18 +304,48 @@ public class ExperimentsController {
         experiment.setDescription(simpleExperiment.getDescription());
         experiment.setSeed(simpleExperiment.getSeed());
         experiment.setEpoch(simpleExperiment.getEpoch());
-        return processCommit(model, experiment,  "launchpad/experiment-edit-form", "redirect:/launchpad/experiment-edit/"+experiment.getId());
+        experiment.setCode(simpleExperiment.getCode());
+        String target = "redirect:/launchpad/experiment-edit/" + experiment.getId();
+        return processCommit(model, experiment, target, target, true, redirectAttributes);
     }
 
-    private String processCommit(Model model, Experiment experiment, String errorTarget, String normalTarget) {
+    private String processCommit(Model model, Experiment experiment,
+                                 String errorTarget, String normalTarget,
+                                 boolean isErrorWithRedirect, final RedirectAttributes redirectAttributes) {
+        if (StringUtils.isBlank(experiment.getName())) {
+            prepareErrorMessage(model, "#330.01 Name of experiment is blank.", isErrorWithRedirect, redirectAttributes);
+            return errorTarget;
+        }
+        if (StringUtils.isBlank(experiment.getCode())) {
+            prepareErrorMessage(model, "#330.04 Code of experiment is blank.", isErrorWithRedirect, redirectAttributes);
+            return errorTarget;
+        }
+        if (StringUtils.isBlank(experiment.getDescription())) {
+            prepareErrorMessage(model, "#330.07 Description of experiment is blank.", isErrorWithRedirect, redirectAttributes);
+            return errorTarget;
+        }
+        if (StringUtils.isBlank(experiment.getEpoch())) {
+            prepareErrorMessage(model, "#330.10 Epochs of experiment isn't specified.", isErrorWithRedirect, redirectAttributes);
+            return errorTarget;
+        }
         ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(experiment.getEpoch());
         if (!numberOfVariants.status) {
-            model.addAttribute("errorMessage", numberOfVariants.getError());
+            prepareErrorMessage(model, numberOfVariants.getError(), isErrorWithRedirect, redirectAttributes);
             return errorTarget;
         }
         experiment.setEpochVariant(numberOfVariants.getCount());
+        experiment.strip();
         experimentRepository.save(experiment);
         return normalTarget;
+    }
+
+    private void prepareErrorMessage(Model model, String msg, boolean isErrorWithRedirect, final RedirectAttributes redirectAttributes) {
+        if (isErrorWithRedirect) {
+            redirectAttributes.addFlashAttribute("errorMessage", msg);
+        }
+        else {
+            model.addAttribute("errorMessage", msg);
+        }
     }
 
     public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
