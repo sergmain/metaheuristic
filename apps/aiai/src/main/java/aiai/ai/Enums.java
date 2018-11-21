@@ -127,42 +127,6 @@ public final class Enums {
         }
     }
 
-    public enum ExperimentExecState {
-        NONE(0),            // just created experiment
-        STARTED(1),         // started
-        STOPPED(2),         // stopped
-        FINISHED(3),        // finished
-        DOESNT_EXIST(4);    // doesn't exist. this state is needed at station side to reconcile list of experiments
-
-        public int code;
-
-        ExperimentExecState(int code) {
-            this.code = code;
-        }
-
-        public static ExperimentExecState toState(int code) {
-            switch (code) {
-                case 0:
-                    return NONE;
-                case 1:
-                    return STARTED;
-                case 2:
-                    return STOPPED;
-                case 3:
-                    return FINISHED;
-                case 4:
-                    return DOESNT_EXIST;
-                default:
-                    return null;
-            }
-        }
-
-        public static String from(int code) {
-            ExperimentExecState state = toState(code);
-            return state == null ? "Unknown" : state.toString();
-        }
-    }
-
     public enum FEATURE_STATUS {
         NONE(0), OK(1), ERROR(2), OBSOLETE(3);
 

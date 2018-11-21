@@ -40,6 +40,9 @@ public interface ExperimentRepository extends CrudRepository<Experiment, Long> {
     @Transactional(readOnly = true)
     Slice<Experiment> findAll(Pageable pageable);
 
+    Experiment findByFlowInstanceId(long flowInstanceId);
+
+    @Override
     @Transactional(readOnly = true)
     List<Experiment> findAll();
 

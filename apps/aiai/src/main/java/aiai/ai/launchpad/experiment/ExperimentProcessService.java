@@ -5,10 +5,8 @@ import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
-import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
-import aiai.ai.launchpad.repositories.StationsRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,14 +16,16 @@ public class ExperimentProcessService {
 
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
+    private final ExperimentCache experimentCache;
 
-    public ExperimentProcessService(ExperimentService experimentService, ExperimentRepository experimentRepository) {
+    public ExperimentProcessService(ExperimentService experimentService, ExperimentRepository experimentRepository, ExperimentCache experimentCache) {
         this.experimentService = experimentService;
         this.experimentRepository = experimentRepository;
+        this.experimentCache = experimentCache;
     }
 
     public FlowService.ProduceTaskResult produceTasks(Flow flow, FlowInstance flowInstance, Process process, int idx, List<String> inputResourceCodes) {
-        Experiment e = experimentRepository.findByCode(process.code);
+        Experiment e = experimentCache.findByCode(process.code);
         FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
         if (e==null) {
             result.status = Enums.FlowProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;

@@ -65,7 +65,7 @@ public class ServerService {
         }
 
         ExchangeData resultData = new ExchangeData();
-        resultData.setCommand(new Protocol.ExperimentStatus(experimentRepository.findAll().stream().map(ServerService::to).collect(Collectors.toList())));
+        resultData.setCommand(new Protocol.FlowInstanceStatus(experimentRepository.findAll().stream().map(ServerService::to).collect(Collectors.toList())));
 
         List<Command> commands = data.getCommands();
         for (Command command : commands) {
@@ -78,7 +78,7 @@ public class ServerService {
         return resultData.getCommands().isEmpty() ? EXCHANGE_DATA_NOP : resultData;
     }
 
-    private static Protocol.ExperimentStatus.SimpleStatus to(Experiment experiment) {
-        return new Protocol.ExperimentStatus.SimpleStatus(experiment.getId(), Enums.ExperimentExecState.toState(experiment.getExecState()));
+    private static Protocol.FlowInstanceStatus.SimpleStatus to(Experiment experiment) {
+        return new Protocol.FlowInstanceStatus.SimpleStatus(experiment.getId(), Enums.FlowInstanceExecState.toState(experiment.getExecState()));
     }
 }

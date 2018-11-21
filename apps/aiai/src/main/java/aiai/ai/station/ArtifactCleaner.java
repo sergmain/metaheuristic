@@ -50,8 +50,8 @@ public class ArtifactCleaner {
         }
 
         for (StationTask task : stationTaskService.findAll()) {
-            if (currentExecState.isState(task.taskId, Enums.ExperimentExecState.DOESNT_EXIST)) {
-                log.info("Delete obsolete task {}", task);
+            if (currentExecState.isState(task.taskId, Enums.FlowInstanceExecState.DOESNT_EXIST)) {
+                log.info("Delete obsolete task with id {}", task.getTaskId());
                 stationTaskService.deleteById(task.getTaskId());
             }
         }

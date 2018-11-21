@@ -171,7 +171,7 @@ public abstract class PreparingExperiment {
             experiment.setDescription("Test experiment. Must be deleted automatically.");
             experiment.setCode(TEST_EXPERIMENT_CODE_01);
             experiment.setSeed(42);
-            experiment.setExecState(Enums.ExperimentExecState.NONE.code);
+            experiment.setExecState(Enums.FlowInstanceExecState.NONE.code);
             experiment.setLaunched(false);
             experiment.setLaunchedOn(null);
             experiment.setAllTaskProduced(false);

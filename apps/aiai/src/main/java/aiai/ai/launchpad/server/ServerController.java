@@ -21,11 +21,17 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
+import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
+import aiai.ai.launchpad.snippet.SnippetCache;
+import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationResourceUtils;
+import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
+import aiai.ai.utils.checksum.ChecksumWithSignatureService;
+import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.DirUtils;
-import aiai.apps.commons.utils.ZipUtils;
+import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.context.annotation.Profile;
@@ -36,14 +42,10 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * User: Serg
@@ -58,11 +60,17 @@ public class ServerController {
     private final Globals globals;
     private final ServerService serverService;
     private final BinaryDataService binaryDataService;
+    private final SnippetCache snippetCache;
+    private final SnippetService snippetService;
+    private final ChecksumWithSignatureService checksumWithSignatureService;
 
-    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService) {
+    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService, SnippetCache snippetCache, SnippetService snippetService, ChecksumWithSignatureService checksumWithSignatureService) {
         this.globals = globals;
         this.serverService = serverService;
         this.binaryDataService = binaryDataService;
+        this.snippetCache = snippetCache;
+        this.snippetService = snippetService;
+        this.checksumWithSignatureService = checksumWithSignatureService;
     }
 
     @PostMapping("/rest-anon/srv")
@@ -147,8 +155,7 @@ public class ServerController {
 
     private HttpEntity<AbstractResource> deliverResource(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
         Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
-        File typeDir = new File(globals.launchpadResourcesDir, binaryDataType.toString());
-        AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.DATA, code);
+        AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.launchpadResourcesDir, binaryDataType, code);
 
         if (assetFile==null) {
             return returnEmptyAsGone(response);
@@ -174,41 +181,39 @@ public class ServerController {
     @GetMapping("/rest-auth/payload/snippet-checksum/{name}")
     public HttpEntity<String> snippetChecksum(HttpServletResponse response, @PathVariable("name") String snippetCode) throws IOException {
 
-        if (true) throw new IllegalStateException("Not implemented yet");
-        return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);
-/*
         SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
         Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
-            log.info("Snippet wasn't found for name {}", snippetCode);
+            log.warn("Snippet wasn't found for name {}", snippetCode);
             return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);
         }
-
+/*
         File snippetFile;
-        try {
-            snippetFile = snippetService.persistSnippet(snippetCode);
-        } catch (BinaryDataNotFoundException e) {
+        AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.launchpadResourcesDir, Enums.BinaryDataType.SNIPPET, snippetCode);
+        if (assetFile==null) {
+            log.warn("Snippet wasn't found for name {}", snippetCode);
             return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);
         }
-        if (snippetFile==null) {
-            log.info("Snippet wasn't found for name {}", snippetCode);
+        try {
+            binaryDataService.storeToFile(snippetCode, assetFile.file);
+        } catch (BinaryDataNotFoundException e) {
+            log.error("Error store data to file", e);
             return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);
         }
 
         Checksum checksum = Checksum.fromJson(snippet.getChecksum());
-        try (InputStream is = new FileInputStream(snippetFile)) {
+        try (InputStream is = new FileInputStream(assetFile.file)) {
             CheckSumAndSignatureStatus status = checksumWithSignatureService.verifyChecksumAndSignature(
                     checksum, snippetCode, is, false
             );
             if (!status.isOk) {
                 return returnEmptyStringWithStatus(response, HttpServletResponse.SC_CONFLICT);
             }
-        }
+        }*/
         final int length = snippet.getChecksum().length();
         log.info("Send checksum for snippet {}, length: {}", snippet.getSnippetCode(), length);
 
         return new HttpEntity<>(snippet.getChecksum(), getHeader(length) );
-*/
     }
 
     private HttpEntity<String> returnEmptyStringWithStatus(HttpServletResponse response, int status) throws IOException {

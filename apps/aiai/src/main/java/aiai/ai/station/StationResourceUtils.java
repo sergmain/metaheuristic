@@ -30,8 +30,7 @@ public class StationResourceUtils {
         final AssetFile assetFile = new AssetFile();
 
         File typeDir = new File(stationResourceDir, binaryDataType.toString());
-        String subDir;
-        subDir = id.replace(':', '_');
+        final String subDir = id.replace(':', '_');
 /*
         if (binaryDataType.idAsString) {
             subDir = id.replace(':', '_');
@@ -43,12 +42,12 @@ public class StationResourceUtils {
 */
         File trgDir;
         trgDir = new File(typeDir, subDir);
-        if (!trgDir.mkdirs()) {
+        if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
             log.error("Can't create resource dir for task: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
-        assetFile.file = new File(trgDir, ""+id+".bin");
+        assetFile.file = new File(trgDir, ""+subDir+".bin");
         assetFile.isExist = assetFile.file.exists();
 
         if (assetFile.isExist) {

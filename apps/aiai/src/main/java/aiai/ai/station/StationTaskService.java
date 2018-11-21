@@ -18,6 +18,7 @@
 package aiai.ai.station;
 
 import aiai.ai.Consts;
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
@@ -312,7 +313,7 @@ public class StationTaskService {
     }
 
     public Collection<StationTask> findAll() {
-        return map.values();
+        return Collections.unmodifiableCollection(map.values());
     }
 
     void deleteById(long taskId) {
@@ -325,7 +326,7 @@ public class StationTaskService {
         }
         final String path = getTaskPath(task.taskId);
 
-        final File systemDir = new File(globals.stationDir, path);
+        final File systemDir = new File(globals.stationTaskDir, path);
         try {
             if (systemDir.exists()) {
                 FileUtils.deleteDirectory(systemDir);

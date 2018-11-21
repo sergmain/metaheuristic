@@ -4,6 +4,7 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
@@ -61,14 +62,16 @@ public class FlowController {
     private final FlowRepository flowRepository;
     private final FlowInstanceRepository flowInstanceRepository;
     private final TaskRepository taskRepository;
+    private final ExperimentService experimentService;
 
-    public FlowController(Globals globals, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository) {
+    public FlowController(Globals globals, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, ExperimentService experimentService) {
         this.globals = globals;
         this.flowCache = flowCache;
         this.flowService = flowService;
         this.flowRepository = flowRepository1;
         this.flowInstanceRepository = flowInstanceRepository;
         this.taskRepository = taskRepository;
+        this.experimentService = experimentService;
     }
 
     @GetMapping("/flows")
@@ -296,6 +299,13 @@ public class FlowController {
             return redirectUrl;
         }
 
+        FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
+        if (fi==null) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "#560.73 FlowInstance wasn't found, flowInstanceId: " + flowInstanceId );
+            return "redirect:/launchpad/flow/flows";
+        }
+        experimentService.resetExperiment(fi);
         taskRepository.deleteByFlowInstanceId(flowInstanceId);
         flowInstanceRepository.deleteById(flowInstanceId);
         return "redirect:/launchpad/flow/flow-instances/"+ flowId;

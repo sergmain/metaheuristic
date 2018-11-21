@@ -77,9 +77,9 @@ public class CommandProcessor {
                 return processReportTaskProcessingResult((Protocol.ReportTaskProcessingResult) command);
             case ReportResultDelivering:
                 return processReportResultDelivering((Protocol.ReportResultDelivering) command);
-            case ExperimentStatus:
+            case FlowInstanceStatus:
                 // processing on station side
-                return processExperimentStatus((Protocol.ExperimentStatus) command);
+                return processFlowInstanceStatus((Protocol.FlowInstanceStatus) command);
             case StationTaskStatus:
                 // processing on launchpad side
                 return processStationTaskStatus((Protocol.StationTaskStatus) command);
@@ -94,8 +94,8 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processExperimentStatus(Protocol.ExperimentStatus command) {
-        taskProcessor.processExperimentStatus(command.statuses);
+    private Command[] processFlowInstanceStatus(Protocol.FlowInstanceStatus command) {
+        taskProcessor.processFlowInstanceStatus(command.statuses);
         return Protocol.NOP_ARRAY;
     }
 

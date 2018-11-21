@@ -48,7 +48,7 @@ public class ExchangeData {
     private Protocol.ReportStationStatus reportStationStatus;
     private Protocol.ReportTaskProcessingResult reportTaskProcessingResult;
     private Protocol.ReportResultDelivering reportResultDelivering;
-    private Protocol.ExperimentStatus experimentStatus;
+    private Protocol.FlowInstanceStatus experimentStatus;
     private Protocol.StationTaskStatus stationTaskStatus;
 
     @JsonProperty(value = "success")
@@ -81,8 +81,8 @@ public class ExchangeData {
                 }
                 this.reportStation = (Protocol.ReportStation) command;
                 break;
-            case ExperimentStatus:
-                this.experimentStatus = (Protocol.ExperimentStatus) command;
+            case FlowInstanceStatus:
+                this.experimentStatus = (Protocol.FlowInstanceStatus) command;
                 break;
             case StationTaskStatus:
                 this.stationTaskStatus = (Protocol.StationTaskStatus) command;

@@ -22,11 +22,14 @@ import aiai.apps.commons.utils.SecUtils;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpHost;
+import org.apache.http.client.utils.URIUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
+import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.util.Random;
@@ -120,6 +123,7 @@ public class Globals {
     // some fields
     public File launchpadTempDir;
     public File launchpadResourcesDir;
+    public HttpHost launchpadHttpHostWithAuth;
 
     public File stationSnippetDir;
     public File stationDbDir;
@@ -193,6 +197,12 @@ public class Globals {
 
             launchpadResourcesDir = new File(launchpadDir, Consts.RESOURCES_DIR);
             launchpadResourcesDir.mkdirs();
+
+            try {
+                launchpadHttpHostWithAuth = URIUtils.extractHost(new URL(launchpadUrl).toURI());
+            } catch (Throwable th) {
+                throw new IllegalArgumentException("Can't build HttpHost for "+launchpadUrl, th);
+            }
         }
         //noinspection unused
         int i=0;

@@ -24,6 +24,8 @@ import lombok.Data;
 public class StationTask {
     public long taskId;
 
+    public long flowInstanceId;
+
     public long createdOn;
 
     public Long launchedOn;

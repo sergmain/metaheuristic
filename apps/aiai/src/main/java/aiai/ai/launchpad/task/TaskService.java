@@ -151,6 +151,7 @@ public class TaskService {
         }
         Protocol.AssignedTask.Task assignedTask = new Protocol.AssignedTask.Task();
         assignedTask.setTaskId(resultTask.getId());
+        assignedTask.setFlowInstanceId(flowInstance.getId());
         assignedTask.setParams(resultTask.getParams());
 
         resultTask.setAssignedOn(System.currentTimeMillis());

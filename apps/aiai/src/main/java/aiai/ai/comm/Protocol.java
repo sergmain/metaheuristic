@@ -58,24 +58,24 @@ public class Protocol {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class ExperimentStatus extends Command {
+    public static class FlowInstanceStatus extends Command {
 
         @Data
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SimpleStatus {
             public long taskId;
-            public Enums.ExperimentExecState state;
+            public Enums.FlowInstanceExecState state;
         }
         List<SimpleStatus> statuses;
 
-        public ExperimentStatus(List<SimpleStatus> statuses) {
-            this.setType(Type.ExperimentStatus);
+        public FlowInstanceStatus(List<SimpleStatus> statuses) {
+            this.setType(Type.FlowInstanceStatus);
             this.statuses = statuses;
         }
 
-        public ExperimentStatus() {
-            this.setType(Type.ExperimentStatus);
+        public FlowInstanceStatus() {
+            this.setType(Type.FlowInstanceStatus);
         }
     }
 
@@ -109,6 +109,7 @@ public class Protocol {
         public static class Task {
             public String params;
             public Long taskId;
+            public Long flowInstanceId;
         }
         public List<Task> tasks;
 

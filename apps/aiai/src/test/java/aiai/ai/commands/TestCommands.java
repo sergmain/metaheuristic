@@ -47,8 +47,8 @@ public class TestCommands {
                 return new Protocol.ReportTaskProcessingResult();
             case ReportResultDelivering:
                 return new Protocol.ReportResultDelivering();
-            case ExperimentStatus:
-                return new Protocol.ExperimentStatus();
+            case FlowInstanceStatus:
+                return new Protocol.FlowInstanceStatus();
             case StationTaskStatus:
                 return new Protocol.StationTaskStatus();
             default:

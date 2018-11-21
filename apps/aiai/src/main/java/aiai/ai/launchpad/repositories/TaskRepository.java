@@ -50,7 +50,7 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
             "t.flowInstanceId=:flowInstanceId and (t.order =:taskOrder or t.order=(:taskOrder + 1))")
     List<Task> findForAssigning(long flowInstanceId, int taskOrder);
 
-    @Query("SELECT t FROM Task t where t.stationId=null and " +
+    @Query("SELECT t FROM Task t where t.stationId is not null and " +
             "t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
     List<Task> findForCompletion(long flowInstanceId, int taskOrder);
 

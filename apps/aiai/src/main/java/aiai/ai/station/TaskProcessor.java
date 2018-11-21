@@ -227,7 +227,7 @@ public class TaskProcessor {
         return snippetTypeDir;
     }
 
-    public void processExperimentStatus(List<Protocol.ExperimentStatus.SimpleStatus> statuses) {
+    public void processFlowInstanceStatus(List<Protocol.FlowInstanceStatus.SimpleStatus> statuses) {
         currentExecState.register(statuses);
     }
 }

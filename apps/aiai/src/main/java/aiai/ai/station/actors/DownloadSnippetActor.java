@@ -19,6 +19,7 @@ package aiai.ai.station.actors;
 
 import aiai.ai.Globals;
 import aiai.ai.snippet.SnippetUtils;
+import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.apps.commons.utils.Checksum;
@@ -27,6 +28,7 @@ import aiai.apps.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.client.fluent.Response;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -44,6 +46,8 @@ import java.util.Map;
 public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask> {
 
     private final Globals globals;
+    private final HttpClientExecutor executor;
+
     private final ChecksumWithSignatureService checksumWithSignatureService;
 
     private String targetUrl;
@@ -51,15 +55,16 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
     private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
 
-    public DownloadSnippetActor(Globals globals, ChecksumWithSignatureService checksumWithSignatureService) {
+    public DownloadSnippetActor(Globals globals, HttpClientExecutor executor, ChecksumWithSignatureService checksumWithSignatureService) {
         this.globals = globals;
+        this.executor = executor;
         this.checksumWithSignatureService = checksumWithSignatureService;
     }
 
     @PostConstruct
     public void postConstruct() {
         if (globals.isStationEnabled) {
-            targetUrl = globals.payloadRestUrl + "/snippet";
+            targetUrl = globals.payloadRestUrl + "/resource/snippet";
             snippetChecksumUrl = globals.payloadRestUrl + "/snippet-checksum";
         }
     }
@@ -88,50 +93,71 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             if (snippetFile.isError) {
                 return;
             }
-            Checksum checksum;
+            Checksum checksum=null;
             final String snippetCode = task.snippetCode;
-            try {
-                String checksumStr = Request.Get(snippetChecksumUrl+'/'+ snippetCode)
-                        .connectTimeout(5000)
-                        .socketTimeout(5000)
-                        .execute().returnContent().asString(StandardCharsets.UTF_8);
+            if (globals.isAcceptOnlySignedSnippets) {
+                try {
+                    Request request = Request.Get(snippetChecksumUrl + '/' + snippetCode)
+                            .connectTimeout(5000)
+                            .socketTimeout(5000);
 
-                checksum = Checksum.fromJson(checksumStr);
-            }
-            catch (HttpResponseException e) {
-                logError(snippetCode, e);
-                break;
-            }
-            catch (SocketTimeoutException e) {
-                log.error("SocketTimeoutException", e.toString());
-                break;
-            }
-            catch (IOException e) {
-                log.error("IOException", e);
-                break;
+                    Response response;
+                    if (globals.isSecureRestUrl) {
+                        response = executor.executor.execute(request);
+                    } else {
+                        response = request.execute();
+                    }
+                    String checksumStr = response.returnContent().asString(StandardCharsets.UTF_8);
+
+                    checksum = Checksum.fromJson(checksumStr);
+                } catch (HttpResponseException e) {
+                    logError(snippetCode, e);
+                    break;
+                } catch (SocketTimeoutException e) {
+                    log.error("SocketTimeoutException", e);
+                    break;
+                } catch (IOException e) {
+                    log.error("IOException", e);
+                    break;
+                } catch (Throwable th) {
+                    log.error("Throwable", th);
+                    return;
+                }
             }
 
             try {
                 File snippetTempFile = new File(snippetFile.file.getAbsolutePath()+".tmp");
-
-                Request.Get(targetUrl+'/'+ snippetCode)
+                //  @GetMapping("/rest-anon/payload/resource/{type}/{code}")
+                Request request = Request.Get(targetUrl + '/' + snippetCode)
                         .connectTimeout(5000)
-                        .socketTimeout(5000)
-                        .execute().saveContent(snippetTempFile);
+                        .socketTimeout(5000);
 
-                CheckSumAndSignatureStatus status;
-                try(FileInputStream fis = new FileInputStream(snippetTempFile)) {
-                    status = checksumWithSignatureService.verifyChecksumAndSignature(checksum, snippetCode, fis, true);
+                Response response;
+                if (globals.isSecureRestUrl) {
+                    response = executor.executor.execute(request);
                 }
-                if (globals.isAcceptOnlySignedSnippets && status.isSignatureOk==null) {
-                    log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", globals.isAcceptOnlySignedSnippets, snippetCode);
-                    continue;
+                else {
+                    response = request.execute();
                 }
-                if (Boolean.FALSE.equals(status.isSignatureOk)) {
-                    log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", globals.isAcceptOnlySignedSnippets, snippetCode);
-                    continue;
+                response.saveContent(snippetTempFile);
+
+                boolean isOk = true;
+                if (globals.isAcceptOnlySignedSnippets) {
+                    CheckSumAndSignatureStatus status;
+                    try (FileInputStream fis = new FileInputStream(snippetTempFile)) {
+                        status = checksumWithSignatureService.verifyChecksumAndSignature(checksum, snippetCode, fis, true);
+                    }
+                    if ( status.isSignatureOk == null){
+                        log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", globals.isAcceptOnlySignedSnippets, snippetCode);
+                        continue;
+                    }
+                    if (Boolean.FALSE.equals(status.isSignatureOk)) {
+                        log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", globals.isAcceptOnlySignedSnippets, snippetCode);
+                        continue;
+                    }
+                    isOk = (status.isOk && !Boolean.FALSE.equals(status.isSignatureOk));
                 }
-                if (status.isOk && !Boolean.FALSE.equals(status.isSignatureOk)) {
+                if (isOk) {
                     //noinspection ResultOfMethodCallIgnored
                     snippetTempFile.renameTo(snippetFile.file);
                     preparedMap.put(snippetCode, true);

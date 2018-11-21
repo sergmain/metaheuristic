@@ -135,8 +135,9 @@ public class ExperimentService {
     private final SnippetCache snippetCache;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetService snippetService;
+    private final ExperimentRepository experimentRepository;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository) {
+    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1) {
         this.globals = globals;
         this.experimentCache = experimentCache;
         this.taskRepository = taskRepository;
@@ -144,6 +145,7 @@ public class ExperimentService {
         this.snippetCache = snippetCache;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.snippetService = snippetService;
+        this.experimentRepository = experimentRepository1;
     }
 
     private static class ParamFilter {
@@ -169,7 +171,7 @@ public class ExperimentService {
     }
 
     private void checkForFinished() {
-        List<ExperimentFeature> features = experimentFeatureRepository.findAllForActiveExperiments(Enums.ExperimentExecState.FINISHED.code);
+        List<ExperimentFeature> features = experimentFeatureRepository.findAllForActiveExperiments(Enums.FlowInstanceExecState.FINISHED.code);
         Set<Long> ids = new HashSet<>();
         // ugly but ok for first version
         for (ExperimentFeature feature : features) {
@@ -188,7 +190,7 @@ public class ExperimentService {
                 if (experiment==null) {
                     continue;
                 }
-                experiment.setExecState(Enums.ExperimentExecState.FINISHED.code);
+                experiment.setExecState(Enums.FlowInstanceExecState.FINISHED.code);
                 experimentCache.save(experiment);
             }
         }
@@ -473,6 +475,25 @@ public class ExperimentService {
             produceTasks(experiment, inputResourceCodes);
         }
 */
+    }
+
+    public void resetExperiment(FlowInstance flowInstance) {
+
+        Experiment e = experimentRepository.findByFlowInstanceId(flowInstance.getId());
+        if (e==null) {
+            return;
+        }
+        experimentFeatureRepository.deleteByExperimentId(e.getId());
+
+        e.setFlowInstanceId(null);
+        e.setExecState( Enums.FlowInstanceExecState.NONE.code);
+        e.setAllTaskProduced(false);
+        e.setLaunchedOn(null);
+        e.setEpochVariant(0);
+        e.setFeatureProduced(false);
+        e.setAllTaskProduced(false);
+        e.setNumberOfTask(0);
+        experimentCache.save(e);
     }
 
     public void produceTasks(FlowInstance flowInstance, int order, Experiment experiment) {

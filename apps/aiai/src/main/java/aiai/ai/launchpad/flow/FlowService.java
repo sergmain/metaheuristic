@@ -82,7 +82,6 @@ public class FlowService {
         List<FlowInstance> flowInstances = flowInstanceRepository.findByExecState(
                 Enums.FlowInstanceExecState.PRODUCING.code);
         for (FlowInstance flowInstance : flowInstances) {
-            log.info("Producing tasks for flow.code: {}, input resource pool: {}",flowI.c);
             Flow flow = flowCache.findById(flowInstance.getFlowId());
             if (flow==null) {
                 flowInstance.setExecState(Enums.FlowInstanceExecState.ERROR.code);
@@ -283,7 +282,11 @@ public class FlowService {
         }
     }
     private void markOrderAsCompleted(FlowInstance flowInstance) {
-        for (Task task : taskRepository.findForCompletion(flowInstance.getId(), flowInstance.getProducingOrder())) {
+        List<Task> forCompletion = taskRepository.findForCompletion(flowInstance.getId(), flowInstance.getProducingOrder() + 1);
+        if (forCompletion.isEmpty()) {
+            return;
+        }
+        for (Task task : forCompletion) {
             if (!task.isCompleted) {
                 return;
             }

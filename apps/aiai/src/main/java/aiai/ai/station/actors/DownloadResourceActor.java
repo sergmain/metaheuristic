@@ -20,16 +20,20 @@ package aiai.ai.station.actors;
 import aiai.ai.Globals;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationResourceUtils;
+import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.DownloadResourceTask;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.client.fluent.Response;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -38,11 +42,14 @@ import java.util.Map;
 public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTask> {
 
     private final Globals globals;
+    private final HttpClientExecutor executor;
+
     private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
     private String targetUrl;
 
-    public DownloadResourceActor(Globals globals) {
+    public DownloadResourceActor(Globals globals, HttpClientExecutor executor) {
         this.globals = globals;
+        this.executor = executor;
     }
 
     @PostConstruct
@@ -72,10 +79,19 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             }
 
             try {
-                Request.Get(targetUrl + '/' + task.getBinaryDataType() + '/' + task.getId())
+                Request request = Request.Get(targetUrl + '/' + task.getBinaryDataType() + '/' + task.getId())
                         .connectTimeout(5000)
-                        .socketTimeout(5000)
-                        .execute().saveContent(assetFile.file);
+                        .socketTimeout(5000);
+
+                Response response;
+                if (globals.isSecureRestUrl) {
+                    response = executor.executor.execute(request);
+                }
+                else {
+                    response = request.execute();
+                }
+                response.saveContent(assetFile.file);
+
                 preparedMap.put(task.getId(), true);
                 log.info("Resource #{} was loaded", task.getId());
             } catch (HttpResponseException e) {
