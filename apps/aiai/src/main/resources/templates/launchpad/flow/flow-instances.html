@@ -30,10 +30,10 @@
     <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
     <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
-    <a class="pure-button pure-button-primary" href="flow-instance-add-form.html" th:href="@{/launchpad/flow/flow-instance-add}">Add new flow instance</a>
+    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController$FlowInstancesResult"*/-->
+    <a class="pure-button pure-button-primary" href="flow-instance-add.html" th:href="${'/launchpad/flow/flow-instance-add/' + result.currentFlowId}">Add new flow instance</a>
     <p></p>
 
-    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController.FlowInstancesResult"*/-->
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>
@@ -42,8 +42,7 @@
             <th>Pool code</th>
             <th>Created on</th>
             <th>Is valid</th>
-            <th>Is started</th>
-            <th>Is completed</th>
+            <th>Exec state</th>
             <th>Completed on</th>
             <th colspan="3">&nbsp;</th>
         </tr>
@@ -51,15 +50,17 @@
         <tbody>
         <tr th:each="i : ${result.instances}">
             <td th:text="${i.id}">#Id</td>
-            <td th:text="${result.flowCodes.get(i.id)}">Flow code</td>
+            <td th:text="${result.flows.get(i.id).code}">Flow code</td>
             <td th:text="${i.inputResourcePoolCode}">Pool code</td>
             <td th:text="${#dates.format(i.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
-            <td th:text="${i.valid}">Is valid</td>
+            <td th:text="${i.valid and result.flows.get(i.id).valid}">Is valid</td>
             <td th:text="${T(aiai.ai.Enums.FlowInstanceExecState).from(i.execState)}">Exec state</td>
             <td th:text="${#dates.format(i.completedOn, 'dd-MMM-yy HH:mm')}">Completed on</td>
             <td>
                 <a class="pure-button pure-button-primary"
-                   th:if="${i.execState==T(aiai.ai.Enums.FlowInstanceExecState).NONE.code}"
+                   th:if="${i.execState==T(aiai.ai.Enums.FlowInstanceExecState).NONE.code and
+                   result.flows.get(i.id).valid
+                   }"
                    th:href="${'/launchpad/flow/flow-instance-target-exec-state/'+i.flowId+'/producing/' + i.id}">Produce</a>
                 <a class="pure-button pure-button-primary"
                    th:if="${i.execState==T(aiai.ai.Enums.FlowInstanceExecState).PRODUCED.code or
@@ -97,5 +98,6 @@
         </tr>
         </tbody>
     </table>
+    <a class="pure-button pure-button-primary" href="flows.html" th:href="${'/launchpad/flow/flows'  }">To flows</a>
 
 </div>

@@ -7,7 +7,9 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.experiment.ExperimentProcessService;
+import aiai.ai.launchpad.experiment.ExperimentProcessValidator;
 import aiai.ai.launchpad.file_process.FileProcessService;
+import aiai.ai.launchpad.file_process.FileProcessValidator;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
@@ -24,6 +26,8 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+import static aiai.ai.Enums.FlowValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
+
 @Service
 @Slf4j
 public class FlowService {
@@ -39,7 +43,10 @@ public class FlowService {
     private final TaskRepository taskRepository;
     private final FlowCache flowCache;
 
-    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache, TaskRepository taskRepository, FlowCache flowCache) {
+    private final ExperimentProcessValidator experimentProcessValidator;
+    private final FileProcessValidator fileProcessValidator;
+
+    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache, TaskRepository taskRepository, FlowCache flowCache, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator) {
         this.flowYamlUtils = flowYamlUtils;
         this.experimentCache = experimentCache;
         this.binaryDataService = binaryDataService;
@@ -49,6 +56,8 @@ public class FlowService {
         this.snippetCache = snippetCache;
         this.taskRepository = taskRepository;
         this.flowCache = flowCache;
+        this.experimentProcessValidator = experimentProcessValidator;
+        this.fileProcessValidator = fileProcessValidator;
     }
 
     public FlowInstance startFlowInstance(FlowInstance flowInstance) {
@@ -69,17 +78,21 @@ public class FlowService {
     }
 
     public synchronized void createAllTasks() {
+        log.info("Start producing tasks");
         List<FlowInstance> flowInstances = flowInstanceRepository.findByExecState(
                 Enums.FlowInstanceExecState.PRODUCING.code);
         for (FlowInstance flowInstance : flowInstances) {
+            log.info("Producing tasks for flow.code: {}, input resource pool: {}",flowI.c);
             Flow flow = flowCache.findById(flowInstance.getFlowId());
             if (flow==null) {
                 flowInstance.setExecState(Enums.FlowInstanceExecState.ERROR.code);
                 flowInstanceRepository.save(flowInstance);
                 continue;
             }
+            log.info("Producing tasks for flow.code: {}, input resource pool: {}",flow.code, flowInstance.inputResourcePoolCode);
             createTasks(flow, flowInstance);
         }
+        log.info("Producing tasks was finished");
     }
 
     @Data
@@ -108,7 +121,7 @@ public class FlowService {
             result.flowVerifyStatus = Enums.FlowValidateStatus.ALREADY_PRODUCED_ERROR;
             return result;
         }
-        result.flowVerifyStatus = verify(flow);
+        result.flowVerifyStatus = validate(flow);
         if (result.flowVerifyStatus != Enums.FlowValidateStatus.OK) {
             log.error("Can't produce tasks, error: {}", result.flowVerifyStatus);
             return result;
@@ -118,7 +131,7 @@ public class FlowService {
         return result;
     }
 
-    public Enums.FlowValidateStatus verify(Flow flow) {
+    public Enums.FlowValidateStatus validate(Flow flow) {
         if (flow==null) {
             return Enums.FlowValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
@@ -151,55 +164,24 @@ public class FlowService {
             if (StringUtils.containsWhitespace(process.outputResourceCode) || StringUtils.contains(process.outputResourceCode, ',') ){
                 return Enums.FlowValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
+            ProcessValidator processValidator;
             if (process.type == Enums.ProcessType.EXPERIMENT) {
                 experimentPresent = true;
-                if (process.snippetCodes!=null && process.snippetCodes.size() > 0) {
-                    return Enums.FlowValidateStatus.SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR;
-                }
-                if (StringUtils.isBlank(process.code)) {
-                    return Enums.FlowValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
-                }
-                Experiment e = experimentCache.findByCode(process.code);
-                if (e==null) {
-                    return Enums.FlowValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
-                }
-                if (process.metas==null || process.metas.isEmpty()) {
-                    return Enums.FlowValidateStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
-                }
-
-                Process.Meta m1 = process.getMeta("dataset");
-                if (m1 ==null || StringUtils.isBlank(m1.getValue())) {
-                    return Enums.FlowValidateStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
-                }
-                Process.Meta m2 = process.getMeta("assembled-raw");
-                if (m2 ==null || StringUtils.isBlank(m2.getValue())) {
-                    return Enums.FlowValidateStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
-                }
-                Process.Meta m3 = process.getMeta("feature");
-                if (m3 ==null || StringUtils.isBlank(m3.getValue())) {
-                    return Enums.FlowValidateStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
-                }
+                processValidator = experimentProcessValidator;
+            }
+            else if (process.type == Enums.ProcessType.FILE_PROCESSING) {
+                processValidator = fileProcessValidator;
             }
             else {
-                if (process.getSnippetCodes() == null || process.getSnippetCodes().isEmpty()) {
-                    return Enums.FlowValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
-                }
-                for (String snippetCode : process.snippetCodes) {
-                    SnippetVersion sv = SnippetVersion.from(snippetCode);
-                    Snippet snippet = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
-                    if (snippet==null) {
-                        log.warn("Snippet wasn't found for code: {}, process: {}", snippetCode, process);
-                        return Enums.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
-                    }
-                }
+                return PROCESS_VALIDATOR_NOT_FOUND_ERROR;
             }
+            Enums.FlowValidateStatus status = processValidator.validate(process);
+            if (status!=null) {
+                return status;
+            }
+
             if (process.parallelExec && (process.snippetCodes==null || process.snippetCodes.size()<2)) {
                 return Enums.FlowValidateStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
-            }
-            if (process.type== Enums.ProcessType.FILE_PROCESSING) {
-                if (!process.parallelExec && process.snippetCodes.size()>1) {
-                    return Enums.FlowValidateStatus.TOO_MANY_SNIPPET_CODES_ERROR;
-                }
             }
         }
         if (experimentPresent && lastProcess.type!=Enums.ProcessType.EXPERIMENT) {

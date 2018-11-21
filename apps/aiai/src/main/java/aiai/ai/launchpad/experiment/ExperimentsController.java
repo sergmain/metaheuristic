@@ -260,7 +260,6 @@ public class ExperimentsController {
         SnippetResult snippetResult = new SnippetResult();
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-//        snippetService.sortSnippetsByOrder(experimentSnippets);
         snippetResult.snippets = experimentSnippets;
         final List<String> types = Arrays.asList("fit", "predict");
         snippetResult.selectOptions = snippetService.getSelectOptions(snippets,

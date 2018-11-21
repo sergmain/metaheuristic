@@ -116,7 +116,7 @@ public class TestFlowService extends PreparingFlow {
         assertFalse(flowYaml.processes.isEmpty());
         assertEquals(Enums.ProcessType.EXPERIMENT, flowYaml.processes.get(flowYaml.processes.size()-1).type);
 
-        Enums.FlowValidateStatus status = flowService.verify(flow);
+        Enums.FlowValidateStatus status = flowService.validate(flow);
         assertEquals(Enums.FlowValidateStatus.OK, status);
 
         FlowService.TaskProducingResult result = flowService.createFlowInstance(flow, PreparingFlow.INPUT_POOL_CODE);

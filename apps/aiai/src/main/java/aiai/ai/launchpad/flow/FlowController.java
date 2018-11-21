@@ -37,8 +37,9 @@ public class FlowController {
 
     @Data
     public static class FlowInstancesResult {
+        public long currentFlowId;
         public Slice<FlowInstance> instances;
-        public Map<Long, String> flowCodes = new HashMap<>();
+        public Map<Long, Flow> flows = new HashMap<>();
     }
 
     @Data
@@ -51,6 +52,7 @@ public class FlowController {
     @Data
     public static class FlowListResult {
         public Iterable<Flow> items;
+        public long currentFlowId;
     }
 
     private final Globals globals;
@@ -109,7 +111,7 @@ public class FlowController {
         }
         model.addAttribute("flow", flow);
 
-        Enums.FlowValidateStatus flowValidateStatus = flowService.verify(flow);
+        Enums.FlowValidateStatus flowValidateStatus = flowService.validate(flow);
         flow.valid = flowValidateStatus == Enums.FlowValidateStatus.OK;
         flowCache.save(flow);
         if (flow.valid) {
@@ -193,6 +195,7 @@ public class FlowController {
     private void prepareFlowInstanceResult(FlowInstancesResult result, @PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.flowInstanceRowsLimit, pageable);
         result.instances = flowInstanceRepository.findByFlowId(pageable, id);
+        result.currentFlowId = id;
 
         for (FlowInstance flowInstance : result.instances) {
             Flow flow = flowCache.findById(flowInstance.getFlowId());
@@ -200,14 +203,16 @@ public class FlowController {
                 log.warn("Found flowInstance with wrong flowId. flowId: {}", flowInstance.getFlowId());
                 continue;
             }
-            result.flowCodes.put(flowInstance.getId(), flow.code);
+            result.flows.put(flowInstance.getId(), flow);
         }
         int i=0;
     }
 
-    @GetMapping(value = "/flow-instance-add")
-    public String flowInstanceAdd(@ModelAttribute("result") FlowListResult result) {
+    @GetMapping(value = "/flow-instance-add/{id}")
+    public String flowInstanceAdd(@ModelAttribute("result") FlowListResult result, @PathVariable Long id) {
         result.items = flowRepository.findAll();
+        result.currentFlowId = id;
+
         return "launchpad/flow/flow-instance-add";
     }
 
@@ -308,7 +313,7 @@ public class FlowController {
         if (redirectUrl != null) {
             return redirectUrl;
         }
-        FlowInstanceResult result = (FlowInstanceResult) model.asMap().get("results");
+        FlowInstanceResult result = (FlowInstanceResult) model.asMap().get("result");
         if (result==null) {
             throw new IllegalStateException("FlowInstanceResult is null");
         }

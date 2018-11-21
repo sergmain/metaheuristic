@@ -88,7 +88,7 @@ public class TestFeatures extends PreparingFlow {
 
     @Test
     public void testFeatures() {
-        Enums.FlowValidateStatus status = flowService.verify(flow);
+        Enums.FlowValidateStatus status = flowService.validate(flow);
         assertEquals(Enums.FlowValidateStatus.OK, status);
 
 
