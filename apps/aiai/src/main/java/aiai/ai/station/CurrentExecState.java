@@ -33,14 +33,15 @@ public class CurrentExecState {
     boolean isInit = false;
 
     void register(List<Protocol.FlowInstanceStatus.SimpleStatus> statuses) {
-        if (statuses==null) {
-            return;
-        }
         synchronized(flowInstanceState) {
+            isInit = true;
+            // statuses==null when there isn't any flow instance
+            if (statuses==null) {
+                return;
+            }
             for (Protocol.FlowInstanceStatus.SimpleStatus status : statuses) {
                 flowInstanceState.put(status.flowInstanceId, status.state);
             }
-            isInit = true;
         }
     }
 

@@ -18,7 +18,6 @@
 package aiai.ai.station;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
@@ -28,7 +27,6 @@ import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.metrics.Metrics;
 import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.sequence.SimpleSnippet;
-import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.station.StationTaskUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +41,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
@@ -51,7 +50,7 @@ public class StationTaskService {
     private final Globals globals;
     private final CurrentExecState currentExecState;
 
-    private final Map<Long, StationTask> map = new HashMap<>();
+    private final Map<Long, StationTask> map = new ConcurrentHashMap<>();
 
     public StationTaskService(Globals globals, CurrentExecState currentExecState) {
         this.currentExecState = currentExecState;
