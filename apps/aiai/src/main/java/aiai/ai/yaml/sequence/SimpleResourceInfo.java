@@ -21,14 +21,14 @@ import aiai.ai.Enums;
 import lombok.Data;
 
 @Data
-public class SimpleResource {
+public class SimpleResourceInfo {
     public String id;
     public Enums.BinaryDataType binaryDataType;
     // it's initialized at station side
     public String path;
 
-    public static SimpleResource of(Enums.BinaryDataType binaryDataType, String id) {
-        SimpleResource sf = new SimpleResource();
+    public static SimpleResourceInfo of(Enums.BinaryDataType binaryDataType, String id) {
+        SimpleResourceInfo sf = new SimpleResourceInfo();
         sf.id = id;
         sf.binaryDataType = binaryDataType;
         return sf;

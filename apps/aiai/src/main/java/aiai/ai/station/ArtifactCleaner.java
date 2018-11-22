@@ -45,17 +45,18 @@ public class ArtifactCleaner {
 
     public void fixedDelay() {
         if (!globals.isStationEnabled || !currentExecState.isInit) {
-            // don't delete anything until station will receive the list of actual experiments
+            // don't delete anything until station will receive the list of actual flow instances
             return;
         }
 
         for (StationTask task : stationTaskService.findAll()) {
-            if (currentExecState.isState(task.taskId, Enums.FlowInstanceExecState.DOESNT_EXIST)) {
+            if (currentExecState.isState(task.flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST)) {
                 log.info("Delete obsolete task with id {}", task.getTaskId());
                 stationTaskService.deleteById(task.getTaskId());
             }
         }
 
+/*
         try {
             Files.newDirectoryStream(globals.stationTaskDir.toPath()).forEach((Path path) -> {
                         final File file = path.toFile();
@@ -63,8 +64,8 @@ public class ArtifactCleaner {
                             log.warn("Found file {} in {}, should be directory only", file.getPath());
                             return;
                         }
-                        int experimentId = Integer.parseInt(file.getName());
-                        if (currentExecState.getState(experimentId) != null) {
+                        int yyyId = Integer.parseInt(file.getName());
+                        if (currentExecState.getState(xxxId) != null) {
                             return;
                         }
                         log.warn("Start deleting dir {}", file.getPath());
@@ -76,6 +77,7 @@ public class ArtifactCleaner {
             log.error("Error", e);
             throw new RuntimeException("error", e);
         }
+*/
     }
 
 }

@@ -64,7 +64,7 @@ public class Protocol {
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SimpleStatus {
-            public long taskId;
+            public long flowInstanceId;
             public Enums.FlowInstanceExecState state;
         }
         List<SimpleStatus> statuses;

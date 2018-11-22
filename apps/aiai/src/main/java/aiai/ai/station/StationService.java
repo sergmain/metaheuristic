@@ -165,7 +165,7 @@ public class StationService {
             return;
         }
         for (Protocol.AssignedTask.Task task : tasks) {
-            stationTaskService.createTask(task.taskId, task.params);
+            stationTaskService.createTask(task.taskId, task.flowInstanceId, task.params);
         }
     }
 }

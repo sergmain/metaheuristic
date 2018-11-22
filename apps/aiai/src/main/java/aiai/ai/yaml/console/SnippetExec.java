@@ -19,10 +19,11 @@ package aiai.ai.yaml.console;
 
 import aiai.ai.core.ExecProcessService;
 import lombok.Data;
+import lombok.Getter;
 
 import java.util.LinkedHashMap;
 
 @Data
 public class SnippetExec {
-    public ExecProcessService.Result exec;
+    public ExecProcessService.Result exec = new ExecProcessService.Result();
 }

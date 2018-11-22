@@ -227,10 +227,8 @@ public class TestFlowService extends PreparingFlow {
 
     private String getExecResult(boolean isOk) {
         SnippetExec snippetExec = new SnippetExec();
-        ExecProcessService.Result execResult = new ExecProcessService.Result();
-        execResult.setOk(isOk);
-        execResult.setExitCode(0);
-        snippetExec.setExec(execResult);
+        snippetExec.setExec( new ExecProcessService.Result(true, 0, null) );
+
         return SnippetExecUtils.toString(snippetExec);
     }
 }

@@ -19,35 +19,27 @@ package aiai.ai.station;
 
 import aiai.ai.Enums;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 
 @Slf4j
 public class StationResourceUtils {
 
-    public static AssetFile prepareResourceFile(File stationResourceDir, Enums.BinaryDataType binaryDataType, String id) {
+    public static AssetFile prepareResourceFile(File stationResourceDir, Enums.BinaryDataType binaryDataType, String id, String resourceFilename) {
 
         final AssetFile assetFile = new AssetFile();
 
         File typeDir = new File(stationResourceDir, binaryDataType.toString());
-        final String subDir = id.replace(':', '_');
-/*
-        if (binaryDataType.idAsString) {
-            subDir = id.replace(':', '_');
-        }
-        else {
-            DigitUtils.Power power = DigitUtils.getPower(Long.parseLong(id));
-            subDir = "" + power.power7 + File.separatorChar + power.power4 + File.separatorChar;
-        }
-*/
-        File trgDir;
-        trgDir = new File(typeDir, subDir);
+        final String resId = id.replace(':', '_');
+
+        File trgDir = new File(typeDir, resId);
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
             log.error("Can't create resource dir for task: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
-        assetFile.file = new File(trgDir, ""+subDir+".bin");
+        assetFile.file = new File(trgDir, StringUtils.isNotBlank(resourceFilename) ? resourceFilename : "" + resId + ".bin");
         assetFile.isExist = assetFile.file.exists();
 
         if (assetFile.isExist) {

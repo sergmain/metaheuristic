@@ -123,14 +123,19 @@ public class StationTaskService {
         return result;
     }
 
-    void markAsFinishedIfAllOk(Long taskId, TaskParamYaml taskParamYaml) {
+    void markAsFinishedIfAllOk(Long taskId, boolean isOk, int exitCode, String console) {
         log.info("markAsFinished({})", taskId);
-        StationTask taskTemp = findById(taskId);
-        if (taskTemp == null) {
+        StationTask task = findById(taskId);
+        if (task == null) {
             log.error("StationTask wasn't found for Id " + taskId);
         } else {
-            taskTemp.setSnippetExecResult(SnippetExecUtils.toString(new SnippetExec()));
-            save(taskTemp);
+            task.setLaunchedOn(System.currentTimeMillis());
+            task.setFinishedOn(System.currentTimeMillis());
+            SnippetExec snippetExec = new SnippetExec();
+            snippetExec.setExec(new ExecProcessService.Result(isOk, exitCode, console));
+
+            task.setSnippetExecResult(SnippetExecUtils.toString(snippetExec));
+            save(task);
         }
     }
 
@@ -152,7 +157,7 @@ public class StationTaskService {
         }
         List<StationTask> tasks = findAllByFinishedOnIsNull();
         for (StationTask task : tasks) {
-            if (currentExecState.isStarted(task.taskId)) {
+            if (currentExecState.isStarted(task.flowInstanceId)) {
                 return false;
             }
         }
@@ -235,11 +240,12 @@ public class StationTaskService {
         return status;
     }
 
-    void createTask(long taskId, String params) {
+    void createTask(long taskId, Long flowInstanceId, String params) {
 
         StationTask seq = map.computeIfAbsent(taskId, k -> new StationTask());
 
         seq.taskId = taskId;
+        seq.flowInstanceId = flowInstanceId;
         seq.createdOn = System.currentTimeMillis();
         seq.params = params;
         seq.finishedOn = null;
@@ -268,18 +274,13 @@ public class StationTaskService {
     }
 
     public StationTask save(StationTask task) {
-        String path = String.format("%06d", task.taskId);
-        File sequenceDir = new File(globals.stationTaskDir, path);
-        if (!sequenceDir.exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            sequenceDir.mkdirs();
-        }
-        File sequenceYaml = new File(sequenceDir, Consts.TASK_YAML);
+        File taskDir = prepareTaskDir(task.taskId);
+        File sequenceYaml = new File(taskDir, Consts.TASK_YAML);
 
 
         if (sequenceYaml.exists()) {
             log.debug("{} file exists. Make backup", sequenceYaml.getPath());
-            File yamlFileBak = new File(sequenceDir, Consts.TASK_YAML + ".bak");
+            File yamlFileBak = new File(taskDir, Consts.TASK_YAML + ".bak");
             //noinspection ResultOfMethodCallIgnored
             yamlFileBak.delete();
             if (sequenceYaml.exists()) {
@@ -336,5 +337,23 @@ public class StationTaskService {
         catch( Throwable th) {
             log.error("Error deleting task "+ task.taskId, th);
         }
+    }
+
+    File prepareTaskDir(Long taskId) {
+        DigitUtils.Power power = DigitUtils.getPower(taskId);
+        File taskDir = new File(globals.stationTaskDir,
+                ""+power.power7+File.separatorChar+power.power4+File.separatorChar);
+        taskDir.mkdirs();
+        return taskDir;
+    }
+
+    File prepareTaskSubDir(File taskDir, String snippetType) {
+        File snippetTypeDir = new File(taskDir, snippetType);
+        snippetTypeDir.mkdirs();
+        if (!snippetTypeDir.exists()) {
+            log.warn("Can't create snippetTypeDir: {}", snippetTypeDir.getAbsolutePath());
+            return null;
+        }
+        return snippetTypeDir;
     }
 }

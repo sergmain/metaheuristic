@@ -18,11 +18,11 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.BinaryData;
-import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.beans.LogData;
+import aiai.ai.launchpad.resource.SimpleResource;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -55,4 +55,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     @Transactional
     void deleteByPoolCodeAndDataType(String poolCode, int dataType);
 
-}
+    @Query(value="select new aiai.ai.launchpad.resource.SimpleResource(" +
+            "b.id, b.version, b.code, b.poolCode, b.dataType, b.uploadTs, b.checksum, b.valid, b.manual, b.filename ) " +
+            "from BinaryData b")
+    Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);}

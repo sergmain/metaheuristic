@@ -74,6 +74,7 @@ public class ExecProcessService {
                     }
                 }
                 catch (IOException e) {
+                    log.error("Error collect data from output stream", e);
                     e.printStackTrace();
                 }
             });
@@ -94,7 +95,9 @@ public class ExecProcessService {
         }
 
         log.info("Any errors of execution? {}", (exitCode == 0 ? "No" : "Yes"));
-        log.debug("Console output: {}",out);
+        log.debug("'\tcmd: {}", cmd);
+        log.debug("'\texecDir: {}", execDir.getPath());
+        log.debug("'\tconsole output: {}",out);
 
         final String console = out.toString();
         return new Result(exitCode==0, exitCode, console);

@@ -23,7 +23,6 @@ import aiai.ai.station.StationResourceUtils;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.DownloadResourceTask;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
@@ -33,7 +32,6 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -72,9 +70,14 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             if (Boolean.TRUE.equals(preparedMap.get(task.getId()))) {
                 continue;
             }
-            AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, task.binaryDataType, task.id);
+            AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, task.binaryDataType, task.id, null);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
+                continue;
+            }
+            if (assetFile.isContent ) {
+                log.info("Resource was already downloaded. Asset file: {}", assetFile.file.getPath());
+                preparedMap.put(task.getId(), true);
                 continue;
             }
 

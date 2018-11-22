@@ -33,7 +33,7 @@ import aiai.ai.utils.permutation.Permutation;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.sequence.SimpleResource;
+import aiai.ai.yaml.sequence.SimpleResourceInfo;
 import aiai.ai.yaml.sequence.SimpleSnippet;
 import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.sequence.TaskParamYamlUtils;
@@ -529,9 +529,9 @@ public class ExperimentService {
             totalVariants += allHyperParams.size() * 2;
 
             final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getResourceCodes());
-            final List<SimpleResource> simpleFeatureResources = Collections.unmodifiableList(
+            final List<SimpleResourceInfo> simpleFeatureResources = Collections.unmodifiableList(
                     ofVariants.values.stream()
-                            .map(s -> SimpleResource.of(Enums.BinaryDataType.DATA, s))
+                            .map(s -> SimpleResourceInfo.of(Enums.BinaryDataType.DATA, s))
                             .collect(Collectors.toList()));
 
             Map<String, Snippet> localCache = new HashMap<>();
@@ -562,7 +562,8 @@ public class ExperimentService {
                             snippet.getFilename(),
                             snippet.checksum,
                             snippet.env,
-                            snippet.reportMetrics
+                            snippet.reportMetrics,
+                            snippet.fileProvided
                     );
 
                     String currTaskParams = taskParamYamlUtils.toString(yaml);

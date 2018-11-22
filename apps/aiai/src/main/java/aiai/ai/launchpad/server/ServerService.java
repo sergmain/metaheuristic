@@ -6,9 +6,11 @@ import aiai.ai.comm.CommandProcessor;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.beans.Experiment;
+import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
+import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -29,6 +31,7 @@ public class ServerService {
     private final StationsRepository stationsRepository;
     private final ExperimentRepository experimentRepository;
     private final BinaryDataService binaryDataService;
+    private final FlowInstanceRepository flowInstanceRepository;
 
     public static final UploadResult OK_UPLOAD_RESULT = new UploadResult(true, null);
 
@@ -45,11 +48,12 @@ public class ServerService {
         public String error;
     }
 
-    public ServerService(CommandProcessor commandProcessor, StationsRepository stationsRepository, ExperimentRepository experimentRepository, BinaryDataService binaryDataService) {
+    public ServerService(CommandProcessor commandProcessor, StationsRepository stationsRepository, ExperimentRepository experimentRepository, BinaryDataService binaryDataService, FlowInstanceRepository flowInstanceRepository) {
         this.commandProcessor = commandProcessor;
         this.stationsRepository = stationsRepository;
         this.experimentRepository = experimentRepository;
         this.binaryDataService = binaryDataService;
+        this.flowInstanceRepository = flowInstanceRepository;
     }
 
     ExchangeData processRequest(@RequestBody ExchangeData data, String remoteAddress) {
@@ -65,7 +69,7 @@ public class ServerService {
         }
 
         ExchangeData resultData = new ExchangeData();
-        resultData.setCommand(new Protocol.FlowInstanceStatus(experimentRepository.findAll().stream().map(ServerService::to).collect(Collectors.toList())));
+        resultData.setCommand(new Protocol.FlowInstanceStatus(flowInstanceRepository.findAll().stream().map(ServerService::to).collect(Collectors.toList())));
 
         List<Command> commands = data.getCommands();
         for (Command command : commands) {
@@ -78,7 +82,7 @@ public class ServerService {
         return resultData.getCommands().isEmpty() ? EXCHANGE_DATA_NOP : resultData;
     }
 
-    private static Protocol.FlowInstanceStatus.SimpleStatus to(Experiment experiment) {
-        return new Protocol.FlowInstanceStatus.SimpleStatus(experiment.getId(), Enums.FlowInstanceExecState.toState(experiment.getExecState()));
+    private static Protocol.FlowInstanceStatus.SimpleStatus to(FlowInstance flowInstance) {
+        return new Protocol.FlowInstanceStatus.SimpleStatus(flowInstance.getId(), Enums.FlowInstanceExecState.toState(flowInstance.getExecState()));
     }
 }

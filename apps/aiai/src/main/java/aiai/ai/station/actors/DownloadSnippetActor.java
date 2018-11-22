@@ -17,14 +17,15 @@
  */
 package aiai.ai.station.actors;
 
+import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.snippet.SnippetUtils;
+import aiai.ai.station.AssetFile;
+import aiai.ai.station.StationResourceUtils;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
-import aiai.apps.commons.utils.Checksum;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
-import aiai.apps.commons.utils.DirUtils;
+import aiai.apps.commons.utils.Checksum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
@@ -77,24 +78,25 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             return;
         }
 
-        File snippetDir = DirUtils.createDir(globals.stationDir, "snippet");
-        if (snippetDir==null) {
-            System.out.println("Station environment is broken. See log for more information");
-            return;
-        }
-
         DownloadSnippetTask task;
         while((task = poll())!=null) {
             if (Boolean.TRUE.equals(preparedMap.get(task.getSnippetCode()))) {
                 continue;
             }
-
-            SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, task.getSnippetCode(), task.filename);
-            if (snippetFile.isError) {
-                return;
-            }
-            Checksum checksum=null;
             final String snippetCode = task.snippetCode;
+
+            AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.SNIPPET, task.snippetCode, task.filename);
+            if (assetFile.isError ) {
+                log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
+                continue;
+            }
+            if (assetFile.isContent ) {
+                log.info("Snippet was already downloaded. Snippet file: {}", assetFile.file.getPath());
+                preparedMap.put(snippetCode, true);
+                continue;
+            }
+
+            Checksum checksum=null;
             if (globals.isAcceptOnlySignedSnippets) {
                 try {
                     Request request = Request.Get(snippetChecksumUrl + '/' + snippetCode)
@@ -126,7 +128,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             }
 
             try {
-                File snippetTempFile = new File(snippetFile.file.getAbsolutePath()+".tmp");
+                File snippetTempFile = new File(assetFile.file.getAbsolutePath()+".tmp");
                 //  @GetMapping("/rest-anon/payload/resource/{type}/{code}")
                 Request request = Request.Get(targetUrl + '/' + snippetCode)
                         .connectTimeout(5000)
@@ -159,7 +161,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 }
                 if (isOk) {
                     //noinspection ResultOfMethodCallIgnored
-                    snippetTempFile.renameTo(snippetFile.file);
+                    snippetTempFile.renameTo(assetFile.file);
                     preparedMap.put(snippetCode, true);
                 }
                 else {

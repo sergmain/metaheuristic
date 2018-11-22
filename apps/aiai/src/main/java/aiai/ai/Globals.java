@@ -126,8 +126,6 @@ public class Globals {
     public HttpHost launchpadHttpHostWithAuth;
 
     public File stationSnippetDir;
-    public File stationDbDir;
-    public File stationSystemDir;
     public File stationResourcesDir;
     public File stationTaskDir;
 
@@ -170,10 +168,6 @@ public class Globals {
         else {
             stationSnippetDir = new File(stationDir, Consts.SNIPPET_DIR);
             stationSnippetDir.mkdirs();
-            stationDbDir = new File(stationDir, Consts.DATABASE_DIR);
-            stationDbDir.mkdirs();
-            stationSystemDir = new File(stationDir, Consts.SYSTEM_DIR);
-            stationSystemDir.mkdirs();
             stationResourcesDir = new File(stationDir, Consts.RESOURCES_DIR);
             stationResourcesDir.mkdirs();
             stationTaskDir = new File(stationDir, Consts.TASK_DIR);

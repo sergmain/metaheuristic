@@ -51,7 +51,7 @@ public class FileProcessService {
                 SnippetVersion sv = SnippetVersion.from(snippetCode);
                 String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, idx);
                 result.outputResourceCodes.add(outputResourceCode);
-                createTaskInternal(flow, flowInstance, process, idx, inputResourceCodes, snippetCode);
+                createTaskInternal(flow, flowInstance, process, idx, inputResourceCodes, outputResourceCode, snippetCode);
             }
         }
         else {
@@ -59,18 +59,19 @@ public class FileProcessService {
             SnippetVersion sv = SnippetVersion.from(snippetCode);
             String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, idx);
             result.outputResourceCodes.add(outputResourceCode);
-            createTaskInternal(flow, flowInstance, process, idx, inputResourceCodes, snippetCode);
+            createTaskInternal(flow, flowInstance, process, idx, inputResourceCodes, outputResourceCode, snippetCode);
         }
         result.status = Enums.FlowProducingStatus.OK;
         return result;
     }
 
-    private void createTaskInternal(Flow flow, FlowInstance flowInstance, Process process, int idx, List<String> inputResourceCodes, String snippetCode) {
+    private void createTaskInternal(Flow flow, FlowInstance flowInstance, Process process, int idx, List<String> inputResourceCodes, String outputResourceCode, String snippetCode) {
         SnippetVersion sv = SnippetVersion.from(snippetCode);
 
         TaskParamYaml yaml = new TaskParamYaml();
         yaml.setHyperParams( Collections.emptyMap() );
         yaml.inputResourceCodes = inputResourceCodes;
+        yaml.outputResourceCode = outputResourceCode;
 
         Snippet snippet = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
         if (snippet==null) {
@@ -83,7 +84,8 @@ public class FileProcessService {
                 snippet.getFilename(),
                 snippet.checksum,
                 snippet.env,
-                snippet.reportMetrics
+                snippet.reportMetrics,
+                snippet.fileProvided
         );
 
         String taskParams = taskParamYamlUtils.toString(yaml);

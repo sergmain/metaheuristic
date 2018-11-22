@@ -55,7 +55,7 @@ public class EnvProperty {
     }
 
     public static File toFile(String dirAsString) {
-        if (dirAsString==null) {
+        if (StringUtils.isBlank(dirAsString)) {
             return null;
         }
 

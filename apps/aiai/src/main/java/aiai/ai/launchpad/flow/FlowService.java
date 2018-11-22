@@ -78,9 +78,11 @@ public class FlowService {
     }
 
     public synchronized void createAllTasks() {
-        log.info("Start producing tasks");
         List<FlowInstance> flowInstances = flowInstanceRepository.findByExecState(
                 Enums.FlowInstanceExecState.PRODUCING.code);
+        if (!flowInstances.isEmpty()) {
+            log.info("Start producing tasks");
+        }
         for (FlowInstance flowInstance : flowInstances) {
             Flow flow = flowCache.findById(flowInstance.getFlowId());
             if (flow==null) {
@@ -91,7 +93,9 @@ public class FlowService {
             log.info("Producing tasks for flow.code: {}, input resource pool: {}",flow.code, flowInstance.inputResourcePoolCode);
             createTasks(flow, flowInstance);
         }
-        log.info("Producing tasks was finished");
+        if (!flowInstances.isEmpty()) {
+            log.info("Producing tasks was finished");
+        }
     }
 
     @Data

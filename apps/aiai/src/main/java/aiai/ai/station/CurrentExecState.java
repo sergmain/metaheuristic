@@ -28,45 +28,45 @@ import java.util.Map;
 @Component
 public class CurrentExecState {
 
-    // this is a map for holding the current status of Experiment, Not a task
-    private final Map<Long, Enums.FlowInstanceExecState> taskState = new HashMap<>();
+    // this is a map for holding the current status of FlowInstance, Not a task
+    private final Map<Long, Enums.FlowInstanceExecState> flowInstanceState = new HashMap<>();
     boolean isInit = false;
 
     void register(List<Protocol.FlowInstanceStatus.SimpleStatus> statuses) {
         if (statuses==null) {
             return;
         }
-        synchronized(taskState) {
+        synchronized(flowInstanceState) {
             for (Protocol.FlowInstanceStatus.SimpleStatus status : statuses) {
-                taskState.put(status.taskId, status.state);
+                flowInstanceState.put(status.flowInstanceId, status.state);
             }
             isInit = true;
         }
     }
 
-    void register(long taskId, Enums.FlowInstanceExecState state) {
-        synchronized(taskState) {
-            taskState.put(taskId, state);
+    void register(long flowInstanceId, Enums.FlowInstanceExecState state) {
+        synchronized(flowInstanceState) {
+            flowInstanceState.put(flowInstanceId, state);
             isInit = true;
         }
     }
 
 
-    Enums.FlowInstanceExecState getState(long taskId) {
-        synchronized(taskState) {
+    Enums.FlowInstanceExecState getState(long flowInstanceId) {
+        synchronized(flowInstanceState) {
             if (!isInit) {
                 return null;
             }
-            return taskState.getOrDefault(taskId, Enums.FlowInstanceExecState.DOESNT_EXIST);
+            return flowInstanceState.getOrDefault(flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST);
         }
     }
 
-    boolean isState(long taskId, Enums.FlowInstanceExecState state) {
-        Enums.FlowInstanceExecState currState = getState(taskId);
+    boolean isState(long flowInstanceId, Enums.FlowInstanceExecState state) {
+        Enums.FlowInstanceExecState currState = getState(flowInstanceId);
         return currState!=null && currState==state;
     }
 
-    boolean isStarted(long taskId) {
-        return isState(taskId, Enums.FlowInstanceExecState.STARTED);
+    boolean isStarted(long flowInstanceId) {
+        return isState(flowInstanceId, Enums.FlowInstanceExecState.STARTED);
     }
 }

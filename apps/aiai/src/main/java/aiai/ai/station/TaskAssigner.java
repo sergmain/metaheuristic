@@ -66,7 +66,7 @@ public class TaskAssigner {
                 log.error("Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            if (currentExecState.isInit && currentExecState.getState(task.taskId)==null) {
+            if (currentExecState.isInit && currentExecState.getState(task.flowInstanceId)==null) {
                 stationTaskService.delete(task);
                 log.info("Deleted orphan task {}", task);
                 continue;

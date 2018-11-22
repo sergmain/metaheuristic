@@ -72,7 +72,7 @@ public class ResourceController {
 
     @Data
     public static class Result {
-        public Slice<BinaryData> items;
+        public Slice<SimpleResource> items;
     }
 
     private final Globals globals;
@@ -92,7 +92,7 @@ public class ResourceController {
     @GetMapping("/resources")
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
         pageable = ControllerUtils.fixPageSize(globals.resourceRowsLimit, pageable);
-        result.items = binaryDataService.findAll(pageable);
+        result.items = binaryDataService.getAllAsSimpleResources(pageable);
         return "launchpad/resources";
     }
 
@@ -100,7 +100,8 @@ public class ResourceController {
     @PostMapping("/resources-part")
     public String getExperiments(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.resourceRowsLimit, pageable);
-        result.items = binaryDataService.findAll(pageable);
+//        result.items = binaryDataService.findAll(pageable);
+        result.items = binaryDataService.getAllAsSimpleResources(pageable);
         return "launchpad/resources :: fragment-table";
     }
 

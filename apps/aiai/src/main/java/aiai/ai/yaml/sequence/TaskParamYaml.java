@@ -27,6 +27,7 @@ public class TaskParamYaml {
     public List<String> inputResourceCodes;
     public SimpleSnippet snippet;
     public Map<String, String> hyperParams;
+    public String outputResourceCode;
 
     public String artifactPath;
 }

@@ -153,9 +153,9 @@ public class ServerController {
     }
 
 
-    private HttpEntity<AbstractResource> deliverResource(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
+    private HttpEntity<AbstractResource> deliverResource(HttpServletResponse response, String typeAsStr, String code) throws IOException {
         Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
-        AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.launchpadResourcesDir, binaryDataType, code);
+        AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.launchpadResourcesDir, binaryDataType, code, null);
 
         if (assetFile==null) {
             return returnEmptyAsGone(response);

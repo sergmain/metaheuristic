@@ -4,6 +4,7 @@ import aiai.ai.Enums;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.repositories.BinaryDataRepository;
+import aiai.ai.launchpad.resource.SimpleResource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
@@ -140,5 +141,9 @@ public class BinaryDataService {
 
     public Optional<BinaryData> findById(Long id) {
         return binaryDataRepository.findById(id);
+    }
+
+    public Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable) {
+        return binaryDataRepository.getAllAsSimpleResources(pageable);
     }
 }
