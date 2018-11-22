@@ -16,12 +16,14 @@ public class RealLaunchpadService implements LaunchpadService{
     private final ExperimentService experimentService;
     private final TaskService taskService;
     private final FlowService flowService;
+    private final ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad;
 
-    public RealLaunchpadService(StationsRepository stationsRepository, ExperimentService experimentService, TaskService taskService, FlowService flowService) {
+    public RealLaunchpadService(StationsRepository stationsRepository, ExperimentService experimentService, TaskService taskService, FlowService flowService, ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad) {
         this.stationsRepository = stationsRepository;
         this.experimentService = experimentService;
         this.taskService = taskService;
         this.flowService = flowService;
+        this.artifactCleanerAtLaunchpad = artifactCleanerAtLaunchpad;
     }
 }
 

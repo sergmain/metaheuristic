@@ -31,13 +31,13 @@ import java.nio.file.Path;
 
 @Service
 @Slf4j
-public class ArtifactCleaner {
+public class ArtifactCleanerAtStation {
 
     private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
     private final Globals globals;
 
-    public ArtifactCleaner(StationTaskService stationTaskService, CurrentExecState currentExecState, Globals globals) {
+    public ArtifactCleanerAtStation(StationTaskService stationTaskService, CurrentExecState currentExecState, Globals globals) {
         this.stationTaskService = stationTaskService;
         this.currentExecState = currentExecState;
         this.globals = globals;

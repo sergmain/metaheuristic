@@ -39,6 +39,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -85,19 +87,23 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
         }
 
         UploadResourceTask task;
+        List<UploadResourceTask> repeat = new ArrayList<>();
         while((task = poll())!=null) {
+            boolean isOk = false;
             try (InputStream is = new FileInputStream(task.file)) {
                 log.info("Start uploading result data to server, resultDataFile: {}", task.file);
 
-                Request request = Request.Get(globals.uploadRestUrl + '/' + task.taskId)
-                        .connectTimeout(5000)
-                        .socketTimeout(5000);
-
+                final String uri = globals.uploadRestUrl + '/' + task.taskId;
                 HttpEntity entity = MultipartEntityBuilder.create()
                         .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                         .setCharset(StandardCharsets.UTF_8)
                         .addBinaryBody("file", is, ContentType.MULTIPART_FORM_DATA, task.file.getName())
                         .build();
+
+                Request request = Request.Post(uri)
+                        .connectTimeout(5000)
+                        .socketTimeout(5000)
+                        .body(entity);
 
                 Response response;
                 if (globals.isSecureRestUrl) {
@@ -109,22 +115,30 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 String json = response.returnContent().asString();
 
                 ServerService.UploadResult result = fromJson(json);
+                log.info("'\tresult data was successfully uploaded");
                 if (!result.isOk) {
                     log.error("Error uploading file, server error: " + result.error);
-                    add(task);
                 }
-                log.info("'\tresult data was successfully uploaded");
-
+                isOk = result.isOk;
             } catch (HttpResponseException e) {
                 log.error("Error uploading code", e);
-                break;
             } catch (SocketTimeoutException e) {
                 log.error("SocketTimeoutException", e.toString());
-                break;
-            } catch (IOException e) {
-                log.error("IOException", e);
-                break;
             }
+            catch (IOException e) {
+                log.error("IOException", e);
+            }
+            catch (Throwable th) {
+                log.error("Throwable", th);
+            }
+            if (!isOk) {
+                log.error("''tTask aggigned one more time.");
+                repeat.add(task);
+            }
+
+        }
+        for (UploadResourceTask uploadResourceTask : repeat) {
+            add(uploadResourceTask);
         }
     }
 }

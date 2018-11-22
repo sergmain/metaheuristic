@@ -10,4 +10,6 @@ public interface LaunchpadService {
     ExperimentService getExperimentService();
     TaskService getTaskService();
     FlowService getFlowService();
+
+    ArtifactCleanerAtLaunchpad getArtifactCleanerAtLaunchpad();
 }

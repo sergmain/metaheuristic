@@ -29,4 +29,9 @@ public class NullLaunchpadService implements LaunchpadService {
     public FlowService getFlowService() {
         return null;
     }
+
+    @Override
+    public ArtifactCleanerAtLaunchpad getArtifactCleanerAtLaunchpad() {
+        return null;
+    }
 }

@@ -18,7 +18,7 @@
 package aiai.ai;
 
 import aiai.ai.launchpad.LaunchpadService;
-import aiai.ai.station.ArtifactCleaner;
+import aiai.ai.station.ArtifactCleanerAtStation;
 import aiai.ai.station.LaunchpadRequester;
 import aiai.ai.station.TaskProcessor;
 import aiai.ai.station.TaskAssigner;
@@ -85,6 +85,18 @@ public class Schedulers {
             log.info("FlowService.producingFlowInstances()");
             launchpadService.getFlowService().createAllTasks();
         }
+
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.artifact-cleaner'), 5, 40, 10)*1000 }")
+        public void artifactCleanerAtLaunchpad() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.isLaunchpadEnabled) {
+                return;
+            }
+            log.info("FlowService.producingFlowInstances()");
+            launchpadService.getArtifactCleanerAtLaunchpad().fixedDelay();
+        }
     }
 
     // Station schedulers
@@ -101,9 +113,9 @@ public class Schedulers {
         private final DownloadSnippetActor downloadSnippetActor;
         private final DownloadResourceActor downloadResourceActor;
         private final UploadResourceActor uploadResourceActor;
-        private final ArtifactCleaner artifactCleaner;
+        private final ArtifactCleanerAtStation artifactCleaner;
 
-        public StationSchedulers(Globals globals, LaunchpadRequester launchpadRequester, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleaner artifactCleaner) {
+        public StationSchedulers(Globals globals, LaunchpadRequester launchpadRequester, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner) {
             this.globals = globals;
             this.launchpadRequester = launchpadRequester;
             this.taskAssigner = taskAssigner;
