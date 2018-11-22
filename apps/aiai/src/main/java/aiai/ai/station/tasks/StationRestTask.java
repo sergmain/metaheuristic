@@ -17,5 +17,5 @@
  */
 package aiai.ai.station.tasks;
 
-public interface StationTask {
+public interface StationRestTask {
 }

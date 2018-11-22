@@ -126,7 +126,7 @@ public class StationTaskService {
         log.info("markAsFinished({})", taskId);
         StationTask task = findById(taskId);
         if (task == null) {
-            log.error("StationTask wasn't found for Id " + taskId);
+            log.error("StationRestTask wasn't found for Id " + taskId);
         } else {
             task.setLaunchedOn(System.currentTimeMillis());
             task.setFinishedOn(System.currentTimeMillis());
@@ -167,7 +167,7 @@ public class StationTaskService {
         log.info("storeExecResult(taskId: {}, snippet code: {})", taskId, snippet.code);
         StationTask seqTemp = findById(taskId);
         if (seqTemp == null) {
-            log.error("StationTask wasn't found for Id " + taskId);
+            log.error("StationRestTask wasn't found for Id " + taskId);
         } else {
             // store metrics after predict only
             if (snippet.isMetrics()) {
@@ -329,6 +329,8 @@ public class StationTaskService {
         final File systemDir = new File(globals.stationTaskDir, path);
         try {
             if (systemDir.exists()) {
+                FileUtils.deleteDirectory(systemDir);
+                // IDK is that bug or side-effect. so delete one more time
                 FileUtils.deleteDirectory(systemDir);
                 deleteFromMap(task);
             }

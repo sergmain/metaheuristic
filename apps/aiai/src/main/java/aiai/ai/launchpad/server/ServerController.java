@@ -22,14 +22,16 @@ import aiai.ai.Globals;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.Snippet;
+import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
+import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationResourceUtils;
-import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
-import aiai.apps.commons.utils.Checksum;
+import aiai.ai.yaml.sequence.TaskParamYaml;
+import aiai.ai.yaml.sequence.TaskParamYamlUtils;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
@@ -63,14 +65,18 @@ public class ServerController {
     private final SnippetCache snippetCache;
     private final SnippetService snippetService;
     private final ChecksumWithSignatureService checksumWithSignatureService;
+    private final TaskRepository taskRepository;
+    private final TaskParamYamlUtils taskParamYamlUtils;
 
-    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService, SnippetCache snippetCache, SnippetService snippetService, ChecksumWithSignatureService checksumWithSignatureService) {
+    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService, SnippetCache snippetCache, SnippetService snippetService, ChecksumWithSignatureService checksumWithSignatureService, TaskRepository taskRepository, TaskParamYamlUtils taskParamYamlUtils) {
         this.globals = globals;
         this.serverService = serverService;
         this.binaryDataService = binaryDataService;
         this.snippetCache = snippetCache;
         this.snippetService = snippetService;
         this.checksumWithSignatureService = checksumWithSignatureService;
+        this.taskRepository = taskRepository;
+        this.taskParamYamlUtils = taskParamYamlUtils;
     }
 
     @PostMapping("/rest-anon/srv")
@@ -105,32 +111,40 @@ public class ServerController {
         return deliverResource(response, typeAsStr, code);
     }
 
-    @GetMapping("/rest-anon/upload/{type}/{code}")
-    public ServerService.UploadResult uploadResourceAnon(MultipartFile file, HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
-        log.debug("uploadResource(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureRestUrl, typeAsStr, code);
+    @GetMapping("/rest-anon/upload/{taskId}")
+    public ServerService.UploadResult uploadResourceAnon(
+            MultipartFile file, HttpServletResponse response,
+            @PathVariable("taskId") Long taskId) throws IOException {
+        log.debug("uploadResourceAnon(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureRestUrl, taskId);
         if (globals.isSecureRestUrl) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
-        return uploadResource(file, response, typeAsStr, code);
+        return uploadResource(file, taskId);
     }
 
-    @PostMapping("/rest-auth/upload/{type}/{code}")
-    public ServerService.UploadResult uploadResourceAuth(MultipartFile file, HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
-        log.debug("uploadResource(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureRestUrl, typeAsStr, code);
-        return uploadResource(file, response, typeAsStr, code);
+    @PostMapping("/rest-auth/upload/{taskId}")
+    public ServerService.UploadResult uploadResourceAuth(
+            MultipartFile file,
+            @PathVariable("taskId") Long taskId) {
+        log.debug("uploadResourceAuth(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureRestUrl, taskId);
+        return uploadResource(file, taskId);
     }
 
-    private ServerService.UploadResult uploadResource(MultipartFile file, HttpServletResponse response, String typeAsStr, String code) {
+    private ServerService.UploadResult uploadResource(MultipartFile file, Long taskId) {
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
             return new ServerService.UploadResult(false, "#442.01 name of uploaded file is null");
         }
-        Enums.BinaryDataType type = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
-        if(!type.isProd()) {
-            return new ServerService.UploadResult(false,
-                    "#442.90 type of uploaded resource isn't acceptable, type: " + typeAsStr);
+        if (taskId==null) {
+            return new ServerService.UploadResult(false,"#442.87 taskId is null" );
         }
+        Task task = taskRepository.findById(taskId).orElse(null);
+        if (task==null) {
+            return new ServerService.UploadResult(false,"#442.83 taskId is null" );
+        }
+
+        final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
 
         try {
             File tempDir = DirUtils.createTempDir("upload-resource-");
@@ -143,7 +157,7 @@ public class ServerController {
             try(OutputStream os = new FileOutputStream(resFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
-            serverService.storeUploadedData(resFile, type, code);
+            serverService.storeUploadedData(resFile, Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode);
         }
         catch (Throwable th) {
             log.error("Error", th);

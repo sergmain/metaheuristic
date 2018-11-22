@@ -19,6 +19,7 @@ package aiai.ai.station.actors;
 
 import aiai.ai.Globals;
 import aiai.ai.launchpad.server.ServerService;
+import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.UploadResourceTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -26,13 +27,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import javax.servlet.http.HttpServletResponse;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +45,7 @@ import java.nio.charset.StandardCharsets;
 public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
 
     private static ObjectMapper mapper;
+    private final HttpClientExecutor executor;
 
     static {
         mapper = new ObjectMapper();
@@ -52,7 +54,8 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
 
     private final Globals globals;
 
-    public UploadResourceActor(Globals globals) {
+    public UploadResourceActor(HttpClientExecutor executor, Globals globals) {
+        this.executor = executor;
         this.globals = globals;
     }
 
@@ -84,22 +87,34 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
         UploadResourceTask task;
         while((task = poll())!=null) {
             try (InputStream is = new FileInputStream(task.file)) {
+                log.info("Start uploading result data to server, resultDataFile: {}", task.file);
+
+                Request request = Request.Get(globals.uploadRestUrl + '/' + task.taskId)
+                        .connectTimeout(5000)
+                        .socketTimeout(5000);
+
                 HttpEntity entity = MultipartEntityBuilder.create()
                         .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                         .setCharset(StandardCharsets.UTF_8)
                         .addBinaryBody("file", is, ContentType.MULTIPART_FORM_DATA, task.file.getName())
                         .build();
-                String json = Request.Post(globals.uploadRestUrl + '/' + task.code)
-                        .connectTimeout(5000)
-                        .socketTimeout(5000)
-                        .body(entity)
-                        .execute().returnContent().asString();
+
+                Response response;
+                if (globals.isSecureRestUrl) {
+                    response = executor.executor.execute(request);
+                }
+                else {
+                    response = request.execute();
+                }
+                String json = response.returnContent().asString();
 
                 ServerService.UploadResult result = fromJson(json);
                 if (!result.isOk) {
-                    log.error("Error uploading file, text: " + result.error);
+                    log.error("Error uploading file, server error: " + result.error);
                     add(task);
                 }
+                log.info("'\tresult data was successfully uploaded");
+
             } catch (HttpResponseException e) {
                 log.error("Error uploading code", e);
                 break;

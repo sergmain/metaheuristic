@@ -134,7 +134,7 @@ public class ResourceController {
                 : resourcePoolCode + '-' + originFilename;
 
         try {
-            resourceService.storeNewPartOfRawFile(
+            resourceService.storeInitialResource(
                     originFilename, tempFile, code, resourcePoolCode, true, originFilename);
         } catch (StoreNewPartOfRawFileException e) {
             log.error("Error", e);

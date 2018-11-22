@@ -23,6 +23,9 @@ import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.snippet.SnippetUtils;
+import aiai.ai.station.actors.UploadResourceActor;
+import aiai.ai.station.tasks.DownloadSnippetTask;
+import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.yaml.sequence.SimpleSnippet;
 import aiai.ai.yaml.sequence.TaskParamYaml;
 import aiai.ai.yaml.sequence.TaskParamYamlUtils;
@@ -49,16 +52,18 @@ public class TaskProcessor {
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
+    private final UploadResourceActor uploadResourceActor;
 
     private Map<Enums.BinaryDataType, Map<String, AssetFile>> resourceReadyMap = new HashMap<>();
 
-    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState) {
+    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState, UploadResourceActor uploadResourceActor) {
         this.globals = globals;
         this.execProcessService = execProcessService;
         this.stationService = stationService;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.stationTaskService = stationTaskService;
         this.currentExecState = currentExecState;
+        this.uploadResourceActor = uploadResourceActor;
     }
 
     private AssetFile getResource(Enums.BinaryDataType binaryDataType, String id) {
@@ -186,6 +191,14 @@ public class TaskProcessor {
                     break;
                 }
 
+                File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR+File.separatorChar+taskParamYaml.outputResourceCode);
+                if (resultDataFile.exists()) {
+                    log.info("Register task for uploading result data to server, resultDataFile: {}", resultDataFile.getPath());
+                    uploadResourceActor.add(new UploadResourceTask(resultDataFile, task.taskId));
+                }
+                else {
+                    log.error("Result data file doesn't exist, resultDataFile: {}", resultDataFile.getPath());
+                }
             } catch (Exception err) {
                 log.error("Error exec process " + interpreter, err);
             }

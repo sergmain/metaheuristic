@@ -27,7 +27,7 @@ import java.io.File;
 @Data
 @AllArgsConstructor
 @EqualsAndHashCode
-public class DownloadResourceTask implements StationTask{
+public class DownloadResourceTask implements StationRestTask {
     public String id;
     public File targetDir;
     public Enums.BinaryDataType binaryDataType;

@@ -24,6 +24,7 @@ import aiai.ai.station.TaskProcessor;
 import aiai.ai.station.TaskAssigner;
 import aiai.ai.station.actors.DownloadResourceActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
+import aiai.ai.station.actors.UploadResourceActor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -99,15 +100,17 @@ public class Schedulers {
         private final TaskProcessor taskProcessor;
         private final DownloadSnippetActor downloadSnippetActor;
         private final DownloadResourceActor downloadResourceActor;
+        private final UploadResourceActor uploadResourceActor;
         private final ArtifactCleaner artifactCleaner;
 
-        public StationSchedulers(Globals globals, LaunchpadRequester launchpadRequester, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, ArtifactCleaner artifactCleaner) {
+        public StationSchedulers(Globals globals, LaunchpadRequester launchpadRequester, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleaner artifactCleaner) {
             this.globals = globals;
             this.launchpadRequester = launchpadRequester;
             this.taskAssigner = taskAssigner;
             this.taskProcessor = taskProcessor;
             this.downloadSnippetActor = downloadSnippetActor;
             this.downloadResourceActor = downloadResourceActor;
+            this.uploadResourceActor = uploadResourceActor;
             this.artifactCleaner = artifactCleaner;
         }
 
@@ -169,6 +172,18 @@ public class Schedulers {
             }
             log.info("DownloadSnippetActor.fixedDelay()");
             downloadResourceActor.fixedDelay();
+        }
+
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.upload-result-resource'), 3, 20, 5)*1000 }")
+        public void uploadResourceActor() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.isStationEnabled) {
+                return;
+            }
+            log.info("UploadResourceActor.fixedDelay()");
+            uploadResourceActor.fixedDelay();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.artifact-cleaner'), 10, 60, 30)*1000 }")

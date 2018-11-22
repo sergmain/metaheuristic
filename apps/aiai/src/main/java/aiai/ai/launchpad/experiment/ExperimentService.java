@@ -494,6 +494,20 @@ public class ExperimentService {
         e.setAllTaskProduced(false);
         e.setNumberOfTask(0);
         experimentCache.save(e);
+
+        // let's check
+        e =  experimentRepository.findById(e.getId()).orElse(null);
+        if (e==null || e.getExecState()!=Enums.FlowInstanceExecState.NONE.code ||
+                e.getFlowInstanceId()!=null
+        ) {
+            throw new IllegalStateException("Cache wasn't updated.");
+        }
+        e =  experimentCache.findById(e.getId());
+        if (e==null || e.getExecState()!=Enums.FlowInstanceExecState.NONE.code ||
+                e.getFlowInstanceId()!=null
+        ) {
+                throw new IllegalStateException("Cache wasn't updated.");
+        }
     }
 
     public void produceTasks(FlowInstance flowInstance, int order, Experiment experiment) {
@@ -589,7 +603,7 @@ public class ExperimentService {
                     try {
                         ExperimentFeature f = experimentFeatureRepository.findById(feature.getId()).orElse(null);
                         if (f==null) {
-                            log.warn("Unexpected behaviour, feature with id {} wasn't found", feature.getId());
+                            log.error("Unexpected behaviour, feature with id {} wasn't found", feature.getId());
                             break;
                         }
                         f.setFinished(false);

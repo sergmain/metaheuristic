@@ -26,7 +26,7 @@ public class ResourceService {
         this.binaryDataService = binaryDataService;
     }
 
-    void storeNewPartOfRawFile(
+    void storeInitialResource(
             String originFilename, File tempFile, String code, String poolCode, boolean isManual, String filename) {
 
         try {
