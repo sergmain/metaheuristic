@@ -32,4 +32,5 @@ public class SimpleSnippet {
     public String env;
     public boolean metrics;
     public boolean fileProvided;
+    public String params;
 }

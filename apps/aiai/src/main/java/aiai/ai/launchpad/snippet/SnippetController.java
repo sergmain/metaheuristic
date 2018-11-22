@@ -34,6 +34,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.Collections;
 
 @Controller
 @RequestMapping("/launchpad")
@@ -59,7 +60,9 @@ public class SnippetController {
     }
 
     @GetMapping("/snippets")
-    public String init(@ModelAttribute Result result, @ModelAttribute("errorMessage") final String errorMessage) {
+    public String init(@ModelAttribute Result result,
+                       @ModelAttribute("errorMessage") final String errorMessage,
+                       @ModelAttribute("infoMessages") final String infoMessages) {
         result.snippets = snippetRepository.findAll();
         return "launchpad/snippets";
     }
@@ -67,12 +70,12 @@ public class SnippetController {
     @GetMapping("/snippet-delete/{id}")
     public String delete(@ModelAttribute Result result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         final Snippet snippet = snippetCache.findById(id);
-        if (snippet==null) {
-            return "redirect:/launchpad/snippets";
+        if (snippet != null) {
+            redirectAttributes.addFlashAttribute("infoMessages",
+                    Collections.singleton("Snippet "+id+" was deleted successfully"));
+            snippetCache.delete(snippet.getId());
         }
-
-        snippetCache.delete(snippet.getId());
-        return "launchpad/snippets";
+        return "redirect:/launchpad/snippets";
     }
 
     @PostMapping(value = "/snippet-upload-from-file")

@@ -56,9 +56,9 @@
         <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
         <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
-        <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ExperimentResult"*/-->
+        <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController$ExperimentResult"*/-->
         <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
-        <!--/*@thymesVar id="simpleExperiment" type="aiai.ai.launchpad.experiment.ExperimentsController.SimpleExperiment"*/-->
+        <!--/*@thymesVar id="simpleExperiment" type="aiai.ai.launchpad.experiment.ExperimentsController$SimpleExperiment"*/-->
         <form class="pure-form pure-form-stacked" th:object="${simpleExperiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment-edit-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <fieldset>
@@ -105,7 +105,7 @@
         <p>&nbsp;</p>
 
 
-        <!--/*@thymesVar id="snippetResult" type="aiai.ai.launchpad.experiment.ExperimentsController.SnippetResult"*/-->
+        <!--/*@thymesVar id="snippetResult" type="aiai.ai.launchpad.experiment.ExperimentsController$SnippetResult"*/-->
         <h1 class="widget-header">Snippets</h1>
         <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-add-commit/'+experiment.id}" accept-charset="UTF-8"
               th:if="${!snippetResult.selectOptions.isEmpty()}">

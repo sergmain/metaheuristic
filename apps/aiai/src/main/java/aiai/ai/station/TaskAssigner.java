@@ -30,6 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
+import java.io.File;
 import java.util.List;
 
 @Service
@@ -77,10 +78,12 @@ public class TaskAssigner {
                 continue;
             }
 
+            File taskDir = stationTaskService.prepareTaskDir(task.taskId);
+
             for (String code : taskParamYaml.inputResourceCodes) {
-                downloadResourceActor.add(new DownloadResourceTask(code, Enums.BinaryDataType.DATA));
+                downloadResourceActor.add(new DownloadResourceTask(code, taskDir, Enums.BinaryDataType.DATA));
             }
-            downloadSnippetActor.add(new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum));
+            downloadSnippetActor.add(new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, taskDir));
         }
     }
 }

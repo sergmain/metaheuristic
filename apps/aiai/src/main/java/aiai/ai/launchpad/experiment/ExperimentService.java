@@ -563,7 +563,8 @@ public class ExperimentService {
                             snippet.checksum,
                             snippet.env,
                             snippet.reportMetrics,
-                            snippet.fileProvided
+                            snippet.fileProvided,
+                            snippet.params
                     );
 
                     String currTaskParams = taskParamYamlUtils.toString(yaml);

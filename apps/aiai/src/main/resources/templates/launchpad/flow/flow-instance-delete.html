@@ -9,7 +9,7 @@
         <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
         <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
-        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController.FlowInstanceResult"*/-->
+        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController$FlowInstanceResult"*/-->
         <form class="pure-form pure-form-stacked" th:object="${result.flow}" action="#">
             <fieldset>
                 <label for="code">Code of flow</label>

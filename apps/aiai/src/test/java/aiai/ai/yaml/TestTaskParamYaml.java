@@ -46,7 +46,7 @@ public class TestTaskParamYaml {
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.setHyperParams(map);
-        seq.setSnippet(new SimpleSnippet("fit", "123", "file.txt", "112233", "python.exe",  false, false));
+        seq.setSnippet(new SimpleSnippet("fit", "123", "file.txt", "112233", "python.exe",  false, false, " aaa bbb"));
 
         String s = taskParamYamlUtils.toString(seq);
 

@@ -4,6 +4,7 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
     <p>&nbsp;</p>
+    <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
     <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
     <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
@@ -40,7 +41,7 @@
         };
     </script>
 
-    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.snippet.SnippetController.Result"*/-->
+    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.snippet.SnippetController$Result"*/-->
     <table class="pure-table pure-table-bordered" id="table-ds-path-cols">
         <thead>
         <tr>

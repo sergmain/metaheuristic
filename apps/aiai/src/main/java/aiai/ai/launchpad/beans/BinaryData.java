@@ -58,7 +58,6 @@ public class BinaryData implements Serializable {
 
     @Column(name = "DATA")
     @Lob
-    @Basic(fetch = FetchType.LAZY)
     private Blob data;
 
     @Column(name = "CHECKSUM")

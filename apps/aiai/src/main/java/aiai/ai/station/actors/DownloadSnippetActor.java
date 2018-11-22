@@ -85,7 +85,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             }
             final String snippetCode = task.snippetCode;
 
-            AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.SNIPPET, task.snippetCode, task.filename);
+            AssetFile assetFile = StationResourceUtils.prepareResourceFile(task.targetDir, Enums.BinaryDataType.SNIPPET, task.snippetCode, task.filename);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;

@@ -19,8 +19,10 @@ package aiai.ai.yaml.station;
 
 import aiai.ai.Enums;
 import lombok.Data;
+import lombok.ToString;
 
 @Data
+@ToString
 public class StationTask {
     public long taskId;
 

@@ -21,6 +21,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.io.File;
+
 @Data
 @AllArgsConstructor
 @EqualsAndHashCode
@@ -28,4 +30,5 @@ public class DownloadSnippetTask implements StationTask {
     public String snippetCode;
     public String filename;
     public String checksum;
+    public File targetDir;
 }

@@ -22,10 +22,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.io.File;
+
 @Data
 @AllArgsConstructor
 @EqualsAndHashCode
 public class DownloadResourceTask implements StationTask{
     public String id;
+    public File targetDir;
     public Enums.BinaryDataType binaryDataType;
 }

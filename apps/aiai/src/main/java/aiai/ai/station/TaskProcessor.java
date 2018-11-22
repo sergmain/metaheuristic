@@ -99,12 +99,14 @@ public class TaskProcessor {
             if (!currentExecState.isStarted(task.flowInstanceId)) {
                 continue;
             }
+            File taskDir = stationTaskService.prepareTaskDir(task.taskId);
+
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean isResourcesOk = true;
             for (String resourceCode : taskParamYaml.inputResourceCodes) {
                 AssetFile assetFile= getResource(Enums.BinaryDataType.DATA, resourceCode);
                 if (assetFile == null) {
-                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.DATA, resourceCode, null);
+                    assetFile = StationResourceUtils.prepareResourceFile(taskDir, Enums.BinaryDataType.DATA, resourceCode, null);
                     // is this resource prepared?
                     if (assetFile.isError || !assetFile.isContent) {
                         log.info("Resource hasn't been prepared yet, {}", assetFile);
@@ -123,8 +125,6 @@ public class TaskProcessor {
                 continue;
             }
 
-            File taskDir = stationTaskService.prepareTaskDir(task.taskId);
-
             File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, "artifacts");
             if (artifactDir == null) {
                 stationTaskService.finishAndWriteToLog(task, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
@@ -133,7 +133,7 @@ public class TaskProcessor {
 
             // at this point all required resources have to be downloaded from server
 
-            taskParamYaml.artifactPath = artifactDir.getAbsolutePath();
+            taskParamYaml.workingPath = taskDir.getAbsolutePath();
             final String params = taskParamYamlUtils.toString(taskParamYaml);
 
             task.setLaunchedOn(System.currentTimeMillis());
@@ -144,7 +144,7 @@ public class TaskProcessor {
             if (!snippet.fileProvided) {
                 assetFile = getResource(Enums.BinaryDataType.SNIPPET, snippet.code);
                 if (assetFile == null) {
-                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.SNIPPET, snippet.code, snippet.filename);
+                    assetFile = StationResourceUtils.prepareResourceFile(taskDir, Enums.BinaryDataType.SNIPPET, snippet.code, snippet.filename);
                     // is this snippet prepared?
                     if (assetFile.isError || !assetFile.isContent) {
                         log.info("Resource hasn't been prepared yet, {}", assetFile);
@@ -158,7 +158,7 @@ public class TaskProcessor {
                 }
             }
 
-            final File paramFile = prepareParamFile(taskDir, snippet.getType(), params);
+            final File paramFile = prepareParamFile(taskDir, Consts.ARTIFACTS_DIR, params);
             if (paramFile == null) {
                 break;
             }
@@ -176,9 +176,11 @@ public class TaskProcessor {
                 if (!snippet.fileProvided && assetFile!=null) {
                     cmd.add(assetFile.file.getAbsolutePath());
                 }
-
-                final File execDir = paramFile.getParentFile();
-                result = execProcessService.execCommand(cmd, execDir);
+                if (StringUtils.isNoneBlank(snippet.params)) {
+                    cmd.addAll(Arrays.stream(StringUtils.split(snippet.params)).collect(Collectors.toList()));
+                }
+                cmd.add(Consts.ARTIFACTS_DIR+File.separatorChar+Consts.PARAMS_YAML);
+                result = execProcessService.execCommand(cmd, taskDir);
                 stationTaskService.storeExecResult(task.getTaskId(), snippet, result, artifactDir);
                 if (!result.isOk()) {
                     break;

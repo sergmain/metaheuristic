@@ -37,6 +37,7 @@ public class CurrentExecState {
             isInit = true;
             // statuses==null when there isn't any flow instance
             if (statuses==null) {
+                flowInstanceState.clear();
                 return;
             }
             for (Protocol.FlowInstanceStatus.SimpleStatus status : statuses) {

@@ -85,7 +85,8 @@ public class FileProcessService {
                 snippet.checksum,
                 snippet.env,
                 snippet.reportMetrics,
-                snippet.fileProvided
+                snippet.fileProvided,
+                snippet.params
         );
 
         String taskParams = taskParamYamlUtils.toString(yaml);

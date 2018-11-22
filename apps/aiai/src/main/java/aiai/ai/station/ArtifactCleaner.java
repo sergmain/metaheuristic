@@ -55,29 +55,5 @@ public class ArtifactCleaner {
                 stationTaskService.deleteById(task.getTaskId());
             }
         }
-
-/*
-        try {
-            Files.newDirectoryStream(globals.stationTaskDir.toPath()).forEach((Path path) -> {
-                        final File file = path.toFile();
-                        if (file.isFile()) {
-                            log.warn("Found file {} in {}, should be directory only", file.getPath());
-                            return;
-                        }
-                        int yyyId = Integer.parseInt(file.getName());
-                        if (currentExecState.getState(xxxId) != null) {
-                            return;
-                        }
-                        log.warn("Start deleting dir {}", file.getPath());
-                        FileUtils.deleteQuietly(file);
-                    }
-            );
-        }
-        catch (IOException e) {
-            log.error("Error", e);
-            throw new RuntimeException("error", e);
-        }
-*/
     }
-
 }

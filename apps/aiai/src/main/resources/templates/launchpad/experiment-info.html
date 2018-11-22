@@ -8,7 +8,7 @@
     <h1 class="widget-header">The experiment info</h1>
 
     <!--/*@thymesVar id="infoMessages" type="java.util.List"*/-->
-    <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController.ExperimentResult"*/-->
+    <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController$ExperimentResult"*/-->
     <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
     <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
 

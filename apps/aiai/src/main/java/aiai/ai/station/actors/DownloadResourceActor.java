@@ -70,7 +70,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             if (Boolean.TRUE.equals(preparedMap.get(task.getId()))) {
                 continue;
             }
-            AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, task.binaryDataType, task.id, null);
+            AssetFile assetFile = StationResourceUtils.prepareResourceFile(task.targetDir, task.binaryDataType, task.id, null);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;

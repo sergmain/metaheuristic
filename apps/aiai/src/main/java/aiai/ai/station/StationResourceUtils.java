@@ -26,20 +26,21 @@ import java.io.File;
 @Slf4j
 public class StationResourceUtils {
 
-    public static AssetFile prepareResourceFile(File stationResourceDir, Enums.BinaryDataType binaryDataType, String id, String resourceFilename) {
+    public static AssetFile prepareResourceFile(File rootDir, Enums.BinaryDataType binaryDataType, String id, String resourceFilename) {
 
         final AssetFile assetFile = new AssetFile();
 
-        File typeDir = new File(stationResourceDir, binaryDataType.toString());
+        File typeDir = new File(rootDir, binaryDataType.toString());
         final String resId = id.replace(':', '_');
 
-        File trgDir = new File(typeDir, resId);
+        File trgDir = typeDir;
+//        File trgDir = new File(typeDir, resId);
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
             log.error("Can't create resource dir for task: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
-        assetFile.file = new File(trgDir, StringUtils.isNotBlank(resourceFilename) ? resourceFilename : "" + resId + ".bin");
+        assetFile.file = new File(trgDir, StringUtils.isNotBlank(resourceFilename) ? resourceFilename : "" + resId/* + ".bin"*/);
         assetFile.isExist = assetFile.file.exists();
 
         if (assetFile.isExist) {
