@@ -14,6 +14,7 @@ import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,6 +44,7 @@ public class ServerService {
 
     @Data
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class UploadResult {
         public boolean isOk;
         public String error;

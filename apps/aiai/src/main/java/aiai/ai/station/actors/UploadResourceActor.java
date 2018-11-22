@@ -132,7 +132,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 log.error("Throwable", th);
             }
             if (!isOk) {
-                log.error("''tTask aggigned one more time.");
+                log.error("'\tTask assigned one more time.");
                 repeat.add(task);
             }
 
