@@ -25,6 +25,7 @@ import aiai.ai.core.ExecProcessService;
 import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
+import aiai.ai.utils.CollectionUtils;
 import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
@@ -107,7 +108,7 @@ public class TaskProcessor {
 
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean isResourcesOk = true;
-            for (String resourceCode : taskParamYaml.inputResourceCodes.values()) {
+            for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
                 AssetFile assetFile= getResource(Enums.BinaryDataType.DATA, resourceCode);
                 if (assetFile == null) {
                     assetFile = StationResourceUtils.prepareResourceFile(taskDir, Enums.BinaryDataType.DATA, resourceCode, null);

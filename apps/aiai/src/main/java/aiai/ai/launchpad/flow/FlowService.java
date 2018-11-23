@@ -1,5 +1,6 @@
 package aiai.ai.launchpad.flow;
 
+import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.Process;
@@ -239,11 +240,7 @@ public class FlowService {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return;
         }
-        for (String inputResourceCode : inputResourceCodes) {
-            List<String> list = collectedInputs.computeIfAbsent("input-flow-instance-type", k -> new ArrayList<>());
-            list.add(inputResourceCode);
-
-        }
+        collectedInputs.computeIfAbsent(Consts.FLOW_INSTANCE_INPUT_TYPE, k -> new ArrayList<>()).addAll(inputResourceCodes);
 
         result.flowInstance = fi;
 

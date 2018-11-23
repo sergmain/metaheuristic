@@ -17,8 +17,10 @@
  */
 package aiai.ai.launchpad.snippet;
 
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Snippet;
+import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
@@ -46,17 +48,19 @@ public class SnippetController {
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
     private final SnippetService snippetService;
+    private final BinaryDataService binaryDataService;
 
     @Data
     public static class Result {
         Iterable<Snippet> snippets;
     }
 
-    public SnippetController(Globals globals, SnippetRepository snippetRepository, SnippetCache snippetCache, SnippetService snippetService) {
+    public SnippetController(Globals globals, SnippetRepository snippetRepository, SnippetCache snippetCache, SnippetService snippetService, BinaryDataService binaryDataService) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
         this.snippetCache = snippetCache;
         this.snippetService = snippetService;
+        this.binaryDataService = binaryDataService;
     }
 
     @GetMapping("/snippets")
@@ -74,7 +78,9 @@ public class SnippetController {
             redirectAttributes.addFlashAttribute("infoMessages",
                     Collections.singleton("Snippet "+id+" was deleted successfully"));
             snippetCache.delete(snippet.getId());
+            binaryDataService.deleteByCodeAndDataType(snippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
         }
+
         return "redirect:/launchpad/snippets";
     }
 

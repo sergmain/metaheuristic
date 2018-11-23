@@ -192,7 +192,7 @@ public class ExperimentService {
                     continue;
                 }
                 experiment.setExecState(Enums.FlowInstanceExecState.FINISHED.code);
-                experimentCache.save(experiment);
+                experiment = experimentCache.save(experiment);
             }
         }
     }
@@ -494,7 +494,7 @@ public class ExperimentService {
         e.setFeatureProduced(false);
         e.setAllTaskProduced(false);
         e.setNumberOfTask(0);
-        experimentCache.save(e);
+        e = experimentCache.save(e);
 
         // let's check
         e =  experimentRepository.findById(e.getId()).orElse(null);
@@ -558,7 +558,7 @@ public class ExperimentService {
                     TaskParamYaml yaml = new TaskParamYaml();
                     yaml.setHyperParams( hyperParams.toSortedMap() );
                     for (String inputResourceCode : inputResourceCodes) {
-                        yaml.inputResourceCodes.put(process.inputType, inputResourceCode);
+                        yaml.inputResourceCodes.computeIfAbsent(process.inputType, k -> new ArrayList<>()).add(inputResourceCode);
                     }
 
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
@@ -633,19 +633,13 @@ public class ExperimentService {
         }
         experimentTemp.setNumberOfTask(totalVariants);
         experimentTemp.setAllTaskProduced(true);
-        experimentCache.save(experimentTemp);
+        experimentTemp = experimentCache.save(experimentTemp);
     }
 
-    public List<String> toPlainList(Collection<List<String>> inputResourceCodes) {
-        final List<String> codes = new ArrayList<>();
-        inputResourceCodes.forEach(codes::addAll);
-        return codes;
-    }
-
-    public void produceFeaturePermutations(Experiment experiment, Collection<List<String>> inputResourceCodes) {
+    public void produceFeaturePermutations(final Experiment experiment, List<String> inputResourceCodes) {
         final List<ExperimentFeature> list = experimentFeatureRepository.findByExperimentId(experiment.getId());
 
-        final List<String> codes = toPlainList(inputResourceCodes);
+        final List<String> codes = inputResourceCodes;
         final Permutation<String> permutation = new Permutation<>();
         final IntHolder total = new IntHolder();
         for (int i = 0; i < codes.size(); i++) {

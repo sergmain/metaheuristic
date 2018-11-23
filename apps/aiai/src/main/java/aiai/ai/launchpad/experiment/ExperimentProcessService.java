@@ -34,8 +34,16 @@ public class ExperimentProcessService {
         }
 
         e.setFlowInstanceId(flowInstance.getId());
+        e = experimentCache.save(e);
 
-        experimentService.produceFeaturePermutations(e, collectedInputs.values());
+        Process.Meta meta = process.getMeta("feature");
+        if (meta==null) {
+            result.status = Enums.FlowProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
+            return result;
+        }
+
+        List<String> features = collectedInputs.get(meta.getValue());
+        experimentService.produceFeaturePermutations(e, features);
         experimentService.produceTasks(flowInstance, process, e);
 
         result.status = Enums.FlowProducingStatus.OK;

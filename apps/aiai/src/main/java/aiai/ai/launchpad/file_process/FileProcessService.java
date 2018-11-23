@@ -77,9 +77,7 @@ public class FileProcessService {
         TaskParamYaml yaml = new TaskParamYaml();
         yaml.setHyperParams( Collections.emptyMap() );
         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
-            for (String s : entry.getValue()) {
-                yaml.inputResourceCodes.put(entry.getKey(), s);
-            }
+            yaml.inputResourceCodes.put(entry.getKey(), entry.getValue());
         }
         yaml.outputResourceCode = outputResourceCode;
 

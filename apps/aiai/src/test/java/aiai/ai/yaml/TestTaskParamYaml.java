@@ -28,6 +28,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -42,9 +43,9 @@ public class TestTaskParamYaml {
     public void testSequenceYaml() {
         TaskParamYaml seq = new TaskParamYaml();
 
-        seq.inputResourceCodes.put("type1","1");
-        seq.inputResourceCodes.put("type2","2");
-        seq.inputResourceCodes.put("type3","3");
+        seq.inputResourceCodes.put("type1", Collections.singletonList("1"));
+        seq.inputResourceCodes.put("type2", Collections.singletonList("2"));
+        seq.inputResourceCodes.put("type3", Collections.singletonList("3"));
         Map<String, String> map = new HashMap<>();
         map.put("key1", "#1");
         map.put("key2", "#1");

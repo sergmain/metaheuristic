@@ -25,7 +25,7 @@ import java.util.Map;
 
 @Data
 public class TaskParamYaml {
-    public Map<String, String> inputResourceCodes = new HashMap<>();
+    public Map<String, List<String>> inputResourceCodes = new HashMap<>();
     public SimpleSnippet snippet;
     public Map<String, String> hyperParams;
     public String outputResourceCode;

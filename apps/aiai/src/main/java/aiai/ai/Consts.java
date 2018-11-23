@@ -64,4 +64,5 @@ public class Consts {
     public static final String PARAMS_YAML = "params.yaml";
     public static final String TASK_YAML = "task.yaml";
 
+    public static final String FLOW_INSTANCE_INPUT_TYPE = "flow-instance-input-type";
 }

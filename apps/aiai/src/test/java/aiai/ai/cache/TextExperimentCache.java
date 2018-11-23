@@ -33,7 +33,7 @@ public class TextExperimentCache extends PreparingExperiment {
         assertEquals(e1.getFlowInstanceId(), e2.getFlowInstanceId());
 
         e2.setFlowInstanceId(1L);
-        experimentCache.save(e2);
+        e2 = experimentCache.save(e2);
 
         e1 = experimentCache.findById(experiment.getId());
         e2 = experimentRepository.findById(experiment.getId()).orElse(null);
@@ -47,7 +47,7 @@ public class TextExperimentCache extends PreparingExperiment {
         assertEquals(e1.getFlowInstanceId(), e2.getFlowInstanceId());
 
         e2.setFlowInstanceId(null);
-        experimentCache.save(e2);
+        e2 = experimentCache.save(e2);
 
         e1 = experimentCache.findById(experiment.getId());
         e2 = experimentRepository.findById(experiment.getId()).orElse(null);

@@ -23,6 +23,7 @@ import aiai.ai.station.actors.DownloadResourceActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.station.tasks.DownloadSnippetTask;
+import aiai.ai.utils.CollectionUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.ai.yaml.station.StationTask;
@@ -80,7 +81,7 @@ public class TaskAssigner {
 
             File taskDir = stationTaskService.prepareTaskDir(task.taskId);
 
-            for (String code : taskParamYaml.inputResourceCodes.values()) {
+            for (String code : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
                 downloadResourceActor.add(new DownloadResourceTask(code, taskDir, Enums.BinaryDataType.DATA));
             }
             downloadSnippetActor.add(new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, taskDir));
