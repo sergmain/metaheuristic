@@ -149,7 +149,7 @@ public class TaskProcessor {
             if (!snippet.fileProvided) {
                 assetFile = getResource(Enums.BinaryDataType.SNIPPET, snippet.code);
                 if (assetFile == null) {
-                    assetFile = StationResourceUtils.prepareResourceFile(taskDir, Enums.BinaryDataType.SNIPPET, snippet.code, snippet.filename);
+                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.SNIPPET, snippet.code, snippet.filename);
                     // is this snippet prepared?
                     if (assetFile.isError || !assetFile.isContent) {
                         log.info("Resource hasn't been prepared yet, {}", assetFile);

@@ -36,6 +36,7 @@ public class ExperimentCache {
     }
 
     @CachePut(cacheNames = "experiments", key = "#result.id")
+    @CacheEvict(cacheNames = {"experimentsByCode"}, key = "#result.code")
     public Experiment save(Experiment experiment) {
         return experimentRepository.save(experiment);
     }

@@ -35,7 +35,8 @@ public class SnippetCache {
         this.snippetRepository = snippetRepository;
     }
 
-    @CachePut(cacheNames = "snippets", key = "#snippet.id")
+    @CachePut(cacheNames = "snippets", key = "#result.id")
+    @CacheEvict(cacheNames = {"snippetsByName"}, key = "#result.id")
     public Snippet save(Snippet snippet) {
         return snippetRepository.save(snippet);
     }

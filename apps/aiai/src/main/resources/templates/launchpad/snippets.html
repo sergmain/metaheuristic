@@ -3,6 +3,36 @@
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
+    <script>
+        'use strict';
+
+        /**
+         * @param {int} id
+         */
+        function deleteSnippet(id) {
+            console.log("Start deleteSnippet("+id+")");
+            my_confirm('Do you really want to delete this snippet?', 'Delete snippet?', "Delete", function() {
+                console.log("Deletion of snippet was confirmed.");
+                $.get('/launchpad/snippet-delete/' + id, function(status) {
+                    // console.log("task-rerun is finished, Status: " + status);
+/*
+                    if (status===true) {
+                        // console.log("task-rerun is finished, status " + status);
+                        my_alert('Snippet was deleted. You need update page to see changes', 'Status');
+                    }
+                    else {
+                        // console.log("task-rerun is finished, status " + status);
+                        my_alert('There is some problem with deleting of snippet. Status: '+status+'. Try to reload this page', 'Status');
+                    }
+*/
+                });
+            });
+            return true;
+        }
+
+    </script>
+
+
     <p>&nbsp;</p>
     <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
     <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
@@ -64,7 +94,10 @@
             <td th:text="${s.env}">Environment</td>
             <td th:text="${s.params}">Params</td>
             <td th:text="${s.isSigned ? 'Yes' : 'No'}">Is signed?</td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/snippet-delete/' + s.id}">Delete</a></td>
+            <td><a class="pure-button pure-button-primary" href="#"
+                   th:data-id="${s.id}"
+                   onclick="deleteSnippet( this.getAttribute('data-id') ); return false;"
+                   title='Delete snippet'>Delete</a></td>
         </tr>
         </tbody>
     </table>
