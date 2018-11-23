@@ -636,10 +636,16 @@ public class ExperimentService {
         experimentCache.save(experimentTemp);
     }
 
-    public void produceFeaturePermutations(Experiment experiment, Collection<String> inputResourceCodes) {
+    public List<String> toPlainList(Collection<List<String>> inputResourceCodes) {
+        final List<String> codes = new ArrayList<>();
+        inputResourceCodes.forEach(codes::addAll);
+        return codes;
+    }
+
+    public void produceFeaturePermutations(Experiment experiment, Collection<List<String>> inputResourceCodes) {
         final List<ExperimentFeature> list = experimentFeatureRepository.findByExperimentId(experiment.getId());
 
-        final List<String> codes = new ArrayList<>(inputResourceCodes);
+        final List<String> codes = toPlainList(inputResourceCodes);
         final Permutation<String> permutation = new Permutation<>();
         final IntHolder total = new IntHolder();
         for (int i = 0; i < codes.size(); i++) {

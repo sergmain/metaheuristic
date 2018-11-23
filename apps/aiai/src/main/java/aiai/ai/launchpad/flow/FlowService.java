@@ -233,14 +233,16 @@ public class FlowService {
 
     public void produce(TaskProducingResult result, Flow flow, FlowInstance fi) {
 
-        final Map<String, String> collectedInputs = new HashMap<>();
+        final Map<String, List<String>> collectedInputs = new HashMap<>();
         List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCode);
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return;
         }
         for (String inputResourceCode : inputResourceCodes) {
-            collectedInputs.put("input-flow-instance-type", inputResourceCode);
+            List<String> list = collectedInputs.computeIfAbsent("input-flow-instance-type", k -> new ArrayList<>());
+            list.add(inputResourceCode);
+
         }
 
         result.flowInstance = fi;
@@ -272,7 +274,8 @@ public class FlowService {
             }
             if (produceTaskResult.outputResourceCodes!=null) {
                 for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
-                    collectedInputs.put(process.outputType, outputResourceCode);
+                    List<String> list = collectedInputs.computeIfAbsent(process.outputType, k -> new ArrayList<>());
+                    list.add(outputResourceCode);
                 }
             }
         }

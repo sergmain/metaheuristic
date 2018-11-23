@@ -25,7 +25,7 @@ public class ExperimentProcessService {
         this.experimentCache = experimentCache;
     }
 
-    public FlowService.ProduceTaskResult produceTasks(Flow flow, FlowInstance flowInstance, Process process, Map<String, String> collectedInputs) {
+    public FlowService.ProduceTaskResult produceTasks(Flow flow, FlowInstance flowInstance, Process process, Map<String, List<String>> collectedInputs) {
         Experiment e = experimentCache.findByCode(process.code);
         FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
         if (e==null) {

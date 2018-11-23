@@ -47,7 +47,7 @@ public class TestFlowService extends PreparingFlow {
 
             p.inputType = "raw-part-data";
             p.snippetCodes = Collections.singletonList("snippet-01:1.1");
-            p.collectResources = true;
+            p.collectResources = false;
             p.outputType = "assembled-raw";
 
             flowYaml.processes.add(p);
@@ -72,7 +72,7 @@ public class TestFlowService extends PreparingFlow {
 
             p.snippetCodes = Arrays.asList("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
             p.parallelExec = true;
-            p.collectResources = true;
+            p.collectResources = false;
             p.outputType = "feature";
 
             flowYaml.processes.add(p);

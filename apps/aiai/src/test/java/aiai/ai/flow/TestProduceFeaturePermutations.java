@@ -13,6 +13,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -40,7 +41,7 @@ public class TestProduceFeaturePermutations extends PreparingExperiment {
 
     @Test
     public void testFeaturePermutation() {
-        experimentService.produceFeaturePermutations(experiment, Arrays.asList("aaa", "bbb", "ccc"));
+        experimentService.produceFeaturePermutations(experiment, Collections.singleton(Arrays.asList("aaa", "bbb", "ccc")));
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         assertNotNull(features);
         assertEquals(7, features.size());

@@ -44,7 +44,7 @@ public class FileProcessService {
 
     public FlowService.ProduceTaskResult produceTasks(
             Flow flow, FlowInstance flowInstance, Process process,
-            Map<String, String> collectedInputs) {
+            Map<String, List<String>> collectedInputs) {
 
         FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
 
@@ -71,13 +71,15 @@ public class FileProcessService {
     private void createTaskInternal(
             Flow flow, FlowInstance flowInstance, Process process,
             String outputResourceCode,
-            String snippetCode, Map<String, String> collectedInputs) {
+            String snippetCode, Map<String, List<String>> collectedInputs) {
         SnippetVersion sv = SnippetVersion.from(snippetCode);
 
         TaskParamYaml yaml = new TaskParamYaml();
         yaml.setHyperParams( Collections.emptyMap() );
-        for (Map.Entry<String, String> entry : collectedInputs.entrySet()) {
-            yaml.inputResourceCodes.put(entry.getKey(), entry.getValue());
+        for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
+            for (String s : entry.getValue()) {
+                yaml.inputResourceCodes.put(entry.getKey(), s);
+            }
         }
         yaml.outputResourceCode = outputResourceCode;
 
