@@ -21,6 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
+import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.repositories.ExperimentFeatureRepository;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
@@ -33,10 +34,10 @@ import aiai.ai.utils.permutation.Permutation;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.sequence.SimpleResourceInfo;
-import aiai.ai.yaml.sequence.SimpleSnippet;
-import aiai.ai.yaml.sequence.TaskParamYaml;
-import aiai.ai.yaml.sequence.TaskParamYamlUtils;
+import aiai.ai.yaml.task.SimpleResourceInfo;
+import aiai.ai.yaml.task.SimpleSnippet;
+import aiai.ai.yaml.task.TaskParamYaml;
+import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -510,7 +511,7 @@ public class ExperimentService {
         }
     }
 
-    public void produceTasks(FlowInstance flowInstance, int order, Experiment experiment) {
+    public void produceTasks(FlowInstance flowInstance, Process process, Experiment experiment) {
         int totalVariants = 0;
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
@@ -556,7 +557,9 @@ public class ExperimentService {
                 for (ExperimentSnippet experimentSnippet : experimentSnippets) {
                     TaskParamYaml yaml = new TaskParamYaml();
                     yaml.setHyperParams( hyperParams.toSortedMap() );
-                    yaml.inputResourceCodes = inputResourceCodes;
+                    for (String inputResourceCode : inputResourceCodes) {
+                        yaml.inputResourceCodes.put(process.inputType, inputResourceCode);
+                    }
 
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                     Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
@@ -592,7 +595,7 @@ public class ExperimentService {
                     task.setFlowInstanceId(flowInstance.getId());
                     // we can just increment order here
                     // because experiment is always last process in flow
-                    task.setOrder(order + (orderAdd++));
+                    task.setOrder(process.order + (orderAdd++));
                     taskRepository.save(task);
                     isNew = true;
                 }
@@ -633,7 +636,7 @@ public class ExperimentService {
         experimentCache.save(experimentTemp);
     }
 
-    public void produceFeaturePermutations(Experiment experiment, List<String> inputResourceCodes) {
+    public void produceFeaturePermutations(Experiment experiment, Collection<String> inputResourceCodes) {
         final List<ExperimentFeature> list = experimentFeatureRepository.findByExperimentId(experiment.getId());
 
         final List<String> codes = new ArrayList<>(inputResourceCodes);

@@ -12,9 +12,9 @@ import aiai.ai.launchpad.flow.FlowUtils;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
-import aiai.ai.yaml.sequence.SimpleSnippet;
-import aiai.ai.yaml.sequence.TaskParamYaml;
-import aiai.ai.yaml.sequence.TaskParamYamlUtils;
+import aiai.ai.yaml.task.SimpleSnippet;
+import aiai.ai.yaml.task.TaskParamYaml;
+import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -41,7 +42,9 @@ public class FileProcessService {
         this.binaryDataService = binaryDataService;
     }
 
-    public FlowService.ProduceTaskResult produceTasks(Flow flow, FlowInstance flowInstance, Process process, int idx, List<String> inputResourceCodes) {
+    public FlowService.ProduceTaskResult produceTasks(
+            Flow flow, FlowInstance flowInstance, Process process,
+            Map<String, String> collectedInputs) {
 
         FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
 
@@ -49,28 +52,33 @@ public class FileProcessService {
         if (process.parallelExec) {
             for (String snippetCode : process.snippetCodes) {
                 SnippetVersion sv = SnippetVersion.from(snippetCode);
-                String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, idx);
+                String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, process.order);
                 result.outputResourceCodes.add(outputResourceCode);
-                createTaskInternal(flow, flowInstance, process, idx, inputResourceCodes, outputResourceCode, snippetCode);
+                createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs);
             }
         }
         else {
             String snippetCode = process.snippetCodes.get(0);
             SnippetVersion sv = SnippetVersion.from(snippetCode);
-            String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, idx);
+            String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, process.order);
             result.outputResourceCodes.add(outputResourceCode);
-            createTaskInternal(flow, flowInstance, process, idx, inputResourceCodes, outputResourceCode, snippetCode);
+            createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs);
         }
         result.status = Enums.FlowProducingStatus.OK;
         return result;
     }
 
-    private void createTaskInternal(Flow flow, FlowInstance flowInstance, Process process, int idx, List<String> inputResourceCodes, String outputResourceCode, String snippetCode) {
+    private void createTaskInternal(
+            Flow flow, FlowInstance flowInstance, Process process,
+            String outputResourceCode,
+            String snippetCode, Map<String, String> collectedInputs) {
         SnippetVersion sv = SnippetVersion.from(snippetCode);
 
         TaskParamYaml yaml = new TaskParamYaml();
         yaml.setHyperParams( Collections.emptyMap() );
-        yaml.inputResourceCodes = inputResourceCodes;
+        for (Map.Entry<String, String> entry : collectedInputs.entrySet()) {
+            yaml.inputResourceCodes.put(entry.getKey(), entry.getValue());
+        }
         yaml.outputResourceCode = outputResourceCode;
 
         Snippet snippet = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
@@ -93,7 +101,7 @@ public class FileProcessService {
 
         Task task = new Task();
         task.setFlowInstanceId(flowInstance.getId());
-        task.setOrder(idx);
+        task.setOrder(process.order);
         task.setParams(taskParams);
         taskRepository.save(task);
     }

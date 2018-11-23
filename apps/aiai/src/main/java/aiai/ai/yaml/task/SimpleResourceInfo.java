@@ -15,19 +15,22 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.sequence;
+package aiai.ai.yaml.task;
 
+import aiai.ai.Enums;
 import lombok.Data;
 
-import java.util.List;
-import java.util.Map;
-
 @Data
-public class TaskParamYaml {
-    public List<String> inputResourceCodes;
-    public SimpleSnippet snippet;
-    public Map<String, String> hyperParams;
-    public String outputResourceCode;
+public class SimpleResourceInfo {
+    public String id;
+    public Enums.BinaryDataType binaryDataType;
+    // it's initialized at station side
+    public String path;
 
-    public String workingPath;
+    public static SimpleResourceInfo of(Enums.BinaryDataType binaryDataType, String id) {
+        SimpleResourceInfo sf = new SimpleResourceInfo();
+        sf.id = id;
+        sf.binaryDataType = binaryDataType;
+        return sf;
+    }
 }

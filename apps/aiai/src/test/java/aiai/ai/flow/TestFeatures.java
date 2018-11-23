@@ -114,7 +114,10 @@ public class TestFeatures extends PreparingFlow {
         log.info("Start experimentService.produceTasks()");
         // produce sequences
         List<String> codes = Arrays.asList("aaa", "bbb", "ccc");
-        experimentService.produceTasks(flowInstance, 1, experiment);
+        Process process = new Process();
+        process.order=1;
+        process.inputType="input-type";
+        experimentService.produceTasks(flowInstance, process, experiment);
         log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
         // some global final check

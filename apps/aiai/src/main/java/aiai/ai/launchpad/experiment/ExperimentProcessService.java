@@ -10,6 +10,7 @@ import aiai.ai.launchpad.repositories.ExperimentRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ExperimentProcessService {
@@ -24,7 +25,7 @@ public class ExperimentProcessService {
         this.experimentCache = experimentCache;
     }
 
-    public FlowService.ProduceTaskResult produceTasks(Flow flow, FlowInstance flowInstance, Process process, int idx, List<String> inputResourceCodes) {
+    public FlowService.ProduceTaskResult produceTasks(Flow flow, FlowInstance flowInstance, Process process, Map<String, String> collectedInputs) {
         Experiment e = experimentCache.findByCode(process.code);
         FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
         if (e==null) {
@@ -34,8 +35,8 @@ public class ExperimentProcessService {
 
         e.setFlowInstanceId(flowInstance.getId());
 
-        experimentService.produceFeaturePermutations(e, inputResourceCodes);
-        experimentService.produceTasks(flowInstance, idx, e);
+        experimentService.produceFeaturePermutations(e, collectedInputs.values());
+        experimentService.produceTasks(flowInstance, process, e);
 
         result.status = Enums.FlowProducingStatus.OK;
         return result;

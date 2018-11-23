@@ -16,7 +16,6 @@ import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,7 +23,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static aiai.ai.Enums.FlowValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
 
@@ -232,10 +233,14 @@ public class FlowService {
 
     public void produce(TaskProducingResult result, Flow flow, FlowInstance fi) {
 
+        final Map<String, String> collectedInputs = new HashMap<>();
         List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCode);
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return;
+        }
+        for (String inputResourceCode : inputResourceCodes) {
+            collectedInputs.put("input-flow-instance-type", inputResourceCode);
         }
 
         result.flowInstance = fi;
@@ -243,17 +248,17 @@ public class FlowService {
         result.flowYaml = flowYamlUtils.toFlowYaml(flow.getParams());
         int idx = 0;
         result.flowProducingStatus = Enums.FlowProducingStatus.OK;
-        List<String> outputResourceCode;
         for (Process process : result.flowYaml.getProcesses()) {
             ++idx;
+            process.order = idx;
 
             ProduceTaskResult produceTaskResult;
             switch(process.type) {
                 case FILE_PROCESSING:
-                    produceTaskResult = fileProcessService.produceTasks(flow, fi, process, idx, inputResourceCodes);
+                    produceTaskResult = fileProcessService.produceTasks(flow, fi, process, collectedInputs);
                     break;
                 case EXPERIMENT:
-                    produceTaskResult = experimentProcessService.produceTasks(flow, fi, process, idx, inputResourceCodes);
+                    produceTaskResult = experimentProcessService.produceTasks(flow, fi, process, collectedInputs);
                     break;
                 default:
                     throw new IllegalStateException("Unknown process type");
@@ -262,7 +267,14 @@ public class FlowService {
                 result.flowProducingStatus = produceTaskResult.status;
                 return;
             }
-            inputResourceCodes = produceTaskResult.outputResourceCodes;
+            if (!process.collectResources) {
+                collectedInputs.clear();
+            }
+            if (produceTaskResult.outputResourceCodes!=null) {
+                for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
+                    collectedInputs.put(process.outputType, outputResourceCode);
+                }
+            }
         }
         Long id = fi.getId();
         result.flowInstance = flowInstanceRepository.findById(id).orElse(null);

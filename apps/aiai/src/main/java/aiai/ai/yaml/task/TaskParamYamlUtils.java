@@ -15,7 +15,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.sequence;
+package aiai.ai.yaml.task;
 
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.DumperOptions;

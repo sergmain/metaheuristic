@@ -15,22 +15,20 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.sequence;
+package aiai.ai.yaml.task;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class SimpleSnippet {
-    public String type;
-    public String code;
-    public String filename;
-    public String checksum;
-    public String env;
-    public boolean metrics;
-    public boolean fileProvided;
-    public String params;
+public class TaskParamYaml {
+    public Map<String, String> inputResourceCodes = new HashMap<>();
+    public SimpleSnippet snippet;
+    public Map<String, String> hyperParams;
+    public String outputResourceCode;
+
+    public String workingPath;
 }

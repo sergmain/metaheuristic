@@ -27,6 +27,7 @@ public class Process {
     public String outputType;
     public String outputResourceCode;
     public List<Meta> metas = new ArrayList<>();
+    public int order;
 
     @Data
     @AllArgsConstructor

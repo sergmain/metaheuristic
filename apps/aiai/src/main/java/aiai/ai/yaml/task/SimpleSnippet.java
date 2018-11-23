@@ -15,22 +15,22 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.sequence;
+package aiai.ai.yaml.task;
 
-import aiai.ai.Enums;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
-public class SimpleResourceInfo {
-    public String id;
-    public Enums.BinaryDataType binaryDataType;
-    // it's initialized at station side
-    public String path;
-
-    public static SimpleResourceInfo of(Enums.BinaryDataType binaryDataType, String id) {
-        SimpleResourceInfo sf = new SimpleResourceInfo();
-        sf.id = id;
-        sf.binaryDataType = binaryDataType;
-        return sf;
-    }
+@AllArgsConstructor
+@NoArgsConstructor
+public class SimpleSnippet {
+    public String type;
+    public String code;
+    public String filename;
+    public String checksum;
+    public String env;
+    public boolean metrics;
+    public boolean fileProvided;
+    public String params;
 }

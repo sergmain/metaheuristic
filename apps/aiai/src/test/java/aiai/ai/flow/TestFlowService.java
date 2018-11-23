@@ -153,8 +153,8 @@ public class TestFlowService extends PreparingFlow {
 
         assertEquals( 1+1+3+ 2*12*7, taskNumber +  experiment.getNumberOfTask());
 
-
         // ======================
+
         TaskService.TasksAndAssignToStationResult assignToStation0 =
                 taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
 

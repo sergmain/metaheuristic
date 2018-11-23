@@ -26,7 +26,7 @@ import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
 import aiai.ai.yaml.metrics.Metrics;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.sequence.SimpleSnippet;
+import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.station.StationTaskUtils;
 import lombok.extern.slf4j.Slf4j;

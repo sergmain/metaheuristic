@@ -23,8 +23,8 @@ import aiai.ai.station.actors.DownloadResourceActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.station.tasks.DownloadSnippetTask;
-import aiai.ai.yaml.sequence.TaskParamYaml;
-import aiai.ai.yaml.sequence.TaskParamYamlUtils;
+import aiai.ai.yaml.task.TaskParamYaml;
+import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -80,7 +80,7 @@ public class TaskAssigner {
 
             File taskDir = stationTaskService.prepareTaskDir(task.taskId);
 
-            for (String code : taskParamYaml.inputResourceCodes) {
+            for (String code : taskParamYaml.inputResourceCodes.values()) {
                 downloadResourceActor.add(new DownloadResourceTask(code, taskDir, Enums.BinaryDataType.DATA));
             }
             downloadSnippetActor.add(new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, taskDir));

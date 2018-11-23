@@ -24,11 +24,10 @@ import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.station.actors.UploadResourceActor;
-import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.station.tasks.UploadResourceTask;
-import aiai.ai.yaml.sequence.SimpleSnippet;
-import aiai.ai.yaml.sequence.TaskParamYaml;
-import aiai.ai.yaml.sequence.TaskParamYamlUtils;
+import aiai.ai.yaml.task.SimpleSnippet;
+import aiai.ai.yaml.task.TaskParamYaml;
+import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -108,7 +107,7 @@ public class TaskProcessor {
 
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean isResourcesOk = true;
-            for (String resourceCode : taskParamYaml.inputResourceCodes) {
+            for (String resourceCode : taskParamYaml.inputResourceCodes.values()) {
                 AssetFile assetFile= getResource(Enums.BinaryDataType.DATA, resourceCode);
                 if (assetFile == null) {
                     assetFile = StationResourceUtils.prepareResourceFile(taskDir, Enums.BinaryDataType.DATA, resourceCode, null);

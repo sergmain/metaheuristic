@@ -17,9 +17,9 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.sequence.SimpleSnippet;
-import aiai.ai.yaml.sequence.TaskParamYaml;
-import aiai.ai.yaml.sequence.TaskParamYamlUtils;
+import aiai.ai.yaml.task.SimpleSnippet;
+import aiai.ai.yaml.task.TaskParamYaml;
+import aiai.ai.yaml.task.TaskParamYamlUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -41,7 +41,10 @@ public class TestTaskParamYaml {
     @Test
     public void testSequenceYaml() {
         TaskParamYaml seq = new TaskParamYaml();
-        seq.inputResourceCodes = Arrays.asList("1", "2", "3");
+
+        seq.inputResourceCodes.put("type1","1");
+        seq.inputResourceCodes.put("type2","2");
+        seq.inputResourceCodes.put("type3","3");
         Map<String, String> map = new HashMap<>();
         map.put("key1", "#1");
         map.put("key2", "#1");
@@ -49,7 +52,7 @@ public class TestTaskParamYaml {
         seq.setSnippet(new SimpleSnippet("fit", "123", "file.txt", "112233", "python.exe",  false, false, " aaa bbb"));
 
         String s = taskParamYamlUtils.toString(seq);
-
+        System.out.println(s);
 
         TaskParamYaml seq1 = taskParamYamlUtils.toTaskYaml(s);
         Assert.assertEquals(seq, seq1);
