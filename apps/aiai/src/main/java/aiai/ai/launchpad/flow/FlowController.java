@@ -308,6 +308,11 @@ public class FlowController {
         experimentService.resetExperiment(fi);
         taskRepository.deleteByFlowInstanceId(flowInstanceId);
         flowInstanceRepository.deleteById(flowInstanceId);
+        Flow flow = flowRepository.findById(fi.flowId).orElse(null);
+        if (flow!=null) {
+            flow.locked = false;
+            flowCache.save(flow);
+        }
         return "redirect:/launchpad/flow/flow-instances/"+ flowId;
     }
 

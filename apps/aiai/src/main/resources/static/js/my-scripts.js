@@ -53,3 +53,20 @@ function my_alert(message, title) {
 
 }
 
+function my_alert_with_action(message, title, okAction) {
+    let $dialog = $( "#dialog-message" );
+    $dialog.attr('title', title);
+    $( "#dialog-message-text" ).empty().append(message);
+    $dialog.show();
+    $dialog.dialog({
+        modal: true,
+        buttons: {
+            Ok: function() {
+                $( this ).dialog( "close" );
+                okAction();
+            }
+        }
+    });
+
+}
+

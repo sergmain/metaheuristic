@@ -14,17 +14,17 @@
             my_confirm('Do you really want to delete this snippet?', 'Delete snippet?', "Delete", function() {
                 console.log("Deletion of snippet was confirmed.");
                 $.get('/launchpad/snippet-delete/' + id, function(status) {
-                    // console.log("task-rerun is finished, Status: " + status);
-/*
-                    if (status===true) {
-                        // console.log("task-rerun is finished, status " + status);
-                        my_alert('Snippet was deleted. You need update page to see changes', 'Status');
+                    console.log("task-rerun is finished, Status: " + status);
+                    var text;
+                    if (status==="true") {
+                        text = 'Snippet was deleted.';
                     }
                     else {
-                        // console.log("task-rerun is finished, status " + status);
-                        my_alert('There is some problem with deleting of snippet. Status: '+status+'. Try to reload this page', 'Status');
+                        text = 'There is some problem with deleting of snippet. Status: '+status;
                     }
-*/
+                    my_alert_with_action(text, 'Status', function(status) {
+                        window.location.replace("/launchpad/snippets");
+                    });
                 });
             });
             return true;

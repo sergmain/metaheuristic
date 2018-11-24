@@ -28,6 +28,9 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -72,16 +75,17 @@ public class SnippetController {
     }
 
     @GetMapping("/snippet-delete/{id}")
-    public String delete(@ModelAttribute Result result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+    public HttpEntity<String> delete(@ModelAttribute Result result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+        log.info("Start deleting snippet with id: {}", id );
         final Snippet snippet = snippetCache.findById(id);
         if (snippet != null) {
-            redirectAttributes.addFlashAttribute("infoMessages",
-                    Collections.singleton("Snippet "+id+" was deleted successfully"));
+//            redirectAttributes.addFlashAttribute("infoMessages",
+//                    Collections.singleton("Snippet "+id+" was deleted successfully"));
             snippetCache.delete(snippet.getId());
             binaryDataService.deleteByCodeAndDataType(snippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
         }
-
-        return "redirect:/launchpad/snippets";
+        return new HttpEntity<>("true");
+//        return "redirect:/launchpad/snippets";
     }
 
     @PostMapping(value = "/snippet-upload-from-file")
