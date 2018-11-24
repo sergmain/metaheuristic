@@ -15,6 +15,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -117,7 +118,7 @@ public class TestFeatures extends PreparingFlow {
         Process process = new Process();
         process.order=1;
         process.inputType="input-type";
-        experimentService.produceTasks(flowInstance, process, experiment);
+        experimentService.produceTasks(flowInstance, process, experiment, new HashMap<>());
         log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
         // some global final check

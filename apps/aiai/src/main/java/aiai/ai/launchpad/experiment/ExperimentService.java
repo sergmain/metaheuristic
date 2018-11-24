@@ -511,7 +511,7 @@ public class ExperimentService {
         }
     }
 
-    public void produceTasks(FlowInstance flowInstance, Process process, Experiment experiment) {
+    public void produceTasks(FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs) {
         int totalVariants = 0;
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
@@ -557,10 +557,14 @@ public class ExperimentService {
                 for (ExperimentSnippet experimentSnippet : experimentSnippets) {
                     TaskParamYaml yaml = new TaskParamYaml();
                     yaml.setHyperParams( hyperParams.toSortedMap() );
-                    for (String inputResourceCode : inputResourceCodes) {
-                        yaml.inputResourceCodes.computeIfAbsent(process.inputType, k -> new ArrayList<>()).add(inputResourceCode);
-                    }
+                    yaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
+                    for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
+                        if ("feature".equals(entry.getKey())) {
+                            continue;
+                        }
+                        yaml.inputResourceCodes.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
 
+                    }
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                     Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
                     if (snippet==null) {

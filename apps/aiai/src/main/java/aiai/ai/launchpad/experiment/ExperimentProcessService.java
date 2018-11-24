@@ -44,7 +44,7 @@ public class ExperimentProcessService {
 
         List<String> features = collectedInputs.get(meta.getValue());
         experimentService.produceFeaturePermutations(e, features);
-        experimentService.produceTasks(flowInstance, process, e);
+        experimentService.produceTasks(flowInstance, process, e, collectedInputs);
 
         result.status = Enums.FlowProducingStatus.OK;
         return result;
