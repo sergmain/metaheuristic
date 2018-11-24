@@ -42,7 +42,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
     private final Globals globals;
     private final HttpClientExecutor executor;
 
-    private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
+//    private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
     private String targetUrl;
 
     public DownloadResourceActor(Globals globals, HttpClientExecutor executor) {
@@ -67,9 +67,9 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
         DownloadResourceTask task;
         while ((task = poll()) != null) {
-            if (Boolean.TRUE.equals(preparedMap.get(task.getId()))) {
-                continue;
-            }
+//            if (Boolean.TRUE.equals(preparedMap.get(task.getId()))) {
+//                continue;
+//            }
             AssetFile assetFile = StationResourceUtils.prepareResourceFile(task.targetDir, task.binaryDataType, task.id, null);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
@@ -77,7 +77,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             }
             if (assetFile.isContent ) {
                 log.info("Resource was already downloaded. Asset file: {}", assetFile.file.getPath());
-                preparedMap.put(task.getId(), true);
+//                preparedMap.put(task.getId(), true);
                 continue;
             }
 
@@ -95,7 +95,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 }
                 response.saveContent(assetFile.file);
 
-                preparedMap.put(task.getId(), true);
+//                preparedMap.put(task.getId(), true);
                 log.info("Resource #{} was loaded", task.getId());
             } catch (HttpResponseException e) {
                 if (e.getStatusCode() == HttpServletResponse.SC_GONE) {

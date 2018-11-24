@@ -28,7 +28,7 @@
         <tbody>
         <tr>
             <td th:text="${experiment.launched and experimentResult.dataset!=null ? 'Experiment is launched' : 'Experiment isn''t launched'}"></td>
-            <td th:text="${T(aiai.ai.Enums.ExperimentExecState).from(experiment.execState)}">exec state</td>
+            <td th:text="${experiment.execState}">exec state</td>
             <td>
                 <a th:if="${experimentResult.isCanBeLaunched}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-launch/' + experiment.id}">Launch</a>
                 <a th:if="${experiment.launched and experiment.execState==1}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-target-exec-state/stopped/' + experiment.id}">Stop</a>
@@ -50,32 +50,12 @@
             <tr><td>Seed</td><td th:text="${experiment.seed}">seed</td></tr>
             <tr><td>Epochs</td><td th:text="${experiment.epoch}">epoch</td></tr>
             <tr><td>Number of epoch variants</td><td th:text="${experiment.epochVariant}">Epoch variants</td></tr>
-            <tr><td>Number of sequences</td><td th:text="${experiment.getNumberOfTask}">Number of sequnces</td></tr>
+            <tr><td>Number of sequences</td><td th:text="${experiment.getNumberOfTask()}">Number of sequnces</td></tr>
             </tbody>
         </table>
         <p>&nbsp;</p>
 
-<!--        &lt;!&ndash;/*@thymesVar id="datasets" type="aiai.ai.launchpad.experiment.ExperimentsController.AllDatasetResult"*/&ndash;&gt;
-        <h1 class="widget-header">Dataset</h1>
-        <table th:if="${experimentResult.dataset!=null}" class="pure-table pure-table-bordered" id="table-datasets">
-            <thead>
-            <tr>
-                <th width="50">Id</th>
-                <th width="200">Name</th>
-                <th width="600">Description</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <td th:text="${experimentResult.dataset.id}">datasetId</td>
-                <td th:text="${experimentResult.dataset.name}">Name</td>
-                <td th:text="${experimentResult.dataset.description}">Description</td>
-            </tr>
-            </tbody>
-        </table>
-        <p th:if="${experimentResult.dataset==null}">Dataset isn't assigned</p>
-        <p>&nbsp;</p>-->
-
+<!--
         <h1 class="widget-header">Snippets</h1>
         <table class="pure-table pure-table-bordered" id="table-snippet" th:fragment="table-snippet">
             <thead>
@@ -92,6 +72,7 @@
             </tr>
             </tbody>
         </table>
+-->
 
         <p>&nbsp;</p>
         <h1 class="widget-header">Hyper parameterst</h1>

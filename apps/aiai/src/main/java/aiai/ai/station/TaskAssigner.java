@@ -84,7 +84,9 @@ public class TaskAssigner {
             for (String code : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
                 downloadResourceActor.add(new DownloadResourceTask(code, taskDir, Enums.BinaryDataType.DATA));
             }
-            downloadSnippetActor.add(new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, taskDir));
+            if (!taskParamYaml.snippet.fileProvided) {
+                downloadSnippetActor.add(new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, taskDir));
+            }
         }
     }
 }

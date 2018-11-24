@@ -34,13 +34,12 @@ public class StationResourceUtils {
         final String resId = id.replace(':', '_');
 
         File trgDir = typeDir;
-//        File trgDir = new File(typeDir, resId);
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
             log.error("Can't create resource dir for task: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
-        assetFile.file = new File(trgDir, StringUtils.isNotBlank(resourceFilename) ? resourceFilename : "" + resId/* + ".bin"*/);
+        assetFile.file = new File(trgDir, StringUtils.isNotBlank(resourceFilename) ? resourceFilename : "" + resId);
         assetFile.isExist = assetFile.file.exists();
 
         if (assetFile.isExist) {

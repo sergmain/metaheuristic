@@ -109,8 +109,9 @@ public class TaskProcessor {
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean isResourcesOk = true;
             for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                AssetFile assetFile= getResource(Enums.BinaryDataType.DATA, resourceCode);
-                if (assetFile == null) {
+                AssetFile assetFile;
+//                assetFile = getResource(Enums.BinaryDataType.DATA, resourceCode);
+//                if (assetFile == null) {
                     assetFile = StationResourceUtils.prepareResourceFile(taskDir, Enums.BinaryDataType.DATA, resourceCode, null);
                     // is this resource prepared?
                     if (assetFile.isError || !assetFile.isContent) {
@@ -118,8 +119,8 @@ public class TaskProcessor {
                         isResourcesOk = false;
                         continue;
                     }
-                    putResource(Enums.BinaryDataType.DATA, resourceCode, assetFile);
-                }
+//                    putResource(Enums.BinaryDataType.DATA, resourceCode, assetFile);
+//                }
             }
             if (!isResourcesOk) {
                 continue;
