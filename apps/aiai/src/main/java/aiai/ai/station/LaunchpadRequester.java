@@ -85,6 +85,8 @@ public class LaunchpadRequester {
         }
     }
 
+    private long lastRequestForMissingResources = 0;
+
     /**
      * this scheduler is being run at the station side
      *
@@ -113,6 +115,10 @@ public class LaunchpadRequester {
             final boolean b = stationTaskService.isNeedNewExperimentSequence(stationId);
             if (b) {
                 data.setCommand(new Protocol.RequestTask(globals.isAcceptOnlySignedSnippets));
+            }
+            if (System.currentTimeMillis() - lastRequestForMissingResources > 15_000) {
+                data.setCommand(new Protocol.CheckForMissingOutputResources());
+                lastRequestForMissingResources = System.currentTimeMillis();
             }
         }
 

@@ -33,6 +33,7 @@ import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -109,18 +110,12 @@ public class TaskProcessor {
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean isResourcesOk = true;
             for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                AssetFile assetFile;
-//                assetFile = getResource(Enums.BinaryDataType.DATA, resourceCode);
-//                if (assetFile == null) {
-                    assetFile = StationResourceUtils.prepareResourceFile(taskDir, Enums.BinaryDataType.DATA, resourceCode, null);
-                    // is this resource prepared?
-                    if (assetFile.isError || !assetFile.isContent) {
-                        log.info("Resource hasn't been prepared yet, {}", assetFile);
-                        isResourcesOk = false;
-                        continue;
-                    }
-//                    putResource(Enums.BinaryDataType.DATA, resourceCode, assetFile);
-//                }
+                AssetFile assetFile = StationResourceUtils.prepareResourceFile(taskDir, Enums.BinaryDataType.DATA, resourceCode, null);
+                // is this resource prepared?
+                if (assetFile.isError || !assetFile.isContent) {
+                    log.info("Resource hasn't been prepared yet, {}", assetFile);
+                    isResourcesOk = false;
+                }
             }
             if (!isResourcesOk) {
                 continue;
@@ -146,20 +141,20 @@ public class TaskProcessor {
             task = stationTaskService.save(task);
             SimpleSnippet snippet = taskParamYaml.getSnippet();
 
-            AssetFile assetFile=null;
+            AssetFile snippetAssetFile=null;
             if (!snippet.fileProvided) {
-                assetFile = getResource(Enums.BinaryDataType.SNIPPET, snippet.code);
-                if (assetFile == null) {
-                    assetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.SNIPPET, snippet.code, snippet.filename);
+                snippetAssetFile = getResource(Enums.BinaryDataType.SNIPPET, snippet.code);
+                if (snippetAssetFile == null) {
+                    snippetAssetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.SNIPPET, snippet.code, snippet.filename);
                     // is this snippet prepared?
-                    if (assetFile.isError || !assetFile.isContent) {
-                        log.info("Resource hasn't been prepared yet, {}", assetFile);
+                    if (snippetAssetFile.isError || !snippetAssetFile.isContent) {
+                        log.info("Resource hasn't been prepared yet, {}", snippetAssetFile);
                         isResourcesOk = false;
                     } else {
-                        putResource(Enums.BinaryDataType.SNIPPET, snippet.code, assetFile);
+                        putResource(Enums.BinaryDataType.SNIPPET, snippet.code, snippetAssetFile);
                     }
                 }
-                if (!isResourcesOk) {
+                if (!isResourcesOk || snippetAssetFile==null) {
                     continue;
                 }
             }
@@ -178,34 +173,41 @@ public class TaskProcessor {
 
             ExecProcessService.Result result = null;
             try {
-                List<String> cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());;
-                if (!snippet.fileProvided && assetFile!=null) {
-                    cmd.add(assetFile.file.getAbsolutePath());
+                List<String> cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
+
+                // bug in IDEA with analyzing !snippet.fileProvided, so we have to add '&& snippetAssetFile!=null'
+                if (!snippet.fileProvided && snippetAssetFile!=null) {
+                    cmd.add(snippetAssetFile.file.getAbsolutePath());
                 }
                 if (StringUtils.isNoneBlank(snippet.params)) {
                     cmd.addAll(Arrays.stream(StringUtils.split(snippet.params)).collect(Collectors.toList()));
                 }
                 cmd.add(Consts.ARTIFACTS_DIR+File.separatorChar+Consts.PARAMS_YAML);
-                result = execProcessService.execCommand(cmd, taskDir);
-                stationTaskService.storeExecResult(task.getTaskId(), snippet, result, artifactDir);
-                if (!result.isOk()) {
-                    break;
-                }
 
-                File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR+File.separatorChar+taskParamYaml.outputResourceCode);
-                if (resultDataFile.exists()) {
-                    log.info("Register task for uploading result data to server, resultDataFile: {}", resultDataFile.getPath());
-                    uploadResourceActor.add(new UploadResourceTask(resultDataFile, task.taskId));
+                File consoleLogFile = new File(artifactDir, Consts.SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
+
+                // Exec snippet
+                result = execProcessService.execCommand(cmd, taskDir, consoleLogFile);
+
+                // Store result
+                stationTaskService.storeExecResult(task.getTaskId(), snippet, result, artifactDir);
+
+                if (result.isOk()) {
+                    File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + taskParamYaml.outputResourceCode);
+                    if (resultDataFile.exists()) {
+                        log.info("Register task for uploading result data to server, resultDataFile: {}", resultDataFile.getPath());
+                        uploadResourceActor.add(new UploadResourceTask(resultDataFile, task.taskId));
+                    } else {
+                        String es = "Result data file doesn't exist, resultDataFile: " + resultDataFile.getPath();
+                        log.error(es);
+                        result = new ExecProcessService.Result(false, -1, es);
+                    }
                 }
-                else {
-                    log.error("Result data file doesn't exist, resultDataFile: {}", resultDataFile.getPath());
-                }
-            } catch (Exception err) {
-                log.error("Error exec process " + interpreter, err);
+            } catch (Throwable th) {
+                log.error("Error exec process " + interpreter, th);
+                result = new ExecProcessService.Result(false, -1, ExceptionUtils.getStackTrace(th));
             }
-            stationTaskService.markAsFinishedIfAllOk(
-                    task.getTaskId(), result!=null ? result.isOk : false,
-                    result!=null ? result.exitCode : -1, result!=null ? result.console : "");
+            stationTaskService.markAsFinishedIfAllOk(task.getTaskId(), result);
         }
     }
 

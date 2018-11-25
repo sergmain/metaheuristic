@@ -50,6 +50,9 @@ public class ExchangeData {
     private Protocol.ReportResultDelivering reportResultDelivering;
     private Protocol.FlowInstanceStatus experimentStatus;
     private Protocol.StationTaskStatus stationTaskStatus;
+    private Protocol.CheckForMissingOutputResources checkForMissingOutputResources;
+    private Protocol.ResendTaskOutputResource resendTaskOutputResource;
+    private Protocol.ResendTaskOutputResourceResult resendTaskOutputResourceResult;
 
     @JsonProperty(value = "success")
     private boolean isSuccess = true;
@@ -86,6 +89,15 @@ public class ExchangeData {
                 break;
             case StationTaskStatus:
                 this.stationTaskStatus = (Protocol.StationTaskStatus) command;
+                break;
+            case CheckForMissingOutputResources:
+                this.checkForMissingOutputResources = (Protocol.CheckForMissingOutputResources) command;
+                break;
+            case ResendTaskOutputResource:
+                this.resendTaskOutputResource = (Protocol.ResendTaskOutputResource) command;
+                break;
+            case ResendTaskOutputResourceResult:
+                this.resendTaskOutputResourceResult = (Protocol.ResendTaskOutputResourceResult) command;
                 break;
             case RequestStationId:
                 if (this.requestStationId != null) {
@@ -156,7 +168,8 @@ public class ExchangeData {
     public List<Command> getCommands(boolean isExcludeNop) {
         return asListOfNonNull(isExcludeNop, nop, reportStation, requestStationId,
                 assignedStationId, reAssignedStationId, requestTask, assignedTask, reportStationStatus,
-                reportTaskProcessingResult, reportResultDelivering, experimentStatus, stationTaskStatus);
+                reportTaskProcessingResult, reportResultDelivering, experimentStatus, stationTaskStatus,
+                checkForMissingOutputResources, resendTaskOutputResource, resendTaskOutputResourceResult);
     }
 
     @JsonIgnore

@@ -97,6 +97,7 @@ public class Schedulers {
             log.info("FlowService.producingFlowInstances()");
             launchpadService.getArtifactCleanerAtLaunchpad().fixedDelay();
         }
+
     }
 
     // Station schedulers

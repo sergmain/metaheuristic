@@ -17,6 +17,7 @@
 
 package aiai.ai.comm;
 
+import aiai.ai.Enums;
 import aiai.ai.launchpad.LaunchpadService;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.task.TaskService;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -67,9 +69,18 @@ public class CommandProcessor {
             case RequestTask:
                 // processing on launchpad side
                 return processRequestTask((Protocol.RequestTask) command);
+            case CheckForMissingOutputResources:
+                // processing on launchpad side
+                return checkForMissingOutputResources((Protocol.CheckForMissingOutputResources) command);
+            case ResendTaskOutputResourceResult:
+                // processing on launchpad side
+                return processResendTaskOutputResourceResult((Protocol.ResendTaskOutputResourceResult) command);
             case AssignedTask:
                 // processing on station side
                 return processAssignedTask((Protocol.AssignedTask) command);
+            case ResendTaskOutputResource:
+                // processing on station side
+                return resendTaskOutputResource((Protocol.ResendTaskOutputResource) command);
             case ReportStationStatus:
                 return processReportStationStatus((Protocol.ReportStationStatus) command);
             case ReportTaskProcessingResult:
@@ -85,6 +96,31 @@ public class CommandProcessor {
                 return processStationTaskStatus((Protocol.StationTaskStatus) command);
             default:
                 System.out.println("There is new command which isn't processed: " + command.getType());
+        }
+        return Protocol.NOP_ARRAY;
+    }
+
+    private Command[] checkForMissingOutputResources(Protocol.CheckForMissingOutputResources command) {
+        final long stationId = Long.parseLong(command.getStationId());
+        List<Long> ids = launchpadService.getTaskService().resourceReceivingChecker(stationId);
+        return new Command[]{new Protocol.ResendTaskOutputResource(ids)};
+    }
+
+    private Command[] resendTaskOutputResource(Protocol.ResendTaskOutputResource command) {
+        if (command.taskIds==null) {
+            return Protocol.NOP_ARRAY;
+        }
+        List<Protocol.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
+        for (Long taskId : command.taskIds) {
+            Enums.ResendTaskOutputResourceStatus status = stationService.resendTaskOutputResource(taskId);
+            statuses.add( new Protocol.ResendTaskOutputResourceResult.SimpleStatus(taskId, status));
+        }
+        return new Command[]{new Protocol.ResendTaskOutputResourceResult(statuses)};
+    }
+
+    private Command[] processResendTaskOutputResourceResult(Protocol.ResendTaskOutputResourceResult command) {
+        for (Protocol.ResendTaskOutputResourceResult.SimpleStatus status : command.statuses) {
+            launchpadService.getTaskService().processResendTaskOutputResourceResult(status.status, status.taskId);
         }
         return Protocol.NOP_ARRAY;
     }

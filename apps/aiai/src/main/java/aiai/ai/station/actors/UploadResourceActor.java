@@ -18,7 +18,7 @@
 package aiai.ai.station.actors;
 
 import aiai.ai.Globals;
-import aiai.ai.launchpad.server.ServerService;
+import aiai.ai.launchpad.server.UploadResult;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.UploadResourceTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -68,10 +68,10 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
         }
     }
 
-    public static ServerService.UploadResult fromJson(String json) {
+    public static UploadResult fromJson(String json) {
         try {
             //noinspection UnnecessaryLocalVariable
-            ServerService.UploadResult result = mapper.readValue(json, ServerService.UploadResult.class);
+            UploadResult result = mapper.readValue(json, UploadResult.class);
             return result;
         } catch (IOException e) {
             throw new RuntimeException("error", e);
@@ -114,7 +114,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 }
                 String json = response.returnContent().asString();
 
-                ServerService.UploadResult result = fromJson(json);
+                UploadResult result = fromJson(json);
                 log.info("'\tresult data was successfully uploaded");
                 if (!result.isOk) {
                     log.error("Error uploading file, server error: " + result.error);

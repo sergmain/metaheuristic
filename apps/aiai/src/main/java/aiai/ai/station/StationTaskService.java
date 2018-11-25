@@ -122,7 +122,8 @@ public class StationTaskService {
         return result;
     }
 
-    void markAsFinishedIfAllOk(Long taskId, boolean isOk, int exitCode, String console) {
+    void markAsFinishedIfAllOk(Long taskId, ExecProcessService.Result result) {
+//        boolean isOk, int exitCode, String console
         log.info("markAsFinished({})", taskId);
         StationTask task = findById(taskId);
         if (task == null) {
@@ -131,7 +132,7 @@ public class StationTaskService {
             task.setLaunchedOn(System.currentTimeMillis());
             task.setFinishedOn(System.currentTimeMillis());
             SnippetExec snippetExec = new SnippetExec();
-            snippetExec.setExec(new ExecProcessService.Result(isOk, exitCode, console));
+            snippetExec.setExec(result);
 
             task.setSnippetExecResult(SnippetExecUtils.toString(snippetExec));
             save(task);

@@ -5,21 +5,18 @@ import aiai.ai.comm.Command;
 import aiai.ai.comm.CommandProcessor;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
-import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Station;
+import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import aiai.ai.launchpad.repositories.TaskRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 
-import java.io.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -30,32 +27,14 @@ public class ServerService {
 
     private final CommandProcessor commandProcessor;
     private final StationsRepository stationsRepository;
-    private final ExperimentRepository experimentRepository;
-    private final BinaryDataService binaryDataService;
     private final FlowInstanceRepository flowInstanceRepository;
+    private final TaskRepository taskRepository;
 
-    public static final UploadResult OK_UPLOAD_RESULT = new UploadResult(true, null);
-
-    public void storeUploadedData(File resFile, Enums.BinaryDataType type, String code) throws IOException {
-        try (InputStream is = new FileInputStream(resFile)) {
-            binaryDataService.save(is, resFile.length(), type, code, code, false, null);
-        }
-    }
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class UploadResult {
-        public boolean isOk;
-        public String error;
-    }
-
-    public ServerService(CommandProcessor commandProcessor, StationsRepository stationsRepository, ExperimentRepository experimentRepository, BinaryDataService binaryDataService, FlowInstanceRepository flowInstanceRepository) {
+    public ServerService(CommandProcessor commandProcessor, StationsRepository stationsRepository, ExperimentRepository experimentRepository, BinaryDataService binaryDataService, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository) {
         this.commandProcessor = commandProcessor;
         this.stationsRepository = stationsRepository;
-        this.experimentRepository = experimentRepository;
-        this.binaryDataService = binaryDataService;
         this.flowInstanceRepository = flowInstanceRepository;
+        this.taskRepository = taskRepository;
     }
 
     ExchangeData processRequest(@RequestBody ExchangeData data, String remoteAddress) {

@@ -52,7 +52,10 @@ public class Command implements Serializable {
         ReportTaskProcessingResult /* returned result of processing sequence at station */,
         ReportResultDelivering, /* results were delivered to the launchpad */
         FlowInstanceStatus, /* current exec status of experiments sended by launchpad every iteration with station */
-        StationTaskStatus /* sent by station, contains all active taskId which is present as station side . neede to elimi*/
+        StationTaskStatus, /* sent by station, contains all active taskId which is present as station side . neede to elimi*/
+        CheckForMissingOutputResources, /*  */
+        ResendTaskOutputResource, /* Task was completed but output resource wasn't received. so we request it*/
+        ResendTaskOutputResourceResult;
     }
 
 }

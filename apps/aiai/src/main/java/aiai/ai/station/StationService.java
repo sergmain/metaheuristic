@@ -18,14 +18,19 @@
 package aiai.ai.station;
 
 import aiai.ai.Consts;
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.Protocol;
+import aiai.ai.station.actors.UploadResourceActor;
+import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.metadata.MetadataUtils;
+import aiai.ai.yaml.task.TaskParamYaml;
+import aiai.ai.yaml.task.TaskParamYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -36,6 +41,7 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,14 +51,18 @@ public class StationService {
 
     private final Globals globals;
     private final StationTaskService stationTaskService;
+    private final TaskParamYamlUtils taskParamYamlUtils;
+    private final UploadResourceActor uploadResourceActor;
 
     private String env;
     private EnvYaml envYaml;
     private Metadata metadata = new Metadata();
 
-    public StationService(Globals globals, StationTaskService stationTaskService) {
+    public StationService(Globals globals, StationTaskService stationTaskService, TaskParamYamlUtils taskParamYamlUtils, UploadResourceActor uploadResourceActor) {
         this.globals = globals;
         this.stationTaskService = stationTaskService;
+        this.taskParamYamlUtils = taskParamYamlUtils;
+        this.uploadResourceActor = uploadResourceActor;
     }
 
     @PostConstruct
@@ -144,7 +154,6 @@ public class StationService {
             log.error("Error", e);
             throw new IllegalStateException("Error while writing to file: " + metadataFile.getPath(), e);
         }
-
     }
 
     public void markAsDelivered(List<Long> ids) {
@@ -167,5 +176,30 @@ public class StationService {
         for (Protocol.AssignedTask.Task task : tasks) {
             stationTaskService.createTask(task.taskId, task.flowInstanceId, task.params);
         }
+    }
+
+    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(long taskId) {
+        File taskDir = stationTaskService.prepareTaskDir(taskId);
+        File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR+File.separatorChar+Consts.PARAMS_YAML);
+        if (!paramFile.isFile() || !paramFile.exists()) {
+            return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
+        }
+        String params;
+        try {
+            params = FileUtils.readFileToString(paramFile, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            log.error("Error reading param file "+ paramFile.getPath(), e);
+            return Enums.ResendTaskOutputResourceStatus.TASK_PARAM_FILE_NOT_FOUND;
+        }
+        final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
+        boolean isResourcesOk = true;
+        final AssetFile assetFile = StationResourceUtils.prepareResourceFile(taskDir, Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
+        // is this resource prepared?
+        if (assetFile.isError || !assetFile.isContent) {
+            log.info("Resource hasn't been prepared yet, {}", assetFile);
+            return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
+        }
+        uploadResourceActor.add(new UploadResourceTask(assetFile.file, taskId));
+        return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
 }

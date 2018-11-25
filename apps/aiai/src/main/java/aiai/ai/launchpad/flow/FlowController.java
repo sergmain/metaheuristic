@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Controller
@@ -130,7 +131,7 @@ public class FlowController {
 
     @PostMapping("/flow-add-commit")
     public String addFormCommit(Model model, Flow flow) {
-        return processFlowCommit(model, flow, "launchpad/flow-add", "redirect:/launchpad/flow/flows");
+        return processFlowCommit(model, flow, "launchpad/flow/flow-add", "redirect:/launchpad/flow/flows");
     }
 
     @PostMapping("/flow-edit-commit")
@@ -152,6 +153,11 @@ public class FlowController {
         }
         if (StringUtils.isBlank(flow.code)) {
             model.addAttribute("errorMessage", "#560.30 flow is empty");
+            return errorTarget;
+        }
+        Flow f = flowRepository.findByCode(flow.code);
+        if (f!=null) {
+            model.addAttribute("errorMessage", "#560.33 flow with such code already exists, code: " + flow.code);
             return errorTarget;
         }
         flowCache.save(flow);
@@ -308,11 +314,13 @@ public class FlowController {
         experimentService.resetExperiment(fi);
         taskRepository.deleteByFlowInstanceId(flowInstanceId);
         flowInstanceRepository.deleteById(flowInstanceId);
-        Flow flow = flowRepository.findById(fi.flowId).orElse(null);
-        if (flow!=null) {
-            flow.locked = false;
-            flowCache.save(flow);
-        }
+        List<FlowInstance> instances = flowInstanceRepository.findByFlowId(fi.flowId);
+        if (instances.isEmpty()) {
+            Flow flow = flowRepository.findById(fi.flowId).orElse(null);
+            if (flow!=null) {
+                flow.locked = false;
+                flowCache.save(flow);
+            }}
         return "redirect:/launchpad/flow/flow-instances/"+ flowId;
     }
 

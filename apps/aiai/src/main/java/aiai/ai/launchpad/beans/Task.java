@@ -64,4 +64,10 @@ public class Task implements Serializable {
 
     @Column(name = "EXEC_STATE")
     public int execState;
+
+    @Column(name = "IS_RESULT_RECEIVED")
+    public boolean resultReceived;
+
+    @Column(name = "RESULT_RESOURCE_SCHEDULED_ON")
+    public long resultResourceScheduledOn;
 }

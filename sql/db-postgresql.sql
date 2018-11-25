@@ -96,12 +96,14 @@ CREATE TABLE AIAI_LP_TASK (
   STATION_ID    NUMERIC(10, 0),
   ASSIGNED_ON   bigint,
   IS_COMPLETED  BOOLEAN default false not null ,
-  COMPLETED_ON   bigint,
+  COMPLETED_ON  bigint,
   SNIPPET_EXEC_RESULTS  TEXT,
   METRICS      TEXT,
   TASK_ORDER   smallint not null,
   FLOW_INSTANCE_ID          NUMERIC(10, 0)   NOT NULL,
-  EXEC_STATE   smallint not null default 0
+  EXEC_STATE   smallint not null default 0,
+  IS_RESULT_RECEIVED  BOOLEAN default false not null,
+  RESULT_RESOURCE_SCHEDULED_ON  bigint NOT NULL default 0
 );
 
 CREATE TABLE AIAI_LP_SNIPPET (
@@ -132,6 +134,9 @@ CREATE TABLE AIAI_LP_FLOW (
   IS_LOCKED      BOOLEAN not null default false,
   IS_VALID      BOOLEAN not null default false
 );
+
+CREATE UNIQUE INDEX AIAI_LP_FLOW_CODE_UNQ_IDX
+  ON AIAI_LP_FLOW (CODE);
 
 CREATE TABLE AIAI_LP_FLOW_INSTANCE (
   ID            SERIAL PRIMARY KEY,

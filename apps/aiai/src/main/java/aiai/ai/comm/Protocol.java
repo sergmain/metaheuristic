@@ -56,6 +56,53 @@ public class Protocol {
         }
     }
 
+    @EqualsAndHashCode(callSuper = false)
+    public static class CheckForMissingOutputResources extends Command {
+        public CheckForMissingOutputResources() {
+            this.setType(Type.CheckForMissingOutputResources);
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class ResendTaskOutputResource extends Command {
+        public List<Long> taskIds;
+
+        public ResendTaskOutputResource() {
+            this.setType(Type.ResendTaskOutputResource);
+        }
+
+        public ResendTaskOutputResource(List<Long> taskIds) {
+            this.taskIds = taskIds;
+            this.setType(Type.ResendTaskOutputResource);
+        }
+
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class ResendTaskOutputResourceResult extends Command {
+
+        @Data
+        @AllArgsConstructor
+        @NoArgsConstructor
+        public static class SimpleStatus {
+            public long taskId;
+            public Enums.ResendTaskOutputResourceStatus status;
+        }
+
+        List<SimpleStatus> statuses;
+
+        public ResendTaskOutputResourceResult() {
+            this.setType(Type.ResendTaskOutputResourceResult);
+        }
+
+        public ResendTaskOutputResourceResult(List<SimpleStatus> statuses) {
+            this.statuses = statuses;
+            this.setType(Type.ResendTaskOutputResourceResult);
+        }
+    }
+
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class FlowInstanceStatus extends Command {

@@ -20,5 +20,7 @@ public interface FlowInstanceRepository extends CrudRepository<FlowInstance, Lon
     List<FlowInstance> findByExecState(int execState);
 
     Slice<FlowInstance> findByFlowId(Pageable pageable, long flowId);
+
+    List<FlowInstance> findByFlowId(long flowId);
 }
 

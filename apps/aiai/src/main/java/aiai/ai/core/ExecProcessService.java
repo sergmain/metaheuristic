@@ -21,12 +21,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -54,28 +57,27 @@ public class ExecProcessService {
     }
 */
 
-    public Result execCommand(List<String> cmd, File execDir) throws IOException, InterruptedException {
+    public Result execCommand(List<String> cmd, File execDir, File consoleLogFile) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder();
         pb.command(cmd);
         pb.directory(execDir);
         pb.redirectErrorStream(true);
         final Process process = pb.start();
 
-        final StringBuilder out = new StringBuilder();
         final StreamHolder streamHolder = new StreamHolder();
         int exitCode;
-        try {
+        try (final FileOutputStream fos = new FileOutputStream(consoleLogFile);
+                BufferedOutputStream bos = new BufferedOutputStream(fos)) {
             final Thread reader = new Thread(() -> {
                 try {
                     streamHolder.is = process.getInputStream();
                     int c;
                     while ((c = streamHolder.is.read()) != -1) {
-                        out.append((char) c);
+                        bos.write(c);
                     }
                 }
                 catch (IOException e) {
                     log.error("Error collect data from output stream", e);
-                    e.printStackTrace();
                 }
             });
             reader.start();
@@ -97,10 +99,29 @@ public class ExecProcessService {
         log.info("Any errors of execution? {}", (exitCode == 0 ? "No" : "Yes"));
         log.debug("'\tcmd: {}", cmd);
         log.debug("'\texecDir: {}", execDir.getPath());
-        log.debug("'\tconsole output: {}",out);
+        String console = readLastLines(500, consoleLogFile);
+        log.debug("'\tconsole output:\n{}", console);
 
-        final String console = out.toString();
         return new Result(exitCode==0, exitCode, console);
+    }
+
+    private String readLastLines(int maxSize, File consoleLogFile) throws IOException {
+        LinkedList<String> lines = new LinkedList<>();
+        String inputLine;
+        try(FileReader fileReader = new FileReader(consoleLogFile); BufferedReader in = new BufferedReader(fileReader) ) {
+            while ((inputLine = in.readLine()) != null) {
+                inputLine = inputLine.trim();
+                if (lines.size()==maxSize) {
+                    lines.removeFirst();
+                }
+                lines.add(inputLine);
+            }
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String line : lines) {
+            sb.append(line).append('\n');
+        }
+        return sb.toString();
     }
 
 

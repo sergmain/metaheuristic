@@ -29,17 +29,19 @@ public class StationResourceUtils {
     public static AssetFile prepareResourceFile(File rootDir, Enums.BinaryDataType binaryDataType, String id, String resourceFilename) {
 
         final AssetFile assetFile = new AssetFile();
-
-        File typeDir = new File(rootDir, binaryDataType.toString());
-        final String resId = id.replace(':', '_');
-
-        File trgDir = typeDir;
+        final File trgDir = new File(rootDir, binaryDataType.toString());
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
             log.error("Can't create resource dir for task: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
-        assetFile.file = new File(trgDir, StringUtils.isNotBlank(resourceFilename) ? resourceFilename : "" + resId);
+        if (StringUtils.isNotBlank(resourceFilename)) {
+            assetFile.file = new File(trgDir, resourceFilename);
+        }
+        else {
+            final String resId = id.replace(':', '_');
+            assetFile.file = new File(trgDir, "" + resId);
+        }
         assetFile.isExist = assetFile.file.exists();
 
         if (assetFile.isExist) {

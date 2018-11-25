@@ -19,6 +19,10 @@ package aiai.ai;
 
 public final class Enums {
 
+    public enum ResendTaskOutputResourceStatus {
+        SEND_SCHEDULED, RESOURCE_NOT_FOUND, TASK_IS_BROKEN, TASK_PARAM_FILE_NOT_FOUND
+    }
+
     public enum ProcessType {
         FILE_PROCESSING(1, false), EXPERIMENT(2, true);
 
@@ -141,6 +145,7 @@ public final class Enums {
         NOT_PRODUCING_YET_ERROR,
         EXPERIMENT_NOT_FOUND_BY_CODE_ERROR,
         INPUT_POOL_CODE_DOESNT_EXIST_ERROR,
+        FLOW_CODE_ALREADY_EXIST_ERROR,
         META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR,
         ERROR,
     }

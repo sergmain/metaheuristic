@@ -60,6 +60,7 @@ public class Consts {
     public static final String ENV_YAML_FILE_NAME = "env.yaml";
 
     public static final String METRICS_FILE_NAME = "metrics.yaml";
+    public static final String SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "system-console.log";
 
     public static final String PARAMS_YAML = "params.yaml";
     public static final String TASK_YAML = "task.yaml";

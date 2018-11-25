@@ -97,7 +97,9 @@ CREATE TABLE AIAI_LP_TASK (
   METRICS      MEDIUMTEXT,
   TASK_ORDER   smallint not null,
   FLOW_INSTANCE_ID          NUMERIC(10, 0)   NOT NULL,
-  EXEC_STATE        tinyint(1) not null default 0
+  EXEC_STATE        tinyint(1) not null default 0,
+  IS_RESULT_RECEIVED  tinyint(1) not null default 0,
+  RESULT_RESOURCE_SCHEDULED_ON bigint
 );
 
 CREATE TABLE AIAI_LP_SNIPPET (

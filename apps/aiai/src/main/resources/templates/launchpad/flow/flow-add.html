@@ -10,7 +10,7 @@
         <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
         <!--/*@thymesVar id="flow" type="aiai.ai.launchpad.beans.Flow"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${flow}" method="post" action="#" th:method="POST" th:action="@{/launchpad/flow/flow-add-form-commit}" accept-charset="UTF-8" id="flow-form" name="f">
+        <form class="pure-form pure-form-stacked" th:object="${flow}" method="post" action="#" th:method="POST" th:action="@{/launchpad/flow/flow-add-commit}" accept-charset="UTF-8" id="flow-form" name="f">
             <fieldset>
 
                 <label for="code">Code of flow</label>

@@ -54,6 +54,11 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
             "t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
     List<Task> findForCompletion(long flowInstanceId, int taskOrder);
 
+    @Query("SELECT t FROM Task t where t.stationId=:stationId and t.resultReceived=false and " +
+            " t.execState =:execState and (:mills - result_resource_scheduled_on > 15000) ")
+    List<Task> findForMissingResultResources(long stationId, long mills, int execState);
+
+
 
 /*
     @Transactional(readOnly = true)

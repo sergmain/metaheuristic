@@ -59,6 +59,8 @@ import java.io.*;
 @Profile("launchpad")
 public class ServerController {
 
+    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(true, null);
+
     private final Globals globals;
     private final ServerService serverService;
     private final BinaryDataService binaryDataService;
@@ -112,7 +114,7 @@ public class ServerController {
     }
 
     @GetMapping("/rest-anon/upload/{taskId}")
-    public ServerService.UploadResult uploadResourceAnon(
+    public UploadResult uploadResourceAnon(
             MultipartFile file, HttpServletResponse response,
             @PathVariable("taskId") Long taskId) throws IOException {
         log.debug("uploadResourceAnon(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureRestUrl, taskId);
@@ -124,24 +126,24 @@ public class ServerController {
     }
 
     @PostMapping("/rest-auth/upload/{taskId}")
-    public ServerService.UploadResult uploadResourceAuth(
+    public UploadResult uploadResourceAuth(
             MultipartFile file,
             @PathVariable("taskId") Long taskId) {
         log.debug("uploadResourceAuth(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureRestUrl, taskId);
         return uploadResource(file, taskId);
     }
 
-    private ServerService.UploadResult uploadResource(MultipartFile file, Long taskId) {
+    private UploadResult uploadResource(MultipartFile file, Long taskId) {
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
-            return new ServerService.UploadResult(false, "#442.01 name of uploaded file is null");
+            return new UploadResult(false, "#442.01 name of uploaded file is null");
         }
         if (taskId==null) {
-            return new ServerService.UploadResult(false,"#442.87 taskId is null" );
+            return new UploadResult(false,"#442.87 taskId is null" );
         }
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            return new ServerService.UploadResult(false,"#442.83 taskId is null" );
+            return new UploadResult(false,"#442.83 taskId is null" );
         }
 
         final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
@@ -150,20 +152,24 @@ public class ServerController {
             File tempDir = DirUtils.createTempDir("upload-resource-");
             if (tempDir==null || tempDir.isFile()) {
                 final String location = System.getProperty("java.io.tmpdir");
-                return new ServerService.UploadResult(false, "#442.04 can't create temporary directory in " + location);
+                return new UploadResult(false, "#442.04 can't create temporary directory in " + location);
             }
             final File resFile = new File(tempDir, "resource.");
             log.debug("Start storing an uploaded resource data to disk");
             try(OutputStream os = new FileOutputStream(resFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
-            serverService.storeUploadedData(resFile, Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode);
+            try (InputStream is = new FileInputStream(resFile)) {
+                binaryDataService.save(is, resFile.length(), Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode, false, null);
+            }
         }
         catch (Throwable th) {
             log.error("Error", th);
-            return new ServerService.UploadResult(false, "#442.05 can't load snippets, Error: " + th.toString());
+            return new UploadResult(false, "#442.05 can't load snippets, Error: " + th.toString());
         }
-        return ServerService.OK_UPLOAD_RESULT;
+        task.resultReceived = true;
+        taskRepository.save(task);
+        return OK_UPLOAD_RESULT;
     }
 
 

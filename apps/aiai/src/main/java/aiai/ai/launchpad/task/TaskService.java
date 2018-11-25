@@ -2,6 +2,7 @@ package aiai.ai.launchpad.task;
 
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
+import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.beans.Task;
@@ -23,6 +24,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -34,6 +36,47 @@ public class TaskService {
     private final FlowInstanceRepository flowInstanceRepository;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetCache snippetCache;
+
+    public List<Long> resourceReceivingChecker(long stationId) {
+        List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), Enums.TaskExecState.OK.value);
+        return tasks.stream().map(Task::getId).collect(Collectors.toList());
+    }
+
+    public void processResendTaskOutputResourceResult(Enums.ResendTaskOutputResourceStatus status, long taskId) {
+        switch(status) {
+            case SEND_SCHEDULED:
+                log.info("output resource was scheduled for re-sending");
+                break;
+            case RESOURCE_NOT_FOUND:
+            case TASK_IS_BROKEN:
+            case TASK_PARAM_FILE_NOT_FOUND:
+                Task task = taskRepository.findById(taskId).orElse(null);
+                if (task==null) {
+                    log.warn("Task obsolete and was already deleted");
+                    return;
+                }
+                FlowInstance flowInstance = flowInstanceRepository.findById(task.flowInstanceId).orElse(null);
+                if (flowInstance==null) {
+                    log.warn("FlowInstance for this task was already deleted");
+                    return;
+                }
+
+                task.snippetExecResults = null;
+                task.stationId = null;
+                task.assignedOn = null;
+                task.isCompleted = false;
+                task.completedOn = null;
+                task.metrics = null;
+                task.execState = Enums.TaskExecState.NONE.value;
+                task.resultReceived = false;
+                task.resultResourceScheduledOn = 0;
+                taskRepository.save(task);
+
+                flowInstance.setProducingOrder(task.order - 1);
+                flowInstanceRepository.save(flowInstance);
+                break;
+        }
+    }
 
     @Data
     @NoArgsConstructor
@@ -83,6 +126,7 @@ public class TaskService {
         task.setMetrics(result.getMetrics());
         task.setCompleted(true);
         task.setCompletedOn(System.currentTimeMillis());
+        task.resultResourceScheduledOn = (state== Enums.TaskExecState.OK ? System.currentTimeMillis() : 0);
         return task;
     }
 
@@ -157,6 +201,7 @@ public class TaskService {
         resultTask.setAssignedOn(System.currentTimeMillis());
         resultTask.setStationId(stationId);
         resultTask.setExecState(Enums.TaskExecState.IN_PROGRESS.value);
+        resultTask.resultResourceScheduledOn = 0;
 
         taskRepository.save(resultTask);
 
