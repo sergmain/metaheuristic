@@ -173,8 +173,10 @@ public class StationService {
         if (tasks==null || tasks.isEmpty()) {
             return;
         }
-        for (Protocol.AssignedTask.Task task : tasks) {
-            stationTaskService.createTask(task.taskId, task.flowInstanceId, task.params);
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            for (Protocol.AssignedTask.Task task : tasks) {
+                stationTaskService.createTask(task.taskId, task.flowInstanceId, task.params);
+            }
         }
     }
 

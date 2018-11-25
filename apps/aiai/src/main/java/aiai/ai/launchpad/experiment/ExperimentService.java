@@ -540,7 +540,7 @@ public class ExperimentService {
             final Map<String, String> map = toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
             final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
-            // there is 2 because we have 2 snippets - fit and predict
+            // there is 2 because we have 2 types of snippets - fit and predict
             totalVariants += allHyperParams.size() * 2;
 
             final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getResourceCodes());
@@ -562,7 +562,16 @@ public class ExperimentService {
                         if ("feature".equals(entry.getKey())) {
                             continue;
                         }
-                        yaml.inputResourceCodes.computeIfAbsent(entry.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
+                        Process.Meta meta = process.getMetas()
+                                .stream()
+                                .filter(o -> o.value.equals(entry.getKey()))
+                                .findFirst()
+                                .orElse(null);
+                        if (meta==null) {
+                            log.error("Validation of flow #{} was failed. Meta with value {} wasn't found.", flowInstance.flowId, entry.getKey());
+                            continue;
+                        }
+                        yaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
 
                     }
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());

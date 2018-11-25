@@ -33,9 +33,9 @@ public class Process {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class Meta {
-        String key;
-        String value;
-        String ext;
+        public String key;
+        public String value;
+        public String ext;
     }
 
     public Meta getMeta(String key) {
