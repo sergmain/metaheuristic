@@ -1,0 +1,320 @@
+Общее описание
+
+1. Сущности, общая концепция
+
+1.1 Flow (поток)
+Поток - это описатель содержащий описания процессов, котрые будут выполняться для перобразования
+данных из начальной формы в конечную. Поток, как описатель, не содержит состояния
+выполнения процесса преобразования данных.
+
+1.2 FlowInstance (реализация потока)
+Реализация потока - это сущьность, которая включает в себя инфрмацию о выполнении преобразования данных.
+
+1.3 Resource (ресурс)
+Ресурс - это данные, которые используются или создаются в процессе преобразования данных потоком.
+Ресурны бывают 2-ух типов - DATA (данные), SNIPPET(спипет)
+Данные - это все что загружается в снипеты или или является продуктов их работы.
+Снипет, как ресурс - это исполняемый код, который соответствует одному из описателей снипетов
+
+1.4 Snippet (спипет)
+Снипет - это описатель исполняемого кода, который будет вызываться при выполнении задачи.
+
+
+1.5 Task (задача)
+Задача - описание, что нужно выполнить, с какими параметрами, какой результат получить
+
+
+2. Общая схема взаимодействия сушностей
+
+2.1 для того , чтобы обработать данные необзодимо выполнить следующие шаги:
+- загрузить снипеты, которые будут использоваться при преобразовании данных
+- создать загрузить исходные данные , которые будут использоваться
+как входные данные для всего преобразования.
+- создать поток
+- выполнить валидацию созданного потока. если есть ошибки - исправить, повторить вализацию.
+если все ок, то перейти к следующему шагу
+-  после успешной вализации можно создать реализацию потока. Реализация включает в себя
+код набора входных ресурсов. ссылку на Поток, который надо преобразовать.
+- сгенерировать задачи для реализации потока
+ стадии: PROCESSING - задачи генерятся, PROCESSED - задачи сгенерированы
+- запустить задачи для данного потока
+ стадии: STARTED - задачи выполняются, STOPPED - выполнение новых задач для данной реализвации потока
+ остановлено
+
+
+
+3. Установка
+логически Aiai состоит из 2-ух верхнеуровневых модулей:
+- launchpad - стартовая площадка
+- station - станция
+
+Устанавливать стартовую площадку можно в любом окружении, где есть доступ к mysql или postgresql
+установка станции на этом же сервере не рекомендуется для прода,
+и имеет смысл только для целей разработки и тестирования
+
+3.1 директории
+- для конфигурации стартовой площадки надо выбрать и создать рабочий директорий,
+в котором стартовая площадка будет создавать свои артифакты
+- выбрать директорий, в котором будет запускаться собственно Aiai. Рекомендуемая схема директориев:
+\aiai - главный директория для aiai
+\aiai\config - директорий, в котором будет находиться application.properties файл
+\aiai\git - в данный директорий будет делаться clone из git
+\aiai\launchpad - директорий для стартовой площадки
+\aiai\station - директорий для станции
+
+3.2 git
+перейти в \aiai  (или другой директорий, который выбран, как основной)
+выполнить команду
+git clone https://github.com/sergmain/aiai.git git
+
+3.3 сборка
+для сборки проекта требуется java8
+в директории \aiai\git запустить
+mvn-all.bat
+
+
+3.3 общие параметры
+aiai.public-key: xxx
+aiai.thread-number=3
+aiai.secure-rest-url=true
+aiai.rest-password=xxx
+aiai.rest-username=xxx
+aiai.rest-token=xxx
+
+aiai.master-password=yyy
+aiai.master-username=yyy
+aiai.master-token=yyy
+
+
+для aiai.public-key необходимо использовать приложение из apps/gen-keys
+
+для
+aiai.rest-password
+aiai.master-password
+необходимо использовать приложение из apps/gen-passwords
+
+-username и -token выбираются самостоятельно, но не могут включать в себя символ '=' (символ равно)
+
+
+
+3.1 Стартовая площадка
+3.1.1 application.properties для стартовой площадки
+конфигурация конфиг файла заключается в задании следующий параметров
+
+spring.profiles.active=launchpad
+
+для mysql
+spring.datasource.url = jdbc:mysql://localhost:3306/aiai?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&autoReconnect=true&failOverReadOnly=false&maxReconnects=10&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=America/Los_Angeles
+spring.datasource.username = aiai
+spring.datasource.password = qwe321
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQL57Dialect
+
+временную зону для mysql выбрать согласно документации на mysql и изменить в spring.datasource.url
+
+для postgresql
+#spring.datasource.url=jdbc:postgresql://host:5432/database?user=abc&password=xxx&sslmode=require
+#spring.datasource.username=abc
+#spring.datasource.password=xxx
+#spring.datasource.driverClassName=org.postgresql.Driver
+#spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQL95Dialect
+
+
+aiai.launchpad.enabled=true
+aiai.launchpad.dir=./aiai-launchpad
+aiai.launchpad.is-replace=true
+aiai.launchpad.accept-only-signed-env=true
+
+
+
+3.1 станция
+3.1.1 application.properties для станции
+spring.profiles.active=station
+
+aiai.station.enabled=true
+aiai.station.launchpad-url=http://host:8080
+aiai.station.server-rest-password=123
+aiai.station.dir=./aiai-station
+aiai.station.accept-only-signed-snippets=false
+aiai.station.active-time: 0:00-8:45, 19:00-23:59
+
+
+
+aiai.station.launchpad-url - url по которому находится стартовая площадка
+для aiai.station.server-rest-password необходимо испольховать тот же пароль,
+что использовался для aiai.rest-password, только в незашифрованном виде
+параметр aiai.station.active-time используется для определение периода времени, когда
+станция будет выполнять вычисления. стартовое время и конечное включаются в активный период
+последним времене в сутка является 23:59
+количество периодов неограничено, каждый период должен отделяться запятой
+
+параметр aiai.station.accept-only-signed-snippets настоятельно рекомендуется установить
+в true, если старновая площадка находится за пределами DMZ
+
+
+4. apps/gen-keys
+для генерации ключей необходимо запустить
+
+java -jar apps/gen-keys/target/gen-keys.jar
+
+новые ключи (публичный и частный) будут напечатаны в консоле
+
+5. apps/gen-passwords
+
+для генерации ключей в формате aiai (bcrypt, 10 циклов) запустить
+
+java -jar apps/gen-keys/target/gen-passwords.jar <master password> <rest password>
+
+результат работы поместить в соответствующие параметры:
+master password --> aiai.master-password
+master token --> aiai.master-token
+
+rest password --> aiai.rest-password
+rest token --> aiai.rest-token
+
+токены могут быть изменены по желанию,
+но не должны быть пустыми и включать в себя символ '=' (символ равно)
+
+6. Управление стартовой площадкой
+после того, как все параметры были прописаны, можно запустить стартовую площадку
+по адресу на котором она была запущена
+логин - aiai.master-username=aiai.master-token
+пароль - aiai.master-password
+
+т.е если
+aiai.master-username=yyy
+aiai.master-token=xxx
+
+то логин будет - yyy=xxx
+
+если все зарустилось успешно, то можно перейти к созданию сущеностей
+
+6. Flow (поток)
+простейший поток, состоящий из одного процесса
+processes:
+- code: simple-snippet
+  collectResources: false
+  name: Simple snippet
+  inputType: simple-resource-pool
+  outputType: simple-result
+  snippetCodes:
+  - simple-snippet:1.1
+  type: FILE_PROCESSING
+  parallelExec: false
+
+сразу после создания данный поток не будет валиден
+т.к. необходимо создать сниппет simple-snippet:1.1
+
+
+7. Снипет
+создание снипета, который будет загружен через стартовую площадку состоит из неслоких этапов
+- создать приложение, которое будет обрабатывать данные
+- создать конфиг описания снипета
+- запаковать снипет приложением apps/package-snippet
+- если окружение сконфигурировано на использование только подписанных снипетов,
+то при паковке снипета так же подписать его используя приватный ключ
+
+
+7.1 снипет без исполняемого кода
+для простоты мы будем создавать снипет, который не содержит исполняемый код
+
+7.2 конфиг снипета
+отсутствие необзодимости иметь исполняемый код помеается в
+fileProvided=true
+
+snippets:
+    - name: simple-snippet
+      version: 1.1
+      type: simple
+      env: simple-snippet
+      fileProvided: true
+
+
+сама ссылка на исполняемое приложение конфигурируется в env: simple-snippet
+
+7.3 подписание снипета
+создать временный директорий и в нем создать файл snippets.yaml
+поместить в данный файл конфиг снипета
+snippets:
+    - name: simple-snippet
+      version: 1.1
+      type: simple
+      env: simple-snippet
+      fileProvided: true
+
+
+используя приложние apps/package-snippet запаковать и подписать снипет
+
+
+8. apps/package-snippet
+
+для запаковывания снипета и его подписания необходимо запустить
+
+java -jar apps/package-snippet/target/package-snippet.jar snippet.zip ../private-key.txt
+
+первый параметр (в примере это snippet.zip) указывает название архива в который будет запакован снипет
+если второй параметр определен, то снипет будет подписан.
+второй параметр это путь до файла с частным ключом. Частный ключ генерится приложением gen-keys
+
+
+9. загрузка снипетов
+используя веб-интерфейст стартовой площадки загрузить снипет, перейдя по адресу
+
+http://localhost:8080/launchpad/snippets
+
+после успешной загрузки снипета проверка потока больше не должна выдавать сообщние, что снипет
+не обнаружен
+
+10. окружение станции
+для того, чтобы снипеты запускались на стороне станции необзодимо сконфигурировать
+исполняемое окуржение. для этого необходимо создать файл \aiai\station\env.yaml
+
+конфиг:
+envs:
+  simple-snippet: type
+
+
+в нашем примере исполяемой командой будет 'type'
+
+11. Загрузка данных
+для инициализации данных для обработки нашим снипетом загрузим любой текстовый файл
+через интерфейс работы с ресурсами
+
+http://localhost:8080/launchpad/resources
+
+указать
+Resource code - simple-resource
+Resource pool code - simple-resource-pool
+
+
+12. Создание реализации потока (Flow instance)
+перейти по адресу
+http://localhost:8080/launchpad/flow/flows
+
+и выбрать поток, который мы ранее создали
+
+и затем нажать кнопку 'Instances'
+
+Создать новую реализацию потока:
+Input pool code for this flow - simple-resource-pool
+
+List of flows - simple-snippet
+
+
+13. запуск реализации потока
+
+после успешного создания реализации потока (Flow Instance) запустить генерацию задач
+нажав кнопку "Produce"
+
+дождаться когда статус будет изменент с PRODUCING на PRODUCED
+примечание. в настоящее время автоматическое обновление старницы не реализовано.
+
+Запустить поток на выполнение нажатием кнопки "Start"
+
+в директории \aiai\station\task
+должен появиться директорий 0 и в нем директорий с номером задачи.
+в директории \aiai\station\task\0\xxx\artifacts после выполнения задачи
+будет содан файл system-console.log в котором будет выведно содержимое файла,
+который мы загрузили как ресурс.
+
+
