@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -78,8 +79,10 @@ public class ArtifactCleanerAtStation {
                                 log.error("#090.01 Error delete path " + t, e);
                             }
                         });
+                    } catch (AccessDeniedException e) {
+                        // ok, may be later
                     } catch (IOException e) {
-                        log.error("#090.04 Error while cleaning up broken tasks", e);
+                        log.error("#090.07 Error while cleaning up broken tasks", e);
                     }
                     if (isEmpty.value) {
                         FileUtils.deleteQuietly(s.toFile());

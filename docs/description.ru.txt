@@ -117,11 +117,11 @@ spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQL57Dialect
 временную зону для mysql выбрать согласно документации на mysql и изменить в spring.datasource.url
 
 для postgresql
-#spring.datasource.url=jdbc:postgresql://host:5432/database?user=abc&password=xxx&sslmode=require
-#spring.datasource.username=abc
-#spring.datasource.password=xxx
-#spring.datasource.driverClassName=org.postgresql.Driver
-#spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQL95Dialect
+spring.datasource.url=jdbc:postgresql://host:5432/database?user=abc&password=xxx&sslmode=require
+spring.datasource.username=abc
+spring.datasource.password=xxx
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQL95Dialect
 
 
 aiai.launchpad.enabled=true
@@ -179,7 +179,14 @@ rest token --> aiai.rest-token
 токены могут быть изменены по желанию,
 но не должны быть пустыми и включать в себя символ '=' (символ равно)
 
-6. Управление стартовой площадкой
+6. Запуск
+для запуска aiai (как стартовой плошадки, так и станции) необходимо
+из директория \aiai запустить команду
+
+java -jar git/apps/aiai/target/aiai.jar
+
+
+7. Управление стартовой площадкой
 после того, как все параметры были прописаны, можно запустить стартовую площадку
 по адресу на котором она была запущена
 логин - aiai.master-username=aiai.master-token
@@ -191,9 +198,9 @@ aiai.master-token=xxx
 
 то логин будет - yyy=xxx
 
-если все зарустилось успешно, то можно перейти к созданию сущеностей
+если все запустилось успешно, то можно перейти к созданию сущеностей
 
-6. Flow (поток)
+8. Flow (поток)
 простейший поток, состоящий из одного процесса
 processes:
 - code: simple-snippet
@@ -210,7 +217,7 @@ processes:
 т.к. необходимо создать сниппет simple-snippet:1.1
 
 
-7. Снипет
+9. Снипет
 создание снипета, который будет загружен через стартовую площадку состоит из неслоких этапов
 - создать приложение, которое будет обрабатывать данные
 - создать конфиг описания снипета
@@ -219,10 +226,10 @@ processes:
 то при паковке снипета так же подписать его используя приватный ключ
 
 
-7.1 снипет без исполняемого кода
+9.1 снипет без исполняемого кода
 для простоты мы будем создавать снипет, который не содержит исполняемый код
 
-7.2 конфиг снипета
+9.2 конфиг снипета
 отсутствие необзодимости иметь исполняемый код помеается в
 fileProvided=true
 
@@ -236,7 +243,7 @@ snippets:
 
 сама ссылка на исполняемое приложение конфигурируется в env: simple-snippet
 
-7.3 подписание снипета
+9.3 подписание снипета
 создать временный директорий и в нем создать файл snippets.yaml
 поместить в данный файл конфиг снипета
 snippets:
@@ -250,7 +257,7 @@ snippets:
 используя приложние apps/package-snippet запаковать и подписать снипет
 
 
-8. apps/package-snippet
+10. apps/package-snippet
 
 для запаковывания снипета и его подписания необходимо запустить
 
@@ -261,7 +268,7 @@ java -jar apps/package-snippet/target/package-snippet.jar snippet.zip ../private
 второй параметр это путь до файла с частным ключом. Частный ключ генерится приложением gen-keys
 
 
-9. загрузка снипетов
+11. загрузка снипетов
 используя веб-интерфейст стартовой площадки загрузить снипет, перейдя по адресу
 
 http://localhost:8080/launchpad/snippets
@@ -269,7 +276,7 @@ http://localhost:8080/launchpad/snippets
 после успешной загрузки снипета проверка потока больше не должна выдавать сообщние, что снипет
 не обнаружен
 
-10. окружение станции
+12. окружение станции
 для того, чтобы снипеты запускались на стороне станции необзодимо сконфигурировать
 исполняемое окуржение. для этого необходимо создать файл \aiai\station\env.yaml
 
@@ -280,7 +287,7 @@ envs:
 
 в нашем примере исполяемой командой будет 'type'
 
-11. Загрузка данных
+13. Загрузка данных
 для инициализации данных для обработки нашим снипетом загрузим любой текстовый файл
 через интерфейс работы с ресурсами
 
@@ -291,7 +298,7 @@ Resource code - simple-resource
 Resource pool code - simple-resource-pool
 
 
-12. Создание реализации потока (Flow instance)
+14. Создание реализации потока (Flow instance)
 перейти по адресу
 http://localhost:8080/launchpad/flow/flows
 
@@ -305,7 +312,7 @@ Input pool code for this flow - simple-resource-pool
 List of flows - simple-snippet
 
 
-13. запуск реализации потока
+15. запуск реализации потока
 
 после успешного создания реализации потока (Flow Instance) запустить генерацию задач
 нажав кнопку "Produce"
