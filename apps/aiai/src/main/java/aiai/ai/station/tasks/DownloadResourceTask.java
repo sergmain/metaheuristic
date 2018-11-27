@@ -30,5 +30,4 @@ import java.io.File;
 public class DownloadResourceTask implements StationRestTask {
     public String id;
     public File targetDir;
-    public Enums.BinaryDataType binaryDataType;
 }

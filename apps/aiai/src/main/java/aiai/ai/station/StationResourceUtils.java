@@ -26,7 +26,8 @@ import java.io.File;
 @Slf4j
 public class StationResourceUtils {
 
-    public static AssetFile prepareResourceFile(File rootDir, Enums.BinaryDataType binaryDataType, String id, String resourceFilename) {
+    public static AssetFile prepareDataFile(File rootDir, String id, String resourceFilename) {
+        Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.DATA;
 
         final AssetFile assetFile = new AssetFile();
         final File trgDir = new File(rootDir, binaryDataType.toString());
@@ -42,6 +43,40 @@ public class StationResourceUtils {
             final String resId = id.replace(':', '_');
             assetFile.file = new File(trgDir, "" + resId);
         }
+        assetFile.isExist = assetFile.file.exists();
+
+        if (assetFile.isExist) {
+            if (assetFile.file.length() == 0) {
+                assetFile.file.delete();
+                assetFile.isExist = false;
+            }
+            else {
+                assetFile.isContent = true;
+            }
+        }
+        return assetFile;
+    }
+
+    public static AssetFile prepareSnippetFile(File baseDir, String id, String resourceFilename) {
+
+        final AssetFile assetFile = new AssetFile();
+        final File trgDir = new File(baseDir, Enums.BinaryDataType.SNIPPET.toString());
+        if (!trgDir.exists() && !trgDir.mkdirs()) {
+            assetFile.isError = true;
+            log.error("Can't create snippet dir: {}", trgDir.getAbsolutePath());
+            return assetFile;
+        }
+        final String resId = id.replace(':', '_');
+        final File resDir = new File(trgDir, resId);
+        if (!resDir.exists() && !resDir.mkdirs()) {
+            assetFile.isError = true;
+            log.error("Can't create resource dir: {}", resDir.getAbsolutePath());
+            return assetFile;
+        }
+        assetFile.file = StringUtils.isNotBlank(resourceFilename)
+                ? new File(resDir, resourceFilename)
+                : new File(resDir, resId);
+
         assetFile.isExist = assetFile.file.exists();
 
         if (assetFile.isExist) {

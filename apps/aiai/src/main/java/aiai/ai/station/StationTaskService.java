@@ -349,13 +349,13 @@ public class StationTaskService {
         return taskDir;
     }
 
-    File prepareTaskSubDir(File taskDir, String snippetType) {
-        File snippetTypeDir = new File(taskDir, snippetType);
-        snippetTypeDir.mkdirs();
-        if (!snippetTypeDir.exists()) {
-            log.warn("Can't create snippetTypeDir: {}", snippetTypeDir.getAbsolutePath());
+    File prepareTaskSubDir(File taskDir, String subDir) {
+        File taskSubDir = new File(taskDir, subDir);
+        taskSubDir.mkdirs();
+        if (!taskSubDir.exists()) {
+            log.warn("Can't create taskSubDir: {}", taskSubDir.getAbsolutePath());
             return null;
         }
-        return snippetTypeDir;
+        return taskSubDir;
     }
 }

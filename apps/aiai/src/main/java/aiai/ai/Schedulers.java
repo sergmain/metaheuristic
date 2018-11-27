@@ -50,18 +50,6 @@ public class Schedulers {
 
         // Launchpad schedulers
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.produce-tasks'), 10, 20, 10)*1000 }")
-        public void produceTasksForFlowInstances() {
-            if (globals.isUnitTesting) {
-                return;
-            }
-            if (!globals.isLaunchpadEnabled) {
-                return;
-            }
-            log.info("ExperimentService.produceTasksForFlowInstances()");
-            launchpadService.getExperimentService().produceTasksForFlowInstances();
-        }
-
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-flow-instance'), 5, 40, 5)*1000 }")
         public void markOrderAsCompleted() {
             if (globals.isUnitTesting) {

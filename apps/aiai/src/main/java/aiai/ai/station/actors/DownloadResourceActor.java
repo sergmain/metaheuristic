@@ -32,8 +32,6 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 @Service
 @Slf4j
@@ -42,7 +40,6 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
     private final Globals globals;
     private final HttpClientExecutor executor;
 
-//    private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
     private String targetUrl;
 
     public DownloadResourceActor(Globals globals, HttpClientExecutor executor) {
@@ -67,22 +64,18 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
         DownloadResourceTask task;
         while ((task = poll()) != null) {
-//            if (Boolean.TRUE.equals(preparedMap.get(task.getId()))) {
-//                continue;
-//            }
-            AssetFile assetFile = StationResourceUtils.prepareResourceFile(task.targetDir, task.binaryDataType, task.id, null);
+            AssetFile assetFile = StationResourceUtils.prepareDataFile(task.targetDir, task.id, null);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
             }
             if (assetFile.isContent ) {
                 log.info("Resource was already downloaded. Asset file: {}", assetFile.file.getPath());
-//                preparedMap.put(task.getId(), true);
                 continue;
             }
 
             try {
-                Request request = Request.Get(targetUrl + '/' + task.getBinaryDataType() + '/' + task.getId())
+                Request request = Request.Get(targetUrl + "/DATA/" + task.getId())
                         .connectTimeout(5000)
                         .socketTimeout(5000);
 
@@ -95,7 +88,6 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 }
                 response.saveContent(assetFile.file);
 
-//                preparedMap.put(task.getId(), true);
                 log.info("Resource #{} was loaded", task.getId());
             } catch (HttpResponseException e) {
                 if (e.getStatusCode() == HttpServletResponse.SC_GONE) {

@@ -95,10 +95,14 @@ aiai.master-password
 
 -username и -token выбираются самостоятельно, но не могут включать в себя символ '=' (символ равно)
 
+3.5 Database
+используя соответствующий скрипт создать таблицы в БД
+MySql       - sql/db-mysql.sql
+Postgresql  - sql/db-postgresql.sql
 
 
-3.1 Стартовая площадка
-3.1.1 application.properties для стартовой площадки
+3.6 Стартовая площадка
+3.6.1 application.properties для стартовой площадки
 конфигурация конфиг файла заключается в задании следующий параметров
 
 spring.profiles.active=launchpad
@@ -127,8 +131,8 @@ aiai.launchpad.accept-only-signed-env=true
 
 
 
-3.1 станция
-3.1.1 application.properties для станции
+3.7 станция
+3.7.1 application.properties для станции
 spring.profiles.active=station
 
 aiai.station.enabled=true
@@ -306,7 +310,7 @@ List of flows - simple-snippet
 после успешного создания реализации потока (Flow Instance) запустить генерацию задач
 нажав кнопку "Produce"
 
-дождаться когда статус будет изменент с PRODUCING на PRODUCED
+дождаться когда статус будет изменен с PRODUCING на PRODUCED
 примечание. в настоящее время автоматическое обновление старницы не реализовано.
 
 Запустить поток на выполнение нажатием кнопки "Start"

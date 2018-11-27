@@ -26,10 +26,10 @@ import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.utils.CollectionUtils;
+import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
-import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +39,8 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,8 +56,6 @@ public class TaskProcessor {
     private final CurrentExecState currentExecState;
     private final UploadResourceActor uploadResourceActor;
 
-    private Map<Enums.BinaryDataType, Map<String, AssetFile>> resourceReadyMap = new HashMap<>();
-
     public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState, UploadResourceActor uploadResourceActor) {
         this.globals = globals;
         this.execProcessService = execProcessService;
@@ -65,19 +64,6 @@ public class TaskProcessor {
         this.stationTaskService = stationTaskService;
         this.currentExecState = currentExecState;
         this.uploadResourceActor = uploadResourceActor;
-    }
-
-    private AssetFile getResource(Enums.BinaryDataType binaryDataType, String id) {
-        return resourceReadyMap.containsKey(binaryDataType) ? resourceReadyMap.get(binaryDataType).get(id) : null;
-    }
-
-    private void putResource(Enums.BinaryDataType binaryDataType, String id, AssetFile assetFile) {
-        Map<String, AssetFile> map = resourceReadyMap.putIfAbsent(binaryDataType, new HashMap<>());
-        if (map==null) {
-            map = new HashMap<>();
-            resourceReadyMap.put(binaryDataType, map);
-        }
-        map.put(id, assetFile);
     }
 
     public void fixedDelay() {
@@ -110,7 +96,7 @@ public class TaskProcessor {
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean isResourcesOk = true;
             for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                AssetFile assetFile = StationResourceUtils.prepareResourceFile(taskDir, Enums.BinaryDataType.DATA, resourceCode, null);
+                AssetFile assetFile = StationResourceUtils.prepareDataFile(taskDir, resourceCode, null);
                 // is this resource prepared?
                 if (assetFile.isError || !assetFile.isContent) {
                     log.info("Resource hasn't been prepared yet, {}", assetFile);
@@ -126,7 +112,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, "artifacts");
+            File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
             if (artifactDir == null) {
                 stationTaskService.finishAndWriteToLog(task, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
@@ -143,23 +129,18 @@ public class TaskProcessor {
 
             AssetFile snippetAssetFile=null;
             if (!snippet.fileProvided) {
-                snippetAssetFile = getResource(Enums.BinaryDataType.SNIPPET, snippet.code);
-                if (snippetAssetFile == null) {
-                    snippetAssetFile = StationResourceUtils.prepareResourceFile(globals.stationResourcesDir, Enums.BinaryDataType.SNIPPET, snippet.code, snippet.filename);
-                    // is this snippet prepared?
-                    if (snippetAssetFile.isError || !snippetAssetFile.isContent) {
-                        log.info("Resource hasn't been prepared yet, {}", snippetAssetFile);
-                        isResourcesOk = false;
-                    } else {
-                        putResource(Enums.BinaryDataType.SNIPPET, snippet.code, snippetAssetFile);
-                    }
-                }
-                if (!isResourcesOk || snippetAssetFile==null) {
-                    continue;
+                snippetAssetFile = StationResourceUtils.prepareSnippetFile(globals.stationResourcesDir, snippet.code, snippet.filename);
+                // is this snippet prepared?
+                if (snippetAssetFile.isError || !snippetAssetFile.isContent) {
+                    log.info("Resource hasn't been prepared yet, {}", snippetAssetFile);
+                    isResourcesOk = false;
                 }
             }
+            if (!isResourcesOk) {
+                continue;
+            }
 
-            final File paramFile = prepareParamFile(taskDir, Consts.ARTIFACTS_DIR, params);
+            final File paramFile = prepareParamFile(taskDir, params);
             if (paramFile == null) {
                 break;
             }
@@ -171,7 +152,7 @@ public class TaskProcessor {
 
             log.info("all system are checked, lift off");
 
-            ExecProcessService.Result result = null;
+            ExecProcessService.Result result;
             try {
                 List<String> cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
 
@@ -211,13 +192,13 @@ public class TaskProcessor {
         }
     }
 
-    private File prepareParamFile(File taskDir, String snippetType, String params) {
-        File snippetTypeDir = stationTaskService.prepareTaskSubDir(taskDir, snippetType);
-        if (snippetTypeDir == null) {
+    private File prepareParamFile(File taskDir, String params) {
+        File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
+        if (artifactDir == null) {
             return null;
         }
 
-        File paramFile = new File(snippetTypeDir, Consts.PARAMS_YAML);
+        File paramFile = new File(artifactDir, Consts.PARAMS_YAML);
         if (paramFile.exists()) {
             //noinspection ResultOfMethodCallIgnored
             paramFile.delete();

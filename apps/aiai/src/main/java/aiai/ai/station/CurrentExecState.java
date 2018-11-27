@@ -21,6 +21,7 @@ import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +41,15 @@ public class CurrentExecState {
                 flowInstanceState.clear();
                 return;
             }
-            for (Protocol.FlowInstanceStatus.SimpleStatus status : statuses) {
-                flowInstanceState.put(status.flowInstanceId, status.state);
-            }
+            statuses.forEach(status -> flowInstanceState.put(status.flowInstanceId, status.state));
+            List<Long> ids = new ArrayList<>();
+            flowInstanceState.forEach((key, value) -> {
+                boolean isFound = statuses.stream().anyMatch(status -> status.flowInstanceId == key);
+                if (!isFound) {
+                    ids.add(key);
+                }
+            });
+            ids.forEach(flowInstanceState::remove);
         }
     }
 

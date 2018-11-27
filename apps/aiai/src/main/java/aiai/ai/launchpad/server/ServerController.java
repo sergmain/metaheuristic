@@ -175,7 +175,19 @@ public class ServerController {
 
     private HttpEntity<AbstractResource> deliverResource(HttpServletResponse response, String typeAsStr, String code) throws IOException {
         Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
-        AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.launchpadResourcesDir, binaryDataType, code, null);
+        AssetFile assetFile;
+        switch(binaryDataType) {
+            case SNIPPET:
+                assetFile = StationResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, code, null);
+                break;
+            case DATA:
+            case TEST:
+                assetFile = StationResourceUtils.prepareDataFile(globals.launchpadResourcesDir, code, null);
+                break;
+            case UNKNOWN:
+            default:
+                throw new IllegalStateException("Unknown type of data: " + binaryDataType);
+        }
 
         if (assetFile==null) {
             return returnEmptyAsGone(response);
@@ -209,7 +221,7 @@ public class ServerController {
         }
 /*
         File snippetFile;
-        AssetFile assetFile = StationResourceUtils.prepareResourceFile(globals.launchpadResourcesDir, Enums.BinaryDataType.SNIPPET, snippetCode);
+        AssetFile assetFile = StationResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, Enums.BinaryDataType.SNIPPET, snippetCode);
         if (assetFile==null) {
             log.warn("Snippet wasn't found for name {}", snippetCode);
             return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);

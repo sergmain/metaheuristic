@@ -66,4 +66,5 @@ public class Consts {
     public static final String TASK_YAML = "task.yaml";
 
     public static final String FLOW_INSTANCE_INPUT_TYPE = "flow-instance-input-type";
+    public static final String ML_MODEL_BIN = "ml_model.bin";
 }

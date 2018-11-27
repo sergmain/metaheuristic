@@ -457,27 +457,6 @@ public class ExperimentService {
         return experimentHyperParams.stream().collect(Collectors.toMap(ExperimentHyperParams::getKey, ExperimentHyperParams::getValues, (a, b) -> b, HashMap::new));
     }
 
-    /**
-     * this scheduler is being run at launchpad side
-     *
-     * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
-     */
-    public void produceTasksForFlowInstances() {
-        if (globals.isUnitTesting) {
-            return;
-        }
-        if (!globals.isLaunchpadEnabled) {
-            return;
-        }
-/*
-        for (final Experiment experiment : experimentRepository.findByIsLaunchedIsTrueAndIsAllTaskProducedIsFalse()) {
-            List<String> inputResourceCodes = new ArrayList<>();
-            produceFeaturePermutations(experiment, inputResourceCodes);
-            produceTasks(experiment, inputResourceCodes);
-        }
-*/
-    }
-
     public void resetExperiment(FlowInstance flowInstance) {
 
         Experiment e = experimentRepository.findByFlowInstanceId(flowInstance.getId());
@@ -544,10 +523,12 @@ public class ExperimentService {
             totalVariants += allHyperParams.size() * 2;
 
             final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getResourceCodes());
+/*
             final List<SimpleResourceInfo> simpleFeatureResources = Collections.unmodifiableList(
                     ofVariants.values.stream()
                             .map(s -> SimpleResourceInfo.of(Enums.BinaryDataType.DATA, s))
                             .collect(Collectors.toList()));
+*/
 
             Map<String, Snippet> localCache = new HashMap<>();
             boolean isNew = false;
@@ -586,6 +567,15 @@ public class ExperimentService {
                         log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
                         continue;
                     }
+                    if ("fit".equals(snippet.getType())) {
+                        yaml.outputResourceCode = Consts.ML_MODEL_BIN;
+                    }
+                    else if ("predict".equals(snippet.getType())){
+                        yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(Consts.ML_MODEL_BIN);
+                    }
+                    else {
+                        throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
+                   }
                     yaml.snippet = new SimpleSnippet(
                             experimentSnippet.getType(),
                             experimentSnippet.getSnippetCode(),

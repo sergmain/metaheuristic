@@ -195,7 +195,7 @@ public class StationService {
         }
         final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
         boolean isResourcesOk = true;
-        final AssetFile assetFile = StationResourceUtils.prepareResourceFile(taskDir, Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
+        final AssetFile assetFile = StationResourceUtils.prepareDataFile(taskDir, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
             log.info("Resource hasn't been prepared yet, {}", assetFile);
