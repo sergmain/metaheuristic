@@ -29,12 +29,12 @@ import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
+import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.utils.BigDecimalHolder;
 import aiai.ai.utils.permutation.Permutation;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.task.SimpleResourceInfo;
 import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
@@ -132,16 +132,18 @@ public class ExperimentService {
     private final Globals globals;
     private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
+    private final TaskPersistencer taskPersistencer;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final SnippetCache snippetCache;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
 
-    public ExperimentService(Globals globals, ExperimentRepository experimentRepository, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1) {
+    public ExperimentService(Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1) {
         this.globals = globals;
         this.experimentCache = experimentCache;
         this.taskRepository = taskRepository;
+        this.taskPersistencer = taskPersistencer;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.snippetCache = snippetCache;
         this.taskParamYamlUtils = taskParamYamlUtils;
@@ -199,19 +201,20 @@ public class ExperimentService {
 
     public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
         final long stationId = Long.parseLong(stationIdAsStr);
-        List<Task> seqs = taskRepository.findByStationIdAndIsCompletedIsFalse(stationId);
-        for (Task seq : seqs) {
+        List<Task> tasks = taskRepository.findByStationIdAndIsCompletedIsFalse(stationId);
+        for (Task task : tasks) {
             boolean isFound = false;
             for (Protocol.StationTaskStatus.SimpleStatus status : statuses) {
-                if (status.experimentSequenceId ==seq.getId()) {
+                if (status.experimentSequenceId ==task.getId()) {
                     isFound = true;
                 }
             }
-            if(!isFound && (seq.getAssignedOn()!=null && (System.currentTimeMillis() - seq.getAssignedOn() > 90_000))) {
-                log.info("De-assign sequence from station #{}, {}", stationIdAsStr, seq);
-                seq.setStationId(null);
-                seq.setAssignedOn(null);
-                taskRepository.save(seq);
+            if(!isFound && (task.getAssignedOn()!=null && (System.currentTimeMillis() - task.getAssignedOn() > 90_000))) {
+                log.info("De-assign sequence from station #{}, {}", stationIdAsStr, task);
+                Task result = taskPersistencer.resetTask(task.getId());
+                if (result==null) {
+                    log.error("Reseting of task {} was failed. See log for more info.", task.getId());
+                }
             }
         }
     }
@@ -577,14 +580,14 @@ public class ExperimentService {
                         throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
                    }
                     yaml.snippet = new SimpleSnippet(
-                            experimentSnippet.getType(),
-                            experimentSnippet.getSnippetCode(),
-                            snippet.getFilename(),
-                            snippet.checksum,
-                            snippet.env,
-                            snippet.reportMetrics,
-                            snippet.fileProvided,
-                            snippet.params
+                        experimentSnippet.getType(),
+                        experimentSnippet.getSnippetCode(),
+                        snippet.getFilename(),
+                        snippet.checksum,
+                        snippet.env,
+                        snippet.reportMetrics,
+                        snippet.fileProvided,
+                        snippet.params
                     );
 
                     String currTaskParams = taskParamYamlUtils.toString(yaml);

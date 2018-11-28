@@ -2,13 +2,13 @@ package aiai.ai.launchpad.task;
 
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
-import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.launchpad.server.UploadResult;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;
@@ -33,6 +33,7 @@ public class TaskService {
     private static final TasksAndAssignToStationResult EMPTY_RESULT = new TasksAndAssignToStationResult(null);
 
     private final TaskRepository taskRepository;
+    private final TaskPersistencer taskPersistencer;
     private final FlowInstanceRepository flowInstanceRepository;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetCache snippetCache;
@@ -61,16 +62,11 @@ public class TaskService {
                     return;
                 }
 
-                task.snippetExecResults = null;
-                task.stationId = null;
-                task.assignedOn = null;
-                task.isCompleted = false;
-                task.completedOn = null;
-                task.metrics = null;
-                task.execState = Enums.TaskExecState.NONE.value;
-                task.resultReceived = false;
-                task.resultResourceScheduledOn = 0;
-                taskRepository.save(task);
+                Task result = taskPersistencer.resetTask(task.getId());
+                if (result==null) {
+                    log.error("Reseting of task {} was failed. See log for more info.", task.getId());
+                    break;
+                }
 
                 flowInstance.setProducingOrder(task.order - 1);
                 flowInstanceRepository.save(flowInstance);
@@ -85,49 +81,21 @@ public class TaskService {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-    public TaskService(TaskRepository taskRepository, FlowInstanceRepository flowInstanceRepository, TaskParamYamlUtils taskParamYamlUtils, SnippetCache snippetCache) {
+    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, FlowInstanceRepository flowInstanceRepository, TaskParamYamlUtils taskParamYamlUtils, SnippetCache snippetCache) {
         this.taskRepository = taskRepository;
+        this.taskPersistencer = taskPersistencer;
         this.flowInstanceRepository = flowInstanceRepository;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.snippetCache = snippetCache;
     }
 
     public List<Long> storeAllResults(List<SimpleTaskExecResult> results) {
-        List<Task> list = new ArrayList<>();
         List<Long> ids = new ArrayList<>();
         for (SimpleTaskExecResult result : results) {
             ids.add(result.taskId);
-            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(result.getResult());
-            Task t = prepareTask(result, snippetExec.exec.isOk ? Enums.TaskExecState.OK : Enums.TaskExecState.ERROR);
-            if (t!=null) {
-                list.add(t);
-            }
+            taskPersistencer.markAsCompleted(result);
         }
-        taskRepository.saveAll(list);
         return ids;
-    }
-
-    public void markAsCompleted(SimpleTaskExecResult result) {
-        SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(result.getResult());
-        Task t = prepareTask(result, snippetExec.exec.isOk ? Enums.TaskExecState.OK : Enums.TaskExecState.ERROR);
-        if (t!=null) {
-            taskRepository.save(t);
-        }
-    }
-
-    private Task prepareTask(SimpleTaskExecResult result, Enums.TaskExecState state) {
-        Task task = taskRepository.findById(result.taskId).orElse(null);
-        if (task==null) {
-            log.warn("Can't find Task for Id: {}", result.taskId);
-            return null;
-        }
-        task.setExecState(state.value);
-        task.setSnippetExecResults(result.getResult());
-        task.setMetrics(result.getMetrics());
-        task.setCompleted(true);
-        task.setCompletedOn(System.currentTimeMillis());
-        task.resultResourceScheduledOn = (state== Enums.TaskExecState.OK ? System.currentTimeMillis() : 0);
-        return task;
     }
 
     public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long flowInstanceId) {

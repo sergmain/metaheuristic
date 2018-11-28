@@ -27,6 +27,7 @@ import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
+import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationResourceUtils;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
@@ -68,9 +69,10 @@ public class ServerController {
     private final SnippetService snippetService;
     private final ChecksumWithSignatureService checksumWithSignatureService;
     private final TaskRepository taskRepository;
+    private final TaskPersistencer taskPersistencer;
     private final TaskParamYamlUtils taskParamYamlUtils;
 
-    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService, SnippetCache snippetCache, SnippetService snippetService, ChecksumWithSignatureService checksumWithSignatureService, TaskRepository taskRepository, TaskParamYamlUtils taskParamYamlUtils) {
+    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService, SnippetCache snippetCache, SnippetService snippetService, ChecksumWithSignatureService checksumWithSignatureService, TaskRepository taskRepository, TaskPersistencer taskPersistencer, TaskParamYamlUtils taskParamYamlUtils) {
         this.globals = globals;
         this.serverService = serverService;
         this.binaryDataService = binaryDataService;
@@ -78,6 +80,7 @@ public class ServerController {
         this.snippetService = snippetService;
         this.checksumWithSignatureService = checksumWithSignatureService;
         this.taskRepository = taskRepository;
+        this.taskPersistencer = taskPersistencer;
         this.taskParamYamlUtils = taskParamYamlUtils;
     }
 
@@ -165,13 +168,11 @@ public class ServerController {
         }
         catch (Throwable th) {
             log.error("Error", th);
-            return new UploadResult(false, "#442.05 can't load snippets, Error: " + th.toString());
+            return new UploadResult(false, "#442.05 can't upload result, Error: " + th.toString());
         }
-        task.resultReceived = true;
-        taskRepository.save(task);
-        return OK_UPLOAD_RESULT;
+        Task result = taskPersistencer.setResultReceived(task.getId(), true);
+        return result!=null ? OK_UPLOAD_RESULT : new UploadResult(false, "#442.08 can't update resultReceived field for task #"+task.getId()+". See log for info.");
     }
-
 
     private HttpEntity<AbstractResource> deliverResource(HttpServletResponse response, String typeAsStr, String code) throws IOException {
         Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());

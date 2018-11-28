@@ -7,6 +7,7 @@ import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
 import aiai.ai.launchpad.flow.FlowService;
+import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingExperiment;
 import aiai.ai.preparing.PreparingFlow;
@@ -34,6 +35,7 @@ public class TestFlowService extends PreparingFlow {
 
     @Autowired
     public TaskService taskService;
+    public TaskPersistencer taskPersistencer;
 
     @SuppressWarnings("Duplicates")
     @Override
@@ -182,7 +184,7 @@ public class TestFlowService extends PreparingFlow {
         r.setMetrics(null);
         r.setResult("Everything is Ok.");
         r.setResult(getExecResult(true));
-        taskService.markAsCompleted(r);
+        taskPersistencer.markAsCompleted(r);
         flowService.markOrderAsCompleted();
 
         TaskService.TasksAndAssignToStationResult assignToStation3 =
@@ -217,10 +219,9 @@ public class TestFlowService extends PreparingFlow {
         Protocol.AssignedTask.Task simpleTask52 = assignToStation52.getSimpleTask();
         assertNotNull(simpleTask52);
         assertNotNull(simpleTask52.getTaskId());
-        Task task52 = taskRepository.findById(simpleTask52.getTaskId()). orElse(null);
+        Task task52 = taskRepository.findById(simpleTask52.getTaskId()).orElse(null);
         assertNotNull(task52);
         assertEquals(3, task52.getOrder());
-
 
         int i=0;
     }
