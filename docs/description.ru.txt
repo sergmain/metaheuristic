@@ -157,6 +157,31 @@ aiai.station.launchpad-url - url по которому находится ста
 параметр aiai.station.accept-only-signed-snippets настоятельно рекомендуется установить
 в true, если старновая площадка находится за пределами DMZ
 
+3.8 Конфигурация spring.profiles.active
+в настоящее время в aiai поддерживается 2 профиля - launchpad и station
+эти профили можно использовать как по отдельности, так и комбинировать. В любом случае
+в application.properties должна быть только одна строка spring.profiles.active=
+Например:
+spring.profiles.active=launchpad
+или
+spring.profiles.active=launchpad, station
+
+3.9 конфигурация Http сервера на стороне стартовой площадки
+3.9.1 IP адрес
+для точного указания на какой IP адрес биндить http используется параметр server.address
+Например:
+server.address=127.0.0.1
+
+3.9.2 SSL
+по умолчанию использование SSL для всех Http запросов включено.
+Для контороля SSL используется параметр aiai.is-ssl-required
+Например:
+aiai.is-ssl-required=false
+
+Отключать SSL рекомендуется только, если aiai запускается
+на localhost (как стартовая площадка, так и станция) или когда aiai запускается в DMZ
+
+
 
 4. apps/gen-keys
 для генерации ключей необходимо запустить

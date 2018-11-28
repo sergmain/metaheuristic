@@ -39,12 +39,6 @@ import org.springframework.security.web.csrf.CsrfTokenRepository;
 @Configuration
 public class MultiHttpSecurityConfig {
 
-    private final Globals globals;
-
-    public MultiHttpSecurityConfig(Globals globals) {
-        this.globals = globals;
-    }
-
     @Bean
     public CsrfTokenRepository csrfTokenRepository() {
         return CookieCsrfTokenRepository.withHttpOnlyFalse();
@@ -61,6 +55,12 @@ public class MultiHttpSecurityConfig {
 
         static final String REST_REALM = "REST realm";
 
+        private final Globals globals;
+
+        public RestAuthSecurityConfig(Globals globals) {
+            this.globals = globals;
+        }
+
         @Override
         protected void configure(HttpSecurity http) throws Exception {
 
@@ -75,12 +75,22 @@ public class MultiHttpSecurityConfig {
                     .and()
                     .csrf().disable()
                     .headers().cacheControl();
+
+            if (globals.isSslRequired) {
+                http.requiresChannel().antMatchers("/**").requiresSecure();
+            }
         }
     }
 
     @Configuration
     @Order(2)
     public class RestAnonSecurityConfig extends WebSecurityConfigurerAdapter {
+
+        private final Globals globals;
+
+        public RestAnonSecurityConfig(Globals globals) {
+            this.globals = globals;
+        }
 
         @Override
         protected void configure(HttpSecurity http) throws Exception {
@@ -91,6 +101,10 @@ public class MultiHttpSecurityConfig {
                     .antMatcher("/rest-anon/**").authorizeRequests().anyRequest().anonymous()
                     .and()
                     .csrf().disable();
+
+            if (globals.isSslRequired) {
+                http.requiresChannel().antMatchers("/**").requiresSecure();
+            }
         }
     }
 
@@ -99,13 +113,15 @@ public class MultiHttpSecurityConfig {
     public static class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
         final CsrfTokenRepository csrfTokenRepository;
+        private final Globals globals;
 
         @Value("${server.address:#{null}}")
         private String serverAddress;
 
         @Autowired
-        public SpringSecurityConfig(CsrfTokenRepository csrfTokenRepository) {
+        public SpringSecurityConfig(CsrfTokenRepository csrfTokenRepository, Globals globals) {
             this.csrfTokenRepository = csrfTokenRepository;
+            this.globals = globals;
         }
 
         @Override
@@ -139,7 +155,10 @@ public class MultiHttpSecurityConfig {
 //                    .deleteCookies(Consts.SESSIONID_NAME)
 //                    .invalidateHttpSession(true)
             ;
-            if (!"127.0.0.1".equals(serverAddress)) {
+//            if (!"127.0.0.1".equals(serverAddress)) {
+//                http.requiresChannel().antMatchers("/**").requiresSecure();
+//            }
+            if (globals.isSslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }
         }

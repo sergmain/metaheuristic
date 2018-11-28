@@ -71,6 +71,9 @@ public class Globals {
     @Value("${aiai.is-testing:#{false}}")
     public boolean isUnitTesting = false;
 
+    @Value("${aiai.is-ssl-required:#{true}}")
+    public boolean isSslRequired = true;
+
     // Launchpad's globals
 
     @Value("${aiai.launchpad.enabled:#{false}}")
