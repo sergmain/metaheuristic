@@ -76,8 +76,8 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
             try {
                 Request request = Request.Get(targetUrl + "/DATA/" + task.getId())
-                        .connectTimeout(5000)
-                        .socketTimeout(5000);
+                        .connectTimeout(10000)
+                        .socketTimeout(10000);
 
                 Response response;
                 if (globals.isSecureRestUrl) {
