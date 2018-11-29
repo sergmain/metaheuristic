@@ -89,7 +89,7 @@ public class SnippetController {
     }
 
     @PostMapping(value = "/snippet-upload-from-file")
-    public String uploadSnippet(MultipartFile file, final RedirectAttributes redirectAttributes) {
+    public String uploadSnippet(final MultipartFile file, final RedirectAttributes redirectAttributes) {
 
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {

@@ -53,7 +53,7 @@ public class SnippetsConfig {
         public boolean metrics = false;
         public Map<Checksum.Type, String> checksums;
 
-        public SnippetConfigStatus verify() {
+        public SnippetConfigStatus validate() {
             if (StringUtils.isBlank(name) || StringUtils.isBlank(type) || StringUtils.isBlank(version) || StringUtils.isBlank(env)) {
                 return new SnippetConfigStatus(false, "A field is null or empty: " + this.toString());
             }

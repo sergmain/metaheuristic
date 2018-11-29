@@ -96,7 +96,7 @@ public class PackageSnippet implements CommandLineRunner {
         boolean isError = false;
         Set<String> set = new HashSet<>();
         for (SnippetsConfig.SnippetConfig snippet : snippetsConfig.getSnippets()) {
-            final SnippetsConfig.SnippetConfigStatus verify = snippet.verify();
+            final SnippetsConfig.SnippetConfigStatus verify = snippet.validate();
             if (!verify.isOk) {
                 System.out.println(verify.error);
                 isError=true;

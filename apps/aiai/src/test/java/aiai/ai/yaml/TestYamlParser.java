@@ -60,7 +60,7 @@ public class TestYamlParser {
             assertNotNull(config.getSnippets());
             assertEquals(1, config.getSnippets().size());
             SnippetsConfig.SnippetConfig snippet = config.getSnippets().get(0);
-            SnippetsConfig.SnippetConfigStatus status = snippet.verify();
+            SnippetsConfig.SnippetConfigStatus status = snippet.validate();
             assertFalse(status.isOk);
         }
     }

@@ -289,10 +289,10 @@ snippets:
 создать временный директорий и в нем создать файл snippets.yaml
 поместить в данный файл конфиг снипета
 snippets:
-    - name: simple-snippet
+    - name: simple-app
       version: 1.1
       type: simple
-      env: simple-snippet
+      env: simple-app
       fileProvided: true
 
 
@@ -319,15 +319,25 @@ http://localhost:8080/launchpad/snippets
 не обнаружен
 
 12. окружение станции
+12.1 env.yaml
 для того, чтобы снипеты запускались на стороне станции необходимо сконфигурировать
 исполняемое окуржение. для этого необходимо создать файл \aiai\station\env.yaml
 
 конфиг:
 envs:
-  simple-snippet: type
+  simple-app: java -jar C:\aia\git\apps\simple-app\target\simple-app.jar
 
 
-в нашем примере исполяемой командой будет 'type'
+в нашем примере исполяемой командой будет запуск простого приложения
+
+12.2 app/simple-app
+данное приложение должно быть уже собрано после выполнения команды mvn-all.bat
+для провеки необходимо из командной строки запустить:
+java -jar C:\aia\git\apps\simple-app\target\simple-app.jar
+
+если все приложение simple-app собрано успешкно то в консоле будет выведено:
+Parameter file wasn't specified
+
 
 13. Загрузка данных
 для инициализации данных для обработки нашим снипетом загрузим любой текстовый файл

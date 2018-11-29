@@ -39,10 +39,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -241,39 +238,33 @@ public class SnippetService {
         String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
         SnippetsConfig snippetsConfig = SnippetsConfigUtils.to(cfg);
         for (SnippetsConfig.SnippetConfig snippetConfig : snippetsConfig.snippets) {
-            SnippetsConfig.SnippetConfigStatus status = snippetConfig.verify();
+            SnippetsConfig.SnippetConfigStatus status = snippetConfig.validate();
             if (!status.isOk) {
                 log.error(status.error);
                 continue;
             }
-            File file = new File(srcDir, snippetConfig.file);
-            if (!file.exists()) {
-                throw new IllegalStateException("File " + snippetConfig.file+" wasn't found in "+ srcDir.getAbsolutePath());
-            }
             String sum;
-            try( InputStream inputStream = new FileInputStream(file)) {
-                sum = Checksum.Type.SHA256.getChecksum(inputStream);
+            File file = null;
+            long length=0;
+            if (snippetConfig.fileProvided) {
+                sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippetConfig.env.getBytes()));
             }
-
+            else {
+                file = new File(srcDir, snippetConfig.file);
+                if (!file.exists()) {
+                    throw new IllegalStateException("File " + snippetConfig.file + " wasn't found in " + srcDir.getAbsolutePath());
+                }
+                try (InputStream inputStream = new FileInputStream(file)) {
+                    sum = Checksum.Type.SHA256.getChecksum(inputStream);
+                }
+                length = file.length();
+            }
             Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
             if (snippet!=null) {
                 final String checksum = Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256);
                 if (!sum.equals(checksum)) {
                     if (globals.isReplaceSnapshot && snippetConfig.version.endsWith(Consts.SNAPSHOT_SUFFIX)) {
-                        setChecksum(snippetConfig, sum, snippet);
-                        snippet.name = snippetConfig.name;
-                        snippet.snippetVersion = snippetConfig.version;
-                        snippet.type = snippetConfig.type;
-                        snippet.filename = snippetConfig.file;
-                        snippet.length = file.length();
-                        snippet.env = snippetConfig.env;
-                        snippet.params = snippetConfig.params;
-                        snippet.reportMetrics = snippetConfig.isMetrics();
-                        snippetCache.save(snippet);
-                        try( InputStream inputStream = new FileInputStream(file)) {
-                            String snippetCode = snippet.getSnippetCode();
-                            binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null);
-                        }
+                        storeSnippet(snippetConfig, sum, file, length, snippet);
                     }
                     else {
                         log.warn("Updating of snippets is prohibited, not a snapshot version '{}:{}'", snippet.name, snippet.snippetVersion);
@@ -282,20 +273,27 @@ public class SnippetService {
             }
             else {
                 snippet = new Snippet();
-                setChecksum(snippetConfig, sum, snippet);
-                snippet.name = snippetConfig.name;
-                snippet.snippetVersion = snippetConfig.version;
-                snippet.type = snippetConfig.type;
-                snippet.filename = snippetConfig.file;
-                snippet.length = file.length();
-                snippet.env = snippetConfig.env;
-                snippet.params = snippetConfig.params;
-                snippet.reportMetrics = snippetConfig.isMetrics();
-                snippetCache.save(snippet);
-                try( InputStream inputStream = new FileInputStream(file)) {
-                    String snippetCode = snippet.getSnippetCode();
-                    binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null);
-                }
+                storeSnippet(snippetConfig, sum, file, length, snippet);
+            }
+        }
+    }
+
+    private void storeSnippet(SnippetsConfig.SnippetConfig snippetConfig, String sum, File file, long length, Snippet snippet) throws IOException {
+        setChecksum(snippetConfig, sum, snippet);
+        snippet.name = snippetConfig.name;
+        snippet.snippetVersion = snippetConfig.version;
+        snippet.type = snippetConfig.type;
+        snippet.filename = snippetConfig.file;
+        snippet.fileProvided = snippetConfig.fileProvided;
+        snippet.length = length;
+        snippet.env = snippetConfig.env;
+        snippet.params = snippetConfig.params;
+        snippet.reportMetrics = snippetConfig.isMetrics();
+        snippetCache.save(snippet);
+        if (file != null) {
+            try (InputStream inputStream = new FileInputStream(file)) {
+                String snippetCode = snippet.getSnippetCode();
+                binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null);
             }
         }
     }

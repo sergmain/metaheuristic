@@ -84,9 +84,9 @@ public class ArtifactCleanerAtStation {
                     } catch (IOException e) {
                         log.error("#090.07 Error while cleaning up broken tasks", e);
                     }
-                    if (isEmpty.value) {
-                        FileUtils.deleteQuietly(s.toFile());
-                    }
+//                    if (isEmpty.value) {
+//                        FileUtils.deleteQuietly(s.toFile());
+//                    }
                 });
             } catch (IOException e) {
                 log.error("#090.07 Error while cleaning up broken tasks", e);
