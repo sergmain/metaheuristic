@@ -233,7 +233,14 @@ aiai.master-token=xxx
 если все запустилось успешно, то можно перейти к созданию сущеностей
 
 8. Flow (поток)
-простейший поток, состоящий из одного процесса
+создать простейший поток, состоящий из одного процесса.
+Создать поток можно перейдя по адресу /launchpad/flow/flow-add
+
+значения полей:
+Code of flow -->  simple-flow
+
+Parameters of flow -->
+
 processes:
 - code: simple-snippet
   collectResources: false
@@ -244,6 +251,9 @@ processes:
   - simple-snippet:1.1
   type: FILE_PROCESSING
   parallelExec: false
+
+
+
 
 сразу после создания данный поток не будет валиден
 т.к. необходимо создать сниппет simple-snippet:1.1
@@ -341,7 +351,7 @@ http://localhost:8080/launchpad/flow/flows
 Создать новую реализацию потока:
 Input pool code for this flow - simple-resource-pool
 
-List of flows - simple-snippet
+List of flows - simple-flow
 
 
 15. запуск реализации потока
