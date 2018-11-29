@@ -177,7 +177,7 @@ public class TaskProcessor {
                     File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + taskParamYaml.outputResourceCode);
                     if (resultDataFile.exists()) {
                         log.info("Register task for uploading result data to server, resultDataFile: {}", resultDataFile.getPath());
-                        uploadResourceActor.add(new UploadResourceTask(resultDataFile, task.taskId));
+                        uploadResourceActor.add(new UploadResourceTask(task.taskId, resultDataFile));
                     } else {
                         String es = "Result data file doesn't exist, resultDataFile: " + resultDataFile.getPath();
                         log.error(es);

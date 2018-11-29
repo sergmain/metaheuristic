@@ -38,6 +38,9 @@ public class ExperimentFeature implements Serializable {
     @Column(name = "RESOURCE_CODES")
     public String resourceCodes;
 
+    @Column(name = "CHECKSUM_ID_CODES")
+    public String checksumIdCodes;
+
     @Column(name = "IS_IN_PROGRESS")
     public boolean isInProgress;
 

@@ -26,7 +26,7 @@ import java.io.File;
 
 @Data
 @AllArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(of = "id")
 public class DownloadResourceTask implements StationRestTask {
     public String id;
     public File targetDir;

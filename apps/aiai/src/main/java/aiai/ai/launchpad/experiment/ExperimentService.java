@@ -27,6 +27,7 @@ import aiai.ai.launchpad.repositories.ExperimentFeatureRepository;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.launchpad.server.UploadResult;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
@@ -38,6 +39,7 @@ import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -52,6 +54,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -493,7 +496,7 @@ public class ExperimentService {
         }
     }
 
-    public void produceTasks(FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs) {
+    public boolean produceTasks(FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs) {
         int totalVariants = 0;
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
@@ -525,20 +528,24 @@ public class ExperimentService {
             // there is 2 because we have 2 types of snippets - fit and predict
             totalVariants += allHyperParams.size() * 2;
 
-            final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getResourceCodes());
-/*
-            final List<SimpleResourceInfo> simpleFeatureResources = Collections.unmodifiableList(
-                    ofVariants.values.stream()
-                            .map(s -> SimpleResourceInfo.of(Enums.BinaryDataType.DATA, s))
-                            .collect(Collectors.toList()));
-*/
-
+//            final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getResourceCodes());
             Map<String, Snippet> localCache = new HashMap<>();
             boolean isNew = false;
             for (HyperParams hyperParams : allHyperParams) {
 
                 int orderAdd = 0;
+                Task prevTask = null;
+                Task task=null;
                 for (ExperimentSnippet experimentSnippet : experimentSnippets) {
+                    prevTask = task;
+
+                    // create empty task. we need task id for initialization
+                    task = new Task();
+                    task.setParams("");
+                    task.setFlowInstanceId(flowInstance.getId());
+                    task.setOrder(process.order + (orderAdd++));
+                    taskRepository.save(task);
+
                     TaskParamYaml yaml = new TaskParamYaml();
                     yaml.setHyperParams( hyperParams.toSortedMap() );
                     yaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
@@ -556,7 +563,6 @@ public class ExperimentService {
                             continue;
                         }
                         yaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
-
                     }
                     final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                     Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
@@ -571,10 +577,13 @@ public class ExperimentService {
                         continue;
                     }
                     if ("fit".equals(snippet.getType())) {
-                        yaml.outputResourceCode = Consts.ML_MODEL_BIN;
+                        yaml.outputResourceCode = task.getId()+"-"+Consts.ML_MODEL_BIN;
                     }
                     else if ("predict".equals(snippet.getType())){
-                        yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(Consts.ML_MODEL_BIN);
+                        if (prevTask==null) {
+                            throw new IllegalStateException("prevTask is null");
+                        }
+                        yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(prevTask.getId()+"-"+Consts.ML_MODEL_BIN);
                     }
                     else {
                         throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
@@ -595,14 +604,11 @@ public class ExperimentService {
                     if (taskParams.contains(currTaskParams)) {
                         continue;
                     }
-
-                    Task task = new Task();
                     task.setParams(currTaskParams);
-                    task.setFlowInstanceId(flowInstance.getId());
-                    // we can just increment order here
-                    // because experiment is always last process in flow
-                    task.setOrder(process.order + (orderAdd++));
-                    taskRepository.save(task);
+                    task = taskPersistencer.setParams(task.getId(), currTaskParams);
+                    if (task==null) {
+                        return false;
+                    }
                     isNew = true;
                 }
             }
@@ -635,11 +641,12 @@ public class ExperimentService {
         Experiment experimentTemp = experimentCache.findById(experiment.getId());
         if (experimentTemp==null) {
             log.warn("Experiment for id {} doesn't exist anymore", experiment.getId());
-            return;
+            return false;
         }
         experimentTemp.setNumberOfTask(totalVariants);
         experimentTemp.setAllTaskProduced(true);
         experimentTemp = experimentCache.save(experimentTemp);
+        return true;
     }
 
     public void produceFeaturePermutations(final Experiment experiment, List<String> inputResourceCodes) {
@@ -659,6 +666,15 @@ public class ExperimentService {
                         final ExperimentFeature feature = new ExperimentFeature();
                         feature.setExperimentId(experiment.getId());
                         feature.setResourceCodes(listAsStr);
+                        String checksumMD5;
+                        try {
+                            checksumMD5 = Checksum.Type.MD5.getChecksum(listAsStr);
+                        } catch (IOException e) {
+                            String es = "Error while calculating MD5 for string " + listAsStr;
+                            log.error(es, e);
+                            throw new IllegalStateException(es);
+                        }
+                        feature.setChecksumIdCodes(listAsStr.substring(0, 20)+"###"+checksumMD5);
                         experimentFeatureRepository.save(feature);
                         total.value++;
                         return true;

@@ -194,14 +194,13 @@ public class StationService {
             return Enums.ResendTaskOutputResourceStatus.TASK_PARAM_FILE_NOT_FOUND;
         }
         final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
-        boolean isResourcesOk = true;
         final AssetFile assetFile = StationResourceUtils.prepareDataFile(taskDir, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
             log.info("Resource hasn't been prepared yet, {}", assetFile);
             return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
         }
-        uploadResourceActor.add(new UploadResourceTask(assetFile.file, taskId));
+        uploadResourceActor.add(new UploadResourceTask(taskId, assetFile.file));
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
 }

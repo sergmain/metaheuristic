@@ -33,7 +33,7 @@ public abstract class AbstractTaskQueue<T> {
 
     public T poll() {
         synchronized (QUEUE) {
-            return QUEUE.pollLast();
+            return QUEUE.pollFirst();
         }
     }
 }

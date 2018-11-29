@@ -49,7 +49,6 @@ public class Checksum {
             this.isSign = isSign;
         }
 
-        @Deprecated
         public String getChecksum(String data) throws IOException {
             return getChecksum( IOUtils.toInputStream(data, Charsets.UTF_8));
         }

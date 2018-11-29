@@ -23,6 +23,26 @@ public class TaskPersistencer {
         this.taskRepository = taskRepository;
     }
 
+    public Task setParams(long taskId, String taskParams) {
+        synchronized (syncObj) {
+            for (int i = 0; i < NUMBER_OF_TRY; i++) {
+                try {
+                    Task task = taskRepository.findById(taskId).orElse(null);
+                    if (task == null) {
+                        log.warn("Task with taskId {} wasn't found", taskParams, taskId);
+                        return null;
+                    }
+                    task.setParams(taskParams);
+                    taskRepository.save(task);
+                    return task;
+                } catch (ObjectOptimisticLockingFailureException e) {
+                    log.error("Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
+                }
+            }
+        }
+        return null;
+    }
+
     public Task setResultReceived(long taskId, boolean value) {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
@@ -124,4 +144,5 @@ public class TaskPersistencer {
         task.resultResourceScheduledOn = System.currentTimeMillis();
         return task;
     }
+
 }

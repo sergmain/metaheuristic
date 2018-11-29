@@ -8,9 +8,8 @@ import java.io.File;
 
 @Data
 @AllArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(of="taskId")
 public class UploadResourceTask implements StationRestTask {
-    public File   file;
     public long taskId;
-
+    public File   file;
 }
