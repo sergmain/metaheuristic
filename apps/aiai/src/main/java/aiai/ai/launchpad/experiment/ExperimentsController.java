@@ -155,7 +155,7 @@ public class ExperimentsController {
     }
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
-    public String getSequncesPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
+    public String getFeatureProgressPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
         Experiment experiment= experimentRepository.findById(experimentId).orElse(null);
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
 
@@ -182,11 +182,11 @@ public class ExperimentsController {
     }
 
     @PostMapping("/experiment-feature-progress-console-part/{id}")
-    public String getSequencesConsolePart(Model model, @PathVariable(name="id") Long sequenceId) {
+    public String getSequencesConsolePart(Model model, @PathVariable(name="id") Long taskId) {
         ConsoleResult result = new ConsoleResult();
-        Task sequence = taskRepository.findById(sequenceId).orElse(null);
-        if (sequence!=null) {
-            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(sequence.getSnippetExecResults());
+        Task task = taskRepository.findById(taskId).orElse(null);
+        if (task!=null) {
+            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(task.getSnippetExecResults());
             final ExecProcessService.Result execResult = snippetExec.getExec();
             result.items.add( new ConsoleResult.SimpleConsoleOutput(execResult.exitCode, execResult.isOk, execResult.console));
         }
@@ -196,7 +196,7 @@ public class ExperimentsController {
     }
 
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
-    public String getSequences(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, final RedirectAttributes redirectAttributes ) {
+    public String getFeatures(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, final RedirectAttributes redirectAttributes ) {
         Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#280.01 experiment wasn't found, experimentId: " + experimentId);
@@ -530,7 +530,7 @@ public class ExperimentsController {
     }
 
     @PostMapping("/task-rerun/{id}")
-    public @ResponseBody boolean rerunSequence(@PathVariable long id) {
+    public @ResponseBody boolean rerunTask(@PathVariable long id) {
         if (true) throw new IllegalStateException("Not implemented yet");
 /*
         Task seq = taskRepository.findById(id).orElse(null);

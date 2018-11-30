@@ -167,11 +167,13 @@ public class TaskProcessor {
 
                 File consoleLogFile = new File(artifactDir, Consts.SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
+                long startedOn = System.currentTimeMillis();
+
                 // Exec snippet
                 result = execProcessService.execCommand(cmd, taskDir, consoleLogFile);
 
                 // Store result
-                stationTaskService.storeExecResult(task.getTaskId(), snippet, result, artifactDir);
+                stationTaskService.storeExecResult(task.getTaskId(), startedOn, snippet, result, artifactDir);
 
                 if (result.isOk()) {
                     File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + taskParamYaml.outputResourceCode);
@@ -188,6 +190,9 @@ public class TaskProcessor {
                 log.error("Error exec process " + interpreter, th);
                 result = new ExecProcessService.Result(false, -1, ExceptionUtils.getStackTrace(th));
             }
+//            stationTaskService.markAsFinishedIfAllOk(
+//                    task.getTaskId(), result!=null ? result.isOk : false,
+//                    result!=null ? result.exitCode : -1, result!=null ? result.console : "");
             stationTaskService.markAsFinishedIfAllOk(task.getTaskId(), result);
         }
     }

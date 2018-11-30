@@ -294,9 +294,9 @@ public class ExperimentService {
         }
 
         String metricKey = null;
-        for (Task sequence : selected) {
+        for (Task task : selected) {
 
-            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(sequence.metrics) );
+            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(task.metrics) );
             if (metricValues==null) {
                 continue;
             }
@@ -308,7 +308,7 @@ public class ExperimentService {
                 }
             }
 
-            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(sequence.getParams());
+            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             int idxX = mapX.get(taskParamYaml.hyperParams.get(paramCleared.get(0)));
             int idxY = mapY.get(taskParamYaml.hyperParams.get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
@@ -335,8 +335,8 @@ public class ExperimentService {
 //        List<Task> list = taskRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
 
         List<Task> selected = new ArrayList<>();
-        for (Task sequence : list) {
-            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(sequence.getParams());
+        for (Task task : list) {
+            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean[] isOk = new boolean[taskParamYaml.hyperParams.size()];
             int idx = 0;
             for (Map.Entry<String, String> entry : taskParamYaml.hyperParams.entrySet()) {
@@ -364,7 +364,7 @@ public class ExperimentService {
                 }
             }
             if (isInclude(isOk)) {
-                selected.add(sequence);
+                selected.add(task);
             }
         }
         //noinspection UnnecessaryLocalVariable
@@ -402,9 +402,9 @@ public class ExperimentService {
         List<Map<String, BigDecimal>> values = new ArrayList<>();
 
         if (true) throw new IllegalStateException("Not implemented yet");
-        List<Task> seqs = null;
-//        List<Task> seqs = taskRepository.findByIsCompletedIsTrueAndFeatureId(experimentFeature.getId());
-        for (Task seq : seqs) {
+        List<Task> tasks = null;
+//        List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndFeatureId(experimentFeature.getId());
+        for (Task seq : tasks) {
             MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.metrics) );
             if (metricValues==null) {
                 continue;

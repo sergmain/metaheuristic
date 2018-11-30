@@ -177,6 +177,11 @@ public class CommandProcessor {
     private Command[] processRequestTask(Protocol.RequestTask command) {
         checkStationId(command);
         Protocol.AssignedTask r = assignTaskToStation(command.getStationId(), command.isAcceptOnlySigned());
+        if (r.tasks!=null && !r.tasks.isEmpty()) {
+            for (Protocol.AssignedTask.Task task : r.tasks) {
+                log.info("Assign task #{} to station #{}",task.getTaskId(), command.getStationId() );
+            }
+        }
         return Protocol.asArray(r);
     }
 

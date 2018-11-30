@@ -110,7 +110,7 @@ public class LaunchpadRequester {
 
         if (stationId!=null) {
             // always report about current active sequences, if we have actual stationId
-            data.setCommand(stationTaskService.produceStationSequenceStatus());
+            data.setCommand(stationTaskService.produceStationTaskStatus());
             data.setCommand(stationService.produceReportStationStatus());
             final boolean b = stationTaskService.isNeedNewExperimentSequence(stationId);
             if (b) {
@@ -122,7 +122,7 @@ public class LaunchpadRequester {
             }
         }
 
-        reportSequenceProcessingResult(data);
+        reportTaskProcessingResult(data);
 
         List<Command> cmds;
         synchronized (commands) {
@@ -167,16 +167,16 @@ public class LaunchpadRequester {
         }
     }
 
-    private void reportSequenceProcessingResult(ExchangeData data) {
+    private void reportTaskProcessingResult(ExchangeData data) {
         final List<StationTask> list = stationTaskService.getForReporting();
         if (list.isEmpty()) {
             return;
         }
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
-        for (StationTask seq : list) {
-            command.getResults().add(new SimpleTaskExecResult(seq.getTaskId(), seq.getSnippetExecResult(), seq.getMetrics()));
-            seq.setReported(true);
-            seq.setReportedOn(System.currentTimeMillis());
+        for (StationTask task : list) {
+            command.getResults().add(new SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), task.getMetrics()));
+            task.setReported(true);
+            task.setReportedOn(System.currentTimeMillis());
         }
         stationTaskService.saveReported(list);
         data.setCommand(command);

@@ -131,6 +131,16 @@ public class TaskService {
 
         List<Task> tasks = taskRepository.findForAssigning(flowInstance.getId(), flowInstance.producingOrder);
         if (currentLevelIsntFinished(tasks, flowInstance.producingOrder)) {
+            log.warn("Not completed task was found, start decreasing completed order to {}", flowInstance.producingOrder-1 );
+            tasks = taskRepository.findForCompletion(flowInstance.getId(), flowInstance.producingOrder);
+            for (Task task : tasks) {
+                taskPersistencer.resetTask(task.getId());
+            }
+            FlowInstance fi = flowInstanceRepository.findById(flowInstance.getId()).orElse(null);
+            if (fi!=null) {
+                fi.setProducingOrder(flowInstance.producingOrder-1);
+                flowInstanceRepository.save(fi);
+            }
             return EMPTY_RESULT;
         }
         Task resultTask = null;
@@ -179,7 +189,6 @@ public class TaskService {
     private boolean currentLevelIsntFinished(List<Task> tasks, int completedOrder) {
         for (Task task : tasks) {
             if (task.getOrder()==completedOrder && !task.isCompleted) {
-                log.error("!!!!!!!!! Not completed task was found {}", task);
                 return true;
             }
         }

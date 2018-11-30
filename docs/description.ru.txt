@@ -242,13 +242,13 @@ Code of flow -->  simple-flow
 Parameters of flow -->
 
 processes:
-- code: simple-snippet
+- code: simple-app
   collectResources: false
   name: Simple snippet
   inputType: simple-resource-pool
   outputType: simple-result
   snippetCodes:
-  - simple-snippet:1.1
+  - simple-app:1.1
   type: FILE_PROCESSING
   parallelExec: false
 
@@ -256,7 +256,7 @@ processes:
 
 
 сразу после создания данный поток не будет валиден
-т.к. необходимо создать сниппет simple-snippet:1.1
+т.к. необходимо создать сниппет simple-app:1.1
 
 
 9. Снипет
@@ -272,18 +272,18 @@ processes:
 для простоты мы будем создавать снипет, который не содержит исполняемый код
 
 9.2 конфиг снипета
-отсутствие необзодимости иметь исполняемый код помеается в
+отсутствие необходимости иметь исполняемый код помечается в
 fileProvided=true
 
 snippets:
-    - name: simple-snippet
+    - name: simple-app
       version: 1.1
       type: simple
-      env: simple-snippet
+      env: simple-app
       fileProvided: true
 
 
-сама ссылка на исполняемое приложение конфигурируется в env: simple-snippet
+сама ссылка на исполняемое приложение конфигурируется в env: simple-app
 
 9.3 подписание снипета
 создать временный директорий и в нем создать файл snippets.yaml
