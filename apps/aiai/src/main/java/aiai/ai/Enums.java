@@ -24,14 +24,12 @@ public final class Enums {
     }
 
     public enum ProcessType {
-        FILE_PROCESSING(1, false), EXPERIMENT(2, true);
+        FILE_PROCESSING(1), EXPERIMENT(2);
 
-        private int processType;
-        private boolean snippetProvided;
+        public int value;
 
-        ProcessType(int processType, boolean snippetProvided) {
-            this.processType = processType;
-            this.snippetProvided = snippetProvided;
+        ProcessType(int value) {
+            this.value = value;
         }
     }
 
@@ -144,6 +142,7 @@ public final class Enums {
     public enum FlowProducingStatus { OK,
         NOT_PRODUCING_YET_ERROR,
         EXPERIMENT_NOT_FOUND_BY_CODE_ERROR,
+        PRODUCING_OF_EXPERIMENT_ERROR,
         INPUT_POOL_CODE_DOESNT_EXIST_ERROR,
         FLOW_CODE_ALREADY_EXIST_ERROR,
         META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR,

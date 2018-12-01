@@ -27,12 +27,12 @@ public class ResourceService {
     }
 
     void storeInitialResource(
-            String originFilename, File tempFile, String code, String poolCode, boolean isManual, String filename) {
+            String originFilename, File tempFile, String code, String poolCode, String filename) {
 
         try {
             try (InputStream is = new FileInputStream(tempFile)) {
                 binaryDataService.save(
-                        is, tempFile.length(), Enums.BinaryDataType.DATA, code, poolCode, isManual, filename);
+                        is, tempFile.length(), Enums.BinaryDataType.DATA, code, poolCode, true, filename, null);
             }
         } catch (IOException e) {
             throw new StoreNewPartOfRawFileException(tempFile.getPath(), originFilename);

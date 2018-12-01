@@ -53,6 +53,9 @@ public class BinaryData implements Serializable {
     @Column(name = "DATA_TYPE")
     private int dataType;
 
+    @Column(name = "FLOW_INSTANCE_ID")
+    private Long flowInstanceId;
+
     @Column(name = "UPLOAD_TS")
     private Timestamp uploadTs;
 

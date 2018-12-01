@@ -163,7 +163,13 @@ public class ServerController {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
             try (InputStream is = new FileInputStream(resFile)) {
-                binaryDataService.save(is, resFile.length(), Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode, false, null);
+                binaryDataService.save(
+                        is, resFile.length(), Enums.BinaryDataType.DATA,
+                        taskParamYaml.outputResourceCode,
+                        taskParamYaml.outputResourceCode,
+                        false,
+                        null,
+                        task.flowInstanceId);
             }
         }
         catch (Throwable th) {

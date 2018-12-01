@@ -134,8 +134,7 @@ public class ResourceController {
                 : resourcePoolCode + '-' + originFilename;
 
         try {
-            resourceService.storeInitialResource(
-                    originFilename, tempFile, code, resourcePoolCode, true, originFilename);
+            resourceService.storeInitialResource(originFilename, tempFile, code, resourcePoolCode, originFilename);
         } catch (StoreNewPartOfRawFileException e) {
             log.error("Error", e);
             redirectAttributes.addFlashAttribute("errorMessage", "#172.04 An error while saving data to file, " + e.toString());

@@ -95,7 +95,8 @@ public class ExperimentsController {
     public static class ExperimentResult {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeature> features;
-        public boolean isCanBeLaunched;
+        public FlowInstance flowInstance;
+        public Enums.FlowInstanceExecState flowInstanceExecState;
     }
 
     @Data
@@ -125,8 +126,9 @@ public class ExperimentsController {
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final TaskRepository taskRepository;
     private final SnippetCache snippetCache;
+    private final FlowInstanceRepository flowInstanceRepository;
 
-    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, SnippetCache snippetCache) {
+    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, SnippetCache snippetCache, FlowInstanceRepository flowInstanceRepository) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
         this.experimentRepository = experimentRepository;
@@ -137,6 +139,7 @@ public class ExperimentsController {
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.taskRepository = taskRepository;
         this.snippetCache = snippetCache;
+        this.flowInstanceRepository = flowInstanceRepository;
     }
 
     @GetMapping("/experiments")
@@ -229,6 +232,12 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", "#282.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
         }
+        FlowInstance flowInstance = flowInstanceRepository.findById(experiment.getFlowInstanceId()).orElse(null);
+        if (flowInstance == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#282.04 experiment has broken ref to flowInstance, experimentId: " + id);
+            return "redirect:/launchpad/experiments";
+        }
+
         for (ExperimentHyperParams hyperParams : experiment.getHyperParams()) {
             if (StringUtils.isBlank(hyperParams.getValues())) {
                 continue;
@@ -242,7 +251,8 @@ public class ExperimentsController {
 
         ExperimentResult experimentResult = new ExperimentResult();
         experimentResult.features = experimentFeatureRepository.findByExperimentId(experiment.getId());
-        experimentResult.features.sort( (ExperimentFeature o1, ExperimentFeature o2) -> (Boolean.compare(o2.isFinished, o1.isFinished)));
+        experimentResult.flowInstance = flowInstance;
+        experimentResult.flowInstanceExecState = Enums.FlowInstanceExecState.toState(flowInstance.execState);
 
         model.addAttribute("experiment", experiment);
         model.addAttribute("experimentResult", experimentResult);
@@ -271,10 +281,10 @@ public class ExperimentsController {
                     if ("fit".equals(s.type) && snippetService.hasFit(experimentSnippets)) {
                         return true;
                     }
-                    if ("predict".equals(s.type) && snippetService.hasPredict(experimentSnippets)) {
+                    else if ("predict".equals(s.type) && snippetService.hasPredict(experimentSnippets)) {
                         return true;
                     }
-                    return false;
+                    else return false;
                 });
 
         ExperimentResult experimentResult = new ExperimentResult();
@@ -565,54 +575,4 @@ public class ExperimentsController {
 */
         return true;
     }
-
-    @GetMapping("/experiment-launch/{experimentId}")
-    public String launch(@PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
-        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
-        if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#284.01 experiment wasn't found, experimentId: " + experimentId);
-            return "redirect:/launchpad/experiments";
-        }
-        if (experiment.isLaunched()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#284.02 experiment was already launched, experimentId: " + experimentId);
-            return "redirect:/launchpad/experiment-info/"+experimentId;
-        }
-
-        experiment.setLaunched(true);
-        experiment.setLaunchedOn(System.currentTimeMillis());
-        experiment.setExecState(Enums.FlowInstanceExecState.STARTED.code);
-        experimentRepository.save(experiment);
-
-        return "redirect:/launchpad/experiment-info/"+experimentId;
-    }
-
-    @GetMapping("/experiment-target-exec-state/{state}/{experimentId}")
-    public String stop(@PathVariable String state, @PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
-        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
-        if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#285.01 experiment wasn't found, experimentId: " + experimentId);
-            return "redirect:/launchpad/experiments";
-        }
-        if (experiment.getFlowInstanceId()==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#285.03 Flow instance wasn't assigned, experimentId: " + experimentId);
-            return "redirect:/launchpad/experiments";
-        }
-        if(!experiment.isLaunched()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#285.04 Experiment wasn't started yet, experimentId: " + experimentId);
-            return "redirect:/launchpad/experiment-info/"+experimentId;
-        }
-        Enums.FlowInstanceExecState execState = Enums.FlowInstanceExecState.valueOf(state.toUpperCase());
-
-        if ((execState== Enums.FlowInstanceExecState.STARTED && experiment.getExecState()== Enums.FlowInstanceExecState.STARTED.code) ||
-                (execState==Enums.FlowInstanceExecState.STOPPED && experiment.getExecState()== Enums.FlowInstanceExecState.STOPPED.code)) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#285.05 Experiment is already in target state: " + execState.toString());
-            return "redirect:/launchpad/experiment-info/"+experimentId;
-        }
-
-        experiment.setExecState(execState.code);
-        experimentRepository.save(experiment);
-
-        return "redirect:/launchpad/experiment-info/"+experimentId;
-    }
-
 }

@@ -63,16 +63,20 @@ public class BinaryDataService {
             BinaryData data = binaryDataRepository.findByCode(code);
             if (data==null) {
                 log.warn("Binary data for code {} wasn't found", code);
-                throw new BinaryDataNotFoundException("Binary data wasn't found, code: " + code);
+                throw new BinaryDataNotFoundException("#087.14 Binary data wasn't found, code: " + code);
             }
             FileUtils.copyInputStreamToFile(data.getData().getBinaryStream(), trgFile);
         } catch (BinaryDataNotFoundException e) {
             throw e;
         } catch (Exception e) {
-            String es = "Error while storing binary data";
+            String es = "#087.10 Error while storing binary data";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
+    }
+
+    public void deleteByFlowInstanceId(long flowInstanceId) {
+        binaryDataRepository.deleteByFlowInstanceId(flowInstanceId);
     }
 
     public void deleteAllByType(Enums.BinaryDataType binaryDataType) {
@@ -94,7 +98,10 @@ public class BinaryDataService {
 
     public BinaryData save(InputStream is, long size,
                            Enums.BinaryDataType binaryDataType, String code, String poolCode,
-                           boolean isManual, String filename) {
+                           boolean isManual, String filename, Long flowInstanceId) {
+        if (binaryDataType== Enums.BinaryDataType.SNIPPET && flowInstanceId!=null) {
+            throw new IllegalStateException("#087.01 Snippet can't be bound to flow instance");
+        }
         BinaryData data = binaryDataRepository.findByCode(code);
         if (data==null) {
             data = new BinaryData();
@@ -104,12 +111,13 @@ public class BinaryDataService {
             data.setPoolCode(poolCode);
             data.setManual(isManual);
             data.setFilename(filename);
+            data.setFlowInstanceId(flowInstanceId);
         }
         else {
             if (!poolCode.equals(data.getPoolCode())) {
                 // TODO what is this exception about?
                 throw new IllegalStateException(
-                        "Pool code is different, old: " + data.getPoolCode()+", new: "+ poolCode);
+                        "#087.04 Pool code is different, old: " + data.getPoolCode()+", new: "+ poolCode);
             }
         }
         data.setUploadTs(new Timestamp(System.currentTimeMillis()));

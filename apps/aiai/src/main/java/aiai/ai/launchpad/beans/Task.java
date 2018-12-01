@@ -62,10 +62,13 @@ public class Task implements Serializable {
     public int order;
 
     @Column(name = "FLOW_INSTANCE_ID")
-    public Long flowInstanceId;
+    public long flowInstanceId;
 
     @Column(name = "EXEC_STATE")
     public int execState;
+
+    @Column(name = "PROCESS_TYPE")
+    public int processType;
 
     @Column(name = "IS_RESULT_RECEIVED")
     public boolean resultReceived;

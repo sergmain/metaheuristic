@@ -77,7 +77,6 @@ public class TestFeatureWithAllError extends FeatureMethods {
         assertNotNull(feature);
         assertNotNull(sequences1.getSimpleTask());
         assertNotNull(sequences1.getSimpleTask());
-        assertTrue(feature.isInProgress);
 
         mills = System.currentTimeMillis();
         log.info("Start finishCurrentWithError()");

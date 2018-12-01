@@ -7,12 +7,14 @@ import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
 
 @Service
+@Slf4j
 public class ExperimentProcessService {
 
     private final ExperimentService experimentService;
@@ -44,9 +46,12 @@ public class ExperimentProcessService {
 
         List<String> features = collectedInputs.get(meta.getValue());
         experimentService.produceFeaturePermutations(e, features);
-        experimentService.produceTasks(flowInstance, process, e, collectedInputs);
+        boolean status = experimentService.produceTasks(flowInstance, process, e, collectedInputs);
+        if (!status) {
+            log.error("Tasks weren't produced successfully.");
+        }
 
-        result.status = Enums.FlowProducingStatus.OK;
+        result.status = status ? Enums.FlowProducingStatus.OK : Enums.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
         return result;
     }
 }

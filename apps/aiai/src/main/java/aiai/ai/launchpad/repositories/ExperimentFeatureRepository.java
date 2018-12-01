@@ -35,14 +35,7 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
     @Transactional(readOnly = true)
     List<ExperimentFeature> findByExperimentId(Long experimentId);
 
-    // continue process the same feature
-    @Transactional(readOnly = true)
-    List<ExperimentFeature> findAllByIsFinishedIsFalseAndIsInProgressIsTrue();
-
-    // continue process the same feature
-    @Transactional(readOnly = true)
-    ExperimentFeature findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue();
-
+/*
     @Transactional(readOnly = true)
     @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and f.isFinished=false and f.isInProgress=true and e.execState=:state")
     List<ExperimentFeature> findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue(Pageable limit, int state);
@@ -68,6 +61,7 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
     @Transactional(readOnly = true)
     @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and e.isLaunched=true and e.execState<>:state")
     List<ExperimentFeature> findAllForActiveExperiments(int state);
+*/
 
 
     @Transactional

@@ -4,9 +4,11 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
+import aiai.ai.launchpad.repositories.TaskExperimentFeatureRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.utils.ControllerUtils;
 import lombok.AllArgsConstructor;
@@ -62,17 +64,21 @@ public class FlowController {
     private final FlowService flowService;
     private final FlowRepository flowRepository;
     private final FlowInstanceRepository flowInstanceRepository;
+    private final TaskExperimentFeatureRepository taskExperimentFeatureRepository;
     private final TaskRepository taskRepository;
     private final ExperimentService experimentService;
+    private final BinaryDataService binaryDataService;
 
-    public FlowController(Globals globals, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, ExperimentService experimentService) {
+    public FlowController(Globals globals, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository, TaskExperimentFeatureRepository taskExperimentFeatureRepository, TaskRepository taskRepository, ExperimentService experimentService, BinaryDataService binaryDataService) {
         this.globals = globals;
         this.flowCache = flowCache;
         this.flowService = flowService;
         this.flowRepository = flowRepository1;
         this.flowInstanceRepository = flowInstanceRepository;
+        this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
         this.taskRepository = taskRepository;
         this.experimentService = experimentService;
+        this.binaryDataService = binaryDataService;
     }
 
     @GetMapping("/flows")
@@ -240,7 +246,7 @@ public class FlowController {
         FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, poolCode);
         if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
             result.items = flowRepository.findAll();
-            model.addAttribute("errorMessage", "#560.60 Error creating flowInstance: " + producingResult.flowProducingStatus);
+            model.addAttribute("errorMessage", "#560.72 Error creating flowInstance: " + producingResult.flowProducingStatus);
             return "launchpad/flow/flow-instance-add";
 
         }
@@ -271,17 +277,17 @@ public class FlowController {
             return "redirect:/launchpad/flow/flows";
         }
         if (flowInstanceId==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.80 flow wasn't found, flowId: " + flowId);
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.85 flow wasn't found, flowId: " + flowId);
             return "redirect:/launchpad/flow/flows";
         }
         final FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
         if (flowInstance == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.80 flow wasn't found, flowId: " + flowId);
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.87 flow wasn't found, flowId: " + flowId);
             return "redirect:/launchpad/flow/flows";
         }
         Flow flow = flowCache.findById(flowId);
         if (flow == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.83 flow wasn't found, flowId: " + flowId);
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.89 flow wasn't found, flowId: " + flowId);
             return "redirect:/launchpad/flow/flows";
         }
 
@@ -308,12 +314,14 @@ public class FlowController {
         FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
         if (fi==null) {
             redirectAttributes.addFlashAttribute("errorMessage",
-                    "#560.73 FlowInstance wasn't found, flowInstanceId: " + flowInstanceId );
+                    "#560.77 FlowInstance wasn't found, flowInstanceId: " + flowInstanceId );
             return "redirect:/launchpad/flow/flows";
         }
         experimentService.resetExperiment(fi);
         taskRepository.deleteByFlowInstanceId(flowInstanceId);
         flowInstanceRepository.deleteById(flowInstanceId);
+        taskExperimentFeatureRepository.deleteByFlowInstanceId(flowInstanceId);
+        binaryDataService.deleteByFlowInstanceId(flowInstanceId);
         List<FlowInstance> instances = flowInstanceRepository.findByFlowId(fi.flowId);
         if (instances.isEmpty()) {
             Flow flow = flowRepository.findById(fi.flowId).orElse(null);
@@ -329,7 +337,7 @@ public class FlowController {
         Enums.FlowInstanceExecState execState = Enums.FlowInstanceExecState.valueOf(state.toUpperCase());
         if (execState== Enums.FlowInstanceExecState.UNKNOWN) {
             redirectAttributes.addFlashAttribute("errorMessage",
-                    "#560.73 Unknown exec state, state: " + state);
+                    "#560.79 Unknown exec state, state: " + state);
             return "redirect:/launchpad/flow/flow-instances/" + flowId;
         }
         String redirectUrl = prepareModel(flowId, id, model, redirectAttributes);

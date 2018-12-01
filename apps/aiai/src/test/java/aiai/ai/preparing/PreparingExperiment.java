@@ -127,7 +127,7 @@ public abstract class PreparingExperiment {
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #1");
                 binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, fitSnippet.getSnippetCode(), fitSnippet.getSnippetCode(),
-                        false, null);
+                        false, null, null);
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
 
@@ -150,8 +150,8 @@ public abstract class PreparingExperiment {
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #2");
                 binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, predictSnippet.getSnippetCode(), predictSnippet.getSnippetCode(),
-                        false, null
-                );
+                        false, null,
+                        null);
                 log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
             }
 
@@ -171,9 +171,6 @@ public abstract class PreparingExperiment {
             experiment.setDescription("Test experiment. Must be deleted automatically.");
             experiment.setCode(TEST_EXPERIMENT_CODE_01);
             experiment.setSeed(42);
-            experiment.setExecState(Enums.FlowInstanceExecState.NONE.code);
-            experiment.setLaunched(false);
-            experiment.setLaunchedOn(null);
             experiment.setAllTaskProduced(false);
 
             // set hyper params for experiment

@@ -53,9 +53,14 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     void deleteByCodeAndDataType(String code, int dataType);
 
     @Transactional
+    void deleteByFlowInstanceId(long flowInstanceId);
+
+    @Transactional
     void deleteByPoolCodeAndDataType(String poolCode, int dataType);
 
     @Query(value="select new aiai.ai.launchpad.resource.SimpleResource(" +
             "b.id, b.version, b.code, b.poolCode, b.dataType, b.uploadTs, b.checksum, b.valid, b.manual, b.filename ) " +
             "from BinaryData b")
-    Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);}
+    Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);
+
+}

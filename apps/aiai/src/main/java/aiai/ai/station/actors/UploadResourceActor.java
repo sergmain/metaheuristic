@@ -97,7 +97,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 HttpEntity entity = MultipartEntityBuilder.create()
                         .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                         .setCharset(StandardCharsets.UTF_8)
-                        .addBinaryBody("file", is, ContentType.MULTIPART_FORM_DATA, task.file.getName())
+                        .addBinaryBody("file", is, ContentType.DEFAULT_BINARY, task.file.getName())
                         .build();
 
                 Request request = Request.Post(uri)
@@ -123,7 +123,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             } catch (HttpResponseException e) {
                 log.error("Error uploading code", e);
             } catch (SocketTimeoutException e) {
-                log.error("SocketTimeoutException", e.toString());
+                log.error("SocketTimeoutException, {}", e.toString());
             }
             catch (IOException e) {
                 log.error("IOException", e);

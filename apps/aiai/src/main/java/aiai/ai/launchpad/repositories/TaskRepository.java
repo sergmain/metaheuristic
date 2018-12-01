@@ -18,6 +18,7 @@
 
 package aiai.ai.launchpad.repositories;
 
+import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import org.springframework.context.annotation.Profile;
@@ -54,23 +55,32 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
             "t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
     List<Task> findForCompletion(long flowInstanceId, int taskOrder);
 
+//    @Query("select new com.htrucker.mongodb.TotalProcessedRecords( a.datasetId, a.numberOfCopies, count(a)) from Record a group by a.datasetId, a.numberOfCopies ")
+    @Query("SELECT count(t) FROM Task t where t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
+    Long countWithConcreteOrder(long flowInstanceId, int taskOrder);
+
     @Query("SELECT t FROM Task t where t.stationId=:stationId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - result_resource_scheduled_on > 15000) ")
     List<Task> findForMissingResultResources(long stationId, long mills, int execState);
 
 
 
-/*
     @Transactional(readOnly = true)
+    @Query("SELECT t FROM Task t, TaskExperimentFeature tef " +
+            "where t.id=tef.taskId and tef.featureId=:featureId and " +
+            " t.execState > 1")
     Slice<Task> findByIsCompletedIsTrueAndFeatureId(Pageable pageable, long featureId);
-*/
+
+    @Transactional(readOnly = true)
+    // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS
+    @Query("SELECT t FROM Task t, TaskExperimentFeature tef " +
+            "where t.id=tef.taskId and tef.featureId=:featureId and " +
+            " t.execState > 1")
+    List<Task> findByIsCompletedIsTrueAndFeatureId(long featureId);
 
 /*
 
     List<Task> findByExperimentId(long experimentId);
-
-    @Transactional(readOnly = true)
-    List<Task> findByIsCompletedIsTrueAndFeatureId(long featureId);
 
     @Transactional(readOnly = true)
     List<Task> findByExperimentIdAndFeatureId(long experiimentId, long featureId);

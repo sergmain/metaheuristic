@@ -23,11 +23,7 @@ import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
-import aiai.ai.launchpad.repositories.ExperimentFeatureRepository;
-import aiai.ai.launchpad.repositories.ExperimentRepository;
-import aiai.ai.launchpad.repositories.FlowInstanceRepository;
-import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.launchpad.server.UploadResult;
+import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
@@ -49,8 +45,10 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.omg.CORBA.IntHolder;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.*;
-import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
@@ -135,6 +133,7 @@ public class ExperimentService {
     private final Globals globals;
     private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
+    private final TaskExperimentFeatureRepository taskExperimentFeatureRepository;
     private final TaskPersistencer taskPersistencer;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final SnippetCache snippetCache;
@@ -142,10 +141,11 @@ public class ExperimentService {
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
 
-    public ExperimentService(Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1) {
+    public ExperimentService(Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, TaskExperimentFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1) {
         this.globals = globals;
         this.experimentCache = experimentCache;
         this.taskRepository = taskRepository;
+        this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
         this.taskPersistencer = taskPersistencer;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.snippetCache = snippetCache;
@@ -176,32 +176,6 @@ public class ExperimentService {
         return true;
     }
 
-    private void checkForFinished() {
-        List<ExperimentFeature> features = experimentFeatureRepository.findAllForActiveExperiments(Enums.FlowInstanceExecState.FINISHED.code);
-        Set<Long> ids = new HashSet<>();
-        // ugly but ok for first version
-        for (ExperimentFeature feature : features) {
-            ids.add(feature.getExperimentId());
-        }
-        for (long id : ids) {
-            boolean isFinished = true;
-            for (ExperimentFeature feature : features) {
-                if (id==feature.getExperimentId() && !feature.isFinished) {
-                    isFinished = false;
-                    break;
-                }
-            }
-            if (isFinished) {
-                Experiment experiment = experimentCache.findById(id);
-                if (experiment==null) {
-                    continue;
-                }
-                experiment.setExecState(Enums.FlowInstanceExecState.FINISHED.code);
-                experiment = experimentCache.save(experiment);
-            }
-        }
-    }
-
     public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
         final long stationId = Long.parseLong(stationIdAsStr);
         List<Task> tasks = taskRepository.findByStationIdAndIsCompletedIsFalse(stationId);
@@ -227,9 +201,7 @@ public class ExperimentService {
             return Page.empty();
         } else {
             if (isEmpty(params)) {
-                if (true) throw new IllegalStateException("Not implemented yet");
-                return null;
-//                return taskRepository.findByIsCompletedIsTrueAndFeatureId(pageable, feature.getId());
+                return taskRepository.findByIsCompletedIsTrueAndFeatureId(pageable, feature.getId());
             } else {
                 List<Task> selected = findTaskWithFilter(experiment, feature.getId(), params);
                 List<Task> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
@@ -382,8 +354,8 @@ public class ExperimentService {
 
     public Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
         ExperimentsController.TasksResult result = new ExperimentsController.TasksResult();
-        if (true) throw new IllegalStateException("Not implemented yet");
-//        result.items = taskRepository.findByIsCompletedIsTrueAndFeatureId(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
+
+        result.items = taskRepository.findByIsCompletedIsTrueAndFeatureId(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
 
         HyperParamResult hyperParamResult = new HyperParamResult();
         for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
@@ -401,9 +373,7 @@ public class ExperimentService {
         MetricsResult metricsResult = new MetricsResult();
         List<Map<String, BigDecimal>> values = new ArrayList<>();
 
-        if (true) throw new IllegalStateException("Not implemented yet");
-        List<Task> tasks = null;
-//        List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndFeatureId(experimentFeature.getId());
+        List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndFeatureId(experimentFeature.getId());
         for (Task seq : tasks) {
             MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.metrics) );
             if (metricValues==null) {
@@ -472,10 +442,7 @@ public class ExperimentService {
         experimentFeatureRepository.deleteByExperimentId(e.getId());
 
         e.setFlowInstanceId(null);
-        e.setExecState( Enums.FlowInstanceExecState.NONE.code);
         e.setAllTaskProduced(false);
-        e.setLaunchedOn(null);
-        e.setEpochVariant(0);
         e.setFeatureProduced(false);
         e.setAllTaskProduced(false);
         e.setNumberOfTask(0);
@@ -483,20 +450,21 @@ public class ExperimentService {
 
         // let's check
         e =  experimentRepository.findById(e.getId()).orElse(null);
-        if (e==null || e.getExecState()!=Enums.FlowInstanceExecState.NONE.code ||
-                e.getFlowInstanceId()!=null
-        ) {
-            throw new IllegalStateException("Cache wasn't updated.");
+        if (e==null || e.getFlowInstanceId()!=null ) {
+            throw new IllegalStateException("Repository wasn't updated.");
         }
         e =  experimentCache.findById(e.getId());
-        if (e==null || e.getExecState()!=Enums.FlowInstanceExecState.NONE.code ||
-                e.getFlowInstanceId()!=null
-        ) {
-                throw new IllegalStateException("Cache wasn't updated.");
+        if (e==null ||  e.getFlowInstanceId()!=null) {
+            throw new IllegalStateException("Cache wasn't updated.");
         }
     }
 
     public boolean produceTasks(FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs) {
+        if (process.type!= Enums.ProcessType.EXPERIMENT) {
+            throw new IllegalStateException("Wrong type of process, " +
+                    "expected: "+ Enums.ProcessType.EXPERIMENT+", " +
+                    "actual: " + process.type);
+        }
         int totalVariants = 0;
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
@@ -528,7 +496,6 @@ public class ExperimentService {
             // there is 2 because we have 2 types of snippets - fit and predict
             totalVariants += allHyperParams.size() * 2;
 
-//            final ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(feature.getResourceCodes());
             Map<String, Snippet> localCache = new HashMap<>();
             boolean isNew = false;
             for (HyperParams hyperParams : allHyperParams) {
@@ -544,7 +511,14 @@ public class ExperimentService {
                     task.setParams("");
                     task.setFlowInstanceId(flowInstance.getId());
                     task.setOrder(process.order + (orderAdd++));
+                    task.setProcessType(process.type.value);
                     taskRepository.save(task);
+
+                    TaskExperimentFeature tef = new TaskExperimentFeature();
+                    tef.setFlowInstanceId(flowInstance.getId());
+                    tef.setTaskId(task.getId());
+                    tef.setFeatureId(feature.getId());
+                    taskExperimentFeatureRepository.save(tef);
 
                     TaskParamYaml yaml = new TaskParamYaml();
                     yaml.setHyperParams( hyperParams.toSortedMap() );
@@ -577,13 +551,14 @@ public class ExperimentService {
                         continue;
                     }
                     if ("fit".equals(snippet.getType())) {
-                        yaml.outputResourceCode = task.getId()+"-"+Consts.ML_MODEL_BIN;
+                        yaml.outputResourceCode = getModelFilename(task);
                     }
                     else if ("predict".equals(snippet.getType())){
                         if (prevTask==null) {
                             throw new IllegalStateException("prevTask is null");
                         }
-                        yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(prevTask.getId()+"-"+Consts.ML_MODEL_BIN);
+                        yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(getModelFilename(prevTask));
+                        yaml.outputResourceCode = "task-"+task.getId()+"-output-stub-for-predict";
                     }
                     else {
                         throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
@@ -612,6 +587,7 @@ public class ExperimentService {
                     isNew = true;
                 }
             }
+/*
             if (isNew) {
                 boolean isOk = false;
                 for (int i = 0; i <3; i++) {
@@ -621,7 +597,6 @@ public class ExperimentService {
                             log.error("Unexpected behaviour, feature with id {} wasn't found", feature.getId());
                             break;
                         }
-                        f.setFinished(false);
                         experimentFeatureRepository.save(f);
                         isOk = true;
                         break;
@@ -634,6 +609,7 @@ public class ExperimentService {
                     log.warn("The new tasks were produced but feature wasn't changed");
                 }
             }
+*/
         }
         if (experiment.getNumberOfTask() != totalVariants && experiment.getNumberOfTask() != 0) {
             log.warn("! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", experiment.getNumberOfTask(), totalVariants);
@@ -647,6 +623,10 @@ public class ExperimentService {
         experimentTemp.setAllTaskProduced(true);
         experimentTemp = experimentCache.save(experimentTemp);
         return true;
+    }
+
+    private String getModelFilename(Task task) {
+        return "task-"+task.getId()+"-"+ Consts.ML_MODEL_BIN;
     }
 
     public void produceFeaturePermutations(final Experiment experiment, List<String> inputResourceCodes) {

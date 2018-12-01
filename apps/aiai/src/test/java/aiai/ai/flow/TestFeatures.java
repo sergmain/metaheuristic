@@ -107,9 +107,6 @@ public class TestFeatures extends PreparingFlow {
 
         assertNotNull(features);
         assertEquals(777, features.size());
-        for (ExperimentFeature feature : features) {
-            assertFalse(feature.isFinished);
-        }
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.produceTasks()");

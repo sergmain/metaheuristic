@@ -66,7 +66,7 @@ public class SnippetService {
     }
 
     @PostConstruct
-    public void init() throws IOException {
+    public void init() {
     }
 
     public List<ExperimentSnippet> getTaskSnippetsForExperiment(Long experimentId) {
@@ -117,56 +117,6 @@ public class SnippetService {
         }
         return false;
     }
-
-
-/*
-    private void persistSnippets() throws IOException {
-        File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
-        if (!snippetDir.exists()) {
-            snippetDir.mkdirs();
-        }
-
-        Iterable<Snippet> snippets = snippetRepository.findAll();
-        for (Snippet snippet : snippets) {
-            persistConcreteSnippet(snippetDir, snippet);
-        }
-        //noinspection unused
-        int i=0;
-    }
-*/
-
-/*
-    public File persistSnippet(String snippetCode) throws IOException {
-        File snippetDir = new File(globals.launchpadDir, Consts.SNIPPET_DIR);
-        if (!snippetDir.exists()) {
-            snippetDir.mkdirs();
-        }
-        SnippetVersion sv = SnippetVersion.from(snippetCode);
-        Snippet snippet = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
-        //noinspection UnnecessaryLocalVariable
-        File file = persistConcreteSnippet(snippetDir, snippet);
-        return file;
-    }
-*/
-
-/*
-    private File persistConcreteSnippet(File snippetDir, Snippet snippet) {
-        SnippetUtils.SnippetFile snippetFile = SnippetUtils.getSnippetFile(snippetDir, snippet.getSnippetCode(), snippet.filename);
-        if (snippetFile.file==null) {
-            log.error("Error while persisting a snippet {}", snippet.getSnippetCode());
-            return null;
-        }
-        if (!snippetFile.file.exists() || snippetFile.file.length()!=snippet.length) {
-            log.warn("Snippet {} has the different length. On disk - {}, in db - {}. Snippet will be re-created.",snippet.getSnippetCode(), snippetFile.file.length(), snippet.length);
-            Snippet s = snippetCache.findById(snippet.getId());
-            if (s==null) {
-                throw new IllegalStateException("Can't find a snippet for Id " + snippet.getId()+", but base snippet is there");
-            }
-            binaryDataService.storeToFile(snippet.getId(), Enums.BinaryDataType.SNIPPET, snippetFile.file);
-        }
-        return snippetFile.file;
-    }
-*/
 
     public interface SnippetFilter {
         boolean filter(Snippet snippet);
@@ -293,7 +243,7 @@ public class SnippetService {
         if (file != null) {
             try (InputStream inputStream = new FileInputStream(file)) {
                 String snippetCode = snippet.getSnippetCode();
-                binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null);
+                binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null, null);
             }
         }
     }

@@ -300,6 +300,15 @@ public class FlowService {
     private void markOrderAsCompleted(FlowInstance flowInstance) {
         List<Task> forCompletion = taskRepository.findForCompletion(flowInstance.getId(), flowInstance.getProducingOrder() + 1);
         if (forCompletion.isEmpty()) {
+            Long count = taskRepository.countWithConcreteOrder(flowInstance.getId(), flowInstance.getProducingOrder() + 1);
+            if (count==null) {
+                throw new IllegalStateException("count of records is null");
+            }
+            if (count==0) {
+                flowInstance.setCompletedOn(System.currentTimeMillis());
+                flowInstance.setExecState(Enums.FlowInstanceExecState.FINISHED.code);
+                flowInstanceRepository.save(flowInstance);
+            }
             return;
         }
         for (Task task : forCompletion) {

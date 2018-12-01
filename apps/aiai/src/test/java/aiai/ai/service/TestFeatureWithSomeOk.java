@@ -57,7 +57,6 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         assertNotNull(feature);
         assertNotNull(sequences1.getSimpleTask());
         assertNotNull(sequences1.getSimpleTask());
-        assertTrue(feature.isInProgress);
 
         finishCurrentWithOk(2);
 

@@ -90,8 +90,6 @@ public abstract class FeatureMethods extends PreparingExperiment {
 
         ExperimentFeature feature = experimentFeatureRepository.findById(sequences1Feature.getId()).orElse(null);
         assertNotNull(feature);
-        assertTrue(feature.isFinished);
-        assertFalse(feature.isInProgress);
         assertEquals(FeatureExecStatus.error.code, feature.execStatus);
     }
 

@@ -37,9 +37,6 @@ public class ExperimentProcessValidator implements ProcessValidator {
         if (e==null) {
             return Enums.FlowValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
         }
-        if (e.getExecState()!=Enums.FlowInstanceExecState.NONE.code) {
-            return Enums.FlowValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;
-        }
         if (e.getFlowInstanceId()!=null) {
             return Enums.FlowValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;
         }

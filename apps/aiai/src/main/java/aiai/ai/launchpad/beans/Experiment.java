@@ -79,17 +79,8 @@ public class Experiment implements Serializable {
     @Column(name = "IS_FEATURE_PRODUCED")
     private boolean isFeatureProduced;
 
-    @Column(name = "EXEC_STATE")
-    private int execState;
-
-    @Column(name = "IS_LAUNCHED")
-    private boolean isLaunched;
-
     @Column(name="CREATED_ON")
     private long createdOn;
-
-    @Column(name="LAUNCHED_ON")
-    private Long launchedOn;
 
     @Column(name = "NUMBER_OF_TASK")
     private int numberOfTask;

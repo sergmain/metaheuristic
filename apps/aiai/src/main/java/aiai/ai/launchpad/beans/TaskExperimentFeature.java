@@ -18,50 +18,31 @@
 package aiai.ai.launchpad.beans;
 
 import lombok.Data;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_LP_EXPERIMENT_FEATURE")
+@Table(name = "AIAI_LP_TASK_FEATURE")
 @Data
-public class ExperimentFeature implements Serializable {
-    private static final long serialVersionUID = -7943373261306370650L;
+@ToString
+public class TaskExperimentFeature implements Serializable {
+    private static final long serialVersionUID = -1718037694710794187L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    private Long id;
 
     @Version
-    public Integer version;
+    private Integer version;
 
-    @Column(name = "RESOURCE_CODES")
-    public String resourceCodes;
+    @Column(name = "FLOW_INSTANCE_ID")
+    public Long flowInstanceId;
 
-    @Column(name = "CHECKSUM_ID_CODES")
-    public String checksumIdCodes;
+    @Column(name = "TASK_ID")
+    public Long taskId;
 
-    @Column(name = "EXEC_STATUS")
-    public int execStatus;
-
-    @Column(name = "EXPERIMENT_ID")
-    public Long experimentId;
-
-    public String execStatusAsString() {
-        switch(execStatus) {
-            case 0:
-                return "Unknown";
-            case 1:
-                return "Ok";
-            case 2:
-                return "All are errors";
-            case 3:
-                return "No sequenses";
-            default:
-                return "Status is wrong";
-        }
-    }
-
-
-
+    @Column(name = "FEATURE_ID")
+    public Long featureId;
 }

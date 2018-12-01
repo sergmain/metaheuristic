@@ -72,6 +72,11 @@ public class FileProcessService {
             Flow flow, FlowInstance flowInstance, Process process,
             String outputResourceCode,
             String snippetCode, Map<String, List<String>> collectedInputs) {
+        if (process.type!= Enums.ProcessType.FILE_PROCESSING) {
+            throw new IllegalStateException("Wrong type of process, " +
+                    "expected: "+ Enums.ProcessType.FILE_PROCESSING+", " +
+                    "actual: " + process.type);
+        }
         SnippetVersion sv = SnippetVersion.from(snippetCode);
 
         TaskParamYaml yaml = new TaskParamYaml();
@@ -103,6 +108,7 @@ public class FileProcessService {
         task.setFlowInstanceId(flowInstance.getId());
         task.setOrder(process.order);
         task.setParams(taskParams);
+        task.setProcessType(process.type.value);
         taskRepository.save(task);
     }
 

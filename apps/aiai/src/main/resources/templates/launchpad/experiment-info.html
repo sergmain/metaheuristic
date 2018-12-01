@@ -8,7 +8,7 @@
     <h1 class="widget-header">The experiment info</h1>
 
     <!--/*@thymesVar id="infoMessages" type="java.util.List"*/-->
-    <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController$ExperimentResult"*/-->
+    <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController$Experi2mentResult"*/-->
     <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
     <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
 
@@ -20,23 +20,14 @@
     <table class="pure-table pure-table-bordered" >
         <thead>
         <tr>
-            <th width="150">Is launched</th>
-            <th width="150">Exec state</th>
-            <th>&nbsp;</th>
+            <th width="150">Flow instance Exec state</th>
         </tr>
         </thead>
         <tbody>
         <tr>
-            <td th:text="${experiment.launched and experimentResult.dataset!=null ? 'Experiment is launched' : 'Experiment isn''t launched'}"></td>
-            <td th:text="${experiment.execState}">exec state</td>
-            <td>
-                <a th:if="${experimentResult.isCanBeLaunched}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-launch/' + experiment.id}">Launch</a>
-                <a th:if="${experiment.launched and experiment.execState==1}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-target-exec-state/stopped/' + experiment.id}">Stop</a>
-                <a th:if="${experiment.launched and experiment.execState==2}" class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-target-exec-state/started/' + experiment.id}">Start</a>
-            </td>
+            <td th:text="${experimentResult.flowInstanceExecState}">exec state</td>
         </tr>
     </table>
-
 
     <p>&nbsp;</p>
 
@@ -118,15 +109,13 @@
 
         <p>&nbsp;</p>
 
-    <div th:if="${experiment.launched}" th:remove="tag">
+    <div th:remove="tag">
         <h1 class="widget-header">Features</h1>
         <table class="pure-table pure-table-bordered" id="table-feature" th:fragment="table-feature">
             <thead>
             <tr>
                 <th width="50">Id</th>
                 <th width="400">Set of features</th>
-                <th width="100">Is in progress?</th>
-                <th width="100">Is finished?</th>
                 <th width="100">Exec status</th>
                 <th width="100"></th>
             </tr>
@@ -136,10 +125,8 @@
             <tr th:each="f : ${experimentResult.features}" >
                 <td th:text="${f.id}">Feature Id</td>
                 <td th:text="${f.resourceCodes}">Ids</td>
-                <td th:text="${f.inProgress}">Is InProgress?</td>
-                <td th:text="${f.finished}">Is finished?</td>
                 <td th:text="${f.execStatusAsString()}">Exec status</td>
-                <td><a th:if="${f.isFinished or f.isInProgress}" class="pure-button table-nav-button-fill pure-button-primary"
+                <td><a class="pure-button table-nav-button-fill pure-button-primary"
                        th:href="${'/launchpad/experiment-feature-progress/'+ experiment.id + '/' + f.id}">Info</a></td>
             </tr>
             </tbody>
