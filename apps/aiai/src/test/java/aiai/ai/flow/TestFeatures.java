@@ -115,7 +115,7 @@ public class TestFeatures extends PreparingFlow {
         Process process = new Process();
         process.order=1;
         process.inputType="input-type";
-        experimentService.produceTasks(flowInstance, process, experiment, new HashMap<>());
+        experimentService.produceTasks(flow, flowInstance, process, experiment, new HashMap<>());
         log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
         // some global final check

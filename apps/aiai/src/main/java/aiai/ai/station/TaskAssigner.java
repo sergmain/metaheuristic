@@ -69,7 +69,7 @@ public class TaskAssigner {
                 continue;
             }
             if (Enums.FlowInstanceExecState.DOESNT_EXIST==currentExecState.getState(task.flowInstanceId)) {
-                stationTaskService.delete(task);
+                stationTaskService.delete(task.taskId);
                 log.info("Deleted orphan task {}", task);
                 continue;
             }

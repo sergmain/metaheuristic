@@ -245,6 +245,7 @@ public class FlowService {
         result.flowInstance = fi;
 
         result.flowYaml = flowYamlUtils.toFlowYaml(flow.getParams());
+        flow.clean = result.flowYaml.clean;
         int idx = 0;
         result.flowProducingStatus = Enums.FlowProducingStatus.OK;
         for (Process process : result.flowYaml.getProcesses()) {

@@ -464,7 +464,7 @@ public class ExperimentService {
         }
     }
 
-    public boolean produceTasks(FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs) {
+    public boolean produceTasks(Flow flow, FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs) {
         if (process.type!= Enums.ProcessType.EXPERIMENT) {
             throw new IllegalStateException("Wrong type of process, " +
                     "expected: "+ Enums.ProcessType.EXPERIMENT+", " +
@@ -583,6 +583,7 @@ public class ExperimentService {
                         snippet.fileProvided,
                         snippet.params
                     );
+                    yaml.clean = flow.clean;
 
                     String currTaskParams = taskParamYamlUtils.toString(yaml);
 

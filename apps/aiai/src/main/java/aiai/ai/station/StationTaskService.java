@@ -29,6 +29,8 @@ import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.station.StationTaskUtils;
+import aiai.ai.yaml.task.TaskParamYaml;
+import aiai.ai.yaml.task.TaskParamYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -51,12 +53,14 @@ public class StationTaskService {
 
     private final Globals globals;
     private final CurrentExecState currentExecState;
+    private final TaskParamYamlUtils taskParamYamlUtils;
 
     private final Map<Long, StationTask> map = new ConcurrentHashMap<>();
 
-    public StationTaskService(Globals globals, CurrentExecState currentExecState) {
+    public StationTaskService(Globals globals, CurrentExecState currentExecState, TaskParamYamlUtils taskParamYamlUtils) {
         this.currentExecState = currentExecState;
         this.globals = globals;
+        this.taskParamYamlUtils = taskParamYamlUtils;
     }
 
     @PostConstruct
@@ -285,6 +289,8 @@ public class StationTaskService {
             task.createdOn = System.currentTimeMillis();
             task.params = params;
             task.finishedOn = null;
+            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
+            task.clean = taskParamYaml.clean;
 
             String path = getTaskPath(taskId);
             File systemDir = new File(globals.stationTaskDir, path);

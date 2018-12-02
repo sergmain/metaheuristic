@@ -46,7 +46,7 @@ public class ExperimentProcessService {
 
         List<String> features = collectedInputs.get(meta.getValue());
         experimentService.produceFeaturePermutations(e, features);
-        boolean status = experimentService.produceTasks(flowInstance, process, e, collectedInputs);
+        boolean status = experimentService.produceTasks(flow, flowInstance, process, e, collectedInputs);
         if (!status) {
             log.error("Tasks weren't produced successfully.");
         }

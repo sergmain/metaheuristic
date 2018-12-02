@@ -53,4 +53,7 @@ public class Flow implements Serializable {
     @Column(name = "IS_VALID")
     public boolean valid;
 
+    @Transient
+    public boolean clean;
+
 }

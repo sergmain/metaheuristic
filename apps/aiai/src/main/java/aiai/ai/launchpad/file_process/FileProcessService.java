@@ -101,6 +101,7 @@ public class FileProcessService {
                 snippet.fileProvided,
                 snippet.params
         );
+        yaml.clean = flow.clean;
 
         String taskParams = taskParamYamlUtils.toString(yaml);
 
