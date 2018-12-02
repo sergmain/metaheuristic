@@ -29,6 +29,6 @@ public class TaskParamYaml {
     public SimpleSnippet snippet;
     public Map<String, String> hyperParams;
     public String outputResourceCode;
-
     public String workingPath;
+    public boolean clean = false;
 }

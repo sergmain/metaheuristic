@@ -9,4 +9,5 @@ import java.util.List;
 @Data
 public class FlowYaml {
     public List<Process> processes = new ArrayList<>();
+    public boolean clean = false;
 }

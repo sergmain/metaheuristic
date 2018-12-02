@@ -19,6 +19,7 @@ package aiai.ai.station.actors;
 
 import aiai.ai.Globals;
 import aiai.ai.launchpad.server.UploadResult;
+import aiai.ai.station.StationTaskService;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.UploadResourceTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -55,10 +56,12 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
     }
 
     private final Globals globals;
+    private final StationTaskService stationTaskService;
 
-    public UploadResourceActor(HttpClientExecutor executor, Globals globals) {
+    public UploadResourceActor(HttpClientExecutor executor, Globals globals, StationTaskService stationTaskService) {
         this.executor = executor;
         this.globals = globals;
+        this.stationTaskService = stationTaskService;
     }
 
     @PostConstruct
@@ -134,6 +137,9 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             if (!isOk) {
                 log.error("'\tTask assigned one more time.");
                 repeat.add(task);
+            }
+            else {
+                stationTaskService.setResourceUploaded(task.taskId);
             }
 
         }
