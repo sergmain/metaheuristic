@@ -165,7 +165,7 @@ public class ExperimentsController {
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
 
         //noinspection UnnecessaryLocalVariable
-        ExperimentService.PlotData data = experimentService.findExperimentSequenceForPlot(experiment, feature, params, paramsAxis);
+        ExperimentService.PlotData data = experimentService.findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
         return data;
     }
 

@@ -513,8 +513,9 @@
                                 </table>
                             </td>
                             <td>
+                                <!--th:if="${e.list.size()>1}"-->
                                 <a class='pure-button' href="#" th:id="${'button-axis-'+g.index}"
-                                   th:if="${e.list.size()>1}"
+
                                    th:data-id="${'button-axis-'+g.index}"
                                    th:data-key="${e.key}"
                                    onclick="switchButtonAxis(this.getAttribute('data-id'), this.getAttribute('data-key'));"

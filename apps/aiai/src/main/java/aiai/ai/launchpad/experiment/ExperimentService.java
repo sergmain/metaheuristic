@@ -223,15 +223,13 @@ public class ExperimentService {
         }
     }
 
-    PlotData findExperimentSequenceForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
+    PlotData findExperimentTaskForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
         if (experiment == null || feature == null) {
             return EMPTY_PLOT_DATA;
         } else {
             List<Task> selected;
             if (isEmpty(params)) {
-                if (true) throw new IllegalStateException("Not implemented yet");
-                selected = null;
-//                selected = taskRepository.findByIsCompletedIsTrueAndFeatureId(feature.getId());
+                selected = taskRepository.findByIsCompletedIsTrueAndFeatureId(feature.getId());
             } else {
                 selected = findTaskWithFilter(experiment, feature.getId(), params);
             }
