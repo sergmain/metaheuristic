@@ -42,7 +42,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
+@SuppressWarnings({"UnnecessaryLocalVariable", "WeakerAccess"})
 @Service
 @Slf4j
 public class StationTaskService {
@@ -101,70 +103,107 @@ public class StationTaskService {
         int i=0;
     }
 
-    private void putInMap(StationTask task) {
-        map.put(task.taskId, task);
-    }
-
-    private void deleteFromMap(StationTask task) {
-        map.remove(task.taskId);
-    }
-
-    List<StationTask> getForReporting() {
-        List<StationTask> list = findAllByFinishedOnIsNotNull();
-        List<StationTask> result = new ArrayList<>();
-        for (StationTask stationTask : list) {
-            if (!stationTask.isReported() ||
-                    (!stationTask.isDelivered() &&
-                            (stationTask.getReportedOn()==null || (System.currentTimeMillis() - stationTask.getReportedOn())>60_000)) ) {
-                result.add(stationTask);
+    public void setReportedOn(long taskId) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            log.info("setReportedOn({})", taskId);
+            StationTask task = findById(taskId);
+            if (task == null) {
+                log.error("StationRestTask wasn't found for Id " + taskId);
+                return;
             }
-        }
-        return result;
-    }
-
-    void markAsFinishedIfAllOk(Long taskId, ExecProcessService.Result result) {
-//    void markAsFinishedIfAllOk(Long taskId, boolean isOk, int exitCode, String console) {
-        log.info("markAsFinished({})", taskId);
-        StationTask task = findById(taskId);
-        if (task == null) {
-            log.error("StationRestTask wasn't found for Id " + taskId);
-        } else {
-            task.setFinishedOn(System.currentTimeMillis());
-            task.setDelivered(false);
-            task.setReported(false);
-
-            SnippetExec snippetExec = new SnippetExec();
-//            snippetExec.setExec(new ExecProcessService.Result(isOk, exitCode, console));
-            snippetExec.setExec(result);
-
-            task.setSnippetExecResult(SnippetExecUtils.toString(snippetExec));
+            task.setReported(true);
+            task.setReportedOn(System.currentTimeMillis());
             save(task);
         }
     }
 
-    void finishAndWriteToLog(StationTask seq, String es) {
-        log.warn(es);
-        seq.setLaunchedOn(System.currentTimeMillis());
-        seq.setFinishedOn(System.currentTimeMillis());
-        seq.setSnippetExecResult(es);
-        save(seq);
-    }
-
-    void saveReported(List<StationTask> list) {
-        saveAll(list);
-    }
-
-    boolean isNeedNewExperimentSequence(String stationId) {
-        if (stationId==null) {
-            return false;
+    public void setDelivered(Long taskId) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            log.info("setDelivered({})", taskId);
+            StationTask task = findById(taskId);
+            if (task == null) {
+                log.error("StationTask wasn't found for Id {}", taskId);
+                return;
+            }
+            task.setDelivered(true);
+            save(task);
         }
-        List<StationTask> tasks = findAllByFinishedOnIsNull();
-        for (StationTask task : tasks) {
-            if (currentExecState.isStarted(task.flowInstanceId)) {
-                return false;
+    }
+
+    public void setResourceUploaded(Long taskId) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            log.info("setResourceUploaded({})", taskId);
+            StationTask task = findById(taskId);
+            if (task == null) {
+                log.error("StationTask wasn't found for Id {}", taskId);
+                return;
+            }
+            task.setResourceUploaded(true);
+            save(task);
+        }
+    }
+
+    public List<StationTask> getForReporting() {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            List<StationTask> list = findAllByFinishedOnIsNotNull();
+            List<StationTask> result = list
+                    .stream()
+                    .filter(stationTask -> !stationTask.isReported() ||
+                            (!stationTask.isDelivered() &&
+                                    (stationTask.getReportedOn() == null || (System.currentTimeMillis() - stationTask.getReportedOn()) > 60_000)))
+                    .collect(Collectors.toList());
+            return result;
+        }
+    }
+
+    void markAsFinishedIfAllOk(Long taskId, ExecProcessService.Result result) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            log.info("markAsFinished({})", taskId);
+            StationTask task = findById(taskId);
+            if (task == null) {
+                log.error("StationRestTask wasn't found for Id " + taskId);
+            } else {
+                task.setFinishedOn(System.currentTimeMillis());
+                task.setDelivered(false);
+                task.setReported(false);
+
+                SnippetExec snippetExec = new SnippetExec();
+                snippetExec.setExec(result);
+
+                task.setSnippetExecResult(SnippetExecUtils.toString(snippetExec));
+                save(task);
             }
         }
-        return true;
+    }
+
+    public void finishAndWriteToLog(long taskId, String es) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            StationTask task = findById(taskId);
+            if (task == null) {
+                log.error("StationTask wasn't found for Id {}", taskId);
+                return;
+            }
+            log.warn(es);
+            task.setLaunchedOn(System.currentTimeMillis());
+            task.setFinishedOn(System.currentTimeMillis());
+            task.setSnippetExecResult(es);
+            save(task);
+        }
+    }
+
+    boolean isNeedNewTask(String stationId) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            if (stationId == null) {
+                return false;
+            }
+            List<StationTask> tasks = findAllByFinishedOnIsNull();
+            for (StationTask task : tasks) {
+                if (currentExecState.isStarted(task.flowInstanceId)) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
     void storeExecResult(Long taskId, long startedOn, SimpleSnippet snippet, ExecProcessService.Result result, File artifactDir) {
@@ -206,23 +245,16 @@ public class StationTaskService {
         }
     }
 
-    List<StationTask> findAllByFinishedOnIsNull() {
-        List<StationTask> list = new ArrayList<>();
-        for (StationTask task : map.values()) {
-            if (task.finishedOn==null) {
-                list.add(task);
+    public List<StationTask> findAllByFinishedOnIsNull() {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            List<StationTask> list = new ArrayList<>();
+            for (StationTask task : map.values()) {
+                if (task.finishedOn == null) {
+                    list.add(task);
+                }
             }
+            return list;
         }
-        return list;
-    }
-
-    StationTask findByTaskId(Long id) {
-        for (StationTask task : map.values()) {
-            if (task.getTaskId()==id) {
-                return task;
-            }
-        }
-        return null;
     }
 
     private List<StationTask> findAllByFinishedOnIsNotNull() {
@@ -235,7 +267,7 @@ public class StationTaskService {
         return list;
     }
 
-    Protocol.StationTaskStatus produceStationTaskStatus() {
+    public Protocol.StationTaskStatus produceStationTaskStatus() {
         Protocol.StationTaskStatus status = new Protocol.StationTaskStatus(new ArrayList<>());
         List<StationTask> list = findAllByFinishedOnIsNull();
         for (StationTask task : list) {
@@ -244,40 +276,46 @@ public class StationTaskService {
         return status;
     }
 
-    void createTask(long taskId, Long flowInstanceId, String params) {
+    public void createTask(long taskId, Long flowInstanceId, String params) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            StationTask task = map.computeIfAbsent(taskId, k -> new StationTask());
 
-        StationTask task = map.computeIfAbsent(taskId, k -> new StationTask());
+            task.taskId = taskId;
+            task.flowInstanceId = flowInstanceId;
+            task.createdOn = System.currentTimeMillis();
+            task.params = params;
+            task.finishedOn = null;
 
-        task.taskId = taskId;
-        task.flowInstanceId = flowInstanceId;
-        task.createdOn = System.currentTimeMillis();
-        task.params = params;
-        task.finishedOn = null;
-
-        String path = getTaskPath(taskId);
-        File systemDir = new File(globals.stationTaskDir, path);
-        try {
-            if (systemDir.exists()) {
-                FileUtils.deleteDirectory(systemDir);
+            String path = getTaskPath(taskId);
+            File systemDir = new File(globals.stationTaskDir, path);
+            try {
+                if (systemDir.exists()) {
+                    FileUtils.deleteDirectory(systemDir);
+                }
+                //noinspection ResultOfMethodCallIgnored
+                systemDir.mkdirs();
+                File taskYamlFile = new File(systemDir, Consts.TASK_YAML);
+                FileUtils.write(taskYamlFile, StationTaskUtils.toString(task), Charsets.UTF_8, false);
+                map.put(task.taskId, task);
+            } catch (Throwable th) {
+                log.error("Error ", th);
+                throw new RuntimeException("Error", th);
             }
-            //noinspection ResultOfMethodCallIgnored
-            systemDir.mkdirs();
-            File taskYamlFile = new File(systemDir, Consts.TASK_YAML);
-            FileUtils.write(taskYamlFile, StationTaskUtils.toString(task), Charsets.UTF_8, false);
-            putInMap(task);
-        }
-        catch( Throwable th) {
-            log.error("Error ", th);
-            throw new RuntimeException("Error", th);
         }
     }
 
-    private String getTaskPath(long taskId) {
-        DigitUtils.Power power = DigitUtils.getPower(taskId);
-        return ""+power.power7+File.separatorChar+power.power4+File.separatorChar;
+    public StationTask setLaunchOn(long taskId) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            StationTask task = findById(taskId);
+            if (task == null) {
+                return null;
+            }
+            task.setLaunchedOn(System.currentTimeMillis());
+            return save(task);
+        }
     }
 
-    public StationTask save(StationTask task) {
+    private StationTask save(StationTask task) {
         File taskDir = prepareTaskDir(task.taskId);
         File taskYaml = new File(taskDir, Consts.TASK_YAML);
 
@@ -302,47 +340,44 @@ public class StationTaskService {
         return task;
     }
 
-    void saveAll(List<StationTask> list) {
-        for (StationTask stationTask : list) {
-            save(stationTask);
-        }
-    }
-
     public StationTask findById(Long taskId) {
-        for (StationTask task : map.values()) {
-            if (task.taskId == taskId) {
-                return task;
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            for (StationTask task : map.values()) {
+                if (task.taskId == taskId) {
+                    return task;
+                }
             }
+            return null;
         }
-        return null;
     }
 
     public Collection<StationTask> findAll() {
-        return Collections.unmodifiableCollection(map.values());
-    }
-
-    void deleteById(long taskId) {
-        delete( findById(taskId) );
-    }
-
-    public void delete(final StationTask task) {
-        if (task==null) {
-            return;
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            return Collections.unmodifiableCollection(map.values());
         }
-        final String path = getTaskPath(task.taskId);
+    }
 
-        final File systemDir = new File(globals.stationTaskDir, path);
-        try {
-            if (systemDir.exists()) {
-                FileUtils.deleteDirectory(systemDir);
-                // IDK is that bug or side-effect. so delete one more time
-                FileUtils.deleteDirectory(systemDir);
-                deleteFromMap(task);
+    public void delete(final long taskId) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            final String path = getTaskPath(taskId);
+
+            final File systemDir = new File(globals.stationTaskDir, path);
+            try {
+                if (systemDir.exists()) {
+                    FileUtils.deleteDirectory(systemDir);
+                    // IDK is that bug or side-effect. so delete one more time
+                    FileUtils.deleteDirectory(systemDir);
+                    map.remove(taskId);
+                }
+            } catch (Throwable th) {
+                log.error("Error deleting task " + taskId, th);
             }
         }
-        catch( Throwable th) {
-            log.error("Error deleting task "+ task.taskId, th);
-        }
+    }
+
+    private String getTaskPath(long taskId) {
+        DigitUtils.Power power = DigitUtils.getPower(taskId);
+        return ""+power.power7+File.separatorChar+power.power4+File.separatorChar;
     }
 
     File prepareTaskDir(Long taskId) {
@@ -362,4 +397,5 @@ public class StationTaskService {
         }
         return taskSubDir;
     }
+
 }

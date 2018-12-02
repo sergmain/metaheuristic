@@ -53,14 +53,6 @@ public class CurrentExecState {
         }
     }
 
-    void register(long flowInstanceId, Enums.FlowInstanceExecState state) {
-        synchronized(flowInstanceState) {
-            flowInstanceState.put(flowInstanceId, state);
-            isInit = true;
-        }
-    }
-
-
     Enums.FlowInstanceExecState getState(long flowInstanceId) {
         synchronized(flowInstanceState) {
             if (!isInit) {

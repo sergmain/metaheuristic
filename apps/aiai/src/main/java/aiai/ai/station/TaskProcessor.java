@@ -108,13 +108,13 @@ public class TaskProcessor {
             }
 
             if (taskParamYaml.snippet==null) {
-                stationTaskService.finishAndWriteToLog(task, "Broken task. Snippet isn't defined");
+                stationTaskService.finishAndWriteToLog(task.taskId, "Broken task. Snippet isn't defined");
                 continue;
             }
 
             File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
             if (artifactDir == null) {
-                stationTaskService.finishAndWriteToLog(task, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
+                stationTaskService.finishAndWriteToLog(task.taskId, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 
@@ -123,8 +123,7 @@ public class TaskProcessor {
             taskParamYaml.workingPath = taskDir.getAbsolutePath();
             final String params = taskParamYamlUtils.toString(taskParamYaml);
 
-            task.setLaunchedOn(System.currentTimeMillis());
-            task = stationTaskService.save(task);
+            task = stationTaskService.setLaunchOn(task.taskId);
             SimpleSnippet snippet = taskParamYaml.getSnippet();
 
             AssetFile snippetAssetFile=null;

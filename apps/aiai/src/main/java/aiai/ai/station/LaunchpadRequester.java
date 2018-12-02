@@ -112,7 +112,7 @@ public class LaunchpadRequester {
             // always report about current active sequences, if we have actual stationId
             data.setCommand(stationTaskService.produceStationTaskStatus());
             data.setCommand(stationService.produceReportStationStatus());
-            final boolean b = stationTaskService.isNeedNewExperimentSequence(stationId);
+            final boolean b = stationTaskService.isNeedNewTask(stationId);
             if (b) {
                 data.setCommand(new Protocol.RequestTask(globals.isAcceptOnlySignedSnippets));
             }
@@ -175,10 +175,8 @@ public class LaunchpadRequester {
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask task : list) {
             command.getResults().add(new SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), task.getMetrics()));
-            task.setReported(true);
-            task.setReportedOn(System.currentTimeMillis());
+            stationTaskService.setReportedOn(task.taskId);
         }
-        stationTaskService.saveReported(list);
         data.setCommand(command);
     }
 

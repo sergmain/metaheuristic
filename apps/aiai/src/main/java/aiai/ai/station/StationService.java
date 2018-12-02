@@ -157,16 +157,9 @@ public class StationService {
     }
 
     public void markAsDelivered(List<Long> ids) {
-        List<StationTask> list = new ArrayList<>();
         for (Long id : ids) {
-            StationTask seq = stationTaskService.findByTaskId(id);
-            if(seq==null) {
-                continue;
-            }
-            seq.setDelivered(true);
-            list.add(seq);
+            stationTaskService.setDelivered(id);
         }
-        stationTaskService.saveAll(list);
     }
 
     public void assignTasks(List<Protocol.AssignedTask.Task> tasks) {

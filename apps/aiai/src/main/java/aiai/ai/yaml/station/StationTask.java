@@ -44,5 +44,7 @@ public class StationTask {
 
     public boolean delivered;
 
+    public boolean resourceUploaded;
+
     public String snippetExecResult;
 }

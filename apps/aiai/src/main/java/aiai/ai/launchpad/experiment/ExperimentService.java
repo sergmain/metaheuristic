@@ -310,9 +310,7 @@ public class ExperimentService {
         }
         final Map<String, Map<String, Integer>> paramByIndex = experiment.getHyperParamsAsMap();
 
-        if (true) throw new IllegalStateException("Not implemented yet");
-        List<Task> list = null;
-//        List<Task> list = taskRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
+        List<Task> list = taskRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
 
         List<Task> selected = new ArrayList<>();
         for (Task task : list) {
@@ -347,7 +345,6 @@ public class ExperimentService {
                 selected.add(task);
             }
         }
-        //noinspection UnnecessaryLocalVariable
         return selected;
     }
 
