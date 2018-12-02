@@ -2,7 +2,7 @@ package aiai.ai.launchpad.task;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Task;
-import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
+import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.yaml.console.SnippetExec;
 import aiai.ai.yaml.console.SnippetExecUtils;

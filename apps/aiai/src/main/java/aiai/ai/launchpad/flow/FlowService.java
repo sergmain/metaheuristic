@@ -305,6 +305,7 @@ public class FlowService {
                 throw new IllegalStateException("count of records is null");
             }
             if (count==0) {
+                log.info("FlowInstance #{} was finished", flowInstance.getId());
                 flowInstance.setCompletedOn(System.currentTimeMillis());
                 flowInstance.setExecState(Enums.FlowInstanceExecState.FINISHED.code);
                 flowInstanceRepository.save(flowInstance);

@@ -61,13 +61,12 @@ public class FlowController {
     private final FlowService flowService;
     private final FlowRepository flowRepository;
     private final FlowInstanceRepository flowInstanceRepository;
-    private final TaskExperimentFeatureRepository taskExperimentFeatureRepository;
+    private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
     private final TaskRepository taskRepository;
     private final ExperimentService experimentService;
-    private final ExperimentTaskRepository experimentTaskRepository;
     private final BinaryDataService binaryDataService;
 
-    public FlowController(Globals globals, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository, TaskExperimentFeatureRepository taskExperimentFeatureRepository, TaskRepository taskRepository, ExperimentService experimentService, ExperimentTaskRepository experimentTaskRepository, BinaryDataService binaryDataService) {
+    public FlowController(Globals globals, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskRepository taskRepository, ExperimentService experimentService, BinaryDataService binaryDataService) {
         this.globals = globals;
         this.flowCache = flowCache;
         this.flowService = flowService;
@@ -76,7 +75,6 @@ public class FlowController {
         this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
         this.taskRepository = taskRepository;
         this.experimentService = experimentService;
-        this.experimentTaskRepository = experimentTaskRepository;
         this.binaryDataService = binaryDataService;
     }
 
@@ -320,7 +318,6 @@ public class FlowController {
         taskRepository.deleteByFlowInstanceId(flowInstanceId);
         flowInstanceRepository.deleteById(flowInstanceId);
         taskExperimentFeatureRepository.deleteByFlowInstanceId(flowInstanceId);
-        experimentTaskRepository.deleteByFlowInstanceId(flowInstanceId);
         binaryDataService.deleteByFlowInstanceId(flowInstanceId);
         List<FlowInstance> instances = flowInstanceRepository.findByFlowId(fi.flowId);
         if (instances.isEmpty()) {

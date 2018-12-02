@@ -18,7 +18,7 @@
 package aiai.ai.comm;
 
 import aiai.ai.Enums;
-import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
+import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

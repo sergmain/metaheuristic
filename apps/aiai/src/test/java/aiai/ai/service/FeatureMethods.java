@@ -22,7 +22,7 @@ import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
+import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;

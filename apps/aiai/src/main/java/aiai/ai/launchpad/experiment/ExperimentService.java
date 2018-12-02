@@ -23,6 +23,7 @@ import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
@@ -133,16 +134,16 @@ public class ExperimentService {
     private final Globals globals;
     private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
-    private final TaskExperimentFeatureRepository taskExperimentFeatureRepository;
+    private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
     private final TaskPersistencer taskPersistencer;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final SnippetCache snippetCache;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
-    private final ExperimentTaskRepository experimentTaskRepository;
+    private final ExperimentTaskFeatureRepository experimentTaskFeatureRepository;
 
-    public ExperimentService(Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, TaskExperimentFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1, ExperimentTaskRepository experimentTaskRepository) {
+    public ExperimentService(Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1, ExperimentTaskFeatureRepository experimentTaskFeatureRepository) {
         this.globals = globals;
         this.experimentCache = experimentCache;
         this.taskRepository = taskRepository;
@@ -153,7 +154,7 @@ public class ExperimentService {
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.snippetService = snippetService;
         this.experimentRepository = experimentRepository1;
-        this.experimentTaskRepository = experimentTaskRepository;
+        this.experimentTaskFeatureRepository = experimentTaskFeatureRepository;
     }
 
     private static class ParamFilter {
@@ -198,20 +199,27 @@ public class ExperimentService {
         }
     }
 
-    Slice<Task> findTasks(Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
+    Slice<TaskWIthType> findTasks(Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
         if (experiment == null || feature == null) {
             return Page.empty();
         } else {
+            Slice<TaskWIthType> slice;
             if (isEmpty(params)) {
-                return taskRepository.findByIsCompletedIsTrueAndFeatureId(pageable, feature.getId());
+                slice = taskRepository.findPredictTasks(pageable, feature.getId());
             } else {
                 List<Task> selected = findTaskWithFilter(experiment, feature.getId(), params);
                 List<Task> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
-                //noinspection UnnecessaryLocalVariable
-                final PageImpl<Task> page = new PageImpl<>(subList, pageable, selected.size());
-                return page;
-
+                List<TaskWIthType> list = new ArrayList<>();
+                for (Task task : subList) {
+                    list.add(new TaskWIthType(task, 0));
+                }
+                slice = new PageImpl<>(list, pageable, selected.size());
+                for (TaskWIthType taskWIthType : slice) {
+                    ExperimentTaskFeature etf = experimentTaskFeatureRepository.findByTaskId(taskWIthType.task.getId());
+                    taskWIthType.type = Enums.ExperimentTaskType.from( etf.getTaskType() ).value;
+                }
             }
+            return slice;
         }
     }
 
@@ -357,7 +365,7 @@ public class ExperimentService {
     public Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
         ExperimentsController.TasksResult result = new ExperimentsController.TasksResult();
 
-        result.items = taskRepository.findByIsCompletedIsTrueAndFeatureId(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
+        result.items = taskRepository.findPredictTasks(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
 
         HyperParamResult hyperParamResult = new HyperParamResult();
         for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
@@ -505,8 +513,6 @@ public class ExperimentService {
                 int orderAdd = 0;
                 Task prevTask = null;
                 Task task=null;
-                ExperimentTask experimentTask = new ExperimentTask();
-                experimentTask.flowInstanceId = flowInstance.getId();
                 for (ExperimentSnippet experimentSnippet : experimentSnippets) {
                     prevTask = task;
 
@@ -517,12 +523,6 @@ public class ExperimentService {
                     task.setOrder(process.order + (orderAdd++));
                     task.setProcessType(process.type.value);
                     taskRepository.save(task);
-
-                    TaskExperimentFeature tef = new TaskExperimentFeature();
-                    tef.setFlowInstanceId(flowInstance.getId());
-                    tef.setTaskId(task.getId());
-                    tef.setFeatureId(feature.getId());
-                    taskExperimentFeatureRepository.save(tef);
 
                     TaskParamYaml yaml = new TaskParamYaml();
                     yaml.setHyperParams( hyperParams.toSortedMap() );
@@ -554,9 +554,11 @@ public class ExperimentService {
                         log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
                         continue;
                     }
+
+                    Enums.ExperimentTaskType type;
                     if ("fit".equals(snippet.getType())) {
                         yaml.outputResourceCode = getModelFilename(task);
-                        experimentTask.setFitTaskId(task.getId());
+                        type = Enums.ExperimentTaskType.FIT;
                     }
                     else if ("predict".equals(snippet.getType())){
                         if (prevTask==null) {
@@ -564,11 +566,18 @@ public class ExperimentService {
                         }
                         yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(getModelFilename(prevTask));
                         yaml.outputResourceCode = "task-"+task.getId()+"-output-stub-for-predict";
-                        experimentTask.setPredictTaskId(task.getId());
+                        type = Enums.ExperimentTaskType.PREDICT;
                     }
                     else {
                         throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
-                   }
+                    }
+                    ExperimentTaskFeature tef = new ExperimentTaskFeature();
+                    tef.setFlowInstanceId(flowInstance.getId());
+                    tef.setTaskId(task.getId());
+                    tef.setFeatureId(feature.getId());
+                    tef.setTaskType( type.value );
+                    taskExperimentFeatureRepository.save(tef);
+
                     yaml.snippet = new SimpleSnippet(
                         experimentSnippet.getType(),
                         experimentSnippet.getSnippetCode(),
@@ -592,7 +601,6 @@ public class ExperimentService {
                     }
                     isNew = true;
                 }
-                experimentTaskRepository.save(experimentTask);
             }
         }
         if (experiment.getNumberOfTask() != totalVariants && experiment.getNumberOfTask() != 0) {

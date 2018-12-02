@@ -21,6 +21,7 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
@@ -65,7 +66,7 @@ public class ExperimentsController {
 
     @Data
     public static class TasksResult {
-        public Slice<Task> items;
+        public Slice<TaskWIthType> items;
     }
 
     @Data
@@ -157,22 +158,6 @@ public class ExperimentsController {
         return "launchpad/experiments :: table";
     }
 
-    @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
-    public String getFeatureProgressPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
-        Experiment experiment= experimentRepository.findById(experimentId).orElse(null);
-        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
-
-        TasksResult result = new TasksResult();
-        result.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
-
-        model.addAttribute("result", result);
-        model.addAttribute("experiment", experiment);
-        model.addAttribute("feature", feature);
-        model.addAttribute("consoleResult", new ConsoleResult());
-
-        return "launchpad/experiment-feature-progress :: fragment-table";
-    }
-
     @PostMapping("/experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
     public @ResponseBody ExperimentService.PlotData getPlotData(Model model, @PathVariable Long experimentId, @PathVariable Long featureId,
                                                                 @PathVariable String[] params, @PathVariable String[] paramsAxis) {
@@ -196,6 +181,22 @@ public class ExperimentsController {
         model.addAttribute("consoleResult", result);
 
         return "launchpad/experiment-feature-progress :: fragment-console-table";
+    }
+
+    @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
+    public String getFeatureProgressPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
+        Experiment experiment= experimentRepository.findById(experimentId).orElse(null);
+        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
+
+        TasksResult result = new TasksResult();
+        result.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
+
+        model.addAttribute("result", result);
+        model.addAttribute("experiment", experiment);
+        model.addAttribute("feature", feature);
+        model.addAttribute("consoleResult", new ConsoleResult());
+
+        return "launchpad/experiment-feature-progress :: fragment-table";
     }
 
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")

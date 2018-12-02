@@ -21,7 +21,7 @@ package aiai.ai.station;
 import aiai.ai.Globals;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.comm.*;
-import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
+import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;

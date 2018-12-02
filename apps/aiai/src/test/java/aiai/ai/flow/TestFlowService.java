@@ -5,7 +5,7 @@ import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Task;
-import aiai.ai.launchpad.experiment.SimpleTaskExecResult;
+import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.launchpad.task.TaskService;

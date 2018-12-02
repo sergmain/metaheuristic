@@ -33,6 +33,27 @@ public final class Enums {
         }
     }
 
+    public enum ExperimentTaskType {
+        UNKNOWN(0), FIT(1), PREDICT(2);
+
+        public int value;
+
+        ExperimentTaskType(int value) {
+            this.value = value;
+        }
+
+        public static ExperimentTaskType from(int type) {
+            switch(type) {
+                case 1:
+                    return FIT;
+                case 2:
+                    return PREDICT;
+                default:
+                    return UNKNOWN;
+            }
+        }
+    }
+
     public enum TaskExecState { NONE(0), IN_PROGRESS(1), ERROR(2), OK(3);
 
         public final int value;

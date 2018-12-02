@@ -18,9 +18,8 @@
 
 package aiai.ai.launchpad.repositories;
 
-import aiai.ai.Enums;
-import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
+import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -66,17 +65,24 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
 
 
     @Transactional(readOnly = true)
-    @Query("SELECT t FROM Task t, TaskExperimentFeature tef " +
+    @Query("SELECT t FROM Task t, ExperimentTaskFeature tef " +
             "where t.id=tef.taskId and tef.featureId=:featureId and " +
             " t.execState > 1")
     Slice<Task> findByIsCompletedIsTrueAndFeatureId(Pageable pageable, long featureId);
 
     @Transactional(readOnly = true)
     // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS
-    @Query("SELECT t FROM Task t, TaskExperimentFeature tef " +
+    @Query("SELECT t FROM Task t, ExperimentTaskFeature tef " +
             "where t.id=tef.taskId and tef.featureId=:featureId and " +
             " t.execState > 1")
     List<Task> findByIsCompletedIsTrueAndFeatureId(long featureId);
+
+
+    @Transactional(readOnly = true)
+    @Query("SELECT new aiai.ai.launchpad.experiment.task.TaskWIthType(t, tef.taskType) FROM Task t, ExperimentTaskFeature tef " +
+            "where t.id=tef.taskId and tef.featureId=:featureId ")
+    Slice<TaskWIthType> findPredictTasks(Pageable pageable, long featureId);
+
 
 /*
 

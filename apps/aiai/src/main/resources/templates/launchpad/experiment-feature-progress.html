@@ -4,7 +4,7 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
      sec:authorize="isAuthenticated()"
 >
-    <!--/*@thymeslet id="result" type="aiai.ai.launchpad.experiment.ExperimentsController$SequencesResult"*/-->
+    <!--/*@thymeslet id="result" type="aiai.ai.launchpad.experiment.ExperimentsController$TasksResult"*/-->
     <!--/*@thymeslet id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
     <!--/*@thymeslet id="feature" type="aiai.ai.launchpad.beans.ExperimentFeature"*/-->
     <!--/*@thymeslet id="consoleResult" type="aiai.ai.launchpad.experiment.ExperimentsController$ConsoleResult"*/-->
@@ -608,46 +608,33 @@
     <table>
         <tr valign="top">
             <td>
-                <h1 class="widget-header">Sequences</h1>
+                <h1 class="widget-header">Tasks</h1>
                 <table class="pure-table pure-table-bordered" id="fragment-table" th:fragment="fragment-table">
-                    <thead>
-                    <tr>
-                        <th>Id</th>
-                        <th>Is completed?</th>
-                        <th>Is all snippets Ok?</th>
-                        <th>Date</th>
-                        <th colspan="1">&nbsp;</th>
-                    </tr>
-                    </thead>
-
-                    <tbody>
-                    <tr th:each="s, g : ${result.items}" valign="top">
-                        <td th:text="${s.id}">Sequence Id</td>
-                        <td th:text="${s.isCompleted}">isCompleted</td>
-                        <td th:text="${s.isAllSnippetsOk}">isAllSnippetsOk</td>
-                        <td>
-                            <table>
-                                <tr><td th:text="${'assigned: ' + #dates.format(s.assignedOn, 'dd-MMM-yy HH:mm')}">assigned on></tr>
-                                <tr><td th:text="${'completed: ' + #dates.format(s.completedOn, 'dd-MMM-yy HH:mm')}">completed on></tr>
-                            </table>
-                        </td>
-                        <td>
-                            <table>
-                                <tr>
-                                    <td>
-                                        <a class='ajax-elem-console table-nav-button pure-button' th:id="${'a-console-'+ g.index}" href="#"
-                                           th:href="@{/launchpad/experiment-feature-progress-console-part/{id}/(id=${s.id})}"
-                                           title='Console output'>Info</a>
-                                    </td>
-                                    <td>
-                                        <a class='table-nav-button pure-button' href="#"
-                                           th:data-id="${s.id}"
-                                           onclick="rerunSequence( this.getAttribute('data-id') ); return false;"
-                                           title='Console output'>Re-run</a>
-                                    </td>
-                                </tr>
-                            </table>
-                    </tr>
+                   <tbody>
+                    <div th:remove="tag" th:each="s, g : ${result.items}">
+                        <tr valign="top">
+                            <td th:text="${s.task.id}" rowspan="3">Task Id</td>
+                                <td th:text="${'type: ' + s.typeAsString()}"></td>
+                                <td th:text="${'assigned: ' + #dates.format(s.task.assignedOn, 'dd-MMM-yy HH:mm')}">assigned on</td>
+                        </tr>
+                        <tr valign="top">
+                            <td th:text="${'completed: ' + s.task.isCompleted}">completed on</td>
+                            <td th:text="${'completed: ' + #dates.format(s.task.completedOn, 'dd-MMM-yy HH:mm')}">completed on</td>
+                        </tr>
+                        <tr valign="top">
+                            <td>
+                                <a class='ajax-elem-console table-nav-button pure-button' th:id="${'a-console-'+ g.index}" href="#"
+                                   th:href="@{/launchpad/experiment-feature-progress-console-part/{id}/(id=${s.task.id})}"
+                                   title='Console output'>Info</a>
+                            </td>
+                            <td>
+                                <a class='table-nav-button pure-button' href="#"
+                                   th:data-id="${s.task.id}"
+                                   onclick="rerunSequence( this.getAttribute('data-id') ); return false;"
+                                   title='Console output'>Re-run</a>
+                            </td>
+                        </tr>
+                    </div>
                     <tr>
                         <td colspan="6">
                             <div th:if="${feature!=null and experiment!=null}">
@@ -684,12 +671,8 @@
                 <table class="pure-table pure-table-bordered" id="fragment-console-table" th:fragment="fragment-console-table">
                     <tbody>
                     <div  th:remove="tag" th:each="c, g : ${consoleResult.items}" >
-                        <tr
-                                th:data-order="${c.order}"
-                                th:data-console-order="${'snippet-console-' + c.order}"
-                                onclick="switchTr(this.getAttribute('data-console-order'), this.getAttribute('data-order'));"
-                        ><td th:text="${'#'+c.order+', exit code: ' + c.exitCode + ', isOk: ' + c.isOk}">Current state</td></tr>
-                        <tr th:style="${ c.order==1 ? 'display:none' : '' }" th:id="${'snippet-console-' + c.order}"><td><pre th:text="${c.console}">console output</pre></td></tr>
+                        <tr><td th:text="${'exit code: ' + c.exitCode + ', isOk: ' + c.isOk}">Current state</td></tr>
+                        <tr><td><pre th:text="${c.console}">console output</pre></td></tr>
                     </div>
                     </tbody>
                 </table>

@@ -15,34 +15,17 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.launchpad.beans;
+package aiai.ai.launchpad.experiment.task;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.ToString;
+import lombok.NoArgsConstructor;
 
-import javax.persistence.*;
-import java.io.Serializable;
-
-@Entity
-@Table(name = "AIAI_LP_TASK_FEATURE")
 @Data
-@ToString
-public class TaskExperimentFeature implements Serializable {
-    private static final long serialVersionUID = -1718037694710794187L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Version
-    private Integer version;
-
-    @Column(name = "FLOW_INSTANCE_ID")
-    public Long flowInstanceId;
-
-    @Column(name = "TASK_ID")
-    public Long taskId;
-
-    @Column(name = "FEATURE_ID")
-    public Long featureId;
+@AllArgsConstructor
+@NoArgsConstructor
+public class SimpleTaskExecResult {
+    public long taskId;
+    public String result;
+    public String metrics;
 }
