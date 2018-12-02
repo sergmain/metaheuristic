@@ -140,8 +140,9 @@ public class ExperimentService {
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
+    private final ExperimentTaskRepository experimentTaskRepository;
 
-    public ExperimentService(Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, TaskExperimentFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1) {
+    public ExperimentService(Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, TaskExperimentFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1, ExperimentTaskRepository experimentTaskRepository) {
         this.globals = globals;
         this.experimentCache = experimentCache;
         this.taskRepository = taskRepository;
@@ -152,6 +153,7 @@ public class ExperimentService {
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.snippetService = snippetService;
         this.experimentRepository = experimentRepository1;
+        this.experimentTaskRepository = experimentTaskRepository;
     }
 
     private static class ParamFilter {
@@ -503,6 +505,8 @@ public class ExperimentService {
                 int orderAdd = 0;
                 Task prevTask = null;
                 Task task=null;
+                ExperimentTask experimentTask = new ExperimentTask();
+                experimentTask.flowInstanceId = flowInstance.getId();
                 for (ExperimentSnippet experimentSnippet : experimentSnippets) {
                     prevTask = task;
 
@@ -552,6 +556,7 @@ public class ExperimentService {
                     }
                     if ("fit".equals(snippet.getType())) {
                         yaml.outputResourceCode = getModelFilename(task);
+                        experimentTask.setFitTaskId(task.getId());
                     }
                     else if ("predict".equals(snippet.getType())){
                         if (prevTask==null) {
@@ -559,6 +564,7 @@ public class ExperimentService {
                         }
                         yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(getModelFilename(prevTask));
                         yaml.outputResourceCode = "task-"+task.getId()+"-output-stub-for-predict";
+                        experimentTask.setPredictTaskId(task.getId());
                     }
                     else {
                         throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
@@ -586,30 +592,8 @@ public class ExperimentService {
                     }
                     isNew = true;
                 }
+                experimentTaskRepository.save(experimentTask);
             }
-/*
-            if (isNew) {
-                boolean isOk = false;
-                for (int i = 0; i <3; i++) {
-                    try {
-                        ExperimentFeature f = experimentFeatureRepository.findById(feature.getId()).orElse(null);
-                        if (f==null) {
-                            log.error("Unexpected behaviour, feature with id {} wasn't found", feature.getId());
-                            break;
-                        }
-                        experimentFeatureRepository.save(f);
-                        isOk = true;
-                        break;
-                    }
-                    catch (ObjectOptimisticLockingFailureException e) {
-                        log.info("Feature record was changed. {}", e.getMessage());
-                    }
-                }
-                if (!isOk) {
-                    log.warn("The new tasks were produced but feature wasn't changed");
-                }
-            }
-*/
         }
         if (experiment.getNumberOfTask() != totalVariants && experiment.getNumberOfTask() != 0) {
             log.warn("! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", experiment.getNumberOfTask(), totalVariants);

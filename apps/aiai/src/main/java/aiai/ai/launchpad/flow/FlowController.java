@@ -6,10 +6,7 @@ import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.launchpad.repositories.FlowInstanceRepository;
-import aiai.ai.launchpad.repositories.FlowRepository;
-import aiai.ai.launchpad.repositories.TaskExperimentFeatureRepository;
-import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.launchpad.repositories.*;
 import aiai.ai.utils.ControllerUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -67,9 +64,10 @@ public class FlowController {
     private final TaskExperimentFeatureRepository taskExperimentFeatureRepository;
     private final TaskRepository taskRepository;
     private final ExperimentService experimentService;
+    private final ExperimentTaskRepository experimentTaskRepository;
     private final BinaryDataService binaryDataService;
 
-    public FlowController(Globals globals, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository, TaskExperimentFeatureRepository taskExperimentFeatureRepository, TaskRepository taskRepository, ExperimentService experimentService, BinaryDataService binaryDataService) {
+    public FlowController(Globals globals, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository, TaskExperimentFeatureRepository taskExperimentFeatureRepository, TaskRepository taskRepository, ExperimentService experimentService, ExperimentTaskRepository experimentTaskRepository, BinaryDataService binaryDataService) {
         this.globals = globals;
         this.flowCache = flowCache;
         this.flowService = flowService;
@@ -78,6 +76,7 @@ public class FlowController {
         this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
         this.taskRepository = taskRepository;
         this.experimentService = experimentService;
+        this.experimentTaskRepository = experimentTaskRepository;
         this.binaryDataService = binaryDataService;
     }
 
@@ -321,6 +320,7 @@ public class FlowController {
         taskRepository.deleteByFlowInstanceId(flowInstanceId);
         flowInstanceRepository.deleteById(flowInstanceId);
         taskExperimentFeatureRepository.deleteByFlowInstanceId(flowInstanceId);
+        experimentTaskRepository.deleteByFlowInstanceId(flowInstanceId);
         binaryDataService.deleteByFlowInstanceId(flowInstanceId);
         List<FlowInstance> instances = flowInstanceRepository.findByFlowId(fi.flowId);
         if (instances.isEmpty()) {
