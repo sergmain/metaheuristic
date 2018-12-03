@@ -1,3 +1,25 @@
+create table AIAI_ACCOUNT
+(
+  ID  bigserial not null PRIMARY KEY,
+  VERSION bigint NOT NULL,
+  USERNAME varchar(30) not null,
+  TOKEN varchar(50) not null,
+  PASSWORD varchar(100) not null,
+  ROLES varchar(100),
+  PUBLIC_NAME varchar(100),
+
+  is_acc_not_expired BOOLEAN not null default true,
+  is_not_locked BOOLEAN not null default false,
+  is_cred_not_expired BOOLEAN not null default false,
+  is_enabled BOOLEAN not null default false,
+
+  mail_address varchar(100) ,
+  PHONE varchar(100) ,
+  PHONE_AS_STR varchar(100) ,
+
+  CREATED_ON bigint not null
+);
+
 CREATE TABLE AIAI_LP_STATION (
   ID          SERIAL PRIMARY KEY,
   VERSION     NUMERIC(5, 0)  NOT NULL,

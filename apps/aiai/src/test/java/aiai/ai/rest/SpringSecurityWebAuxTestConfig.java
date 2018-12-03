@@ -92,7 +92,7 @@ public class SpringSecurityWebAuxTestConfig {
             account.setEnabled(true);
             account.setPassword("123");
 
-            account.setAuthorities("ROLE_ADMIN");
+            account.setRoles("ROLE_ADMIN");
             accounts.add(account);
         }
         {
@@ -107,7 +107,7 @@ public class SpringSecurityWebAuxTestConfig {
             account.setEnabled(true);
             account.setPassword("123");
 
-            account.setAuthorities("ROLE_ADMIN");
+            account.setRoles("ROLE_ADMIN");
             accounts.add(account);
         }
 

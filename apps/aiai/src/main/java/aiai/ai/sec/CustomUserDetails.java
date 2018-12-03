@@ -78,7 +78,7 @@ public class CustomUserDetails implements UserDetailsService {
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
             account.setPassword(globals.restPassword);
-            account.setAuthorities("ROLE_ACCESS_REST");
+            account.setRoles("ROLE_ACCESS_REST");
             return account;
         }
 
@@ -97,7 +97,7 @@ public class CustomUserDetails implements UserDetailsService {
             account.setEnabled(true);
             account.setPassword(globals.masterPassword);
 
-            account.setAuthorities("ROLE_ADMIN, ROLE_MANAGER");
+            account.setRoles("ROLE_ADMIN, ROLE_MANAGER");
 /*
             List<GrantedAuthority> authList = new ArrayList<>();
             authList.add(new SimpleGrantedAuthority("ROLE_ADMIN"));

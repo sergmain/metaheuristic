@@ -97,6 +97,9 @@ public class Globals {
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.station-table-rows-limit'), 5, 30, 10) }")
     public int stationRowsLimit;
 
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.account-table-rows-limit'), 5, 100, 20) }")
+    public int accountRowsLimit;
+
     @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
     public boolean isReplaceSnapshot;
 

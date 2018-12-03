@@ -44,6 +44,9 @@ public class Account implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Version
+    private Integer version;
+
     /**
      * as UUID
      */
@@ -52,27 +55,47 @@ public class Account implements UserDetails {
      * as UUID with BCrypt
      */
     private String password;
-    private String authorities;
+
+    @Transient
+    private String password2;
+
+    @Column(name="is_acc_not_expired")
     private boolean accountNonExpired;
+
+    @Column(name="is_not_locked")
     private boolean accountNonLocked;
+
+    @Column(name="is_cred_not_expired")
     private boolean credentialsNonExpired;
+
+    @Column(name="is_enabled")
     private boolean enabled;
+
+    @Column(name="PUBLIC_NAME")
+    private String publicName;
+
     private String mailAddress;
     private long phone;
+
     //TODO add checks on max length
     private String phoneAsStr;
+
     /**
      * токен для проверки логин/пароля/токена
      */
     private String token;
 
-    public Collection<GrantedAuthority> getAuthorities() {
-        StringTokenizer st = new StringTokenizer(authorities, ",");
-        List<GrantedAuthority> authorityList = new ArrayList<>();
-        while (st.hasMoreTokens()) {
-            authorityList.add(new SimpleGrantedAuthority(st.nextToken()));
-        }
-        return authorityList;
-    }
+    @Column(name="created_on")
+    private long createdOn;
 
+    private String roles;
+
+    public List<? extends GrantedAuthority> getAuthorities(){
+        List<GrantedAuthority> authList = new ArrayList<>();
+        StringTokenizer st = new StringTokenizer(roles, ",");
+        while (st.hasMoreTokens()) {
+            authList.add(new SimpleGrantedAuthority(st.nextToken().trim()));
+        }
+        return authList;
+    }
 }
