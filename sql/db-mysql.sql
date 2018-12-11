@@ -1,3 +1,12 @@
+create table AIAI_LP_LAUNCHPAD_ADDRESS
+(
+  ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+  VERSION     NUMERIC(5, 0)  NOT NULL,
+  URL varchar(200) not null,
+  DESCRIPTION varchar(100) not null,
+  CHECKSUM varchar(250) not null
+);
+
 create table AIAI_ACCOUNT
 (
   ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,

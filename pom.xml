@@ -31,7 +31,7 @@
         <module>apps/package-snippet</module>
         <module>apps/gen-keys</module>
         <module>apps/gen-passwords</module>
-        <module>apps/sign-environment</module>
+        <module>apps/sign-string</module>
         <module>apps/simple-app</module>
     </modules>
 

@@ -84,6 +84,12 @@ public class ServerController {
         this.taskParamYamlUtils = taskParamYamlUtils;
     }
 
+    @PostMapping("/rest-anon/registry")
+    public RegistryData getRegistryData() {
+
+        //
+    }
+
     @PostMapping("/rest-anon/srv")
     public ExchangeData processRequestAnon(HttpServletResponse response, @RequestBody ExchangeData data, HttpServletRequest request) throws IOException {
         log.debug("processRequestAnon(), globals.isSecureRestUrl: {}, data: {}", globals.isSecureRestUrl, data);

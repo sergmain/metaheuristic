@@ -1,3 +1,12 @@
+create table AIAI_LP_LAUNCHPAD_ADDRESS
+(
+  ID          bigserial not null PRIMARY KEY,
+  VERSION     bigint NOT NULL,
+  URL varchar(200) not null,
+  DESCRIPTION varchar(100) not null,
+  CHECKSUM varchar(250) not null
+);
+
 create table AIAI_ACCOUNT
 (
   ID  bigserial not null PRIMARY KEY,

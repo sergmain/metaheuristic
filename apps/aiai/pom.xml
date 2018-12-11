@@ -39,6 +39,7 @@
 	</parent>
 
 	<properties>
+		<oauth.version>2.3.3.RELEASE</oauth.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
@@ -144,6 +145,22 @@
 			<artifactId>spring-boot-test-autoconfigure</artifactId>
 			<scope>test</scope>
 		</dependency>
+
+<!--
+		<dependency>
+			<groupId>org.springframework.security.oauth</groupId>
+			<artifactId>spring-security-oauth2</artifactId>
+			<version>${oauth.version}</version>
+		</dependency>
+-->
+
+		<dependency>
+			<groupId>org.springframework.security.oauth.boot</groupId>
+			<artifactId>spring-security-oauth2-autoconfigure</artifactId>
+			<version>2.1.1.RELEASE</version>
+		</dependency>
+
+		<!-- End of spring's section -->
 
 		<dependency>
 			<groupId>org.webjars</groupId>

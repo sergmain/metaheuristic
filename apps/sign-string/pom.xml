@@ -22,18 +22,18 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.1.0.RC1</version>
+        <version>2.1.0.RELEASE</version>
         <relativePath/>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>aiai</groupId>
-    <artifactId>sign-environment</artifactId>
+    <artifactId>sign-string</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>sign-environmentfile</name>
-    <description>Sign environment</description>
+    <name>sign-string</name>
+    <description>Sign string</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -62,7 +62,7 @@
     </dependencies>
 
     <build>
-        <finalName>aiai</finalName>
+        <finalName>sign-string</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -80,7 +80,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>aiai.apps.sign_snippet.PackageSnippet</mainClass>
+                    <mainClass>aiai.apps.sign_string.SignString</mainClass>
                 </configuration>
             </plugin>
         </plugins>

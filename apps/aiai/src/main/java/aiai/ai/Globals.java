@@ -126,6 +126,9 @@ public class Globals {
     @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.station.launchpad-url')) }")
     public String launchpadUrl;
 
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.station.registry-url')) }")
+    public String registryUrl;
+
     // some fields
     public File launchpadTempDir;
     public File launchpadResourcesDir;
@@ -152,12 +155,14 @@ public class Globals {
             throw new IllegalStateException("masterUsername can't be the same as restUsername, masterUsername: " + masterUsername + ", restUsername: " + restUsername);
         }
 
-        if (isSecureRestUrl) {
-
-            if (isStationEnabled) {
+        if (isStationEnabled) {
+            if (isSecureRestUrl) {
                 if (stationRestPassword==null) {
                     throw new IllegalArgumentException("if aiai.secure-rest-url=true and aiai.station.enabled=true, then aiai.station.server-rest-password has to be not null");
                 }
+            }
+            if (registryUrl ==null) {
+                throw new IllegalArgumentException("if aiai.station.enabled=true, then aiai.station.registry-server has to be not null");
             }
         }
 
@@ -180,6 +185,7 @@ public class Globals {
             stationTaskDir.mkdirs();
 
             timePeriods = TimePeriods.from(stationActiveTime);
+
         }
 
         if (isLaunchpadEnabled && launchpadDir==null) {

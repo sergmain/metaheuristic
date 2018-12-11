@@ -157,7 +157,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", globals.isAcceptOnlySignedSnippets, snippetCode);
                         continue;
                     }
-                    isOk = (status.isOk && !Boolean.FALSE.equals(status.isSignatureOk));
+                    isOk = status.isOk;
                 }
                 if (isOk) {
                     //noinspection ResultOfMethodCallIgnored
