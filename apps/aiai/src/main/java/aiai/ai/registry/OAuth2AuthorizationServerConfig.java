@@ -30,9 +30,9 @@ import org.springframework.security.oauth2.provider.token.TokenEnhancerChain;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JdbcTokenStore;
 
-@Configuration
+//@Configuration
 //@PropertySource({ "classpath:persistence.properties" })
-@EnableAuthorizationServer
+//@EnableAuthorizationServer
 public class OAuth2AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
 
 /*
@@ -46,9 +46,9 @@ public class OAuth2AuthorizationServerConfig extends AuthorizationServerConfigur
     @Autowired
     private Environment env;
 
-    @Autowired
-    @Qualifier("authenticationManagerBean")
-    private AuthenticationManager authenticationManager;
+//    @Autowired
+//    @Qualifier("authenticationManagerBean")
+//    private AuthenticationManager authenticationManager;
 
     @Value("classpath:schema.sql")
     private Resource schemaScript;
@@ -70,7 +70,9 @@ public class OAuth2AuthorizationServerConfig extends AuthorizationServerConfigur
     public void configure(final AuthorizationServerEndpointsConfigurer endpoints) throws Exception {
         final TokenEnhancerChain tokenEnhancerChain = new TokenEnhancerChain();
         tokenEnhancerChain.setTokenEnhancers(Arrays.asList(tokenEnhancer()));
-        endpoints.tokenStore(tokenStore()).tokenEnhancer(tokenEnhancerChain).authenticationManager(authenticationManager);
+        endpoints.tokenStore(tokenStore()).tokenEnhancer(tokenEnhancerChain)
+//                .authenticationManager(authenticationManager)
+        ;
     }
 
     @Bean
@@ -84,7 +86,8 @@ public class OAuth2AuthorizationServerConfig extends AuthorizationServerConfigur
 
     @Bean
     public TokenEnhancer tokenEnhancer() {
-        return new CustomTokenEnhancer();
+        return null;
+//        return new CustomTokenEnhancer();
     }
 
     // JDBC token store configuration

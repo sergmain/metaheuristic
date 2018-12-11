@@ -20,13 +20,13 @@ public class LaunchpadAddress implements Serializable {
     private Integer version;
 
     @Column(name = "URL")
-    public String address;
+    public String url;
 
     @Column(name = "DESCRIPTION")
     public String description;
 
-    @Column(name = "CHECKSUM")
-    public String checksum;
+    @Column(name = "SIGNATURE")
+    public String signature;
 
 
 }

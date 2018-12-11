@@ -46,7 +46,7 @@ public class ChecksumWithSignatureService {
         this.globals = globals;
     }
 
-    public CheckSumAndSignatureStatus verifyChecksumAndSignature(Checksum checksum, String snippetCode, InputStream fis, boolean isVerifySignature ) throws IOException {
+    public CheckSumAndSignatureStatus verifyChecksumAndSignature(Checksum checksum, String infoPrefix, InputStream fis, boolean isVerifySignature ) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
         status.isOk = true;
         status.isSignatureOk = null;
@@ -57,10 +57,11 @@ public class ChecksumWithSignatureService {
                 entrySum = checksumWithSignature.checksum;
 
                 if (isVerifySignature) {
-                    if (!(status.isSignatureOk = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, globals.publicKey))) {
+                    status.isSignatureOk = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, globals.publicKey);
+                    if (!status.isSignatureOk) {
                         break;
                     }
-                    log.info("Snippet {}, signature is Ok", snippetCode);
+                    log.info("{}, signature is Ok", infoPrefix);
                 }
                 sum = Checksum.Type.SHA256.getChecksum(fis);
             }
@@ -69,15 +70,15 @@ public class ChecksumWithSignatureService {
                 entrySum = entry.getValue();
             }
             if (sum.equals(entrySum)) {
-                log.info("Snippet {}, checksum is Ok", snippetCode);
+                log.info("{}, checksum is Ok", infoPrefix);
             } else {
-                log.error("Snippet {}, checksum is wrong, expected: {}, actual: {}", snippetCode, entrySum, sum);
+                log.error("S{}, checksum is wrong, expected: {}, actual: {}", infoPrefix, entrySum, sum);
                 status.isOk = false;
                 break;
             }
         }
         if (Boolean.FALSE.equals(status.isSignatureOk)) {
-            log.error("Snippet {}, Signature is worng", snippetCode);
+            log.error("{}, Signature is wrong", infoPrefix);
         }
         return status;
     }
@@ -97,8 +98,9 @@ public class ChecksumWithSignatureService {
             Signature signature = Signature.getInstance("SHA256withRSA");
             signature.initVerify(publicKey);
             signature.update(data);
-            //noinspection UnnecessaryLocalVariable
+            //noinspection
             final byte[] bytes = Base64.decodeBase64(signatureAsBase64);
+            //noinspection UnnecessaryLocalVariable
             boolean status = signature.verify(bytes);
             return status;
         }

@@ -47,7 +47,7 @@
         </thead>
 
         <tbody>
-        <!--/*@thymesVar id="result" type="com.htrucker.manager.AccountController.AccountsResult"*/-->
+        <!--/*@thymesVar id="result" type="aiai.manager.AccountController.AccountsResult"*/-->
         <tr th:each="r : ${result.accounts}">
             <td th:text="${r.id}">#Id</td>
             <td th:text="${r.enabled} ? 'Yes' : 'No'">Is enabled</td>

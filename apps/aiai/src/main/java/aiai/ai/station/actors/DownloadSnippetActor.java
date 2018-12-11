@@ -147,7 +147,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 if (globals.isAcceptOnlySignedSnippets) {
                     CheckSumAndSignatureStatus status;
                     try (FileInputStream fis = new FileInputStream(snippetTempFile)) {
-                        status = checksumWithSignatureService.verifyChecksumAndSignature(checksum, snippetCode, fis, true);
+                        status = checksumWithSignatureService.verifyChecksumAndSignature(checksum, "Snippet "+snippetCode, fis, true);
                     }
                     if ( status.isSignatureOk == null){
                         log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", globals.isAcceptOnlySignedSnippets, snippetCode);

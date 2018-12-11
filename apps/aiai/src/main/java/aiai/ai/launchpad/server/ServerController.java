@@ -86,7 +86,7 @@ public class ServerController {
 
     @PostMapping("/rest-anon/registry")
     public RegistryData getRegistryData() {
-
+        return null;
         //
     }
 
