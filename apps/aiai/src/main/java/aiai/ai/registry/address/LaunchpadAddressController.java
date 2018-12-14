@@ -26,12 +26,10 @@ public class LaunchpadAddressController {
 
     private final Globals globals;
     private final LaunchpadAddressRepository launchpadAddressRepository;
-    private final ChecksumWithSignatureService checksumWithSignatureService;
 
-    public LaunchpadAddressController(Globals globals, LaunchpadAddressRepository launchpadAddressRepository, ChecksumWithSignatureService checksumWithSignatureService) {
+    public LaunchpadAddressController(Globals globals, LaunchpadAddressRepository launchpadAddressRepository) {
         this.globals = globals;
         this.launchpadAddressRepository = launchpadAddressRepository;
-        this.checksumWithSignatureService = checksumWithSignatureService;
     }
 
     @GetMapping("/addresses")
@@ -61,6 +59,7 @@ public class LaunchpadAddressController {
             model.addAttribute("errorMessage", "#660.30 description is empty");
             return errorTarget;
         }
+        if (globals.isSslRequired)
         if (StringUtils.isBlank(address.signature)) {
             model.addAttribute("errorMessage", "#660.33 checksum is empty");
             return errorTarget;

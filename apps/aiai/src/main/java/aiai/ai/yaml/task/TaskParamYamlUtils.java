@@ -17,12 +17,9 @@
  */
 package aiai.ai.yaml.task;
 
+import aiai.apps.commons.yaml.YamlUtils;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.Tag;
-import org.yaml.snakeyaml.representer.Representer;
 
 @Service
 public class TaskParamYamlUtils {
@@ -33,14 +30,7 @@ public class TaskParamYamlUtils {
     private static final Object syncObj = new Object();
 
     public TaskParamYamlUtils() {
-        final DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options.setPrettyFlow(true);
-
-        Representer representer = new Representer();
-        representer.addClassTag(TaskParamYaml.class, Tag.MAP);
-
-        yamlTaskYaml = new Yaml(new Constructor(TaskParamYaml.class), representer, options);
+        yamlTaskYaml = YamlUtils.init(TaskParamYaml.class);
     }
 
     public String toString(TaskParamYaml taskParamYaml) {

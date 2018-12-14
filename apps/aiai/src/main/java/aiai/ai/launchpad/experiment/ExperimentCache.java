@@ -23,6 +23,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -54,6 +55,10 @@ public class ExperimentCache {
 
     @CacheEvict(cacheNames = {"experiments", "experimentsByCode"}, allEntries=true)
     public void delete(Experiment experiment) {
-        experimentRepository.delete(experiment);
+        try {
+            experimentRepository.delete(experiment);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            //
+        }
     }
 }

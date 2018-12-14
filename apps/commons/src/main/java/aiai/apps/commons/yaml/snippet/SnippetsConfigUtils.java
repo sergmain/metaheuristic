@@ -17,6 +17,7 @@
  */
 package aiai.apps.commons.yaml.snippet;
 
+import aiai.apps.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -35,38 +36,22 @@ public class SnippetsConfigUtils {
     private static Yaml yaml;
 
     static {
-        final DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options.setPrettyFlow(true);
-
-        Representer representer = new Representer();
-        representer.addClassTag(SnippetsConfig.class, Tag.MAP);
-
-        yaml = new Yaml(new Constructor(SnippetsConfig.class), representer, options);
+        yaml = YamlUtils.init(SnippetsConfig.class);
     }
 
     public static String toString(SnippetsConfig config) {
-        return yaml.dump(config);
+        return YamlUtils.toString(config, yaml);
     }
 
     public static SnippetsConfig to(String s) {
-        if (s == null) {
-            return null;
-        }
-        return yaml.load(s);
+        return (SnippetsConfig) YamlUtils.to(s, yaml);
     }
 
     public static SnippetsConfig to(InputStream is) {
-        return yaml.load(is);
+        return (SnippetsConfig) YamlUtils.to(is, yaml);
     }
 
     public static SnippetsConfig to(File file) {
-        try (FileInputStream fis = new FileInputStream(file)) {
-            return yaml.load(fis);
-        }
-        catch (IOException e) {
-            log.error("Error", e);
-            throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
-        }
-   }
+        return (SnippetsConfig) YamlUtils.to(file, yaml);
+    }
 }

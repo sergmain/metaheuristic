@@ -28,8 +28,8 @@ import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.utils.SimpleSelectOption;
-import aiai.ai.yaml.console.SnippetExec;
-import aiai.ai.yaml.console.SnippetExecUtils;
+import aiai.ai.yaml.snippet_exec.SnippetExec;
+import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -174,7 +174,7 @@ public class ExperimentsController {
         ConsoleResult result = new ConsoleResult();
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task!=null) {
-            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(task.getSnippetExecResults());
+            SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
             final ExecProcessService.Result execResult = snippetExec.getExec();
             result.items.add( new ConsoleResult.SimpleConsoleOutput(execResult.exitCode, execResult.isOk, execResult.console));
         }

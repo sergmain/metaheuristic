@@ -23,6 +23,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -43,12 +44,20 @@ public class SnippetCache {
 
     @CacheEvict(cacheNames = {"snippets", "snippetsByName"}, key = "#snippet.id")
     public void delete(Snippet snippet) {
-        snippetRepository.delete(snippet);
+        try {
+            snippetRepository.delete(snippet);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            //
+        }
     }
 
     @CacheEvict(cacheNames = {"snippets", "snippetsByName"}, allEntries=true)
     public void delete(long snippetId) {
-        snippetRepository.deleteById(snippetId);
+        try {
+            snippetRepository.deleteById(snippetId);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            //
+        }
     }
 
     @Cacheable(cacheNames = "snippets", unless="#result==null")

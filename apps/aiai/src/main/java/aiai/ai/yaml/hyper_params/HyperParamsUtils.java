@@ -23,9 +23,6 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
-/**
- * Because of xxx.class can't use generics (or don't have enough time to find out how)
- */
 public class HyperParamsUtils {
 
     private static Yaml yaml;

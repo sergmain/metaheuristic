@@ -15,33 +15,37 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.flow;
+package aiai.ai.yaml.snippet_exec;
 
 import aiai.apps.commons.yaml.YamlUtils;
-import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
 
-@Service
-public class FlowYamlUtils {
+import java.io.File;
+import java.io.InputStream;
 
-    private Yaml yamlFlowYaml;
+@Slf4j
+public class SnippetExecUtils {
 
-    // TODO 2018.09.12. so, snakeYaml isn't thread-safe or it was a side-effect?
-    private static final Object syncObj = new Object();
+    private static Yaml yaml;
 
-    public FlowYamlUtils() {
-        yamlFlowYaml = YamlUtils.init(FlowYaml.class);
+    static {
+        yaml = YamlUtils.init(SnippetExec.class);
     }
 
-    public String toString(FlowYaml flowYaml) {
-        synchronized (syncObj) {
-            return yamlFlowYaml.dump(flowYaml);
-        }
+    public static String toString(SnippetExec config) {
+        return YamlUtils.toString(config, yaml);
     }
 
-    public FlowYaml toFlowYaml(String s) {
-        synchronized (syncObj) {
-            return yamlFlowYaml.load(s);
-        }
+    public static SnippetExec to(String s) {
+        return (SnippetExec) YamlUtils.to(s, yaml);
+    }
+
+    public static SnippetExec to(InputStream is) {
+        return (SnippetExec) YamlUtils.to(is, yaml);
+    }
+
+    public static SnippetExec to(File file) {
+        return (SnippetExec) YamlUtils.to(file, yaml);
     }
 }

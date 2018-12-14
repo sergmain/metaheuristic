@@ -17,51 +17,36 @@
  */
 package aiai.ai.yaml.env;
 
-import org.yaml.snakeyaml.DumperOptions;
+import aiai.apps.commons.yaml.YamlUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.*;
+import java.io.File;
+import java.io.InputStream;
 
-/**
- * Because of xxx.class can't use generics (or don't have enough time to find out how)
- */
+@Slf4j
 public class EnvYamlUtils {
 
     private static Yaml yaml;
 
     static {
-        final DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options.setPrettyFlow(true);
-
-        yaml = new Yaml(new Constructor(EnvYaml.class), new Representer(), options);
-
+        yaml = YamlUtils.init(EnvYaml.class);
     }
 
-    public static String toString(EnvYaml envYaml) {
-        return yaml.dump(envYaml);
+    public static String toString(EnvYaml config) {
+        return YamlUtils.toString(config, yaml);
     }
 
-    public static EnvYaml toEnvYaml(String s) {
-        if (s==null) {
-            return null;
-        }
-        return yaml.load(s);
+    public static EnvYaml to(String s) {
+        return (EnvYaml) YamlUtils.to(s, yaml);
     }
 
-    public static EnvYaml toEnvYaml(InputStream is) {
-        return yaml.load(is);
+    public static EnvYaml to(InputStream is) {
+        return (EnvYaml) YamlUtils.to(is, yaml);
     }
 
-    public static EnvYaml toEnvYaml(File file) {
-        try(FileInputStream fis =  new FileInputStream(file)) {
-            return yaml.load(fis);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
-        }
+    public static EnvYaml to(File file) {
+        return (EnvYaml) YamlUtils.to(file, yaml);
     }
 
 }

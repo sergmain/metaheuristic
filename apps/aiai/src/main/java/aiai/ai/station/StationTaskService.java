@@ -22,8 +22,8 @@ import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.utils.DigitUtils;
-import aiai.ai.yaml.console.SnippetExec;
-import aiai.ai.yaml.console.SnippetExecUtils;
+import aiai.ai.yaml.snippet_exec.SnippetExec;
+import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.metrics.Metrics;
 import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.task.SimpleSnippet;
@@ -237,7 +237,7 @@ public class StationTaskService {
                 }
                 taskTemp.setMetrics(MetricsUtils.toString(metrics));
             }
-            SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(taskTemp.getSnippetExecResult());
+            SnippetExec snippetExec = SnippetExecUtils.to(taskTemp.getSnippetExecResult());
             if (snippetExec==null) {
                 snippetExec = new SnippetExec();
             }

@@ -17,58 +17,35 @@
  */
 package aiai.ai.yaml.station;
 
+import aiai.apps.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.Tag;
-import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
-/**
- * Because of xxx.class can't use generics (or don't have enough time to find out how to)
- */
 @Slf4j
 public class StationTaskUtils {
 
     private static Yaml yaml;
 
     static {
-        final DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options.setPrettyFlow(true);
-
-        Representer representer = new Representer();
-        representer.addClassTag(StationTask.class, Tag.MAP);
-
-        yaml = new Yaml(new Constructor(StationTask.class), representer, options);
+        yaml = YamlUtils.init(StationTask.class);
     }
 
     public static String toString(StationTask config) {
-        return yaml.dump(config);
+        return YamlUtils.toString(config, yaml);
     }
 
     public static StationTask to(String s) {
-        if (s==null) {
-            return null;
-        }
-        return yaml.load(s);
+        return (StationTask) YamlUtils.to(s, yaml);
     }
 
     public static StationTask to(InputStream is) {
-        return yaml.load(is);
+        return (StationTask) YamlUtils.to(is, yaml);
     }
 
     public static StationTask to(File file) {
-        try(FileInputStream fis =  new FileInputStream(file)) {
-            return yaml.load(fis);
-        } catch (IOException e) {
-            log.error("Error", e);
-            throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
-        }
+        return (StationTask) YamlUtils.to(file, yaml);
     }
 }

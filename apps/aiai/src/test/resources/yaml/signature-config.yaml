@@ -1,0 +1,6 @@
+configs:
+  - signatureRequired: false
+    url: http://localhost:8080
+  - publicKey: some-public-key
+    signatureRequired: true
+    url: https://host

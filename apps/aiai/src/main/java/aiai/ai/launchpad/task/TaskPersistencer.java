@@ -4,8 +4,8 @@ import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.yaml.console.SnippetExec;
-import aiai.ai.yaml.console.SnippetExecUtils;
+import aiai.ai.yaml.snippet_exec.SnippetExec;
+import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -115,7 +115,7 @@ public class TaskPersistencer {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
-                    SnippetExec snippetExec = SnippetExecUtils.toSnippetExec(result.getResult());
+                    SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
                     Task t = prepareTask(result, snippetExec.exec.isOk ? Enums.TaskExecState.OK : Enums.TaskExecState.ERROR);
                     if (t!=null) {
                         taskRepository.save(t);

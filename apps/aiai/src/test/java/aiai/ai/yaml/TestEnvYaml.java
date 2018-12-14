@@ -33,7 +33,7 @@ public class TestEnvYaml {
     public void testEnvYaml() throws IOException {
 
         try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/env.yaml")) {
-            EnvYaml envYaml = EnvYamlUtils.toEnvYaml(is);
+            EnvYaml envYaml = EnvYamlUtils.to(is);
             assertNotNull(envYaml);
             assertNotNull(envYaml.getEnvs());
             assertEquals(2, envYaml.getEnvs().size());
@@ -42,7 +42,7 @@ public class TestEnvYaml {
 
             String s = EnvYamlUtils.toString(envYaml);
 
-            EnvYaml envYaml1 = EnvYamlUtils.toEnvYaml(s);
+            EnvYaml envYaml1 = EnvYamlUtils.to(s);
             assertEquals(envYaml, envYaml1);
         }
     }

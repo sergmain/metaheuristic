@@ -4,7 +4,7 @@ create table AIAI_LP_LAUNCHPAD_ADDRESS
   VERSION     bigint NOT NULL,
   URL varchar(200) not null,
   DESCRIPTION varchar(100) not null,
-  SIGNATURE varchar(1000) not null
+  SIGNATURE varchar(1000)
 );
 
 create table AIAI_ACCOUNT

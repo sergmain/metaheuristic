@@ -17,20 +17,14 @@
  */
 package aiai.ai.yaml.metrics;
 
-import org.yaml.snakeyaml.DumperOptions;
+import aiai.apps.commons.yaml.YamlUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.Tag;
-import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
-/**
- * Because of xxx.class can't use generics (or don't have enough time to find out how to)
- */
+@Slf4j
 public class MetricsUtils {
 
     private static Yaml yaml;
@@ -38,49 +32,27 @@ public class MetricsUtils {
     public static final Metrics EMPTY_METRICS = new Metrics(Metrics.Status.NotFound, null, null);
 
     static {
-        final DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options.setPrettyFlow(true);
-
-        Representer representer = new Representer();
-        representer.addClassTag(Metrics.class, Tag.MAP);
-
-        yaml = new Yaml(new Constructor(Metrics.class), representer, options);
+        yaml = YamlUtils.init(Metrics.class);
     }
 
     static {
-        final DumperOptions options1 = new DumperOptions();
-        options1.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        options1.setPrettyFlow(true);
-
-        Representer representer1 = new Representer();
-        representer1.addClassTag(MetricValues.class, Tag.MAP);
-
-        valueYaml = new Yaml(new Constructor(MetricValues.class), representer1, options1);
+        valueYaml = YamlUtils.init(MetricValues.class);
     }
 
     public static String toString(Metrics config) {
-        return yaml.dump(config);
+        return YamlUtils.toString(config, yaml);
     }
 
     public static Metrics to(String s) {
-        if (s==null) {
-            return null;
-        }
-        return yaml.load(s);
+        return (Metrics) YamlUtils.to(s, yaml);
     }
 
     public static Metrics to(InputStream is) {
-        return yaml.load(is);
+        return (Metrics) YamlUtils.to(is, yaml);
     }
 
     public static Metrics to(File file) {
-        try(FileInputStream fis =  new FileInputStream(file)) {
-            return yaml.load(fis);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
-        }
+        return (Metrics) YamlUtils.to(file, yaml);
     }
 
     public static MetricValues getValues(Metrics metrics) {
@@ -88,7 +60,7 @@ public class MetricsUtils {
             return null;
         }
         //noinspection UnnecessaryLocalVariable
-        MetricValues metricValues = valueYaml.load(metrics.metrics);
+        MetricValues metricValues = (MetricValues) YamlUtils.to(metrics.metrics, valueYaml);
         return metricValues;
     }
 

@@ -6,6 +6,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -30,11 +31,19 @@ public class FlowCache {
 
     @CacheEvict(cacheNames = {"flows"}, allEntries=true)
     public void delete(Flow flow) {
-        flowRepository.delete(flow);
+        try {
+            flowRepository.delete(flow);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            //
+        }
     }
 
     @CacheEvict(cacheNames = {"flows"}, allEntries=true)
     public void deleteById(Long id) {
-        flowRepository.deleteById(id);
+        try {
+            flowRepository.deleteById(id);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            //
+        }
     }
 }

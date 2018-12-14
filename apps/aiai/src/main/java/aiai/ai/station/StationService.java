@@ -76,7 +76,7 @@ public class StationService {
         }
         try {
             env = FileUtils.readFileToString(file, Charsets.UTF_8);
-            envYaml = EnvYamlUtils.toEnvYaml(env);
+            envYaml = EnvYamlUtils.to(env);
             if (envYaml==null) {
                 log.error("env.yaml wasn't found or empty. path: {}{}env.yaml", globals.stationDir, File.separatorChar );
                 throw new IllegalStateException("Station isn't configured, env.yaml is empty or doesn't exist");

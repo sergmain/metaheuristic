@@ -24,7 +24,7 @@ import org.junit.Test;
 
 import java.util.ArrayList;
 
-public class TestSnippetYaml {
+public class TestSnippetConfig {
 
     @Test
     public void test() {

@@ -15,13 +15,10 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.console;
+package aiai.ai.yaml.snippet_exec;
 
 import aiai.ai.core.ExecProcessService;
 import lombok.Data;
-import lombok.Getter;
-
-import java.util.LinkedHashMap;
 
 @Data
 public class SnippetExec {

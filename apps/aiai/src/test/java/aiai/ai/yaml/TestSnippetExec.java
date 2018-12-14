@@ -18,8 +18,8 @@
 package aiai.ai.yaml;
 
 import aiai.ai.core.ExecProcessService;
-import aiai.ai.yaml.console.SnippetExec;
-import aiai.ai.yaml.console.SnippetExecUtils;
+import aiai.ai.yaml.snippet_exec.SnippetExec;
+import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,8 +27,8 @@ public class TestSnippetExec {
 
     @Test
     public void testEmptyString() {
-        Assert.assertNull(SnippetExecUtils.toSnippetExec(""));
-        Assert.assertNull(SnippetExecUtils.toSnippetExec((String) null));
+        Assert.assertNull(SnippetExecUtils.to(""));
+        Assert.assertNull(SnippetExecUtils.to((String) null));
     }
 
     @Test
@@ -37,7 +37,7 @@ public class TestSnippetExec {
         output.exec = new ExecProcessService.Result(true, 0, "output#1");
 
         String yaml = SnippetExecUtils.toString(output);
-        SnippetExec output1 = SnippetExecUtils.toSnippetExec(yaml);
+        SnippetExec output1 = SnippetExecUtils.to(yaml);
         Assert.assertEquals(output, output1);
     }
 
