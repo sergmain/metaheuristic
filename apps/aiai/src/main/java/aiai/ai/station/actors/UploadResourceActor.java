@@ -92,7 +92,8 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
         List<UploadResourceTask> repeat = new ArrayList<>();
         while((task = poll())!=null) {
             boolean isOk = false;
-            try (InputStream is = new FileInputStream(task.file)) {
+//            try (InputStream is = new FileInputStream(task.file)) {
+            try {
                 log.info("Start uploading result data to server, resultDataFile: {}", task.file);
 
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
@@ -102,7 +103,8 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 HttpEntity entity = MultipartEntityBuilder.create()
                         .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                         .setCharset(StandardCharsets.UTF_8)
-                        .addBinaryBody("file", is, ContentType.DEFAULT_BINARY, task.file.getName())
+                        .addBinaryBody("file", task.file, ContentType.DEFAULT_BINARY, task.file.getName())
+//                        .addBinaryBody("file", is, ContentType.DEFAULT_BINARY, task.file.getName())
                         .build();
 
                 Request request = Request.Post(uri)

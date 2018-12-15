@@ -95,7 +95,7 @@ public class TaskAssigner {
             File taskDir = stationTaskService.prepareTaskDir(task.taskId);
 
             for (String code : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                DownloadResourceTask resourceTask = new DownloadResourceTask(code, taskDir);
+                DownloadResourceTask resourceTask = new DownloadResourceTask(code, task.getTaskId(), taskDir);
                 resourceTask.launchpad = launchpad.launchpadLookup;
                 downloadResourceActor.add(resourceTask);
             }

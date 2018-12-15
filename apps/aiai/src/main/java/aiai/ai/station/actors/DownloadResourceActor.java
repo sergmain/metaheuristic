@@ -21,6 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationResourceUtils;
+import aiai.ai.station.StationTaskService;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.DownloadResourceTask;
 import lombok.extern.slf4j.Slf4j;
@@ -40,9 +41,11 @@ import java.net.SocketTimeoutException;
 public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTask> {
 
     private final Globals globals;
+    private final StationTaskService stationTaskService;
 
-    public DownloadResourceActor(Globals globals) {
+    public DownloadResourceActor(Globals globals, StationTaskService stationTaskService) {
         this.globals = globals;
+        this.stationTaskService = stationTaskService;
     }
 
     @PostConstruct
@@ -85,7 +88,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 else {
                     response = request.execute();
                 }
-                File tempFile = File.createTempFile("resource", ".temp", assetFile.file.getParentFile());
+                File tempFile = File.createTempFile("resource-", ".temp", assetFile.file.getParentFile());
                 if (tempFile.exists()) {
                     log.warn("Temp file already exists, {}", tempFile.getPath());
                     if (!tempFile.delete()) {
@@ -101,7 +104,9 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 log.info("Resource #{} was loaded", task.getId());
             } catch (HttpResponseException e) {
                 if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                    log.warn("Resource with id {} wasn't found", task.getId());
+                    log.warn("Resource with id {} wasn't found. stop processing task #{}", task.getId(), task.getTaskId());
+                    stationTaskService.finishAndWriteToLog( task.getTaskId(),
+                            String.format("Resource %s wasn't found on launchpad. Task #%s is finished.", task.getId(), task.getTaskId() ));
                 } else if (e.getStatusCode() == HttpServletResponse.SC_CONFLICT) {
                     log.warn("Resource with id {} is broken and need to be recreated", task.getId());
                 } else {

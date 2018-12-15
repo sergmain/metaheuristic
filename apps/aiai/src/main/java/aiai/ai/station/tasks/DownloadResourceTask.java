@@ -29,6 +29,7 @@ import java.io.File;
 @EqualsAndHashCode(of = "id", callSuper = false)
 public class DownloadResourceTask extends StationRestTask {
     public String id;
+    public long taskId;
     public File targetDir;
 
     @Override
