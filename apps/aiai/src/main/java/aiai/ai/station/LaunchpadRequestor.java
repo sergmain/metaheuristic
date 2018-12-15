@@ -33,7 +33,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
-import javax.annotation.PostConstruct;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -73,14 +72,6 @@ public class LaunchpadRequestor {
         final String restUrl = launchpadUrl + (launchpad.launchpadLookup.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
         serverRestUrl = restUrl + Consts.SERVER_REST_URL;
 
-    }
-
-    @PostConstruct
-    public void postConstruct() {
-        if (!globals.isStationEnabled) {
-            //noinspection UnnecessaryReturnStatement
-            return;
-        }
     }
 
     private final List<Command> commands = new ArrayList<>();

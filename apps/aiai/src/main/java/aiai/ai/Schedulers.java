@@ -17,11 +17,9 @@
  */
 package aiai.ai;
 
+import aiai.ai.comm.CommandProcessor;
 import aiai.ai.launchpad.LaunchpadService;
-import aiai.ai.station.ArtifactCleanerAtStation;
-import aiai.ai.station.LaunchpadRequestor;
-import aiai.ai.station.TaskProcessor;
-import aiai.ai.station.TaskAssigner;
+import aiai.ai.station.*;
 import aiai.ai.station.actors.DownloadResourceActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.actors.UploadResourceActor;
@@ -30,6 +28,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class Schedulers {
@@ -96,23 +97,39 @@ public class Schedulers {
     public static class StationSchedulers {
 
         private final Globals globals;
-        private final LaunchpadRequestor launchpadRequester;
         private final TaskAssigner taskAssigner;
         private final TaskProcessor taskProcessor;
         private final DownloadSnippetActor downloadSnippetActor;
         private final DownloadResourceActor downloadResourceActor;
         private final UploadResourceActor uploadResourceActor;
         private final ArtifactCleanerAtStation artifactCleaner;
+        private final StationService stationService;
+        private final StationTaskService stationTaskService;
+        private final CommandProcessor commandProcessor;
 
-        public StationSchedulers(Globals globals, LaunchpadRequestor launchpadRequester, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner) {
+        private final RoundRobinForLaunchpad roundRobin;
+        private final Map<String, LaunchpadRequestor> launchpadRequestorMap = new HashMap<>();
+
+        public StationSchedulers(Globals globals, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, CommandProcessor commandProcessor) {
             this.globals = globals;
-            this.launchpadRequester = launchpadRequester;
             this.taskAssigner = taskAssigner;
             this.taskProcessor = taskProcessor;
             this.downloadSnippetActor = downloadSnippetActor;
             this.downloadResourceActor = downloadResourceActor;
             this.uploadResourceActor = uploadResourceActor;
             this.artifactCleaner = artifactCleaner;
+            this.stationService = stationService;
+            this.stationTaskService = stationTaskService;
+            this.commandProcessor = commandProcessor;
+
+            this.roundRobin = new RoundRobinForLaunchpad(stationService.lookupExtendedMap);
+
+            for (Map.Entry<String, StationService.LaunchpadLookupExtended> entry : stationService.lookupExtendedMap.entrySet()) {
+                final StationService.LaunchpadLookupExtended launchpad = entry.getValue();
+                final LaunchpadRequestor requestor = new LaunchpadRequestor(launchpad.launchpadLookup.url, globals, commandProcessor, stationTaskService, stationService);
+
+                launchpadRequestorMap.put(launchpad.launchpadLookup.url, requestor);
+            }
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.request-launchpad'), 3, 20, 10)*1000 }")
@@ -123,8 +140,10 @@ public class Schedulers {
             if (!globals.isStationEnabled) {
                 return;
             }
-            log.info("LaunchpadRequester.fixedDelay()");
-            launchpadRequester.fixedDelay();
+
+            String url = roundRobin.next();
+            log.info("LaunchpadRequestor.fixedDelay() for url {}", url);
+            launchpadRequestorMap.get(url).fixedDelay();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.task-assigner'), 3, 20, 10)*1000 }")
