@@ -190,7 +190,10 @@ public class StationTaskService {
             log.warn(es);
             task.setLaunchedOn(System.currentTimeMillis());
             task.setFinishedOn(System.currentTimeMillis());
-            task.setSnippetExecResult(es);
+
+            SnippetExec snippetExec = new SnippetExec();
+            snippetExec.setExec( new ExecProcessService.Result(false, -1, es) );
+            task.setSnippetExecResult(SnippetExecUtils.toString(snippetExec));
             save(task);
         }
     }
@@ -280,7 +283,10 @@ public class StationTaskService {
         return status;
     }
 
-    public void createTask(long taskId, Long flowInstanceId, String params) {
+    public void createTask(String launchpadUrl, long taskId, Long flowInstanceId, String params) {
+        if (launchpadUrl==null) {
+            throw new IllegalStateException("launchpadUrl is null");
+        }
         synchronized (StationSyncHolder.stationGlobalSync) {
             StationTask task = map.computeIfAbsent(taskId, k -> new StationTask());
 
@@ -291,6 +297,7 @@ public class StationTaskService {
             task.finishedOn = null;
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
             task.clean = taskParamYaml.clean;
+            task.launchpadUrl = launchpadUrl;
 
             String path = getTaskPath(taskId);
             File systemDir = new File(globals.stationTaskDir, path);

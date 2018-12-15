@@ -112,7 +112,7 @@ public class CommandProcessor {
         }
         List<Protocol.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
         for (Long taskId : command.taskIds) {
-            Enums.ResendTaskOutputResourceStatus status = stationService.resendTaskOutputResource(taskId);
+            Enums.ResendTaskOutputResourceStatus status = stationService.resendTaskOutputResource(command.launchpadUrl, taskId);
             statuses.add( new Protocol.ResendTaskOutputResourceResult.SimpleStatus(taskId, status));
         }
         return new Command[]{new Protocol.ResendTaskOutputResourceResult(statuses)};
@@ -170,7 +170,7 @@ public class CommandProcessor {
     }
 
     private Command[] processAssignedTask(Protocol.AssignedTask command) {
-        stationService.assignTasks(command.tasks);
+        stationService.assignTasks(command.launchpadUrl, command.tasks);
         return Protocol.NOP_ARRAY;
     }
 
@@ -230,6 +230,7 @@ public class CommandProcessor {
             if (command.getType()== Command.Type.Nop) {
                 continue;
             }
+            command.launchpadUrl = data.launchpadUrl;
             responses.setCommands(process(command));
         }
         return responses;

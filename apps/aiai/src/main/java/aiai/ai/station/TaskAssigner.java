@@ -44,14 +44,16 @@ public class TaskAssigner {
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final CurrentExecState currentExecState;
     private final StationTaskService stationTaskService;
+    private final StationService stationService;
 
-    public TaskAssigner(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService) {
+    public TaskAssigner(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, StationService stationService) {
         this.globals = globals;
         this.downloadSnippetActor = downloadSnippetActor;
         this.downloadResourceActor = downloadResourceActor;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.currentExecState = currentExecState;
         this.stationTaskService = stationTaskService;
+        this.stationService = stationService;
     }
 
     public void fixedDelay() {
@@ -70,6 +72,10 @@ public class TaskAssigner {
             }
         }
         for (StationTask task : tasks) {
+            if (StringUtils.isBlank(task.launchpadUrl)) {
+                log.error("launchpadUrl for task {} is blank", task.getTaskId());
+                continue;
+            }
             if (StringUtils.isBlank(task.getParams())) {
                 log.error("Params for task {} is blank", task.getTaskId());
                 continue;
@@ -84,14 +90,19 @@ public class TaskAssigner {
                 log.warn("taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;
             }
+            final StationService.LaunchpadLookupExtended launchpad = stationService.lookupExtendedMap.get(task.launchpadUrl);
 
             File taskDir = stationTaskService.prepareTaskDir(task.taskId);
 
             for (String code : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                downloadResourceActor.add(new DownloadResourceTask(code, taskDir));
+                DownloadResourceTask resourceTask = new DownloadResourceTask(code, taskDir);
+                resourceTask.launchpad = launchpad.launchpadLookup;
+                downloadResourceActor.add(resourceTask);
             }
             if (!taskParamYaml.snippet.fileProvided) {
-                downloadSnippetActor.add(new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, taskDir));
+                DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, taskDir);
+                snippetTask.launchpad = launchpad.launchpadLookup;
+                downloadSnippetActor.add(snippetTask);
             }
         }
     }

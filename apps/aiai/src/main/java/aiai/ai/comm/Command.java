@@ -32,9 +32,10 @@ import java.util.Map;
  */
 @Data
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@JsonIgnoreProperties(value = {"sysParams"})
+@JsonIgnoreProperties(value = {"launchpadUrl"})
 public class Command implements Serializable {
     public String stationId;
+    public String launchpadUrl;
 
     private Type type;
     private Map<String, String> params = new HashMap<>();

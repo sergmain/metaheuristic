@@ -122,7 +122,7 @@ public class LaunchpadRequestor {
             data.setCommand(stationService.produceReportStationStatus(launchpad.periods));
             final boolean b = stationTaskService.isNeedNewTask(stationId);
             if (b) {
-                data.setCommand(new Protocol.RequestTask(globals.isAcceptOnlySignedSnippets));
+                data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.isAcceptOnlySignedSnippets));
             }
             if (System.currentTimeMillis() - lastRequestForMissingResources > 15_000) {
                 data.setCommand(new Protocol.CheckForMissingOutputResources());
@@ -156,6 +156,11 @@ public class LaunchpadRequestor {
             HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
             ResponseEntity<ExchangeData> response = restTemplate.exchange(serverRestUrl, HttpMethod.POST, request, ExchangeData.class);
             ExchangeData result = response.getBody();
+            if (result==null) {
+                log.warn("Launchpad returned null as a result");
+                return;
+            }
+            result.launchpadUrl = launchpadUrl;
 
             addCommands(commandProcessor.processExchangeData(result).getCommands());
             log.debug("fixedDelay(), {}", result);
@@ -163,6 +168,9 @@ public class LaunchpadRequestor {
         catch (HttpClientErrorException e) {
             if (e.getStatusCode()== HttpStatus.UNAUTHORIZED) {
                 log.error("Error 401 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
+            }
+            else if (e.getStatusCode()== HttpStatus.FORBIDDEN) {
+                log.error("Error 403 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
             }
             else {
                 throw e;

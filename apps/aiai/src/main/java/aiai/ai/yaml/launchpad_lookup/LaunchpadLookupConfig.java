@@ -35,6 +35,7 @@ public class LaunchpadLookupConfig {
         public String restPassword;
         public String restUsername;
         public String restToken;
+        public boolean isAcceptOnlySignedSnippets;
 
         public PublicKey createPublicKey() {
             return SecUtils.getPublicKey(publicKey);

@@ -197,18 +197,21 @@ public class StationService {
         }
     }
 
-    public void assignTasks(List<Protocol.AssignedTask.Task> tasks) {
+    public void assignTasks(String launchpadUrl, List<Protocol.AssignedTask.Task> tasks) {
         if (tasks==null || tasks.isEmpty()) {
             return;
         }
         synchronized (StationSyncHolder.stationGlobalSync) {
             for (Protocol.AssignedTask.Task task : tasks) {
-                stationTaskService.createTask(task.taskId, task.flowInstanceId, task.params);
+                stationTaskService.createTask(launchpadUrl, task.taskId, task.flowInstanceId, task.params);
             }
         }
     }
 
-    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(long taskId) {
+    public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(String launchpadUrl, long taskId) {
+        if (launchpadUrl==null) {
+            throw new IllegalStateException("launchpadUrl is null");
+        }
         File taskDir = stationTaskService.prepareTaskDir(taskId);
         File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR+File.separatorChar+Consts.PARAMS_YAML);
         if (!paramFile.isFile() || !paramFile.exists()) {
@@ -228,7 +231,11 @@ public class StationService {
             log.info("Resource hasn't been prepared yet, {}", assetFile);
             return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
         }
-        uploadResourceActor.add(new UploadResourceTask(taskId, assetFile.file));
+        final StationService.LaunchpadLookupExtended launchpad = lookupExtendedMap.get(launchpadUrl);
+
+        UploadResourceTask uploadResourceTask = new UploadResourceTask(taskId, assetFile.file);
+        uploadResourceTask.launchpad = launchpad.launchpadLookup;
+        uploadResourceActor.add(uploadResourceTask);
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
 }

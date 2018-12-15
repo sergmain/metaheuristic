@@ -192,7 +192,9 @@ public class TaskProcessor {
                     File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + taskParamYaml.outputResourceCode);
                     if (resultDataFile.exists()) {
                         log.info("Register task for uploading result data to server, resultDataFile: {}", resultDataFile.getPath());
-                        uploadResourceActor.add(new UploadResourceTask(task.taskId, resultDataFile));
+                        UploadResourceTask uploadResourceTask = new UploadResourceTask(task.taskId, resultDataFile);
+                        uploadResourceTask.launchpad = launchpad.launchpadLookup;
+                        uploadResourceActor.add(uploadResourceTask);
                     } else {
                         String es = "Result data file doesn't exist, resultDataFile: " + resultDataFile.getPath();
                         log.error(es);

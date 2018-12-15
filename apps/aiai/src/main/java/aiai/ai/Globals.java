@@ -26,7 +26,6 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
-import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.util.Random;
 
@@ -43,13 +42,13 @@ public class Globals {
     @Value("${aiai.is-testing:#{false}}")
     public boolean isUnitTesting = false;
 
-    @Value("${aiai.launchpad.is-ssl-required:#{true}}")
-    public boolean isSslRequired = true;
-
     // Launchpad's globals
 
     @Value("${aiai.launchpad.secure-rest-url:#{true}}")
     public boolean isSecureLaunchpadRestUrl;
+
+    @Value("${aiai.launchpad.is-ssl-required:#{true}}")
+    public boolean isSslRequired = true;
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.master-username')) }")
     public String launchpadMasterUsername;
@@ -90,9 +89,6 @@ public class Globals {
     @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
     public boolean isReplaceSnapshot;
 
-    @Value("${aiai.launchpad.accept-only-signed-env:#{true}}")
-    public boolean isAcceptOnlySignedEnv;
-
     @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.rest-password')) }")
     public String launchpadRestPassword;
 
@@ -110,8 +106,6 @@ public class Globals {
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
     public File stationDir;
 
-    @Value("${aiai.station.accept-only-signed-snippets:#{true}}")
-    public boolean isAcceptOnlySignedSnippets;
 
     // some fields
     public File launchpadTempDir;
@@ -120,8 +114,6 @@ public class Globals {
     public File stationSnippetDir;
     public File stationResourcesDir;
     public File stationTaskDir;
-
-//    public TimePeriods timePeriods;
 
 //    public String serverRestUrl;
 //    public String payloadRestUrl;
@@ -138,15 +130,6 @@ public class Globals {
             throw new IllegalStateException("launchpadMasterUsername can't be the same as launchpadRestUsername, launchpadMasterUsername: " + launchpadMasterUsername + ", launchpadRestUsername: " + launchpadRestUsername);
         }
 
-        if (isStationEnabled) {
-/*
-            if (isSecureRestUrl) {
-                if (stationRestPassword==null) {
-                    throw new IllegalArgumentException("if aiai.secure-rest-url=true and aiai.station.enabled=true, then aiai.station.server-rest-password has to be not null");
-                }
-            }
-*/
-        }
 
 /*
         final String restUrl = launchpadUrl + (isSecureLaunchpadRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
@@ -167,9 +150,6 @@ public class Globals {
             stationResourcesDir.mkdirs();
             stationTaskDir = new File(stationDir, Consts.TASK_DIR);
             stationTaskDir.mkdirs();
-
-//            timePeriods = TimePeriods.from(stationActiveTime);
-
         }
 
         if (isLaunchpadEnabled && launchpadDir==null) {
@@ -207,10 +187,8 @@ public class Globals {
         log.info("\tstationRowsLimit: {}", stationRowsLimit);
         log.info("\taccountRowsLimit: {}", accountRowsLimit);
         log.info("\tisReplaceSnapshot: {}", isReplaceSnapshot);
-        log.info("\tisAcceptOnlySignedEnv: {}", isAcceptOnlySignedEnv);
         log.info("\tisStationEnabled: {}", isStationEnabled);
         log.info("\tstationDir: {}", stationDir);
-        log.info("\tisAcceptOnlySignedSnippets: {}", isAcceptOnlySignedSnippets);
     }
 
     private static final Random r = new Random();

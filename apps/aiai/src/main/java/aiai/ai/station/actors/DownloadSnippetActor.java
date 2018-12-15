@@ -54,12 +54,6 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
         this.globals = globals;
     }
 
-    @PostConstruct
-    public void postConstruct() {
-        if (globals.isStationEnabled) {
-        }
-    }
-
     public void fixedDelay() {
         if (globals.isUnitTesting) {
             return;
@@ -94,7 +88,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
 
             Checksum checksum=null;
-            if (globals.isAcceptOnlySignedSnippets) {
+            if (task.launchpad.isAcceptOnlySignedSnippets) {
                 try {
                     Request request = Request.Get(snippetChecksumUrl + '/' + snippetCode)
                             .connectTimeout(5000)
@@ -141,17 +135,17 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 response.saveContent(snippetTempFile);
 
                 boolean isOk = true;
-                if (globals.isAcceptOnlySignedSnippets) {
+                if (task.launchpad.isAcceptOnlySignedSnippets) {
                     CheckSumAndSignatureStatus status;
                     try (FileInputStream fis = new FileInputStream(snippetTempFile)) {
                         status = ChecksumWithSignatureService.verifyChecksumAndSignature(checksum, "Snippet "+snippetCode, fis, true, task.launchpad.createPublicKey());
                     }
                     if ( status.isSignatureOk == null){
-                        log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", globals.isAcceptOnlySignedSnippets, snippetCode);
+                        log.warn("launchpad.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", task.launchpad.isAcceptOnlySignedSnippets, snippetCode);
                         continue;
                     }
                     if (Boolean.FALSE.equals(status.isSignatureOk)) {
-                        log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", globals.isAcceptOnlySignedSnippets, snippetCode);
+                        log.warn("launchpad.isAcceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", task.launchpad.isAcceptOnlySignedSnippets, snippetCode);
                         continue;
                     }
                     isOk = status.isOk;

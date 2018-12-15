@@ -60,6 +60,9 @@ public class ExchangeData {
     @JsonProperty(value = "station_id")
     private String stationId;
 
+    @JsonIgnore
+    public String launchpadUrl;
+
     public ExchangeData() {
     }
 

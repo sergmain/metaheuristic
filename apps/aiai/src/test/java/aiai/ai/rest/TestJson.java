@@ -43,19 +43,6 @@ public class TestJson {
     }
 
     @Test
-    public void testDontSerializeSysParams() throws IOException {
-        ExchangeData ed = new ExchangeData();
-        final Protocol.Nop nop = new Protocol.Nop();
-        nop.getParams().put("key", "13");
-        ed.setSuccess(true);
-        ed.setCommand(nop);
-        String asJson = JsonUtils.toJson(ed);
-
-        Assert.assertTrue(asJson.contains("13"));
-        Assert.assertFalse(asJson.contains("42"));
-    }
-
-    @Test
     public void testJsonExchangeData() throws IOException {
         System.out.println("testJsonExchangeData()");
         String json = "{\"nop\":{\"type\":\"Nop\",\"params\":{\"key\":\"13\"},\"sysParams\":{\"key42\":\"42\"}},\"success\":true}";

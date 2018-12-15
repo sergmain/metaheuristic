@@ -50,11 +50,14 @@
                     &nbsp;
                 </td>
                 <td>
+                    <a class="pure-button pure-button-primary" href="flow-instances.html" th:href="${'/launchpad/flow/flow-instances/' + result.flow.id}">Cancel</a>
+<!--
                     <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/flow/flow-instances}" accept-charset="UTF-8" id="flow-instance-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>
                     </form>
+-->
                 </td>
             </tr>
         </table>
