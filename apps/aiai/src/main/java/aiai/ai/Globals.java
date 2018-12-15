@@ -17,19 +17,15 @@
  */
 package aiai.ai;
 
-import aiai.ai.yaml.env.TimePeriods;
 import aiai.apps.commons.utils.SecUtils;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHost;
-import org.apache.http.client.utils.URIUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
-import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.PublicKey;
 import java.util.Random;
@@ -41,40 +37,31 @@ public class Globals {
 
     // Globals' globals
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.public-key')) }")
-    public String publicKeyStr;
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.rest-password')) }")
-    public String restPassword;
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.rest-username')) }")
-    public String restUsername;
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.rest-token')) }")
-    public String restToken;
-
-    @Value("${aiai.secure-rest-url:#{true}}")
-    public boolean isSecureRestUrl;
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.master-username')) }")
-    public String masterUsername;
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.master-token')) }")
-    public String masterToken;
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.master-password')) }")
-    public String masterPassword;
-
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.thread-number'), 1, 8, 3) }")
     public int threadNumber;
 
     @Value("${aiai.is-testing:#{false}}")
     public boolean isUnitTesting = false;
 
-    @Value("${aiai.is-ssl-required:#{true}}")
+    @Value("${aiai.launchpad.is-ssl-required:#{true}}")
     public boolean isSslRequired = true;
 
     // Launchpad's globals
+
+    @Value("${aiai.launchpad.secure-rest-url:#{true}}")
+    public boolean isSecureLaunchpadRestUrl;
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.master-username')) }")
+    public String launchpadMasterUsername;
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.master-token')) }")
+    public String launchpadMasterToken;
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.master-password')) }")
+    public String launchpadMasterPassword;
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.public-key')) }")
+    public String launchpadPublicKeyStr;
 
     @Value("${aiai.launchpad.enabled:#{false}}")
     public boolean isLaunchpadEnabled = true;
@@ -106,6 +93,15 @@ public class Globals {
     @Value("${aiai.launchpad.accept-only-signed-env:#{true}}")
     public boolean isAcceptOnlySignedEnv;
 
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.rest-password')) }")
+    public String launchpadRestPassword;
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.rest-username')) }")
+    public String launchpadRestUsername;
+
+    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.rest-token')) }")
+    public String launchpadRestToken;
+
     // Station's globals
 
     @Value("${aiai.station.enabled:#{false}}")
@@ -114,63 +110,51 @@ public class Globals {
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
     public File stationDir;
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.station.server-rest-password')) }")
-    public String stationRestPassword;
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.station.active-time')) }")
-    public String stationActiveTime;
-
     @Value("${aiai.station.accept-only-signed-snippets:#{true}}")
     public boolean isAcceptOnlySignedSnippets;
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.station.launchpad-url')) }")
-    public String launchpadUrl;
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.station.registry-url')) }")
-    public String registryUrl;
 
     // some fields
     public File launchpadTempDir;
     public File launchpadResourcesDir;
-    public HttpHost launchpadHttpHostWithAuth;
 
     public File stationSnippetDir;
     public File stationResourcesDir;
     public File stationTaskDir;
 
-    public TimePeriods timePeriods;
+//    public TimePeriods timePeriods;
 
-    public String serverRestUrl;
-    public String payloadRestUrl;
-    public String uploadRestUrl;
-    public PublicKey publicKey = null;
+//    public String serverRestUrl;
+//    public String payloadRestUrl;
+//    public String uploadRestUrl;
+    public PublicKey launchpadPublicKey = null;
 
     @PostConstruct
-    public void init() throws GeneralSecurityException {
-        if (publicKeyStr!=null) {
-            publicKey = SecUtils.getPublicKey(publicKeyStr);
+    public void init() {
+        if (launchpadPublicKeyStr!=null) {
+            launchpadPublicKey = SecUtils.getPublicKey(launchpadPublicKeyStr);
         }
 
-        if (masterUsername!=null && masterUsername.equals(restUsername)) {
-            throw new IllegalStateException("masterUsername can't be the same as restUsername, masterUsername: " + masterUsername + ", restUsername: " + restUsername);
+        if (launchpadMasterUsername!=null && launchpadMasterUsername.equals(launchpadRestUsername)) {
+            throw new IllegalStateException("launchpadMasterUsername can't be the same as launchpadRestUsername, launchpadMasterUsername: " + launchpadMasterUsername + ", launchpadRestUsername: " + launchpadRestUsername);
         }
 
         if (isStationEnabled) {
+/*
             if (isSecureRestUrl) {
                 if (stationRestPassword==null) {
                     throw new IllegalArgumentException("if aiai.secure-rest-url=true and aiai.station.enabled=true, then aiai.station.server-rest-password has to be not null");
                 }
             }
-            if (registryUrl ==null) {
-                throw new IllegalArgumentException("if aiai.station.enabled=true, then aiai.station.registry-server has to be not null");
-            }
+*/
         }
 
-        final String restUrl = launchpadUrl + (isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
+/*
+        final String restUrl = launchpadUrl + (isSecureLaunchpadRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
 
         serverRestUrl  = restUrl + Consts.SERVER_REST_URL;
         payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL;
         uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
+*/
 
         if (stationDir==null) {
             log.warn("Station is disabled, stationDir: {}, isStationEnabled: {}", stationDir, isStationEnabled);
@@ -184,7 +168,7 @@ public class Globals {
             stationTaskDir = new File(stationDir, Consts.TASK_DIR);
             stationTaskDir.mkdirs();
 
-            timePeriods = TimePeriods.from(stationActiveTime);
+//            timePeriods = TimePeriods.from(stationActiveTime);
 
         }
 
@@ -194,7 +178,7 @@ public class Globals {
         }
 
         if (isLaunchpadEnabled) {
-            if (masterUsername==null || masterToken==null || masterPassword==null) {
+            if (launchpadMasterUsername==null || launchpadMasterToken==null || launchpadMasterPassword==null) {
                 throw new IllegalArgumentException("if aiai.secure-rest-url=true, then aiai.master-username, aiai.master-token, and aiai.master-password have to be not null");
             }
 
@@ -204,14 +188,29 @@ public class Globals {
             launchpadResourcesDir = new File(launchpadDir, Consts.RESOURCES_DIR);
             launchpadResourcesDir.mkdirs();
 
-            try {
-                launchpadHttpHostWithAuth = URIUtils.extractHost(new URL(launchpadUrl).toURI());
-            } catch (Throwable th) {
-                throw new IllegalArgumentException("Can't build HttpHost for "+launchpadUrl, th);
-            }
         }
-        //noinspection unused
-        int i=0;
+        logGlobals();
+    }
+
+    private void logGlobals() {
+        log.info("Current globals:");
+        log.info("\tisSecureLaunchpadRestUrl: {}", isSecureLaunchpadRestUrl);
+        log.info("\tthreadNumber: {}", threadNumber);
+        log.info("\tisUnitTesting: {}", isUnitTesting);
+        log.info("\tisSslRequired: {}", isSslRequired);
+        log.info("\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
+        log.info("\tlaunchpadDir: {}", launchpadDir);
+        log.info("\tresourceRowsLimit: {}", resourceRowsLimit);
+        log.info("\texperimentRowsLimit: {}", experimentRowsLimit);
+        log.info("\tflowRowsLimit: {}", flowRowsLimit);
+        log.info("\tflowInstanceRowsLimit: {}", flowInstanceRowsLimit);
+        log.info("\tstationRowsLimit: {}", stationRowsLimit);
+        log.info("\taccountRowsLimit: {}", accountRowsLimit);
+        log.info("\tisReplaceSnapshot: {}", isReplaceSnapshot);
+        log.info("\tisAcceptOnlySignedEnv: {}", isAcceptOnlySignedEnv);
+        log.info("\tisStationEnabled: {}", isStationEnabled);
+        log.info("\tstationDir: {}", stationDir);
+        log.info("\tisAcceptOnlySignedSnippets: {}", isAcceptOnlySignedSnippets);
     }
 
     private static final Random r = new Random();

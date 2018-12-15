@@ -46,7 +46,8 @@ public class StationResourceUtils {
         assetFile.isExist = assetFile.file.exists();
 
         if (assetFile.isExist) {
-            if (assetFile.file.length() == 0) {
+            assetFile.fileLength = assetFile.file.length();
+            if (assetFile.fileLength == 0) {
                 assetFile.file.delete();
                 assetFile.isExist = false;
             }

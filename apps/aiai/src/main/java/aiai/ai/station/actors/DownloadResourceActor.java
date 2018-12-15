@@ -17,6 +17,7 @@
  */
 package aiai.ai.station.actors;
 
+import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationResourceUtils;
@@ -30,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
+import java.io.File;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 
@@ -38,20 +40,13 @@ import java.net.SocketTimeoutException;
 public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTask> {
 
     private final Globals globals;
-    private final HttpClientExecutor executor;
 
-    private String targetUrl;
-
-    public DownloadResourceActor(Globals globals, HttpClientExecutor executor) {
+    public DownloadResourceActor(Globals globals) {
         this.globals = globals;
-        this.executor = executor;
     }
 
     @PostConstruct
     public void postConstruct() {
-        if (globals.isStationEnabled) {
-            targetUrl = globals.payloadRestUrl + "/resource";
-        }
     }
 
     public void fixedDelay() {
@@ -64,30 +59,45 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
         DownloadResourceTask task;
         while ((task = poll()) != null) {
+            log.info("Start processing the task {}", task);
             AssetFile assetFile = StationResourceUtils.prepareDataFile(task.targetDir, task.id, null);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
             }
             if (assetFile.isContent ) {
-                log.info("Resource was already downloaded. Asset file: {}", assetFile.file.getPath());
+                log.info("Resource was already downloaded. Asset file: {}", assetFile);
                 continue;
             }
 
             try {
-                Request request = Request.Get(targetUrl + "/DATA/" + task.getId())
+                final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
+                String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource";
+
+                Request request = Request.Get(payloadRestUrl + "/DATA/" + task.getId())
                         .connectTimeout(10000)
                         .socketTimeout(10000);
 
                 Response response;
-                if (globals.isSecureRestUrl) {
-                    response = executor.executor.execute(request);
+                if (task.launchpad.isSecureRestUrl) {
+                    response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                 }
                 else {
                     response = request.execute();
                 }
-                response.saveContent(assetFile.file);
-
+                File tempFile = File.createTempFile("resource", ".temp", assetFile.file.getParentFile());
+                if (tempFile.exists()) {
+                    log.warn("Temp file already exists, {}", tempFile.getPath());
+                    if (!tempFile.delete()) {
+                        log.error("Can't delete temporary file {}", tempFile.getAbsolutePath());
+                        return;
+                    }
+                }
+                response.saveContent(tempFile);
+                if (!tempFile.renameTo(assetFile.file)) {
+                    log.warn("Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());
+                    return;
+                }
                 log.info("Resource #{} was loaded", task.getId());
             } catch (HttpResponseException e) {
                 if (e.getStatusCode() == HttpServletResponse.SC_GONE) {

@@ -17,6 +17,7 @@
  */
 package aiai.apps.commons.utils;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
 
@@ -26,6 +27,7 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
+@Slf4j
 public class SecUtils {
 
     public static final String SIGNATURE_DELIMITER = "###";
@@ -41,11 +43,17 @@ public class SecUtils {
         return StringUtils.newStringUsAscii(Base64.encodeBase64(signer.sign(), isChuncked));
     }
 
-    public static PublicKey getPublicKey(String keyBase64) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        byte[] keyBytes = Base64.decodeBase64(keyBase64);
-        X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
-        return kf.generatePublic(spec);
+    public static PublicKey getPublicKey(String keyBase64) {
+        try {
+            byte[] keyBytes = Base64.decodeBase64(keyBase64);
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(keyBytes);
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            return kf.generatePublic(spec);
+        } catch (GeneralSecurityException e) {
+            String es = "Error of creating public key from string";
+            log.error(es, e);
+            throw new IllegalStateException(es, e);
+        }
     }
 
     public static PrivateKey getPrivateKey(String keyBase64) throws NoSuchAlgorithmException, InvalidKeySpecException {

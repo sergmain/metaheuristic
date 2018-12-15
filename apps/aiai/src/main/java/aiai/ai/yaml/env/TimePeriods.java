@@ -41,6 +41,7 @@ public class TimePeriods {
     }
 
     public final List<TimePeriod> periods = new ArrayList<>();
+    public String asString = ""; // for ALWAYS_ACTIVE
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormat.forPattern("HH:mm");
 
@@ -66,6 +67,7 @@ public class TimePeriods {
         }
 
         TimePeriods periods = new TimePeriods();
+        periods.asString = s;
         for (StringTokenizer st = new StringTokenizer(s, ","); st.hasMoreTokens(); ) {
             String token = st.nextToken().trim();
             periods.periods.add( asTimePeriod(token) );
@@ -87,7 +89,7 @@ public class TimePeriods {
         return false;
     }
 
-    public boolean isCurrentTimeActive() {
-        return isActive(LocalTime.fromMillisOfDay(System.currentTimeMillis()));
+    public boolean isCurrentTimeInactive() {
+        return !isActive(LocalTime.fromMillisOfDay(System.currentTimeMillis()));
     }
 }

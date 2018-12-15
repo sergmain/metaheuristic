@@ -64,38 +64,38 @@ public class CustomUserDetails implements UserDetailsService {
             throw new UsernameNotFoundException("Username not found");
         }
 
-        if (StringUtils.equals(globals.restUsername, complexUsername.getUsername()) && StringUtils.equals(globals.restToken, complexUsername.getToken())) {
+        if (StringUtils.equals(globals.launchpadRestUsername, complexUsername.getUsername()) && StringUtils.equals(globals.launchpadRestToken, complexUsername.getToken())) {
 
             Account account = new Account();
 
             // fake Id, I hope it won't make any collision with real accounts
             // need to think of better solution for virtual accounts
             account.setId( Integer.MAX_VALUE -6L );
-            account.setUsername(globals.restUsername);
-            account.setToken(globals.restToken);
+            account.setUsername(globals.launchpadRestUsername);
+            account.setToken(globals.launchpadRestToken);
+            account.setPassword(globals.launchpadRestPassword);
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
-            account.setPassword(globals.restPassword);
             account.setRoles("ROLE_ACCESS_REST");
             return account;
         }
 
-        if (StringUtils.equals(globals.masterUsername, complexUsername.getUsername()) && StringUtils.equals(globals.masterToken, complexUsername.getToken())) {
+        if (StringUtils.equals(globals.launchpadMasterUsername, complexUsername.getUsername()) && StringUtils.equals(globals.launchpadMasterToken, complexUsername.getToken())) {
 
             Account account = new Account();
 
             // fake Id, I hope it won't make any collision with real accounts
             // need to think of better solution for virtual accounts
             account.setId( Integer.MAX_VALUE -5L );
-            account.setUsername(globals.masterUsername);
-            account.setToken(globals.masterToken);
+            account.setUsername(globals.launchpadMasterUsername);
+            account.setToken(globals.launchpadMasterToken);
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);
             account.setEnabled(true);
-            account.setPassword(globals.masterPassword);
+            account.setPassword(globals.launchpadMasterPassword);
 
             account.setRoles("ROLE_ADMIN, ROLE_MANAGER");
 /*

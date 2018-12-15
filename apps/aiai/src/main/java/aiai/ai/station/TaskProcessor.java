@@ -18,7 +18,6 @@
 package aiai.ai.station;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
@@ -40,6 +39,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -73,9 +73,6 @@ public class TaskProcessor {
         if (!globals.isStationEnabled) {
             return;
         }
-        if (!globals.timePeriods.isCurrentTimeActive()) {
-            return;
-        }
 
         File snippetDir = SnippetUtils.checkEvironment(globals.stationDir);
         if (snippetDir == null) {
@@ -84,11 +81,28 @@ public class TaskProcessor {
 
         List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNull();
         for (StationTask task : tasks) {
+            if (StringUtils.isBlank(task.launchpadUrl)) {
+                stationTaskService.finishAndWriteToLog(task.taskId, "Broken task. LaunchpadUrl is blank.");
+                continue;
+            }
+
+            StationService.LaunchpadLookupExtended launchpad = stationService.lookupExtendedMap.get(task.launchpadUrl);
+            if (StringUtils.isBlank(task.launchpadUrl)) {
+                stationTaskService.finishAndWriteToLog(task.taskId, "Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
+                continue;
+            }
+
+            if (launchpad.periods.isCurrentTimeInactive()) {
+                log.info("Can't process task for url {} at this time, time: {}, permitted period of time: {}", new Date(), launchpad.periods.asString);
+                return;
+            }
+
             if (StringUtils.isBlank(task.getParams())) {
                 log.warn("Params for task {} is blank", task.getTaskId());
                 continue;
             }
             if (!currentExecState.isStarted(task.flowInstanceId)) {
+                log.info("FlowInstance #{} isn't started, skip it", task.flowInstanceId);
                 continue;
             }
             File taskDir = stationTaskService.prepareTaskDir(task.taskId);

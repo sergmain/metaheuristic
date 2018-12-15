@@ -17,7 +17,6 @@
  */
 package aiai.ai.utils.checksum;
 
-import aiai.ai.Globals;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
@@ -27,14 +26,13 @@ import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.*;
+import java.security.GeneralSecurityException;
+import java.security.PublicKey;
+import java.security.Signature;
 import java.util.Map;
 
-@Component
 @Slf4j
 public class ChecksumWithSignatureService {
-
-    public final Globals globals;
 
     @AllArgsConstructor
     public static class ChecksumWithSignature {
@@ -42,11 +40,7 @@ public class ChecksumWithSignatureService {
         public String signature;
     }
 
-    public ChecksumWithSignatureService(Globals globals) {
-        this.globals = globals;
-    }
-
-    public CheckSumAndSignatureStatus verifyChecksumAndSignature(Checksum checksum, String infoPrefix, InputStream fis, boolean isVerifySignature ) throws IOException {
+    public static CheckSumAndSignatureStatus verifyChecksumAndSignature(Checksum checksum, String infoPrefix, InputStream fis, boolean isVerifySignature, PublicKey publicKey ) throws IOException {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
         status.isOk = true;
         status.isSignatureOk = null;
@@ -57,7 +51,7 @@ public class ChecksumWithSignatureService {
                 entrySum = checksumWithSignature.checksum;
 
                 if (isVerifySignature) {
-                    status.isSignatureOk = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, globals.publicKey);
+                    status.isSignatureOk = isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, publicKey);
                     if (!status.isSignatureOk) {
                         break;
                     }

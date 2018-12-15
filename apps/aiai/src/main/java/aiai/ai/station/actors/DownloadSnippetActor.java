@@ -17,7 +17,7 @@
  */
 package aiai.ai.station.actors;
 
-import aiai.ai.Enums;
+import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationResourceUtils;
@@ -47,26 +47,16 @@ import java.util.Map;
 public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask> {
 
     private final Globals globals;
-    private final HttpClientExecutor executor;
-
-    private final ChecksumWithSignatureService checksumWithSignatureService;
-
-    private String targetUrl;
-    private String snippetChecksumUrl;
 
     private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
 
-    public DownloadSnippetActor(Globals globals, HttpClientExecutor executor, ChecksumWithSignatureService checksumWithSignatureService) {
+    public DownloadSnippetActor(Globals globals) {
         this.globals = globals;
-        this.executor = executor;
-        this.checksumWithSignatureService = checksumWithSignatureService;
     }
 
     @PostConstruct
     public void postConstruct() {
         if (globals.isStationEnabled) {
-            targetUrl = globals.payloadRestUrl + "/resource/snippet";
-            snippetChecksumUrl = globals.payloadRestUrl + "/snippet-checksum";
         }
     }
 
@@ -96,6 +86,13 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 continue;
             }
 
+            final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
+            final String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL;
+
+            final String targetUrl = payloadRestUrl + "/resource/snippet";
+            final String snippetChecksumUrl = payloadRestUrl + "/snippet-checksum";
+
+
             Checksum checksum=null;
             if (globals.isAcceptOnlySignedSnippets) {
                 try {
@@ -104,8 +101,8 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                             .socketTimeout(5000);
 
                     Response response;
-                    if (globals.isSecureRestUrl) {
-                        response = executor.executor.execute(request);
+                    if (task.launchpad.isSecureRestUrl) {
+                        response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                     } else {
                         response = request.execute();
                     }
@@ -135,8 +132,8 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         .socketTimeout(5000);
 
                 Response response;
-                if (globals.isSecureRestUrl) {
-                    response = executor.executor.execute(request);
+                if (task.launchpad.isSecureRestUrl) {
+                    response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                 }
                 else {
                     response = request.execute();
@@ -147,7 +144,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 if (globals.isAcceptOnlySignedSnippets) {
                     CheckSumAndSignatureStatus status;
                     try (FileInputStream fis = new FileInputStream(snippetTempFile)) {
-                        status = checksumWithSignatureService.verifyChecksumAndSignature(checksum, "Snippet "+snippetCode, fis, true);
+                        status = ChecksumWithSignatureService.verifyChecksumAndSignature(checksum, "Snippet "+snippetCode, fis, true, task.launchpad.createPublicKey());
                     }
                     if ( status.isSignatureOk == null){
                         log.warn("globals.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", globals.isAcceptOnlySignedSnippets, snippetCode);

@@ -26,6 +26,9 @@ import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
+import aiai.ai.yaml.env.TimePeriods;
+import aiai.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
+import aiai.ai.yaml.launchpad_lookup.LaunchpadLookupConfigUtils;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.metadata.MetadataUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
@@ -41,7 +44,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -55,6 +60,13 @@ public class StationService {
     private String env;
     private EnvYaml envYaml;
     private Metadata metadata = new Metadata();
+
+    public  final Map<String, LaunchpadLookupExtended> lookupExtendedMap = new HashMap<>();
+
+    public static class LaunchpadLookupExtended {
+        public LaunchpadLookupConfig.LaunchpadLookup launchpadLookup;
+        public TimePeriods periods;
+    }
 
     public StationService(Globals globals, StationTaskService stationTaskService, TaskParamYamlUtils taskParamYamlUtils, UploadResourceActor uploadResourceActor) {
         this.globals = globals;
@@ -86,9 +98,34 @@ public class StationService {
             throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
         }
 
+        final File launchpadFile = new File(globals.stationDir, Consts.LAUNCHPAD_YAML_FILE_NAME);
+        if (!launchpadFile.exists()) {
+            log.warn("Station's launchpad config file doesn't exist: {}", launchpadFile.getPath());
+            return;
+        }
+        try {
+            final String cfg = FileUtils.readFileToString(launchpadFile, Charsets.UTF_8);
+            LaunchpadLookupConfig launchpadLookupConfig = LaunchpadLookupConfigUtils.to(cfg);;
+            if (launchpadLookupConfig==null) {
+                log.error("{} wasn't found or empty. path: {}{}{}",
+                        Consts.LAUNCHPAD_YAML_FILE_NAME, globals.stationDir,
+                        File.separatorChar, Consts.LAUNCHPAD_YAML_FILE_NAME );
+                throw new IllegalStateException("Station isn't configured, launchpad.yaml is empty or doesn't exist");
+            }
+            for (LaunchpadLookupConfig.LaunchpadLookup launchpad : launchpadLookupConfig.launchpads) {
+                LaunchpadLookupExtended lookupExtended = new LaunchpadLookupExtended();
+                lookupExtended.launchpadLookup = launchpad;
+                lookupExtended.periods = TimePeriods.from(launchpad.taskProcessingTime);
+                lookupExtendedMap.put( launchpad.url, lookupExtended );
+            }
+        } catch (IOException e) {
+            log.error("Error", e);
+            throw new IllegalStateException("Error while loading file: " + launchpadFile.getPath(), e);
+        }
+
         final File metadataFile = new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME);
         if (!metadataFile.exists()) {
-            log.warn("Station's metadata file doesn't exist: {}", file.getPath());
+            log.warn("Station's metadata file doesn't exist: {}", launchpadFile.getPath());
             return;
         }
         try(FileInputStream fis = new FileInputStream(metadataFile)) {
@@ -109,9 +146,9 @@ public class StationService {
         return envYaml;
     }
 
-    Command produceReportStationStatus() {
+    Command produceReportStationStatus(TimePeriods periods) {
         //noinspection UnnecessaryLocalVariable
-        Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(getEnv(), globals.stationActiveTime);
+        Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(getEnv(), periods.asString);
         return reportStationStatus;
     }
 

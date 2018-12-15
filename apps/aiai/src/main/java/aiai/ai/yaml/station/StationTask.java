@@ -49,4 +49,6 @@ public class StationTask {
     public String snippetExecResult;
 
     public boolean clean;
+
+    public String launchpadUrl;
 }

@@ -25,8 +25,8 @@ import java.io.File;
 
 @Data
 @AllArgsConstructor
-@EqualsAndHashCode(of = "snippetCode")
-public class DownloadSnippetTask implements StationRestTask {
+@EqualsAndHashCode(of = "snippetCode", callSuper = false)
+public class DownloadSnippetTask extends StationRestTask {
     public String snippetCode;
     public String filename;
     public String checksum;

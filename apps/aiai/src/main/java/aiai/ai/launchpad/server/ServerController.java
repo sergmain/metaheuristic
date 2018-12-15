@@ -26,11 +26,9 @@ import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
-import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.StationResourceUtils;
-import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.utils.DirUtils;
@@ -66,19 +64,15 @@ public class ServerController {
     private final ServerService serverService;
     private final BinaryDataService binaryDataService;
     private final SnippetCache snippetCache;
-    private final SnippetService snippetService;
-    private final ChecksumWithSignatureService checksumWithSignatureService;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final TaskParamYamlUtils taskParamYamlUtils;
 
-    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService, SnippetCache snippetCache, SnippetService snippetService, ChecksumWithSignatureService checksumWithSignatureService, TaskRepository taskRepository, TaskPersistencer taskPersistencer, TaskParamYamlUtils taskParamYamlUtils) {
+    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService, SnippetCache snippetCache, TaskRepository taskRepository, TaskPersistencer taskPersistencer, TaskParamYamlUtils taskParamYamlUtils) {
         this.globals = globals;
         this.serverService = serverService;
         this.binaryDataService = binaryDataService;
         this.snippetCache = snippetCache;
-        this.snippetService = snippetService;
-        this.checksumWithSignatureService = checksumWithSignatureService;
         this.taskRepository = taskRepository;
         this.taskPersistencer = taskPersistencer;
         this.taskParamYamlUtils = taskParamYamlUtils;
@@ -92,8 +86,8 @@ public class ServerController {
 
     @PostMapping("/rest-anon/srv")
     public ExchangeData processRequestAnon(HttpServletResponse response, @RequestBody ExchangeData data, HttpServletRequest request) throws IOException {
-        log.debug("processRequestAnon(), globals.isSecureRestUrl: {}, data: {}", globals.isSecureRestUrl, data);
-        if (globals.isSecureRestUrl) {
+        log.debug("processRequestAnon(), globals.isSecureRestUrl: {}, data: {}", globals.isSecureLaunchpadRestUrl, data);
+        if (globals.isSecureLaunchpadRestUrl) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
@@ -102,14 +96,14 @@ public class ServerController {
 
     @PostMapping("/rest-auth/srv")
     public ExchangeData processRequestAuth(@RequestBody ExchangeData data, HttpServletRequest request) {
-        log.debug("processRequestAnon(), globals.isSecureRestUrl: {}, data: {}", globals.isSecureRestUrl, data);
+        log.debug("processRequestAnon(), globals.isSecureRestUrl: {}, data: {}", globals.isSecureLaunchpadRestUrl, data);
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
     @GetMapping("/rest-anon/payload/resource/{type}/{code}")
     public HttpEntity<AbstractResource> deliverResourceAnon(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
-        log.debug("deliverResourceAnon(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureRestUrl, typeAsStr, code);
-        if (globals.isSecureRestUrl) {
+        log.debug("deliverResourceAnon(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
+        if (globals.isSecureLaunchpadRestUrl) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
@@ -118,7 +112,7 @@ public class ServerController {
 
     @GetMapping("/rest-auth/payload/resource/{type}/{code}")
     public HttpEntity<AbstractResource> deliverResourceAuth(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
-        log.debug("deliverResourceAuth(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureRestUrl, typeAsStr, code);
+        log.debug("deliverResourceAuth(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
         return deliverResource(response, typeAsStr, code);
     }
 
@@ -126,8 +120,8 @@ public class ServerController {
     public UploadResult uploadResourceAnon(
             MultipartFile file, HttpServletResponse response,
             @PathVariable("taskId") Long taskId) throws IOException {
-        log.debug("uploadResourceAnon(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureRestUrl, taskId);
-        if (globals.isSecureRestUrl) {
+        log.debug("uploadResourceAnon(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
+        if (globals.isSecureLaunchpadRestUrl) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
@@ -138,7 +132,7 @@ public class ServerController {
     public UploadResult uploadResourceAuth(
             MultipartFile file,
             @PathVariable("taskId") Long taskId) {
-        log.debug("uploadResourceAuth(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureRestUrl, taskId);
+        log.debug("uploadResourceAuth(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
         return uploadResource(file, taskId);
     }
 

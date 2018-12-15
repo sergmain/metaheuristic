@@ -190,10 +190,10 @@ public class ExperimentService {
                 }
             }
             if(!isFound && (task.getAssignedOn()!=null && (System.currentTimeMillis() - task.getAssignedOn() > 90_000))) {
-                log.info("De-assign sequence from station #{}, {}", stationIdAsStr, task);
+                log.info("De-assign task from station #{}, {}", stationIdAsStr, task);
                 Task result = taskPersistencer.resetTask(task.getId());
                 if (result==null) {
-                    log.error("Reseting of task {} was failed. See log for more info.", task.getId());
+                    log.error("Resetting of task {} was failed. See log for more info.", task.getId());
                 }
             }
         }

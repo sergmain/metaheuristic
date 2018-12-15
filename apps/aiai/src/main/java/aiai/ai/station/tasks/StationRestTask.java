@@ -17,5 +17,16 @@
  */
 package aiai.ai.station.tasks;
 
-public interface StationRestTask {
+import aiai.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
+import lombok.Data;
+
+@Data
+public abstract class StationRestTask {
+    public LaunchpadLookupConfig.LaunchpadLookup launchpad;
+//    public boolean isSecureLaunchpadRestUrl;
+//    public String launchpadUrl;
+//    public String restUsername;
+//    public String restToken;
+//    public String restPassword;
+
 }

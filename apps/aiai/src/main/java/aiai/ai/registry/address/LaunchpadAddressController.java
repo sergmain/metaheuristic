@@ -59,14 +59,12 @@ public class LaunchpadAddressController {
             model.addAttribute("errorMessage", "#660.30 description is empty");
             return errorTarget;
         }
-        if (globals.isSslRequired)
         if (StringUtils.isBlank(address.signature)) {
             model.addAttribute("errorMessage", "#660.33 checksum is empty");
             return errorTarget;
         }
 
-        boolean isSignatureOk;
-        isSignatureOk = ChecksumWithSignatureService.isValid(address.url.getBytes(), address.signature, globals.publicKey);
+        boolean isSignatureOk = ChecksumWithSignatureService.isValid(address.url.getBytes(), address.signature, globals.launchpadPublicKey);
         if (!isSignatureOk) {
             model.addAttribute("errorMessage", "#660.43 signature isn't valid");
             return errorTarget;

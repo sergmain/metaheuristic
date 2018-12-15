@@ -18,15 +18,17 @@
 
 package aiai.ai.station;
 
+import aiai.ai.Consts;
 import aiai.ai.Globals;
-import aiai.ai.yaml.station.StationTask;
-import aiai.ai.comm.*;
+import aiai.ai.comm.Command;
+import aiai.ai.comm.CommandProcessor;
+import aiai.ai.comm.ExchangeData;
+import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
+import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
-import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -42,9 +44,9 @@ import java.util.List;
  * Date: 13.06.2017
  * Time: 16:25
  */
-@Service
+
 @Slf4j
-public class LaunchpadRequester {
+public class LaunchpadRequestor {
 
     private final Globals globals;
 
@@ -53,14 +55,24 @@ public class LaunchpadRequester {
     private final CommandProcessor commandProcessor;
     private final StationTaskService stationTaskService;
     private final StationService stationService;
+    private final String launchpadUrl;
+    private final StationService.LaunchpadLookupExtended launchpad;
+    private final String serverRestUrl;
 
-    @Autowired
-    public LaunchpadRequester(Globals globals, CommandProcessor commandProcessor, StationTaskService stationTaskService, StationService stationService) {
+    public LaunchpadRequestor(String launchpadUrl, Globals globals, CommandProcessor commandProcessor, StationTaskService stationTaskService, StationService stationService) {
+        this.launchpadUrl = launchpadUrl;
         this.globals = globals;
         this.commandProcessor = commandProcessor;
         this.stationTaskService = stationTaskService;
         this.stationService = stationService;
         this.restTemplate = new RestTemplate();
+        this.launchpad = stationService.lookupExtendedMap.get(launchpadUrl);
+        if (launchpad==null) {
+            throw new IllegalStateException("Can'r find launchpad config for url "+ launchpadUrl);
+        }
+        final String restUrl = launchpadUrl + (launchpad.launchpadLookup.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
+        serverRestUrl = restUrl + Consts.SERVER_REST_URL;
+
     }
 
     @PostConstruct
@@ -101,6 +113,11 @@ public class LaunchpadRequester {
             return;
         }
 
+        if (launchpad.periods.isCurrentTimeInactive()) {
+            log.info("LaunchpadRequestor for url {} is inactive", launchpadUrl);
+            return;
+        }
+
         ExchangeData data = new ExchangeData();
         String stationId = stationService.getStationId();
         if (stationId==null) {
@@ -111,7 +128,7 @@ public class LaunchpadRequester {
         if (stationId!=null) {
             // always report about current active sequences, if we have actual stationId
             data.setCommand(stationTaskService.produceStationTaskStatus());
-            data.setCommand(stationService.produceReportStationStatus());
+            data.setCommand(stationService.produceReportStationStatus(launchpad.periods));
             final boolean b = stationTaskService.isNeedNewTask(stationId);
             if (b) {
                 data.setCommand(new Protocol.RequestTask(globals.isAcceptOnlySignedSnippets));
@@ -138,16 +155,15 @@ public class LaunchpadRequester {
             HttpHeaders headers = new HttpHeaders();
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
             headers.setContentType(MediaType.APPLICATION_JSON);
-            if (globals.isSecureRestUrl) {
-                String auth = globals.restUsername+'='+globals.restToken + ':' + globals.stationRestPassword;
+            if (launchpad.launchpadLookup.isSecureRestUrl) {
+                String auth = launchpad.launchpadLookup.restUsername+'='+launchpad.launchpadLookup.restToken + ':' + launchpad.launchpadLookup.restPassword;
                 byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
                 String authHeader = "Basic " + new String(encodedAuth);
                 headers.set("Authorization", authHeader);
             }
 
             HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
-
-            ResponseEntity<ExchangeData> response = restTemplate.exchange(globals.serverRestUrl, HttpMethod.POST, request, ExchangeData.class);
+            ResponseEntity<ExchangeData> response = restTemplate.exchange(serverRestUrl, HttpMethod.POST, request, ExchangeData.class);
             ExchangeData result = response.getBody();
 
             addCommands(commandProcessor.processExchangeData(result).getCommands());
@@ -155,14 +171,14 @@ public class LaunchpadRequester {
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode()== HttpStatus.UNAUTHORIZED) {
-                log.error("Error 401 accessing url {}, globals.isSecureRestUrl: {}", globals.serverRestUrl, globals.isSecureRestUrl);
+                log.error("Error 401 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
             }
             else {
                 throw e;
             }
         }
         catch (RestClientException e) {
-            log.error("Error accessing url: {}", globals.serverRestUrl);
+            log.error("Error accessing url: {}", serverRestUrl);
             log.error("Stacktrace", e);
         }
     }

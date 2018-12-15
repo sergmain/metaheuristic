@@ -19,7 +19,7 @@ package aiai.ai;
 
 import aiai.ai.launchpad.LaunchpadService;
 import aiai.ai.station.ArtifactCleanerAtStation;
-import aiai.ai.station.LaunchpadRequester;
+import aiai.ai.station.LaunchpadRequestor;
 import aiai.ai.station.TaskProcessor;
 import aiai.ai.station.TaskAssigner;
 import aiai.ai.station.actors.DownloadResourceActor;
@@ -96,7 +96,7 @@ public class Schedulers {
     public static class StationSchedulers {
 
         private final Globals globals;
-        private final LaunchpadRequester launchpadRequester;
+        private final LaunchpadRequestor launchpadRequester;
         private final TaskAssigner taskAssigner;
         private final TaskProcessor taskProcessor;
         private final DownloadSnippetActor downloadSnippetActor;
@@ -104,7 +104,7 @@ public class Schedulers {
         private final UploadResourceActor uploadResourceActor;
         private final ArtifactCleanerAtStation artifactCleaner;
 
-        public StationSchedulers(Globals globals, LaunchpadRequester launchpadRequester, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner) {
+        public StationSchedulers(Globals globals, LaunchpadRequestor launchpadRequester, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner) {
             this.globals = globals;
             this.launchpadRequester = launchpadRequester;
             this.taskAssigner = taskAssigner;

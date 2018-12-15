@@ -155,9 +155,6 @@ public class MultiHttpSecurityConfig {
 //                    .deleteCookies(Consts.SESSIONID_NAME)
 //                    .invalidateHttpSession(true)
             ;
-//            if (!"127.0.0.1".equals(serverAddress)) {
-//                http.requiresChannel().antMatchers("/**").requiresSecure();
-//            }
             if (globals.isSslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }

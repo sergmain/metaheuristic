@@ -17,6 +17,7 @@
  */
 package aiai.ai.station.actors;
 
+import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.server.UploadResult;
 import aiai.ai.station.StationTaskService;
@@ -48,7 +49,6 @@ import java.util.List;
 public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
 
     private static ObjectMapper mapper;
-    private final HttpClientExecutor executor;
 
     static {
         mapper = new ObjectMapper();
@@ -58,8 +58,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
     private final Globals globals;
     private final StationTaskService stationTaskService;
 
-    public UploadResourceActor(HttpClientExecutor executor, Globals globals, StationTaskService stationTaskService) {
-        this.executor = executor;
+    public UploadResourceActor(Globals globals, StationTaskService stationTaskService) {
         this.globals = globals;
         this.stationTaskService = stationTaskService;
     }
@@ -96,7 +95,10 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             try (InputStream is = new FileInputStream(task.file)) {
                 log.info("Start uploading result data to server, resultDataFile: {}", task.file);
 
-                final String uri = globals.uploadRestUrl + '/' + task.taskId;
+                final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
+                final String uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
+
+                final String uri = uploadRestUrl + '/' + task.taskId;
                 HttpEntity entity = MultipartEntityBuilder.create()
                         .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                         .setCharset(StandardCharsets.UTF_8)
@@ -109,8 +111,8 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                         .body(entity);
 
                 Response response;
-                if (globals.isSecureRestUrl) {
-                    response = executor.executor.execute(request);
+                if (task.launchpad.isSecureRestUrl) {
+                    response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                 }
                 else {
                     response = request.execute();

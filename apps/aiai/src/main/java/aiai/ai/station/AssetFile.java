@@ -22,11 +22,22 @@ import lombok.ToString;
 
 import java.io.File;
 
-@ToString
 @Data
 public class AssetFile {
     public File file;
+    public long fileLength;
     public boolean isError;
     public boolean isContent;
     public boolean isExist;
+
+    @Override
+    public String toString() {
+        return "AssetFile{" +
+                "file=" + file.getPath() +
+                ", fileLength=" + fileLength +
+                ", isError=" + isError +
+                ", isContent=" + isContent +
+                ", isExist=" + isExist +
+                '}';
+    }
 }

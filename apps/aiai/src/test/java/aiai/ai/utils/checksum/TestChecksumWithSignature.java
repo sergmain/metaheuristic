@@ -38,11 +38,7 @@ import static org.junit.Assert.assertTrue;
 public class TestChecksumWithSignature {
 
     @Autowired
-    public ChecksumWithSignatureService checksumWithSignatureService;
-
-    @Autowired
     public Globals globals;
-
 
     @Test
     public void test() throws IOException, GeneralSecurityException {
@@ -58,7 +54,7 @@ public class TestChecksumWithSignature {
 
         ChecksumWithSignatureService.ChecksumWithSignature checksumWithSignature = ChecksumWithSignatureService.parse(forVerifying);
 
-        assertTrue(ChecksumWithSignatureService.isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, globals.publicKey));
+        assertTrue(ChecksumWithSignatureService.isValid(checksumWithSignature.checksum.getBytes(), checksumWithSignature.signature, globals.launchpadPublicKey));
     }
 
 

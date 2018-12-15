@@ -58,6 +58,7 @@ public class Consts {
     public static final String METADATA_YAML_FILE_NAME = "metadata.yaml";
     public static final String RAW_FILE_NAME = "raw-file.txt";
     public static final String ENV_YAML_FILE_NAME = "env.yaml";
+    public static final String LAUNCHPAD_YAML_FILE_NAME = "launchpad.yaml";
 
     public static final String METRICS_FILE_NAME = "metrics.yaml";
     public static final String SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "system-console.log";

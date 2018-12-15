@@ -57,7 +57,7 @@ public class TestRest {
     @RestController
     public static class JsonTestController {
 
-        // This isn't test
+        // This isn't the test
         // see testNearMessages() below
         @GetMapping("/rest-anon/test/message")
         public NewMessage getMessage() {
@@ -110,7 +110,7 @@ public class TestRest {
     @Test
     @WithUserDetails("admin")
     public void whenTestAdminCredentials_thenOk() throws Exception {
-        if (globals.isSecureRestUrl) {
+        if (globals.isSecureLaunchpadRestUrl) {
             return;
         }
         MvcResult result = mockMvc.perform(get("/rest-auth/test"))
@@ -130,7 +130,7 @@ public class TestRest {
     @Test
 //    @WithUserDetails("admin")
     public void testSimpleCommunicationWithServer() throws Exception {
-        if (globals.isSecureRestUrl) {
+        if (globals.isSecureLaunchpadRestUrl) {
             return;
         }
         ExchangeData dataReqest = new ExchangeData(new Protocol.Nop());

@@ -63,6 +63,12 @@ public class TaskAssigner {
         }
 
         List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNull();
+        if (log.isInfoEnabled()) {
+            log.info("There are task(s) for processing:");
+            for (StationTask task : tasks) {
+                log.info("\t{}", task);
+            }
+        }
         for (StationTask task : tasks) {
             if (StringUtils.isBlank(task.getParams())) {
                 log.error("Params for task {} is blank", task.getTaskId());
@@ -75,7 +81,7 @@ public class TaskAssigner {
             }
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             if (taskParamYaml.inputResourceCodes.isEmpty()) {
-                log.warn("taskParamYaml.resources is empty\n{}", task.getParams());
+                log.warn("taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;
             }
 
