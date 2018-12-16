@@ -89,15 +89,6 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                     response = request.execute();
                 }
                 File tempFile = File.createTempFile("resource-", ".temp", assetFile.file.getParentFile());
-/*
-                if (tempFile.exists()) {
-                    log.warn("Temp file already exists, {}", tempFile.getPath());
-                    if (!tempFile.delete()) {
-                        log.error("Can't delete temporary file {}", tempFile.getAbsolutePath());
-                        return;
-                    }
-                }
-*/
                 response.saveContent(tempFile);
                 if (!tempFile.renameTo(assetFile.file)) {
                     log.warn("Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());
