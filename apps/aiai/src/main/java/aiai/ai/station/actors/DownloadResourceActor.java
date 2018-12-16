@@ -62,17 +62,17 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
         DownloadResourceTask task;
         while ((task = poll()) != null) {
-            log.info("Start processing the task {}", task);
             AssetFile assetFile = StationResourceUtils.prepareDataFile(task.targetDir, task.id, null);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
             }
             if (assetFile.isContent ) {
-                log.info("Resource was already downloaded. Asset file: {}", assetFile);
+                log.debug("Resource was already downloaded. Asset file: {}", assetFile);
                 continue;
             }
 
+            log.info("Start processing the download task {}", task);
             try {
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
                 String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource";
@@ -89,6 +89,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                     response = request.execute();
                 }
                 File tempFile = File.createTempFile("resource-", ".temp", assetFile.file.getParentFile());
+/*
                 if (tempFile.exists()) {
                     log.warn("Temp file already exists, {}", tempFile.getPath());
                     if (!tempFile.delete()) {
@@ -96,10 +97,11 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                         return;
                     }
                 }
+*/
                 response.saveContent(tempFile);
                 if (!tempFile.renameTo(assetFile.file)) {
                     log.warn("Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());
-                    return;
+                    continue;
                 }
                 log.info("Resource #{} was loaded", task.getId());
             } catch (HttpResponseException e) {

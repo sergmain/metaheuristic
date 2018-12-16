@@ -97,7 +97,7 @@ public class Schedulers {
     public static class StationSchedulers {
 
         private final Globals globals;
-        private final TaskAssigner taskAssigner;
+        private final TaskAssetPreparer taskAssigner;
         private final TaskProcessor taskProcessor;
         private final DownloadSnippetActor downloadSnippetActor;
         private final DownloadResourceActor downloadResourceActor;
@@ -110,7 +110,7 @@ public class Schedulers {
         private final RoundRobinForLaunchpad roundRobin;
         private final Map<String, LaunchpadRequestor> launchpadRequestorMap = new HashMap<>();
 
-        public StationSchedulers(Globals globals, TaskAssigner taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, CommandProcessor commandProcessor) {
+        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, CommandProcessor commandProcessor) {
             this.globals = globals;
             this.taskAssigner = taskAssigner;
             this.taskProcessor = taskProcessor;
@@ -146,7 +146,7 @@ public class Schedulers {
             launchpadRequestorMap.get(url).fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.task-assigner'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.task-assigner'), 3, 20, 5)*1000 }")
         public void taskAssigner() {
             if (globals.isUnitTesting) {
                 return;
@@ -182,7 +182,7 @@ public class Schedulers {
             downloadSnippetActor.fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-resource'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.download-resource'), 3, 20, 3)*1000 }")
         public void downloadResourceActor() {
             if (globals.isUnitTesting) {
                 return;

@@ -26,7 +26,7 @@ import java.io.File;
 
 @Data
 @AllArgsConstructor
-@EqualsAndHashCode(of = "id", callSuper = false)
+@EqualsAndHashCode(of = {"id", "taskId"}, callSuper = false)
 public class DownloadResourceTask extends StationRestTask {
     public String id;
     public long taskId;

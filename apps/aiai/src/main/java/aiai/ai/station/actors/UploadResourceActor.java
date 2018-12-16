@@ -122,7 +122,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 String json = response.returnContent().asString();
 
                 UploadResult result = fromJson(json);
-                log.info("'\tresult data was successfully uploaded");
+                log.info("file {} was successfully uploaded", task.file.getPath());
                 if (!result.isOk) {
                     log.error("Error uploading file, server error: " + result.error);
                 }

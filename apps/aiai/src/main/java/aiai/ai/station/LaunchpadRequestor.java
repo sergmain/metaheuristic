@@ -163,7 +163,7 @@ public class LaunchpadRequestor {
             result.launchpadUrl = launchpadUrl;
 
             addCommands(commandProcessor.processExchangeData(result).getCommands());
-            log.debug("fixedDelay(), {}", result);
+//            log.debug("fixedDelay(), {}", result);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode()== HttpStatus.UNAUTHORIZED) {

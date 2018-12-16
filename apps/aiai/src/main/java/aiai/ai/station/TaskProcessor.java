@@ -79,7 +79,7 @@ public class TaskProcessor {
             return;
         }
 
-        List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNull();
+        List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
             if (StringUtils.isBlank(task.launchpadUrl)) {
                 stationTaskService.finishAndWriteToLog(task.taskId, "Broken task. LaunchpadUrl is blank.");
@@ -163,7 +163,7 @@ public class TaskProcessor {
                 break;
             }
 
-            log.info("all system are checked, lift off");
+            log.info("All systems are checked for the task #{}, lift off", task.taskId );
 
             ExecProcessService.Result result;
             try {

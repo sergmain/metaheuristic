@@ -180,6 +180,19 @@ public class StationTaskService {
         }
     }
 
+    void markAsAssetPrepared(Long taskId) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            log.info("markAsAssetPrepared({})", taskId);
+            StationTask task = findById(taskId);
+            if (task == null) {
+                log.error("StationTask wasn't found for Id {}", taskId);
+            } else {
+                task.setAssetsPrepared(true);
+                save(task);
+            }
+        }
+    }
+
     public void finishAndWriteToLog(long taskId, String es) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             StationTask task = findById(taskId);
@@ -257,6 +270,18 @@ public class StationTaskService {
             List<StationTask> list = new ArrayList<>();
             for (StationTask task : map.values()) {
                 if (task.finishedOn == null) {
+                    list.add(task);
+                }
+            }
+            return list;
+        }
+    }
+
+    public List<StationTask> findAllByFinishedOnIsNullAndAssetsPreparedIs(boolean status) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            List<StationTask> list = new ArrayList<>();
+            for (StationTask task : map.values()) {
+                if (task.finishedOn == null && task.assetsPrepared==status) {
                     list.add(task);
                 }
             }
@@ -397,6 +422,9 @@ public class StationTaskService {
         DigitUtils.Power power = DigitUtils.getPower(taskId);
         File taskDir = new File(globals.stationTaskDir,
                 ""+power.power7+File.separatorChar+power.power4+File.separatorChar);
+        if (taskDir.exists()) {
+            return taskDir;
+        }
         taskDir.mkdirs();
         return taskDir;
     }

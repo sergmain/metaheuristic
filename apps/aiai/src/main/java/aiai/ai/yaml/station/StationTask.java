@@ -46,6 +46,8 @@ public class StationTask {
 
     public boolean resourceUploaded;
 
+    public boolean assetsPrepared;
+
     public String snippetExecResult;
 
     public boolean clean;

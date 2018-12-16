@@ -23,6 +23,12 @@ public abstract class AbstractTaskQueue<T> {
 
     private final LinkedList<T> QUEUE = new LinkedList<>();
 
+    public int queueSize(){
+        synchronized (QUEUE) {
+            return QUEUE.size();
+        }
+    }
+
     public void add(T t){
         synchronized (QUEUE) {
             if (!QUEUE.contains(t)) {

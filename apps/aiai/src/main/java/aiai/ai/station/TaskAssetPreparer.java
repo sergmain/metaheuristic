@@ -36,7 +36,7 @@ import java.util.List;
 
 @Service
 @Slf4j
-public class TaskAssigner {
+public class TaskAssetPreparer {
 
     private final Globals globals;
     private final DownloadSnippetActor downloadSnippetActor;
@@ -46,7 +46,7 @@ public class TaskAssigner {
     private final StationTaskService stationTaskService;
     private final StationService stationService;
 
-    public TaskAssigner(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, StationService stationService) {
+    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, StationService stationService) {
         this.globals = globals;
         this.downloadSnippetActor = downloadSnippetActor;
         this.downloadResourceActor = downloadResourceActor;
@@ -64,13 +64,15 @@ public class TaskAssigner {
             return;
         }
 
-        List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNull();
-        if (log.isInfoEnabled()) {
-            log.info("There are task(s) for processing:");
+        List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(false);
+/*
+        if (log.isDebugEnabled() && !tasks.isEmpty()) {
+            log.debug("There are task(s) for processing:");
             for (StationTask task : tasks) {
-                log.info("\t{}", task);
+                log.debug("\t{}", task);
             }
         }
+*/
         for (StationTask task : tasks) {
             if (StringUtils.isBlank(task.launchpadUrl)) {
                 log.error("launchpadUrl for task {} is blank", task.getTaskId());
@@ -80,7 +82,7 @@ public class TaskAssigner {
                 log.error("Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            if (Enums.FlowInstanceExecState.DOESNT_EXIST==currentExecState.getState(task.flowInstanceId)) {
+            if (Enums.FlowInstanceExecState.DOESNT_EXIST == currentExecState.getState(task.flowInstanceId)) {
                 stationTaskService.delete(task.taskId);
                 log.info("Deleted orphan task {}", task);
                 continue;
@@ -94,15 +96,31 @@ public class TaskAssigner {
 
             File taskDir = stationTaskService.prepareTaskDir(task.taskId);
 
-            for (String code : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                DownloadResourceTask resourceTask = new DownloadResourceTask(code, task.getTaskId(), taskDir);
+            boolean isAllLoaded = true;
+            for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
+                AssetFile assetFile = StationResourceUtils.prepareDataFile(taskDir, resourceCode, null);
+                // is this resource prepared?
+                if (!assetFile.isError && assetFile.isContent) {
+                    continue;
+                }
+                isAllLoaded=false;
+                DownloadResourceTask resourceTask = new DownloadResourceTask(resourceCode, task.getTaskId(), taskDir);
                 resourceTask.launchpad = launchpad.launchpadLookup;
                 downloadResourceActor.add(resourceTask);
             }
+
             if (!taskParamYaml.snippet.fileProvided) {
-                DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, taskDir);
-                snippetTask.launchpad = launchpad.launchpadLookup;
-                downloadSnippetActor.add(snippetTask);
+                AssetFile assetFile = StationResourceUtils.prepareSnippetFile(globals.stationResourcesDir, taskParamYaml.snippet.code, taskParamYaml.snippet.filename);
+                if (assetFile.isError || !assetFile.isContent) {
+                    isAllLoaded = false;
+                    DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, taskDir);
+                    snippetTask.launchpad = launchpad.launchpadLookup;
+                    downloadSnippetActor.add(snippetTask);
+                }
+            }
+            if (isAllLoaded) {
+                log.info("All assets were prepared for task #{}", task.taskId);
+                stationTaskService.markAsAssetPrepared(task.taskId);
             }
         }
     }

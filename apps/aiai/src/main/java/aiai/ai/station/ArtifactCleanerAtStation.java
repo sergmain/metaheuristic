@@ -81,7 +81,7 @@ public class ArtifactCleanerAtStation {
                                     FileUtils.deleteDirectory(t.toFile());
                                 }
                             } catch (IOException e) {
-                                log.error("#090.01 Error delete path " + t, e);
+                                log.error("#090.01 Error while deleting path {}, this isn't fatal error.", t);
                             }
                         });
                     } catch (AccessDeniedException e) {
