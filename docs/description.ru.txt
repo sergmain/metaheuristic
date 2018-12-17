@@ -2,62 +2,69 @@
 
 1. Сущности, общая концепция
 
-1.1 Flow (поток)
+1.1 Общая концепция
+логически Aiai состоит из 2-ух верхнеуровневых модулей:
+- launchpad - стартовая площадка
+- station - станция
+
+Стартовая площадка используется для управления заданиями, которые будут обрабатываться на станциях.
+Станции могут получать задания от неограниченного количества стартовыз площадок.
+Выбор стартовой площадки у которой необходимо запросить новое задание на выполнение осучествляется
+на основе Round-robin алгоритма.
+
+1.2 Flow (поток)
 Поток - это описатель содержащий описания процессов, котрые будут выполняться для перобразования
 данных из начальной формы в конечную. Поток, как описатель, не содержит состояния
 выполнения процесса преобразования данных.
 
-1.2 FlowInstance (реализация потока)
+1.3 FlowInstance (реализация потока)
 Реализация потока - это сущьность, которая включает в себя инфрмацию о выполнении преобразования данных.
 
-1.3 Resource (ресурс)
+1.4 Resource (ресурс)
 Ресурс - это данные, которые используются или создаются в процессе преобразования данных потоком.
 Ресурны бывают 2-ух типов - DATA (данные), SNIPPET(спипет)
 Данные - это все что загружается в снипеты или или является продуктов их работы.
 Снипет, как ресурс - это исполняемый код, который соответствует одному из описателей снипетов
 
-1.4 Snippet (спипет)
+1.5 Snippet (спипет)
 Снипет - это описатель исполняемого кода, который будет вызываться при выполнении задачи.
 
 
-1.5 Task (задача)
+1.6 Task (задача)
 Задача - описание, что нужно выполнить, с какими параметрами, какой результат получить
 
 
 2. Общая схема взаимодействия сушностей
 
-2.1 для того , чтобы обработать данные необзодимо выполнить следующие шаги:
+2.1 для того , чтобы обработать данные необходимо выполнить следующие шаги:
 - загрузить снипеты, которые будут использоваться при преобразовании данных
-- создать загрузить исходные данные , которые будут использоваться
+- создать и загрузить исходные данные, которые будут использоваться
 как входные данные для всего преобразования.
 - создать поток
-- выполнить валидацию созданного потока. если есть ошибки - исправить, повторить вализацию.
+- выполнить валидацию созданного потока. Если есть ошибки - исправить, повторить валидацию.
 если все ок, то перейти к следующему шагу
--  после успешной вализации можно создать реализацию потока. Реализация включает в себя
-код набора входных ресурсов. ссылку на Поток, который надо преобразовать.
+-  после успешной валидации можно создать реализацию потока. Реализация включает в себя
+код набора входных ресурсов, ссылку на Поток, который надо преобразовать.
 - сгенерировать задачи для реализации потока
  стадии: PROCESSING - задачи генерятся, PROCESSED - задачи сгенерированы
 - запустить задачи для данного потока
  стадии: STARTED - задачи выполняются, STOPPED - выполнение новых задач для данной реализвации потока
- остановлено
+ остановлено, FINISHED - все задачи для данной реализации потока выполнены
 
 
 
 3. Установка
-логически Aiai состоит из 2-ух верхнеуровневых модулей:
-- launchpad - стартовая площадка
-- station - станция
 
 Устанавливать стартовую площадку можно в любом окружении, где есть доступ к mysql или postgresql
 установка станции на этом же сервере не рекомендуется для прода,
 и имеет смысл только для целей разработки и тестирования
 
-3.1 директории
+3.1 Директории
 - для конфигурации стартовой площадки надо выбрать и создать рабочий директорий,
 в котором стартовая площадка будет создавать свои артифакты
 - выбрать директорий, в котором будет запускаться собственно Aiai. Рекомендуемая схема директориев:
-\aiai - главный директория для aiai
-\aiai\config - директорий, в котором будет находиться application.properties файл
+\aiai - главный директорий для aiai
+\aiai\config - директорий, в котором будет находиться application.properties конфиг файл
 \aiai\git - в данный директорий будет делаться clone из git
 \aiai\launchpad - директорий для стартовой площадки
 \aiai\station - директорий для станции
@@ -67,33 +74,14 @@
 выполнить команду
 git clone https://github.com/sergmain/aiai.git git
 
-3.3 сборка
+3.3 Сборка
 для сборки проекта требуется java8
 в директории \aiai\git запустить
 mvn-all.bat
 
+3.3 Общие параметры в application.properties
 
-3.3 общие параметры
-aiai.public-key: xxx
 aiai.thread-number=3
-aiai.secure-rest-url=true
-aiai.rest-password=xxx
-aiai.rest-username=xxx
-aiai.rest-token=xxx
-
-aiai.master-password=yyy
-aiai.master-username=yyy
-aiai.master-token=yyy
-
-
-для aiai.public-key необходимо использовать приложение из apps/gen-keys
-
-для
-aiai.rest-password
-aiai.master-password
-необходимо использовать приложение из apps/gen-passwords
-
--username и -token выбираются самостоятельно, но не могут включать в себя символ '=' (символ равно)
 
 3.5 Database
 создать нового пользовотеля и схему(базу данных).
@@ -117,6 +105,7 @@ spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQL57Dialect
 
 временную зону для mysql выбрать согласно документации на mysql и изменить в spring.datasource.url
+в приведеном выше примере временная зона - serverTimezone=America/Los_Angele
 
 для postgresql
 spring.datasource.url=jdbc:postgresql://host:5432/database?user=abc&password=xxx&sslmode=require
@@ -126,21 +115,66 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQL95Dialect
 
 
+указать специфические для стартовой площадки параметры:
+
+======================
 aiai.launchpad.enabled=true
 aiai.launchpad.dir=./aiai-launchpad
-aiai.launchpad.is-replace=true
-aiai.launchpad.accept-only-signed-env=true
+aiai.launchpad.is-replace-snapshot=true
+
+aiai.launchpad.is-ssl-required=false
+aiai.launchpad.secure-rest-url=true
 
 
+# password - 123
+aiai.launchpad.master-password=$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu
+aiai.launchpad.master-username=q
+aiai.launchpad.master-token=1
 
-3.7 станция
+aiai.launchpad.rest-password=$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu
+aiai.launchpad.rest-username=q1
+aiai.launchpad.rest-token=11
+
+aiai.launchpad.public-key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtS3jRjE1wlHcxiqn6fCRvTahRt6LBvhrqxzgo1FcpJ9uZvRUmf3KwszwQoL+Ypw7aM9oxmg15Q+pssKcrulS/ofDfbuusiYdny7wMlil1H11svQM3yGwMl9gjZ2FupaRwpyZkIMj1ILaDhylTudQCBoJgJ/BWyMCDn2kzh5EpV7hkhhfjZ/2/NRIcayQVmMKOikCXR8q1bb3QNQ2HiMyUsBUGzeO2DuvX4n375+SaFIDrse4eGNVbR/ImWw7TeD4wk0h5kJ2VTdgl2J7gVS7gCCMwBN9TVxPErRDxg/OtXreS8VRUd0hOZiadX12KjwI4mjhC4q+geXAq2sC1DOV8wIDAQAB
+=========================
+
+aiai.launchpad.is-replace-snapshot - можно ли перезаписывать snapshot-спипеты новыми версиями
+
+aiai.launchpad.is-ssl-required - все взаимодействия со стартовой площадкой только через SSL
+по умолчанию использование SSL для всех http запросов включено.
+Для контороля SSL используется параметр aiai.is-ssl-required
+Например:
+aiai.launchpad.is-ssl-required=false
+
+Отключать SSL рекомендуется только, если aiai  (как стартовая площадка, так и станция) запускается
+на localhost или когда станции и стартовая площадка распологаются в одной DMZ
+
+
+aiai.launchpad.secure-rest-url - нужен ли пароль/логин для защиты rest урл
+
+aiai.launchpad.master-* - данные для аутенсификации для web интерфейса
+aiai.launchpad.rest-* - данные для аутенсификации дл rest урл
+
+
+для aiai.launchpad.public-key необходимо использовать приложение из apps/gen-keys
+
+для
+aiai.launchpad.rest-password
+aiai.launchpad.master-password
+необходимо использовать приложение из apps/gen-passwords
+
+-username и -token выбираются самостоятельно, но не могут включать в себя символ '=' (символ равно)
+
+3.7 Станция
 3.7.1 application.properties для станции
 spring.profiles.active=station
 
 aiai.station.enabled=true
+aiai.station.dir=./aiai-station
+
+
 aiai.station.launchpad-url=http://host:8080
 aiai.station.server-rest-password=123
-aiai.station.dir=./aiai-station
 aiai.station.accept-only-signed-snippets=false
 aiai.station.active-time: 0:00-8:45, 19:00-23:59
 
@@ -157,29 +191,62 @@ aiai.station.launchpad-url - url по которому находится ста
 параметр aiai.station.accept-only-signed-snippets настоятельно рекомендуется установить
 в true, если старновая площадка находится за пределами DMZ
 
+3.7.2 Конфигурация launchpad.yaml
+Для конфигурации стартовых площадок, с которыми будет взаимодействовать конкретная станция используется
+конфиг файл launchpad.yaml. Данный файл должен располагаться в директории который является главным для станции,
+в данном руковосдстве это \aiai\station
+формат файла:
+launchpads:
+  - signatureRequired: false
+    isSecureRestUrl: true
+    url: http://localhost:8080
+    lookupType: direct
+    authType: basic
+    restPassword: 123
+    restUsername: q1
+    restToken: 11
+    taskProcessingTime: 0:00 - 23:59
+    publicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtS3jRjE1wlHcxiqn6fCRvTahRt6LBvhrqxzgo1FcpJ9uZvRUmf3KwszwQoL+Ypw7aM9oxmg15Q+pssKcrulS/ofDfbuusiYdny7wMlil1H11svQM3yGwMl9gjZ2FupaRwpyZkIMj1ILaDhylTudQCBoJgJ/BWyMCDn2kzh5EpV7hkhhfjZ/2/NRIcayQVmMKOikCXR8q1bb3QNQ2HiMyUsBUGzeO2DuvX4n375+SaFIDrse4eGNVbR/ImWw7TeD4wk0h5kJ2VTdgl2J7gVS7gCCMwBN9TVxPErRDxg/OtXreS8VRUd0hOZiadX12KjwI4mjhC4q+geXAq2sC1DOV8wIDAQAB
+    isAcceptOnlySignedSnippets: false
+
+
+Описание параметров:
+signatureRequired: пребуется ли подпись (в настоящее время не используется)
+isSecureRestUrl: rest урл защищен логин/паролем
+url: урл стартовой площадки / регистра,
+    если lookupType==direct, то url это адрес стартовой площадки,
+    если lookupType==registry, то url это адрес регистра стартовых площадок
+lookupType: см параметр url
+authType: тип аутенсификации, basic - стандартная BASIC аутенсификация, oauth - аутенсификация по OAuth2.0
+restPassword: пароль для rest урл
+restUsername: пароль для rest
+restToken: токен для rest
+taskProcessingTime: время, когда задачи с данной стартовой площадки активны,
+    например 0:00 - 23:59 или 0:00 - 8:45, 19:00 - 23:59
+publicKey: публичный ключ для данной стартовой площадки
+isAcceptOnlySignedSnippets: принимать только подписанные снипеты
+
+
+для publicKey необходимо использовать приложение из apps/gen-keys, подробнее см "Конфигурация стартовой плащадки"
+
+
 3.8 Конфигурация spring.profiles.active
 в настоящее время в aiai поддерживается 2 профиля - launchpad и station
 эти профили можно использовать как по отдельности, так и комбинировать. В любом случаев,
-в файле application.properties должна быть только одна строка spring.profiles.active=
+в файле application.properties должна быть только ОДНА строка spring.profiles.active=
 Например:
 spring.profiles.active=launchpad
 или
 spring.profiles.active=launchpad, station
+или
+spring.profiles.active=station
+
 
 3.9 конфигурация Http сервера на стороне стартовой площадки
 3.9.1 IP адрес
 для точного указания на какой IP адрес биндить http используется параметр server.address
 Например:
 server.address=127.0.0.1
-
-3.9.2 SSL
-по умолчанию использование SSL для всех http запросов включено.
-Для контороля SSL используется параметр aiai.is-ssl-required
-Например:
-aiai.is-ssl-required=false
-
-Отключать SSL рекомендуется только, если aiai запускается
-на localhost (как стартовая площадка, так и станция) или когда aiai запускается в DMZ
 
 
 4. apps/gen-keys
@@ -311,7 +378,7 @@ java -jar apps/package-snippet/target/package-snippet.jar snippet.zip ../private
 
 
 11. загрузка снипетов
-используя веб-интерфейст стартовой площадки загрузить снипет, перейдя по адресу
+используя веб-интерфейс стартовой площадки загрузить снипет, перейдя по адресу
 
 http://localhost:8080/launchpad/snippets
 

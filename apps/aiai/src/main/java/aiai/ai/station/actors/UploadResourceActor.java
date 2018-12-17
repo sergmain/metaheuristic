@@ -95,6 +95,9 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
 //            try (InputStream is = new FileInputStream(task.file)) {
             try {
                 log.info("Start uploading result data to server, resultDataFile: {}", task.file);
+                if (!task.file.exists()) {
+
+                }
 
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
                 final String uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
