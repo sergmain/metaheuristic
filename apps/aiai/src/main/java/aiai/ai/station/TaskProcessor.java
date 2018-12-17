@@ -82,13 +82,13 @@ public class TaskProcessor {
         List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
             if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.finishAndWriteToLog(task.taskId, "Broken task. LaunchpadUrl is blank.");
+                stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Broken task. LaunchpadUrl is blank.");
                 continue;
             }
 
             StationService.LaunchpadLookupExtended launchpad = stationService.lookupExtendedMap.get(task.launchpadUrl);
             if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.finishAndWriteToLog(task.taskId, "Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
+                stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
                 continue;
             }
 
@@ -123,13 +123,13 @@ public class TaskProcessor {
             }
 
             if (taskParamYaml.snippet==null) {
-                stationTaskService.finishAndWriteToLog(task.taskId, "Broken task. Snippet isn't defined");
+                stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Broken task. Snippet isn't defined");
                 continue;
             }
 
             File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
             if (artifactDir == null) {
-                stationTaskService.finishAndWriteToLog(task.taskId, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
+                stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 
@@ -138,7 +138,7 @@ public class TaskProcessor {
             taskParamYaml.workingPath = taskDir.getAbsolutePath();
             final String params = taskParamYamlUtils.toString(taskParamYaml);
 
-            task = stationTaskService.setLaunchOn(task.taskId);
+            task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
             SimpleSnippet snippet = taskParamYaml.getSnippet();
 
             AssetFile snippetAssetFile=null;
@@ -187,7 +187,7 @@ public class TaskProcessor {
                 result = execProcessService.execCommand(cmd, taskDir, consoleLogFile);
 
                 // Store result
-                stationTaskService.storeExecResult(task.getTaskId(), startedOn, snippet, result, artifactDir);
+                stationTaskService.storeExecResult(task.launchpadUrl, task.getTaskId(), startedOn, snippet, result, artifactDir);
 
                 if (result.isOk()) {
                     File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + taskParamYaml.outputResourceCode);
@@ -206,7 +206,7 @@ public class TaskProcessor {
                 log.error("Error exec process " + interpreter, th);
                 result = new ExecProcessService.Result(false, -1, ExceptionUtils.getStackTrace(th));
             }
-            stationTaskService.markAsFinishedIfAllOk(task.getTaskId(), result);
+            stationTaskService.markAsFinishedIfAllOk(task.launchpadUrl, task.getTaskId(), result);
         }
     }
 

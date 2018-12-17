@@ -139,7 +139,7 @@ public class CommandProcessor {
     }
 
     private Command[] processReportResultDelivering(Protocol.ReportResultDelivering command) {
-        stationService.markAsDelivered(command.getIds());
+        stationService.markAsDelivered(command.launchpadUrl, command.getIds());
         return Protocol.NOP_ARRAY;
     }
 

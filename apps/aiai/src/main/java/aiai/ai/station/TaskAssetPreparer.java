@@ -124,8 +124,8 @@ public class TaskAssetPreparer {
                 }
             }
             if (isAllLoaded) {
-                log.info("All assets were prepared for task #{}", task.taskId);
-                stationTaskService.markAsAssetPrepared(task.taskId);
+                log.info("All assets were prepared for task #{}, launchpad: {}", task.taskId, task.launchpadUrl);
+                stationTaskService.markAsAssetPrepared(task.launchpadUrl, task.taskId);
             }
         }
     }

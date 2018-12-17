@@ -137,9 +137,9 @@ public class StationService {
         return reportStationStatus;
     }
 
-    public void markAsDelivered(List<Long> ids) {
+    public void markAsDelivered(String launchpadUrl, List<Long> ids) {
         for (Long id : ids) {
-            stationTaskService.setDelivered(id);
+            stationTaskService.setDelivered(launchpadUrl, id);
         }
     }
 

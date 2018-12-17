@@ -14,6 +14,7 @@ import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -42,6 +43,15 @@ public class MetadataService {
         }
         //noinspection unused
         int i=0;
+    }
+
+    public String findHostByCode(String code) {
+        for (Map.Entry<String, Metadata.LaunchpadCode> entry : metadata.launchpad.entrySet()) {
+            if (code.equals(entry.getValue().value)) {
+                return entry.getKey();
+            }
+        }
+        return null;
     }
 
     public Metadata.LaunchpadCode launchpadUrlAsCode(String launchpadUrl) {

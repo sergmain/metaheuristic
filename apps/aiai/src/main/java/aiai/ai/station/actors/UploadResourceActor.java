@@ -146,7 +146,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 repeat.add(task);
             }
             else {
-                stationTaskService.setResourceUploaded(task.taskId);
+                stationTaskService.setResourceUploaded(task.launchpad.url, task.taskId);
             }
 
         }

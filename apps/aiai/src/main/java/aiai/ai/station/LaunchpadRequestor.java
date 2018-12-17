@@ -123,10 +123,10 @@ public class LaunchpadRequestor {
 
         if (stationId!=null) {
             // always report about current active sequences, if we have actual stationId
-            data.setCommand(stationTaskService.produceStationTaskStatus());
+            data.setCommand(stationTaskService.produceStationTaskStatus(launchpadUrl));
             data.setCommand(stationService.produceReportStationStatus(launchpad.periods));
             if (currentExecState.isInit(launchpadUrl)) {
-                final boolean b = stationTaskService.isNeedNewTask(stationId);
+                final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
                 if (b) {
                     data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.isAcceptOnlySignedSnippets));
                 }
@@ -190,14 +190,14 @@ public class LaunchpadRequestor {
     }
 
     private void reportTaskProcessingResult(ExchangeData data) {
-        final List<StationTask> list = stationTaskService.getForReporting();
+        final List<StationTask> list = stationTaskService.getForReporting(launchpadUrl);
         if (list.isEmpty()) {
             return;
         }
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask task : list) {
             command.getResults().add(new SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), task.getMetrics()));
-            stationTaskService.setReportedOn(task.taskId);
+            stationTaskService.setReportedOn(launchpadUrl, task.taskId);
         }
         data.setCommand(command);
     }
