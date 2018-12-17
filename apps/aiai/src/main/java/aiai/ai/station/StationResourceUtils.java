@@ -26,6 +26,13 @@ import java.io.File;
 @Slf4j
 public class StationResourceUtils {
 
+    /**
+     *
+     * @param rootDir
+     * @param id -  this is the code of resource
+     * @param resourceFilename
+     * @return
+     */
     public static AssetFile prepareDataFile(File rootDir, String id, String resourceFilename) {
         Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.DATA;
 

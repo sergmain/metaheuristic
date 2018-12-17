@@ -24,6 +24,7 @@ import aiai.ai.station.StationResourceUtils;
 import aiai.ai.station.StationTaskService;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.DownloadResourceTask;
+import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
@@ -62,6 +63,11 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
         DownloadResourceTask task;
         while ((task = poll()) != null) {
+            StationTask stationTask = stationTaskService.findById(task.taskId);
+            if (stationTask!=null && stationTask.finishedOn!=null) {
+                log.info("Task #{} was already finished", task.taskId);
+                continue;
+            }
             AssetFile assetFile = StationResourceUtils.prepareDataFile(task.targetDir, task.id, null);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
@@ -88,7 +94,22 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 else {
                     response = request.execute();
                 }
-                File tempFile = File.createTempFile("resource-", ".temp", assetFile.file.getParentFile());
+                File parentDir = assetFile.file.getParentFile();
+                if (parentDir==null) {
+                    String es = "Can't get parent dir for asset file " + assetFile.file.getAbsolutePath();
+                    log.error(es);
+                    stationTaskService.finishAndWriteToLog(task.taskId, es);
+                    continue;
+                }
+                File tempFile;
+                try {
+                    tempFile = File.createTempFile("resource-", ".temp", parentDir);
+                } catch (IOException e) {
+                    String es = "Error creating temp file in parent dir: " + parentDir.getAbsolutePath();
+                    log.error(es, e);
+                    stationTaskService.finishAndWriteToLog(task.taskId, es);
+                    continue;
+                }
                 response.saveContent(tempFile);
                 if (!tempFile.renameTo(assetFile.file)) {
                     log.warn("Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());

@@ -422,9 +422,9 @@ public class StationTaskService {
         DigitUtils.Power power = DigitUtils.getPower(taskId);
         File taskDir = new File(globals.stationTaskDir,
                 ""+power.power7+File.separatorChar+power.power4+File.separatorChar);
-        if (taskDir.exists()) {
-            return taskDir;
-        }
+//        if (taskDir.exists()) {
+//            return taskDir;
+//        }
         taskDir.mkdirs();
         return taskDir;
     }
