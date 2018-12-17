@@ -22,6 +22,7 @@ import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.utils.DigitUtils;
+import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.metrics.Metrics;
@@ -54,13 +55,15 @@ public class StationTaskService {
     private final Globals globals;
     private final CurrentExecState currentExecState;
     private final TaskParamYamlUtils taskParamYamlUtils;
+    private final MetadataService metadataService;
 
-    private final Map<Long, StationTask> map = new ConcurrentHashMap<>();
+    private final Map<String, Map<Long, StationTask>> map = new ConcurrentHashMap<>();
 
-    public StationTaskService(Globals globals, CurrentExecState currentExecState, TaskParamYamlUtils taskParamYamlUtils) {
+    public StationTaskService(Globals globals, CurrentExecState currentExecState, TaskParamYamlUtils taskParamYamlUtils, MetadataService metadataService) {
         this.currentExecState = currentExecState;
         this.globals = globals;
         this.taskParamYamlUtils = taskParamYamlUtils;
+        this.metadataService = metadataService;
     }
 
     @PostConstruct
@@ -72,28 +75,35 @@ public class StationTaskService {
             return;
         }
         try {
-            Files.list(globals.stationTaskDir.toPath()).forEach(p -> {
-                final File topDir = p.toFile();
-                if (!topDir.isDirectory()) {
-                    return;
-                }
+            Files.list(globals.stationTaskDir.toPath()).forEach(top -> {
                 try {
-                    Files.list(topDir.toPath()).forEach(s -> {
-                        long taskId = Long.parseLong(topDir.getName()+s.toFile().getName());
-                        File taskYamlFile = new File(s.toFile(), Consts.TASK_YAML);
-                        if (taskYamlFile.exists()) {
-                            try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
-                                StationTask task = StationTaskUtils.to(fis);
-                                map.put(taskId, task);
-                            }
-                            catch (IOException e) {
-                                log.error("Error #3", e);
-                                throw new RuntimeException("Error #3", e);
-                            }
+                    Files.list(top).forEach(p -> {
+                        final File launchpadDir = p.toFile();
+                        if (!launchpadDir.isDirectory()) {
+                            return;
+                        }
+                        try {
+                            Files.list(launchpadDir.toPath()).forEach(s -> {
+                                long taskId = Long.parseLong(launchpadDir.getName()+s.toFile().getName());
+                                File taskYamlFile = new File(s.toFile(), Consts.TASK_YAML);
+                                if (taskYamlFile.exists()) {
+                                    try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
+                                        StationTask task = StationTaskUtils.to(fis);
+                                        map.put(taskId, task);
+                                    }
+                                    catch (IOException e) {
+                                        log.error("Error #4", e);
+                                        throw new RuntimeException("Error #4", e);
+                                    }
+                                }
+                            });
+                        }
+                        catch (IOException e) {
+                            log.error("Error #3", e);
+                            throw new RuntimeException("Error #3", e);
                         }
                     });
-                }
-                catch (IOException e) {
+                } catch (IOException e) {
                     log.error("Error #2", e);
                     throw new RuntimeException("Error #2", e);
                 }
@@ -218,7 +228,7 @@ public class StationTaskService {
             }
             List<StationTask> tasks = findAllByFinishedOnIsNull();
             for (StationTask task : tasks) {
-                if (currentExecState.isStarted(task.flowInstanceId)) {
+                if (currentExecState.isStarted(task.launchpadUrl, task.flowInstanceId)) {
                     return false;
                 }
             }
@@ -324,8 +334,9 @@ public class StationTaskService {
             task.clean = taskParamYaml.clean;
             task.launchpadUrl = launchpadUrl;
 
+            File launchpadDir = new File(globals.stationTaskDir, metadataService.launchpadUrlAsCode(launchpadUrl).value);
             String path = getTaskPath(taskId);
-            File systemDir = new File(globals.stationTaskDir, path);
+            File systemDir = new File(launchpadDir, path);
             try {
                 if (systemDir.exists()) {
                     FileUtils.deleteDirectory(systemDir);
@@ -354,9 +365,8 @@ public class StationTaskService {
     }
 
     private StationTask save(StationTask task) {
-        File taskDir = prepareTaskDir(task.taskId);
+        File taskDir = prepareTaskDir(task.launchpadUrl, task.taskId);
         File taskYaml = new File(taskDir, Consts.TASK_YAML);
-
 
         if (taskYaml.exists()) {
             log.debug("{} file exists. Make backup", taskYaml.getPath());
@@ -395,11 +405,17 @@ public class StationTaskService {
         }
     }
 
-    public void delete(final long taskId) {
+    public void delete(String launchpadUrl, final long taskId) {
+        Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
+        delete(launchpadCode, taskId);
+    }
+
+    public void delete(Metadata.LaunchpadCode launchpadCode, final long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             final String path = getTaskPath(taskId);
 
-            final File systemDir = new File(globals.stationTaskDir, path);
+            final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.value);
+            final File systemDir = new File(launchpadDir, path);
             try {
                 if (systemDir.exists()) {
                     FileUtils.deleteDirectory(systemDir);
@@ -418,14 +434,18 @@ public class StationTaskService {
         return ""+power.power7+File.separatorChar+power.power4+File.separatorChar;
     }
 
-    File prepareTaskDir(Long taskId) {
-        DigitUtils.Power power = DigitUtils.getPower(taskId);
-        File taskDir = new File(globals.stationTaskDir,
-                ""+power.power7+File.separatorChar+power.power4+File.separatorChar);
-//        if (taskDir.exists()) {
-//            return taskDir;
-//        }
-        taskDir.mkdirs();
+    File prepareTaskDir(String launchpadUrl, Long taskId) {
+        Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
+        return prepareTaskDir(launchpadCode, taskId);
+    }
+
+    File prepareTaskDir(Metadata.LaunchpadCode launchpadCode, Long taskId) {
+        final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.value);
+        File taskDir = new File(launchpadDir, getTaskPath(taskId));
+        if (taskDir.exists()) {
+            return taskDir;
+        }
+        boolean status = taskDir.mkdirs();
         return taskDir;
     }
 

@@ -17,6 +17,7 @@
  */
 package aiai.ai.yaml.metadata;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.math.BigDecimal;
@@ -24,5 +25,13 @@ import java.util.LinkedHashMap;
 
 @Data
 public class Metadata {
+
+    @Data
+    @AllArgsConstructor
+    public static class LaunchpadCode {
+        public String value;
+    }
+
     public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
+    public LinkedHashMap<String, LaunchpadCode> launchpad = new LinkedHashMap<>();
 }

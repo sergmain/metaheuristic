@@ -29,19 +29,15 @@ import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.env.TimePeriods;
 import aiai.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import aiai.ai.yaml.launchpad_lookup.LaunchpadLookupConfigUtils;
-import aiai.ai.yaml.metadata.Metadata;
-import aiai.ai.yaml.metadata.MetadataUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -56,10 +52,10 @@ public class StationService {
     private final StationTaskService stationTaskService;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final UploadResourceActor uploadResourceActor;
+    private final MetadataService metadataService;
 
     private String env;
     private EnvYaml envYaml;
-    private Metadata metadata = new Metadata();
 
     public  final Map<String, LaunchpadLookupExtended> lookupExtendedMap = new HashMap<>();
 
@@ -68,11 +64,12 @@ public class StationService {
         public TimePeriods periods;
     }
 
-    public StationService(Globals globals, StationTaskService stationTaskService, TaskParamYamlUtils taskParamYamlUtils, UploadResourceActor uploadResourceActor) {
+    public StationService(Globals globals, StationTaskService stationTaskService, TaskParamYamlUtils taskParamYamlUtils, UploadResourceActor uploadResourceActor, MetadataService metadataService) {
         this.globals = globals;
         this.stationTaskService = stationTaskService;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.uploadResourceActor = uploadResourceActor;
+        this.metadataService = metadataService;
     }
 
     @PostConstruct
@@ -117,25 +114,13 @@ public class StationService {
                 lookupExtended.launchpadLookup = launchpad;
                 lookupExtended.periods = TimePeriods.from(launchpad.taskProcessingTime);
                 lookupExtendedMap.put( launchpad.url, lookupExtended );
+
+                metadataService.launchpadUrlAsCode(launchpad.url);
             }
         } catch (IOException e) {
             log.error("Error", e);
             throw new IllegalStateException("Error while loading file: " + launchpadFile.getPath(), e);
         }
-
-        final File metadataFile = new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME);
-        if (!metadataFile.exists()) {
-            log.warn("Station's metadata file doesn't exist: {}", launchpadFile.getPath());
-            return;
-        }
-        try(FileInputStream fis = new FileInputStream(metadataFile)) {
-            metadata = MetadataUtils.to(fis);
-        } catch (IOException e) {
-            log.error("Error", e);
-            throw new IllegalStateException("Error while loading file: " + metadataFile.getPath(), e);
-        }
-        //noinspection unused
-        int i=0;
     }
 
     public String getEnv() {
@@ -150,45 +135,6 @@ public class StationService {
         //noinspection UnnecessaryLocalVariable
         Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(getEnv(), periods.asString);
         return reportStationStatus;
-    }
-
-    private static final Object syncObj = new Object();
-
-    public String getStationId() {
-        synchronized (syncObj) {
-            return metadata.metadata.get(StationConsts.STATION_ID);
-        }
-    }
-
-    public void setStationId(String stationId) {
-        if (StringUtils.isBlank(stationId)) {
-            throw new IllegalStateException("StationId is null");
-        }
-        synchronized (syncObj) {
-            metadata.metadata.put(StationConsts.STATION_ID, stationId);
-            updateMetadataFile();
-        }
-    }
-
-    private void updateMetadataFile() {
-        final File metadataFile =  new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME);
-        if (metadataFile.exists()) {
-            log.info("Metadata file exists. Make backup");
-            File yamlFileBak = new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME + ".bak");
-            //noinspection ResultOfMethodCallIgnored
-            yamlFileBak.delete();
-            if (metadataFile.exists()) {
-                //noinspection ResultOfMethodCallIgnored
-                metadataFile.renameTo(yamlFileBak);
-            }
-        }
-
-        try {
-            FileUtils.write(metadataFile, MetadataUtils.toString(metadata), Charsets.UTF_8, false);
-        } catch (IOException e) {
-            log.error("Error", e);
-            throw new IllegalStateException("Error while writing to file: " + metadataFile.getPath(), e);
-        }
     }
 
     public void markAsDelivered(List<Long> ids) {
@@ -212,7 +158,7 @@ public class StationService {
         if (launchpadUrl==null) {
             throw new IllegalStateException("launchpadUrl is null");
         }
-        File taskDir = stationTaskService.prepareTaskDir(taskId);
+        File taskDir = stationTaskService.prepareTaskDir(metadataService.launchpadUrlAsCode(launchpadUrl), taskId);
         File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR+File.separatorChar+Consts.PARAMS_YAML);
         if (!paramFile.isFile() || !paramFile.exists()) {
             return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;

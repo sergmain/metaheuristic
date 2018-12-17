@@ -20,19 +20,17 @@ package aiai.ai.station;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
-import aiai.ai.yaml.station.StationTaskUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.omg.CORBA.BooleanHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 
 @Service
 @Slf4j
@@ -41,60 +39,70 @@ public class ArtifactCleanerAtStation {
     private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
     private final Globals globals;
+    private final StationService stationService;
+    private final MetadataService metadataService;
 
-    public ArtifactCleanerAtStation(StationTaskService stationTaskService, CurrentExecState currentExecState, Globals globals) {
+    public ArtifactCleanerAtStation(StationTaskService stationTaskService, CurrentExecState currentExecState, Globals globals, StationService stationService, MetadataService metadataService) {
         this.stationTaskService = stationTaskService;
         this.currentExecState = currentExecState;
         this.globals = globals;
+        this.stationService = stationService;
+        this.metadataService = metadataService;
     }
 
     public void fixedDelay() {
-        if (!globals.isStationEnabled || !currentExecState.isInit) {
-            // don't delete anything until station will receive the list of actual flow instances
-            return;
-        }
-
-        for (StationTask task : stationTaskService.findAll()) {
-            if (currentExecState.isState(task.flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST)) {
-                log.info("Delete obsolete task, id {}", task.getTaskId());
-                stationTaskService.delete(task.getTaskId());
+        for (String launchpadUrl : stationService.lookupExtendedMap.keySet()) {
+            if (!globals.isStationEnabled || !currentExecState.isInit(launchpadUrl)) {
+                // don't delete anything until station will receive the list of actual flow instances
                 continue;
             }
-            if (task.clean && task.delivered && task.resourceUploaded) {
-                log.info("Delete task with clean==true, id {}", task.getTaskId());
-                stationTaskService.delete(task.getTaskId());
+
+            Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
+
+            for (StationTask task : stationTaskService.findAll()) {
+                if (currentExecState.isState(launchpadUrl, task.flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST)) {
+                    log.info("Delete obsolete task, id {}", task.getTaskId());
+                    stationTaskService.delete(launchpadCode, task.getTaskId());
+                    continue;
+                }
+                if (task.clean && task.delivered && task.resourceUploaded) {
+                    log.info("Delete task with clean==true, id {}", task.getTaskId());
+                    stationTaskService.delete(launchpadCode, task.getTaskId());
+                }
             }
-        }
-        synchronized (StationSyncHolder.stationGlobalSync) {
-            try {
-                final BooleanHolder isEmpty = new BooleanHolder(true);
-                Files.list(globals.stationTaskDir.toPath()).forEach(s -> {
-                    isEmpty.value = true;
-                    try {
-                        Files.list(s).forEach(t -> {
-                            isEmpty.value = false;
-                            try {
-                                File taskYaml = new File(t.toFile(), Consts.TASK_YAML);
-                                if (!taskYaml.exists()) {
-                                    FileUtils.deleteDirectory(t.toFile());
-                                    // IDK is that bug or side-effect. so delete one more time
-                                    FileUtils.deleteDirectory(t.toFile());
+
+            final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.value);
+            if (!launchpadDir.exists()) {
+                launchpadDir.mkdir();
+            }
+            synchronized (StationSyncHolder.stationGlobalSync) {
+                try {
+                    final BooleanHolder isEmpty = new BooleanHolder(true);
+                    Files.list(launchpadDir.toPath()).forEach(s -> {
+                        isEmpty.value = true;
+                        try {
+                            Files.list(s).forEach(t -> {
+                                isEmpty.value = false;
+                                try {
+                                    File taskYaml = new File(t.toFile(), Consts.TASK_YAML);
+                                    if (!taskYaml.exists()) {
+                                        FileUtils.deleteDirectory(t.toFile());
+                                        // IDK is that bug or side-effect. so delete one more time
+                                        FileUtils.deleteDirectory(t.toFile());
+                                    }
+                                } catch (IOException e) {
+                                    log.error("#090.01 Error while deleting path {}, this isn't fatal error.", t);
                                 }
-                            } catch (IOException e) {
-                                log.error("#090.01 Error while deleting path {}, this isn't fatal error.", t);
-                            }
-                        });
-                    } catch (AccessDeniedException e) {
-                        // ok, may be later
-                    } catch (IOException e) {
-                        log.error("#090.07 Error while cleaning up broken tasks", e);
-                    }
-//                    if (isEmpty.value) {
-//                        FileUtils.deleteQuietly(s.toFile());
-//                    }
-                });
-            } catch (IOException e) {
-                log.error("#090.07 Error while cleaning up broken tasks", e);
+                            });
+                        } catch (AccessDeniedException e) {
+                            // ok, may be later
+                        } catch (IOException e) {
+                            log.error("#090.07 Error while cleaning up broken tasks", e);
+                        }
+                    });
+                } catch (IOException e) {
+                    log.error("#090.07 Error while cleaning up broken tasks", e);
+                }
             }
         }
     }

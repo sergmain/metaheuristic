@@ -106,11 +106,13 @@ public class Schedulers {
         private final StationService stationService;
         private final StationTaskService stationTaskService;
         private final CommandProcessor commandProcessor;
+        private final MetadataService metadataService;
+        private final CurrentExecState currentExecState;
 
         private final RoundRobinForLaunchpad roundRobin;
         private final Map<String, LaunchpadRequestor> launchpadRequestorMap = new HashMap<>();
 
-        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, CommandProcessor commandProcessor) {
+        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, CommandProcessor commandProcessor, MetadataService metadataService, CurrentExecState currentExecState) {
             this.globals = globals;
             this.taskAssigner = taskAssigner;
             this.taskProcessor = taskProcessor;
@@ -123,10 +125,12 @@ public class Schedulers {
             this.commandProcessor = commandProcessor;
 
             this.roundRobin = new RoundRobinForLaunchpad(stationService.lookupExtendedMap);
+            this.metadataService = metadataService;
+            this.currentExecState = currentExecState;
 
             for (Map.Entry<String, StationService.LaunchpadLookupExtended> entry : stationService.lookupExtendedMap.entrySet()) {
                 final StationService.LaunchpadLookupExtended launchpad = entry.getValue();
-                final LaunchpadRequestor requestor = new LaunchpadRequestor(launchpad.launchpadLookup.url, globals, commandProcessor, stationTaskService, stationService);
+                final LaunchpadRequestor requestor = new LaunchpadRequestor(launchpad.launchpadLookup.url, globals, commandProcessor, stationTaskService, stationService, this.metadataService, this.currentExecState);
 
                 launchpadRequestorMap.put(launchpad.launchpadLookup.url, requestor);
             }

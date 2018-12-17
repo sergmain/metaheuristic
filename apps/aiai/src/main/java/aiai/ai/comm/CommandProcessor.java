@@ -21,6 +21,7 @@ import aiai.ai.Enums;
 import aiai.ai.launchpad.LaunchpadService;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.task.TaskService;
+import aiai.ai.station.MetadataService;
 import aiai.ai.station.StationService;
 import aiai.ai.station.TaskProcessor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,15 +44,14 @@ public class CommandProcessor {
     private final LaunchpadService launchpadService;
 
     private final StationService stationService;
+    private final MetadataService metadataService;
     private final TaskProcessor taskProcessor;
 
-    // TODO not implemented yet
-//    private final InviteService inviteService;
-
-    public CommandProcessor(StationService stationService, TaskProcessor taskProcessor, LaunchpadService launchpadService) {
+    public CommandProcessor(StationService stationService, TaskProcessor taskProcessor, LaunchpadService launchpadService, MetadataService metadataService) {
         this.launchpadService = launchpadService;
         this.stationService = stationService;
         this.taskProcessor = taskProcessor;
+        this.metadataService = metadataService;
     }
 
     public Command[] process(Command command) {
@@ -131,7 +131,10 @@ public class CommandProcessor {
     }
 
     private Command[] processFlowInstanceStatus(Protocol.FlowInstanceStatus command) {
-        taskProcessor.processFlowInstanceStatus(command.statuses);
+        if (command.launchpadUrl==null) {
+            throw new IllegalStateException("command.launchpadUrl is null");
+        }
+        taskProcessor.processFlowInstanceStatus(command.launchpadUrl, command.statuses);
         return Protocol.NOP_ARRAY;
     }
 
@@ -206,13 +209,13 @@ public class CommandProcessor {
 
     private Command[] storeStationId(Protocol.AssignedStationId command) {
         System.out.println("New station Id: " + command.getStationId());
-        stationService.setStationId(command.getAssignedStationId());
+        metadataService.setStationId(command.getAssignedStationId());
         return Protocol.NOP_ARRAY;
     }
 
     private Command[] reAssignStationId(Protocol.ReAssignStationId command) {
         System.out.println("New station Id: " + command.getReAssignedStationId());
-        stationService.setStationId(command.getReAssignedStationId());
+        metadataService.setStationId(command.getReAssignedStationId());
         return Protocol.NOP_ARRAY;
     }
 

@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Consts {
+    public static final String HTTP = "http://";
+    public static final String HTTPS = "https://";
+
     public static final String SESSIONID_NAME = "JSESSIONID";
 
     public static final String REST_ANON_URL = "/rest-anon";

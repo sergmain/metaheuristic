@@ -101,11 +101,12 @@ public class TaskProcessor {
                 log.warn("Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            if (!currentExecState.isStarted(task.flowInstanceId)) {
+            if (!currentExecState.isStarted(task.launchpadUrl, task.flowInstanceId)) {
                 log.info("FlowInstance #{} isn't started, skip it", task.flowInstanceId);
                 continue;
             }
-            File taskDir = stationTaskService.prepareTaskDir(task.taskId);
+
+            File taskDir = stationTaskService.prepareTaskDir(task.launchpadUrl, task.taskId);
 
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean isResourcesOk = true;
@@ -229,7 +230,7 @@ public class TaskProcessor {
         return paramFile;
     }
 
-    public void processFlowInstanceStatus(List<Protocol.FlowInstanceStatus.SimpleStatus> statuses) {
-        currentExecState.register(statuses);
+    public void processFlowInstanceStatus(String launchpadUrl, List<Protocol.FlowInstanceStatus.SimpleStatus> statuses) {
+        currentExecState.register(launchpadUrl, statuses);
     }
 }

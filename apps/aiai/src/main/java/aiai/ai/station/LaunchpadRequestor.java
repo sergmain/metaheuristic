@@ -54,16 +54,21 @@ public class LaunchpadRequestor {
     private final CommandProcessor commandProcessor;
     private final StationTaskService stationTaskService;
     private final StationService stationService;
-    private final String launchpadUrl;
+    private final MetadataService metadataService;
+    private final CurrentExecState currentExecState;
+
     private final StationService.LaunchpadLookupExtended launchpad;
+    private final String launchpadUrl;
     private final String serverRestUrl;
 
-    public LaunchpadRequestor(String launchpadUrl, Globals globals, CommandProcessor commandProcessor, StationTaskService stationTaskService, StationService stationService) {
+    public LaunchpadRequestor(String launchpadUrl, Globals globals, CommandProcessor commandProcessor, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService, CurrentExecState currentExecState) {
         this.launchpadUrl = launchpadUrl;
         this.globals = globals;
         this.commandProcessor = commandProcessor;
         this.stationTaskService = stationTaskService;
         this.stationService = stationService;
+        this.metadataService = metadataService;
+        this.currentExecState = currentExecState;
         this.restTemplate = new RestTemplate();
         this.launchpad = stationService.lookupExtendedMap.get(launchpadUrl);
         if (launchpad==null) {
@@ -110,7 +115,7 @@ public class LaunchpadRequestor {
         }
 
         ExchangeData data = new ExchangeData();
-        String stationId = stationService.getStationId();
+        String stationId = metadataService.getStationId();
         if (stationId==null) {
             data.setCommand(new Protocol.RequestStationId());
         }
@@ -120,9 +125,11 @@ public class LaunchpadRequestor {
             // always report about current active sequences, if we have actual stationId
             data.setCommand(stationTaskService.produceStationTaskStatus());
             data.setCommand(stationService.produceReportStationStatus(launchpad.periods));
-            final boolean b = stationTaskService.isNeedNewTask(stationId);
-            if (b) {
-                data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.isAcceptOnlySignedSnippets));
+            if (currentExecState.isInit(launchpadUrl)) {
+                final boolean b = stationTaskService.isNeedNewTask(stationId);
+                if (b) {
+                    data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.isAcceptOnlySignedSnippets));
+                }
             }
             if (System.currentTimeMillis() - lastRequestForMissingResources > 15_000) {
                 data.setCommand(new Protocol.CheckForMissingOutputResources());

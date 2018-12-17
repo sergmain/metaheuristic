@@ -19,55 +19,63 @@ package aiai.ai.station;
 
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
+import org.omg.CORBA.BooleanHolder;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Component
 public class CurrentExecState {
 
     // this is a map for holding the current status of FlowInstance, Not a task
-    private final Map<Long, Enums.FlowInstanceExecState> flowInstanceState = new HashMap<>();
-    boolean isInit = false;
+    private final Map<String, Map<Long, Enums.FlowInstanceExecState>> flowInstanceState = new HashMap<>();
 
-    void register(List<Protocol.FlowInstanceStatus.SimpleStatus> statuses) {
+    private Map<String, BooleanHolder> isInit = new HashMap<>();
+
+    public boolean isInit(String launchpadUrl) {
+        return isInit.computeIfAbsent(launchpadUrl, v -> new BooleanHolder(false)).value;
+    }
+
+    void register(String launchpadUrl, List<Protocol.FlowInstanceStatus.SimpleStatus> statuses) {
         synchronized(flowInstanceState) {
-            isInit = true;
+            isInit.computeIfAbsent(launchpadUrl, v -> new BooleanHolder()).value = true;
             // statuses==null when there isn't any flow instance
             if (statuses==null) {
-                flowInstanceState.clear();
+                flowInstanceState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).clear();
                 return;
             }
-            statuses.forEach(status -> flowInstanceState.put(status.flowInstanceId, status.state));
-            List<Long> ids = new ArrayList<>();
-            flowInstanceState.forEach((key, value) -> {
-                boolean isFound = statuses.stream().anyMatch(status -> status.flowInstanceId == key);
-                if (!isFound) {
-                    ids.add(key);
+            statuses.forEach(status -> flowInstanceState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).put(status.flowInstanceId, status.state));
+            flowInstanceState.forEach((k, v) -> {
+                if (!k.equals(launchpadUrl)) {
+                    return;
                 }
+                List<Long> ids = new ArrayList<>();
+                v.forEach((key, value) -> {
+                    boolean isFound = statuses.stream().anyMatch(status -> status.flowInstanceId == key);
+                    if (!isFound) {
+                        ids.add(key);
+                    }
+                });
+                ids.forEach(v::remove);
             });
-            ids.forEach(flowInstanceState::remove);
         }
     }
 
-    Enums.FlowInstanceExecState getState(long flowInstanceId) {
+    Enums.FlowInstanceExecState getState(String host, long flowInstanceId) {
         synchronized(flowInstanceState) {
-            if (!isInit) {
+            if (!isInit(host)) {
                 return null;
             }
-            return flowInstanceState.getOrDefault(flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST);
+            return flowInstanceState.getOrDefault(host, Collections.emptyMap()).getOrDefault(flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST);
         }
     }
 
-    boolean isState(long flowInstanceId, Enums.FlowInstanceExecState state) {
-        Enums.FlowInstanceExecState currState = getState(flowInstanceId);
+    boolean isState(String launchpadUrl, long flowInstanceId, Enums.FlowInstanceExecState state) {
+        Enums.FlowInstanceExecState currState = getState(launchpadUrl, flowInstanceId);
         return currState!=null && currState==state;
     }
 
-    boolean isStarted(long flowInstanceId) {
-        return isState(flowInstanceId, Enums.FlowInstanceExecState.STARTED);
+    boolean isStarted(String launchpadUrl, long flowInstanceId) {
+        return isState(launchpadUrl, flowInstanceId, Enums.FlowInstanceExecState.STARTED);
     }
 }

@@ -24,6 +24,7 @@ import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.CollectionUtils;
+import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.ai.yaml.station.StationTask;
@@ -45,8 +46,9 @@ public class TaskAssetPreparer {
     private final CurrentExecState currentExecState;
     private final StationTaskService stationTaskService;
     private final StationService stationService;
+    private final MetadataService metadataService;
 
-    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, StationService stationService) {
+    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService) {
         this.globals = globals;
         this.downloadSnippetActor = downloadSnippetActor;
         this.downloadResourceActor = downloadResourceActor;
@@ -54,6 +56,7 @@ public class TaskAssetPreparer {
         this.currentExecState = currentExecState;
         this.stationTaskService = stationTaskService;
         this.stationService = stationService;
+        this.metadataService = metadataService;
     }
 
     public void fixedDelay() {
@@ -82,8 +85,10 @@ public class TaskAssetPreparer {
                 log.error("Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            if (Enums.FlowInstanceExecState.DOESNT_EXIST == currentExecState.getState(task.flowInstanceId)) {
-                stationTaskService.delete(task.taskId);
+            Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
+
+            if (Enums.FlowInstanceExecState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.flowInstanceId)) {
+                stationTaskService.delete(launchpadCode, task.taskId);
                 log.info("Deleted orphan task {}", task);
                 continue;
             }
@@ -94,7 +99,7 @@ public class TaskAssetPreparer {
             }
             final StationService.LaunchpadLookupExtended launchpad = stationService.lookupExtendedMap.get(task.launchpadUrl);
 
-            File taskDir = stationTaskService.prepareTaskDir(task.taskId);
+            File taskDir = stationTaskService.prepareTaskDir(launchpadCode, task.taskId);
 
             boolean isAllLoaded = true;
             for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
