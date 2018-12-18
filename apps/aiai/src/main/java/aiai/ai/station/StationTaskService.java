@@ -415,7 +415,8 @@ public class StationTaskService {
 
     public Collection<StationTask> findAll(String launchpadUrl) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            return Collections.unmodifiableCollection(getMapForLaunchpadUrl(launchpadUrl).values());
+            Collection<StationTask> values = getMapForLaunchpadUrl(launchpadUrl).values();
+            return Collections.unmodifiableCollection(new ArrayList<>(values));
         }
     }
 
