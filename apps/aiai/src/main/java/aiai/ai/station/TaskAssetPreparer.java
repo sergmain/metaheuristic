@@ -45,17 +45,17 @@ public class TaskAssetPreparer {
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final CurrentExecState currentExecState;
     private final StationTaskService stationTaskService;
-    private final StationService stationService;
+    private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
     private final MetadataService metadataService;
 
-    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService) {
+    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService) {
         this.globals = globals;
         this.downloadSnippetActor = downloadSnippetActor;
         this.downloadResourceActor = downloadResourceActor;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.currentExecState = currentExecState;
         this.stationTaskService = stationTaskService;
-        this.stationService = stationService;
+        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
         this.metadataService = metadataService;
     }
 
@@ -97,7 +97,8 @@ public class TaskAssetPreparer {
                 log.warn("taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;
             }
-            final StationService.LaunchpadLookupExtended launchpad = stationService.lookupExtendedMap.get(task.launchpadUrl);
+            final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
+                    launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
 
             File taskDir = stationTaskService.prepareTaskDir(launchpadCode, task.taskId);
 
@@ -125,7 +126,7 @@ public class TaskAssetPreparer {
             }
             if (isAllLoaded) {
                 log.info("All assets were prepared for task #{}, launchpad: {}", task.taskId, task.launchpadUrl);
-                stationTaskService.markAsAssetPrepared(task.launchpadUrl, task.taskId);
+                stationTaskService.markAsAssetPrepared(task.launchpadUrl, task.taskId, true);
             }
         }
     }

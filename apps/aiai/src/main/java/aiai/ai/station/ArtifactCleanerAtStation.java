@@ -39,19 +39,19 @@ public class ArtifactCleanerAtStation {
     private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
     private final Globals globals;
-    private final StationService stationService;
     private final MetadataService metadataService;
+    private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
 
-    public ArtifactCleanerAtStation(StationTaskService stationTaskService, CurrentExecState currentExecState, Globals globals, StationService stationService, MetadataService metadataService) {
+    public ArtifactCleanerAtStation(StationTaskService stationTaskService, CurrentExecState currentExecState, Globals globals, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService) {
         this.stationTaskService = stationTaskService;
         this.currentExecState = currentExecState;
         this.globals = globals;
-        this.stationService = stationService;
         this.metadataService = metadataService;
+        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
     }
 
     public void fixedDelay() {
-        for (String launchpadUrl : stationService.lookupExtendedMap.keySet()) {
+        for (String launchpadUrl : launchpadLookupExtendedService.lookupExtendedMap.keySet()) {
             if (!globals.isStationEnabled || !currentExecState.isInit(launchpadUrl)) {
                 // don't delete anything until station will receive the list of actual flow instances
                 continue;

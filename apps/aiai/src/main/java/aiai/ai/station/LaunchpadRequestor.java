@@ -56,12 +56,13 @@ public class LaunchpadRequestor {
     private final StationService stationService;
     private final MetadataService metadataService;
     private final CurrentExecState currentExecState;
+    private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
 
-    private final StationService.LaunchpadLookupExtended launchpad;
+    private final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad;
     private final String launchpadUrl;
     private final String serverRestUrl;
 
-    public LaunchpadRequestor(String launchpadUrl, Globals globals, CommandProcessor commandProcessor, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService, CurrentExecState currentExecState) {
+    public LaunchpadRequestor(String launchpadUrl, Globals globals, CommandProcessor commandProcessor, StationTaskService stationTaskService, StationService stationService, MetadataService metadataService, CurrentExecState currentExecState, LaunchpadLookupExtendedService launchpadLookupExtendedService) {
         this.launchpadUrl = launchpadUrl;
         this.globals = globals;
         this.commandProcessor = commandProcessor;
@@ -69,8 +70,9 @@ public class LaunchpadRequestor {
         this.stationService = stationService;
         this.metadataService = metadataService;
         this.currentExecState = currentExecState;
+        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
         this.restTemplate = new RestTemplate();
-        this.launchpad = stationService.lookupExtendedMap.get(launchpadUrl);
+        this.launchpad = this.launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
         if (launchpad==null) {
             throw new IllegalStateException("Can'r find launchpad config for url "+ launchpadUrl);
         }

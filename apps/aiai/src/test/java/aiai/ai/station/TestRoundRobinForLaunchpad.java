@@ -15,14 +15,14 @@ public class TestRoundRobinForLaunchpad {
     @Test
     public void test() {
 
-        LinkedHashMap<String, StationService.LaunchpadLookupExtended> lookupExtendedMap = new LinkedHashMap<>();
+        LinkedHashMap<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> lookupExtendedMap = new LinkedHashMap<>();
 
-        StationService.LaunchpadLookupExtended lle1 = new StationService.LaunchpadLookupExtended();
+        LaunchpadLookupExtendedService.LaunchpadLookupExtended lle1 = new LaunchpadLookupExtendedService.LaunchpadLookupExtended();
         lle1.launchpadLookup = new LaunchpadLookupConfig.LaunchpadLookup();
         lle1.launchpadLookup.url = "url1";
         lookupExtendedMap.put( "url1", lle1);
 
-        StationService.LaunchpadLookupExtended lle2 = new StationService.LaunchpadLookupExtended();
+        LaunchpadLookupExtendedService.LaunchpadLookupExtended lle2 = new LaunchpadLookupExtendedService.LaunchpadLookupExtended();
         lle2.launchpadLookup = new LaunchpadLookupConfig.LaunchpadLookup();
         lle2.launchpadLookup.url = "url2";
         lookupExtendedMap.put( "url2", lle2);

@@ -160,7 +160,7 @@ public class StationTaskService {
 
     public List<StationTask> getForReporting(String launchpadUrl) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            List<StationTask> list = findAllByFinishedOnIsNotNull();
+            List<StationTask> list = findAllByFinishedOnIsNotNull(launchpadUrl);
             List<StationTask> result = list
                     .stream()
                     .filter(stationTask -> !stationTask.isReported() ||
@@ -191,14 +191,14 @@ public class StationTaskService {
         }
     }
 
-    void markAsAssetPrepared(String launchpadUrl, Long taskId) {
+    void markAsAssetPrepared(String launchpadUrl, Long taskId, boolean status) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            log.info("markAsAssetPrepared({}, {})", launchpadUrl, taskId);
+            log.info("markAsAssetPrepared(launchpadUrl: {}, taskId: {}, status: {})", launchpadUrl, taskId, status);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
                 log.error("StationTask wasn't found for Id {}", taskId);
             } else {
-                task.setAssetsPrepared(true);
+                task.setAssetsPrepared(status);
                 save(task);
             }
         }
@@ -312,13 +312,11 @@ public class StationTaskService {
         }
     }
 
-    private List<StationTask> findAllByFinishedOnIsNotNull() {
+    private List<StationTask> findAllByFinishedOnIsNotNull(String launchpadUrl) {
         List<StationTask> list = new ArrayList<>();
-        for (String launchpadUrl : map.keySet()) {
-            for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
-                if (task.finishedOn != null) {
-                    list.add(task);
-                }
+        for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
+            if (task.finishedOn != null) {
+                list.add(task);
             }
         }
         return list;

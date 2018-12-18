@@ -21,11 +21,13 @@ import java.util.Map;
 public class MetadataService {
 
     private final Globals globals;
+    private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
 
     private Metadata metadata = new Metadata();
 
-    public MetadataService(Globals globals) {
+    public MetadataService(Globals globals, LaunchpadLookupExtendedService launchpadLookupExtendedService) {
         this.globals = globals;
+        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
     }
 
     @PostConstruct
@@ -40,6 +42,9 @@ public class MetadataService {
         } catch (IOException e) {
             log.error("Error", e);
             throw new IllegalStateException("Error while loading file: " + metadataFile.getPath(), e);
+        }
+        for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpadLookupExtendedService.lookupExtendedMap.entrySet()) {
+            launchpadUrlAsCode(entry.getKey());
         }
         //noinspection unused
         int i=0;

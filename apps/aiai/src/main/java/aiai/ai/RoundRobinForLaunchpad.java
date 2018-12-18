@@ -1,18 +1,17 @@
 package aiai.ai;
 
-import aiai.ai.station.StationService;
+import aiai.ai.station.LaunchpadLookupExtendedService;
 import org.omg.CORBA.BooleanHolder;
 
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class RoundRobinForLaunchpad {
 
     public Map<String, BooleanHolder> urls = new HashMap<>();
 
-    public RoundRobinForLaunchpad(Map<String, StationService.LaunchpadLookupExtended> launchpads) {
-        for (Map.Entry<String, StationService.LaunchpadLookupExtended> entry : launchpads.entrySet()) {
+    public RoundRobinForLaunchpad(Map<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> launchpads) {
+        for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpads.entrySet()) {
             this.urls.putIfAbsent(entry.getValue().launchpadLookup.url, new BooleanHolder(true));
         }
     }

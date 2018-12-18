@@ -64,7 +64,7 @@ public class CurrentExecState {
     Enums.FlowInstanceExecState getState(String host, long flowInstanceId) {
         synchronized(flowInstanceState) {
             if (!isInit(host)) {
-                return null;
+                return Enums.FlowInstanceExecState.UNKNOWN;
             }
             return flowInstanceState.getOrDefault(host, Collections.emptyMap()).getOrDefault(flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST);
         }

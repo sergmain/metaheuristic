@@ -18,6 +18,7 @@
 package aiai.ai.station;
 
 import aiai.ai.Consts;
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
@@ -55,8 +56,9 @@ public class TaskProcessor {
     private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
     private final UploadResourceActor uploadResourceActor;
+    private final LaunchpadLookupExtendedService launchpadLookupExtendedService ;
 
-    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState, UploadResourceActor uploadResourceActor) {
+    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState, UploadResourceActor uploadResourceActor, LaunchpadLookupExtendedService launchpadLookupExtendedService) {
         this.globals = globals;
         this.execProcessService = execProcessService;
         this.stationService = stationService;
@@ -64,6 +66,7 @@ public class TaskProcessor {
         this.stationTaskService = stationTaskService;
         this.currentExecState = currentExecState;
         this.uploadResourceActor = uploadResourceActor;
+        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
     }
 
     public void fixedDelay() {
@@ -86,7 +89,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            StationService.LaunchpadLookupExtended launchpad = stationService.lookupExtendedMap.get(task.launchpadUrl);
+            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
             if (StringUtils.isBlank(task.launchpadUrl)) {
                 stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
                 continue;
@@ -101,24 +104,33 @@ public class TaskProcessor {
                 log.warn("Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            if (!currentExecState.isStarted(task.launchpadUrl, task.flowInstanceId)) {
-                log.info("FlowInstance #{} isn't started, skip it", task.flowInstanceId);
+            Enums.FlowInstanceExecState state = currentExecState.getState(task.launchpadUrl, task.flowInstanceId);
+            if (state==Enums.FlowInstanceExecState.UNKNOWN) {
+                log.info("The state for FlowInstance #{}, host {} is unknown, skip it", task.flowInstanceId, task.launchpadUrl);
+                continue;
+            }
+
+            if (state!=Enums.FlowInstanceExecState.STARTED) {
+                log.info("The state for FlowInstance #{}, host is {}, skip it", task.flowInstanceId, task.launchpadUrl, state);
                 continue;
             }
 
             File taskDir = stationTaskService.prepareTaskDir(task.launchpadUrl, task.taskId);
 
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
-            boolean isResourcesOk = true;
+            boolean isAssetsOk = true;
             for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
                 AssetFile assetFile = StationResourceUtils.prepareDataFile(taskDir, resourceCode, null);
                 // is this resource prepared?
                 if (assetFile.isError || !assetFile.isContent) {
                     log.info("Resource hasn't been prepared yet, {}", assetFile);
-                    isResourcesOk = false;
+                    isAssetsOk = false;
                 }
             }
-            if (!isResourcesOk) {
+            if (!isAssetsOk) {
+                if (task.assetsPrepared) {
+                    stationTaskService.markAsAssetPrepared(task.launchpadUrl, task.taskId, false);
+                }
                 continue;
             }
 
@@ -147,10 +159,10 @@ public class TaskProcessor {
                 // is this snippet prepared?
                 if (snippetAssetFile.isError || !snippetAssetFile.isContent) {
                     log.info("Resource hasn't been prepared yet, {}", snippetAssetFile);
-                    isResourcesOk = false;
+                    isAssetsOk = false;
                 }
             }
-            if (!isResourcesOk) {
+            if (!isAssetsOk) {
                 continue;
             }
 
