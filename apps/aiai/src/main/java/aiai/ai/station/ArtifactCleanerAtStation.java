@@ -61,13 +61,13 @@ public class ArtifactCleanerAtStation {
 
             for (StationTask task : stationTaskService.findAll(launchpadUrl)) {
                 if (currentExecState.isState(launchpadUrl, task.flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST)) {
-                    log.info("Delete obsolete task, id {}", task.getTaskId());
-                    stationTaskService.delete(launchpadCode, task.getTaskId());
+                    log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), launchpadUrl);
+                    stationTaskService.delete(launchpadUrl, task.getTaskId());
                     continue;
                 }
                 if (task.clean && task.delivered && task.resourceUploaded) {
-                    log.info("Delete task with clean==true, id {}", task.getTaskId());
-                    stationTaskService.delete(launchpadCode, task.getTaskId());
+                    log.info("Delete task with clean==true, id {}, url {}", task.getTaskId(), launchpadUrl);
+                    stationTaskService.delete(launchpadUrl, task.getTaskId());
                 }
             }
 

@@ -421,10 +421,7 @@ public class StationTaskService {
 
     public void delete(String launchpadUrl, final long taskId) {
         Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
-        delete(launchpadCode, taskId);
-    }
 
-    public void delete(Metadata.LaunchpadCode launchpadCode, final long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             final String path = getTaskPath(taskId);
 
@@ -435,8 +432,8 @@ public class StationTaskService {
                     FileUtils.deleteDirectory(systemDir);
                     // IDK is that bug or side-effect. so delete one more time
                     FileUtils.deleteDirectory(systemDir);
-                    map.remove(taskId);
                 }
+                getMapForLaunchpadUrl(launchpadUrl).remove(taskId);
             } catch (Throwable th) {
                 log.error("Error deleting task " + taskId, th);
             }

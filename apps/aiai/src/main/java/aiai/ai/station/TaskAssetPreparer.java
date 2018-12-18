@@ -88,7 +88,7 @@ public class TaskAssetPreparer {
             Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 
             if (Enums.FlowInstanceExecState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.flowInstanceId)) {
-                stationTaskService.delete(launchpadCode, task.taskId);
+                stationTaskService.delete(task.launchpadUrl, task.taskId);
                 log.info("Deleted orphan task {}", task);
                 continue;
             }
