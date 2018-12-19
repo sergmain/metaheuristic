@@ -461,6 +461,15 @@ public class StationTaskService {
         return taskDir;
     }
 
+    public File prepareSnippetDir(Metadata.LaunchpadCode launchpadCode) {
+        final File launchpadDir = new File(globals.stationResourcesDir, launchpadCode.value);
+        if (launchpadDir.exists()) {
+            return launchpadDir;
+        }
+        boolean status = launchpadDir.mkdirs();
+        return launchpadDir;
+    }
+
     File prepareTaskSubDir(File taskDir, String subDir) {
         File taskSubDir = new File(taskDir, subDir);
         taskSubDir.mkdirs();

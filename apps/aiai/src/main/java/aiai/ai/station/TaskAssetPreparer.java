@@ -115,11 +115,12 @@ public class TaskAssetPreparer {
                 downloadResourceActor.add(resourceTask);
             }
 
+            File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
             if (!taskParamYaml.snippet.fileProvided) {
-                AssetFile assetFile = StationResourceUtils.prepareSnippetFile(globals.stationResourcesDir, taskParamYaml.snippet.code, taskParamYaml.snippet.filename);
+                AssetFile assetFile = StationResourceUtils.prepareSnippetFile(snippetDir, taskParamYaml.snippet.code, taskParamYaml.snippet.filename);
                 if (assetFile.isError || !assetFile.isContent) {
                     isAllLoaded = false;
-                    DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, taskDir);
+                    DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, snippetDir);
                     snippetTask.launchpad = launchpad.launchpadLookup;
                     downloadSnippetActor.add(snippetTask);
                 }

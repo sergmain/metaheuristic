@@ -22,10 +22,10 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
-import aiai.ai.snippet.SnippetUtils;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.utils.CollectionUtils;
+import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
@@ -57,8 +57,9 @@ public class TaskProcessor {
     private final CurrentExecState currentExecState;
     private final UploadResourceActor uploadResourceActor;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService ;
+    private final MetadataService metadataService;
 
-    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState, UploadResourceActor uploadResourceActor, LaunchpadLookupExtendedService launchpadLookupExtendedService) {
+    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState, UploadResourceActor uploadResourceActor, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService) {
         this.globals = globals;
         this.execProcessService = execProcessService;
         this.stationService = stationService;
@@ -67,6 +68,7 @@ public class TaskProcessor {
         this.currentExecState = currentExecState;
         this.uploadResourceActor = uploadResourceActor;
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
+        this.metadataService = metadataService;
     }
 
     public void fixedDelay() {
@@ -77,10 +79,10 @@ public class TaskProcessor {
             return;
         }
 
-        File snippetDir = SnippetUtils.checkEvironment(globals.stationDir);
-        if (snippetDir == null) {
-            return;
-        }
+//        File snippetDir = SnippetUtils.checkEvironment(globals.stationDir);
+//        if (snippetDir == null) {
+//            return;
+//        }
 
         List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
@@ -88,12 +90,12 @@ public class TaskProcessor {
                 stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Broken task. LaunchpadUrl is blank.");
                 continue;
             }
-
-            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
             if (StringUtils.isBlank(task.launchpadUrl)) {
                 stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
                 continue;
             }
+
+            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
 
             if (launchpad.periods.isCurrentTimeInactive()) {
                 log.info("Can't process task for url {} at this time, time: {}, permitted period of time: {}", new Date(), launchpad.periods.asString);
@@ -155,7 +157,9 @@ public class TaskProcessor {
 
             AssetFile snippetAssetFile=null;
             if (!snippet.fileProvided) {
-                snippetAssetFile = StationResourceUtils.prepareSnippetFile(globals.stationResourcesDir, snippet.code, snippet.filename);
+                final Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
+                final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
+                snippetAssetFile = StationResourceUtils.prepareSnippetFile(snippetDir, snippet.code, snippet.filename);
                 // is this snippet prepared?
                 if (snippetAssetFile.isError || !snippetAssetFile.isContent) {
                     log.info("Resource hasn't been prepared yet, {}", snippetAssetFile);

@@ -20,11 +20,14 @@ package aiai.ai.station.actors;
 import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.station.AssetFile;
+import aiai.ai.station.MetadataService;
 import aiai.ai.station.StationResourceUtils;
+import aiai.ai.station.StationTaskService;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
+import aiai.ai.yaml.metadata.Metadata;
 import aiai.apps.commons.utils.Checksum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
@@ -47,11 +50,15 @@ import java.util.Map;
 public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask> {
 
     private final Globals globals;
+    private final MetadataService metadataService;
+    private final StationTaskService stationTaskService;
 
     private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
 
-    public DownloadSnippetActor(Globals globals) {
+    public DownloadSnippetActor(Globals globals, MetadataService metadataService, StationTaskService stationTaskService) {
         this.globals = globals;
+        this.metadataService = metadataService;
+        this.stationTaskService = stationTaskService;
     }
 
     public void fixedDelay() {
@@ -69,7 +76,9 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             }
             final String snippetCode = task.snippetCode;
 
-            AssetFile assetFile = StationResourceUtils.prepareSnippetFile(globals.stationResourcesDir, task.snippetCode, task.filename);
+            final Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(task.launchpad.url);
+            final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
+            final AssetFile assetFile = StationResourceUtils.prepareSnippetFile(snippetDir, task.snippetCode, task.filename);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
@@ -105,16 +114,16 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     checksum = Checksum.fromJson(checksumStr);
                 } catch (HttpResponseException e) {
                     logError(snippetCode, e);
-                    break;
+                    continue;
                 } catch (SocketTimeoutException e) {
                     log.error("SocketTimeoutException", e);
-                    break;
+                    continue;
                 } catch (IOException e) {
                     log.error("IOException", e);
-                    break;
+                    continue;
                 } catch (Throwable th) {
                     log.error("Throwable", th);
-                    return;
+                    continue;
                 }
             }
 

@@ -111,13 +111,9 @@ public class Globals {
     public File launchpadTempDir;
     public File launchpadResourcesDir;
 
-    public File stationSnippetDir;
     public File stationResourcesDir;
     public File stationTaskDir;
 
-//    public String serverRestUrl;
-//    public String payloadRestUrl;
-//    public String uploadRestUrl;
     public PublicKey launchpadPublicKey = null;
 
     @PostConstruct
@@ -130,22 +126,11 @@ public class Globals {
             throw new IllegalStateException("launchpadMasterUsername can't be the same as launchpadRestUsername, launchpadMasterUsername: " + launchpadMasterUsername + ", launchpadRestUsername: " + launchpadRestUsername);
         }
 
-
-/*
-        final String restUrl = launchpadUrl + (isSecureLaunchpadRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
-
-        serverRestUrl  = restUrl + Consts.SERVER_REST_URL;
-        payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL;
-        uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
-*/
-
         if (stationDir==null) {
             log.warn("Station is disabled, stationDir: {}, isStationEnabled: {}", stationDir, isStationEnabled);
             isStationEnabled = false;
         }
         else {
-            stationSnippetDir = new File(stationDir, Consts.SNIPPET_DIR);
-            stationSnippetDir.mkdirs();
             stationResourcesDir = new File(stationDir, Consts.RESOURCES_DIR);
             stationResourcesDir.mkdirs();
             stationTaskDir = new File(stationDir, Consts.TASK_DIR);
