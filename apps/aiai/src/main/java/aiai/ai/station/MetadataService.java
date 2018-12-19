@@ -46,6 +46,7 @@ public class MetadataService {
         for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpadLookupExtendedService.lookupExtendedMap.entrySet()) {
             launchpadUrlAsCode(entry.getKey());
         }
+        updateMetadataFile();
         //noinspection unused
         int i=0;
     }

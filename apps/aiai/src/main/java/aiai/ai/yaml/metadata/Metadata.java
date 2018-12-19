@@ -19,6 +19,7 @@ package aiai.ai.yaml.metadata;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.math.BigDecimal;
@@ -29,6 +30,7 @@ public class Metadata {
 
     @Data
     @AllArgsConstructor
+    @NoArgsConstructor
     @ToString
     public static class LaunchpadCode {
         public String value;

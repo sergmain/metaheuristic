@@ -1,0 +1,5 @@
+launchpad:
+  http://localhost:8080:
+    value: localhost-8080
+metadata:
+  stationId: '11'
