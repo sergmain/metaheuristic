@@ -8,6 +8,7 @@ import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
+@Profile("launchpad")
 public class ExperimentProcessService {
 
     private final ExperimentService experimentService;

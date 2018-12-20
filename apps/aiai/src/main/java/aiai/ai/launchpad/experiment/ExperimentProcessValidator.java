@@ -8,11 +8,13 @@ import aiai.ai.launchpad.flow.ProcessValidator;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@Profile("launchpad")
 public class ExperimentProcessValidator implements ProcessValidator {
 
     private final SnippetCache snippetCache;

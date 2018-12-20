@@ -6,6 +6,7 @@ import aiai.ai.launchpad.repositories.AccountRepository;
 import aiai.ai.utils.ControllerUtils;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -19,6 +20,7 @@ import java.util.UUID;
 
 @Controller
 @RequestMapping("/launchpad/account")
+@Profile("launchpad")
 public class AccountController {
 
     private final AccountRepository accountRepository;

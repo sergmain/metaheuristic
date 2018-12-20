@@ -17,6 +17,7 @@ import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
+@Profile("launchpad")
 public class FileProcessService {
 
     private final FlowInstanceRepository flowInstanceRepository;

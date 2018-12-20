@@ -23,6 +23,7 @@ import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -33,6 +34,7 @@ import java.util.Set;
 
 @Service
 @Slf4j
+@Profile("launchpad")
 public class ArtifactCleanerAtLaunchpad {
 
     private final Globals globals;

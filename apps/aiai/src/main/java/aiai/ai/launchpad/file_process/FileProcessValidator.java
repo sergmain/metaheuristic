@@ -7,10 +7,12 @@ import aiai.ai.launchpad.flow.ProcessValidator;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@Profile("launchpad")
 public class FileProcessValidator implements ProcessValidator {
 
     private final SnippetCache snippetCache;

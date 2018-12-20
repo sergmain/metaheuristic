@@ -7,11 +7,13 @@ import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@Profile("launchpad")
 public class TaskPersistencer {
 
     private static final int NUMBER_OF_TRY = 2;
