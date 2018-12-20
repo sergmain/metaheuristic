@@ -383,7 +383,7 @@ public class StationTaskService {
         File taskYaml = new File(taskDir, Consts.TASK_YAML);
 
         if (taskYaml.exists()) {
-            log.debug("{} file exists. Make backup", taskYaml.getPath());
+            log.trace("{} file exists. Make backup", taskYaml.getPath());
             File yamlFileBak = new File(taskDir, Consts.TASK_YAML + ".bak");
             //noinspection ResultOfMethodCallIgnored
             yamlFileBak.delete();
