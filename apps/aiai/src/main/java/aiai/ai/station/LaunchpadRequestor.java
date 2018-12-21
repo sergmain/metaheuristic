@@ -172,7 +172,6 @@ public class LaunchpadRequestor {
             result.launchpadUrl = launchpadUrl;
 
             addCommands(commandProcessor.processExchangeData(result).getCommands());
-//            log.debug("fixedDelay(), {}", result);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode()== HttpStatus.UNAUTHORIZED) {
@@ -186,8 +185,10 @@ public class LaunchpadRequestor {
             }
         }
         catch (RestClientException e) {
-            log.error("Error accessing url: {}", serverRestUrl);
-            log.error("Stacktrace", e);
+            log.error("Error accessing url: {}, error: {}", serverRestUrl, e.getMessage());
+            if (e.getMessage()==null || !e.getMessage().contains("503")) {
+                log.error("Stacktrace", e);
+            }
         }
     }
 
