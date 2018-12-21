@@ -129,8 +129,10 @@ public class FlowService {
             return result;
         }
         result.flowVerifyStatus = validate(flow);
-        if (result.flowVerifyStatus != Enums.FlowValidateStatus.OK) {
+        if (result.flowVerifyStatus != Enums.FlowValidateStatus.OK &&
+                result.flowVerifyStatus != Enums.FlowValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
             log.error("Can't produce tasks, error: {}", result.flowVerifyStatus);
+            toStopped(flowInstance.getId());
             return result;
         }
         produce(result, flow, flowInstance);
@@ -225,6 +227,16 @@ public class FlowService {
         result.flowInstance = fi;
 
         return result;
+    }
+
+    public void toStopped(long flowInstanceId) {
+        FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
+        if (fi==null) {
+            return;
+        }
+        fi.setExecState(Enums.FlowInstanceExecState.STOPPED.code);
+        fi.setProducingOrder(0);
+        flowInstanceRepository.save(fi);
     }
 
     public Enums.FlowProducingStatus toProducing(FlowInstance fi) {
