@@ -102,7 +102,7 @@ public class FlowController {
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         final Flow flow = flowCache.findById(id);
         if (flow == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.01 flow wasn't found, flowId: " + id);
+            redirectAttributes.addFlashAttribute("errorMessage", "#559.01 flow wasn't found, flowId: " + id);
             return "redirect:/launchpad/flow/flows";
         }
         model.addAttribute("flow", flow);
@@ -126,7 +126,7 @@ public class FlowController {
         }
         else {
             log.error("Validation error: {}", flowValidateStatus);
-            model.addAttribute("errorMessage", "#560.01 Validation error: : " + flowValidateStatus);
+            model.addAttribute("errorMessage", "#561.01 Validation error: : " + flowValidateStatus);
         }
         model.addAttribute("flow", flow);
         return "launchpad/flow/flow-edit";
