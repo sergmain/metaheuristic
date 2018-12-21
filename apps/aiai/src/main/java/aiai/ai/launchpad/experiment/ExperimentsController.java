@@ -228,9 +228,14 @@ public class ExperimentsController {
 
     @GetMapping(value = "/experiment-info/{id}")
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
+
         Experiment experiment = experimentRepository.findById(id).orElse(null);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#282.01 experiment wasn't found, experimentId: " + id);
+            return "redirect:/launchpad/experiments";
+        }
+        if (experiment.getFlowInstanceId() == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#282.03 experiment wasn't startet yet, experimentId: " + id);
             return "redirect:/launchpad/experiments";
         }
         FlowInstance flowInstance = flowInstanceRepository.findById(experiment.getFlowInstanceId()).orElse(null);

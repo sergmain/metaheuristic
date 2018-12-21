@@ -47,7 +47,7 @@
                 <td th:text="${r.description}">description</td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:disabled="${r.flowInstanceId!=null}" th:href="${'/launchpad/experiment-edit/' + r.id}">Edit</a></td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-delete/' + r.id}">Delete</a></td>
-                <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-info/' + r.id}">Info</a></td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:disabled="${r.flowInstanceId==null}" th:href="${'/launchpad/experiment-info/' + r.id}">Info</a></td>
                 <td rowspan="2">
                     <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/launchpad/experiment-clone-commit}"
                           accept-charset="UTF-8"
