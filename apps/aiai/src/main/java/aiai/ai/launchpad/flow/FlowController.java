@@ -204,7 +204,7 @@ public class FlowController {
         return "launchpad/flow/flow-instances :: table";
     }
 
-    private void prepareFlowInstanceResult(FlowInstancesResult result, @PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
+    private void prepareFlowInstanceResult(FlowInstancesResult result, Long id, Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.flowInstanceRowsLimit, pageable);
         result.instances = flowInstanceRepository.findByFlowId(pageable, id);
         result.currentFlowId = id;

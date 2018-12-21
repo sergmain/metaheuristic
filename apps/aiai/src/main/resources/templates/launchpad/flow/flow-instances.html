@@ -3,6 +3,7 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
 
+    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController$FlowInstancesResult"*/-->
     <script>
         var table = function (html) {
             $('#table').html(html).find('.ajax-elem').each(function () {
@@ -20,7 +21,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/flow/flows-instance-part', table);
+            $.post('/launchpad/flow/flows-instances-part'+ [[${result.currentFlowId}]] , table);
         });
 
     </script>
@@ -30,7 +31,6 @@
     <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
     <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
 
-    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController$FlowInstancesResult"*/-->
     <a class="pure-button pure-button-primary" href="flow-instance-add.html" th:href="${'/launchpad/flow/flow-instance-add/' + result.currentFlowId}">Add new flow instance</a>
     <p></p>
 

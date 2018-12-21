@@ -116,7 +116,7 @@ public class ServerController {
         return deliverResource(response, typeAsStr, code);
     }
 
-    @GetMapping("/rest-anon/upload/{taskId}")
+    @PostMapping("/rest-anon/upload/{taskId}")
     public UploadResult uploadResourceAnon(
             MultipartFile file, HttpServletResponse response,
             @PathVariable("taskId") Long taskId) throws IOException {
