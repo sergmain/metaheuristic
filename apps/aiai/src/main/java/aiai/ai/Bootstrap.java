@@ -37,7 +37,7 @@ public class Bootstrap extends JarLauncher {
             bootstrap.launch(args, bootstrap.getMainClass(), classLoader, true);
         }
         catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("Error in start()", ex);
             System.exit(1);
         }
     }
@@ -51,7 +51,7 @@ public class Bootstrap extends JarLauncher {
             }
         }
         catch (Exception ex) {
-            ex.printStackTrace();
+            log.error("Error in stop()", ex);
             System.exit(1);
         }
     }
@@ -63,6 +63,9 @@ public class Bootstrap extends JarLauncher {
         }
         else if ("stop".equals(mode)) {
             Bootstrap.stop(args);
+        }
+        else {
+            log.error("Unknown mode {}", mode);
         }
     }
 }
