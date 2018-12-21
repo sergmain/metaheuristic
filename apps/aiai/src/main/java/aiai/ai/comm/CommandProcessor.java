@@ -21,9 +21,7 @@ import aiai.ai.Enums;
 import aiai.ai.launchpad.LaunchpadService;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.task.TaskService;
-import aiai.ai.station.MetadataService;
-import aiai.ai.station.StationService;
-import aiai.ai.station.TaskProcessor;
+import aiai.ai.station.StationServicesHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -42,16 +40,11 @@ import java.util.Objects;
 public class CommandProcessor {
 
     private final LaunchpadService launchpadService;
+    private final StationServicesHolder stationServicesHolder;
 
-    private final StationService stationService;
-    private final MetadataService metadataService;
-    private final TaskProcessor taskProcessor;
-
-    public CommandProcessor(StationService stationService, TaskProcessor taskProcessor, LaunchpadService launchpadService, MetadataService metadataService) {
+    public CommandProcessor(LaunchpadService launchpadService, StationServicesHolder stationServicesHolder) {
         this.launchpadService = launchpadService;
-        this.stationService = stationService;
-        this.taskProcessor = taskProcessor;
-        this.metadataService = metadataService;
+        this.stationServicesHolder = stationServicesHolder;
     }
 
     public Command[] process(Command command) {
@@ -112,7 +105,7 @@ public class CommandProcessor {
         }
         List<Protocol.ResendTaskOutputResourceResult.SimpleStatus> statuses = new ArrayList<>();
         for (Long taskId : command.taskIds) {
-            Enums.ResendTaskOutputResourceStatus status = stationService.resendTaskOutputResource(command.launchpadUrl, taskId);
+            Enums.ResendTaskOutputResourceStatus status = stationServicesHolder.getStationService().resendTaskOutputResource(command.launchpadUrl, taskId);
             statuses.add( new Protocol.ResendTaskOutputResourceResult.SimpleStatus(taskId, status));
         }
         return new Command[]{new Protocol.ResendTaskOutputResourceResult(statuses)};
@@ -134,12 +127,12 @@ public class CommandProcessor {
         if (command.launchpadUrl==null) {
             throw new IllegalStateException("command.launchpadUrl is null");
         }
-        taskProcessor.processFlowInstanceStatus(command.launchpadUrl, command.statuses);
+        stationServicesHolder.getTaskProcessor().processFlowInstanceStatus(command.launchpadUrl, command.statuses);
         return Protocol.NOP_ARRAY;
     }
 
     private Command[] processReportResultDelivering(Protocol.ReportResultDelivering command) {
-        stationService.markAsDelivered(command.launchpadUrl, command.getIds());
+        stationServicesHolder.getStationService().markAsDelivered(command.launchpadUrl, command.getIds());
         return Protocol.NOP_ARRAY;
     }
 
@@ -173,7 +166,7 @@ public class CommandProcessor {
     }
 
     private Command[] processAssignedTask(Protocol.AssignedTask command) {
-        stationService.assignTasks(command.launchpadUrl, command.tasks);
+        stationServicesHolder.getStationService().assignTasks(command.launchpadUrl, command.tasks);
         return Protocol.NOP_ARRAY;
     }
 
@@ -209,13 +202,13 @@ public class CommandProcessor {
 
     private Command[] storeStationId(Protocol.AssignedStationId command) {
         System.out.println("New station Id: " + command.getStationId());
-        metadataService.setStationId(command.getAssignedStationId());
+        stationServicesHolder.getMetadataService().setStationId(command.getAssignedStationId());
         return Protocol.NOP_ARRAY;
     }
 
     private Command[] reAssignStationId(Protocol.ReAssignStationId command) {
         System.out.println("New station Id: " + command.getReAssignedStationId());
-        metadataService.setStationId(command.getReAssignedStationId());
+        stationServicesHolder.getMetadataService().setStationId(command.getReAssignedStationId());
         return Protocol.NOP_ARRAY;
     }
 

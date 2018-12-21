@@ -103,9 +103,6 @@ public class Schedulers {
         private final DownloadResourceActor downloadResourceActor;
         private final UploadResourceActor uploadResourceActor;
         private final ArtifactCleanerAtStation artifactCleaner;
-        private final StationService stationService;
-        private final StationTaskService stationTaskService;
-        private final CommandProcessor commandProcessor;
         private final MetadataService metadataService;
         private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
         private final CurrentExecState currentExecState;
@@ -121,9 +118,6 @@ public class Schedulers {
             this.downloadResourceActor = downloadResourceActor;
             this.uploadResourceActor = uploadResourceActor;
             this.artifactCleaner = artifactCleaner;
-            this.stationService = stationService;
-            this.stationTaskService = stationTaskService;
-            this.commandProcessor = commandProcessor;
 
             this.roundRobin = new RoundRobinForLaunchpad(launchpadLookupExtendedService.lookupExtendedMap);
             this.metadataService = metadataService;

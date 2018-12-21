@@ -33,6 +33,7 @@ import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -46,6 +47,7 @@ import java.util.List;
 
 @Service
 @Slf4j
+@Profile("station")
 public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
 
     private static ObjectMapper mapper;

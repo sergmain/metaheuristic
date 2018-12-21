@@ -4,10 +4,12 @@ import aiai.ai.Globals;
 import aiai.ai.station.oauth.OAuthTokenHolder;
 import aiai.ai.station.tasks.OAuthTokenTask;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
+@Profile("station")
 public class OAuthTokenRequestorActor extends AbstractTaskQueue<OAuthTokenTask>{
 
     private final Globals globals;

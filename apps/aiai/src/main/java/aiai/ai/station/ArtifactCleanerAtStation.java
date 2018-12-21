@@ -25,6 +25,7 @@ import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.omg.CORBA.BooleanHolder;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -34,6 +35,7 @@ import java.nio.file.Files;
 
 @Service
 @Slf4j
+@Profile("station")
 public class ArtifactCleanerAtStation {
 
     private final StationTaskService stationTaskService;

@@ -35,6 +35,7 @@ import aiai.ai.yaml.task.TaskParamYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings({"UnnecessaryLocalVariable", "WeakerAccess"})
 @Service
 @Slf4j
+@Profile("station")
 public class StationTaskService {
 
     private final Globals globals;

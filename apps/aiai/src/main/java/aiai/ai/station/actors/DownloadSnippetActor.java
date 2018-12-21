@@ -33,6 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -47,6 +48,7 @@ import java.util.Map;
 
 @Service
 @Slf4j
+@Profile("station")
 public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask> {
 
     private final Globals globals;

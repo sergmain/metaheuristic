@@ -20,11 +20,13 @@ package aiai.ai.station;
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
 import org.omg.CORBA.BooleanHolder;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
 @Component
+@Profile("station")
 public class CurrentExecState {
 
     // this is a map for holding the current status of FlowInstance, Not a task
