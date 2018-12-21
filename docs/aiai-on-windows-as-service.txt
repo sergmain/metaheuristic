@@ -1,7 +1,10 @@
 how to:
     https://www.javadevjournal.com/spring-boot/spring-boot-application-as-a-service/
 
-download winsw
+sources for winsw
+    https://github.com/kohsuke/winsw
+
+download .exe winsw
     https://github.com/kohsuke/winsw/releases
 
 config:
