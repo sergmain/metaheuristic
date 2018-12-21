@@ -21,7 +21,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/flow/flows-instances-part'+ [[${result.currentFlowId}]] , table);
+            $.post('/launchpad/flow/flows-instances-part/'+ [[${result.currentFlowId}]] , table);
         });
 
     </script>
