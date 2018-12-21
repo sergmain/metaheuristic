@@ -1,1 +1,1 @@
-web: java $JAVA_OPTS -Xms256m -Xmx256m -Dserver.port=$PORT -jar apps/aiai/target/aiai.jar
+web: java $JAVA_OPTS -Xms228m -Xmx228m -Dserver.port=$PORT -jar apps/aiai/target/aiai.jar
