@@ -22,20 +22,21 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 
 @Data
 public class Metadata {
 
     @Data
-    @AllArgsConstructor
     @NoArgsConstructor
     @ToString
-    public static class LaunchpadCode {
+    public static class LaunchpadInfo {
+        @Deprecated
         public String value;
+        public String code;
+        public String stationId;
     }
 
     public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();
-    public LinkedHashMap<String, LaunchpadCode> launchpad = new LinkedHashMap<>();
+    public LinkedHashMap<String, LaunchpadInfo> launchpad = new LinkedHashMap<>();
 }

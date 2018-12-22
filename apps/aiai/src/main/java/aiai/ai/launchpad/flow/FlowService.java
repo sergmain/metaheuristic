@@ -3,6 +3,7 @@ package aiai.ai.launchpad.flow;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.Monitoring;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
@@ -17,17 +18,24 @@ import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.annotation.Scope;
+import org.springframework.lang.NonNullApi;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static aiai.ai.Enums.FlowValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
 
@@ -82,8 +90,11 @@ public class FlowService {
     }
 
     public synchronized void createAllTasks() {
+
+        Monitoring.log("##019", Enums.Monitor.MEMORY);
         List<FlowInstance> flowInstances = flowInstanceRepository.findByExecState(
                 Enums.FlowInstanceExecState.PRODUCING.code);
+        Monitoring.log("##020", Enums.Monitor.MEMORY);
         if (!flowInstances.isEmpty()) {
             log.info("Start producing tasks");
         }
@@ -94,8 +105,10 @@ public class FlowService {
                 flowInstanceRepository.save(flowInstance);
                 continue;
             }
+            Monitoring.log("##021", Enums.Monitor.MEMORY);
             log.info("Producing tasks for flow.code: {}, input resource pool: {}",flow.code, flowInstance.inputResourcePoolCode);
             createTasks(flow, flowInstance);
+            Monitoring.log("##022", Enums.Monitor.MEMORY);
         }
         if (!flowInstances.isEmpty()) {
             log.info("Producing tasks was finished");
@@ -135,7 +148,9 @@ public class FlowService {
             toStopped(flowInstance.getId());
             return result;
         }
+        Monitoring.log("##022", Enums.Monitor.MEMORY);
         produce(result, flow, flowInstance);
+        Monitoring.log("##033", Enums.Monitor.MEMORY);
 
         return result;
     }
@@ -249,12 +264,15 @@ public class FlowService {
     public void produce(TaskProducingResult result, Flow flow, FlowInstance fi) {
 
         final Map<String, List<String>> collectedInputs = new HashMap<>();
+        Monitoring.log("##023", Enums.Monitor.MEMORY);
         List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCode);
+        Monitoring.log("##024", Enums.Monitor.MEMORY);
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return;
         }
         collectedInputs.computeIfAbsent(Consts.FLOW_INSTANCE_INPUT_TYPE, k -> new ArrayList<>()).addAll(inputResourceCodes);
+        Monitoring.log("##025", Enums.Monitor.MEMORY);
 
         result.flowInstance = fi;
 
@@ -269,10 +287,14 @@ public class FlowService {
             ProduceTaskResult produceTaskResult;
             switch(process.type) {
                 case FILE_PROCESSING:
+                    Monitoring.log("##026", Enums.Monitor.MEMORY);
                     produceTaskResult = fileProcessService.produceTasks(flow, fi, process, collectedInputs);
+                    Monitoring.log("##027", Enums.Monitor.MEMORY);
                     break;
                 case EXPERIMENT:
+                    Monitoring.log("##028", Enums.Monitor.MEMORY);
                     produceTaskResult = experimentProcessService.produceTasks(flow, fi, process, collectedInputs);
+                    Monitoring.log("##029", Enums.Monitor.MEMORY);
                     break;
                 default:
                     throw new IllegalStateException("Unknown process type");
@@ -284,12 +306,14 @@ public class FlowService {
             if (!process.collectResources) {
                 collectedInputs.clear();
             }
+            Monitoring.log("##030", Enums.Monitor.MEMORY);
             if (produceTaskResult.outputResourceCodes!=null) {
                 for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
                     List<String> list = collectedInputs.computeIfAbsent(process.outputType, k -> new ArrayList<>());
                     list.add(outputResourceCode);
                 }
             }
+            Monitoring.log("##031", Enums.Monitor.MEMORY);
         }
         Long id = fi.getId();
         result.flowInstance = flowInstanceRepository.findById(id).orElse(null);

@@ -19,6 +19,7 @@ package aiai.ai.launchpad.snippet;
 
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.repositories.SnippetRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Profile("launchpad")
+@Slf4j
 public class SnippetCache {
 
     private final SnippetRepository snippetRepository;
@@ -47,7 +49,7 @@ public class SnippetCache {
         try {
             snippetRepository.delete(snippet);
         } catch (ObjectOptimisticLockingFailureException e) {
-            //
+            log.warn("Error deleting of snippet by object, {}", e.getMessage());
         }
     }
 
@@ -56,7 +58,7 @@ public class SnippetCache {
         try {
             snippetRepository.deleteById(snippetId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            //
+            log.warn("Error deleting of snippet by id, {}", e.getMessage());
         }
     }
 

@@ -1,18 +1,27 @@
 package aiai.ai;
 
 import aiai.ai.station.LaunchpadLookupExtendedService;
+import aiai.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
+import lombok.extern.slf4j.Slf4j;
 import org.omg.CORBA.BooleanHolder;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class RoundRobinForLaunchpad {
 
     public Map<String, BooleanHolder> urls = new HashMap<>();
 
     public RoundRobinForLaunchpad(Map<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> launchpads) {
         for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpads.entrySet()) {
-            this.urls.putIfAbsent(entry.getValue().launchpadLookup.url, new BooleanHolder(true));
+            LaunchpadLookupConfig.LaunchpadLookup launchpadLookup = entry.getValue().launchpadLookup;
+            if (launchpadLookup.disabled) {
+                log.info("launchpad {} is disabled", launchpadLookup.url);
+                continue;
+            }
+            log.info("launchpad {} was added to round-robin", launchpadLookup.url);
+            this.urls.putIfAbsent(launchpadLookup.url, new BooleanHolder(true));
         }
     }
 

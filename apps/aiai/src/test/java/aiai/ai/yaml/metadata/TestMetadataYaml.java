@@ -17,18 +17,15 @@
  */
 package aiai.ai.yaml.metadata;
 
-import aiai.ai.station.StationConsts;
-import aiai.ai.yaml.env.EnvYaml;
-import aiai.ai.yaml.env.EnvYamlUtils;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class TestMetadataYaml {
 
@@ -41,13 +38,19 @@ public class TestMetadataYaml {
             assertNotNull(m.getMetadata());
             assertNotNull(m.getLaunchpad());
             assertEquals(1, m.getMetadata().size());
-            assertEquals(1, m.getLaunchpad().size());
-            assertEquals("11", m.metadata.get(StationConsts.STATION_ID));
-            Set<Map.Entry<String, Metadata.LaunchpadCode>> entry = m.getLaunchpad().entrySet();
-            Map.Entry<String, Metadata.LaunchpadCode> map = entry.iterator().next();
+            assertEquals(2, m.getLaunchpad().size());
+            Set<Map.Entry<String, Metadata.LaunchpadInfo>> entry = m.getLaunchpad().entrySet();
+            Iterator<Map.Entry<String, Metadata.LaunchpadInfo>> iterator = entry.iterator();
+            Map.Entry<String, Metadata.LaunchpadInfo> map = iterator.next();
+            Map.Entry<String, Metadata.LaunchpadInfo> map1 = iterator.next();
 
             assertEquals("http://localhost:8080", map.getKey());
-            assertEquals("localhost-8080", map.getValue().value);
+            assertEquals("localhost-8080", map.getValue().code);
+            assertEquals("15", map.getValue().stationId);
+
+            assertEquals("http://host", map1.getKey());
+            assertEquals("host", map1.getValue().code);
+            assertNull(map1.getValue().stationId);
         }
     }
 }

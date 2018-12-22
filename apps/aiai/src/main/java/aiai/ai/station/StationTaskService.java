@@ -350,7 +350,7 @@ public class StationTaskService {
             task.clean = taskParamYaml.clean;
             task.launchpadUrl = launchpadUrl;
 
-            File launchpadDir = new File(globals.stationTaskDir, metadataService.launchpadUrlAsCode(launchpadUrl).value);
+            File launchpadDir = new File(globals.stationTaskDir, metadataService.launchpadUrlAsCode(launchpadUrl).code);
             String path = getTaskPath(taskId);
             File systemDir = new File(launchpadDir, path);
             try {
@@ -423,12 +423,12 @@ public class StationTaskService {
     }
 
     public void delete(String launchpadUrl, final long taskId) {
-        Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
+        Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
 
         synchronized (StationSyncHolder.stationGlobalSync) {
             final String path = getTaskPath(taskId);
 
-            final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.value);
+            final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.code);
             final File systemDir = new File(launchpadDir, path);
             try {
                 if (systemDir.exists()) {
@@ -449,12 +449,12 @@ public class StationTaskService {
     }
 
     File prepareTaskDir(String launchpadUrl, Long taskId) {
-        Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
+        Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
         return prepareTaskDir(launchpadCode, taskId);
     }
 
-    File prepareTaskDir(Metadata.LaunchpadCode launchpadCode, Long taskId) {
-        final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.value);
+    File prepareTaskDir(Metadata.LaunchpadInfo launchpadCode, Long taskId) {
+        final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.code);
         File taskDir = new File(launchpadDir, getTaskPath(taskId));
         if (taskDir.exists()) {
             return taskDir;
@@ -463,8 +463,8 @@ public class StationTaskService {
         return taskDir;
     }
 
-    public File prepareSnippetDir(Metadata.LaunchpadCode launchpadCode) {
-        final File launchpadDir = new File(globals.stationResourcesDir, launchpadCode.value);
+    public File prepareSnippetDir(Metadata.LaunchpadInfo launchpadCode) {
+        final File launchpadDir = new File(globals.stationResourcesDir, launchpadCode.code);
         if (launchpadDir.exists()) {
             return launchpadDir;
         }

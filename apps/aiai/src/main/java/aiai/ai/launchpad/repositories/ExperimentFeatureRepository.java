@@ -21,6 +21,7 @@ package aiai.ai.launchpad.repositories;
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,12 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
 
     @Transactional(readOnly = true)
     List<ExperimentFeature> findByExperimentId(Long experimentId);
+
+    @Query("SELECT f.id, f.resourceCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
+    List<Object[]> getAsExperimentFeatureSimpleByExperimentId(Long experimentId);
+
+    @Query("SELECT f.checksumIdCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
+    List<String> getChecksumIdCodesByExperimentId(long experimentId);
 
 /*
     @Transactional(readOnly = true)

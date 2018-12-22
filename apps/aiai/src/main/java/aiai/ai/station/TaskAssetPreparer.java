@@ -87,7 +87,7 @@ public class TaskAssetPreparer {
                 log.error("Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
+            Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 
             if (Enums.FlowInstanceExecState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.flowInstanceId)) {
                 stationTaskService.delete(task.launchpadUrl, task.taskId);

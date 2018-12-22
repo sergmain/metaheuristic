@@ -96,8 +96,7 @@ public class TestFeatures extends PreparingFlow {
         // produce artifacts - features, sequences,...
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
-        Experiment experiment = new Experiment();
-        experimentService.produceFeaturePermutations(experiment, null);
+        experimentService.produceFeaturePermutations(experiment.getId(), null);
         log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();

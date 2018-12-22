@@ -25,6 +25,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 import static org.junit.Assert.*;
 
@@ -139,7 +141,8 @@ public class TestFlowService extends PreparingFlow {
 
         experiment = experimentCache.findById(experiment.getId());
 
-        List<Task> tasks = taskRepository.findByFlowInstanceId(result.flowInstance.getId());
+        List<Object[]> tasks = taskRepository.findByFlowInstanceId(result.flowInstance.getId())
+                .collect(Collectors.toList());
         assertNotNull(result);
         assertNotNull(result.flowInstance);
         assertNotNull(tasks);

@@ -25,6 +25,7 @@ public class LaunchpadLookupConfig {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class LaunchpadLookup {
+        public boolean disabled;
         public String url;
         public boolean signatureRequired;
         public String publicKey;

@@ -59,7 +59,7 @@ public class ArtifactCleanerAtStation {
                 continue;
             }
 
-            Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
+            Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
 
             for (StationTask task : stationTaskService.findAll(launchpadUrl)) {
                 if (currentExecState.isState(launchpadUrl, task.flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST)) {
@@ -73,7 +73,7 @@ public class ArtifactCleanerAtStation {
                 }
             }
 
-            final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.value);
+            final File launchpadDir = new File(globals.stationTaskDir, launchpadCode.code);
             if (!launchpadDir.exists()) {
                 launchpadDir.mkdir();
             }

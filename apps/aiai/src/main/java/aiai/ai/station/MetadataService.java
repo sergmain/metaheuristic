@@ -54,32 +54,35 @@ public class MetadataService {
     }
 
     public String findHostByCode(String code) {
-        for (Map.Entry<String, Metadata.LaunchpadCode> entry : metadata.launchpad.entrySet()) {
-            if (code.equals(entry.getValue().value)) {
+        for (Map.Entry<String, Metadata.LaunchpadInfo> entry : metadata.launchpad.entrySet()) {
+            if (code.equals(entry.getValue().code)) {
                 return entry.getKey();
             }
         }
         return null;
     }
 
-    public Metadata.LaunchpadCode launchpadUrlAsCode(String launchpadUrl) {
+    public Metadata.LaunchpadInfo launchpadUrlAsCode(String launchpadUrl) {
         return metadata.launchpad.computeIfAbsent(launchpadUrl, v-> asCode(launchpadUrl));
     }
 
     private static final Object syncObj = new Object();
 
-    public String getStationId() {
+    public String getStationId(String launchpadUrl) {
         synchronized (syncObj) {
-            return metadata.metadata.get(StationConsts.STATION_ID);
+            return metadata.launchpad.computeIfAbsent(launchpadUrl, m->new Metadata.LaunchpadInfo()).stationId;
         }
     }
 
-    public void setStationId(String stationId) {
+    public void setStationId(String launchpadUrl, String stationId) {
+        if (StringUtils.isBlank(launchpadUrl)) {
+            throw new IllegalStateException("launchpadUrl is null");
+        }
         if (StringUtils.isBlank(stationId)) {
             throw new IllegalStateException("StationId is null");
         }
         synchronized (syncObj) {
-            metadata.metadata.put(StationConsts.STATION_ID, stationId);
+            metadata.launchpad.computeIfAbsent(launchpadUrl, m->new Metadata.LaunchpadInfo()).stationId = stationId;
             updateMetadataFile();
         }
     }
@@ -87,7 +90,7 @@ public class MetadataService {
     private void updateMetadataFile() {
         final File metadataFile =  new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME);
         if (metadataFile.exists()) {
-            log.info("Metadata file exists. Make backup");
+            log.trace("Metadata file exists. Make backup");
             File yamlFileBak = new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME + ".bak");
             //noinspection ResultOfMethodCallIgnored
             yamlFileBak.delete();
@@ -105,7 +108,7 @@ public class MetadataService {
         }
     }
 
-    private Metadata.LaunchpadCode asCode(String launchpadUrl) {
+    private Metadata.LaunchpadInfo asCode(String launchpadUrl) {
         String s = launchpadUrl.toLowerCase();
         if (launchpadUrl.startsWith(Consts.HTTP)) {
             s = s.substring(Consts.HTTP.length());
@@ -114,7 +117,9 @@ public class MetadataService {
             s = s.substring(Consts.HTTPS.length());
         }
         s = StringUtils.replaceEach(s, new String[]{".", ":", "/"}, new String[]{"_", "-", "-"});
-        return new Metadata.LaunchpadCode(s);
+        Metadata.LaunchpadInfo launchpadInfo = new Metadata.LaunchpadInfo();
+        launchpadInfo.code = s;
+        return launchpadInfo;
     }
 
 }

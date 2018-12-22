@@ -19,7 +19,9 @@
 package aiai.ai.station;
 
 import aiai.ai.Consts;
+import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.Monitoring;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.CommandProcessor;
 import aiai.ai.comm.ExchangeData;
@@ -116,8 +118,9 @@ public class LaunchpadRequestor {
             return;
         }
 
+        Monitoring.log("##010", Enums.Monitor.MEMORY);
         ExchangeData data = new ExchangeData();
-        String stationId = metadataService.getStationId();
+        String stationId = metadataService.getStationId(launchpadUrl);
         if (stationId==null) {
             data.setCommand(new Protocol.RequestStationId());
         }
@@ -128,7 +131,9 @@ public class LaunchpadRequestor {
             data.setCommand(stationTaskService.produceStationTaskStatus(launchpadUrl));
             data.setCommand(stationService.produceReportStationStatus(launchpad.periods));
             if (currentExecState.isInit(launchpadUrl)) {
+                Monitoring.log("##011", Enums.Monitor.MEMORY);
                 final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
+                Monitoring.log("##012", Enums.Monitor.MEMORY);
                 if (b) {
                     data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.isAcceptOnlySignedSnippets));
                 }
@@ -139,7 +144,9 @@ public class LaunchpadRequestor {
             }
         }
 
+        Monitoring.log("##013", Enums.Monitor.MEMORY);
         reportTaskProcessingResult(data);
+        Monitoring.log("##014", Enums.Monitor.MEMORY);
 
         List<Command> cmds;
         synchronized (commands) {
@@ -163,7 +170,9 @@ public class LaunchpadRequestor {
             }
 
             HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
+            Monitoring.log("##015", Enums.Monitor.MEMORY);
             ResponseEntity<ExchangeData> response = restTemplate.exchange(serverRestUrl, HttpMethod.POST, request, ExchangeData.class);
+            Monitoring.log("##016", Enums.Monitor.MEMORY);
             ExchangeData result = response.getBody();
             if (result==null) {
                 log.warn("Launchpad returned null as a result");
@@ -171,7 +180,9 @@ public class LaunchpadRequestor {
             }
             result.launchpadUrl = launchpadUrl;
 
+            Monitoring.log("##017", Enums.Monitor.MEMORY);
             addCommands(commandProcessor.processExchangeData(result).getCommands());
+            Monitoring.log("##018", Enums.Monitor.MEMORY);
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode()== HttpStatus.UNAUTHORIZED) {

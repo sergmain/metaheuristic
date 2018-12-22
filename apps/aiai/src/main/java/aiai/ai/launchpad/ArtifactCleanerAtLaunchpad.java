@@ -22,15 +22,19 @@ import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.utils.BoolHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -38,14 +42,37 @@ import java.util.Set;
 public class ArtifactCleanerAtLaunchpad {
 
     private final Globals globals;
+    private final CleanerTasks cleanerTasks;
     private final FlowInstanceRepository flowInstanceRepository;
-    private final TaskRepository taskRepository;
 
+    @Service
+    public static class CleanerTasks {
+        private final TaskRepository taskRepository;
 
-    public ArtifactCleanerAtLaunchpad(Globals globals, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository) {
+        public CleanerTasks(TaskRepository taskRepository) {
+            this.taskRepository = taskRepository;
+        }
+
+        @Transactional
+        public int cleanTasks(Set<Long> ids, int page, BoolHolder isFound) {
+            try (Stream<Object[]> stream = taskRepository.findAllAsTaskSimple(PageRequest.of(page++, 100))) {
+                stream
+                        .forEach(t -> {
+                            isFound.value = true;
+                            if (!ids.contains((Long) t[1])) {
+                                log.info("Found orphan task.id: {}", t[0]);
+                                taskRepository.deleteById((Long) t[0]);
+                            }
+                        });
+            }
+            return page;
+        }
+    }
+
+    public ArtifactCleanerAtLaunchpad(Globals globals, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, CleanerTasks cleanerTasks) {
         this.globals = globals;
         this.flowInstanceRepository = flowInstanceRepository;
-        this.taskRepository = taskRepository;
+        this.cleanerTasks = cleanerTasks;
     }
 
     public void fixedDelay() {
@@ -54,20 +81,15 @@ public class ArtifactCleanerAtLaunchpad {
             return;
         }
 
-        List<FlowInstance> flowInstances = flowInstanceRepository.findAll();
         Set<Long> ids = new HashSet<>();
-        for (FlowInstance flowInstance : flowInstances) {
-            ids.add(flowInstance.getId());
-        }
-        Slice<Task> tasks;
+        flowInstanceRepository.findAll().forEach( o -> ids.add(o.getId()));
+
         int page = 0;
-        while ((tasks = taskRepository.findAll(PageRequest.of(page++, 100))).hasContent()){
-            for (Task task : tasks) {
-                if (!ids.contains(task.flowInstanceId)) {
-                    log.info("Found orphan task.id: {}", task.getId());
-                    taskRepository.deleteById(task.getId());
-                }
-            }
-        }
+        final BoolHolder isFound = new BoolHolder();
+        do {
+            isFound.value = false;
+            page = cleanerTasks.cleanTasks(ids, page, isFound);
+        } while (isFound.value);
     }
+
 }

@@ -6,3 +6,4 @@ launchpads:
     signatureRequired: true
     url: https://host
     lookupType: registry
+    disabled: true

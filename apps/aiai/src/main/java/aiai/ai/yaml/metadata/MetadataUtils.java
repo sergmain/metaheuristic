@@ -23,6 +23,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.Map;
 
 @Slf4j
 public class MetadataUtils {
@@ -42,7 +43,17 @@ public class MetadataUtils {
     }
 
     public static Metadata to(InputStream is) {
-        return (Metadata) YamlUtils.to(is, yaml);
+        Metadata m = (Metadata) YamlUtils.to(is, yaml);
+        for (Map.Entry<String, Metadata.LaunchpadInfo> entry : m.launchpad.entrySet()) {
+            Metadata.LaunchpadInfo info = entry.getValue();
+            if (info.value != null) {
+                if (info.code == null) {
+                    info.code = info.value;
+                }
+                info.value = null;
+            }
+        }
+        return m;
     }
 
     public static Metadata to(File file) {

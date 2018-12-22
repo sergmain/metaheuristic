@@ -20,15 +20,18 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.Monitoring;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.experiment.task.TaskWIthType;
+import aiai.ai.launchpad.flow.FlowInstanceService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.utils.BigDecimalHolder;
+import aiai.ai.utils.BoolHolder;
 import aiai.ai.utils.permutation.Permutation;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.metrics.MetricValues;
@@ -45,18 +48,24 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.omg.CORBA.IntHolder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Profile;
+import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @EnableTransactionManagement
@@ -65,6 +74,42 @@ import java.util.stream.Collectors;
 public class ExperimentService {
 
     private static final HashMap<String, Integer> HASH_MAP = new HashMap<>();
+
+    private final ApplicationEventMulticaster eventMulticaster;
+
+    @Service
+    public static class ParamsSetter {
+
+        private final TaskRepository taskRepository;
+
+        public ParamsSetter(TaskRepository taskRepository) {
+            this.taskRepository = taskRepository;
+        }
+
+        @Transactional
+        public Set<String> getParamsInTransaction(FlowInstance flowInstance, Experiment experiment, IntHolder size) {
+            Set<String> taskParams;
+            taskParams = new LinkedHashSet<>();
+
+            size.value = 0;
+            try (Stream<Object[]> stream = taskRepository.findByFlowInstanceId(flowInstance.getId()) ) {
+                stream
+                        .forEach(o -> {
+                            if (taskParams.contains((String) o[1])) {
+                                // delete doubles records
+                                log.warn("!!! Found doubles. ExperimentId: {}, hyperParams: {}", experiment.getId(), o[1]);
+                                taskRepository.deleteById((Long) o[0]);
+
+                            }
+                            taskParams.add((String) o[1]);
+                            size.value += ((String) o[1]).length();
+                        });
+            }
+            return taskParams;
+        }
+
+
+    }
 
     @Data
     @NoArgsConstructor
@@ -132,6 +177,7 @@ public class ExperimentService {
     }
 
     private final Globals globals;
+    private final ParamsSetter paramsSetter;
     private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
     private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
@@ -142,8 +188,11 @@ public class ExperimentService {
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
     private final ExperimentTaskFeatureRepository experimentTaskFeatureRepository;
+    private final FlowInstanceRepository flowInstanceRepository;
 
-    public ExperimentService(Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1, ExperimentTaskFeatureRepository experimentTaskFeatureRepository) {
+    @Autowired
+    public ExperimentService(ApplicationEventMulticaster eventMulticaster, Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter) {
+        this.eventMulticaster = eventMulticaster;
         this.globals = globals;
         this.experimentCache = experimentCache;
         this.taskRepository = taskRepository;
@@ -155,6 +204,8 @@ public class ExperimentService {
         this.snippetService = snippetService;
         this.experimentRepository = experimentRepository1;
         this.experimentTaskFeatureRepository = experimentTaskFeatureRepository;
+        this.paramsSetter = paramsSetter;
+        this.flowInstanceRepository = flowInstanceRepository;
     }
 
     private static class ParamFilter {
@@ -464,7 +515,7 @@ public class ExperimentService {
         }
     }
 
-    public boolean produceTasks(Flow flow, FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs) {
+    public Enums.FlowProducingStatus produceTasks(Flow flow, FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs) {
         if (process.type!= Enums.ProcessType.EXPERIMENT) {
             throw new IllegalStateException("Wrong type of process, " +
                     "expected: "+ Enums.ProcessType.EXPERIMENT+", " +
@@ -475,166 +526,184 @@ public class ExperimentService {
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
         snippetService.sortSnippetsByType(experimentSnippets);
 
-        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
-        for (ExperimentFeature feature : features) {
-            ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(feature.getResourceCodes());
-            if (!numberOfVariants.status) {
-                log.warn("empty list of feature, feature: {}", feature);
-                continue;
-            }
-            List<String> inputResourceCodes = numberOfVariants.values;
-            Set<String> taskParams = new LinkedHashSet<>();
+        final Map<String, String> map = toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
+        final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
-            for (Task task : taskRepository.findByFlowInstanceId(flowInstance.getId())) {
-                if (taskParams.contains(task.getParams())) {
-                    // delete doubles records
-                    log.warn("!!! Found doubles. ExperimentId: {}, experimentFeatureId: {}, hyperParams: {}", experiment.getId(), feature.getId(), task.getParams());
-                    taskRepository.delete(task);
+//        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
+        final List<Object[]> features = experimentFeatureRepository.getAsExperimentFeatureSimpleByExperimentId(experiment.getId());
+        final Map<String, Snippet> localCache = new HashMap<>();
+        final IntHolder size = new IntHolder();
+        final Set<String> taskParams = paramsSetter.getParamsInTransaction(flowInstance, experiment, size);
+
+        // there is 2 because we have 2 types of snippets - fit and predict
+        totalVariants = features.size() * allHyperParams.size() * 2;
+
+        log.info("total size of tasks' params is {}", size.value);
+        int processed = taskParams.size();
+
+        final BoolHolder boolHolder = new BoolHolder();
+        final Consumer<Long> longConsumer = o -> {
+            if (flowInstance.getId().equals(o)) {
+                boolHolder.value = true;
+            }
+        };
+        FlowInstanceService.FlowInstanceDeletionListener listener =
+                new FlowInstanceService.FlowInstanceDeletionListener(flowInstance.getId(), longConsumer);
+
+        try {
+            eventMulticaster.addApplicationListener(listener);
+            FlowInstance instance = flowInstanceRepository.findById(flowInstance.getId()).orElse(null);
+            if (instance==null) {
+                return Enums.FlowProducingStatus.FLOW_INSTANCE_WAS_DELETED;
+            }
+
+            for (Object[] feature : features) {
+                ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants((String) feature[1]);
+                if (!numberOfVariants.status) {
+                    log.warn("empty list of feature, feature: {}", feature);
                     continue;
                 }
-                taskParams.add(task.getParams());
-            }
+                List<String> inputResourceCodes = numberOfVariants.values;
 
-            final Map<String, String> map = toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
-            final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+                boolean isNew = false;
+                for (HyperParams hyperParams : allHyperParams) {
 
-            // there is 2 because we have 2 types of snippets - fit and predict
-            totalVariants += allHyperParams.size() * 2;
+                    int orderAdd = 0;
+                    Task prevTask = null;
+                    Task task = null;
+                    for (ExperimentSnippet experimentSnippet : experimentSnippets) {
+                        if (boolHolder.value) {
+                            return Enums.FlowProducingStatus.FLOW_INSTANCE_WAS_DELETED;
+                        }
+                        prevTask = task;
 
-            Map<String, Snippet> localCache = new HashMap<>();
-            boolean isNew = false;
-            for (HyperParams hyperParams : allHyperParams) {
+                        // create empty task. we need task id for initialization
+                        task = new Task();
+                        task.setParams("");
+                        task.setFlowInstanceId(flowInstance.getId());
+                        task.setOrder(process.order + (orderAdd++));
+                        task.setProcessType(process.type.value);
+                        taskRepository.save(task);
 
-                int orderAdd = 0;
-                Task prevTask = null;
-                Task task=null;
-                for (ExperimentSnippet experimentSnippet : experimentSnippets) {
-                    prevTask = task;
-
-                    // create empty task. we need task id for initialization
-                    task = new Task();
-                    task.setParams("");
-                    task.setFlowInstanceId(flowInstance.getId());
-                    task.setOrder(process.order + (orderAdd++));
-                    task.setProcessType(process.type.value);
-                    taskRepository.save(task);
-
-                    TaskParamYaml yaml = new TaskParamYaml();
-                    yaml.setHyperParams( hyperParams.toSortedMap() );
-                    yaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
-                    for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
-                        if ("feature".equals(entry.getKey())) {
+                        TaskParamYaml yaml = new TaskParamYaml();
+                        yaml.setHyperParams(hyperParams.toSortedMap());
+                        yaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
+                        for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
+                            if ("feature".equals(entry.getKey())) {
+                                continue;
+                            }
+                            Process.Meta meta = process.getMetas()
+                                    .stream()
+                                    .filter(o -> o.value.equals(entry.getKey()))
+                                    .findFirst()
+                                    .orElse(null);
+                            if (meta == null) {
+                                log.error("Validation of flow #{} was failed. Meta with value {} wasn't found.", flowInstance.flowId, entry.getKey());
+                                continue;
+                            }
+                            yaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
+                        }
+                        final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
+                        Snippet snippet = localCache.get(experimentSnippet.getSnippetCode());
+                        if (snippet == null) {
+                            snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                            if (snippet != null) {
+                                localCache.put(experimentSnippet.getSnippetCode(), snippet);
+                            }
+                        }
+                        if (snippet == null) {
+                            log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
                             continue;
                         }
-                        Process.Meta meta = process.getMetas()
-                                .stream()
-                                .filter(o -> o.value.equals(entry.getKey()))
-                                .findFirst()
-                                .orElse(null);
-                        if (meta==null) {
-                            log.error("Validation of flow #{} was failed. Meta with value {} wasn't found.", flowInstance.flowId, entry.getKey());
+
+                        Enums.ExperimentTaskType type;
+                        if ("fit".equals(snippet.getType())) {
+                            yaml.outputResourceCode = getModelFilename(task);
+                            type = Enums.ExperimentTaskType.FIT;
+                        } else if ("predict".equals(snippet.getType())) {
+                            if (prevTask == null) {
+                                throw new IllegalStateException("prevTask is null");
+                            }
+                            yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(getModelFilename(prevTask));
+                            yaml.outputResourceCode = "task-" + task.getId() + "-output-stub-for-predict";
+                            type = Enums.ExperimentTaskType.PREDICT;
+                        } else {
+                            throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
+                        }
+                        ExperimentTaskFeature tef = new ExperimentTaskFeature();
+                        tef.setFlowInstanceId(flowInstance.getId());
+                        tef.setTaskId(task.getId());
+                        tef.setFeatureId((Long) feature[0]);
+                        tef.setTaskType(type.value);
+                        taskExperimentFeatureRepository.save(tef);
+
+                        yaml.snippet = new SimpleSnippet(
+                                experimentSnippet.getType(),
+                                experimentSnippet.getSnippetCode(),
+                                snippet.getFilename(),
+                                snippet.checksum,
+                                snippet.env,
+                                snippet.reportMetrics,
+                                snippet.fileProvided,
+                                snippet.params
+                        );
+                        yaml.clean = flow.clean;
+
+                        String currTaskParams = taskParamYamlUtils.toString(yaml);
+
+                        processed++;
+                        if (processed % 100 == 0) {
+                            log.info("total tasks: {}, created: {}", totalVariants, processed);
+                        }
+                        if (taskParams.contains(currTaskParams)) {
+                            log.info("Params already processed, skip");
                             continue;
                         }
-                        yaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
-                    }
-                    final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                    Snippet snippet =  localCache.get(experimentSnippet.getSnippetCode());
-                    if (snippet==null) {
-                        snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
-                        if (snippet!=null) {
-                            localCache.put(experimentSnippet.getSnippetCode(), snippet);
+                        task.setParams(currTaskParams);
+                        task = taskPersistencer.setParams(task.getId(), currTaskParams);
+                        if (task == null) {
+                            return Enums.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                         }
+                        isNew = true;
                     }
-                    if (snippet==null) {
-                        log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
-                        continue;
-                    }
-
-                    Enums.ExperimentTaskType type;
-                    if ("fit".equals(snippet.getType())) {
-                        yaml.outputResourceCode = getModelFilename(task);
-                        type = Enums.ExperimentTaskType.FIT;
-                    }
-                    else if ("predict".equals(snippet.getType())){
-                        if (prevTask==null) {
-                            throw new IllegalStateException("prevTask is null");
-                        }
-                        yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(getModelFilename(prevTask));
-                        yaml.outputResourceCode = "task-"+task.getId()+"-output-stub-for-predict";
-                        type = Enums.ExperimentTaskType.PREDICT;
-                    }
-                    else {
-                        throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
-                    }
-                    ExperimentTaskFeature tef = new ExperimentTaskFeature();
-                    tef.setFlowInstanceId(flowInstance.getId());
-                    tef.setTaskId(task.getId());
-                    tef.setFeatureId(feature.getId());
-                    tef.setTaskType( type.value );
-                    taskExperimentFeatureRepository.save(tef);
-
-                    yaml.snippet = new SimpleSnippet(
-                        experimentSnippet.getType(),
-                        experimentSnippet.getSnippetCode(),
-                        snippet.getFilename(),
-                        snippet.checksum,
-                        snippet.env,
-                        snippet.reportMetrics,
-                        snippet.fileProvided,
-                        snippet.params
-                    );
-                    yaml.clean = flow.clean;
-
-                    String currTaskParams = taskParamYamlUtils.toString(yaml);
-
-                    if (taskParams.contains(currTaskParams)) {
-                        continue;
-                    }
-                    task.setParams(currTaskParams);
-                    task = taskPersistencer.setParams(task.getId(), currTaskParams);
-                    if (task==null) {
-                        return false;
-                    }
-                    isNew = true;
                 }
             }
         }
+        finally {
+            eventMulticaster.removeApplicationListener(listener);
+        }
+
         if (experiment.getNumberOfTask() != totalVariants && experiment.getNumberOfTask() != 0) {
             log.warn("! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", experiment.getNumberOfTask(), totalVariants);
         }
         Experiment experimentTemp = experimentCache.findById(experiment.getId());
         if (experimentTemp==null) {
             log.warn("Experiment for id {} doesn't exist anymore", experiment.getId());
-            return false;
+            return Enums.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
         }
         experimentTemp.setNumberOfTask(totalVariants);
         experimentTemp.setAllTaskProduced(true);
         experimentTemp = experimentCache.save(experimentTemp);
-        return true;
+        return Enums.FlowProducingStatus.OK;
     }
 
     private String getModelFilename(Task task) {
         return "task-"+task.getId()+"-"+ Consts.ML_MODEL_BIN;
     }
 
-    public void produceFeaturePermutations(final Experiment experiment, List<String> inputResourceCodes) {
-        final List<ExperimentFeature> list = experimentFeatureRepository.findByExperimentId(experiment.getId());
+    public void produceFeaturePermutations(final Long experimentId, List<String> inputResourceCodes) {
+        final List<String> list = experimentFeatureRepository.getChecksumIdCodesByExperimentId(experimentId);
 
-        final List<String> codes = inputResourceCodes;
         final Permutation<String> permutation = new Permutation<>();
         final IntHolder total = new IntHolder();
-        for (int i = 0; i < codes.size(); i++) {
-            permutation.printCombination(codes, i+1,
+        Monitoring.log("##040", Enums.Monitor.MEMORY);
+        for (int i = 0; i < inputResourceCodes.size(); i++) {
+            Monitoring.log("##041", Enums.Monitor.MEMORY);
+            permutation.printCombination(inputResourceCodes, i+1,
                     data -> {
+                        Monitoring.log("##042", Enums.Monitor.MEMORY);
                         final String listAsStr = String.valueOf(data);
-                        if (isExist(list, listAsStr)) {
-                            return true;
-                        }
-
-                        final ExperimentFeature feature = new ExperimentFeature();
-                        feature.setExperimentId(experiment.getId());
-                        feature.setResourceCodes(listAsStr);
-                        String checksumMD5;
+                        final String checksumMD5;
                         try {
                             checksumMD5 = Checksum.Type.MD5.getChecksum(listAsStr);
                         } catch (IOException e) {
@@ -642,15 +711,29 @@ public class ExperimentService {
                             log.error(es, e);
                             throw new IllegalStateException(es);
                         }
-                        feature.setChecksumIdCodes(listAsStr.substring(0, 20)+"###"+checksumMD5);
+                        String checksumIdCodes = listAsStr.substring(0, 20) + "###" + checksumMD5;
+                        if (list.contains(checksumIdCodes)) {
+                            return true;
+                        }
+
+                        ExperimentFeature feature = new ExperimentFeature();
+                        feature.setExperimentId(experimentId);
+                        feature.setResourceCodes(listAsStr);
+                        feature.setChecksumIdCodes(checksumIdCodes);
                         experimentFeatureRepository.save(feature);
+                        //noinspection UnusedAssignment
+                        feature = null;
                         total.value++;
                         return true;
                     }
             );
         }
-        experiment.setFeatureProduced(true);
-        experimentCache.save(experiment);
+        Experiment e = experimentRepository.findById(experimentId).orElse(null);
+        if (e==null) {
+            throw new IllegalStateException("Experiment wasn't found for id " + experimentId);
+        }
+        e.setFeatureProduced(true);
+        experimentCache.save(e);
     }
 
     private boolean isExist(List<ExperimentFeature> features, String f) {

@@ -159,7 +159,7 @@ public class TaskProcessor {
 
             AssetFile snippetAssetFile=null;
             if (!snippet.fileProvided) {
-                final Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
+                final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
                 final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
                 snippetAssetFile = StationResourceUtils.prepareSnippetFile(snippetDir, snippet.code, snippet.filename);
                 // is this snippet prepared?

@@ -22,11 +22,13 @@ public class TestLaunchpadLookup {
             assertEquals(LaunchpadLookupConfig.LaunchpadLookupType.direct, ssc.launchpads.get(0).lookupType);
             assertNull(ssc.launchpads.get(0).publicKey);
             assertFalse(ssc.launchpads.get(0).signatureRequired);
+            assertFalse(ssc.launchpads.get(0).disabled);
 
             assertEquals("https://host", ssc.launchpads.get(1).url);
             assertEquals(LaunchpadLookupConfig.LaunchpadLookupType.registry, ssc.launchpads.get(1).lookupType);
             assertEquals("some-public-key", ssc.launchpads.get(1).publicKey);
             assertTrue(ssc.launchpads.get(1).signatureRequired);
+            assertTrue(ssc.launchpads.get(1).disabled);
         }
     }
 

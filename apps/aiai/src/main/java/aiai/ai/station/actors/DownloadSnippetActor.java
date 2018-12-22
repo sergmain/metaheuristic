@@ -36,7 +36,6 @@ import org.apache.http.client.fluent.Response;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
@@ -78,7 +77,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             }
             final String snippetCode = task.snippetCode;
 
-            final Metadata.LaunchpadCode launchpadCode = metadataService.launchpadUrlAsCode(task.launchpad.url);
+            final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpad.url);
             final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
             final AssetFile assetFile = StationResourceUtils.prepareSnippetFile(snippetDir, task.snippetCode, task.filename);
             if (assetFile.isError ) {

@@ -19,6 +19,7 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.Task;
+import aiai.ai.launchpad.beans.TaskSimple;
 import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -29,6 +30,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Component
 @Profile("launchpad")
@@ -37,14 +39,18 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     @Transactional(readOnly = true)
     Slice<Task> findAll(Pageable pageable);
 
+    @Query(value="select t.id, t.flowInstanceId from Task t")
+    Stream<Object[]> findAllAsTaskSimple(Pageable pageable);
+
     @Transactional(readOnly = true)
     List<Task> findByStationIdAndIsCompletedIsFalse(long stationId);
 
     @Transactional
     void deleteByFlowInstanceId(long flowInstanceId);
 
-    @Transactional(readOnly = true)
-    List<Task> findByFlowInstanceId(long flowInstanceId);
+    @Transactional
+    @Query(value="select t.id, t.params from Task t where t.flowInstanceId=:flowInstanceId")
+    Stream<Object[]> findByFlowInstanceId(long flowInstanceId);
 
     @Query("SELECT t FROM Task t where t.stationId=null and " +
             "t.flowInstanceId=:flowInstanceId and (t.order =:taskOrder or t.order=(:taskOrder + 1))")
@@ -54,7 +60,6 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
             "t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
     List<Task> findForCompletion(long flowInstanceId, int taskOrder);
 
-//    @Query("select new com.htrucker.mongodb.TotalProcessedRecords( a.datasetId, a.numberOfCopies, count(a)) from Record a group by a.datasetId, a.numberOfCopies ")
     @Query("SELECT count(t) FROM Task t where t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
     Long countWithConcreteOrder(long flowInstanceId, int taskOrder);
 

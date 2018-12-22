@@ -1,6 +1,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Enums;
+import aiai.ai.Monitoring;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.Flow;
@@ -47,13 +48,15 @@ public class ExperimentProcessService {
         }
 
         List<String> features = collectedInputs.get(meta.getValue());
-        experimentService.produceFeaturePermutations(e, features);
-        boolean status = experimentService.produceTasks(flow, flowInstance, process, e, collectedInputs);
-        if (!status) {
+        experimentService.produceFeaturePermutations(e.getId(), features);
+        Monitoring.log("##051", Enums.Monitor.MEMORY);
+        Enums.FlowProducingStatus status = experimentService.produceTasks(flow, flowInstance, process, e, collectedInputs);
+        Monitoring.log("##071", Enums.Monitor.MEMORY);
+        if (status!= Enums.FlowProducingStatus.OK) {
             log.error("Tasks weren't produced successfully.");
         }
 
-        result.status = status ? Enums.FlowProducingStatus.OK : Enums.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
+        result.status = status;
         return result;
     }
 }

@@ -201,14 +201,14 @@ public class CommandProcessor {
     }
 
     private Command[] storeStationId(Protocol.AssignedStationId command) {
-        System.out.println("New station Id: " + command.getStationId());
-        stationServicesHolder.getMetadataService().setStationId(command.getAssignedStationId());
+        log.info("storeStationId() new station Id: {}", command.getAssignedStationId());
+        stationServicesHolder.getMetadataService().setStationId(command.launchpadUrl, command.getAssignedStationId());
         return Protocol.NOP_ARRAY;
     }
 
     private Command[] reAssignStationId(Protocol.ReAssignStationId command) {
-        System.out.println("New station Id: " + command.getReAssignedStationId());
-        stationServicesHolder.getMetadataService().setStationId(command.getReAssignedStationId());
+        log.info("reAssignStationId() station Id: {}", command.getReAssignedStationId());
+        stationServicesHolder.getMetadataService().setStationId(command.launchpadUrl, command.getReAssignedStationId());
         return Protocol.NOP_ARRAY;
     }
 
