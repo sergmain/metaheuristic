@@ -521,7 +521,6 @@ public class ExperimentService {
                     "expected: "+ Enums.ProcessType.EXPERIMENT+", " +
                     "actual: " + process.type);
         }
-        int totalVariants = 0;
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
         snippetService.sortSnippetsByType(experimentSnippets);
@@ -536,9 +535,9 @@ public class ExperimentService {
         final Set<String> taskParams = paramsSetter.getParamsInTransaction(flowInstance, experiment, size);
 
         // there is 2 because we have 2 types of snippets - fit and predict
-        totalVariants = features.size() * allHyperParams.size() * 2;
+        int totalVariants = features.size() * allHyperParams.size() * 2;
 
-        log.info("total size of tasks' params is {}", size.value);
+        log.info("total size of tasks' params is {} bytes", size.value);
         int processed = taskParams.size();
 
         final BoolHolder boolHolder = new BoolHolder();

@@ -117,7 +117,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     logError(snippetCode, e);
                     continue;
                 } catch (SocketTimeoutException e) {
-                    log.error("SocketTimeoutException", e);
+                    log.error("SocketTimeoutException: {}", e.toString());
                     continue;
                 } catch (IOException e) {
                     log.error("IOException", e);
@@ -174,7 +174,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 logError(snippetCode, e);
             }
             catch (SocketTimeoutException e) {
-                log.error("SocketTimeoutException", e.toString());
+                log.error("SocketTimeoutException: {}", e.toString());
             }
             catch (IOException e) {
                 log.error("IOException", e);

@@ -75,7 +75,7 @@ public class Schedulers {
             launchpadService.getFlowService().createAllTasks();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.artifact-cleaner'), 5, 40, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.artifact-cleaner'), 30, 300, 30)*1000 }")
         public void artifactCleanerAtLaunchpad() {
             if (globals.isUnitTesting) {
                 return;

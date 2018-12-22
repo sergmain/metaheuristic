@@ -27,10 +27,8 @@ import org.springframework.cache.concurrent.ConcurrentMapCache;
 import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.context.event.SimpleApplicationEventMulticaster;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -80,17 +78,6 @@ public class Config {
         eventMulticaster.setTaskExecutor(new SimpleAsyncTaskExecutor());
         return eventMulticaster;
     }
-
-/*
-    @Bean
-    @Profile("!launchpad")
-    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
-        PropertySourcesPlaceholderConfigurer configurer = new PropertySourcesPlaceholderConfigurer();
-        configurer.setIgnoreUnresolvablePlaceholders(true);
-        configurer.setOrder(configurer.getOrder() - 1);
-        return configurer;
-    }
-*/
 
     /*
     @Configuration
@@ -197,21 +184,6 @@ public class Config {
 */
 
     // https://medium.com/@joeclever/using-multiple-datasources-with-spring-boot-and-spring-data-6430b00c02e7
-
-/*
-    TODO 20018-08-24 If everything will be fine, then delete this inner class
-    @Configuration
-    public static class SchedulingConfigurerConfiguration implements SchedulingConfigurer {
-
-        @Override
-        public void configureTasks(ScheduledTaskRegistrar taskRegistrar) {
-            ThreadPoolTaskScheduler taskScheduler = new ThreadPoolTaskScheduler();
-            taskScheduler.setPoolSize(100);
-            taskScheduler.initialize();
-            taskRegistrar.setTaskScheduler(taskScheduler);
-        }
-    }
-*/
 
     @Bean
     public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
