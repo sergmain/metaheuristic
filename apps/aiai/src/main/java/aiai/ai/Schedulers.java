@@ -119,6 +119,9 @@ public class Schedulers {
             this.uploadResourceActor = uploadResourceActor;
             this.artifactCleaner = artifactCleaner;
 
+            if (launchpadLookupExtendedService.lookupExtendedMap==null) {
+                throw new IllegalStateException("launchpad.yaml wasn't configured");
+            }
             this.roundRobin = new RoundRobinForLaunchpad(launchpadLookupExtendedService.lookupExtendedMap);
             this.metadataService = metadataService;
             this.launchpadLookupExtendedService = launchpadLookupExtendedService;
