@@ -35,15 +35,13 @@ public class MetadataService {
     @PostConstruct
     public void init() {
       final File metadataFile = new File(globals.stationDir, Consts.METADATA_YAML_FILE_NAME);
-        if (!metadataFile.exists()) {
-            log.warn("Station's metadata file doesn't exist: {}", metadataFile.getPath());
-            return;
-        }
-        try(FileInputStream fis = new FileInputStream(metadataFile)) {
-            metadata = MetadataUtils.to(fis);
-        } catch (IOException e) {
-            log.error("Error", e);
-            throw new IllegalStateException("Error while loading file: " + metadataFile.getPath(), e);
+        if (metadataFile.exists()) {
+            try (FileInputStream fis = new FileInputStream(metadataFile)) {
+                metadata = MetadataUtils.to(fis);
+            } catch (IOException e) {
+                log.error("Error", e);
+                throw new IllegalStateException("Error while loading file: " + metadataFile.getPath(), e);
+            }
         }
         for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpadLookupExtendedService.lookupExtendedMap.entrySet()) {
             launchpadUrlAsCode(entry.getKey());
@@ -63,7 +61,12 @@ public class MetadataService {
     }
 
     public Metadata.LaunchpadInfo launchpadUrlAsCode(String launchpadUrl) {
-        return metadata.launchpad.computeIfAbsent(launchpadUrl, v-> asCode(launchpadUrl));
+        Metadata.LaunchpadInfo launchpadInfo = metadata.launchpad.computeIfAbsent(launchpadUrl, v -> asCode(launchpadUrl));
+        // fix for wrong metadata.yaml data
+        if (launchpadInfo.code==null) {
+            launchpadInfo.code = asCode(launchpadUrl).code;
+        }
+        return launchpadInfo;
     }
 
     private static final Object syncObj = new Object();
