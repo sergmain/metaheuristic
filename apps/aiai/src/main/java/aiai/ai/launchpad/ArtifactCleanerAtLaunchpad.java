@@ -77,7 +77,7 @@ public class ArtifactCleanerAtLaunchpad {
     }
 
     public void fixedDelay() {
-        if (!globals.isStationEnabled) {
+        if (!globals.isLaunchpadEnabled) {
             // don't delete anything until station will receive the list of actual flow instances
             return;
         }
