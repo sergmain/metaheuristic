@@ -32,9 +32,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.http.*;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -193,6 +195,15 @@ public class LaunchpadRequestor {
             }
             else {
                 throw e;
+            }
+        }
+        catch (ResourceAccessException e) {
+            Throwable cause = e.getCause();
+            if (cause instanceof SocketException) {
+                log.error("Connection error: {}", cause.toString());
+            }
+            else {
+                log.error("Error", e);
             }
         }
         catch (RestClientException e) {
