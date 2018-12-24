@@ -6,11 +6,13 @@ import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.util.function.Consumer;
 
 @Service
+@Profile("launchpad")
 public class FlowInstanceService implements ApplicationEventPublisherAware {
 
 

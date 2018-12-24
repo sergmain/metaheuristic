@@ -78,6 +78,7 @@ public class ExperimentService {
     private final ApplicationEventMulticaster eventMulticaster;
 
     @Service
+    @Profile("launchpad")
     public static class ParamsSetter {
 
         private final TaskRepository taskRepository;

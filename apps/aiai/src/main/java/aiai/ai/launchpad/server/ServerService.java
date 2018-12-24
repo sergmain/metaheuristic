@@ -35,6 +35,7 @@ public class ServerService {
     private final CommandSetter commandSetter;
 
     @Service
+    @Profile("launchpad")
     public static class CommandSetter {
         private final FlowInstanceRepository flowInstanceRepository;
 

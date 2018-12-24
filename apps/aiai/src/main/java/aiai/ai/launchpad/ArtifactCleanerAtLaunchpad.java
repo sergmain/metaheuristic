@@ -46,6 +46,7 @@ public class ArtifactCleanerAtLaunchpad {
     private final FlowInstanceRepository flowInstanceRepository;
 
     @Service
+    @Profile("launchpad")
     public static class CleanerTasks {
         private final TaskRepository taskRepository;
 
