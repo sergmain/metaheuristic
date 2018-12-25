@@ -77,8 +77,8 @@ public class ArtifactCleanerAtLaunchpad {
     }
 
     public void fixedDelay() {
+        // maybe we have to delete this because we already have @Profile("launchpad")
         if (!globals.isLaunchpadEnabled) {
-            // don't delete anything until station will receive the list of actual flow instances
             return;
         }
 
