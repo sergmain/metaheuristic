@@ -51,7 +51,14 @@ public class TestCommands {
                 return new Protocol.FlowInstanceStatus();
             case StationTaskStatus:
                 return new Protocol.StationTaskStatus();
+            case CheckForMissingOutputResources:
+                return new Protocol.CheckForMissingOutputResources();
+            case ResendTaskOutputResource:
+                return new Protocol.ResendTaskOutputResource();
+            case ResendTaskOutputResourceResult:
+                return new Protocol.ResendTaskOutputResourceResult();
             default:
+                // if you get this exception, you'll have to add related enum to this switch block
                 throw new IllegalStateException("unknown command type: " + type);
         }
     }

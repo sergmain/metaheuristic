@@ -77,8 +77,8 @@ public abstract class FeatureMethods extends PreparingExperiment {
     @Autowired
     private BinaryDataService binaryDataService;
 
-    Station station = null;
-    Experiment experiment = null;
+//    Station station = null;
+//    Experiment experiment = null;
     boolean isCorrectInit = true;
 
     protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {

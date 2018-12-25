@@ -35,7 +35,7 @@ public class ExperimentUtils {
     public static void sortExperimentSnippets(List<ExperimentSnippet> experimentSnippets) {
         experimentSnippets.sort((o1, o2) -> {
                     if (o1.getType().equals(o2.getType())) return 0;
-                    return "fit".equals(o1.getType().toLowerCase()) ? 1 : -1;
+                    return "fit".equals(o1.getType().toLowerCase()) ? -1 : 1;
                 }
         );
     }

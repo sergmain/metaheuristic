@@ -2,7 +2,6 @@ package aiai.ai.flow;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.Process;
-import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.yaml.flow.FlowYaml;
@@ -18,7 +17,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -83,6 +83,7 @@ public class TestFeatures extends PreparingFlow {
             flowYaml.processes.add(p);
         }
 
+        //noinspection UnnecessaryLocalVariable
         String yaml = flowYamlUtils.toString(flowYaml);
         return yaml;
     }
@@ -96,7 +97,8 @@ public class TestFeatures extends PreparingFlow {
         // produce artifacts - features, sequences,...
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
-        experimentService.produceFeaturePermutations(experiment.getId(), null);
+        //noinspection ArraysAsListWithZeroOrOneArgument
+        experimentService.produceFeaturePermutations(experiment.getId(), Arrays.asList("aaa"));
         log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();
@@ -105,6 +107,7 @@ public class TestFeatures extends PreparingFlow {
         log.info("experimentFeatureRepository.findByExperimentId() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(features);
+        // TODO 777 - just random number. need to change value for working test
         assertEquals(777, features.size());
 
         mills = System.currentTimeMillis();

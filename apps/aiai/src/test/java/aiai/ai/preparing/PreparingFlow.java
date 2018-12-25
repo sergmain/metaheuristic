@@ -5,6 +5,7 @@ import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
+import aiai.ai.launchpad.flow.FlowCache;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
@@ -21,6 +22,9 @@ import java.io.ByteArrayInputStream;
 
 @Slf4j
 public abstract class PreparingFlow extends PreparingExperiment {
+
+    @Autowired
+    public FlowCache flowCache;
 
     @Autowired
     public FlowRepository flowRepository;
@@ -75,7 +79,12 @@ public abstract class PreparingFlow extends PreparingExperiment {
         flow.setParams(params);
         flow.setCreatedOn(System.currentTimeMillis());
 
-        flowRepository.save(flow);
+
+        Flow tempFlow = flowRepository.findByCode(flow.getCode());
+        if (tempFlow!=null) {
+            flowCache.deleteById(tempFlow.getId());
+        }
+        flowCache.save(flow);
 
         byte[] bytes = "A resource for input pool".getBytes();
 
@@ -98,22 +107,6 @@ public abstract class PreparingFlow extends PreparingExperiment {
         SnippetVersion sv = SnippetVersion.from(snippetCode);
         Snippet s = new Snippet();
 
-/*
-        ID          SERIAL PRIMARY KEY,
-        VERSION     NUMERIC(5, 0)  NOT NULL,
-        NAME      VARCHAR(50) not null,
-        SNIPPET_TYPE      VARCHAR(50) not null,
-        SNIPPET_VERSION   VARCHAR(20) not null,
-        FILENAME  VARCHAR(250) not null,
-        CHECKSUM    VARCHAR(2048),
-        IS_SIGNED   BOOLEAN not null default false,
-        IS_REPORT_METRICS   BOOLEAN not null default false,
-        ENV         VARCHAR(50) not null,
-        PARAMS         VARCHAR(1000),
-        CODE_LENGTH integer not null,
-        IS_FILE_PROVIDED   BOOLEAN not null default false
-
-*/
         Snippet sn = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
         if (sn!=null) {
             snippetCache.delete(sn);
@@ -138,9 +131,9 @@ public abstract class PreparingFlow extends PreparingExperiment {
     public void afterPreparingFlow() {
         if (flow!=null) {
             try {
-                flowRepository.delete(flow);
+                flowCache.deleteById(flow.getId());
             } catch (Throwable th) {
-                th.printStackTrace();
+                log.error("Error while flowCache.deleteById()", th);
             }
         }
         deleteSnippet(s1);
@@ -152,7 +145,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
             try {
                 flowInstanceRepository.deleteById(flowInstance.getId());
             } catch (Throwable th) {
-                th.printStackTrace();
+                log.error("Error while flowInstanceRepository.deleteById()", th);
             }
         }
         try {

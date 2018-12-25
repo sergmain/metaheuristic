@@ -45,7 +45,7 @@ public class TestJson {
     @Test
     public void testJsonExchangeData() throws IOException {
         System.out.println("testJsonExchangeData()");
-        String json = "{\"nop\":{\"type\":\"Nop\",\"params\":{\"key\":\"13\"},\"sysParams\":{\"key42\":\"42\"}},\"success\":true}";
+        String json = "{\"nop\":{\"type\":\"Nop\",\"params\":{\"key\":\"13\"}},\"success\":true}";
 
         ExchangeData data = JsonUtils.getExchangeData(json);
 

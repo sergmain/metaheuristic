@@ -108,8 +108,6 @@ public class ExperimentService {
             }
             return taskParams;
         }
-
-
     }
 
     @Data
@@ -711,7 +709,7 @@ public class ExperimentService {
                             log.error(es, e);
                             throw new IllegalStateException(es);
                         }
-                        String checksumIdCodes = listAsStr.substring(0, 20) + "###" + checksumMD5;
+                        String checksumIdCodes = StringUtils.substring(listAsStr, 0, 20) + "###" + checksumMD5;
                         if (list.contains(checksumIdCodes)) {
                             return true;
                         }
