@@ -30,7 +30,7 @@ public class ExperimentProcessService {
         this.experimentCache = experimentCache;
     }
 
-    public FlowService.ProduceTaskResult produceTasks(Flow flow, FlowInstance flowInstance, Process process, Map<String, List<String>> collectedInputs) {
+    public FlowService.ProduceTaskResult produceTasks(boolean isPersist, Flow flow, FlowInstance flowInstance, Process process, Map<String, List<String>> collectedInputs) {
         Experiment e = experimentCache.findByCode(process.code);
         FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
         if (e==null) {
@@ -39,7 +39,9 @@ public class ExperimentProcessService {
         }
 
         e.setFlowInstanceId(flowInstance.getId());
-        e = experimentCache.save(e);
+        if (isPersist) {
+            e = experimentCache.save(e);
+        }
 
         Process.Meta meta = process.getMeta("feature");
         if (meta==null) {
@@ -48,9 +50,9 @@ public class ExperimentProcessService {
         }
 
         List<String> features = collectedInputs.get(meta.getValue());
-        experimentService.produceFeaturePermutations(e.getId(), features);
+        experimentService.produceFeaturePermutations(isPersist, e.getId(), features);
         Monitoring.log("##051", Enums.Monitor.MEMORY);
-        Enums.FlowProducingStatus status = experimentService.produceTasks(flow, flowInstance, process, e, collectedInputs);
+        Enums.FlowProducingStatus status = experimentService.produceTasks(isPersist, flow, flowInstance, process, e, collectedInputs);
         Monitoring.log("##071", Enums.Monitor.MEMORY);
         if (status!= Enums.FlowProducingStatus.OK) {
             log.error("Tasks weren't produced successfully.");

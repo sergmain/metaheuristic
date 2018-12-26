@@ -44,8 +44,9 @@ public class FileProcessService {
         this.binaryDataService = binaryDataService;
     }
 
+    @SuppressWarnings("Duplicates")
     public FlowService.ProduceTaskResult produceTasks(
-            Flow flow, FlowInstance flowInstance, Process process,
+            boolean isPersist, Flow flow, FlowInstance flowInstance, Process process,
             Map<String, List<String>> collectedInputs) {
 
         FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
@@ -56,7 +57,9 @@ public class FileProcessService {
                 SnippetVersion sv = SnippetVersion.from(snippetCode);
                 String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, process.order);
                 result.outputResourceCodes.add(outputResourceCode);
-                createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs);
+                if (isPersist) {
+                    createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs);
+                }
             }
         }
         else {
@@ -64,7 +67,9 @@ public class FileProcessService {
             SnippetVersion sv = SnippetVersion.from(snippetCode);
             String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, process.order);
             result.outputResourceCodes.add(outputResourceCode);
-            createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs);
+            if (isPersist) {
+                createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs);
+            }
         }
         result.status = Enums.FlowProducingStatus.OK;
         return result;

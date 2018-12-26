@@ -98,7 +98,7 @@ public class TestFeatures extends PreparingFlow {
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
         //noinspection ArraysAsListWithZeroOrOneArgument
-        experimentService.produceFeaturePermutations(experiment.getId(), Arrays.asList("aaa"));
+        experimentService.produceFeaturePermutations(true, experiment.getId(), Arrays.asList("aaa"));
         log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();
@@ -117,7 +117,7 @@ public class TestFeatures extends PreparingFlow {
         Process process = new Process();
         process.order=1;
         process.inputType="input-type";
-        experimentService.produceTasks(flow, flowInstance, process, experiment, new HashMap<>());
+        experimentService.produceTasks(true, flow, flowInstance, process, experiment, new HashMap<>());
         log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
         // some global final check

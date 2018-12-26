@@ -49,7 +49,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.omg.CORBA.IntHolder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.data.domain.Page;
@@ -88,7 +87,7 @@ public class ExperimentService {
         }
 
         @Transactional
-        public Set<String> getParamsInTransaction(FlowInstance flowInstance, Experiment experiment, IntHolder size) {
+        public Set<String> getParamsInTransaction(boolean isPersist, FlowInstance flowInstance, Experiment experiment, IntHolder size) {
             Set<String> taskParams;
             taskParams = new LinkedHashSet<>();
 
@@ -99,7 +98,9 @@ public class ExperimentService {
                             if (taskParams.contains((String) o[1])) {
                                 // delete doubles records
                                 log.warn("!!! Found doubles. ExperimentId: {}, hyperParams: {}", experiment.getId(), o[1]);
-                                taskRepository.deleteById((Long) o[0]);
+                                if (isPersist) {
+                                    taskRepository.deleteById((Long) o[0]);
+                                }
 
                             }
                             taskParams.add((String) o[1]);
@@ -514,7 +515,7 @@ public class ExperimentService {
         }
     }
 
-    public Enums.FlowProducingStatus produceTasks(Flow flow, FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs) {
+    public Enums.FlowProducingStatus produceTasks(boolean isPersist, Flow flow, FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs) {
         if (process.type!= Enums.ProcessType.EXPERIMENT) {
             throw new IllegalStateException("Wrong type of process, " +
                     "expected: "+ Enums.ProcessType.EXPERIMENT+", " +
@@ -527,11 +528,10 @@ public class ExperimentService {
         final Map<String, String> map = toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
-//        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         final List<Object[]> features = experimentFeatureRepository.getAsExperimentFeatureSimpleByExperimentId(experiment.getId());
         final Map<String, Snippet> localCache = new HashMap<>();
         final IntHolder size = new IntHolder();
-        final Set<String> taskParams = paramsSetter.getParamsInTransaction(flowInstance, experiment, size);
+        final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, flowInstance, experiment, size);
 
         // there is 2 because we have 2 types of snippets - fit and predict
         int totalVariants = features.size() * allHyperParams.size() * 2;
@@ -563,7 +563,6 @@ public class ExperimentService {
                 }
                 List<String> inputResourceCodes = numberOfVariants.values;
 
-                boolean isNew = false;
                 for (HyperParams hyperParams : allHyperParams) {
 
                     int orderAdd = 0;
@@ -581,7 +580,9 @@ public class ExperimentService {
                         task.setFlowInstanceId(flowInstance.getId());
                         task.setOrder(process.order + (orderAdd++));
                         task.setProcessType(process.type.value);
-                        taskRepository.save(task);
+                        if (isPersist) {
+                            taskRepository.save(task);
+                        }
 
                         TaskParamYaml yaml = new TaskParamYaml();
                         yaml.setHyperParams(hyperParams.toSortedMap());
@@ -633,7 +634,9 @@ public class ExperimentService {
                         tef.setTaskId(task.getId());
                         tef.setFeatureId((Long) feature[0]);
                         tef.setTaskType(type.value);
-                        taskExperimentFeatureRepository.save(tef);
+                        if (isPersist) {
+                            taskExperimentFeatureRepository.save(tef);
+                        }
 
                         yaml.snippet = new SimpleSnippet(
                                 experimentSnippet.getType(),
@@ -658,11 +661,12 @@ public class ExperimentService {
                             continue;
                         }
                         task.setParams(currTaskParams);
-                        task = taskPersistencer.setParams(task.getId(), currTaskParams);
-                        if (task == null) {
-                            return Enums.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
+                        if (isPersist) {
+                            task = taskPersistencer.setParams(task.getId(), currTaskParams);
+                            if (task == null) {
+                                return Enums.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
+                            }
                         }
-                        isNew = true;
                     }
                 }
             }
@@ -674,14 +678,16 @@ public class ExperimentService {
         if (experiment.getNumberOfTask() != totalVariants && experiment.getNumberOfTask() != 0) {
             log.warn("! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", experiment.getNumberOfTask(), totalVariants);
         }
-        Experiment experimentTemp = experimentCache.findById(experiment.getId());
-        if (experimentTemp==null) {
-            log.warn("Experiment for id {} doesn't exist anymore", experiment.getId());
-            return Enums.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
+        if (isPersist) {
+            Experiment experimentTemp = experimentCache.findById(experiment.getId());
+            if (experimentTemp == null) {
+                log.warn("Experiment for id {} doesn't exist anymore", experiment.getId());
+                return Enums.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
+            }
+            experimentTemp.setNumberOfTask(totalVariants);
+            experimentTemp.setAllTaskProduced(true);
+            experimentTemp = experimentCache.save(experimentTemp);
         }
-        experimentTemp.setNumberOfTask(totalVariants);
-        experimentTemp.setAllTaskProduced(true);
-        experimentTemp = experimentCache.save(experimentTemp);
         return Enums.FlowProducingStatus.OK;
     }
 
@@ -689,7 +695,7 @@ public class ExperimentService {
         return "task-"+task.getId()+"-"+ Consts.ML_MODEL_BIN;
     }
 
-    public void produceFeaturePermutations(final Long experimentId, List<String> inputResourceCodes) {
+    public void produceFeaturePermutations(boolean isPersist, final Long experimentId, List<String> inputResourceCodes) {
         final List<String> list = experimentFeatureRepository.getChecksumIdCodesByExperimentId(experimentId);
 
         final Permutation<String> permutation = new Permutation<>();
@@ -711,6 +717,7 @@ public class ExperimentService {
                         }
                         String checksumIdCodes = StringUtils.substring(listAsStr, 0, 20) + "###" + checksumMD5;
                         if (list.contains(checksumIdCodes)) {
+                            // already exist
                             return true;
                         }
 
@@ -718,7 +725,9 @@ public class ExperimentService {
                         feature.setExperimentId(experimentId);
                         feature.setResourceCodes(listAsStr);
                         feature.setChecksumIdCodes(checksumIdCodes);
-                        experimentFeatureRepository.save(feature);
+                        if (isPersist) {
+                            experimentFeatureRepository.save(feature);
+                        }
                         //noinspection UnusedAssignment
                         feature = null;
                         total.value++;
@@ -731,7 +740,9 @@ public class ExperimentService {
             throw new IllegalStateException("Experiment wasn't found for id " + experimentId);
         }
         e.setFeatureProduced(true);
-        experimentCache.save(e);
+        if (isPersist) {
+            experimentCache.save(e);
+        }
     }
 
     private boolean isExist(List<ExperimentFeature> features, String f) {

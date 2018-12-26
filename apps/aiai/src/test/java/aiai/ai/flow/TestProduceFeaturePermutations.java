@@ -41,7 +41,7 @@ public class TestProduceFeaturePermutations extends PreparingExperiment {
 
     @Test
     public void testFeaturePermutation() {
-        experimentService.produceFeaturePermutations(experiment.getId(), Arrays.asList("aaa", "bbb", "ccc"));
+        experimentService.produceFeaturePermutations(true, experiment.getId(), Arrays.asList("aaa", "bbb", "ccc"));
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         assertNotNull(features);
         assertEquals(7, features.size());

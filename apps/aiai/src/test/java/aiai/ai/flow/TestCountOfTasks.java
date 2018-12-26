@@ -1,20 +1,13 @@
 package aiai.ai.flow;
 
 import aiai.ai.Enums;
-import aiai.ai.comm.Protocol;
-import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.Process;
-import aiai.ai.launchpad.beans.Task;
-import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingExperiment;
 import aiai.ai.preparing.PreparingFlow;
-import aiai.ai.yaml.snippet_exec.SnippetExec;
-import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.flow.FlowYaml;
-import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,22 +15,16 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
-public class TestFlowService extends PreparingFlow {
-
-    @Autowired
-    public TaskService taskService;
-    @Autowired
-    public TaskPersistencer taskPersistencer;
-    @Autowired
-    public TaskCollector taskCollector;
-
+public class TestCountOfTasks extends PreparingFlow {
 
     @SuppressWarnings("Duplicates")
     @Override
@@ -103,17 +90,12 @@ public class TestFlowService extends PreparingFlow {
         return yaml;
     }
 
-    @After
-    public void afterTestFlowService() {
-        if (flowInstance!=null) {
-            try {
-                taskRepository.deleteByFlowInstanceId(flowInstance.getId());
-            } catch (Throwable th) {
-                th.printStackTrace();
-            }
-        }
-        System.out.println("Finished TestFlowService.afterTestFlowService()");
-    }
+    @Autowired
+    public TaskService taskService;
+    @Autowired
+    public TaskPersistencer taskPersistencer;
+    @Autowired
+    public TaskCollector taskCollector;
 
     @Test
     public void testCreateTasks() {
@@ -125,7 +107,6 @@ public class TestFlowService extends PreparingFlow {
 
         FlowService.TaskProducingResult result = flowService.createFlowInstance(flow, PreparingFlow.INPUT_POOL_CODE);
         flowInstance = result.flowInstance;
-
         assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
         assertNotNull(flowInstance);
         assertEquals(Enums.FlowInstanceExecState.NONE.code, flowInstance.execState);
@@ -135,19 +116,41 @@ public class TestFlowService extends PreparingFlow {
         assertEquals(Enums.FlowProducingStatus.OK, producingStatus);
         assertEquals(Enums.FlowInstanceExecState.PRODUCING.code, flowInstance.execState);
 
+        List<Object[]> tasks01 = taskCollector.getTasks(result.flowInstance);
+        assertTrue(tasks01.isEmpty());
+
+        long mills = System.currentTimeMillis();
+        result = flowService.produceAllTasks(false, flow, flowInstance);
+        System.out.println("Number of tasks was counted for " + (System.currentTimeMillis() - mills ));
+
+        assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
+        int numberOfTasks = result.numberOfTasks;
+
+        List<Object[]> tasks02 = taskCollector.getTasks(result.flowInstance);
+        assertTrue(tasks02.isEmpty());
+
+        mills = System.currentTimeMillis();
         result = flowService.produceAllTasks(true, flow, flowInstance);
+        System.out.println("All tasks were produced for " + (System.currentTimeMillis() - mills ));
+
         flowInstance = result.flowInstance;
         assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
         assertEquals(Enums.FlowInstanceExecState.PRODUCED.code, flowInstance.execState);
 
         experiment = experimentCache.findById(experiment.getId());
 
-        List<Object[]> tasks = taskCollector.getTasks(flowInstance);
+        List<Object[]> tasks = taskCollector.getTasks(result.flowInstance);
 
         assertNotNull(result);
         assertNotNull(result.flowInstance);
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
+        assertEquals(numberOfTasks, result.numberOfTasks);
+
+        result = flowService.produceAllTasks(false, flow, flowInstance);
+        List<Object[]> tasks03 = taskCollector.getTasks(flowInstance);
+        assertFalse(tasks03.isEmpty());
+        assertEquals(numberOfTasks, result.numberOfTasks);
 
         int taskNumber = 0;
         for (Process process : flowYaml.processes) {
@@ -159,81 +162,6 @@ public class TestFlowService extends PreparingFlow {
 
         assertEquals( 1+1+3+ 2*12*7, taskNumber +  experiment.getNumberOfTask());
 
-        // ======================
-
-        TaskService.TasksAndAssignToStationResult assignToStation0 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
-
-        Protocol.AssignedTask.Task simpleTask0 = assignToStation0.getSimpleTask();
-        assertNull(simpleTask0);
-
-        flowInstance = flowService.startFlowInstance(flowInstance);
-
-        TaskService.TasksAndAssignToStationResult assignToStation =
-                taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
-
-        Protocol.AssignedTask.Task simpleTask = assignToStation.getSimpleTask();
-        assertNotNull(simpleTask);
-        assertNotNull(simpleTask.getTaskId());
-        Task task = taskRepository.findById(simpleTask.getTaskId()). orElse(null);
-        assertNotNull(task);
-        assertEquals(1, task.getOrder());
-
-        TaskService.TasksAndAssignToStationResult assignToStation2 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
-        assertNull(assignToStation2.getSimpleTask());
-
-        SimpleTaskExecResult r = new SimpleTaskExecResult();
-        r.setTaskId(simpleTask.getTaskId());
-        r.setMetrics(null);
-        r.setResult("Everything is Ok.");
-        r.setResult(getExecResult(true));
-        taskPersistencer.markAsCompleted(r);
-        flowService.markOrderAsCompleted();
-
-        TaskService.TasksAndAssignToStationResult assignToStation3 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
-
-        Protocol.AssignedTask.Task simpleTask3 = assignToStation3.getSimpleTask();
-        assertNotNull(simpleTask3);
-        assertNotNull(simpleTask3.getTaskId());
-        Task task3 = taskRepository.findById(simpleTask3.getTaskId()). orElse(null);
-        assertNotNull(task3);
-        assertEquals(2, task3.getOrder());
-
-        TaskService.TasksAndAssignToStationResult assignToStation4 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
-        assertNull(assignToStation4.getSimpleTask());
-
-        flowService.markOrderAsCompleted();
-
-        TaskService.TasksAndAssignToStationResult assignToStation51 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
-
-        Protocol.AssignedTask.Task simpleTask51 = assignToStation51.getSimpleTask();
-        assertNotNull(simpleTask51);
-        assertNotNull(simpleTask51.getTaskId());
-        Task task51 = taskRepository.findById(simpleTask51.getTaskId()). orElse(null);
-        assertNotNull(task51);
-        assertEquals(3, task51.getOrder());
-
-        TaskService.TasksAndAssignToStationResult assignToStation52 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
-
-        Protocol.AssignedTask.Task simpleTask52 = assignToStation52.getSimpleTask();
-        assertNotNull(simpleTask52);
-        assertNotNull(simpleTask52.getTaskId());
-        Task task52 = taskRepository.findById(simpleTask52.getTaskId()).orElse(null);
-        assertNotNull(task52);
-        assertEquals(3, task52.getOrder());
-
-        int i=0;
     }
 
-    private String getExecResult(boolean isOk) {
-        SnippetExec snippetExec = new SnippetExec();
-        snippetExec.setExec( new ExecProcessService.Result(true, 0, null) );
-
-        return SnippetExecUtils.toString(snippetExec);
-    }
 }
