@@ -8,6 +8,7 @@ import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingExperiment;
 import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.yaml.flow.FlowYaml;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,7 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
+@Slf4j
 public class TestCountOfTasks extends PreparingFlow {
 
     @SuppressWarnings("Duplicates")
@@ -98,7 +100,9 @@ public class TestCountOfTasks extends PreparingFlow {
     public TaskCollector taskCollector;
 
     @Test
-    public void testCreateTasks() {
+    public void testCountNumberOfTasks() {
+        log.info("Start TestCountOfTasks.testCountNumberOfTasks()");
+
         assertFalse(flowYaml.processes.isEmpty());
         assertEquals(Enums.ProcessType.EXPERIMENT, flowYaml.processes.get(flowYaml.processes.size()-1).type);
 
@@ -121,7 +125,7 @@ public class TestCountOfTasks extends PreparingFlow {
 
         long mills = System.currentTimeMillis();
         result = flowService.produceAllTasks(false, flow, flowInstance);
-        System.out.println("Number of tasks was counted for " + (System.currentTimeMillis() - mills ));
+        log.info("Number of tasks was counted for " + (System.currentTimeMillis() - mills )+" ms.");
 
         assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
         int numberOfTasks = result.numberOfTasks;
@@ -131,7 +135,7 @@ public class TestCountOfTasks extends PreparingFlow {
 
         mills = System.currentTimeMillis();
         result = flowService.produceAllTasks(true, flow, flowInstance);
-        System.out.println("All tasks were produced for " + (System.currentTimeMillis() - mills ));
+        log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
         flowInstance = result.flowInstance;
         assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);

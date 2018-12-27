@@ -50,9 +50,14 @@ public class ExperimentProcessService {
         }
 
         List<String> features = collectedInputs.get(meta.getValue());
+        long mills = System.currentTimeMillis();
         experimentService.produceFeaturePermutations(isPersist, e.getId(), features);
+        log.info("produceFeaturePermutations() was done for " + (System.currentTimeMillis() - mills) + " ms.");
+
         Monitoring.log("##051", Enums.Monitor.MEMORY);
+        mills = System.currentTimeMillis();
         Enums.FlowProducingStatus status = experimentService.produceTasks(isPersist, flow, flowInstance, process, e, collectedInputs);
+        log.info("experimentService.produceTasks() was done for " + (System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##071", Enums.Monitor.MEMORY);
         if (status!= Enums.FlowProducingStatus.OK) {
             log.error("Tasks weren't produced successfully.");

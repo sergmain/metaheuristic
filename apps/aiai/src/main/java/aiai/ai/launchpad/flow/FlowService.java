@@ -137,7 +137,9 @@ public class FlowService {
             result.flowValidateStatus = Enums.FlowValidateStatus.ALREADY_PRODUCED_ERROR;
             return result;
         }
+        long mills = System.currentTimeMillis();
         result.flowValidateStatus = validate(flow);
+        log.info("Flow was validated for "+(System.currentTimeMillis() - mills) + " ms.");
         if (result.flowValidateStatus != Enums.FlowValidateStatus.OK &&
                 result.flowValidateStatus != Enums.FlowValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
             log.error("Can't produce tasks, error: {}", result.flowValidateStatus);
@@ -145,7 +147,9 @@ public class FlowService {
             return result;
         }
         Monitoring.log("##022", Enums.Monitor.MEMORY);
+        mills = System.currentTimeMillis();
         produce(isPersist, result, flow, flowInstance);
+        log.info("FlowService.produce() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 
         return result;
@@ -265,7 +269,9 @@ public class FlowService {
 
         final Map<String, List<String>> collectedInputs = new HashMap<>();
         Monitoring.log("##023", Enums.Monitor.MEMORY);
+        long mill = System.currentTimeMillis();
         List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCode);
+        log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
         Monitoring.log("##024", Enums.Monitor.MEMORY);
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
@@ -300,7 +306,7 @@ public class FlowService {
                     throw new IllegalStateException("Unknown process type");
             }
             result.numberOfTasks += produceTaskResult.numberOfTasks;
-            if (produceTaskResult.status!= Enums.FlowProducingStatus.OK) {
+            if (produceTaskResult.status != Enums.FlowProducingStatus.OK) {
                 result.flowProducingStatus = produceTaskResult.status;
                 return;
             }

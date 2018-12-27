@@ -79,16 +79,24 @@ git clone https://github.com/sergmain/aiai.git git
 в директории \aiai\git запустить
 mvn-all.bat
 
-3.3 Общие параметры в application.properties
-
-aiai.thread-number=3
-
-3.5 Database
+3.4 Database
 создать нового пользовотеля и схему(базу данных).
 
 используя соответствующий скрипт создать таблицы в БД в созданной схеме
 MySql       - sql/db-mysql.sql
 Postgresql  - sql/db-postgresql.sql
+
+
+3.5 application.properties
+за основу можно взять файл, который доступен по url -
+https://github.com/sergmain/aiai/blob/master/apps/aiai/src/main/resources/application.properties
+
+при этом заменив значения из окружения на конкретные значения
+
+3.5.1 общие значения для стартовой площадки и станции
+aiai.thread-number=3
+определяет количество потоков, которые будет использоваться для паралельной работы aiai
+делать количество потоков больше, чем количестов виртуальных ядер (ядер с учетом гипер-трединга) смысла нет.
 
 
 3.6 Стартовая площадка
@@ -135,7 +143,7 @@ aiai.launchpad.rest-password=$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jg
 aiai.launchpad.rest-username=q1
 aiai.launchpad.rest-token=11
 
-aiai.launchpad.public-key: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtS3jRjE1wlHcxiqn6fCRvTahRt6LBvhrqxzgo1FcpJ9uZvRUmf3KwszwQoL+Ypw7aM9oxmg15Q+pssKcrulS/ofDfbuusiYdny7wMlil1H11svQM3yGwMl9gjZ2FupaRwpyZkIMj1ILaDhylTudQCBoJgJ/BWyMCDn2kzh5EpV7hkhhfjZ/2/NRIcayQVmMKOikCXR8q1bb3QNQ2HiMyUsBUGzeO2DuvX4n375+SaFIDrse4eGNVbR/ImWw7TeD4wk0h5kJ2VTdgl2J7gVS7gCCMwBN9TVxPErRDxg/OtXreS8VRUd0hOZiadX12KjwI4mjhC4q+geXAq2sC1DOV8wIDAQAB
+aiai.launchpad.public-key= MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtS3jRjE1wlHcxiqn6fCRvTahRt6LBvhrqxzgo1FcpJ9uZvRUmf3KwszwQoL+Ypw7aM9oxmg15Q+pssKcrulS/ofDfbuusiYdny7wMlil1H11svQM3yGwMl9gjZ2FupaRwpyZkIMj1ILaDhylTudQCBoJgJ/BWyMCDn2kzh5EpV7hkhhfjZ/2/NRIcayQVmMKOikCXR8q1bb3QNQ2HiMyUsBUGzeO2DuvX4n375+SaFIDrse4eGNVbR/ImWw7TeD4wk0h5kJ2VTdgl2J7gVS7gCCMwBN9TVxPErRDxg/OtXreS8VRUd0hOZiadX12KjwI4mjhC4q+geXAq2sC1DOV8wIDAQAB
 =========================
 
 aiai.launchpad.is-replace-snapshot - можно ли перезаписывать snapshot-спипеты новыми версиями
