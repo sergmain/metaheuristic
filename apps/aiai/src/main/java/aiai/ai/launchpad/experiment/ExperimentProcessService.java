@@ -33,6 +33,9 @@ public class ExperimentProcessService {
 
     public FlowService.ProduceTaskResult produceTasks(boolean isPersist, Flow flow, FlowInstance flowInstance, Process process, Map<String, List<String>> collectedInputs) {
         Experiment e = experimentCache.findByCode(process.code);
+
+        // real copy of experiment
+        e = experimentCache.findById(e.getId());
         FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
         if (e==null) {
             result.status = Enums.FlowProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
