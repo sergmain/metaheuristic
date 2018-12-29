@@ -515,7 +515,7 @@ public class ExperimentService {
         }
     }
 
-    public Enums.FlowProducingStatus produceTasks(boolean isPersist, Flow flow, FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs) {
+    public Enums.FlowProducingStatus produceTasks(boolean isPersist, Flow flow, FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs, IntHolder intHolder) {
         if (process.type!= Enums.ProcessType.EXPERIMENT) {
             throw new IllegalStateException("Wrong type of process, " +
                     "expected: "+ Enums.ProcessType.EXPERIMENT+", " +
@@ -534,7 +534,10 @@ public class ExperimentService {
         final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, flowInstance, experiment, size);
 
         // there is 2 because we have 2 types of snippets - fit and predict
+        // feature has real value only when isPersist==true
         int totalVariants = features.size() * allHyperParams.size() * 2;
+
+        intHolder.value = allHyperParams.size() * experimentSnippets.size();
 
         log.info("total size of tasks' params is {} bytes", size.value);
         int processed = taskParams.size();
@@ -545,7 +548,7 @@ public class ExperimentService {
                 boolHolder.value = true;
             }
         };
-        FlowInstanceService.FlowInstanceDeletionListener listener =
+        final FlowInstanceService.FlowInstanceDeletionListener listener =
                 new FlowInstanceService.FlowInstanceDeletionListener(flowInstance.getId(), longConsumer);
 
         try {
@@ -583,6 +586,8 @@ public class ExperimentService {
                         if (isPersist) {
                             taskRepository.save(task);
                         }
+                        // inc number of tasks
+                        intHolder.value++;
 
                         TaskParamYaml yaml = new TaskParamYaml();
                         yaml.setHyperParams(hyperParams.toSortedMap());
@@ -695,11 +700,10 @@ public class ExperimentService {
         return "task-"+task.getId()+"-"+ Consts.ML_MODEL_BIN;
     }
 
-    public void produceFeaturePermutations(boolean isPersist, final Long experimentId, List<String> inputResourceCodes) {
+    public void produceFeaturePermutations(boolean isPersist, final Long experimentId, List<String> inputResourceCodes, IntHolder total) {
         final List<String> list = experimentFeatureRepository.getChecksumIdCodesByExperimentId(experimentId);
 
         final Permutation<String> permutation = new Permutation<>();
-        final IntHolder total = new IntHolder();
         Monitoring.log("##040", Enums.Monitor.MEMORY);
         for (int i = 0; i < inputResourceCodes.size(); i++) {
             Monitoring.log("##041", Enums.Monitor.MEMORY);

@@ -133,7 +133,7 @@ public class FlowService {
 
     public TaskProducingResult produceAllTasks(boolean isPersist, Flow flow, FlowInstance flowInstance ) {
         TaskProducingResult result = new TaskProducingResult();
-        if (flowInstance.getExecState()!=Enums.FlowInstanceExecState.PRODUCING.code) {
+        if (isPersist && flowInstance.getExecState()!=Enums.FlowInstanceExecState.PRODUCING.code) {
             result.flowValidateStatus = Enums.FlowValidateStatus.ALREADY_PRODUCED_ERROR;
             return result;
         }
@@ -268,11 +268,13 @@ public class FlowService {
     public void produce(boolean isPersist, TaskProducingResult result, Flow flow, FlowInstance fi) {
 
         final Map<String, List<String>> collectedInputs = new HashMap<>();
+
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
         List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCode);
         log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
         Monitoring.log("##024", Enums.Monitor.MEMORY);
+
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return;

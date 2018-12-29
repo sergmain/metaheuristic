@@ -27,9 +27,6 @@
 
     <h1 class="widget-header">Flows</h1>
 
-    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
     <a class="pure-button pure-button-primary" href="flow-add-form.html" th:href="@{/launchpad/flow/flow-add}">Add new flow</a>
     <p></p>
 
@@ -56,7 +53,8 @@
                    th:disabled="${f.locked}"
                    th:href="${'/launchpad/flow/flow-edit/' + f.id}">Edit</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-delete/' + f.id}">Delete</a></td>
-            <td><a class="pure-button pure-button-primary" th:disabled="${not f.valid}"
+            <!--th:disabled="${not f.valid}"-->
+            <td><a class="pure-button pure-button-primary"
                    th:href="${'/launchpad/flow/flow-instances/' + f.id}">Instances</a></td>
         </tr>
         <tr>

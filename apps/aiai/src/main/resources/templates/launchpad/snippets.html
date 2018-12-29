@@ -32,12 +32,6 @@
 
     </script>
 
-
-    <p>&nbsp;</p>
-    <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
-    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
     <!-- ==================================== Snippet files ==================================== -->
 
     <h2 class="widget-header">Upload snippet </h2>

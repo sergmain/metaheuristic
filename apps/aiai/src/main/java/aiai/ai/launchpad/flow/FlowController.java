@@ -52,7 +52,7 @@ public class FlowController {
 
     @Data
     public static class FlowListResult {
-        public Iterable<Flow> items;
+        public Flow flow;
         public long currentFlowId;
     }
 
@@ -118,6 +118,12 @@ public class FlowController {
         }
         model.addAttribute("flow", flow);
 
+        validateInternal(model, flow);
+        model.addAttribute("flow", flow);
+        return "launchpad/flow/flow-edit";
+    }
+
+    private Enums.FlowValidateStatus validateInternal(Model model, Flow flow) {
         Enums.FlowValidateStatus flowValidateStatus = flowService.validate(flow);
         flow.valid = flowValidateStatus == Enums.FlowValidateStatus.OK;
         flowCache.save(flow);
@@ -128,13 +134,12 @@ public class FlowController {
             log.error("Validation error: {}", flowValidateStatus);
             model.addAttribute("errorMessage", "#561.01 Validation error: : " + flowValidateStatus);
         }
-        model.addAttribute("flow", flow);
-        return "launchpad/flow/flow-edit";
+        return flowValidateStatus;
     }
 
     @PostMapping("/flow-add-commit")
-    public String addFormCommit(Model model, Flow flow) {
-        return processFlowCommit(model, flow, "launchpad/flow/flow-add", "redirect:/launchpad/flow/flows");
+    public String addFormCommit(Model model, Flow flow, final RedirectAttributes redirectAttributes) {
+        return processFlowCommit(model, flow, "launchpad/flow/flow-add", "redirect:/launchpad/flow/flows", redirectAttributes);
     }
 
     @PostMapping("/flow-edit-commit")
@@ -146,10 +151,10 @@ public class FlowController {
         }
         flow.setCode(flowModel.getCode());
         flow.setParams(flowModel.getParams());
-        return processFlowCommit(model, flow,"launchpad/flow/flow-edit","redirect:/launchpad/flow/flow-edit/"+flow.getId());
+        return processFlowCommit(model, flow,"launchpad/flow/flow-edit","redirect:/launchpad/flow/flow-edit/"+flow.getId(), redirectAttributes);
     }
 
-    private String processFlowCommit(Model model, Flow flow, String errorTarget, String normalTarget) {
+    private String processFlowCommit(Model model, Flow flow, String errorTarget, String normalTarget, final RedirectAttributes redirectAttributes) {
         if (StringUtils.isBlank(flow.code)) {
             model.addAttribute("errorMessage", "#560.20 code of flow is empty");
             return errorTarget;
@@ -159,11 +164,14 @@ public class FlowController {
             return errorTarget;
         }
         Flow f = flowRepository.findByCode(flow.code);
-        if (f!=null) {
+        if (f!=null && !f.getId().equals(flow.getId())) {
             model.addAttribute("errorMessage", "#560.33 flow with such code already exists, code: " + flow.code);
             return errorTarget;
         }
         flowCache.save(flow);
+        if (validateInternal(model, flow)== Enums.FlowValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("infoMessages", "Validation result: OK");
+        }
         return normalTarget;
     }
 
@@ -221,32 +229,63 @@ public class FlowController {
     }
 
     @GetMapping(value = "/flow-instance-add/{id}")
-    public String flowInstanceAdd(@ModelAttribute("result") FlowListResult result, @PathVariable Long id) {
-        result.items = flowRepository.findAll();
+    public String flowInstanceAdd(@ModelAttribute("result") FlowListResult result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+        result.flow = flowCache.findById(id);
+        if (result.flow == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#564.10 flow wasn't found, flowId: " + id);
+            return "redirect:/launchpad/flow/flows";
+        }
         result.currentFlowId = id;
-
         return "launchpad/flow/flow-instance-add";
     }
 
     @PostMapping("/flow-instance-add-commit")
     public String flowInstanceAddCommit(@ModelAttribute("result") FlowListResult result, Model model, Long flowId, String poolCode, final RedirectAttributes redirectAttributes) {
         if (StringUtils.isBlank(poolCode)) {
-            model.addAttribute("errorMessage", "#560.60 inputResourcePoolCode of FlowInstance is empty");
-            return "launchpad/flow/flow-instance-add";
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.60 inputResourcePoolCode of FlowInstance is empty");
+            return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
         }
 
-        Flow flow = flowCache.findById(flowId);
-        if (flow == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.70 flow wasn't found, flowId: " + flowId);
+        result.flow = flowCache.findById(flowId);
+        if (result.flow == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.65 flow wasn't found, flowId: " + flowId);
             return "redirect:/launchpad/flow/flows";
         }
-        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, poolCode);
-        if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
-            result.items = flowRepository.findAll();
-            model.addAttribute("errorMessage", "#560.72 Error creating flowInstance: " + producingResult.flowProducingStatus);
-            return "launchpad/flow/flow-instance-add";
 
+        // validate the flow
+        Enums.FlowValidateStatus validateStatus = validateInternal(model, result.flow);
+        if (validateStatus != Enums.FlowValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.70 validation of flow was failed, status: " + validateStatus);
+            return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
         }
+
+        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(result.flow, poolCode);
+        if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.72 Error creating flowInstance: " + producingResult.flowProducingStatus);
+            return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
+        }
+
+        // validate the flow + the flow instance
+        validateStatus = validateInternal(model, result.flow);
+        if (validateStatus != Enums.FlowValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.75 validation of flow was failed, status: " + validateStatus);
+            return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
+        }
+
+        FlowService.TaskProducingResult countTasks = new FlowService.TaskProducingResult();
+        flowService.produce(false, countTasks, result.flow, producingResult.flowInstance);
+        if (countTasks.flowProducingStatus != Enums.FlowProducingStatus.OK) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.77 validation of flow was failed, status: " + countTasks.flowValidateStatus);
+            return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
+        }
+
+        if (globals.maxTasksPerFlow < countTasks.numberOfTasks) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "#560.81 number of tasks for this flow instance exceeded the allowed maximum number. " +
+                    "Allowed: " + globals.maxTasksPerFlow+", tasks in this flow instance:  " + countTasks.numberOfTasks);
+            return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
+        }
+
         return "redirect:/launchpad/flow/flow-instances/" + flowId;
     }
 

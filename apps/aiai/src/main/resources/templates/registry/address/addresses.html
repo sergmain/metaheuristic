@@ -6,10 +6,7 @@
 
     <h1 class="widget-header">Launchpad addresses</h1>
 
-    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
-    <a class="pure-button pure-button-primary" href="address-add-form.html" th:href="@{/registry/address/address-add}">Add new address</a>
+    <a class="pure-button pure-button-primary" href="address-add.html" th:href="@{/registry/address/address-add}">Add new address</a>
     <p></p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">

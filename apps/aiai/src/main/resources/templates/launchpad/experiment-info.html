@@ -12,10 +12,6 @@
     <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
     <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
 
-    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
-
     <h1 class="widget-header">Progress of experiment</h1>
     <table class="pure-table pure-table-bordered" >
         <thead>

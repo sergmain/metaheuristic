@@ -27,9 +27,6 @@
 
     <h1 class="widget-header">Experiments</h1>
 
-    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
     <a class="pure-button pure-button-primary" href="experiment-add-form.html" th:href="@{/launchpad/experiment-add}">Add new record</a>
     <p></p>
 

@@ -6,9 +6,6 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Station</h1>
 
-        <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-        <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
         <!--/*@thymesVar id="resource" type="aiai.ai.launchpad.beans.BinaryData"*/-->
         <form class="form-horizontal" th:object="${resource}">
             <div class="form-group">

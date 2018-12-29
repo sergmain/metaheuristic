@@ -6,9 +6,6 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New launchpad address</h1>
 
-        <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-        <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
         <!--/*@thymesVar id="address" type="aiai.ai.launchpad.beans.LaunchpadAddress"*/-->
         <form class="pure-form pure-form-stacked" th:object="${address}" method="post" action="#" th:method="POST" th:action="@{/registry/address/address-add-commit}" accept-charset="UTF-8" id="address-form" name="f">
             <input type="hidden" th:field="*{id}"/>

@@ -72,6 +72,7 @@ public class FileProcessService {
             }
         }
         result.status = Enums.FlowProducingStatus.OK;
+        result.numberOfTasks = result.outputResourceCodes.size();
         return result;
     }
 

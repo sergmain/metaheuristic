@@ -7,6 +7,7 @@ import aiai.ai.preparing.PreparingExperiment;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.omg.CORBA.IntHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -41,7 +42,7 @@ public class TestProduceFeaturePermutations extends PreparingExperiment {
 
     @Test
     public void testFeaturePermutation() {
-        experimentService.produceFeaturePermutations(true, experiment.getId(), Arrays.asList("aaa", "bbb", "ccc"));
+        experimentService.produceFeaturePermutations(true, experiment.getId(), Arrays.asList("aaa", "bbb", "ccc"), new IntHolder());
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         assertNotNull(features);
         assertEquals(7, features.size());

@@ -6,9 +6,6 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Flow edit</h1>
 
-        <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-        <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
         <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController$FlowInstanceResult"*/-->
         <form class="pure-form pure-form-stacked" th:object="${flow}" method="post" action="#" th:method="POST" th:action="@{/launchpad/flow/flow-edit-commit}" accept-charset="UTF-8" id="station-form" name="f">
             <input type="hidden" th:field="*{id}"/>

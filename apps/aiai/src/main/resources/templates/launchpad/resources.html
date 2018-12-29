@@ -27,11 +27,6 @@
 
     <h1 class="widget-header">Resources</h1>
 
-    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-    <p>&nbsp;</p>
-
-
     <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
           th:action="@{/launchpad/resource-upload-from-file}"
     >

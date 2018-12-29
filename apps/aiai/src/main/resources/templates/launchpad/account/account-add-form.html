@@ -6,8 +6,6 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New account</h1>
 
-        <p class="error-msg" th:if="${errorMessage != null}" th:text="${errorMessage}"></p>
-
         <!--/*@thymesVar id="account" type="aiai.beans.Account"*/-->
         <form class="pure-form pure-form-stacked" th:object="${account}" method="post" action="#" th:method="POST" th:action="@{/launchpad/account/account-add-form-commit}" accept-charset="UTF-8" id="account-form" name="f">
             <input type="hidden" th:field="*{id}"/>

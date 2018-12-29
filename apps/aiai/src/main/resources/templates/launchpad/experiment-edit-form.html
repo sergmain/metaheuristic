@@ -53,9 +53,6 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New experiment</h1>
 
-        <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-        <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
         <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController$ExperimentResult"*/-->
         <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
         <!--/*@thymesVar id="simpleExperiment" type="aiai.ai.launchpad.experiment.ExperimentsController$SimpleExperiment"*/-->

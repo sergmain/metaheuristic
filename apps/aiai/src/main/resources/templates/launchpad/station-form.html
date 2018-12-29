@@ -6,9 +6,6 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New station record</h1>
 
-        <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-        <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
         <!--/*@thymesVar id="station" type="aiai.ai.launchpad.beans.Station"*/-->
         <form class="pure-form pure-form-stacked" th:object="${station}" method="post" action="#" th:method="POST" th:action="@{/launchpad/station-form-commit}" accept-charset="UTF-8" id="station-form" name="f">
             <input type="hidden" th:field="*{id}"/>

@@ -149,12 +149,12 @@ public class TestCountOfTasks extends PreparingFlow {
         assertNotNull(result.flowInstance);
         assertNotNull(tasks);
         assertFalse(tasks.isEmpty());
-        assertEquals(numberOfTasks, result.numberOfTasks);
+        assertEquals(numberOfTasks, tasks.size());
 
         result = flowService.produceAllTasks(false, flow, flowInstance);
         List<Object[]> tasks03 = taskCollector.getTasks(flowInstance);
         assertFalse(tasks03.isEmpty());
-        assertEquals(numberOfTasks, result.numberOfTasks);
+        assertEquals(numberOfTasks, tasks.size());
 
         int taskNumber = 0;
         for (Process process : flowYaml.processes) {

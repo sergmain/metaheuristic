@@ -9,6 +9,7 @@ import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.omg.CORBA.IntHolder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -51,12 +52,14 @@ public class ExperimentProcessService {
 
         List<String> features = collectedInputs.get(meta.getValue());
         long mills = System.currentTimeMillis();
-        experimentService.produceFeaturePermutations(isPersist, e.getId(), features);
+        IntHolder intHolder = new IntHolder();
+        experimentService.produceFeaturePermutations(isPersist, e.getId(), features, intHolder);
+        int numberOfFeatures = intHolder.value;
         log.info("produceFeaturePermutations() was done for " + (System.currentTimeMillis() - mills) + " ms.");
 
         Monitoring.log("##051", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        Enums.FlowProducingStatus status = experimentService.produceTasks(isPersist, flow, flowInstance, process, e, collectedInputs);
+        Enums.FlowProducingStatus status = experimentService.produceTasks(isPersist, flow, flowInstance, process, e, collectedInputs, intHolder);
         log.info("experimentService.produceTasks() was done for " + (System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##071", Enums.Monitor.MEMORY);
         if (status!= Enums.FlowProducingStatus.OK) {
@@ -64,6 +67,7 @@ public class ExperimentProcessService {
         }
 
         result.status = status;
+        result.numberOfTasks = numberOfFeatures * intHolder.value;
         return result;
     }
 }

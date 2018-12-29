@@ -28,9 +28,6 @@
 
     <h1 class="widget-header">Accounts</h1>
 
-    <p class="error-msg" th:if="${!#strings.isEmpty(errorMessage)}" th:text="${errorMessage}"></p>
-    <p th:if="${#strings.isEmpty(errorMessage)}">&nbsp;</p>
-
     <a class="pure-button pure-button-primary" href="account-add-form.html" th:href="@{/launchpad/account/account-add}">Add new record</a>
     <p></p>
 

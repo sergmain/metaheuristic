@@ -8,6 +8,7 @@ import aiai.ai.yaml.flow.FlowYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.omg.CORBA.IntHolder;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -98,7 +99,7 @@ public class TestFeatures extends PreparingFlow {
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
         //noinspection ArraysAsListWithZeroOrOneArgument
-        experimentService.produceFeaturePermutations(true, experiment.getId(), Arrays.asList("aaa"));
+        experimentService.produceFeaturePermutations(true, experiment.getId(), Arrays.asList("aaa"), new IntHolder());
         log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();
@@ -117,7 +118,8 @@ public class TestFeatures extends PreparingFlow {
         Process process = new Process();
         process.order=1;
         process.inputType="input-type";
-        experimentService.produceTasks(true, flow, flowInstance, process, experiment, new HashMap<>());
+        IntHolder intHolder = new IntHolder();
+        experimentService.produceTasks(true, flow, flowInstance, process, experiment, new HashMap<>(), intHolder);
         log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
         // some global final check
