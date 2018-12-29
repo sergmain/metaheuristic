@@ -2,6 +2,7 @@ package aiai.ai.launchpad.file_process;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.Process;
+import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.flow.ProcessValidator;
 import aiai.ai.launchpad.snippet.SnippetCache;
@@ -22,7 +23,7 @@ public class FileProcessValidator implements ProcessValidator {
     }
 
     @Override
-    public Enums.FlowValidateStatus validate(Process process) {
+    public Enums.FlowValidateStatus validate(Flow flow, Process process) {
         if (process.getSnippetCodes() == null || process.getSnippetCodes().isEmpty()) {
             return Enums.FlowValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }

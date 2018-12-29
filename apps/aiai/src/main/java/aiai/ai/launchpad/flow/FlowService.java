@@ -199,7 +199,7 @@ public class FlowService {
             else {
                 return PROCESS_VALIDATOR_NOT_FOUND_ERROR;
             }
-            Enums.FlowValidateStatus status = processValidator.validate(process);
+            Enums.FlowValidateStatus status = processValidator.validate(flow, process);
             if (status!=null) {
                 return status;
             }
@@ -255,6 +255,11 @@ public class FlowService {
         }
         fi.setExecState(Enums.FlowInstanceExecState.STOPPED.code);
         fi.setProducingOrder(0);
+        flowInstanceRepository.save(fi);
+    }
+
+    public void changeValidStatus(FlowInstance fi, boolean status) {
+        fi.setValid(status);
         flowInstanceRepository.save(fi);
     }
 

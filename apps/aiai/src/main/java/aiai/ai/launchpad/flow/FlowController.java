@@ -280,11 +280,13 @@ public class FlowController {
         }
 
         if (globals.maxTasksPerFlow < countTasks.numberOfTasks) {
+            flowService.changeValidStatus(producingResult.flowInstance, false);
             redirectAttributes.addFlashAttribute("errorMessage",
-                    "#560.81 number of tasks for this flow instance exceeded the allowed maximum number. " +
-                    "Allowed: " + globals.maxTasksPerFlow+", tasks in this flow instance:  " + countTasks.numberOfTasks);
-            return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
+                    "#560.81 number of tasks for this flow instance exceeded the allowed maximum number. Flow instance was created but its status is 'not valid'. " +
+                    "Allowed maximum number of tasks: " + globals.maxTasksPerFlow+", tasks in this flow instance:  " + countTasks.numberOfTasks);
+            return "redirect:/launchpad/flow/flow-instances/" + flowId;
         }
+        flowService.changeValidStatus(producingResult.flowInstance, true);
 
         return "redirect:/launchpad/flow/flow-instances/" + flowId;
     }
