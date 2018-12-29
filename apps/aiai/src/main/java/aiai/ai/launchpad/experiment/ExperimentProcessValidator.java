@@ -7,6 +7,7 @@ import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.flow.ProcessValidator;
+import aiai.ai.launchpad.repositories.ExperimentRepository;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
@@ -23,12 +24,14 @@ public class ExperimentProcessValidator implements ProcessValidator {
     private final SnippetCache snippetCache;
     private final SnippetService snippetService;
     private final ExperimentCache experimentCache;
+    private final ExperimentRepository experimentRepository;
     private final FlowInstanceRepository flowInstanceRepository;
 
-    public ExperimentProcessValidator(SnippetCache snippetCache, SnippetService snippetService, ExperimentCache experimentCache, FlowInstanceRepository flowInstanceRepository) {
+    public ExperimentProcessValidator(SnippetCache snippetCache, SnippetService snippetService, ExperimentCache experimentCache, ExperimentRepository experimentRepository, FlowInstanceRepository flowInstanceRepository) {
         this.snippetCache = snippetCache;
         this.snippetService = snippetService;
         this.experimentCache = experimentCache;
+        this.experimentRepository = experimentRepository;
         this.flowInstanceRepository = flowInstanceRepository;
     }
 
@@ -42,7 +45,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
         if (StringUtils.isBlank(process.code)) {
             return Enums.FlowValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }
-        Experiment e = experimentCache.findByCode(process.code);
+        Experiment e = experimentRepository.findByCode(process.code);
         if (e==null) {
             return Enums.FlowValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
         }

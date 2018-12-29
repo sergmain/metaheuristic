@@ -32,7 +32,7 @@ public class ExperimentProcessService {
     }
 
     public FlowService.ProduceTaskResult produceTasks(boolean isPersist, Flow flow, FlowInstance flowInstance, Process process, Map<String, List<String>> collectedInputs) {
-        Experiment e = experimentCache.findByCode(process.code);
+        Experiment e = experimentRepository.findByCode(process.code);
 
         // real copy of experiment
         e = experimentCache.findById(e.getId());

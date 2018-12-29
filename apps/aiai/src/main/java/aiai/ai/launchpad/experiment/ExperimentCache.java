@@ -38,9 +38,7 @@ public class ExperimentCache {
         this.experimentRepository = experimentRepository;
     }
 
-//    @CachePut(cacheNames = "experiments", key = "#result.id")
-//    @CacheEvict(cacheNames = {"experimentsByCode"}, key = "#result.code")
-    @CacheEvict(cacheNames = {"experiments", "experimentsByCode"}, allEntries=true)
+    @CachePut(cacheNames = "experiments", key = "#result.id")
     public Experiment save(Experiment experiment) {
         return experimentRepository.save(experiment);
     }
@@ -50,12 +48,7 @@ public class ExperimentCache {
         return experimentRepository.findById(id).orElse(null);
     }
 
-    @Cacheable(cacheNames = "experimentsByCode", unless="#result==null")
-    public Experiment findByCode(String code) {
-        return experimentRepository.findByCode(code);
-    }
-
-    @CacheEvict(cacheNames = {"experiments", "experimentsByCode"}, allEntries=true)
+    @CacheEvict(cacheNames = {"experiments"}, key = "#experiment.id")
     public void delete(Experiment experiment) {
         try {
             experimentRepository.delete(experiment);
@@ -64,7 +57,7 @@ public class ExperimentCache {
         }
     }
 
-    @CacheEvict(cacheNames = {"experiments", "experimentsByCode"}, allEntries=true)
+    @CacheEvict(cacheNames = {"experiments"}, key = "#id")
     public void deleteById(Long id) {
         try {
             experimentRepository.deleteById(id);

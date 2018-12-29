@@ -497,26 +497,14 @@ public class ExperimentService {
         }
         experimentFeatureRepository.deleteByExperimentId(e.getId());
 
+        e = experimentCache.findById(e.getId());
+
         e.setFlowInstanceId(null);
         e.setAllTaskProduced(false);
         e.setFeatureProduced(false);
         e.setAllTaskProduced(false);
         e.setNumberOfTask(0);
         e = experimentCache.save(e);
-
-        // let's check
-        e = experimentRepository.findById(e.getId()).orElse(null);
-        if (e==null || e.getFlowInstanceId()!=null ) {
-            throw new IllegalStateException("Repository wasn't updated.");
-        }
-        e = experimentCache.findById(e.getId());
-        if (e==null || e.getFlowInstanceId()!=null) {
-            throw new IllegalStateException("Cache wasn't updated.");
-        }
-        e = experimentCache.findByCode(e.getCode());
-        if (e==null || e.getFlowInstanceId()!=null) {
-            throw new IllegalStateException("Cache wasn't updated.");
-        }
     }
 
     public Enums.FlowProducingStatus produceTasks(boolean isPersist, Flow flow, FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs, IntHolder intHolder) {
