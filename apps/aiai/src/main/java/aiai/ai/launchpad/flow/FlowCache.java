@@ -2,6 +2,7 @@ package aiai.ai.launchpad.flow;
 
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.repositories.FlowRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Profile("launchpad")
+@Slf4j
 public class FlowCache {
 
     private final FlowRepository flowRepository;
@@ -34,7 +36,7 @@ public class FlowCache {
         try {
             flowRepository.delete(flow);
         } catch (ObjectOptimisticLockingFailureException e) {
-            //
+            log.warn("Error", e);
         }
     }
 
@@ -43,7 +45,7 @@ public class FlowCache {
         try {
             flowRepository.deleteById(id);
         } catch (ObjectOptimisticLockingFailureException e) {
-            //
+            log.warn("Error", e);
         }
     }
 }

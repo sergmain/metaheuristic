@@ -168,7 +168,7 @@ public class FlowController {
             model.addAttribute("errorMessage", "#560.33 flow with such code already exists, code: " + flow.code);
             return errorTarget;
         }
-        flowCache.save(flow);
+        flow = flowCache.save(flow);
         if (validateInternal(model, flow)== Enums.FlowValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", "Validation result: OK");
         }
@@ -263,6 +263,13 @@ public class FlowController {
         if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#560.72 Error creating flowInstance: " + producingResult.flowProducingStatus);
             return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
+        }
+
+        // ugly work-around on StaleObjectStateException
+        result.flow = flowCache.findById(flowId);
+        if (result.flow == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.65 flow wasn't found, flowId: " + flowId);
+            return "redirect:/launchpad/flow/flows";
         }
 
         // validate the flow + the flow instance

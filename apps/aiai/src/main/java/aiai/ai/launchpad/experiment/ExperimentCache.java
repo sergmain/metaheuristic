@@ -19,6 +19,7 @@ package aiai.ai.launchpad.experiment;
 
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 @Profile("launchpad")
+@Slf4j
 public class ExperimentCache {
 
     private final ExperimentRepository experimentRepository;
@@ -58,7 +60,16 @@ public class ExperimentCache {
         try {
             experimentRepository.delete(experiment);
         } catch (ObjectOptimisticLockingFailureException e) {
-            //
+            log.warn("Error", e);
+        }
+    }
+
+    @CacheEvict(cacheNames = {"experiments", "experimentsByCode"}, allEntries=true)
+    public void deleteById(Long id) {
+        try {
+            experimentRepository.deleteById(id);
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.warn("Error", e);
         }
     }
 }

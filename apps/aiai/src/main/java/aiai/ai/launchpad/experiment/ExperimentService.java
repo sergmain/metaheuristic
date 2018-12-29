@@ -191,7 +191,7 @@ public class ExperimentService {
     private final FlowInstanceRepository flowInstanceRepository;
 
     @Autowired
-    public ExperimentService(ApplicationEventMulticaster eventMulticaster, Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository1, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter) {
+    public ExperimentService(ApplicationEventMulticaster eventMulticaster, Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter) {
         this.eventMulticaster = eventMulticaster;
         this.globals = globals;
         this.experimentCache = experimentCache;
@@ -202,7 +202,7 @@ public class ExperimentService {
         this.snippetCache = snippetCache;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.snippetService = snippetService;
-        this.experimentRepository = experimentRepository1;
+        this.experimentRepository = experimentRepository;
         this.experimentTaskFeatureRepository = experimentTaskFeatureRepository;
         this.paramsSetter = paramsSetter;
         this.flowInstanceRepository = flowInstanceRepository;
@@ -505,12 +505,16 @@ public class ExperimentService {
         e = experimentCache.save(e);
 
         // let's check
-        e =  experimentRepository.findById(e.getId()).orElse(null);
+        e = experimentRepository.findById(e.getId()).orElse(null);
         if (e==null || e.getFlowInstanceId()!=null ) {
             throw new IllegalStateException("Repository wasn't updated.");
         }
-        e =  experimentCache.findById(e.getId());
-        if (e==null ||  e.getFlowInstanceId()!=null) {
+        e = experimentCache.findById(e.getId());
+        if (e==null || e.getFlowInstanceId()!=null) {
+            throw new IllegalStateException("Cache wasn't updated.");
+        }
+        e = experimentCache.findByCode(e.getCode());
+        if (e==null || e.getFlowInstanceId()!=null) {
             throw new IllegalStateException("Cache wasn't updated.");
         }
     }

@@ -121,6 +121,7 @@ public class ExperimentsController {
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
+    private final ExperimentCache experimentCache;
     private final ExperimentService experimentService;
     private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
     private final ExperimentSnippetRepository experimentSnippetRepository;
@@ -129,12 +130,13 @@ public class ExperimentsController {
     private final SnippetCache snippetCache;
     private final FlowInstanceRepository flowInstanceRepository;
 
-    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, SnippetCache snippetCache, FlowInstanceRepository flowInstanceRepository) {
+    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentCache experimentCache, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, SnippetCache snippetCache, FlowInstanceRepository flowInstanceRepository) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
         this.experimentRepository = experimentRepository;
         this.experimentHyperParamsRepository = experimentHyperParamsRepository;
         this.snippetService = snippetService;
+        this.experimentCache = experimentCache;
         this.experimentService = experimentService;
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
@@ -161,7 +163,7 @@ public class ExperimentsController {
     @PostMapping("/experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
     public @ResponseBody ExperimentService.PlotData getPlotData(Model model, @PathVariable Long experimentId, @PathVariable Long featureId,
                                                                 @PathVariable String[] params, @PathVariable String[] paramsAxis) {
-        Experiment experiment= experimentRepository.findById(experimentId).orElse(null);
+        Experiment experiment= experimentCache.findById(experimentId);
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
 
         //noinspection UnnecessaryLocalVariable
@@ -185,7 +187,7 @@ public class ExperimentsController {
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
     public String getFeatureProgressPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
-        Experiment experiment= experimentRepository.findById(experimentId).orElse(null);
+        Experiment experiment= experimentCache.findById(experimentId);
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
 
         TasksResult result = new TasksResult();
@@ -201,7 +203,7 @@ public class ExperimentsController {
 
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
     public String getFeatures(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, final RedirectAttributes redirectAttributes ) {
-        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
+        Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#280.01 experiment wasn't found, experimentId: " + experimentId);
             return "redirect:/launchpad/experiments";
@@ -229,7 +231,7 @@ public class ExperimentsController {
     @GetMapping(value = "/experiment-info/{id}")
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
 
-        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#282.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
@@ -267,7 +269,7 @@ public class ExperimentsController {
 
     @GetMapping(value = "/experiment-edit/{id}")
     public String edit(@PathVariable Long id, Model model, @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes) {
-        final Experiment experiment = experimentRepository.findById(id).orElse(null);
+        final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#275.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
@@ -310,7 +312,7 @@ public class ExperimentsController {
 
     @PostMapping("/experiment-edit-form-commit")
     public String editFormCommit(Model model, SimpleExperiment simpleExperiment, final RedirectAttributes redirectAttributes) {
-        Experiment experiment = experimentRepository.findById(simpleExperiment.id).orElse(null);
+        Experiment experiment = experimentCache.findById(simpleExperiment.id);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#281.01 experiment wasn't found, experimentId: " + simpleExperiment.id);
             return "redirect:/launchpad/experiments";
@@ -350,7 +352,7 @@ public class ExperimentsController {
         }
         experiment.setEpochVariant(numberOfVariants.getCount());
         experiment.strip();
-        experimentRepository.save(experiment);
+        experimentCache.save(experiment);
         return normalTarget;
     }
 
@@ -369,7 +371,7 @@ public class ExperimentsController {
 
     @PostMapping("/experiment-metadata-add-commit/{id}")
     public String metadataAddCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
-        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             return "redirect:/launchpad/experiments";
         }
@@ -393,13 +395,13 @@ public class ExperimentsController {
         m.setValues(value.trim());
         experiment.getHyperParams().add(m);
 
-        experimentRepository.save(experiment);
+        experimentCache.save(experiment);
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
     @PostMapping("/experiment-metadata-edit-commit/{id}")
     public String metadataEditCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
-        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#289.01 experiment wasn't found, id: "+id );
             return "redirect:/launchpad/experiments";
@@ -427,13 +429,13 @@ public class ExperimentsController {
         }
         m.setValues(value.trim());
 
-        experimentRepository.save(experiment);
+        experimentCache.save(experiment);
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
     @PostMapping("/experiment-snippet-add-commit/{id}")
     public String snippetAddCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
-        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#290.01 experiment wasn't found, id: "+id );
             return "redirect:/launchpad/experiments";
@@ -471,7 +473,7 @@ public class ExperimentsController {
 
     @GetMapping("/experiment-metadata-default-add-commit/{experimentId}")
     public String metadataDefaultAddCommit(@PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
-        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
+        Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#292.01 experiment wasn't found, id: "+experimentId );
             return "redirect:/launchpad/experiments";
@@ -486,7 +488,7 @@ public class ExperimentsController {
         add(experiment, "batch_size", "[20, 40, 60]");
         add(experiment, "time_steps", "[5, 40, 60]");
 
-        experimentRepository.save(experiment);
+        experimentCache.save(experiment);
         return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 
@@ -523,7 +525,7 @@ public class ExperimentsController {
 
     @GetMapping("/experiment-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#294.01 experiment wasn't found, id: "+id );
             return "redirect:/launchpad/experiments";
@@ -534,14 +536,14 @@ public class ExperimentsController {
 
     @PostMapping("/experiment-delete-commit")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
-        Experiment experiment = experimentRepository.findById(id).orElse(null);
+        Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#283.01 experiment wasn't found, experimentId: " + id);
             return "redirect:/launchpad/experiments";
         }
         experimentSnippetRepository.deleteByExperimentId(id);
         experimentFeatureRepository.deleteByExperimentId(id);
-        experimentRepository.deleteById(id);
+        experimentCache.deleteById(id);
         return "redirect:/launchpad/experiments";
     }
 
@@ -559,7 +561,7 @@ public class ExperimentsController {
             log.warn("#292.01 Can't re-run sequence {}, ExperimentFeature wasn't found for this sequence", id);
             return false;
         }
-        Experiment experiment = experimentRepository.findById(seq.getExperimentId()).orElse(null);
+        Experiment experiment = experimentCache.findById(seq.getExperimentId()).orElse(null);
         if (experiment == null) {
             log.warn("#293.01 Can't re-run sequence {}, this sequence is orphan and doesn't belong to any experiment", id);
             return false;
