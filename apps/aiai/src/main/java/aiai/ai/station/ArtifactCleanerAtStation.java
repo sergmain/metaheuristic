@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
+import java.util.List;
 
 @Service
 @Slf4j
@@ -61,7 +62,9 @@ public class ArtifactCleanerAtStation {
 
             Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
 
-            for (StationTask task : stationTaskService.findAll(launchpadUrl)) {
+            List<StationTask> all = stationTaskService.findAll(launchpadUrl);
+            log.info("Number tasks for deleting obsolete: {} ", all.size());
+            for (StationTask task : all) {
                 if (currentExecState.isState(launchpadUrl, task.flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST)) {
                     log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), launchpadUrl);
                     stationTaskService.delete(launchpadUrl, task.getTaskId());

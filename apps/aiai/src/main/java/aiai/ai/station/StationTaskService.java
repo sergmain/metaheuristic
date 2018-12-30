@@ -415,10 +415,10 @@ public class StationTaskService {
         }
     }
 
-    public Collection<StationTask> findAll(String launchpadUrl) {
+    public List<StationTask> findAll(String launchpadUrl) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             Collection<StationTask> values = getMapForLaunchpadUrl(launchpadUrl).values();
-            return Collections.unmodifiableCollection(new ArrayList<>(values));
+            return Collections.unmodifiableList(new ArrayList<>(values));
         }
     }
 
@@ -436,7 +436,10 @@ public class StationTaskService {
                     // IDK is that bug or side-effect. so delete one more time
                     FileUtils.deleteDirectory(systemDir);
                 }
-                getMapForLaunchpadUrl(launchpadUrl).remove(taskId);
+                Map<Long, StationTask> mapTask = getMapForLaunchpadUrl(launchpadUrl);
+                log.info("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
+                mapTask.remove(taskId);
+                log.info("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
             } catch (Throwable th) {
                 log.error("Error deleting task " + taskId, th);
             }
