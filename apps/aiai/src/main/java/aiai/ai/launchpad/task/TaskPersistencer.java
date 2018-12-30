@@ -54,7 +54,7 @@ public class TaskPersistencer {
                         return null;
                     }
                     if (task.execState == Enums.TaskExecState.NONE.value) {
-                        log.warn("Task {} was resetted, can't set new value to field resultReceived", taskId);
+                        log.warn("Task {} was reset, can't set new value to field resultReceived", taskId);
                         return null;
                     }
                     task.setResultReceived(value);
@@ -106,7 +106,7 @@ public class TaskPersistencer {
                     taskRepository.save(task);
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("Error while resetting task, taskId: {}, error: {}",  taskId, e.toString());
+                    log.error("Error while reseting task, taskId: {}, error: {}",  taskId, e.toString());
                 }
             }
         }

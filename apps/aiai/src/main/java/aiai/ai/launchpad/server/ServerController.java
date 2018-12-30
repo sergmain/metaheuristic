@@ -163,7 +163,7 @@ public class ServerController {
                 return new UploadResult(false, "#442.04 can't create temporary directory in " + location);
             }
             final File resFile = new File(tempDir, "resource.");
-            log.debug("Start storing an uploaded resource data to disk");
+            log.debug("Start storing an uploaded resource data to disk, target file: {}", resFile.getPath());
             try(OutputStream os = new FileOutputStream(resFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }

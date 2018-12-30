@@ -155,11 +155,16 @@ public abstract class PreparingFlow extends PreparingExperiment {
             } catch (Throwable th) {
                 log.error("Error while flowInstanceRepository.deleteById()", th);
             }
+            try {
+                taskRepository.deleteByFlowInstanceId(flowInstance.getId());
+            } catch (Throwable th) {
+                log.error("Error while taskRepository.deleteByFlowInstanceId()", th);
+            }
         }
         try {
             binaryDataService.deleteByPoolCodeAndDataType(INPUT_POOL_CODE, Enums.BinaryDataType.DATA);
         } catch (Throwable th) {
-            th.printStackTrace();
+            log.error("error", th);
         }
     }
 

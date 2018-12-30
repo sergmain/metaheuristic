@@ -242,7 +242,7 @@ public class ExperimentService {
                 log.info("De-assign task from station #{}, {}", stationIdAsStr, task);
                 Task result = taskPersistencer.resetTask(task.getId());
                 if (result==null) {
-                    log.error("Resetting of task {} was failed. See log for more info.", task.getId());
+                    log.error("Reseting of task {} was failed. See log for more info.", task.getId());
                 }
             }
         }
