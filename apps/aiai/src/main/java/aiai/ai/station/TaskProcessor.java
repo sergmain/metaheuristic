@@ -81,13 +81,10 @@ public class TaskProcessor {
             return;
         }
 
-//        File snippetDir = SnippetUtils.checkEvironment(globals.stationDir);
-//        if (snippetDir == null) {
-//            return;
-//        }
-
         List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
+            final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
+
             if (StringUtils.isBlank(task.launchpadUrl)) {
                 stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Broken task. LaunchpadUrl is blank.");
                 continue;
@@ -159,7 +156,6 @@ public class TaskProcessor {
 
             AssetFile snippetAssetFile=null;
             if (!snippet.fileProvided) {
-                final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
                 final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
                 snippetAssetFile = StationResourceUtils.prepareSnippetFile(snippetDir, snippet.code, snippet.filename);
                 // is this snippet prepared?
@@ -213,6 +209,7 @@ public class TaskProcessor {
                         log.info("Register task for uploading result data to server, resultDataFile: {}", resultDataFile.getPath());
                         UploadResourceTask uploadResourceTask = new UploadResourceTask(task.taskId, resultDataFile);
                         uploadResourceTask.launchpad = launchpad.launchpadLookup;
+                        uploadResourceTask.stationId = launchpadCode.stationId;
                         uploadResourceActor.add(uploadResourceTask);
                     } else {
                         String es = "Result data file doesn't exist, resultDataFile: " + resultDataFile.getPath();
