@@ -444,7 +444,7 @@ public class ExperimentsController {
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experimentId);
 
         SnippetVersion version = SnippetVersion.from(code);
-        Snippet snippet = snippetCache.findByNameAndSnippetVersion(version.name, version.version);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
 
         ExperimentSnippet ts = new ExperimentSnippet();
         ts.setExperimentId(experimentId);

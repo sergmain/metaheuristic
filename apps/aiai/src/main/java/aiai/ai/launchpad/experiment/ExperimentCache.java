@@ -38,9 +38,18 @@ public class ExperimentCache {
         this.experimentRepository = experimentRepository;
     }
 
-    @CachePut(cacheNames = "experiments", key = "#result.id")
+//    @CachePut(cacheNames = "experiments", key = "#result.id")
+//    @Cacheable(cacheNames = "experiments", unless="#result==null")
+    @CacheEvict(value = "experiments", key = "#result.id")
     public Experiment save(Experiment experiment) {
-        return experimentRepository.save(experiment);
+        //noinspection CaughtExceptionImmediatelyRethrown,UnusedAssignment
+        Experiment save=null;
+        try {
+            save = experimentRepository.save(experiment);
+            return save;
+        } catch (ObjectOptimisticLockingFailureException e) {
+            throw e;
+        }
     }
 
     @Cacheable(cacheNames = "experiments", unless="#result==null")

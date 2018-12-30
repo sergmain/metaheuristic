@@ -7,8 +7,8 @@ import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
@@ -35,7 +35,7 @@ public class TaskService {
     private final TaskPersistencer taskPersistencer;
     private final FlowInstanceRepository flowInstanceRepository;
     private final TaskParamYamlUtils taskParamYamlUtils;
-    private final SnippetCache snippetCache;
+    private final SnippetRepository snippetRepository;
 
     public List<Long> resourceReceivingChecker(long stationId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), Enums.TaskExecState.OK.value);
@@ -63,7 +63,7 @@ public class TaskService {
 
                 Task result = taskPersistencer.resetTask(task.getId());
                 if (result==null) {
-                    log.error("Reseting of task {} was failed. See log for more info.", task.getId());
+                    log.error("Resetting of task {} was failed. See log for more info.", task.getId());
                     break;
                 }
 
@@ -80,12 +80,12 @@ public class TaskService {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, FlowInstanceRepository flowInstanceRepository, TaskParamYamlUtils taskParamYamlUtils, SnippetCache snippetCache) {
+    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, FlowInstanceRepository flowInstanceRepository, TaskParamYamlUtils taskParamYamlUtils, SnippetRepository snippetRepository) {
         this.taskRepository = taskRepository;
         this.taskPersistencer = taskPersistencer;
         this.flowInstanceRepository = flowInstanceRepository;
         this.taskParamYamlUtils = taskParamYamlUtils;
-        this.snippetCache = snippetCache;
+        this.snippetRepository = snippetRepository;
     }
 
     public List<Long> storeAllResults(List<SimpleTaskExecResult> results) {
@@ -149,7 +149,7 @@ public class TaskService {
                     final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
 
                     SnippetVersion version = SnippetVersion.from(taskParamYaml.snippet.getCode());
-                    Snippet snippet = snippetCache.findByNameAndSnippetVersion(version.name, version.version);
+                    Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
                     if (snippet==null) {
                         log.warn("Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
                         continue;

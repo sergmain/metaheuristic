@@ -107,7 +107,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
         SnippetVersion sv = SnippetVersion.from(snippetCode);
         Snippet s = new Snippet();
 
-        Snippet sn = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
+        Snippet sn = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
         if (sn!=null) {
             snippetCache.delete(sn);
         }

@@ -176,14 +176,13 @@ public class ExperimentService {
         public BigDecimal[][] z;
     }
 
-    private final Globals globals;
     private final ParamsSetter paramsSetter;
     private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
     private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
     private final TaskPersistencer taskPersistencer;
     private final ExperimentFeatureRepository experimentFeatureRepository;
-    private final SnippetCache snippetCache;
+    private final SnippetRepository snippetRepository;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
@@ -191,21 +190,20 @@ public class ExperimentService {
     private final FlowInstanceRepository flowInstanceRepository;
 
     @Autowired
-    public ExperimentService(ApplicationEventMulticaster eventMulticaster, Globals globals, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter) {
+    public ExperimentService(ApplicationEventMulticaster eventMulticaster, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter, SnippetRepository snippetRepository) {
         this.eventMulticaster = eventMulticaster;
-        this.globals = globals;
         this.experimentCache = experimentCache;
         this.taskRepository = taskRepository;
         this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
         this.taskPersistencer = taskPersistencer;
         this.experimentFeatureRepository = experimentFeatureRepository;
-        this.snippetCache = snippetCache;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.snippetService = snippetService;
         this.experimentRepository = experimentRepository;
         this.experimentTaskFeatureRepository = experimentTaskFeatureRepository;
         this.paramsSetter = paramsSetter;
         this.flowInstanceRepository = flowInstanceRepository;
+        this.snippetRepository = snippetRepository;
     }
 
     private static class ParamFilter {
@@ -532,8 +530,6 @@ public class ExperimentService {
         intHolder.value = allHyperParams.size() * experimentSnippets.size();
 
         log.info("total size of tasks' params is {} bytes", size.value);
-        int processed = taskParams.size();
-
         final BoolHolder boolHolder = new BoolHolder();
         final Consumer<Long> longConsumer = o -> {
             if (flowInstance.getId().equals(o)) {
@@ -543,6 +539,7 @@ public class ExperimentService {
         final FlowInstanceService.FlowInstanceDeletionListener listener =
                 new FlowInstanceService.FlowInstanceDeletionListener(flowInstance.getId(), longConsumer);
 
+        int processed = 0;
         try {
             eventMulticaster.addApplicationListener(listener);
             FlowInstance instance = flowInstanceRepository.findById(flowInstance.getId()).orElse(null);
@@ -602,7 +599,7 @@ public class ExperimentService {
                         final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                         Snippet snippet = localCache.get(experimentSnippet.getSnippetCode());
                         if (snippet == null) {
-                            snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                            snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                             if (snippet != null) {
                                 localCache.put(experimentSnippet.getSnippetCode(), snippet);
                             }
@@ -667,6 +664,7 @@ public class ExperimentService {
                     }
                 }
             }
+            log.info("Created {} tasks, total: {}", processed, totalVariants);
         }
         finally {
             eventMulticaster.removeApplicationListener(listener);

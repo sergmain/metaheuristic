@@ -61,6 +61,9 @@ public abstract class PreparingExperiment {
     protected SnippetCache snippetCache;
 
     @Autowired
+    protected SnippetRepository snippetRepository;
+
+    @Autowired
     protected ExperimentSnippetRepository experimentSnippetRepository;
 
     @Autowired
@@ -105,7 +108,7 @@ public abstract class PreparingExperiment {
             // Prepare snippets
             mills = System.currentTimeMillis();
             log.info("Start findByNameAndSnippetVersion.save()");
-            fitSnippet = snippetCache.findByNameAndSnippetVersion(TEST_FIT_SNIPPET, SNIPPET_VERSION_1_0);
+            fitSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_FIT_SNIPPET, SNIPPET_VERSION_1_0);
             log.info("findByNameAndSnippetVersion() was finished for {}", System.currentTimeMillis() - mills);
 
             byte[] bytes = "some program code".getBytes();
@@ -131,7 +134,7 @@ public abstract class PreparingExperiment {
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
 
-            predictSnippet = snippetCache.findByNameAndSnippetVersion(TEST_PREDICT_SNIPPET, SNIPPET_VERSION_1_0);
+            predictSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_PREDICT_SNIPPET, SNIPPET_VERSION_1_0);
             if (predictSnippet == null) {
                 predictSnippet = new Snippet();
                 predictSnippet.setName(TEST_PREDICT_SNIPPET);

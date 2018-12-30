@@ -21,7 +21,8 @@ public class FlowCache {
         this.flowRepository = flowRepository;
     }
 
-    @CachePut(cacheNames = "flows", key = "#result.id")
+//    @CachePut(cacheNames = "flows", key = "#result.id")
+    @CacheEvict(value = "flows", key = "#result.id")
     public Flow save(Flow flow) {
         return flowRepository.save(flow);
     }
@@ -31,7 +32,8 @@ public class FlowCache {
         return flowRepository.findById(id).orElse(null);
     }
 
-    @CacheEvict(cacheNames = {"flows"}, allEntries=true)
+//    @CacheEvict(cacheNames = {"flows"}, allEntries=true)
+    @CacheEvict(cacheNames = {"flows"}, key = "#flow.id")
     public void delete(Flow flow) {
         try {
             flowRepository.delete(flow);
@@ -40,7 +42,8 @@ public class FlowCache {
         }
     }
 
-    @CacheEvict(cacheNames = {"flows"}, allEntries=true)
+//    @CacheEvict(cacheNames = {"flows"}, allEntries=true)
+    @CacheEvict(cacheNames = {"flows"}, key = "#id")
     public void deleteById(Long id) {
         try {
             flowRepository.deleteById(id);

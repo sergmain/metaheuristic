@@ -21,7 +21,6 @@ import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -38,27 +37,28 @@ public class SnippetCache {
         this.snippetRepository = snippetRepository;
     }
 
-    @CachePut(cacheNames = "snippets", key = "#result.id")
-    @CacheEvict(cacheNames = {"snippetsByName"}, key = "#result.id")
+//    @CachePut(cacheNames = "snippets", key = "#result.id")
+    @CacheEvict(cacheNames = "snippets", key = "#result.id")
     public Snippet save(Snippet snippet) {
         return snippetRepository.save(snippet);
     }
 
-    @CacheEvict(cacheNames = {"snippets", "snippetsByName"}, key = "#snippet.id")
+    @CacheEvict(cacheNames = {"snippets"}, key = "#snippet.id")
     public void delete(Snippet snippet) {
         try {
             snippetRepository.delete(snippet);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error deleting of snippet by object, {}", e.getMessage());
+            log.warn("Error deleting of snippet by object, {}", e);
         }
     }
 
-    @CacheEvict(cacheNames = {"snippets", "snippetsByName"}, allEntries=true)
+//    @CacheEvict(cacheNames = {"snippets", "snippetsByName"}, allEntries=true)
+    @CacheEvict(cacheNames = {"snippets"}, key = "#snippetId")
     public void delete(long snippetId) {
         try {
             snippetRepository.deleteById(snippetId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error deleting of snippet by id, {}", e.getMessage());
+            log.warn("Error deleting of snippet by id, {}", e);
         }
     }
 
@@ -67,8 +67,4 @@ public class SnippetCache {
         return snippetRepository.findById(id).orElse(null);
     }
 
-    @Cacheable(cacheNames = "snippetsByName", key = "#name + #snippetVersion", unless="#result==null")
-    public Snippet findByNameAndSnippetVersion(String name, String snippetVersion) {
-        return snippetRepository.findByNameAndSnippetVersion(name, snippetVersion);
-    }
 }

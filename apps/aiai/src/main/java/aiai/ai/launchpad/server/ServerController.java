@@ -24,6 +24,7 @@ import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.task.TaskPersistencer;
@@ -63,16 +64,16 @@ public class ServerController {
     private final Globals globals;
     private final ServerService serverService;
     private final BinaryDataService binaryDataService;
-    private final SnippetCache snippetCache;
+    private final SnippetRepository snippetRepository;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final TaskParamYamlUtils taskParamYamlUtils;
 
-    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService, SnippetCache snippetCache, TaskRepository taskRepository, TaskPersistencer taskPersistencer, TaskParamYamlUtils taskParamYamlUtils) {
+    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService, SnippetRepository snippetRepository, TaskRepository taskRepository, TaskPersistencer taskPersistencer, TaskParamYamlUtils taskParamYamlUtils) {
         this.globals = globals;
         this.serverService = serverService;
         this.binaryDataService = binaryDataService;
-        this.snippetCache = snippetCache;
+        this.snippetRepository = snippetRepository;
         this.taskRepository = taskRepository;
         this.taskPersistencer = taskPersistencer;
         this.taskParamYamlUtils = taskParamYamlUtils;
@@ -221,7 +222,7 @@ public class ServerController {
     public HttpEntity<String> snippetChecksum(HttpServletResponse response, @PathVariable("name") String snippetCode) throws IOException {
 
         SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
-        Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
             log.warn("Snippet wasn't found for name {}", snippetCode);
             return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);

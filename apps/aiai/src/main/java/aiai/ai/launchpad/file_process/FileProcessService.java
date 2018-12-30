@@ -6,12 +6,10 @@ import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.beans.Task;
-import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.flow.FlowUtils;
-import aiai.ai.launchpad.repositories.FlowInstanceRepository;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
@@ -30,18 +28,14 @@ import java.util.Map;
 @Profile("launchpad")
 public class FileProcessService {
 
-    private final FlowInstanceRepository flowInstanceRepository;
-    private final SnippetCache snippetCache;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final TaskRepository taskRepository;
-    private final BinaryDataService binaryDataService;
+    private final SnippetRepository snippetRepository;
 
-    public FileProcessService(FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache, TaskParamYamlUtils taskParamYamlUtils, TaskRepository taskRepository, BinaryDataService binaryDataService) {
-        this.flowInstanceRepository = flowInstanceRepository;
-        this.snippetCache = snippetCache;
+    public FileProcessService(TaskParamYamlUtils taskParamYamlUtils, TaskRepository taskRepository, SnippetRepository snippetRepository) {
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.taskRepository = taskRepository;
-        this.binaryDataService = binaryDataService;
+        this.snippetRepository = snippetRepository;
     }
 
     @SuppressWarnings("Duplicates")
@@ -94,7 +88,7 @@ public class FileProcessService {
         }
         yaml.outputResourceCode = outputResourceCode;
 
-        Snippet snippet = snippetCache.findByNameAndSnippetVersion(sv.name, sv.version);
+        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
         if (snippet==null) {
             log.warn("Snippet wasn't found for code: {}", snippetCode);
             return;

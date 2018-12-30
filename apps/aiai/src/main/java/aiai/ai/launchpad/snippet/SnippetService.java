@@ -80,7 +80,7 @@ public class SnippetService {
         List<Snippet> snippets = new ArrayList<>();
         for (ExperimentSnippet experimentSnippet : experimentSnippets) {
             SnippetVersion version = SnippetVersion.from(experimentSnippet.getSnippetCode());
-            Snippet snippet = snippetCache.findByNameAndSnippetVersion(version.name, version.version);
+            Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
             if (snippet==null) {
                 log.warn("Can't find snippet for code: {}", experimentSnippet.getSnippetCode());
                 continue;
@@ -209,7 +209,7 @@ public class SnippetService {
                 }
                 length = file.length();
             }
-            Snippet snippet = snippetCache.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
+            Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
             if (snippet!=null) {
                 final String checksum = Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256);
                 if (!sum.equals(checksum)) {
