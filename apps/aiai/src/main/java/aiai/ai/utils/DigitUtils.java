@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 
 public class DigitUtils {
 
+    public static final int DIV = 10_000;
+
     @AllArgsConstructor
     public static class Power {
         public long power7;
@@ -11,6 +13,6 @@ public class DigitUtils {
     }
 
     public static Power getPower(long num) {
-        return new Power(num/10_000, num % 10_000 );
+        return new Power(num/DIV, num % DIV );
     }
 }

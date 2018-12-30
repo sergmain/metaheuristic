@@ -87,7 +87,10 @@ public class StationTaskService {
                         }
                         try {
                             Files.list(launchpadDir.toPath()).forEach(s -> {
-                                long taskId = Long.parseLong(launchpadDir.getName()+s.toFile().getName());
+                                String launchpadDirName = launchpadDir.getName();
+                                String name = s.toFile().getName();
+                                long taskId = Long.parseLong(launchpadDirName) * DigitUtils.DIV + Long.parseLong(name);
+                                log.info("Found new task with id: {}, {}, {}", taskId, launchpadDirName, name);
                                 File taskYamlFile = new File(s.toFile(), Consts.TASK_YAML);
                                 if (taskYamlFile.exists()) {
                                     try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
@@ -437,9 +440,9 @@ public class StationTaskService {
                     FileUtils.deleteDirectory(systemDir);
                 }
                 Map<Long, StationTask> mapTask = getMapForLaunchpadUrl(launchpadUrl);
-                log.info("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
+                log.debug("Does task present in map before deleting: {}", mapTask.containsKey(taskId));
                 mapTask.remove(taskId);
-                log.info("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
+                log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
             } catch (Throwable th) {
                 log.error("Error deleting task " + taskId, th);
             }
