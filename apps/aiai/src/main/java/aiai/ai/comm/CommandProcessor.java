@@ -144,7 +144,7 @@ public class CommandProcessor {
                 launchpadService.getTaskService().storeAllResults(command.getResults())
         );
         // we can't return immediately task because we have to receive some params from station,
-        // like does snippet have to be signed or not
+        // like: does snippet have to be signed or not
 
         return new Command[]{cmd1};
     }

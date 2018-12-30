@@ -54,7 +54,7 @@ public class TaskPersistencer {
                         return null;
                     }
                     if (task.execState == Enums.TaskExecState.NONE.value) {
-                        log.error("Task {} was reseted, can't set new value to field resultReceived", taskId);
+                        log.warn("Task {} was resetted, can't set new value to field resultReceived", taskId);
                         return null;
                     }
                     task.setResultReceived(value);
@@ -142,7 +142,6 @@ public class TaskPersistencer {
         task.setMetrics(result.getMetrics());
         task.setCompleted(true);
         task.setCompletedOn(System.currentTimeMillis());
-//        task.resultResourceScheduledOn = (state== Enums.TaskExecState.OK ? System.currentTimeMillis() : 0);
         task.resultResourceScheduledOn = System.currentTimeMillis();
         return task;
     }

@@ -144,7 +144,8 @@ public class TaskService {
         }
         Task resultTask = null;
         for (Task task : tasks) {
-            if (!task.isCompleted) {
+//            if (!task.isCompleted) {
+            if (!task.isResultReceived()) {
                 if (isAcceptOnlySigned) {
                     final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
 
