@@ -101,7 +101,7 @@ public class ServerController {
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
-    @GetMapping("/rest-anon/payload/resource/{stationId}/{type}/{code}")
+    @GetMapping("/rest-anon/payload/resource/{type}/{stationId}/{code}")
     public HttpEntity<AbstractResource> deliverResourceAnon(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
         log.debug("deliverResourceAnon(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
         if (globals.isSecureLaunchpadRestUrl) {
@@ -111,7 +111,7 @@ public class ServerController {
         return deliverResource(response, typeAsStr, code);
     }
 
-    @GetMapping("/rest-auth/payload/resource/{stationId}/{type}/{code}")
+    @GetMapping("/rest-auth/payload/resource/{type}/{stationId}/{code}")
     public HttpEntity<AbstractResource> deliverResourceAuth(
             HttpServletResponse response,
             @PathVariable("stationId") String stationId, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
