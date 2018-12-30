@@ -27,6 +27,7 @@ import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.env.TimePeriods;
+import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -143,11 +144,13 @@ public class StationService {
             log.info("Resource hasn't been prepared yet, {}", assetFile);
             return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
         }
+        final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
         final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
                 launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
 
         UploadResourceTask uploadResourceTask = new UploadResourceTask(taskId, assetFile.file);
         uploadResourceTask.launchpad = launchpad.launchpadLookup;
+        uploadResourceTask.stationId = launchpadCode.stationId;
         uploadResourceActor.add(uploadResourceTask);
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }

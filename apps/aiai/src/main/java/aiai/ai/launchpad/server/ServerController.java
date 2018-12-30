@@ -101,7 +101,7 @@ public class ServerController {
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
-    @GetMapping("/rest-anon/payload/resource/{type}/{code}")
+    @GetMapping("/rest-anon/payload/resource/{stationId}/{type}/{code}")
     public HttpEntity<AbstractResource> deliverResourceAnon(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
         log.debug("deliverResourceAnon(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
         if (globals.isSecureLaunchpadRestUrl) {
@@ -111,15 +111,18 @@ public class ServerController {
         return deliverResource(response, typeAsStr, code);
     }
 
-    @GetMapping("/rest-auth/payload/resource/{type}/{code}")
-    public HttpEntity<AbstractResource> deliverResourceAuth(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
+    @GetMapping("/rest-auth/payload/resource/{stationId}/{type}/{code}")
+    public HttpEntity<AbstractResource> deliverResourceAuth(
+            HttpServletResponse response,
+            @PathVariable("stationId") String stationId, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
         log.debug("deliverResourceAuth(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
         return deliverResource(response, typeAsStr, code);
     }
 
-    @PostMapping("/rest-anon/upload/{taskId}")
+    @PostMapping("/rest-anon/upload/{stationId}/{taskId}")
     public UploadResult uploadResourceAnon(
             MultipartFile file, HttpServletResponse response,
+            @PathVariable("stationId") String stationId,
             @PathVariable("taskId") Long taskId) throws IOException {
         log.debug("uploadResourceAnon(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
         if (globals.isSecureLaunchpadRestUrl) {
@@ -129,9 +132,10 @@ public class ServerController {
         return uploadResource(file, taskId);
     }
 
-    @PostMapping("/rest-auth/upload/{taskId}")
+    @PostMapping("/rest-auth/upload/{stationId}/{taskId}")
     public UploadResult uploadResourceAuth(
             MultipartFile file,
+            @PathVariable("stationId") String stationId,
             @PathVariable("taskId") Long taskId) {
         log.debug("uploadResourceAuth(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
         return uploadResource(file, taskId);
@@ -218,8 +222,11 @@ public class ServerController {
         return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
     }
 
-    @GetMapping("/rest-auth/payload/snippet-checksum/{name}")
-    public HttpEntity<String> snippetChecksum(HttpServletResponse response, @PathVariable("name") String snippetCode) throws IOException {
+    @GetMapping("/rest-auth/payload/snippet-checksum/{stationId}/{name}")
+    public HttpEntity<String> snippetChecksum(
+            HttpServletResponse response,
+            @PathVariable("stationId") String stationId,
+            @PathVariable("name") String snippetCode) throws IOException {
 
         SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);

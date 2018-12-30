@@ -100,7 +100,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             Checksum checksum=null;
             if (task.launchpad.isAcceptOnlySignedSnippets) {
                 try {
-                    Request request = Request.Get(snippetChecksumUrl + '/' + snippetCode)
+                    Request request = Request.Get(snippetChecksumUrl + '/' + task.stationId+ '/' + snippetCode)
                             .connectTimeout(5000)
                             .socketTimeout(5000);
 
@@ -131,7 +131,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             try {
                 File snippetTempFile = new File(assetFile.file.getAbsolutePath()+".tmp");
                 //  @GetMapping("/rest-anon/payload/resource/{type}/{code}")
-                Request request = Request.Get(targetUrl + '/' + snippetCode)
+                Request request = Request.Get(targetUrl + '/' + task.stationId+ '/' + snippetCode)
                         .connectTimeout(5000)
                         .socketTimeout(5000);
 

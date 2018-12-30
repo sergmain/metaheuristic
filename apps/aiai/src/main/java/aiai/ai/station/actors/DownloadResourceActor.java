@@ -83,9 +83,9 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             log.info("Start processing the download task {}", task);
             try {
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
-                String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource";
+                String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource/DATA";
 
-                Request request = Request.Get(payloadRestUrl + "/DATA/" + task.getId())
+                Request request = Request.Get(payloadRestUrl + '/' + task.stationId+ '/' + task.getId())
                         .connectTimeout(10000)
                         .socketTimeout(10000);
 

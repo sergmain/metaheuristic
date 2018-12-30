@@ -32,7 +32,7 @@ public class OAuthTokenRequestorActor extends AbstractTaskQueue<OAuthTokenTask>{
         while((task = poll())!=null) {
             String token = null;
             
-            // ocalhost:8080/oauth/token -d "grant_type=password&scope=read&username=greg&password=turnquist" -u foo:bar
+            // localhost:8080/oauth/token -d "grant_type=password&scope=read&username=greg&password=turnquist" -u foo:bar
             // ...
 
 

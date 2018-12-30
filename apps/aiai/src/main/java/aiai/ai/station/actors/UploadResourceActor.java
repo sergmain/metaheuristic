@@ -37,9 +37,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -98,13 +96,13 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             try {
                 log.info("Start uploading result data to server, resultDataFile: {}", task.file);
                 if (!task.file.exists()) {
-
+                    log.error("File {} doesn't exist", task.file.getPath());
                 }
 
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
                 final String uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
 
-                final String uri = uploadRestUrl + '/' + task.taskId;
+                final String uri = uploadRestUrl + '/' + task.stationId+ '/' + task.taskId;
                 HttpEntity entity = MultipartEntityBuilder.create()
                         .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                         .setCharset(StandardCharsets.UTF_8)

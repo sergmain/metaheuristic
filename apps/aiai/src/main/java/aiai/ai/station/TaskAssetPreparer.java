@@ -70,14 +70,6 @@ public class TaskAssetPreparer {
         }
 
         List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(false);
-/*
-        if (log.isDebugEnabled() && !tasks.isEmpty()) {
-            log.debug("There are task(s) for processing:");
-            for (StationTask task : tasks) {
-                log.debug("\t{}", task);
-            }
-        }
-*/
         for (StationTask task : tasks) {
             if (StringUtils.isBlank(task.launchpadUrl)) {
                 log.error("launchpadUrl for task {} is blank", task.getTaskId());
@@ -114,6 +106,7 @@ public class TaskAssetPreparer {
                 isAllLoaded=false;
                 DownloadResourceTask resourceTask = new DownloadResourceTask(resourceCode, task.getTaskId(), taskDir);
                 resourceTask.launchpad = launchpad.launchpadLookup;
+                resourceTask.stationId = launchpadCode.stationId;
                 downloadResourceActor.add(resourceTask);
             }
 
@@ -124,6 +117,7 @@ public class TaskAssetPreparer {
                     isAllLoaded = false;
                     DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, snippetDir);
                     snippetTask.launchpad = launchpad.launchpadLookup;
+                    snippetTask.stationId = launchpadCode.stationId;
                     downloadSnippetActor.add(snippetTask);
                 }
             }

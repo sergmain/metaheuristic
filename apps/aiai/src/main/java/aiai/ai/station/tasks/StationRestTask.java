@@ -25,4 +25,5 @@ import lombok.NoArgsConstructor;
 @Data
 public abstract class StationRestTask {
     public LaunchpadLookupConfig.LaunchpadLookup launchpad;
+    public String stationId;
 }
