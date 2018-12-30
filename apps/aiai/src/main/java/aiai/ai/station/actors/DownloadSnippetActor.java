@@ -21,7 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.MetadataService;
-import aiai.ai.station.StationResourceUtils;
+import aiai.ai.utils.ResourceUtils;
 import aiai.ai.station.StationTaskService;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.DownloadSnippetTask;
@@ -79,7 +79,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
             final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpad.url);
             final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
-            final AssetFile assetFile = StationResourceUtils.prepareSnippetFile(snippetDir, task.snippetCode, task.filename);
+            final AssetFile assetFile = ResourceUtils.prepareSnippetFile(snippetDir, task.snippetCode, task.filename);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
@@ -130,8 +130,8 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
             try {
                 File snippetTempFile = new File(assetFile.file.getAbsolutePath()+".tmp");
-                //  @GetMapping("/rest-anon/payload/resource/{type}/{code}")
-                Request request = Request.Get(targetUrl + '/' + task.stationId+ '/' + snippetCode)
+                //  @PostMapping("/rest-anon/payload/resource/{type}/{stationId}/{code}")
+                Request request = Request.Post(targetUrl + '/' + task.stationId+ '/' + snippetCode)
                         .connectTimeout(5000)
                         .socketTimeout(5000);
 

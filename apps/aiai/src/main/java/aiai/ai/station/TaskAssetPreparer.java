@@ -24,6 +24,7 @@ import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.CollectionUtils;
+import aiai.ai.utils.ResourceUtils;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
@@ -98,7 +99,7 @@ public class TaskAssetPreparer {
 
             boolean isAllLoaded = true;
             for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                AssetFile assetFile = StationResourceUtils.prepareDataFile(taskDir, resourceCode, null);
+                AssetFile assetFile = ResourceUtils.prepareDataFile(taskDir, resourceCode, null);
                 // is this resource prepared?
                 if (!assetFile.isError && assetFile.isContent) {
                     continue;
@@ -112,7 +113,7 @@ public class TaskAssetPreparer {
 
             File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
             if (!taskParamYaml.snippet.fileProvided) {
-                AssetFile assetFile = StationResourceUtils.prepareSnippetFile(snippetDir, taskParamYaml.snippet.code, taskParamYaml.snippet.filename);
+                AssetFile assetFile = ResourceUtils.prepareSnippetFile(snippetDir, taskParamYaml.snippet.code, taskParamYaml.snippet.filename);
                 if (assetFile.isError || !assetFile.isContent) {
                     isAllLoaded = false;
                     DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, snippetDir);

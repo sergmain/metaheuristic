@@ -25,6 +25,7 @@ import aiai.ai.core.ExecProcessService;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.utils.CollectionUtils;
+import aiai.ai.utils.ResourceUtils;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.task.SimpleSnippet;
@@ -83,6 +84,7 @@ public class TaskProcessor {
 
         List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
+            log.info("Start processing task {}", task);
             final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 
             if (StringUtils.isBlank(task.launchpadUrl)) {
@@ -121,7 +123,7 @@ public class TaskProcessor {
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean isAssetsOk = true;
             for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                AssetFile assetFile = StationResourceUtils.prepareDataFile(taskDir, resourceCode, null);
+                AssetFile assetFile = ResourceUtils.prepareDataFile(taskDir, resourceCode, null);
                 // is this resource prepared?
                 if (assetFile.isError || !assetFile.isContent) {
                     log.info("Resource hasn't been prepared yet, {}", assetFile);
@@ -157,7 +159,7 @@ public class TaskProcessor {
             AssetFile snippetAssetFile=null;
             if (!snippet.fileProvided) {
                 final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
-                snippetAssetFile = StationResourceUtils.prepareSnippetFile(snippetDir, snippet.code, snippet.filename);
+                snippetAssetFile = ResourceUtils.prepareSnippetFile(snippetDir, snippet.code, snippet.filename);
                 // is this snippet prepared?
                 if (snippetAssetFile.isError || !snippetAssetFile.isContent) {
                     log.info("Resource hasn't been prepared yet, {}", snippetAssetFile);

@@ -24,6 +24,7 @@ import aiai.ai.comm.Command;
 import aiai.ai.comm.Protocol;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
+import aiai.ai.utils.ResourceUtils;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.env.TimePeriods;
@@ -138,7 +139,7 @@ public class StationService {
             return Enums.ResendTaskOutputResourceStatus.TASK_PARAM_FILE_NOT_FOUND;
         }
         final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
-        final AssetFile assetFile = StationResourceUtils.prepareDataFile(taskDir, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
+        final AssetFile assetFile = ResourceUtils.prepareDataFile(taskDir, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
             log.info("Resource hasn't been prepared yet, {}", assetFile);

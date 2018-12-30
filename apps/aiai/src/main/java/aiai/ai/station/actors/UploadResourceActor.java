@@ -107,7 +107,6 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                         .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
                         .setCharset(StandardCharsets.UTF_8)
                         .addBinaryBody("file", task.file, ContentType.DEFAULT_BINARY, task.file.getName())
-//                        .addBinaryBody("file", is, ContentType.DEFAULT_BINARY, task.file.getName())
                         .build();
 
                 Request request = Request.Post(uri)

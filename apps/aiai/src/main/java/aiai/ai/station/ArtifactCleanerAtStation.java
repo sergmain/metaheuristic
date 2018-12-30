@@ -63,7 +63,7 @@ public class ArtifactCleanerAtStation {
             Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
 
             List<StationTask> all = stationTaskService.findAll(launchpadUrl);
-            log.debug("Number tasks for deleting obsolete: {} ", all.size());
+//            log.debug("Number tasks for deleting obsolete: {} ", all.size());
             for (StationTask task : all) {
                 if (currentExecState.isState(launchpadUrl, task.flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST)) {
                     log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), launchpadUrl);

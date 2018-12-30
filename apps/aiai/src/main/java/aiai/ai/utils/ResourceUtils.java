@@ -15,23 +15,24 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.station;
+package aiai.ai.utils;
 
 import aiai.ai.Enums;
+import aiai.ai.station.AssetFile;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.File;
 
 @Slf4j
-public class StationResourceUtils {
+public class ResourceUtils {
 
     /**
      *
-     * @param rootDir
+     * @param rootDir File
      * @param id -  this is the code of resource
-     * @param resourceFilename
-     * @return
+     * @param resourceFilename String
+     * @return AssetFile
      */
     public static AssetFile prepareDataFile(File rootDir, String id, String resourceFilename) {
         Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.DATA;

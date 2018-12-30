@@ -26,10 +26,9 @@ import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.station.AssetFile;
-import aiai.ai.station.StationResourceUtils;
+import aiai.ai.utils.ResourceUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.utils.DirUtils;
@@ -101,22 +100,22 @@ public class ServerController {
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
-    @GetMapping("/rest-anon/payload/resource/{type}/{stationId}/{code}")
+    @PostMapping("/rest-anon/payload/resource/{type}/{stationId}/{code}")
     public HttpEntity<AbstractResource> deliverResourceAnon(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
         log.debug("deliverResourceAnon(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
         if (globals.isSecureLaunchpadRestUrl) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
-        return deliverResource(response, typeAsStr, code);
+        return deliverResourceToStation(response, typeAsStr, code);
     }
 
-    @GetMapping("/rest-auth/payload/resource/{type}/{stationId}/{code}")
+    @PostMapping("/rest-auth/payload/resource/{type}/{stationId}/{code}")
     public HttpEntity<AbstractResource> deliverResourceAuth(
             HttpServletResponse response,
             @PathVariable("stationId") String stationId, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
         log.debug("deliverResourceAuth(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
-        return deliverResource(response, typeAsStr, code);
+        return deliverResourceToStation(response, typeAsStr, code);
     }
 
     @PostMapping("/rest-anon/upload/{stationId}/{taskId}")
@@ -185,16 +184,16 @@ public class ServerController {
         return result!=null ? OK_UPLOAD_RESULT : new UploadResult(false, "#442.08 can't update resultReceived field for task #"+task.getId()+". See log for info.");
     }
 
-    private HttpEntity<AbstractResource> deliverResource(HttpServletResponse response, String typeAsStr, String code) throws IOException {
+    private HttpEntity<AbstractResource> deliverResourceToStation(HttpServletResponse response, String typeAsStr, String code) throws IOException {
         Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
         AssetFile assetFile;
         switch(binaryDataType) {
             case SNIPPET:
-                assetFile = StationResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, code, null);
+                assetFile = ResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, code, null);
                 break;
             case DATA:
             case TEST:
-                assetFile = StationResourceUtils.prepareDataFile(globals.launchpadResourcesDir, code, null);
+                assetFile = ResourceUtils.prepareDataFile(globals.launchpadResourcesDir, code, null);
                 break;
             case UNKNOWN:
             default:
@@ -202,11 +201,13 @@ public class ServerController {
         }
 
         if (assetFile==null) {
+            log.warn("resource with code {} wasn't found", code);
             return returnEmptyAsGone(response);
         }
         try {
             binaryDataService.storeToFile(code, assetFile.file);
         } catch (BinaryDataNotFoundException e) {
+            log.error("Error store file to db, code " + code, e);
             return returnEmptyAsGone(response);
         }
         return new HttpEntity<>(new FileSystemResource(assetFile.file.toPath()), getHeader(assetFile.file.length()));

@@ -20,7 +20,7 @@ package aiai.ai.station.actors;
 import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.station.AssetFile;
-import aiai.ai.station.StationResourceUtils;
+import aiai.ai.utils.ResourceUtils;
 import aiai.ai.station.StationTaskService;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.DownloadResourceTask;
@@ -70,7 +70,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 log.info("Task #{} was already finished", task.taskId);
                 continue;
             }
-            AssetFile assetFile = StationResourceUtils.prepareDataFile(task.targetDir, task.id, null);
+            AssetFile assetFile = ResourceUtils.prepareDataFile(task.targetDir, task.id, null);
             if (assetFile.isError ) {
                 log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
@@ -85,7 +85,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
                 String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource/DATA";
 
-                Request request = Request.Get(payloadRestUrl + '/' + task.stationId+ '/' + task.getId())
+                Request request = Request.Post(payloadRestUrl + '/' + task.stationId+ '/' + task.getId())
                         .connectTimeout(10000)
                         .socketTimeout(10000);
 

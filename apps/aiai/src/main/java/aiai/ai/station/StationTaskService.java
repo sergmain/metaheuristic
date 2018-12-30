@@ -341,6 +341,7 @@ public class StationTaskService {
             throw new IllegalStateException("launchpadUrl is null");
         }
         synchronized (StationSyncHolder.stationGlobalSync) {
+            log.info("Assign task #{}, params{}", taskId, params );
             Map<Long, StationTask> mapForLaunchpadUrl = getMapForLaunchpadUrl(launchpadUrl);
             StationTask task = mapForLaunchpadUrl.computeIfAbsent(taskId, k -> new StationTask());
 
@@ -364,7 +365,6 @@ public class StationTaskService {
                 systemDir.mkdirs();
                 File taskYamlFile = new File(systemDir, Consts.TASK_YAML);
                 FileUtils.write(taskYamlFile, StationTaskUtils.toString(task), Charsets.UTF_8, false);
-//                mapForLaunchpadUrl.put(task.taskId, task);
             } catch (Throwable th) {
                 log.error("Error ", th);
                 throw new RuntimeException("Error", th);
