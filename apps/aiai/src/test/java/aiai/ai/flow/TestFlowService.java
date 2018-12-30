@@ -167,7 +167,7 @@ public class TestFlowService extends PreparingFlow {
         Protocol.AssignedTask.Task simpleTask0 = assignToStation0.getSimpleTask();
         assertNull(simpleTask0);
 
-        flowInstance = flowService.startFlowInstance(flowInstance);
+        flowInstance = flowService.toStarted(flowInstance);
 
         TaskService.TasksAndAssignToStationResult assignToStation =
                 taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());

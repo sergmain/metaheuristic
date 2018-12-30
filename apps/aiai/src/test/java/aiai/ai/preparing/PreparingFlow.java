@@ -1,6 +1,7 @@
 package aiai.ai.preparing;
 
 import aiai.ai.Enums;
+import aiai.ai.flow.TaskCollector;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
@@ -10,6 +11,7 @@ import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
+import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
@@ -40,6 +42,12 @@ public abstract class PreparingFlow extends PreparingExperiment {
 
     @Autowired
     public FlowYamlUtils flowYamlUtils;
+
+    @Autowired
+    public TaskCollector taskCollector;
+
+    @Autowired
+    public TaskPersistencer taskPersistencer;
 
     public Flow flow = null;
     public FlowYaml flowYaml = null;

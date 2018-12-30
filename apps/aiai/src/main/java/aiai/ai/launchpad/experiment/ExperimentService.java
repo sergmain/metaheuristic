@@ -230,7 +230,7 @@ public class ExperimentService {
 
     public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
         final long stationId = Long.parseLong(stationIdAsStr);
-        List<Task> tasks = taskRepository.findByStationIdAndIsCompletedIsFalse(stationId);
+        List<Task> tasks = taskRepository.findByStationIdAndResultReceivedIsFalse(stationId);
         for (Task task : tasks) {
             boolean isFound = false;
             for (Protocol.StationTaskStatus.SimpleStatus status : statuses) {

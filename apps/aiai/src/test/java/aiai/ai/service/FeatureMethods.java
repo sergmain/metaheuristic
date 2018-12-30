@@ -17,17 +17,23 @@
  */
 package aiai.ai.service;
 
+import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
+import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
+import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingExperiment;
+import aiai.ai.preparing.PreparingFlow;
+import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.metrics.MetricsUtils;
@@ -35,12 +41,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
 @Slf4j
-public abstract class FeatureMethods extends PreparingExperiment {
+public abstract class FeatureMethods extends PreparingFlow {
 
     private static final String TEST_FIT_SNIPPET = "test.fit.snippet";
     private static final String SNIPPET_VERSION_1_0 = "1.0";
@@ -77,14 +85,110 @@ public abstract class FeatureMethods extends PreparingExperiment {
     @Autowired
     private BinaryDataService binaryDataService;
 
-//    Station station = null;
-//    Experiment experiment = null;
     boolean isCorrectInit = true;
+
+    @Override
+    public String getFlowParamsAsYaml() {
+        flowYaml = new FlowYaml();
+        {
+            Process p = new Process();
+            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.name = "assembly raw file";
+            p.code = "assembly-raw-file";
+
+            p.inputType = "raw-part-data";
+            p.snippetCodes = Collections.singletonList("snippet-01:1.1");
+            p.collectResources = false;
+            p.outputType = "assembled-raw";
+
+            flowYaml.processes.add(p);
+        }
+        {
+            Process p = new Process();
+            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.name = "dataset processing";
+            p.code = "dataset-processing";
+
+            p.snippetCodes = Collections.singletonList("snippet-02:1.1");
+            p.collectResources = true;
+            p.outputType = "dataset-processing";
+
+            flowYaml.processes.add(p);
+        }
+        {
+            Process p = new Process();
+            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.name = "feature processing";
+            p.code = "feature-processing";
+
+            p.snippetCodes = Arrays.asList("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
+            p.parallelExec = true;
+            p.collectResources = false;
+            p.outputType = "feature";
+
+            flowYaml.processes.add(p);
+        }
+        {
+            Process p = new Process();
+            p.type = Enums.ProcessType.EXPERIMENT;
+            p.name = "experiment";
+            p.code = PreparingExperiment.TEST_EXPERIMENT_CODE_01;
+
+            p.metas.addAll(
+                    Arrays.asList(
+                            new Process.Meta("assembled-raw", "assembled-raw", null),
+                            new Process.Meta("dataset", "dataset-processing", null),
+                            new Process.Meta("feature", "feature", null)
+                    )
+            );
+
+            flowYaml.processes.add(p);
+        }
+
+        String yaml = flowYamlUtils.toString(flowYaml);
+        System.out.println(yaml);
+        return yaml;
+    }
+
+    protected void produceTasks() {
+        Enums.FlowValidateStatus status = flowService.validate(flow);
+        assertEquals(Enums.FlowValidateStatus.OK, status);
+
+        FlowService.TaskProducingResult result = flowService.createFlowInstance(flow, PreparingFlow.INPUT_POOL_CODE);
+        flowInstance = result.flowInstance;
+        assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
+        assertNotNull(flowInstance);
+        assertEquals(Enums.FlowInstanceExecState.NONE.code, flowInstance.execState);
+
+
+        Enums.FlowProducingStatus producingStatus = flowService.toProducing(flowInstance);
+        assertEquals(Enums.FlowProducingStatus.OK, producingStatus);
+        assertEquals(Enums.FlowInstanceExecState.PRODUCING.code, flowInstance.execState);
+
+        List<Object[]> tasks01 = taskCollector.getTasks(result.flowInstance);
+        assertTrue(tasks01.isEmpty());
+
+        long mills;
+
+        List<Object[]> tasks02 = taskCollector.getTasks(result.flowInstance);
+        assertTrue(tasks02.isEmpty());
+
+        mills = System.currentTimeMillis();
+        result = flowService.produceAllTasks(true, flow, flowInstance);
+        log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
+
+        flowInstance = result.flowInstance;
+        assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
+        assertEquals(Enums.FlowInstanceExecState.PRODUCED.code, flowInstance.execState);
+
+        experiment = experimentCache.findById(experiment.getId());
+        assertNotNull(experiment.getFlowInstanceId());
+    }
 
     protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
         assertEquals(sequences1Feature.experimentId, experiment.getId());
         TaskService.TasksAndAssignToStationResult sequences2 = taskService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getId());
+                station.getId(), false, experiment.getFlowInstanceId());
         assertNotNull(sequences2);
         assertNotNull(sequences2.getSimpleTask());
 
@@ -93,38 +197,24 @@ public abstract class FeatureMethods extends PreparingExperiment {
         assertEquals(FeatureExecStatus.error.code, feature.execStatus);
     }
 
-    protected void checkCurrentState_with10sequences() {
+    protected Protocol.AssignedTask.Task getTaskAndAssignToStation_mustBeNewTask() {
         long mills;
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
         TaskService.TasksAndAssignToStationResult sequences = taskService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getId());
+                station.getId(), false, experiment.getFlowInstanceId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(sequences);
         assertNotNull(sequences.getSimpleTask());
-        assertNotNull(sequences.getSimpleTask());
-
-        mills = System.currentTimeMillis();
-        log.info("Start experimentFeatureRepository.findById()");
-
-        if (true) throw new IllegalStateException("Not implemented yet");
-/*
-        ExperimentFeature feature =
-                experimentFeatureRepository.findById(sequences.getFeature().getId()).orElse(null);
-        log.info("experimentFeatureRepository.findById() was finished for {}", System.currentTimeMillis() - mills);
-
-        assertNotNull(feature);
-        assertFalse(feature.isFinished);
-        assertTrue(feature.isInProgress);
-*/
+        return sequences.getSimpleTask();
     }
 
     protected void finishCurrentWithError(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<SimpleTaskExecResult> results = new ArrayList<>();
-        List<Task> tasks = taskRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
+        List<Task> tasks = taskRepository.findByStationIdAndResultReceivedIsFalse(station.getId());
         if (expectedSeqs!=0) {
             assertEquals(expectedSeqs, tasks.size());
         }
@@ -144,7 +234,7 @@ public abstract class FeatureMethods extends PreparingExperiment {
     protected void finishCurrentWithOk(int expectedSeqs) {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<SimpleTaskExecResult> results = new ArrayList<>();
-        List<Task> tasks = taskRepository.findByStationIdAndIsCompletedIsFalse(station.getId());
+        List<Task> tasks = taskRepository.findByStationIdAndResultReceivedIsFalse(station.getId());
         if (expectedSeqs!=0) {
             assertEquals(expectedSeqs, tasks.size());
         }

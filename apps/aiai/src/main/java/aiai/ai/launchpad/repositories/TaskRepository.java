@@ -43,7 +43,7 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     Stream<Object[]> findAllAsTaskSimple(Pageable pageable);
 
     @Transactional(readOnly = true)
-    List<Task> findByStationIdAndIsCompletedIsFalse(long stationId);
+    List<Task> findByStationIdAndResultReceivedIsFalse(long stationId);
 
     @Transactional
     void deleteByFlowInstanceId(long flowInstanceId);
@@ -87,48 +87,4 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     @Query("SELECT new aiai.ai.launchpad.experiment.task.TaskWIthType(t, tef.taskType) FROM Task t, ExperimentTaskFeature tef " +
             "where t.id=tef.taskId and tef.featureId=:featureId ")
     Slice<TaskWIthType> findPredictTasks(Pageable pageable, long featureId);
-
-
-/*
-
-    List<Task> findByExperimentId(long experimentId);
-
-    @Transactional(readOnly = true)
-    List<Task> findByExperimentIdAndFeatureId(long experiimentId, long featureId);
-
-    @Transactional(readOnly = true)
-    Slice<Task> findAllByStationIdIsNullAndFeatureId(Pageable pageable, long featureId);
-
-    @Transactional(readOnly = true)
-    Slice<Task> findAllByStationIdIsNullAndFeatureIdAndExperimentId(Pageable pageable, long featureId, long experimentId);
-
-    @Transactional(readOnly = true)
-    Task findTop1ByStationIdAndIsCompletedIsFalseAndFeatureId(long stationId, long featureId);
-
-    @Transactional(readOnly = true)
-    Task findTop1ByFeatureId(Long featureId);
-
-    @Transactional(readOnly = true)
-    Task findTop1ByIsCompletedIsFalseAndFeatureId(Long featureId);
-
-    @Transactional(readOnly = true)
-    Task findTop1ByIsAllSnippetsOkIsTrueAndFeatureId(long featureId);
-
-    @Transactional
-    void deleteByExperimentId(long experimentId);
-*/
-/*
-
-    @Transactional(readOnly = true)
-    @Query("SELECT f FROM Task s, ExperimentFeature f, Experiment e  where s.stationId=:stationId and s.featureId=f.id and f.experimentId=e.id and  " +
-            "f.isFinished=false and f.isInProgress=true and e.isLaunched=true and e.execState=:state")
-    List<ExperimentFeature> findAnyStartedButNotFinished(Pageable limit, long stationId, int state);
-*/
-
-/*
-    @Transactional(readOnly = true)
-    List<Task> findByStationIdAndIsCompletedIsFalse(Long stationId);
-*/
-
-
 }

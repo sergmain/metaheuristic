@@ -67,7 +67,7 @@ public class FlowService {
         this.fileProcessValidator = fileProcessValidator;
     }
 
-    public FlowInstance startFlowInstance(FlowInstance flowInstance) {
+    public FlowInstance toStarted(FlowInstance flowInstance) {
         FlowInstance fi = flowInstanceRepository.findById(flowInstance.getId()).orElse(null);
         if (fi==null) {
             String es = "Can't change exec state to PRODUCED for flowInstance #" + flowInstance.getId();
@@ -357,6 +357,7 @@ public class FlowService {
             markOrderAsCompleted(flowInstance);
         }
     }
+
     private void markOrderAsCompleted(FlowInstance flowInstance) {
         List<Task> forCompletion = taskRepository.findForCompletion(flowInstance.getId(), flowInstance.getProducingOrder() + 1);
         if (forCompletion.isEmpty()) {

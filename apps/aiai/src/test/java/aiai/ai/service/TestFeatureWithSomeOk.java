@@ -18,7 +18,6 @@
 package aiai.ai.service;
 
 import aiai.ai.launchpad.beans.*;
-import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.task.TaskService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,11 +36,11 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
     public void testFeatureCompletionWithPartialError() {
         assertTrue(isCorrectInit);
 
-        checkCurrentState_with10sequences();
+        getTaskAndAssignToStation_mustBeNewTask();
 
         // this station already got sequences, so don't provide any new
         TaskService.TasksAndAssignToStationResult sequences = taskService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getId());
+                station.getId(), false, experiment.getFlowInstanceId());
         assertNotNull(sequences);
         // sequences is empty cos we still didn't finish those sequences
         assertNull(sequences.getSimpleTask());
@@ -49,7 +48,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         finishCurrentWithError(1);
 
         TaskService.TasksAndAssignToStationResult sequences1 = taskService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getId());
+                station.getId(), false, experiment.getFlowInstanceId());
         assertNotNull(sequences1);
         if (true) throw new IllegalStateException("Not implemented yet");
         final ExperimentFeature feature = null;
@@ -60,7 +59,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         finishCurrentWithOk(2);
 
-        checkCurrentState_with10sequences();
+        getTaskAndAssignToStation_mustBeNewTask();
 
 
         System.out.println();

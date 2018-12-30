@@ -96,8 +96,6 @@ public class TestCountOfTasks extends PreparingFlow {
     public TaskService taskService;
     @Autowired
     public TaskPersistencer taskPersistencer;
-    @Autowired
-    public TaskCollector taskCollector;
 
     @Test
     public void testCountNumberOfTasks() {
