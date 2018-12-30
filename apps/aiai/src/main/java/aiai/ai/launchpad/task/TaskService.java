@@ -188,7 +188,7 @@ public class TaskService {
 
     private boolean currentLevelIsntFinished(List<Task> tasks, int completedOrder) {
         for (Task task : tasks) {
-            if (task.getOrder()==completedOrder && !task.isCompleted) {
+            if (task.getOrder()==completedOrder && !task.resultReceived) {
                 return true;
             }
         }
