@@ -102,13 +102,14 @@ public class ServerController {
     }
 
     @SuppressWarnings("unused")
-    @PostMapping("/rest-anon/{uuid}/payload/resource/{type}/{stationId}/{code}")
+    @PostMapping("/rest-anon/payload/resource/{type}/{random-part}")
     public HttpEntity<AbstractResource> deliverResourceAnon(
             HttpServletResponse response,
-            @PathVariable("uuid") String uuid,
             @PathVariable("type") String typeAsStr,
-            @PathVariable("stationId") String stationId,
-            @PathVariable("code") String code) throws IOException {
+            @PathVariable("random-part") String randomPart,
+            String stationId,
+            Long taskId,
+            String code) throws IOException {
         log.debug("deliverResourceAnon(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
         if (globals.isSecureLaunchpadRestUrl) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -118,24 +119,27 @@ public class ServerController {
     }
 
     @SuppressWarnings("unused")
-    @PostMapping("/rest-auth/{uuid}/payload/resource/{type}/{stationId}/{code}")
+    @PostMapping("/rest-auth/payload/resource/{type}/{random-part}")
     public HttpEntity<AbstractResource> deliverResourceAuth(
             HttpServletResponse response,
-            @PathVariable("uuid") String uuid,
-            @PathVariable("stationId") String stationId,
             @PathVariable("type") String typeAsStr,
-            @PathVariable("code") String code) throws IOException {
+            @PathVariable("random-part") String randomPart,
+            String stationId,
+            Long taskId,
+            String code) throws IOException {
         log.debug("deliverResourceAuth(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
         return deliverResourceToStation(response, typeAsStr, code);
     }
 
     @SuppressWarnings("unused")
-    @PostMapping("/rest-anon/{uuid}/upload/{stationId}/{taskId}")
+    @PostMapping("/rest-anon/upload/{random-part}")
     public UploadResult uploadResourceAnon(
-            MultipartFile file, HttpServletResponse response,
-            @PathVariable("uuid") String uuid,
-            @PathVariable("stationId") String stationId,
-            @PathVariable("taskId") Long taskId) throws IOException {
+            HttpServletResponse response,
+            MultipartFile file,
+            String stationId,
+            Long taskId,
+            @PathVariable("random-part") String randomPart
+    ) throws IOException {
         log.debug("uploadResourceAnon(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
         if (globals.isSecureLaunchpadRestUrl) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -145,12 +149,13 @@ public class ServerController {
     }
 
     @SuppressWarnings("unused")
-    @PostMapping("/rest-auth/{uuid}/upload/{stationId}/{taskId}")
+    @PostMapping("/rest-auth/upload/{random-part}")
     public UploadResult uploadResourceAuth(
             MultipartFile file,
-            @PathVariable("uuid") String uuid,
-            @PathVariable("stationId") String stationId,
-            @PathVariable("taskId") Long taskId) {
+            String stationId,
+            Long taskId,
+            @PathVariable("random-part") String randomPart
+    ) {
         log.debug("uploadResourceAuth(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
         return uploadResource(file, taskId);
     }

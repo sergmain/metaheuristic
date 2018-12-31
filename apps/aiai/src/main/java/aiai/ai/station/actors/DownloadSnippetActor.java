@@ -18,6 +18,7 @@
 package aiai.ai.station.actors;
 
 import aiai.ai.Consts;
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.station.AssetFile;
 import aiai.ai.station.MetadataService;
@@ -32,6 +33,7 @@ import aiai.ai.yaml.metadata.Metadata;
 import aiai.apps.commons.utils.Checksum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.springframework.context.annotation.Profile;
@@ -42,6 +44,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -94,9 +97,22 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
             final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
             final String payloadRestUrl = restUrl + '/' + UUID.randomUUID() + Consts.PAYLOAD_REST_URL;
-
             final String targetUrl = payloadRestUrl + "/resource/snippet";
             final String snippetChecksumUrl = payloadRestUrl + "/snippet-checksum";
+
+/*
+            final String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource/" + Enums.BinaryDataType.DATA;
+            final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0,8) + '-' + task.stationId+ '-' + task.taskId+ URLEncoder.encode(task.getId(), StandardCharsets.UTF_8.toString());
+
+            final Request request = Request.Post(uri)
+                    .bodyForm(Form.form()
+                            .add("stationId", task.stationId)
+                            .add("taskId", Long.toString(task.getTaskId()))
+                            .add("code", task.getId())
+                            .build(), StandardCharsets.UTF_8)
+                    .connectTimeout(20000)
+                    .socketTimeout(20000);
+*/
 
             Checksum checksum=null;
             if (task.launchpad.isAcceptOnlySignedSnippets) {

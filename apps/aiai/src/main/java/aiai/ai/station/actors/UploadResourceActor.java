@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpResponseException;
+import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
@@ -111,13 +112,17 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 }
 
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
-                final String uploadRestUrl  = restUrl + '/' + UUID.randomUUID() + Consts.UPLOAD_REST_URL;
+//                final String uploadRestUrl  = restUrl + '/' + UUID.randomUUID() + Consts.UPLOAD_REST_URL;
+//                final String uri = uploadRestUrl + '/' + task.stationId+ '/' + task.taskId;
+                final String uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
+                final String uri = uploadRestUrl + '/' + UUID.randomUUID().toString().substring(0,8) + '-' + task.stationId+ '-' + task.taskId;
 
-                final String uri = uploadRestUrl + '/' + task.stationId+ '/' + task.taskId;
                 HttpEntity entity = MultipartEntityBuilder.create()
-                        .setMode(HttpMultipartMode.BROWSER_COMPATIBLE)
+                        .setMode(HttpMultipartMode.RFC6532)
                         .setCharset(StandardCharsets.UTF_8)
-                        .addBinaryBody("file", task.file, ContentType.DEFAULT_BINARY, task.file.getName())
+                        .addTextBody("stationId", task.stationId)
+                        .addTextBody("taskId", Long.toString(task.taskId))
+                        .addBinaryBody("file", task.file, ContentType.APPLICATION_OCTET_STREAM, task.file.getName())
                         .build();
 
                 Request request = Request.Post(uri)
