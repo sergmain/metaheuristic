@@ -103,8 +103,8 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             if (task.launchpad.isAcceptOnlySignedSnippets) {
                 try {
                     Request request = Request.Get(snippetChecksumUrl + '/' + task.stationId+ '/' + snippetCode)
-                            .connectTimeout(5000)
-                            .socketTimeout(5000);
+                            .connectTimeout(20000)
+                            .socketTimeout(20000);
 
                     RestUtils.addHeaders(request);
 

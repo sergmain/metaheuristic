@@ -141,7 +141,7 @@ public class CommandProcessor {
             return Protocol.NOP_ARRAY;
         }
         final Protocol.ReportResultDelivering cmd1 = new Protocol.ReportResultDelivering(
-                launchpadService.getTaskService().storeAllResults(command.getResults())
+                launchpadService.getTaskService().storeAllConsoleResults(command.getResults())
         );
         // we can't return immediately task because we have to receive some params from station,
         // like: does snippet have to be signed or not

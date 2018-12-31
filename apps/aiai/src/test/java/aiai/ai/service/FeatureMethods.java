@@ -229,7 +229,7 @@ public abstract class FeatureMethods extends PreparingFlow {
             results.add(sser);
         }
 
-        taskService.storeAllResults(results);
+        taskService.storeAllConsoleResults(results);
     }
 
     protected void finishCurrentWithOk(int expectedSeqs) {
@@ -248,7 +248,7 @@ public abstract class FeatureMethods extends PreparingFlow {
             results.add(sser);
         }
 
-        taskService.storeAllResults(results);
+        taskService.storeAllConsoleResults(results);
     }
 
 

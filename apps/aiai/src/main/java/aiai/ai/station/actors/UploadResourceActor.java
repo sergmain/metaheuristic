@@ -103,10 +103,6 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 log.info("#311.73 resource was already uploaded, {}, #{}", task.launchpad.url, task.taskId);
                 continue;
             }
-            if (stationTask.delivered) {
-                log.info("#311.75 resource was delivered, {}, #{}", task.launchpad.url, task.taskId);
-                continue;
-            }
             Enums.UploadResourceStatus status = null;
             try {
                 log.info("Start uploading result data to server, resultDataFile: {}", task.file);
@@ -125,8 +121,8 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                         .build();
 
                 Request request = Request.Post(uri)
-                        .connectTimeout(5000)
-                        .socketTimeout(5000)
+                        .connectTimeout(20000)
+                        .socketTimeout(20000)
                         .body(entity);
 
                 Response response;

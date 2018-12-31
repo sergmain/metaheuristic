@@ -89,8 +89,8 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
                 Request request = Request.Post(payloadRestUrl + '/' + task.stationId+ '/' + task.getId())
                         .addHeader("X-Custom-header", "stuff")
-                        .connectTimeout(10000)
-                        .socketTimeout(10000);
+                        .connectTimeout(20000)
+                        .socketTimeout(20000);
 
                 RestUtils.addHeaders(request);
 

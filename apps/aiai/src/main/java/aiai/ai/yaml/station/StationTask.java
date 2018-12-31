@@ -28,28 +28,40 @@ public class StationTask {
 
     public long flowInstanceId;
 
+    // when task was created
     public long createdOn;
 
+    // when task was launched
     public Long launchedOn;
 
+    // when execution of snippet finished
     public Long finishedOn;
 
+    // when status and console output were reported to launchpad
     public Long reportedOn;
 
+    // params of this task
     public String params;
 
+    // metrics of this task
     public String metrics;
 
+    // was this task reported to launchpad?
     public boolean reported;
 
+    // were status and console result received by launchpad?
     public boolean delivered;
 
+    // was resource(output resource as the result of execution of snippet) uploaded to launchpad?
     public boolean resourceUploaded;
 
+    // were all assets (data resources and snippet) prepared?
     public boolean assetsPrepared;
 
+    // snippet exec result
     public String snippetExecResult;
 
+    // need to clean dir of task after processing this task?
     public boolean clean;
 
     public String launchpadUrl;

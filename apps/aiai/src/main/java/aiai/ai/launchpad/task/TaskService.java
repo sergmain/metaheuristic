@@ -88,7 +88,7 @@ public class TaskService {
         this.snippetRepository = snippetRepository;
     }
 
-    public List<Long> storeAllResults(List<SimpleTaskExecResult> results) {
+    public List<Long> storeAllConsoleResults(List<SimpleTaskExecResult> results) {
         List<Long> ids = new ArrayList<>();
         for (SimpleTaskExecResult result : results) {
             ids.add(result.taskId);
