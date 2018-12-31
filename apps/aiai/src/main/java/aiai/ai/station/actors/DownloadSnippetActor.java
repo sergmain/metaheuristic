@@ -98,7 +98,6 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             final String targetUrl = payloadRestUrl + "/resource/snippet";
             final String snippetChecksumUrl = payloadRestUrl + "/snippet-checksum";
 
-
             Checksum checksum=null;
             if (task.launchpad.isAcceptOnlySignedSnippets) {
                 try {
