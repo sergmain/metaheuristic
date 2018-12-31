@@ -192,7 +192,7 @@ public class StationTaskService {
             log.info("markAsFinished({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("StationRestTask wasn't found for Id " + taskId);
+                log.error("StationTask wasn't found for Id " + taskId);
             } else {
                 task.setFinishedOn(System.currentTimeMillis());
                 task.setDelivered(false);

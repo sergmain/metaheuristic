@@ -63,4 +63,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
             "from BinaryData b")
     Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);
 
+    @Query(value="select b.code from BinaryData b")
+    List<String> dumpAllCodes();
+
 }

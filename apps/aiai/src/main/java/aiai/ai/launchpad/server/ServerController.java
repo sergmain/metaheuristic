@@ -224,7 +224,7 @@ public class ServerController {
         try {
             binaryDataService.storeToFile(code, assetFile.file);
         } catch (BinaryDataNotFoundException e) {
-            log.error("Error store file to db, code " + code, e);
+            log.error("Error store data to file, code " + code+", file: " + assetFile.file.getPath(), e);
             return returnEmptyAsGone(response);
         }
         return new HttpEntity<>(new FileSystemResource(assetFile.file.toPath()), getHeader(assetFile.file.length()));

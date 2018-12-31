@@ -103,6 +103,10 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 log.info("#311.73 resource was already uploaded, {}, #{}", task.launchpad.url, task.taskId);
                 continue;
             }
+            if (stationTask.delivered) {
+                log.info("#311.75 resource was delivered, {}, #{}", task.launchpad.url, task.taskId);
+                continue;
+            }
             Enums.UploadResourceStatus status = null;
             try {
                 log.info("Start uploading result data to server, resultDataFile: {}", task.file);

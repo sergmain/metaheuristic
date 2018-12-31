@@ -69,7 +69,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
         while ((task = poll()) != null) {
             StationTask stationTask = stationTaskService.findById(task.launchpad.url, task.taskId);
             if (stationTask!=null && stationTask.finishedOn!=null) {
-                log.info("Task #{} was already finished", task.taskId);
+                log.info("Task #{} was already finished, skip it", task.taskId);
                 continue;
             }
             AssetFile assetFile = ResourceUtils.prepareDataFile(task.targetDir, task.id, null);
