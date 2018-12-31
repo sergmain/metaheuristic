@@ -18,11 +18,13 @@
 package aiai.ai.station.actors;
 
 import aiai.ai.Consts;
+import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.server.UploadResult;
 import aiai.ai.station.StationTaskService;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.UploadResourceTask;
+import aiai.ai.yaml.station.StationTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
@@ -42,6 +44,7 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -76,7 +79,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             UploadResult result = mapper.readValue(json, UploadResult.class);
             return result;
         } catch (IOException e) {
-            throw new RuntimeException("error", e);
+            throw new RuntimeException("#311.77 error", e);
         }
     }
 
@@ -91,16 +94,24 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
         UploadResourceTask task;
         List<UploadResourceTask> repeat = new ArrayList<>();
         while((task = poll())!=null) {
-            boolean isOk = false;
-//            try (InputStream is = new FileInputStream(task.file)) {
+            StationTask stationTask = stationTaskService.findById(task.launchpad.url, task.taskId);
+            if (stationTask == null) {
+                log.info("#311.71 task was already cleaned or didn't exist, {}, #{}", task.launchpad.url, task.taskId);
+                continue;
+            }
+            if (stationTask.resourceUploaded) {
+                log.info("#311.73 resource was already uploaded, {}, #{}", task.launchpad.url, task.taskId);
+                continue;
+            }
+            Enums.UploadResourceStatus status = null;
             try {
                 log.info("Start uploading result data to server, resultDataFile: {}", task.file);
                 if (!task.file.exists()) {
-                    log.error("File {} doesn't exist", task.file.getPath());
+                    log.error("#311.67 File {} doesn't exist", task.file.getPath());
                 }
 
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
-                final String uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
+                final String uploadRestUrl  = restUrl + '/' + UUID.randomUUID() + Consts.UPLOAD_REST_URL;
 
                 final String uri = uploadRestUrl + '/' + task.stationId+ '/' + task.taskId;
                 HttpEntity entity = MultipartEntityBuilder.create()
@@ -124,30 +135,47 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 String json = response.returnContent().asString();
 
                 UploadResult result = fromJson(json);
-                log.info("file {} was successfully uploaded", task.file.getPath());
-                if (!result.isOk) {
-                    log.error("Error uploading file, server error: " + result.error);
+                if (result.status!= Enums.UploadResourceStatus.OK) {
+                    log.error("#311.51 Error uploading file, server's error : " + result.error);
                 }
-                isOk = result.isOk;
+                status = result.status;
             } catch (HttpResponseException e) {
-                log.error("Error uploading code", e);
+                log.error("#311.55 Error uploading code", e);
             } catch (SocketTimeoutException e) {
-                log.error("SocketTimeoutException, {}", e.toString());
+                log.error("#311.58 SocketTimeoutException, {}", e.toString());
             }
             catch (IOException e) {
-                log.error("IOException", e);
+                log.error("#311.61 IOException", e);
             }
             catch (Throwable th) {
-                log.error("Throwable", th);
+                log.error("#311.64 Throwable", th);
             }
-            if (!isOk) {
-                log.error("'\tTask assigned one more time.");
-                repeat.add(task);
+            log.info("");
+            if (status!=null) {
+                switch(status) {
+                    case OK:
+                        log.info("Task was successfully uploaded to server, {}, {} ", task.launchpad.url, task.taskId);
+                        stationTaskService.setResourceUploaded(task.launchpad.url, task.taskId);
+                        break;
+                    case FILENAME_IS_BLANK:
+                    case TASK_WAS_RESET:
+                    case TASK_NOT_FOUND:
+                        log.error("#311.01 server return status {}", status);
+                        break;
+                    case PROBLEM_WITH_OPTIMISTIC_LOCKING:
+                        log.warn("#311.05 problem with optimistic locking at server side, {}", status);
+                        repeat.add(task);
+                        break;
+                    case GENERAL_ERROR:
+                        log.warn("#311.07 general error at server side, {}", status);
+                        repeat.add(task);
+                        break;
+                }
             }
             else {
-                stationTaskService.setResourceUploaded(task.launchpad.url, task.taskId);
+                log.error("#311.09 Error accessing rest-server. Assign task one more time.");
+                repeat.add(task);
             }
-
         }
         for (UploadResourceTask uploadResourceTask : repeat) {
             add(uploadResourceTask);

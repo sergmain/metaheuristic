@@ -100,7 +100,8 @@ public class MultiHttpSecurityConfig {
                     .and()
                     .antMatcher("/rest-anon/**").authorizeRequests().anyRequest().anonymous()
                     .and()
-                    .csrf().disable();
+                    .csrf().disable()
+                    .headers().cacheControl();
 
             if (globals.isSslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();

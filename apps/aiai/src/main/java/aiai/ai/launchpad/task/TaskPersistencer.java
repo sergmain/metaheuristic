@@ -31,41 +31,41 @@ public class TaskPersistencer {
                 try {
                     Task task = taskRepository.findById(taskId).orElse(null);
                     if (task == null) {
-                        log.warn("Task with taskId {} wasn't found", taskParams, taskId);
+                        log.warn("#307.01 Task with taskId {} wasn't found", taskParams, taskId);
                         return null;
                     }
                     task.setParams(taskParams);
                     taskRepository.save(task);
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
+                    log.error("#307.07 Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
                 }
             }
         }
         return null;
     }
 
-    public Task setResultReceived(long taskId, boolean value) {
+    public Enums.UploadResourceStatus setResultReceived(long taskId, boolean value) {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
                     Task task = taskRepository.findById(taskId).orElse(null);
                     if (task == null) {
-                        return null;
+                        return Enums.UploadResourceStatus.TASK_NOT_FOUND;
                     }
                     if (task.execState == Enums.TaskExecState.NONE.value) {
-                        log.warn("Task {} was reset, can't set new value to field resultReceived", taskId);
-                        return null;
+                        log.warn("#307.12 Task {} was reset, can't set new value to field resultReceived", taskId);
+                        return Enums.UploadResourceStatus.TASK_WAS_RESET;
                     }
                     task.setResultReceived(value);
                     taskRepository.save(task);
-                    return task;
+                    return Enums.UploadResourceStatus.OK;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("Error set resultReceived to {}, taskId: {}, error: {}", value, taskId, e.toString());
+                    log.error("#307.18 Error set resultReceived to {}, taskId: {}, error: {}", value, taskId, e.toString());
                 }
             }
         }
-        return null;
+        return Enums.UploadResourceStatus.PROBLEM_WITH_OPTIMISTIC_LOCKING;
     }
 
     public Task assignTask(Task task, long stationId) {
@@ -79,7 +79,7 @@ public class TaskPersistencer {
 
                     taskRepository.save(task);
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("Error assign task {}, taskId: {}, error: {}", task.toString(), e.toString());
+                    log.error("#307.21 Error assign task {}, taskId: {}, error: {}", task.toString(), e.toString());
                 }
             }
         }
@@ -106,7 +106,7 @@ public class TaskPersistencer {
                     taskRepository.save(task);
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("Error while reseting task, taskId: {}, error: {}",  taskId, e.toString());
+                    log.error("#307.25 Error while reseting task, taskId: {}, error: {}",  taskId, e.toString());
                 }
             }
         }
@@ -124,7 +124,7 @@ public class TaskPersistencer {
                     }
                     return t;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
+                    log.error("#307.29 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
                 }
             }
         }
@@ -134,7 +134,7 @@ public class TaskPersistencer {
     private Task prepareTask(SimpleTaskExecResult result, Enums.TaskExecState state) {
         Task task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
-            log.warn("Can't find Task for Id: {}", result.taskId);
+            log.warn("#307.33 Can't find Task for Id: {}", result.taskId);
             return null;
         }
         task.setExecState(state.value);

@@ -177,8 +177,13 @@ public class ExperimentsController {
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task!=null) {
             SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
-            final ExecProcessService.Result execResult = snippetExec.getExec();
-            result.items.add( new ConsoleResult.SimpleConsoleOutput(execResult.exitCode, execResult.isOk, execResult.console));
+            if (snippetExec!=null) {
+                final ExecProcessService.Result execResult = snippetExec.getExec();
+                result.items.add(new ConsoleResult.SimpleConsoleOutput(execResult.exitCode, execResult.isOk, execResult.console));
+            }
+            else {
+
+            }
         }
         model.addAttribute("consoleResult", result);
 

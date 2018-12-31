@@ -25,6 +25,7 @@ import aiai.ai.utils.ResourceUtils;
 import aiai.ai.station.StationTaskService;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.DownloadSnippetTask;
+import aiai.ai.utils.RestUtils;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import aiai.ai.yaml.metadata.Metadata;
@@ -44,6 +45,7 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -91,7 +93,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             }
 
             final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
-            final String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL;
+            final String payloadRestUrl = restUrl + '/' + UUID.randomUUID() + Consts.PAYLOAD_REST_URL;
 
             final String targetUrl = payloadRestUrl + "/resource/snippet";
             final String snippetChecksumUrl = payloadRestUrl + "/snippet-checksum";
@@ -103,6 +105,8 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     Request request = Request.Get(snippetChecksumUrl + '/' + task.stationId+ '/' + snippetCode)
                             .connectTimeout(5000)
                             .socketTimeout(5000);
+
+                    RestUtils.addHeaders(request);
 
                     Response response;
                     if (task.launchpad.isSecureRestUrl) {

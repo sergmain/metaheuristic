@@ -24,6 +24,7 @@ import aiai.ai.utils.ResourceUtils;
 import aiai.ai.station.StationTaskService;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.DownloadResourceTask;
+import aiai.ai.utils.RestUtils;
 import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
@@ -37,6 +38,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.UUID;
 
 @Service
 @Slf4j
@@ -83,11 +85,14 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             log.info("Start processing the download task {}", task);
             try {
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
-                String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource/DATA";
+                String payloadRestUrl = restUrl + '/' + UUID.randomUUID() + Consts.PAYLOAD_REST_URL + "/resource/DATA";
 
                 Request request = Request.Post(payloadRestUrl + '/' + task.stationId+ '/' + task.getId())
+                        .addHeader("X-Custom-header", "stuff")
                         .connectTimeout(10000)
                         .socketTimeout(10000);
+
+                RestUtils.addHeaders(request);
 
                 Response response;
                 if (task.launchpad.isSecureRestUrl) {

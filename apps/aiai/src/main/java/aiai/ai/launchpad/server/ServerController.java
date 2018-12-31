@@ -35,6 +35,7 @@ import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
@@ -58,7 +59,7 @@ import java.io.*;
 @Profile("launchpad")
 public class ServerController {
 
-    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(true, null);
+    private static final UploadResult OK_UPLOAD_RESULT = new UploadResult(Enums.UploadResourceStatus.OK, null);
 
     private final Globals globals;
     private final ServerService serverService;
@@ -100,8 +101,14 @@ public class ServerController {
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
-    @PostMapping("/rest-anon/payload/resource/{type}/{stationId}/{code}")
-    public HttpEntity<AbstractResource> deliverResourceAnon(HttpServletResponse response, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
+    @SuppressWarnings("unused")
+    @PostMapping("/rest-anon/{uuid}/payload/resource/{type}/{stationId}/{code}")
+    public HttpEntity<AbstractResource> deliverResourceAnon(
+            HttpServletResponse response,
+            @PathVariable("uuid") String uuid,
+            @PathVariable("type") String typeAsStr,
+            @PathVariable("stationId") String stationId,
+            @PathVariable("code") String code) throws IOException {
         log.debug("deliverResourceAnon(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
         if (globals.isSecureLaunchpadRestUrl) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -110,17 +117,23 @@ public class ServerController {
         return deliverResourceToStation(response, typeAsStr, code);
     }
 
-    @PostMapping("/rest-auth/payload/resource/{type}/{stationId}/{code}")
+    @SuppressWarnings("unused")
+    @PostMapping("/rest-auth/{uuid}/payload/resource/{type}/{stationId}/{code}")
     public HttpEntity<AbstractResource> deliverResourceAuth(
             HttpServletResponse response,
-            @PathVariable("stationId") String stationId, @PathVariable("type") String typeAsStr, @PathVariable("code") String code) throws IOException {
+            @PathVariable("uuid") String uuid,
+            @PathVariable("stationId") String stationId,
+            @PathVariable("type") String typeAsStr,
+            @PathVariable("code") String code) throws IOException {
         log.debug("deliverResourceAuth(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
         return deliverResourceToStation(response, typeAsStr, code);
     }
 
-    @PostMapping("/rest-anon/upload/{stationId}/{taskId}")
+    @SuppressWarnings("unused")
+    @PostMapping("/rest-anon/{uuid}/upload/{stationId}/{taskId}")
     public UploadResult uploadResourceAnon(
             MultipartFile file, HttpServletResponse response,
+            @PathVariable("uuid") String uuid,
             @PathVariable("stationId") String stationId,
             @PathVariable("taskId") Long taskId) throws IOException {
         log.debug("uploadResourceAnon(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
@@ -131,9 +144,11 @@ public class ServerController {
         return uploadResource(file, taskId);
     }
 
-    @PostMapping("/rest-auth/upload/{stationId}/{taskId}")
+    @SuppressWarnings("unused")
+    @PostMapping("/rest-auth/{uuid}/upload/{stationId}/{taskId}")
     public UploadResult uploadResourceAuth(
             MultipartFile file,
+            @PathVariable("uuid") String uuid,
             @PathVariable("stationId") String stationId,
             @PathVariable("taskId") Long taskId) {
         log.debug("uploadResourceAuth(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
@@ -142,15 +157,15 @@ public class ServerController {
 
     private UploadResult uploadResource(MultipartFile file, Long taskId) {
         String originFilename = file.getOriginalFilename();
-        if (originFilename == null) {
-            return new UploadResult(false, "#442.01 name of uploaded file is null");
+        if (StringUtils.isBlank(originFilename)) {
+            return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#442.01 name of uploaded file is blank");
         }
         if (taskId==null) {
-            return new UploadResult(false,"#442.87 taskId is null" );
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#442.87 taskId is null" );
         }
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            return new UploadResult(false,"#442.83 taskId is null" );
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#442.83 taskId is null" );
         }
 
         final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
@@ -159,7 +174,7 @@ public class ServerController {
             File tempDir = DirUtils.createTempDir("upload-resource-");
             if (tempDir==null || tempDir.isFile()) {
                 final String location = System.getProperty("java.io.tmpdir");
-                return new UploadResult(false, "#442.04 can't create temporary directory in " + location);
+                return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, "#442.04 can't create temporary directory in " + location);
             }
             final File resFile = new File(tempDir, "resource.");
             log.debug("Start storing an uploaded resource data to disk, target file: {}", resFile.getPath());
@@ -178,10 +193,12 @@ public class ServerController {
         }
         catch (Throwable th) {
             log.error("Error", th);
-            return new UploadResult(false, "#442.05 can't upload result, Error: " + th.toString());
+            return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, "#442.05 can't upload result, Error: " + th.toString());
         }
-        Task result = taskPersistencer.setResultReceived(task.getId(), true);
-        return result!=null ? OK_UPLOAD_RESULT : new UploadResult(false, "#442.08 can't update resultReceived field for task #"+task.getId()+". See log for info.");
+        Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(task.getId(), true);
+        return status== Enums.UploadResourceStatus.OK
+                ? OK_UPLOAD_RESULT
+                : new UploadResult(status, "#442.08 can't update resultReceived field for task #"+task.getId()+"");
     }
 
     private HttpEntity<AbstractResource> deliverResourceToStation(HttpServletResponse response, String typeAsStr, String code) throws IOException {

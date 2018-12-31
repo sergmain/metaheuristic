@@ -1,5 +1,6 @@
 package aiai.ai.launchpad.server;
 
+import aiai.ai.Enums;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -8,6 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UploadResult {
-    public boolean isOk;
+    public Enums.UploadResourceStatus status;
     public String error;
 }

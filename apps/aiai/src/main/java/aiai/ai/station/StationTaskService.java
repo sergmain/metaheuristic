@@ -90,7 +90,7 @@ public class StationTaskService {
                                 String launchpadDirName = launchpadDir.getName();
                                 String name = s.toFile().getName();
                                 long taskId = Long.parseLong(launchpadDirName) * DigitUtils.DIV + Long.parseLong(name);
-                                log.info("Found new task with id: {}, {}, {}", taskId, launchpadDirName, name);
+                                log.info("Found dir of task with id: {}, {}, {}", taskId, launchpadDirName, name);
                                 File taskYamlFile = new File(s.toFile(), Consts.TASK_YAML);
                                 if (taskYamlFile.exists()) {
                                     try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
@@ -100,6 +100,17 @@ public class StationTaskService {
                                     catch (IOException e) {
                                         log.error("Error #4", e);
                                         throw new RuntimeException("Error #4", e);
+                                    }
+                                }
+                                else {
+                                    String path = s.toFile().getPath();
+                                    log.info("Delete not valid dir of task {}", path);
+                                    try {
+                                        FileUtils.deleteDirectory(s.toFile());
+                                        // IDK is that bug or side-effect. so delete one more time
+                                        FileUtils.deleteDirectory(s.toFile());
+                                    } catch (IOException e) {
+                                        log.warn("Error while deleting dir " + path, e);
                                     }
                                 }
                             });
@@ -341,7 +352,7 @@ public class StationTaskService {
             throw new IllegalStateException("launchpadUrl is null");
         }
         synchronized (StationSyncHolder.stationGlobalSync) {
-            log.info("Assign task #{}, params{}", taskId, params );
+            log.info("Assign task #{}, params:\n{}", taskId, params );
             Map<Long, StationTask> mapForLaunchpadUrl = getMapForLaunchpadUrl(launchpadUrl);
             StationTask task = mapForLaunchpadUrl.computeIfAbsent(taskId, k -> new StationTask());
 

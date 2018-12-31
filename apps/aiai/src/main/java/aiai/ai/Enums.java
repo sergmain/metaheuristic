@@ -19,6 +19,15 @@ package aiai.ai;
 
 public final class Enums {
 
+    public enum UploadResourceStatus {
+        OK,
+        FILENAME_IS_BLANK,
+        TASK_WAS_RESET,
+        TASK_NOT_FOUND,
+        PROBLEM_WITH_OPTIMISTIC_LOCKING,
+        GENERAL_ERROR
+    }
+
     public enum Monitor { MEMORY }
 
     public enum ResendTaskOutputResourceStatus {
