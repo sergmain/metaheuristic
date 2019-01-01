@@ -29,9 +29,13 @@ public class FileProcessValidator implements ProcessValidator {
         }
         for (String snippetCode : process.snippetCodes) {
             SnippetVersion sv = SnippetVersion.from(snippetCode);
+            if (sv==null) {
+                log.error("#175.01 Wrong format of snippet code: {}, process: {}", snippetCode, process);
+                return Enums.FlowValidateStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
+            }
             Snippet snippet = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
             if (snippet==null) {
-                log.warn("Snippet wasn't found for code: {}, process: {}", snippetCode, process);
+                log.error("#175.07 Snippet wasn't found for code: {}, process: {}", snippetCode, process);
                 return Enums.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }

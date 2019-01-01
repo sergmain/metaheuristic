@@ -197,7 +197,7 @@ public class ServerController {
             }
         }
         catch (Throwable th) {
-            log.error("Error", th);
+            log.error("#442.01 Error", th);
             return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, "#442.05 can't upload result, Error: " + th.toString());
         }
         Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(task.getId(), true);
@@ -223,13 +223,13 @@ public class ServerController {
         }
 
         if (assetFile==null) {
-            log.warn("resource with code {} wasn't found", code);
+            log.error("#442.12 resource with code {} wasn't found", code);
             return returnEmptyAsGone(response);
         }
         try {
             binaryDataService.storeToFile(code, assetFile.file);
         } catch (BinaryDataNotFoundException e) {
-            log.error("Error store data to file, code " + code+", file: " + assetFile.file.getPath(), e);
+            log.error("#442.16 Error store data to file, code " + code+", file: " + assetFile.file.getPath(), e);
             return returnEmptyAsGone(response);
         }
         return new HttpEntity<>(new FileSystemResource(assetFile.file.toPath()), getHeader(assetFile.file.length()));
@@ -240,55 +240,50 @@ public class ServerController {
         return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
     }
 
-    private HttpEntity<AbstractResource> returnEmptyAsConflict(HttpServletResponse response) throws IOException {
-        response.sendError(HttpServletResponse.SC_CONFLICT);
-        return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
+    @SuppressWarnings("unused")
+    @PostMapping("/rest-anon/payload/snippet-checksum/{random-part}")
+    public String snippetChecksumAnon(
+            HttpServletResponse response,
+            String stationId,
+            Long taskId,
+            String snippetCode,
+            @PathVariable("random-part") String randomPart
+    ) throws IOException {
+        log.debug("snippetChecksumAnon(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
+        if (globals.isSecureLaunchpadRestUrl) {
+            response.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return null;
+        }
+        return getSnippetChecksum(response, snippetCode);
     }
 
-    @GetMapping("/rest-auth/payload/snippet-checksum/{stationId}/{name}")
-    public HttpEntity<String> snippetChecksum(
+    @SuppressWarnings("unused")
+    @PostMapping("/rest-auth/payload/snippet-checksum/{random-part}")
+    public String snippetChecksumAuth(
             HttpServletResponse response,
-            @PathVariable("stationId") String stationId,
-            @PathVariable("name") String snippetCode) throws IOException {
+            String stationId,
+            String taskId,
+            String snippetCode,
+            @PathVariable("random-part") String randomPart
+    ) throws IOException {
+        return getSnippetChecksum(response, snippetCode);
+    }
 
+    private String getSnippetChecksum(HttpServletResponse response, String snippetCode) throws IOException {
         SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
+        if (snippetVersion==null) {
+            log.warn("#442.19 wrong format of snippet code {}", snippetCode);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return null;
+        }
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
         if (snippet==null) {
-            log.warn("Snippet wasn't found for name {}", snippetCode);
-            return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);
+            log.warn("#442.23 Snippet wasn't found for code {}", snippetCode);
+            response.sendError(HttpServletResponse.SC_GONE);
+            return null;
         }
-/*
-        File snippetFile;
-        AssetFile assetFile = StationResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, Enums.BinaryDataType.SNIPPET, snippetCode);
-        if (assetFile==null) {
-            log.warn("Snippet wasn't found for name {}", snippetCode);
-            return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);
-        }
-        try {
-            binaryDataService.storeToFile(snippetCode, assetFile.file);
-        } catch (BinaryDataNotFoundException e) {
-            log.error("Error store data to file", e);
-            return returnEmptyStringWithStatus(response, HttpServletResponse.SC_GONE);
-        }
-
-        Checksum checksum = Checksum.fromJson(snippet.getChecksum());
-        try (InputStream is = new FileInputStream(assetFile.file)) {
-            CheckSumAndSignatureStatus status = checksumWithSignatureService.verifyChecksumAndSignature(
-                    checksum, snippetCode, is, false
-            );
-            if (!status.isOk) {
-                return returnEmptyStringWithStatus(response, HttpServletResponse.SC_CONFLICT);
-            }
-        }*/
-        final int length = snippet.getChecksum().length();
-        log.info("Send checksum for snippet {}, length: {}", snippet.getSnippetCode(), length);
-
-        return new HttpEntity<>(snippet.getChecksum(), getHeader(length) );
-    }
-
-    private HttpEntity<String> returnEmptyStringWithStatus(HttpServletResponse response, int status) throws IOException {
-        response.sendError(status);
-        return new HttpEntity<>("", getHeader(0));
+        log.info("Send checksum for snippet {}");
+        return snippet.getChecksum();
     }
 
     private static HttpHeaders getHeader(long length) {

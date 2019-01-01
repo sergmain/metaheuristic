@@ -116,7 +116,7 @@ public class TaskAssetPreparer {
                 AssetFile assetFile = ResourceUtils.prepareSnippetFile(snippetDir, taskParamYaml.snippet.code, taskParamYaml.snippet.filename);
                 if (assetFile.isError || !assetFile.isContent) {
                     isAllLoaded = false;
-                    DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, snippetDir);
+                    DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, snippetDir, task.getTaskId());
                     snippetTask.launchpad = launchpad.launchpadLookup;
                     snippetTask.stationId = launchpadCode.stationId;
                     downloadSnippetActor.add(snippetTask);

@@ -80,9 +80,13 @@ public class SnippetService {
         List<Snippet> snippets = new ArrayList<>();
         for (ExperimentSnippet experimentSnippet : experimentSnippets) {
             SnippetVersion version = SnippetVersion.from(experimentSnippet.getSnippetCode());
+            if (version==null) {
+                log.error("#295.01 wrong format of snippet code: {}", experimentSnippet.getSnippetCode());
+                continue;
+            }
             Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
             if (snippet==null) {
-                log.warn("Can't find snippet for code: {}", experimentSnippet.getSnippetCode());
+                log.error("#295.07 Can't find snippet for code: {}", experimentSnippet.getSnippetCode());
                 continue;
             }
             snippets.add(snippet);
@@ -181,7 +185,7 @@ public class SnippetService {
     private void loadSnippetsFromDir(File srcDir) throws IOException {
         File yamlConfigFile = new File(srcDir, "snippets.yaml");
         if (!yamlConfigFile.exists()) {
-            log.warn("File 'snippets.yaml' wasn't found in dir {}", srcDir.getAbsolutePath());
+            log.error("#295.11 File 'snippets.yaml' wasn't found in dir {}", srcDir.getAbsolutePath());
             return;
         }
 
@@ -217,7 +221,7 @@ public class SnippetService {
                         storeSnippet(snippetConfig, sum, file, length, snippet);
                     }
                     else {
-                        log.warn("Updating of snippets is prohibited, not a snapshot version '{}:{}'", snippet.name, snippet.snippetVersion);
+                        log.warn("#295.14 Updating of snippets is prohibited, not a snapshot version '{}:{}'", snippet.name, snippet.snippetVersion);
                     }
                 }
             }

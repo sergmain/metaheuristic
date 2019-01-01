@@ -52,18 +52,18 @@ public class TaskService {
             case TASK_PARAM_FILE_NOT_FOUND:
                 Task task = taskRepository.findById(taskId).orElse(null);
                 if (task==null) {
-                    log.warn("Task obsolete and was already deleted");
+                    log.warn("#317.01 Task obsolete and was already deleted");
                     return;
                 }
                 FlowInstance flowInstance = flowInstanceRepository.findById(task.flowInstanceId).orElse(null);
                 if (flowInstance==null) {
-                    log.warn("FlowInstance for this task was already deleted");
+                    log.warn("#317.04 FlowInstance for this task was already deleted");
                     return;
                 }
 
                 Task result = taskPersistencer.resetTask(task.getId());
                 if (result==null) {
-                    log.error("Reseting of task {} was failed. See log for more info.", task.getId());
+                    log.error("#317.07 Reset of task {} was failed. See log for more info.", task.getId());
                     break;
                 }
 
@@ -107,11 +107,11 @@ public class TaskService {
         else {
             FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
             if (flowInstance==null) {
-                log.warn("Flow instance wasn't found for id: {}", flowInstanceId);
+                log.warn("#317.11 Flow instance wasn't found for id: {}", flowInstanceId);
                 return EMPTY_RESULT;
             }
             if (flowInstance.execState!=Enums.FlowInstanceExecState.STARTED.code) {
-                log.warn("Flow instance wasn't started.Current exec state: {}", Enums.FlowInstanceExecState.toState(flowInstance.execState));
+                log.warn("#317.16 Flow instance wasn't started.Current exec state: {}", Enums.FlowInstanceExecState.toState(flowInstance.execState));
                 return EMPTY_RESULT;
             }
             flowInstances = Collections.singletonList(flowInstance);
@@ -130,7 +130,7 @@ public class TaskService {
 
         List<Task> tasks = taskRepository.findForAssigning(flowInstance.getId(), flowInstance.producingOrder);
         if (currentLevelIsntFinished(tasks, flowInstance.producingOrder)) {
-            log.warn("Not completed task was found, start decreasing completed order to {}", flowInstance.producingOrder-1 );
+            log.warn("#317.19 Not completed task was found, start decreasing completed order to {}", flowInstance.producingOrder-1 );
             tasks = taskRepository.findForCompletion(flowInstance.getId(), flowInstance.producingOrder);
             for (Task task : tasks) {
                 taskPersistencer.resetTask(task.getId());
@@ -150,9 +150,13 @@ public class TaskService {
                     final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
 
                     SnippetVersion version = SnippetVersion.from(taskParamYaml.snippet.getCode());
+                    if (version==null) {
+                        log.warn("#317.23 Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
+                        continue;
+                    }
                     Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
                     if (snippet==null) {
-                        log.warn("Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
+                        log.warn("#317.26 Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
                         continue;
                     }
 

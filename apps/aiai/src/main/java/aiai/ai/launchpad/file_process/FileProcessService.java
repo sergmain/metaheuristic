@@ -49,6 +49,11 @@ public class FileProcessService {
         if (process.parallelExec) {
             for (String snippetCode : process.snippetCodes) {
                 SnippetVersion sv = SnippetVersion.from(snippetCode);
+                if (sv==null) {
+                    result.status = Enums.FlowProducingStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
+                    result.numberOfTasks = 0;
+                    return result;
+                }
                 String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, process.order);
                 result.outputResourceCodes.add(outputResourceCode);
                 if (isPersist) {
@@ -59,6 +64,11 @@ public class FileProcessService {
         else {
             String snippetCode = process.snippetCodes.get(0);
             SnippetVersion sv = SnippetVersion.from(snippetCode);
+            if (sv==null) {
+                result.status = Enums.FlowProducingStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
+                result.numberOfTasks = 0;
+                return result;
+            }
             String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, process.order);
             result.outputResourceCodes.add(outputResourceCode);
             if (isPersist) {
@@ -75,11 +85,15 @@ public class FileProcessService {
             String outputResourceCode,
             String snippetCode, Map<String, List<String>> collectedInputs) {
         if (process.type!= Enums.ProcessType.FILE_PROCESSING) {
-            throw new IllegalStateException("Wrong type of process, " +
+            throw new IllegalStateException("#171.01 Wrong type of process, " +
                     "expected: "+ Enums.ProcessType.FILE_PROCESSING+", " +
                     "actual: " + process.type);
         }
         SnippetVersion sv = SnippetVersion.from(snippetCode);
+        if (sv==null) {
+            log.error("#171.05 Wrong format of snippet's code: {}", snippetCode);
+            return;
+        }
 
         TaskParamYaml yaml = new TaskParamYaml();
         yaml.setHyperParams( Collections.emptyMap() );
@@ -90,7 +104,7 @@ public class FileProcessService {
 
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
         if (snippet==null) {
-            log.warn("Snippet wasn't found for code: {}", snippetCode);
+            log.error("#171.07 Snippet wasn't found for code: {}", snippetCode);
             return;
         }
         yaml.snippet = new SimpleSnippet(

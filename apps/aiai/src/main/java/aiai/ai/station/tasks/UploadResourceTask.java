@@ -11,5 +11,5 @@ import java.io.File;
 @EqualsAndHashCode(of="taskId", callSuper = false)
 public class UploadResourceTask extends StationRestTask {
     public long taskId;
-    public File   file;
+    public File file;
 }

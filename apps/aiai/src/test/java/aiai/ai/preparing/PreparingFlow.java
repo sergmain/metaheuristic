@@ -113,8 +113,10 @@ public abstract class PreparingFlow extends PreparingExperiment {
 
     private Snippet createSnippet(String snippetCode) {
         SnippetVersion sv = SnippetVersion.from(snippetCode);
+        if (sv==null) {
+            throw new IllegalStateException("wrong format of snippet code " + snippetCode);
+        }
         Snippet s = new Snippet();
-
         Snippet sn = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
         if (sn!=null) {
             snippetCache.delete(sn);

@@ -32,4 +32,5 @@ public class DownloadSnippetTask extends StationRestTask {
     public String filename;
     public String checksum;
     public File targetDir;
+    public long taskId;
 }

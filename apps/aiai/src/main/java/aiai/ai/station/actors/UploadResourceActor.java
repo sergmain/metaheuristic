@@ -30,7 +30,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
@@ -39,7 +38,6 @@ import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
@@ -67,14 +65,16 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
         this.stationTaskService = stationTaskService;
     }
 
+/*
     @PostConstruct
     public void postConstruct() {
         if (globals.isStationEnabled) {
             //
         }
     }
+*/
 
-    public static UploadResult fromJson(String json) {
+    private static UploadResult fromJson(String json) {
         try {
             //noinspection UnnecessaryLocalVariable
             UploadResult result = mapper.readValue(json, UploadResult.class);
@@ -84,6 +84,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
         }
     }
 
+    @SuppressWarnings("Duplicates")
     public void fixedDelay() {
         if (globals.isUnitTesting) {
             return;
@@ -155,7 +156,6 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             catch (Throwable th) {
                 log.error("#311.64 Throwable", th);
             }
-            log.info("");
             if (status!=null) {
                 switch(status) {
                     case OK:

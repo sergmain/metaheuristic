@@ -96,61 +96,63 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             }
 
             final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
-            final String payloadRestUrl = restUrl + '/' + UUID.randomUUID() + Consts.PAYLOAD_REST_URL;
-            final String targetUrl = payloadRestUrl + "/resource/snippet";
+            final String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL;
+
+            final String targetUrl = payloadRestUrl + "/resource/" + Enums.BinaryDataType.SNIPPET;
             final String snippetChecksumUrl = payloadRestUrl + "/snippet-checksum";
 
-/*
-            final String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource/" + Enums.BinaryDataType.DATA;
-            final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0,8) + '-' + task.stationId+ '-' + task.taskId+ URLEncoder.encode(task.getId(), StandardCharsets.UTF_8.toString());
-
-            final Request request = Request.Post(uri)
-                    .bodyForm(Form.form()
-                            .add("stationId", task.stationId)
-                            .add("taskId", Long.toString(task.getTaskId()))
-                            .add("code", task.getId())
-                            .build(), StandardCharsets.UTF_8)
-                    .connectTimeout(20000)
-                    .socketTimeout(20000);
-*/
-
-            Checksum checksum=null;
-            if (task.launchpad.isAcceptOnlySignedSnippets) {
-                try {
-                    Request request = Request.Get(snippetChecksumUrl + '/' + task.stationId+ '/' + snippetCode)
-                            .connectTimeout(20000)
-                            .socketTimeout(20000);
-
-                    RestUtils.addHeaders(request);
-
-                    Response response;
-                    if (task.launchpad.isSecureRestUrl) {
-                        response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
-                    } else {
-                        response = request.execute();
-                    }
-                    String checksumStr = response.returnContent().asString(StandardCharsets.UTF_8);
-
-                    checksum = Checksum.fromJson(checksumStr);
-                } catch (HttpResponseException e) {
-                    logError(snippetCode, e);
-                    continue;
-                } catch (SocketTimeoutException e) {
-                    log.error("SocketTimeoutException: {}", e.toString());
-                    continue;
-                } catch (IOException e) {
-                    log.error("IOException", e);
-                    continue;
-                } catch (Throwable th) {
-                    log.error("Throwable", th);
-                    continue;
-                }
-            }
 
             try {
-                File snippetTempFile = new File(assetFile.file.getAbsolutePath()+".tmp");
-                //  @PostMapping("/rest-anon/payload/resource/{type}/{stationId}/{code}")
-                Request request = Request.Post(targetUrl + '/' + task.stationId+ '/' + snippetCode)
+                final String randomPartUri = '/' + UUID.randomUUID().toString().substring(0, 8) +
+                        '-' + task.stationId +
+                        '-' + task.getTaskId() +
+                        '-' + URLEncoder.encode(task.snippetCode, StandardCharsets.UTF_8.toString());
+
+                Checksum checksum=null;
+                if (task.launchpad.isAcceptOnlySignedSnippets) {
+                    try {
+
+                        final Request request = Request.Post(snippetChecksumUrl + randomPartUri)
+                                .bodyForm(Form.form()
+                                        .add("stationId", task.stationId)
+                                        .add("taskId", Long.toString(task.getTaskId()))
+                                        .add("code", task.snippetCode)
+                                        .build(), StandardCharsets.UTF_8)
+                                .connectTimeout(20000)
+                                .socketTimeout(20000);
+
+                        RestUtils.addHeaders(request);
+
+                        Response response;
+                        if (task.launchpad.isSecureRestUrl) {
+                            response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
+                        } else {
+                            response = request.execute();
+                        }
+                        String checksumStr = response.returnContent().asString(StandardCharsets.UTF_8);
+
+                        checksum = Checksum.fromJson(checksumStr);
+                    } catch (HttpResponseException e) {
+                        logError(snippetCode, e);
+                        continue;
+                    } catch (SocketTimeoutException e) {
+                        log.error("SocketTimeoutException: {}", e.toString());
+                        continue;
+                    } catch (IOException e) {
+                        log.error("IOException", e);
+                        continue;
+                    } catch (Throwable th) {
+                        log.error("Throwable", th);
+                        continue;
+                    }
+                }
+
+                Request request = Request.Post(targetUrl + randomPartUri)
+                        .bodyForm(Form.form()
+                                .add("stationId", task.stationId)
+                                .add("taskId", Long.toString(task.getTaskId()))
+                                .add("code", task.snippetCode)
+                                .build(), StandardCharsets.UTF_8)
                         .connectTimeout(5000)
                         .socketTimeout(5000);
 
@@ -161,6 +163,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 else {
                     response = request.execute();
                 }
+                File snippetTempFile = new File(assetFile.file.getAbsolutePath()+".tmp");
                 response.saveContent(snippetTempFile);
 
                 boolean isOk = true;

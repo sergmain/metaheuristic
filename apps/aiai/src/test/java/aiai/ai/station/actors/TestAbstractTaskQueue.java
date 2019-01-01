@@ -17,6 +17,7 @@ public class TestAbstractTaskQueue {
         SimpleClass actor = new SimpleClass();
 
         DownloadResourceTask task = new DownloadResourceTask("resource-id-01", 10, new File("aaa"));
+
         actor.add(task);
         assertEquals(1, actor.queueSize());
 

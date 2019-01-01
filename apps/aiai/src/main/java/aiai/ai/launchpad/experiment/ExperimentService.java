@@ -596,9 +596,13 @@ public class ExperimentService {
                             }
                             yaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
                         }
-                        final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
                         Snippet snippet = localCache.get(experimentSnippet.getSnippetCode());
                         if (snippet == null) {
+                            final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
+                            if (snippetVersion==null) {
+                                log.error("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
+                                continue;
+                            }
                             snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
                             if (snippet != null) {
                                 localCache.put(experimentSnippet.getSnippetCode(), snippet);
@@ -729,7 +733,7 @@ public class ExperimentService {
                     }
             );
         }
-        Experiment e = experimentRepository.findById(experimentId).orElse(null);
+        Experiment e = experimentCache.findById(experimentId);
         if (e==null) {
             throw new IllegalStateException("Experiment wasn't found for id " + experimentId);
         }
