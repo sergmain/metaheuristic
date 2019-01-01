@@ -129,6 +129,7 @@ public class TaskService {
     private TasksAndAssignToStationResult findUnassignedTaskAndAssign(FlowInstance flowInstance, long stationId, boolean isAcceptOnlySigned) {
 
         List<Task> tasks = taskRepository.findForAssigning(flowInstance.getId(), flowInstance.producingOrder);
+        log.debug("Tasks for assigning {}", tasks);
         if (currentLevelIsntFinished(tasks, flowInstance.producingOrder)) {
             log.warn("#317.19 Not completed task was found, start decreasing completed order to {}", flowInstance.producingOrder-1 );
             tasks = taskRepository.findForCompletion(flowInstance.getId(), flowInstance.producingOrder);

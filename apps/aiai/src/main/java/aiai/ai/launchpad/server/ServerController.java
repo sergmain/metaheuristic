@@ -97,7 +97,7 @@ public class ServerController {
 
     @PostMapping("/rest-auth/srv")
     public ExchangeData processRequestAuth(@RequestBody ExchangeData data, HttpServletRequest request) {
-        log.debug("processRequestAnon(), globals.isSecureRestUrl: {}, data: {}", globals.isSecureLaunchpadRestUrl, data);
+        log.debug("processRequestAuth(), globals.isSecureRestUrl: {}, data: {}", globals.isSecureLaunchpadRestUrl, data);
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
