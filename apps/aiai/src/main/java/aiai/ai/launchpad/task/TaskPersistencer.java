@@ -89,6 +89,7 @@ public class TaskPersistencer {
     }
 
     public Task resetTask(long taskId) {
+        log.info("Start resetting task #{}", taskId);
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {

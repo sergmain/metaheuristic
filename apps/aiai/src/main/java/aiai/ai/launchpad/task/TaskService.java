@@ -142,10 +142,10 @@ public class TaskService {
             }
             return EMPTY_RESULT;
         }
+
         Task resultTask = null;
         for (Task task : tasks) {
-//            if (!task.isCompleted) {
-            if (!task.isResultReceived()) {
+            if (task.stationId == null) {
                 if (isAcceptOnlySigned) {
                     final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
 
