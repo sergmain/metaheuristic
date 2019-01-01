@@ -34,7 +34,7 @@ public class CurrentExecState {
 
     private Map<String, BooleanHolder> isInit = new HashMap<>();
 
-    public boolean isInit(String launchpadUrl) {
+    public boolean isInited(String launchpadUrl) {
         return isInit.computeIfAbsent(launchpadUrl, v -> new BooleanHolder(false)).value;
     }
 
@@ -65,7 +65,7 @@ public class CurrentExecState {
 
     Enums.FlowInstanceExecState getState(String host, long flowInstanceId) {
         synchronized(flowInstanceState) {
-            if (!isInit(host)) {
+            if (!isInited(host)) {
                 return Enums.FlowInstanceExecState.UNKNOWN;
             }
             return flowInstanceState.getOrDefault(host, Collections.emptyMap()).getOrDefault(flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST);

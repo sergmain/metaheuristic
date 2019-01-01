@@ -55,7 +55,7 @@ public class ArtifactCleanerAtStation {
 
     public void fixedDelay() {
         for (String launchpadUrl : launchpadLookupExtendedService.lookupExtendedMap.keySet()) {
-            if (!globals.isStationEnabled || !currentExecState.isInit(launchpadUrl)) {
+            if (!globals.isStationEnabled || !currentExecState.isInited(launchpadUrl)) {
                 // don't delete anything until station will receive the list of actual flow instances
                 continue;
             }

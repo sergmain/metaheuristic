@@ -184,8 +184,8 @@ public class CommandProcessor {
     private synchronized Protocol.AssignedTask assignTaskToStation(String stationId, boolean isAcceptOnlySigned) {
         Protocol.AssignedTask r = new Protocol.AssignedTask();
         TaskService.TasksAndAssignToStationResult result =
-            launchpadService.getTaskService()
-                .getTaskAndAssignToStation(Long.parseLong(stationId), isAcceptOnlySigned, null);
+            launchpadService.getTaskService().getTaskAndAssignToStation(
+                    Long.parseLong(stationId), isAcceptOnlySigned, null);
 
         if (result.getSimpleTask()!=null) {
             r.tasks = Collections.singletonList(result.getSimpleTask());
