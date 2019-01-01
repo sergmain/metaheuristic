@@ -162,6 +162,7 @@ public class TaskService {
                     }
 
                     if (!snippet.isSigned()) {
+                        log.warn("#317.31 Snippet with code {} wasn't signed", taskParamYaml.snippet.getCode());
                         continue;
                     }
                     resultTask = task;
