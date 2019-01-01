@@ -135,7 +135,7 @@ public class Protocol {
         @NoArgsConstructor
         // will use static inner class for future extension
         public static class SimpleStatus {
-            public long experimentSequenceId;
+            public long taskId;
         }
         List<SimpleStatus> statuses;
 

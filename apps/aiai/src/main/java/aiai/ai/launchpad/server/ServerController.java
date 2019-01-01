@@ -151,12 +151,17 @@ public class ServerController {
     @SuppressWarnings("unused")
     @PostMapping("/rest-auth/upload/{random-part}")
     public UploadResult uploadResourceAuth(
+            HttpServletResponse response,
             MultipartFile file,
             String stationId,
             Long taskId,
             @PathVariable("random-part") String randomPart
-    ) {
+    ) throws IOException {
         log.debug("uploadResourceAuth(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
+//        if (true){
+//            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+//            return null;
+//        }
         return uploadResource(file, taskId);
     }
 
@@ -229,7 +234,7 @@ public class ServerController {
         try {
             binaryDataService.storeToFile(code, assetFile.file);
         } catch (BinaryDataNotFoundException e) {
-            log.error("#442.16 Error store data to file, code " + code+", file: " + assetFile.file.getPath(), e);
+            log.error("#442.16 Error store data to file, code " + code+", file: " + assetFile.file.getPath());
             return returnEmptyAsGone(response);
         }
         return new HttpEntity<>(new FileSystemResource(assetFile.file.toPath()), getHeader(assetFile.file.length()));

@@ -139,14 +139,16 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                     response = request.execute();
                 }
                 String json = response.returnContent().asString();
-
                 UploadResult result = fromJson(json);
+                log.info("Server response: {}", result);
+
                 if (result.status!= Enums.UploadResourceStatus.OK) {
                     log.error("#311.51 Error uploading file, server's error : " + result.error);
                 }
                 status = result.status;
+
             } catch (HttpResponseException e) {
-                log.error("#311.55 Error uploading code", e);
+                log.error("#311.55 Error uploading resource to server, code: " + e.getStatusCode(), e);
             } catch (SocketTimeoutException e) {
                 log.error("#311.58 SocketTimeoutException, {}", e.toString());
             }
@@ -159,7 +161,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             if (status!=null) {
                 switch(status) {
                     case OK:
-                        log.info("Task was successfully uploaded to server, {}, {} ", task.launchpad.url, task.taskId);
+                        log.info("Resource was successfully uploaded to server, {}, {} ", task.launchpad.url, task.taskId);
                         stationTaskService.setResourceUploaded(task.launchpad.url, task.taskId);
                         break;
                     case FILENAME_IS_BLANK:

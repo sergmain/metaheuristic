@@ -19,7 +19,6 @@ package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Consts;
 import aiai.ai.Enums;
-import aiai.ai.Globals;
 import aiai.ai.Monitoring;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.Process;
@@ -27,7 +26,6 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import aiai.ai.launchpad.flow.FlowInstanceService;
 import aiai.ai.launchpad.repositories.*;
-import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.utils.BigDecimalHolder;
@@ -234,7 +232,7 @@ public class ExperimentService {
         for (Task task : tasks) {
             boolean isFound = false;
             for (Protocol.StationTaskStatus.SimpleStatus status : statuses) {
-                if (status.experimentSequenceId ==task.getId()) {
+                if (status.taskId ==task.getId()) {
                     isFound = true;
                 }
             }

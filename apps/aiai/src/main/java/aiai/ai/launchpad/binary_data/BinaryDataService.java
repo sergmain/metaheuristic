@@ -1,6 +1,7 @@
 package aiai.ai.launchpad.binary_data;
 
 import aiai.ai.Enums;
+import aiai.ai.Globals;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.repositories.BinaryDataRepository;
@@ -33,17 +34,22 @@ public class BinaryDataService {
 
     private final EntityManager em;
     private final BinaryDataRepository binaryDataRepository;
+    private final Globals globals;
 
-    public BinaryDataService(EntityManager em, BinaryDataRepository binaryDataRepository) {
+    public BinaryDataService(EntityManager em, BinaryDataRepository binaryDataRepository, Globals globals) {
         this.em = em;
         this.binaryDataRepository = binaryDataRepository;
+        this.globals = globals;
     }
 
     public BinaryData getBinaryData(long id) {
+        if (!globals.isUnitTesting) {
+            throw new IllegalStateException("this method intended to be only for test cases");
+        }
         return getBinaryData(id, true);
     }
 
-    public BinaryData getBinaryData(long id, boolean isInitBytes) {
+    private BinaryData getBinaryData(long id, boolean isInitBytes) {
         try {
             BinaryData data = binaryDataRepository.findById(id).orElse(null);
             if (data==null) {
@@ -104,34 +110,45 @@ public class BinaryDataService {
                            Enums.BinaryDataType binaryDataType, String code, String poolCode,
                            boolean isManual, String filename, Long flowInstanceId) {
         if (binaryDataType== Enums.BinaryDataType.SNIPPET && flowInstanceId!=null) {
-            throw new IllegalStateException("#087.01 Snippet can't be bound to flow instance");
+            String es = "#087.01 Snippet can't be bound to flow instance";
+            log.error(es);
+            throw new IllegalStateException(es);
         }
-        BinaryData data = binaryDataRepository.findByCode(code);
-        if (data==null) {
-            data = new BinaryData();
-            data.setType(binaryDataType);
-            data.setValid(true);
-            data.setCode(code);
-            data.setPoolCode(poolCode);
-            data.setManual(isManual);
-            data.setFilename(filename);
-            data.setFlowInstanceId(flowInstanceId);
-        }
-        else {
-            if (!poolCode.equals(data.getPoolCode())) {
-                // TODO what is this exception about?
-                throw new IllegalStateException(
-                        "#087.04 Pool code is different, old: " + data.getPoolCode()+", new: "+ poolCode);
+        try {
+            BinaryData data = binaryDataRepository.findByCode(code);
+            if (data == null) {
+                data = new BinaryData();
+                data.setType(binaryDataType);
+                data.setValid(true);
+                data.setCode(code);
+                data.setPoolCode(poolCode);
+                data.setManual(isManual);
+                data.setFilename(filename);
+                data.setFlowInstanceId(flowInstanceId);
+            } else {
+                if (!poolCode.equals(data.getPoolCode())) {
+                    // this is exeception for the case when two resources have the same names but different pool codes
+                    String es = "#087.04 Pool code is different, old: " + data.getPoolCode() + ", new: " + poolCode;
+                    log.error(es);
+                    throw new IllegalStateException(es);
+                }
             }
+            data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+
+            Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
+            data.setData(blob);
+
+            binaryDataRepository.save(data);
+
+            return data;
         }
-        data.setUploadTs(new Timestamp(System.currentTimeMillis()));
-
-        Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
-        data.setData(blob);
-
-        binaryDataRepository.save(data);
-
-        return data;
+        catch(IllegalStateException e) {
+            throw e;
+        }
+        catch(Throwable th) {
+            log.error("#087.09 error storing data to db", th);
+            throw new RuntimeException("Error", th);
+        }
     }
 
     public void update(InputStream is, long size, BinaryData data) {

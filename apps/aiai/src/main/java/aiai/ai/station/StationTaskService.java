@@ -243,8 +243,9 @@ public class StationTaskService {
             if (stationId == null) {
                 return false;
             }
-            List<StationTask> tasks = findAllByFinishedOnIsNull(launchpadUrl);
+            List<StationTask> tasks = findAllByResourceUploadedIsFalse(launchpadUrl);
             for (StationTask task : tasks) {
+                // we don't need new task because flowInstance for this task is active
                 if (currentExecState.isStarted(task.launchpadUrl, task.flowInstanceId)) {
                     return false;
                 }
@@ -303,6 +304,18 @@ public class StationTaskService {
             List<StationTask> list = new ArrayList<>();
             for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
                 if (task.finishedOn == null) {
+                    list.add(task);
+                }
+            }
+            return list;
+        }
+    }
+
+    public List<StationTask> findAllByResourceUploadedIsFalse(String launchpadUrl) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            List<StationTask> list = new ArrayList<>();
+            for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
+                if (!task.resourceUploaded) {
                     list.add(task);
                 }
             }
