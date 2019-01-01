@@ -105,18 +105,19 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 log.info("#311.73 resource was already uploaded, {}, #{}", task.launchpad.url, task.taskId);
                 continue;
             }
+            log.info("Start uploading result data to server, resultDataFile: {}", task.file);
+            if (!task.file.exists()) {
+                log.error("#311.67 File {} doesn't exist", task.file.getPath());
+                continue;
+            }
             Enums.UploadResourceStatus status = null;
             try {
-                log.info("Start uploading result data to server, resultDataFile: {}", task.file);
-                if (!task.file.exists()) {
-                    log.error("#311.67 File {} doesn't exist", task.file.getPath());
-                }
-
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
 //                final String uploadRestUrl  = restUrl + '/' + UUID.randomUUID() + Consts.UPLOAD_REST_URL;
 //                final String uri = uploadRestUrl + '/' + task.stationId+ '/' + task.taskId;
                 final String uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
-                final String uri = uploadRestUrl + '/' + UUID.randomUUID().toString().substring(0,8) + '-' + task.stationId+ '-' + task.taskId;
+                String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.stationId + '-' + task.taskId;
+                final String uri = uploadRestUrl + randonPart;
 
                 HttpEntity entity = MultipartEntityBuilder.create()
                         .setMode(HttpMultipartMode.RFC6532)
@@ -131,6 +132,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                         .socketTimeout(20000)
                         .body(entity);
 
+                log.info("Start uploading resource to rest-server, {}", randonPart);
                 Response response;
                 if (task.launchpad.isSecureRestUrl) {
                     response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
@@ -140,7 +142,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 }
                 String json = response.returnContent().asString();
                 UploadResult result = fromJson(json);
-                log.info("Server response: {}", result);
+                log.info("Server response: length: {}, content {}", json.length(), result);
 
                 if (result.status!= Enums.UploadResourceStatus.OK) {
                     log.error("#311.51 Error uploading file, server's error : " + result.error);

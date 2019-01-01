@@ -91,7 +91,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
                 final String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource/" + Enums.BinaryDataType.DATA;
 //                final String uri = payloadRestUrl + '/' + task.stationId + '/' + task.getId();
-                final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0,8) + '-' + task.stationId+ '-' + task.taskId+ URLEncoder.encode(task.getId(), StandardCharsets.UTF_8.toString());
+                final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0,8) + '-' + task.stationId+ '-' + task.taskId + '-' + URLEncoder.encode(task.getId(), StandardCharsets.UTF_8.toString());
 
                 final Request request = Request.Post(uri)
                         .bodyForm(Form.form()
