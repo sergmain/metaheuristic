@@ -70,7 +70,7 @@ public class ArtifactCleanerAtStation {
                     stationTaskService.delete(launchpadUrl, task.getTaskId());
                     continue;
                 }
-                if (task.clean && task.delivered && task.resourceUploaded) {
+                if (task.clean && task.completed) {
                     log.info("Delete task with clean==true, id {}, url {}", task.getTaskId(), launchpadUrl);
                     stationTaskService.delete(launchpadUrl, task.getTaskId());
                 }

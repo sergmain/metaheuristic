@@ -65,15 +65,6 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
         this.stationTaskService = stationTaskService;
     }
 
-/*
-    @PostConstruct
-    public void postConstruct() {
-        if (globals.isStationEnabled) {
-            //
-        }
-    }
-*/
-
     private static UploadResult fromJson(String json) {
         try {
             //noinspection UnnecessaryLocalVariable
@@ -164,12 +155,13 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 switch(status) {
                     case OK:
                         log.info("Resource was successfully uploaded to server, {}, {} ", task.launchpad.url, task.taskId);
-                        stationTaskService.setResourceUploaded(task.launchpad.url, task.taskId);
+                        stationTaskService.setResourceUploadedAndCompleted(task.launchpad.url, task.taskId);
                         break;
                     case FILENAME_IS_BLANK:
                     case TASK_WAS_RESET:
                     case TASK_NOT_FOUND:
-                        log.error("#311.01 server return status {}", status);
+                        stationTaskService.setCompleted(task.launchpad.url, task.taskId);
+                        log.error("#311.01 server return status {}, task was set to 'completed'", status);
                         break;
                     case PROBLEM_WITH_OPTIMISTIC_LOCKING:
                         log.warn("#311.05 problem with optimistic locking at server side, {}", status);

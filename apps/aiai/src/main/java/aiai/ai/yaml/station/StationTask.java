@@ -17,7 +17,6 @@
  */
 package aiai.ai.yaml.station;
 
-import aiai.ai.Enums;
 import lombok.Data;
 import lombok.ToString;
 
@@ -28,8 +27,25 @@ public class StationTask {
 
     public long flowInstanceId;
 
+    // params of this task
+    public String params;
+
+    // metrics of this task
+    public String metrics;
+
+    // snippet exec result
+    public String snippetExecResult;
+
+    // need to clean dir of task after processing this task?
+    public boolean clean;
+
+    public String launchpadUrl;
+
     // when task was created
     public long createdOn;
+
+    // were all assets (data resources and snippet) prepared?
+    public boolean assetsPrepared;
 
     // when task was launched
     public Long launchedOn;
@@ -40,12 +56,6 @@ public class StationTask {
     // when status and console output were reported to launchpad
     public Long reportedOn;
 
-    // params of this task
-    public String params;
-
-    // metrics of this task
-    public String metrics;
-
     // was this task reported to launchpad?
     public boolean reported;
 
@@ -55,14 +65,7 @@ public class StationTask {
     // was resource(output resource as the result of execution of snippet) uploaded to launchpad?
     public boolean resourceUploaded;
 
-    // were all assets (data resources and snippet) prepared?
-    public boolean assetsPrepared;
+    // processing of this task was completed ( it doesn't matter with which outcome)
+    public boolean completed;
 
-    // snippet exec result
-    public String snippetExecResult;
-
-    // need to clean dir of task after processing this task?
-    public boolean clean;
-
-    public String launchpadUrl;
 }

@@ -47,6 +47,7 @@ import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings({"UnnecessaryLocalVariable", "WeakerAccess"})
 @Service
@@ -98,8 +99,9 @@ public class StationTaskService {
                                         getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
                                     }
                                     catch (IOException e) {
-                                        log.error("Error #4", e);
-                                        throw new RuntimeException("Error #4", e);
+                                        String es = "#713.01 Error";
+                                        log.error(es, e);
+                                        throw new RuntimeException(es, e);
                                     }
                                 }
                                 else {
@@ -110,25 +112,28 @@ public class StationTaskService {
                                         // IDK is that bug or side-effect. so delete one more time
                                         FileUtils.deleteDirectory(s.toFile());
                                     } catch (IOException e) {
-                                        log.warn("Error while deleting dir " + path, e);
+                                        log.warn("#713.06 Error while deleting dir " + path, e);
                                     }
                                 }
                             });
                         }
                         catch (IOException e) {
-                            log.error("Error #3", e);
-                            throw new RuntimeException("Error #3", e);
+                            String es = "#713.09 Error";
+                            log.error(es, e);
+                            throw new RuntimeException(es, e);
                         }
                     });
                 } catch (IOException e) {
-                    log.error("Error #2", e);
-                    throw new RuntimeException("Error #2", e);
+                    String es = "#713.14 Error";
+                    log.error(es, e);
+                    throw new RuntimeException(es, e);
                 }
             });
         }
         catch (IOException e) {
-            log.error("Error #1", e);
-            throw new RuntimeException("Error #1", e);
+            String es = "#713.17 Error";
+            log.error(es, e);
+            throw new RuntimeException(es, e);
         }
         //noinspection unused
         int i=0;
@@ -139,7 +144,7 @@ public class StationTaskService {
             log.info("setReportedOn({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("StationRestTask wasn't found for Id " + taskId);
+                log.error("#713.21 StationRestTask wasn't found for Id " + taskId);
                 return;
             }
             task.setReported(true);
@@ -153,32 +158,46 @@ public class StationTaskService {
             log.info("setDelivered({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("StationTask wasn't found for Id {}", taskId);
+                log.error("#713.25 StationTask wasn't found for Id {}", taskId);
                 return;
             }
             task.setDelivered(true);
+            task.setCompleted( task.isResourceUploaded() );
             save(task);
         }
     }
 
-    public void setResourceUploaded(String launchpadUrl, Long taskId) {
+    public void setResourceUploadedAndCompleted(String launchpadUrl, Long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             log.info("setResourceUploaded({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("StationTask wasn't found for Id {}", taskId);
+                log.error("#713.29 StationTask wasn't found for Id {}", taskId);
                 return;
             }
             task.setResourceUploaded(true);
+            task.setCompleted( task.isDelivered() );
+            save(task);
+        }
+    }
+
+    public void setCompleted(String launchpadUrl, Long taskId) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            log.info("setCompleted({}, {})", launchpadUrl, taskId);
+            StationTask task = findById(launchpadUrl, taskId);
+            if (task == null) {
+                log.error("#713.33 StationTask wasn't found for Id {}", taskId);
+                return;
+            }
+            task.setCompleted(true);
             save(task);
         }
     }
 
     public List<StationTask> getForReporting(String launchpadUrl) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            List<StationTask> list = findAllByFinishedOnIsNotNull(launchpadUrl);
-            List<StationTask> result = list
-                    .stream()
+            Stream<StationTask> stream = findAllByFinishedOnIsNotNull(launchpadUrl);
+            List<StationTask> result = stream
                     .filter(stationTask -> !stationTask.isReported() ||
                             (!stationTask.isDelivered() &&
                                     (stationTask.getReportedOn() == null || (System.currentTimeMillis() - stationTask.getReportedOn()) > 60_000)))
@@ -192,7 +211,7 @@ public class StationTaskService {
             log.info("markAsFinished({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("StationTask wasn't found for Id " + taskId);
+                log.error("#713.38 StationTask wasn't found for Id " + taskId);
             } else {
                 task.setFinishedOn(System.currentTimeMillis());
                 task.setDelivered(false);
@@ -212,7 +231,7 @@ public class StationTaskService {
             log.info("markAsAssetPrepared(launchpadUrl: {}, taskId: {}, status: {})", launchpadUrl, taskId, status);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("StationTask wasn't found for Id {}", taskId);
+                log.error("#713.42 StationTask wasn't found for Id {}", taskId);
             } else {
                 task.setAssetsPrepared(status);
                 save(task);
@@ -224,7 +243,7 @@ public class StationTaskService {
         synchronized (StationSyncHolder.stationGlobalSync) {
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("StationTask wasn't found for Id {}", taskId);
+                log.error("#713.45 StationTask wasn't found for Id {}", taskId);
                 return;
             }
             log.warn(es);
@@ -243,7 +262,7 @@ public class StationTaskService {
             if (stationId == null) {
                 return false;
             }
-            List<StationTask> tasks = findAllByResourceUploadedIsFalse(launchpadUrl);
+            List<StationTask> tasks = findAllByCompletedIsFalse(launchpadUrl);
             for (StationTask task : tasks) {
                 // we don't need new task because flowInstance for this task is active
                 if (currentExecState.isStarted(task.launchpadUrl, task.flowInstanceId)) {
@@ -258,7 +277,7 @@ public class StationTaskService {
         log.info("storeExecResult(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, taskId, snippet.code);
         StationTask taskTemp = findById(launchpadUrl, taskId);
         if (taskTemp == null) {
-            log.error("StationRestTask wasn't found for Id " + taskId);
+            log.error("#713.49 StationRestTask wasn't found for Id " + taskId);
         } else {
             // store metrics after predict only
             if (snippet.isMetrics()) {
@@ -271,7 +290,7 @@ public class StationTaskService {
                         metrics.setMetrics(execMetrics);
                     }
                     catch (IOException e) {
-                        log.error("Error reading metrics file {}", metricsFile.getAbsolutePath());
+                        log.error("#713.53 Error reading metrics file {}", metricsFile.getAbsolutePath());
                         taskTemp.setMetrics("system-error: " + e.toString());
                         metrics.setStatus(Metrics.Status.Error);
                         metrics.setError(e.toString());
@@ -311,11 +330,11 @@ public class StationTaskService {
         }
     }
 
-    public List<StationTask> findAllByResourceUploadedIsFalse(String launchpadUrl) {
+    public List<StationTask> findAllByCompletedIsFalse(String launchpadUrl) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             List<StationTask> list = new ArrayList<>();
             for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
-                if (!task.resourceUploaded) {
+                if (!task.completed) {
                     list.add(task);
                 }
             }
@@ -341,6 +360,7 @@ public class StationTaskService {
         }
     }
 
+/*
     private List<StationTask> findAllByFinishedOnIsNotNull(String launchpadUrl) {
         List<StationTask> list = new ArrayList<>();
         for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
@@ -349,6 +369,11 @@ public class StationTaskService {
             }
         }
         return list;
+    }
+*/
+
+    private Stream<StationTask> findAllByFinishedOnIsNotNull(String launchpadUrl) {
+        return getMapForLaunchpadUrl(launchpadUrl).values().stream().filter( o -> o.finishedOn!=null);
     }
 
     public Protocol.StationTaskStatus produceStationTaskStatus(String launchpadUrl) {
@@ -362,7 +387,7 @@ public class StationTaskService {
 
     public void createTask(String launchpadUrl, long taskId, Long flowInstanceId, String params) {
         if (launchpadUrl==null) {
-            throw new IllegalStateException("launchpadUrl is null");
+            throw new IllegalStateException("#713.55 launchpadUrl is null");
         }
         synchronized (StationSyncHolder.stationGlobalSync) {
             log.info("Assign task #{}, params:\n{}", taskId, params );
@@ -390,8 +415,9 @@ public class StationTaskService {
                 File taskYamlFile = new File(systemDir, Consts.TASK_YAML);
                 FileUtils.write(taskYamlFile, StationTaskUtils.toString(task), Charsets.UTF_8, false);
             } catch (Throwable th) {
-                log.error("Error ", th);
-                throw new RuntimeException("Error", th);
+                String es = "#713.58 Error";
+                log.error(es, th);
+                throw new RuntimeException(es, th);
             }
         }
     }
@@ -425,8 +451,9 @@ public class StationTaskService {
         try {
             FileUtils.write(taskYaml, StationTaskUtils.toString(task), Charsets.UTF_8, false);
         } catch (IOException e) {
-            log.error("Error", e);
-            throw new IllegalStateException("Error while writing to file: " + taskYaml.getPath(), e);
+            String es = "#713.61 Error while writing to file: " + taskYaml.getPath();
+            log.error(es, e);
+            throw new IllegalStateException(es, e);
         }
         return task;
     }
@@ -468,7 +495,7 @@ public class StationTaskService {
                 mapTask.remove(taskId);
                 log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
             } catch (Throwable th) {
-                log.error("Error deleting task " + taskId, th);
+                log.error("#713.66 Error deleting task " + taskId, th);
             }
         }
     }
@@ -506,7 +533,7 @@ public class StationTaskService {
         File taskSubDir = new File(taskDir, subDir);
         taskSubDir.mkdirs();
         if (!taskSubDir.exists()) {
-            log.warn("Can't create taskSubDir: {}", taskSubDir.getAbsolutePath());
+            log.warn("#713.69 Can't create taskSubDir: {}", taskSubDir.getAbsolutePath());
             return null;
         }
         return taskSubDir;

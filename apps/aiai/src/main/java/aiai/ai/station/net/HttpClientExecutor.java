@@ -17,6 +17,8 @@ public class HttpClientExecutor {
         } catch (Throwable th) {
             throw new IllegalArgumentException("Can't build HttpHost for "+launchpadUrl, th);
         }
-        return Executor.newInstance().auth(launchpadHttpHostWithAuth,restUsername+'=' + restToken, restPassword);
+        return Executor.newInstance()
+                .authPreemptive(launchpadHttpHostWithAuth)
+                .auth(launchpadHttpHostWithAuth,restUsername+'=' + restToken, restPassword);
     }
 }
