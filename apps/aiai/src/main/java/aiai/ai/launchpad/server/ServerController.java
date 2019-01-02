@@ -251,7 +251,7 @@ public class ServerController {
             HttpServletResponse response,
             String stationId,
             Long taskId,
-            String snippetCode,
+            String code,
             @PathVariable("random-part") String randomPart
     ) throws IOException {
         log.debug("snippetChecksumAnon(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
@@ -259,7 +259,7 @@ public class ServerController {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
-        return getSnippetChecksum(response, snippetCode);
+        return getSnippetChecksum(response, code);
     }
 
     @SuppressWarnings("unused")

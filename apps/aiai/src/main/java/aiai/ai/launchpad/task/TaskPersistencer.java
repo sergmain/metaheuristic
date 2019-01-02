@@ -46,7 +46,6 @@ public class TaskPersistencer {
         return null;
     }
 
-    @Transactional
     public Enums.UploadResourceStatus setResultReceived(long taskId, boolean value) {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
