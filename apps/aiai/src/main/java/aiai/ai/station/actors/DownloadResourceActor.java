@@ -93,7 +93,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 final String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource/" + Enums.BinaryDataType.DATA;
                 final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0,8) + '-' + task.stationId+ '-' + task.taskId + '-' + URLEncoder.encode(task.getId(), StandardCharsets.UTF_8.toString());
 
-                final Request request = Request.Post(uri)
+                final Request request = Request.Get(uri)
                         .bodyForm(Form.form()
                                 .add("stationId", task.stationId)
                                 .add("taskId", Long.toString(task.getTaskId()))

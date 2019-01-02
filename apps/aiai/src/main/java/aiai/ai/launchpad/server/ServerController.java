@@ -42,6 +42,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -102,7 +103,7 @@ public class ServerController {
     }
 
     @SuppressWarnings("unused")
-    @PostMapping("/rest-anon/payload/resource/{type}/{random-part}")
+    @GetMapping(value="/rest-anon/payload/resource/{type}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> deliverResourceAnon(
             HttpServletResponse response,
             @PathVariable("type") String typeAsStr,
@@ -119,7 +120,7 @@ public class ServerController {
     }
 
     @SuppressWarnings("unused")
-    @PostMapping("/rest-auth/payload/resource/{type}/{random-part}")
+    @GetMapping(value="/rest-auth/payload/resource/{type}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> deliverResourceAuth(
             HttpServletResponse response,
             @PathVariable("type") String typeAsStr,
@@ -158,10 +159,6 @@ public class ServerController {
             @PathVariable("random-part") String randomPart
     ) throws IOException {
         log.debug("uploadResourceAuth(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
-//        if (true){
-//            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-//            return null;
-//        }
         return uploadResource(file, taskId);
     }
 

@@ -148,7 +148,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     }
                 }
 
-                Request request = Request.Post(targetUrl + randomPartUri)
+                Request request = Request.Get(targetUrl + randomPartUri)
                         .bodyForm(Form.form()
                                 .add("stationId", task.stationId)
                                 .add("taskId", Long.toString(task.getTaskId()))
