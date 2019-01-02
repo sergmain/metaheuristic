@@ -36,6 +36,7 @@ import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
+import org.apache.http.client.utils.URIBuilder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -44,7 +45,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -148,12 +151,21 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                     }
                 }
 
+                final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
+                        .addParameter("stationId", task.stationId)
+                        .addParameter("taskId", Long.toString(task.getTaskId()))
+                        .addParameter("code", task.snippetCode);
+
+
+                final Request request = Request.Get(builder.build())
+/*
                 Request request = Request.Get(targetUrl + randomPartUri)
                         .bodyForm(Form.form()
                                 .add("stationId", task.stationId)
                                 .add("taskId", Long.toString(task.getTaskId()))
                                 .add("code", task.snippetCode)
                                 .build(), StandardCharsets.UTF_8)
+*/
                         .connectTimeout(5000)
                         .socketTimeout(5000);
 
@@ -201,6 +213,8 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             }
             catch (IOException e) {
                 log.error("IOException", e);
+            } catch (URISyntaxException e) {
+                log.error("URISyntaxException", e);
             }
         }
     }
