@@ -372,7 +372,7 @@ public class FlowService {
             return;
         }
         for (Task task : forChecking) {
-            if (!task.resultReceived) {
+            if (!task.isCompleted) {
                 return;
             }
         }

@@ -59,6 +59,8 @@ public class TaskPersistencer {
                         log.warn("#307.12 Task {} was reset, can't set new value to field resultReceived", taskId);
                         return Enums.UploadResourceStatus.TASK_WAS_RESET;
                     }
+                    task.setCompleted(true);
+                    task.setCompletedOn(System.currentTimeMillis());
                     task.setResultReceived(value);
                     taskRepository.save(task);
                     return Enums.UploadResourceStatus.OK;
@@ -121,10 +123,8 @@ public class TaskPersistencer {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
                     SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
-                    Task t = prepareTask(result, snippetExec.exec.isOk ? Enums.TaskExecState.OK : Enums.TaskExecState.ERROR);
-                    if (t!=null) {
-                        taskRepository.save(t);
-                    }
+                    //noinspection UnnecessaryLocalVariable
+                    Task t = prepareAndSaveTask(result, snippetExec.exec.isOk ? Enums.TaskExecState.OK : Enums.TaskExecState.ERROR);
                     return t;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.error("#307.29 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
@@ -134,7 +134,7 @@ public class TaskPersistencer {
         return null;
     }
 
-    private Task prepareTask(SimpleTaskExecResult result, Enums.TaskExecState state) {
+    private Task prepareAndSaveTask(SimpleTaskExecResult result, Enums.TaskExecState state) {
         Task task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
             log.warn("#307.33 Can't find Task for Id: {}", result.taskId);
@@ -143,9 +143,9 @@ public class TaskPersistencer {
         task.setExecState(state.value);
         task.setSnippetExecResults(result.getResult());
         task.setMetrics(result.getMetrics());
-        task.setCompleted(true);
-        task.setCompletedOn(System.currentTimeMillis());
         task.resultResourceScheduledOn = System.currentTimeMillis();
+        task = taskRepository.save(task);
+
         return task;
     }
 

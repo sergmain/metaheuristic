@@ -72,6 +72,7 @@ public class Task implements Serializable {
     @Column(name = "PROCESS_TYPE")
     public int processType;
 
+    // by result means file which is created by task
     @Column(name = "IS_RESULT_RECEIVED")
     public boolean resultReceived;
 

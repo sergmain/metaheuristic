@@ -130,21 +130,6 @@ public class TaskService {
 
     private TasksAndAssignToStationResult findUnassignedTaskAndAssign(FlowInstance flowInstance, long stationId, boolean isAcceptOnlySigned) {
 
-/*
-        if (currentLevelIsntFinished(tasks, flowInstance.producingOrder)) {
-            log.warn("#317.19 Not completed task was found, start decreasing completed order to {}", flowInstance.producingOrder-1 );
-            tasks = taskRepository.findWithConcreteOrder(flowInstance.getId(), flowInstance.producingOrder);
-            for (Task task : tasks) {
-                taskPersistencer.resetTask(task.getId());
-            }
-            FlowInstance fi = flowInstanceRepository.findById(flowInstance.getId()).orElse(null);
-            if (fi!=null) {
-                fi.setProducingOrder(flowInstance.producingOrder-1);
-                flowInstanceRepository.save(fi);
-            }
-            return EMPTY_RESULT;
-        }
-*/
         int page = 0;
         Task resultTask = null;
         Slice<Task> tasks;
@@ -196,16 +181,6 @@ public class TaskService {
 
         return new TasksAndAssignToStationResult(assignedTask);
     }
-
-    private boolean currentLevelIsntFinished(List<Task> tasks, int completedOrder) {
-        for (Task task : tasks) {
-            if (task.getOrder()==completedOrder && !task.resultReceived) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 
 
 }
