@@ -268,10 +268,10 @@ public class ServerController {
             HttpServletResponse response,
             String stationId,
             String taskId,
-            String snippetCode,
+            String code,
             @PathVariable("random-part") String randomPart
     ) throws IOException {
-        return getSnippetChecksum(response, snippetCode);
+        return getSnippetChecksum(response, code);
     }
 
     private String getSnippetChecksum(HttpServletResponse response, String snippetCode) throws IOException {
