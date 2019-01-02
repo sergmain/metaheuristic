@@ -67,6 +67,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
         this.stationTaskService = stationTaskService;
     }
 
+    @SuppressWarnings("Duplicates")
     public void fixedDelay() {
         if (globals.isUnitTesting) {
             return;

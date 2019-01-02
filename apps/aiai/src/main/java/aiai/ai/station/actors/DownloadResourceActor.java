@@ -61,6 +61,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
     public void postConstruct() {
     }
 
+    @SuppressWarnings("Duplicates")
     public void fixedDelay() {
         if (globals.isUnitTesting) {
             return;
@@ -90,7 +91,6 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             try {
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
                 final String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource/" + Enums.BinaryDataType.DATA;
-//                final String uri = payloadRestUrl + '/' + task.stationId + '/' + task.getId();
                 final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0,8) + '-' + task.stationId+ '-' + task.taskId + '-' + URLEncoder.encode(task.getId(), StandardCharsets.UTF_8.toString());
 
                 final Request request = Request.Post(uri)
@@ -101,24 +101,6 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                                 .build(), StandardCharsets.UTF_8)
                         .connectTimeout(20000)
                         .socketTimeout(20000);
-
-
-/*
-                json = Request.Post(PRICE_PROXY_URL)
-                        .bodyForm(Form.form().add("p", Const.RANDOM_PASS).add("j", j).build(), Const.UTF_8)
-                        .execute().returnContent().asString(Const.UTF_8);
-
-                String json = Request.Post("http://www.aaa.com/api/panel")
-                        .bodyForm(Form.form()
-                                .add("action", "item.summary")
-                                .add("hash", "4ba62806109973643a8451e69bdc665a")
-                                .add("gameid", "570")
-                                .add("itemid", "6894312711")
-                                .add("index", "4007")
-                                .add("quality", "4")
-                                .build(), UTF_8)
-                        .execute();
-*/
 
                 RestUtils.addHeaders(request);
 

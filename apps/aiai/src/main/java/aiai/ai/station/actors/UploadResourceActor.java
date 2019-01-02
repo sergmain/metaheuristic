@@ -104,8 +104,6 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             Enums.UploadResourceStatus status = null;
             try {
                 final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
-//                final String uploadRestUrl  = restUrl + '/' + UUID.randomUUID() + Consts.UPLOAD_REST_URL;
-//                final String uri = uploadRestUrl + '/' + task.stationId+ '/' + task.taskId;
                 final String uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
                 String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.stationId + '-' + task.taskId;
                 final String uri = uploadRestUrl + randonPart;
