@@ -53,12 +53,11 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     Stream<Object[]> findByFlowInstanceId(long flowInstanceId);
 
     @Query("SELECT t FROM Task t where t.stationId=null and " +
-            "t.flowInstanceId=:flowInstanceId and (t.order =:taskOrder or t.order=(:taskOrder + 1))")
-    List<Task> findForAssigning(long flowInstanceId, int taskOrder);
-
-    @Query("SELECT t FROM Task t where t.stationId is not null and " +
             "t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
-    List<Task> findForCompletion(long flowInstanceId, int taskOrder);
+    Slice<Task> findForAssigning(Pageable pageable, long flowInstanceId, int taskOrder);
+
+    @Query("SELECT t FROM Task t where t.stationId is not null and t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
+    List<Task> findWithConcreteOrder(long flowInstanceId, int taskOrder);
 
     @Query("SELECT count(t) FROM Task t where t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
     Long countWithConcreteOrder(long flowInstanceId, int taskOrder);
@@ -69,11 +68,13 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
 
 
 
+/*
     @Transactional(readOnly = true)
     @Query("SELECT t FROM Task t, ExperimentTaskFeature tef " +
             "where t.id=tef.taskId and tef.featureId=:featureId and " +
             " t.execState > 1")
     Slice<Task> findByIsCompletedIsTrueAndFeatureId(Pageable pageable, long featureId);
+*/
 
     @Transactional(readOnly = true)
     // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS

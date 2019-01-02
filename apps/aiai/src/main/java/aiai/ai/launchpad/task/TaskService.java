@@ -17,6 +17,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -67,7 +69,7 @@ public class TaskService {
                     break;
                 }
 
-                flowInstance.setProducingOrder(task.order - 1);
+                flowInstance.setProducingOrder(task.order);
                 flowInstanceRepository.save(flowInstance);
                 break;
         }
@@ -128,11 +130,10 @@ public class TaskService {
 
     private TasksAndAssignToStationResult findUnassignedTaskAndAssign(FlowInstance flowInstance, long stationId, boolean isAcceptOnlySigned) {
 
-        List<Task> tasks = taskRepository.findForAssigning(flowInstance.getId(), flowInstance.producingOrder);
-        log.debug("LIst of tasks, which can be assigned {}", tasks);
+/*
         if (currentLevelIsntFinished(tasks, flowInstance.producingOrder)) {
             log.warn("#317.19 Not completed task was found, start decreasing completed order to {}", flowInstance.producingOrder-1 );
-            tasks = taskRepository.findForCompletion(flowInstance.getId(), flowInstance.producingOrder);
+            tasks = taskRepository.findWithConcreteOrder(flowInstance.getId(), flowInstance.producingOrder);
             for (Task task : tasks) {
                 taskPersistencer.resetTask(task.getId());
             }
@@ -143,20 +144,22 @@ public class TaskService {
             }
             return EMPTY_RESULT;
         }
-
+*/
+        int page = 0;
         Task resultTask = null;
-        for (Task task : tasks) {
-            if (task.stationId == null) {
+        Slice<Task> tasks;
+        while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), flowInstance.getId(), flowInstance.producingOrder)).hasContent()) {
+            for (Task task : tasks) {
                 if (isAcceptOnlySigned) {
                     final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
 
                     SnippetVersion version = SnippetVersion.from(taskParamYaml.snippet.getCode());
-                    if (version==null) {
+                    if (version == null) {
                         log.warn("#317.23 Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
                         continue;
                     }
                     Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
-                    if (snippet==null) {
+                    if (snippet == null) {
                         log.warn("#317.26 Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
                         continue;
                     }
@@ -167,11 +170,13 @@ public class TaskService {
                     }
                     resultTask = task;
                     break;
-                }
-                else {
+                } else {
                     resultTask = task;
                     break;
                 }
+            }
+            if (resultTask!=null) {
+                break;
             }
         }
         if (resultTask==null) {

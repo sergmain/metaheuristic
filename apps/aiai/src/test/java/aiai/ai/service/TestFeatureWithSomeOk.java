@@ -19,6 +19,7 @@ package aiai.ai.service;
 
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.task.TaskService;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,11 +31,19 @@ import static org.junit.Assert.*;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
+@Slf4j
 public class TestFeatureWithSomeOk extends FeatureMethods {
 
     @Test
     public void testFeatureCompletionWithPartialError() {
         assertTrue(isCorrectInit);
+
+        long mills = System.currentTimeMillis();
+        log.info("Start produceTasks()");
+        produceTasks();
+        log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
+
+        flowInstance = flowService.toStarted(flowInstance);
 
         getTaskAndAssignToStation_mustBeNewTask();
 

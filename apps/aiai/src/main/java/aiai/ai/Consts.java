@@ -26,6 +26,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Consts {
+
+    public static final int TASK_ORDER_START_VALUE = 1;
+
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
 
@@ -45,6 +48,7 @@ public class Consts {
 
     public static final PageRequest PAGE_REQUEST_1_REC = PageRequest.of(0, 1);
     public static final PageRequest PAGE_REQUEST_10_REC = PageRequest.of(0, 10);
+    public static final PageRequest PAGE_REQUEST_20_REC = PageRequest.of(0, 20);
 
     public static final Map<String, String> EMPTY_UNMODIFIABLE_MAP = Collections.unmodifiableMap(new HashMap<>(0));
 

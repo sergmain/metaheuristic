@@ -25,8 +25,8 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.transaction.Transactional;
 import java.util.List;
 
 /**
@@ -43,7 +43,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
 
     BinaryData findByCode(String code);
 
-    @org.springframework.transaction.annotation.Transactional(readOnly = true)
+    @Transactional(readOnly = true)
     Slice<BinaryData> findAll(Pageable pageable);
 
     @Transactional

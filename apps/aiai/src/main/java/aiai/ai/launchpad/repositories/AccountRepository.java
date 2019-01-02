@@ -40,11 +40,4 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     Account findByMailAddress(String mailAddress);
 
-/*
-    @Transactional(readOnly = true)
-    Optional<Account> findById(BigInteger id);
-
-    List<Message> findByLocationNear(Point p, Distance d);
-*/
-
 }

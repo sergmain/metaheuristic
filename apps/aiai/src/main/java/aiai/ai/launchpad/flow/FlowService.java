@@ -70,7 +70,7 @@ public class FlowService {
     public FlowInstance toStarted(FlowInstance flowInstance) {
         FlowInstance fi = flowInstanceRepository.findById(flowInstance.getId()).orElse(null);
         if (fi==null) {
-            String es = "Can't change exec state to PRODUCED for flowInstance #" + flowInstance.getId();
+            String es = "#701.01 Can't change exec state to PRODUCED for flowInstance #" + flowInstance.getId();
             log.error(es);
             throw new IllegalStateException(es);
         }
@@ -142,7 +142,7 @@ public class FlowService {
         log.info("Flow was validated for "+(System.currentTimeMillis() - mills) + " ms.");
         if (result.flowValidateStatus != Enums.FlowValidateStatus.OK &&
                 result.flowValidateStatus != Enums.FlowValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
-            log.error("Can't produce tasks, error: {}", result.flowValidateStatus);
+            log.error("#701.07 Can't produce tasks, error: {}", result.flowValidateStatus);
             toStopped(isPersist, flowInstance.getId());
             return result;
         }
@@ -235,7 +235,7 @@ public class FlowService {
         fi.setExecState(Enums.FlowInstanceExecState.NONE.code);
         fi.setCompletedOn(null);
         fi.setInputResourcePoolCode(startWithResourcePoolCode);
-        fi.setProducingOrder(0);
+        fi.setProducingOrder(Consts.TASK_ORDER_START_VALUE);
         fi.setValid(true);
 
         flowInstanceRepository.save(fi);
@@ -254,7 +254,7 @@ public class FlowService {
             return;
         }
         fi.setExecState(Enums.FlowInstanceExecState.STOPPED.code);
-        fi.setProducingOrder(0);
+//        fi.setProducingOrder();
         flowInstanceRepository.save(fi);
     }
 
@@ -265,7 +265,7 @@ public class FlowService {
 
     public Enums.FlowProducingStatus toProducing(FlowInstance fi) {
         fi.setExecState(Enums.FlowInstanceExecState.PRODUCING.code);
-        fi.setProducingOrder(0);
+//        fi.setProducingOrder();
         flowInstanceRepository.save(fi);
         return Enums.FlowProducingStatus.OK;
     }
@@ -291,11 +291,10 @@ public class FlowService {
 
         result.flowYaml = flowYamlUtils.toFlowYaml(flow.getParams());
         flow.clean = result.flowYaml.clean;
-        int idx = 0;
+        int idx = Consts.TASK_ORDER_START_VALUE;
         result.flowProducingStatus = Enums.FlowProducingStatus.OK;
         for (Process process : result.flowYaml.getProcesses()) {
-            ++idx;
-            process.order = idx;
+            process.order = idx++;
 
             ProduceTaskResult produceTaskResult;
             switch(process.type) {
@@ -310,7 +309,7 @@ public class FlowService {
                     Monitoring.log("##029", Enums.Monitor.MEMORY);
                     break;
                 default:
-                    throw new IllegalStateException("Unknown process type");
+                    throw new IllegalStateException("#701.11 Unknown process type");
             }
             result.numberOfTasks += produceTaskResult.numberOfTasks;
             if (produceTaskResult.status != Enums.FlowProducingStatus.OK) {
@@ -342,7 +341,7 @@ public class FlowService {
         Long id = fi.getId();
         result.flowInstance = flowInstanceRepository.findById(id).orElse(null);
         if (result.flowInstance==null) {
-            String es = "Can't change exec state to PRODUCED for flowInstance #" + id;
+            String es = "#701.16 Can't change exec state to PRODUCED for flowInstance #" + id;
             log.error(es);
             throw new IllegalStateException(es);
         }
@@ -350,20 +349,19 @@ public class FlowService {
         flowInstanceRepository.save(result.flowInstance);
     }
 
-    public void markOrderAsCompleted() {
-        List<FlowInstance> flowInstances = flowInstanceRepository.findByExecState(
-                Enums.FlowInstanceExecState.STARTED.code);
+    public void markOrderAsProcessed() {
+        List<FlowInstance> flowInstances = flowInstanceRepository.findByExecState(Enums.FlowInstanceExecState.STARTED.code);
         for (FlowInstance flowInstance : flowInstances) {
-            markOrderAsCompleted(flowInstance);
+            markOrderAsProcessed(flowInstance);
         }
     }
 
-    private void markOrderAsCompleted(FlowInstance flowInstance) {
-        List<Task> forCompletion = taskRepository.findForCompletion(flowInstance.getId(), flowInstance.getProducingOrder() + 1);
-        if (forCompletion.isEmpty()) {
+    private void markOrderAsProcessed(FlowInstance flowInstance) {
+        List<Task> forChecking = taskRepository.findWithConcreteOrder(flowInstance.getId(), flowInstance.getProducingOrder() );
+        if (forChecking.isEmpty()) {
             Long count = taskRepository.countWithConcreteOrder(flowInstance.getId(), flowInstance.getProducingOrder() + 1);
             if (count==null) {
-                throw new IllegalStateException("count of records is null");
+                throw new IllegalStateException("#701.21 count of records is null");
             }
             if (count==0) {
                 log.info("FlowInstance #{} was finished", flowInstance.getId());
@@ -373,8 +371,8 @@ public class FlowService {
             }
             return;
         }
-        for (Task task : forCompletion) {
-            if (!task.isCompleted) {
+        for (Task task : forChecking) {
+            if (!task.resultReceived) {
                 return;
             }
         }

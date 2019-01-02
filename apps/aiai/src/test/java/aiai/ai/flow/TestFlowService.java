@@ -189,7 +189,7 @@ public class TestFlowService extends PreparingFlow {
         r.setResult("Everything is Ok.");
         r.setResult(getExecResult(true));
         taskPersistencer.markAsCompleted(r);
-        flowService.markOrderAsCompleted();
+        flowService.markOrderAsProcessed();
 
         TaskService.TasksAndAssignToStationResult assignToStation3 =
                 taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
@@ -205,7 +205,7 @@ public class TestFlowService extends PreparingFlow {
                 taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
         assertNull(assignToStation4.getSimpleTask());
 
-        flowService.markOrderAsCompleted();
+        flowService.markOrderAsProcessed();
 
         TaskService.TasksAndAssignToStationResult assignToStation51 =
                 taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());

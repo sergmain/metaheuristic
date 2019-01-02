@@ -268,7 +268,7 @@ public class FlowController {
         // ugly work-around on StaleObjectStateException
         result.flow = flowCache.findById(flowId);
         if (result.flow == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.65 flow wasn't found, flowId: " + flowId);
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.73 flow wasn't found, flowId: " + flowId);
             return "redirect:/launchpad/flow/flows";
         }
 

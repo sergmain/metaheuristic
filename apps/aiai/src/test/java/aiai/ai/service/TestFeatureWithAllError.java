@@ -63,7 +63,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         noNewTask();
 
-        flowService.markOrderAsCompleted();
+        flowService.markOrderAsProcessed();
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToStation_mustBeNewTask()");
