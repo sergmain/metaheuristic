@@ -52,8 +52,7 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     @Query(value="select t.id, t.params from Task t where t.flowInstanceId=:flowInstanceId")
     Stream<Object[]> findByFlowInstanceId(long flowInstanceId);
 
-    @Query("SELECT t FROM Task t where t.stationId=null and " +
-            "t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
+    @Query("SELECT t FROM Task t where t.stationId is null and t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
     Slice<Task> findForAssigning(Pageable pageable, long flowInstanceId, int taskOrder);
 
     @Query("SELECT t FROM Task t where t.stationId is not null and t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
