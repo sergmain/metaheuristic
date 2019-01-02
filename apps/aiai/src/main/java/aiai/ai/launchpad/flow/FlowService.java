@@ -357,6 +357,10 @@ public class FlowService {
     }
 
     private void markOrderAsProcessed(FlowInstance flowInstance) {
+        List<Long> anyTask = taskRepository.findAnyNotAssignedWithConcreteOrder(Consts.PAGE_REQUEST_1_REC, flowInstance.getId(), flowInstance.getProducingOrder() );
+        if (!anyTask.isEmpty()) {
+            return;
+        }
         List<Task> forChecking = taskRepository.findWithConcreteOrder(flowInstance.getId(), flowInstance.getProducingOrder() );
         if (forChecking.isEmpty()) {
             Long count = taskRepository.countWithConcreteOrder(flowInstance.getId(), flowInstance.getProducingOrder() + 1);

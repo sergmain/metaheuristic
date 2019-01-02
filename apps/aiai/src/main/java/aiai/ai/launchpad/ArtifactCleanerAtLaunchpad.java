@@ -61,7 +61,7 @@ public class ArtifactCleanerAtLaunchpad {
                         .forEach(t -> {
                             isFound.value = true;
                             if (!ids.contains((Long) t[1])) {
-                                log.info("Found orphan task.id: {}", t[0]);
+                                log.info("Found orphan task #{}", t[0]);
                                 taskRepository.deleteById((Long) t[0]);
                             }
                         });
