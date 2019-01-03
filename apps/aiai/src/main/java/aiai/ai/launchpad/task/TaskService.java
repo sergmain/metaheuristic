@@ -1,5 +1,6 @@
 package aiai.ai.launchpad.task;
 
+import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.beans.FlowInstance;
@@ -63,14 +64,17 @@ public class TaskService {
                     return;
                 }
 
+                log.info("Task #{} has to be reset, ResendTaskOutputResourceStatus: ", task.getId(), status );
                 Task result = taskPersistencer.resetTask(task.getId());
                 if (result==null) {
                     log.error("#317.07 Reset of task {} was failed. See log for more info.", task.getId());
                     break;
                 }
 
-                flowInstance.setProducingOrder(task.order);
-                flowInstanceRepository.save(flowInstance);
+                if (task.order<flowInstance.producingOrder) {
+                    flowInstance.setProducingOrder(task.order);
+                    flowInstanceRepository.save(flowInstance);
+                }
                 break;
         }
     }
@@ -100,6 +104,12 @@ public class TaskService {
     }
 
     public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long flowInstanceId) {
+
+        List<Long> anyTaskId = taskRepository.findAnyActiveForStationId(Consts.PAGE_REQUEST_1_REC, stationId);
+        if (!anyTaskId.isEmpty()) {
+            // this station already has active task
+            return EMPTY_RESULT;
+        }
 
         List<FlowInstance> flowInstances;
         if (flowInstanceId==null) {

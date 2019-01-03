@@ -48,7 +48,8 @@ public class TaskPersistencer {
 
     public Enums.UploadResourceStatus setResultReceived(long taskId, boolean value) {
         synchronized (syncObj) {
-            for (int i = 0; i < NUMBER_OF_TRY; i++) {
+            int i=0;
+            for (i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
                     Task task = taskRepository.findById(taskId).orElse(null);
                     if (task == null) {
@@ -64,7 +65,7 @@ public class TaskPersistencer {
                     taskRepository.save(task);
                     return Enums.UploadResourceStatus.OK;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.18 Error set resultReceived to {}, taskId: {}, error: {}", value, taskId, e.toString());
+                    log.warn("#307.18 Error set resultReceived to {} try #{}, taskId: {}, error: {}", value, i, taskId, e.toString());
                 }
             }
         }

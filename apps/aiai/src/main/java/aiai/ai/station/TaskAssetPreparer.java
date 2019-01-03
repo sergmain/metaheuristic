@@ -36,6 +36,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -71,6 +72,9 @@ public class TaskAssetPreparer {
         }
 
         List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(false);
+        if (tasks.size()>1) {
+            log.warn("#951.01 There is more than one task: {}", tasks.stream().map(StationTask::getTaskId).collect(Collectors.toList()));
+        }
         for (StationTask task : tasks) {
             if (StringUtils.isBlank(task.launchpadUrl)) {
                 log.error("launchpadUrl for task {} is blank", task.getTaskId());
