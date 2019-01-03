@@ -108,6 +108,7 @@ public class TaskService {
         List<Long> anyTaskId = taskRepository.findAnyActiveForStationId(Consts.PAGE_REQUEST_1_REC, stationId);
         if (!anyTaskId.isEmpty()) {
             // this station already has active task
+            log.info("#317.10 can't assign any new task to station #{} because this station has active one #{}", stationId, anyTaskId);
             return EMPTY_RESULT;
         }
 
