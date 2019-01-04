@@ -141,6 +141,10 @@ public class TaskPersistencer {
             return null;
         }
         task.setExecState(state.value);
+        if (state==Enums.TaskExecState.ERROR) {
+            task.setCompleted(true);
+            task.setCompletedOn(System.currentTimeMillis());
+        }
         task.setSnippetExecResults(result.getResult());
         task.setMetrics(result.getMetrics());
         task.resultResourceScheduledOn = System.currentTimeMillis();
