@@ -1,0 +1,19 @@
+how to:
+    https://www.javadevjournal.com/spring-boot/spring-boot-application-as-a-service/
+
+sources for winsw
+    https://github.com/kohsuke/winsw
+
+download .exe winsw
+    https://github.com/kohsuke/winsw/releases
+
+config:
+<?xml version="1.0" encoding="UTF-8"?>
+<service>
+   <id>Aiai-service</id>
+   <name>aiai</name>
+   <description>Aiai Spring Boot as a service.</description>
+   <executable>java</executable>
+   <arguments>-Dhttps.protocols=TLSv1.2,SSLv3 -Xrs -Xms512m -Xmx512m -jar "%BASE%\git\apps\aiai\target\aiai.jar" --httpPort=8080</arguments>
+   <logmode>rotate</logmode>
+</service>

@@ -45,6 +45,11 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     @Transactional(readOnly = true)
     List<Task> findByStationIdAndResultReceivedIsFalse(long stationId);
 
+    @Transactional(readOnly = true)
+    @Query(value="select t.id, t.assignedOn from Task t where t.stationId=:stationId and t.resultReceived=false")
+    List<Object[]> findAllByStationIdAndResultReceivedIsFalse(long stationId);
+
+
     @Transactional
     void deleteByFlowInstanceId(long flowInstanceId);
 

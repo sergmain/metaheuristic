@@ -228,19 +228,27 @@ public class ExperimentService {
 
     public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
         final long stationId = Long.parseLong(stationIdAsStr);
-        List<Task> tasks = taskRepository.findByStationIdAndResultReceivedIsFalse(stationId);
-        for (Task task : tasks) {
+        List<Object[]> tasks = taskRepository.findAllByStationIdAndResultReceivedIsFalse(stationId);
+        for (Object[] obj : tasks) {
+            long taskId = ((Number)obj[0]).longValue();
+            Long assignedOn = obj[1]!=null ? ((Number)obj[1]).longValue() : null;
+
             boolean isFound = false;
             for (Protocol.StationTaskStatus.SimpleStatus status : statuses) {
-                if (status.taskId ==task.getId()) {
+                if (status.taskId ==taskId) {
                     isFound = true;
                 }
             }
-            if(!isFound && (task.getAssignedOn()!=null && (System.currentTimeMillis() - task.getAssignedOn() > 90_000))) {
-                log.info("De-assign task #{} from station #{}, {}", task.getId(), stationIdAsStr, task);
-                Task result = taskPersistencer.resetTask(task.getId());
+
+            boolean isExpired = assignedOn!=null && (System.currentTimeMillis() - assignedOn > 90_000);
+            if (!isFound && isExpired) {
+                log.info("De-assign task #{} from station #{}", taskId, stationIdAsStr);
+                log.info("\tstatuses: {}", statuses);
+                log.info("\ttasks: {}", tasks);
+                log.info("\tisFound: {}, is expired: {}", isFound, isExpired);
+                Task result = taskPersistencer.resetTask(taskId);
                 if (result==null) {
-                    log.error("Resetting of task {} was failed. See log for more info.", task.getId());
+                    log.error("Resetting of task {} was failed. See log for more info.", taskId);
                 }
             }
         }
