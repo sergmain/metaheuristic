@@ -1,27 +1,20 @@
-(function(document) {
-    var metas = document.getElementsByTagName('meta'),
-        changeViewportContent = function(content) {
-            for (var i = 0; i < metas.length; i++) {
-                if (metas[i].name == "viewport") {
-                    metas[i].content = content;
-                }
-            }
-        },
-        initialize = function() {
-            changeViewportContent("width=device-width, minimum-scale=1.0, maximum-scale=1.0");
-        },
-        gestureStart = function() {
-            changeViewportContent("width=device-width, minimum-scale=0.25, maximum-scale=1.6");
-        },
-        gestureEnd = function() {
-            initialize();
-        };
+fixScale = function(doc) {
 
+	var addEvent = 'addEventListener',
+	    type = 'gesturestart',
+	    qsa = 'querySelectorAll',
+	    scales = [1, 1],
+	    meta = qsa in doc ? doc[qsa]('meta[name=viewport]') : [];
 
-    if (navigator.userAgent.match(/iPhone/i)) {
-        initialize();
+	function fix() {
+		meta.content = 'width=device-width,minimum-scale=' + scales[0] + ',maximum-scale=' + scales[1];
+		doc.removeEventListener(type, fix, true);
+	}
 
-        document.addEventListener("touchstart", gestureStart, false);
-        document.addEventListener("touchend", gestureEnd, false);
-    }
-})(document);
+	if ((meta = meta[meta.length - 1]) && addEvent in doc) {
+		fix();
+		scales = [.25, 1.6];
+		doc[addEvent](type, fix, true);
+	}
+
+};
