@@ -407,16 +407,30 @@ public class StationTaskService {
             File launchpadDir = new File(globals.stationTaskDir, metadataService.launchpadUrlAsCode(launchpadUrl).code);
             String path = getTaskPath(taskId);
             File systemDir = new File(launchpadDir, path);
+            File taskYamlFile = new File(systemDir, Consts.TASK_YAML);
             try {
                 if (systemDir.exists()) {
-                    FileUtils.deleteDirectory(systemDir);
+                    log.warn("#713.57 task's directory already exists {}", systemDir.getPath());
+                    if (taskYamlFile.exists()) {
+                        File temp = File.createTempFile("",".temp", taskYamlFile.getParentFile());
+                        FileUtils.moveFile(taskYamlFile, temp);
+                        if (taskYamlFile.exists()) {
+                            log.error("#713.58 File task.yaml still exists");
+                        }
+                    }
+                    File tempDir = File.createTempFile("",".temp", systemDir.getParentFile());
+                    //noinspection ResultOfMethodCallIgnored
+                    systemDir.renameTo(tempDir);
+                    FileUtils.deleteDirectory(tempDir);
+                    if (systemDir.exists()) {
+                        log.error("c#713.59 an't delete or more task's dir {}", systemDir.getPath());
+                    }
                 }
                 //noinspection ResultOfMethodCallIgnored
                 systemDir.mkdirs();
-                File taskYamlFile = new File(systemDir, Consts.TASK_YAML);
                 FileUtils.write(taskYamlFile, StationTaskUtils.toString(task), Charsets.UTF_8, false);
             } catch (Throwable th) {
-                String es = "#713.58 Error";
+                String es = "#713.60 Error";
                 log.error(es, th);
                 throw new RuntimeException(es, th);
             }
@@ -452,7 +466,7 @@ public class StationTaskService {
         try {
             FileUtils.write(taskYaml, StationTaskUtils.toString(task), Charsets.UTF_8, false);
         } catch (IOException e) {
-            String es = "#713.61 Error while writing to file: " + taskYaml.getPath();
+            String es = "#713.63 Error while writing to file: " + taskYaml.getPath();
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }

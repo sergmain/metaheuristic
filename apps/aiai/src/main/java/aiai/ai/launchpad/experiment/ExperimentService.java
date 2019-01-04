@@ -244,7 +244,7 @@ public class ExperimentService {
             boolean isExpired = assignedOn!=null && (System.currentTimeMillis() - assignedOn > 90_000);
             if (!isFound && isExpired) {
                 log.info("De-assign task #{} from station #{}", taskId, stationIdAsStr);
-                log.info("\tstatuses: {}", statuses);
+                log.info("\tstatuses: {}", statuses.stream().map( o -> ""+o.taskId).collect(Collectors.toList()));
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tisFound: {}, is expired: {}", isFound, isExpired);
                 Task result = taskPersistencer.resetTask(taskId);

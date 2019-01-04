@@ -80,7 +80,7 @@ public class LaunchpadRequestor {
         this.restTemplate = new RestTemplate();
         this.launchpad = this.launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
         if (launchpad==null) {
-            throw new IllegalStateException("Can'r find launchpad config for url "+ launchpadUrl);
+            throw new IllegalStateException("#775.01 Can'r find launchpad config for url "+ launchpadUrl);
         }
         final String restUrl = launchpadUrl + (launchpad.launchpadLookup.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
         serverRestUrl = restUrl + Consts.SERVER_REST_URL;
@@ -181,7 +181,7 @@ public class LaunchpadRequestor {
             Monitoring.log("##016", Enums.Monitor.MEMORY);
             ExchangeData result = response.getBody();
             if (result==null) {
-                log.warn("Launchpad returned null as a result");
+                log.warn("#775.05 Launchpad returned null as a result");
                 return;
             }
             result.launchpadUrl = launchpadUrl;
@@ -192,10 +192,10 @@ public class LaunchpadRequestor {
         }
         catch (HttpClientErrorException e) {
             if (e.getStatusCode()== HttpStatus.UNAUTHORIZED) {
-                log.error("Error 401 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
+                log.error("#775.11 Error 401 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
             }
             else if (e.getStatusCode()== HttpStatus.FORBIDDEN) {
-                log.error("Error 403 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
+                log.error("#775.16 Error 403 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
             }
             else {
                 throw e;
@@ -204,16 +204,16 @@ public class LaunchpadRequestor {
         catch (ResourceAccessException e) {
             Throwable cause = e.getCause();
             if (cause instanceof SocketException) {
-                log.error("Connection error: {}", cause.toString());
+                log.error("#775.22 Connection error: {}", cause.toString());
             }
             else {
-                log.error("Error", e);
+                log.error("#775.27 Error", e);
             }
         }
         catch (RestClientException e) {
-            log.error("Error accessing url: {}, error: {}", serverRestUrl, e.getMessage());
+            log.error("#775.31 Error accessing url: {}, error: {}", serverRestUrl, e.getMessage());
             if (e.getMessage()==null || !e.getMessage().contains("503")) {
-                log.error("Stacktrace", e);
+                log.error("#775.35 Stacktrace", e);
             }
         }
     }
