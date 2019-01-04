@@ -144,6 +144,7 @@ public class TaskPersistencer {
         if (state==Enums.TaskExecState.ERROR) {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
+            // TODO add here statuses to tasks which are in chain after this one
         }
         task.setSnippetExecResults(result.getResult());
         task.setMetrics(result.getMetrics());
