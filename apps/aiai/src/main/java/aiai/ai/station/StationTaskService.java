@@ -391,18 +391,27 @@ public class StationTaskService {
             throw new IllegalStateException("#713.55 launchpadUrl is null");
         }
         synchronized (StationSyncHolder.stationGlobalSync) {
-            log.info("Assign task #{}, params:\n{}", taskId, params );
+            log.info("Assign new task #{}, params:\n{}", taskId, params );
             Map<Long, StationTask> mapForLaunchpadUrl = getMapForLaunchpadUrl(launchpadUrl);
             StationTask task = mapForLaunchpadUrl.computeIfAbsent(taskId, k -> new StationTask());
 
             task.taskId = taskId;
             task.flowInstanceId = flowInstanceId;
-            task.createdOn = System.currentTimeMillis();
             task.params = params;
-            task.finishedOn = null;
+            task.metrics = null;
+            task.snippetExecResult = null;
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
             task.clean = taskParamYaml.clean;
             task.launchpadUrl = launchpadUrl;
+            task.createdOn = System.currentTimeMillis();
+            task.assetsPrepared = false;
+            task.launchedOn = null;
+            task.finishedOn = null;
+            task.reportedOn = null;
+            task.reported = false;
+            task.delivered = false;
+            task.resourceUploaded = false;
+            task.completed = false;
 
             File launchpadDir = new File(globals.stationTaskDir, metadataService.launchpadUrlAsCode(launchpadUrl).code);
             String path = getTaskPath(taskId);
