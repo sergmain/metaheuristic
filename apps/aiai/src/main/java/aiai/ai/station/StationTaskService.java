@@ -378,7 +378,8 @@ public class StationTaskService {
 
     public Protocol.StationTaskStatus produceStationTaskStatus(String launchpadUrl) {
         Protocol.StationTaskStatus status = new Protocol.StationTaskStatus(new ArrayList<>());
-        List<StationTask> list = findAllByFinishedOnIsNull(launchpadUrl);
+//        List<StationTask> list = findAllByFinishedOnIsNull(launchpadUrl);
+        List<StationTask> list = findAll(launchpadUrl);
         for (StationTask task : list) {
             status.getStatuses().add( new Protocol.StationTaskStatus.SimpleStatus(task.getTaskId()));
         }
