@@ -7,8 +7,6 @@ import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Station;
-import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.repositories.ExperimentRepository;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
@@ -16,7 +14,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -30,8 +27,6 @@ public class ServerService {
 
     private final CommandProcessor commandProcessor;
     private final StationsRepository stationsRepository;
-    private final FlowInstanceRepository flowInstanceRepository;
-    private final TaskRepository taskRepository;
     private final CommandSetter commandSetter;
 
     @Service
@@ -52,15 +47,13 @@ public class ServerService {
         }
     }
 
-    public ServerService(CommandProcessor commandProcessor, StationsRepository stationsRepository, ExperimentRepository experimentRepository, BinaryDataService binaryDataService, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, CommandSetter commandSetter) {
+    public ServerService(CommandProcessor commandProcessor, StationsRepository stationsRepository, CommandSetter commandSetter) {
         this.commandProcessor = commandProcessor;
         this.stationsRepository = stationsRepository;
-        this.flowInstanceRepository = flowInstanceRepository;
-        this.taskRepository = taskRepository;
         this.commandSetter = commandSetter;
     }
 
-    ExchangeData processRequest(@RequestBody ExchangeData data, String remoteAddress) {
+    public ExchangeData processRequest(ExchangeData data, String remoteAddress) {
         if (StringUtils.isBlank(data.getStationId())) {
             return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
         }

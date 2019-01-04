@@ -98,7 +98,7 @@ public class TaskService {
         List<Long> ids = new ArrayList<>();
         for (SimpleTaskExecResult result : results) {
             ids.add(result.taskId);
-            taskPersistencer.markAsCompleted(result);
+            taskPersistencer.storeExecResult(result);
         }
         return ids;
     }

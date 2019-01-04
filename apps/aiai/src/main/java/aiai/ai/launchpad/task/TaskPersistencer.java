@@ -118,7 +118,7 @@ public class TaskPersistencer {
         return null;
     }
 
-    public Task markAsCompleted(SimpleTaskExecResult result) {
+    public Task storeExecResult(SimpleTaskExecResult result) {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {

@@ -86,8 +86,12 @@ public class ServerController {
         //
     }
 
-    @PostMapping("/rest-anon/srv")
-    public ExchangeData processRequestAnon(HttpServletResponse response, @RequestBody ExchangeData data, HttpServletRequest request) throws IOException {
+    @PostMapping("/rest-anon/srv/{random-part}")
+    public ExchangeData processRequestAnon(
+            HttpServletResponse response, HttpServletRequest request,
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
+            @RequestBody ExchangeData data
+            ) throws IOException {
         log.debug("processRequestAnon(), globals.isSecureRestUrl: {}, data: {}", globals.isSecureLaunchpadRestUrl, data);
         if (globals.isSecureLaunchpadRestUrl) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -96,20 +100,23 @@ public class ServerController {
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
-    @PostMapping("/rest-auth/srv")
-    public ExchangeData processRequestAuth(@RequestBody ExchangeData data, HttpServletRequest request) {
+    @PostMapping("/rest-auth/srv/{random-part}")
+    public ExchangeData processRequestAuth(
+            HttpServletRequest request,
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
+            @RequestBody ExchangeData data
+            ) {
         log.debug("processRequestAuth(), globals.isSecureRestUrl: {}, data: {}", globals.isSecureLaunchpadRestUrl, data);
         return serverService.processRequest(data, request.getRemoteAddr());
     }
 
-    @SuppressWarnings("unused")
     @GetMapping(value="/rest-anon/payload/resource/{type}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> deliverResourceAnon(
             HttpServletResponse response,
             @PathVariable("type") String typeAsStr,
-            @PathVariable("random-part") String randomPart,
-            String stationId,
-            Long taskId,
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
+            @SuppressWarnings("unused") String stationId,
+            @SuppressWarnings("unused") Long taskId,
             String code) throws IOException {
         log.debug("deliverResourceAnon(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
         if (globals.isSecureLaunchpadRestUrl) {
@@ -119,27 +126,25 @@ public class ServerController {
         return deliverResourceToStation(response, typeAsStr, code);
     }
 
-    @SuppressWarnings("unused")
     @GetMapping(value="/rest-auth/payload/resource/{type}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> deliverResourceAuth(
             HttpServletResponse response,
             @PathVariable("type") String typeAsStr,
-            @PathVariable("random-part") String randomPart,
-            String stationId,
-            Long taskId,
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
+            @SuppressWarnings("unused") String stationId,
+            @SuppressWarnings("unused") Long taskId,
             String code) throws IOException {
         log.debug("deliverResourceAuth(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
         return deliverResourceToStation(response, typeAsStr, code);
     }
 
-    @SuppressWarnings("unused")
     @PostMapping("/rest-anon/upload/{random-part}")
     public UploadResult uploadResourceAnon(
             HttpServletResponse response,
             MultipartFile file,
-            String stationId,
+            @SuppressWarnings("unused") String stationId,
             Long taskId,
-            @PathVariable("random-part") String randomPart
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
     ) throws IOException {
         log.debug("uploadResourceAnon(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
         if (globals.isSecureLaunchpadRestUrl) {
@@ -149,15 +154,13 @@ public class ServerController {
         return uploadResource(file, taskId);
     }
 
-    @SuppressWarnings("unused")
     @PostMapping("/rest-auth/upload/{random-part}")
     public UploadResult uploadResourceAuth(
-            HttpServletResponse response,
             MultipartFile file,
-            String stationId,
+            @SuppressWarnings("unused") String stationId,
             Long taskId,
-            @PathVariable("random-part") String randomPart
-    ) throws IOException {
+            @SuppressWarnings("unused") @PathVariable("random-part") String randomPart
+    ) {
         log.debug("uploadResourceAuth(), globals.isSecureRestUrl: {}, taskId: {}", globals.isSecureLaunchpadRestUrl, taskId);
         return uploadResource(file, taskId);
     }

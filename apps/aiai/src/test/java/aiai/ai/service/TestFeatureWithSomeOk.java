@@ -19,6 +19,7 @@ package aiai.ai.service;
 
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.task.TaskService;
+import aiai.ai.preparing.FeatureMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;

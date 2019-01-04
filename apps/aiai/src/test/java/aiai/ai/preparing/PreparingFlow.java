@@ -2,6 +2,7 @@ package aiai.ai.preparing;
 
 import aiai.ai.Enums;
 import aiai.ai.flow.TaskCollector;
+import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
@@ -21,6 +22,10 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
+import java.util.Arrays;
+import java.util.Collections;
+
+import static org.junit.Assert.assertTrue;
 
 @Slf4j
 public abstract class PreparingFlow extends PreparingExperiment {
@@ -60,6 +65,68 @@ public abstract class PreparingFlow extends PreparingExperiment {
 
     public abstract String getFlowParamsAsYaml();
 
+    public String getFlowParamsAsYaml_Simple() {
+        flowYaml = new FlowYaml();
+        {
+            Process p = new Process();
+            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.name = "assembly raw file";
+            p.code = "assembly-raw-file";
+
+            p.inputType = "raw-part-data";
+            p.snippetCodes = Collections.singletonList("snippet-01:1.1");
+            p.collectResources = false;
+            p.outputType = "assembled-raw";
+
+            flowYaml.processes.add(p);
+        }
+        {
+            Process p = new Process();
+            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.name = "dataset processing";
+            p.code = "dataset-processing";
+
+            p.snippetCodes = Collections.singletonList("snippet-02:1.1");
+            p.collectResources = true;
+            p.outputType = "dataset-processing";
+
+            flowYaml.processes.add(p);
+        }
+        {
+            Process p = new Process();
+            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.name = "feature processing";
+            p.code = "feature-processing";
+
+            p.snippetCodes = Arrays.asList("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
+            p.parallelExec = true;
+            p.collectResources = false;
+            p.outputType = "feature";
+
+            flowYaml.processes.add(p);
+        }
+        {
+            Process p = new Process();
+            p.type = Enums.ProcessType.EXPERIMENT;
+            p.name = "experiment";
+            p.code = PreparingExperiment.TEST_EXPERIMENT_CODE_01;
+
+            p.metas.addAll(
+                    Arrays.asList(
+                            new Process.Meta("assembled-raw", "assembled-raw", null),
+                            new Process.Meta("dataset", "dataset-processing", null),
+                            new Process.Meta("feature", "feature", null)
+                    )
+            );
+
+            flowYaml.processes.add(p);
+        }
+
+        String yaml = flowYamlUtils.toString(flowYaml);
+        System.out.println(yaml);
+        return yaml;
+    }
+
     @Autowired
     private BinaryDataService binaryDataService;
 
@@ -68,11 +135,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
 
     @Before
     public void beforePreparingFlow() {
-        // snippet-01:1.1
-        // snippet-02:1.1
-        // snippet-03:1.1
-        // snippet-04:1.1
-        // snippet-05:1.1
+        assertTrue(globals.isUnitTesting);
 
         s1 = createSnippet("snippet-01:1.1");
         s2 = createSnippet("snippet-02:1.1");

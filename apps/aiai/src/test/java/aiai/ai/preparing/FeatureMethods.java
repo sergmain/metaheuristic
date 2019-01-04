@@ -15,13 +15,12 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.service;
+package aiai.ai.preparing;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
-import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
@@ -32,9 +31,7 @@ import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.task.TaskService;
-import aiai.ai.preparing.PreparingExperiment;
 import aiai.ai.preparing.PreparingFlow;
-import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -42,19 +39,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
 @Slf4j
 public abstract class FeatureMethods extends PreparingFlow {
-
-    private static final String TEST_FIT_SNIPPET = "test.fit.snippet";
-    private static final String SNIPPET_VERSION_1_0 = "1.0";
-    private static final String TEST_PREDICT_SNIPPET = "test.predict.snippet";
-    private static final int EXPECTED_FEATURE_PERMUTATIONS_NUMBER = 7;
 
     @Autowired
     protected Globals globals;
@@ -83,72 +73,15 @@ public abstract class FeatureMethods extends PreparingFlow {
     @Autowired
     protected TaskService taskService;
 
-    @Autowired
-    private BinaryDataService binaryDataService;
-
-    boolean isCorrectInit = true;
+    public boolean isCorrectInit = true;
 
     @Override
     public String getFlowParamsAsYaml() {
-        flowYaml = new FlowYaml();
-        {
-            Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
-            p.name = "assembly raw file";
-            p.code = "assembly-raw-file";
+        return getFlowParamsAsYaml_Simple();
+    }
 
-            p.inputType = "raw-part-data";
-            p.snippetCodes = Collections.singletonList("snippet-01:1.1");
-            p.collectResources = false;
-            p.outputType = "assembled-raw";
-
-            flowYaml.processes.add(p);
-        }
-        {
-            Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
-            p.name = "dataset processing";
-            p.code = "dataset-processing";
-
-            p.snippetCodes = Collections.singletonList("snippet-02:1.1");
-            p.collectResources = true;
-            p.outputType = "dataset-processing";
-
-            flowYaml.processes.add(p);
-        }
-        {
-            Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
-            p.name = "feature processing";
-            p.code = "feature-processing";
-
-            p.snippetCodes = Arrays.asList("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
-            p.parallelExec = true;
-            p.collectResources = false;
-            p.outputType = "feature";
-
-            flowYaml.processes.add(p);
-        }
-        {
-            Process p = new Process();
-            p.type = Enums.ProcessType.EXPERIMENT;
-            p.name = "experiment";
-            p.code = PreparingExperiment.TEST_EXPERIMENT_CODE_01;
-
-            p.metas.addAll(
-                    Arrays.asList(
-                            new Process.Meta("assembled-raw", "assembled-raw", null),
-                            new Process.Meta("dataset", "dataset-processing", null),
-                            new Process.Meta("feature", "feature", null)
-                    )
-            );
-
-            flowYaml.processes.add(p);
-        }
-
-        String yaml = flowYamlUtils.toString(flowYaml);
-        System.out.println(yaml);
-        return yaml;
+    public void toStarted() {
+        flowInstance = flowService.toStarted(flowInstance);
     }
 
     protected void produceTasks() {
@@ -232,12 +165,12 @@ public abstract class FeatureMethods extends PreparingFlow {
         taskService.storeAllConsoleResults(results);
     }
 
-    protected void finishCurrentWithOk(int expectedSeqs) {
+    protected void finishCurrentWithOk(int expectedTasks) {
         // lets report about sequences that all finished with error (errorCode!=0)
         List<SimpleTaskExecResult> results = new ArrayList<>();
         List<Task> tasks = taskRepository.findByStationIdAndResultReceivedIsFalse(station.getId());
-        if (expectedSeqs!=0) {
-            assertEquals(expectedSeqs, tasks.size());
+        if (expectedTasks!=0) {
+            assertEquals(expectedTasks, tasks.size());
         }
         for (Task task : tasks) {
             SnippetExec snippetExec = new SnippetExec();

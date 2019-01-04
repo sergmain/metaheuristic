@@ -356,10 +356,10 @@ public class FlowService {
         }
     }
 
-    private void markOrderAsProcessed(FlowInstance flowInstance) {
+    public FlowInstance markOrderAsProcessed(FlowInstance flowInstance) {
         List<Long> anyTask = taskRepository.findAnyNotAssignedWithConcreteOrder(Consts.PAGE_REQUEST_1_REC, flowInstance.getId(), flowInstance.getProducingOrder() );
         if (!anyTask.isEmpty()) {
-            return;
+            return flowInstance;
         }
         List<Task> forChecking = taskRepository.findWithConcreteOrder(flowInstance.getId(), flowInstance.getProducingOrder() );
         if (forChecking.isEmpty()) {
@@ -371,17 +371,17 @@ public class FlowService {
                 log.info("FlowInstance #{} was finished", flowInstance.getId());
                 flowInstance.setCompletedOn(System.currentTimeMillis());
                 flowInstance.setExecState(Enums.FlowInstanceExecState.FINISHED.code);
-                flowInstanceRepository.save(flowInstance);
+                return flowInstanceRepository.save(flowInstance);
             }
-            return;
+            return flowInstance;
         }
         for (Task task : forChecking) {
             if (!task.isCompleted) {
-                return;
+                return flowInstance;
             }
         }
         flowInstance.setProducingOrder(flowInstance.getProducingOrder()+1);
-        flowInstanceRepository.save(flowInstance);
+        return flowInstanceRepository.save(flowInstance);
     }
 
 

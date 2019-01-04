@@ -37,10 +37,12 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.SocketException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * User: Serg
@@ -122,7 +124,7 @@ public class LaunchpadRequestor {
 
         Monitoring.log("##010", Enums.Monitor.MEMORY);
         ExchangeData data = new ExchangeData();
-        String stationId = metadataService.getStationId(launchpadUrl);
+        final String stationId = metadataService.getStationId(launchpadUrl);
         if (stationId==null) {
             data.setCommand(new Protocol.RequestStationId());
         }
@@ -173,7 +175,9 @@ public class LaunchpadRequestor {
 
             HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
             Monitoring.log("##015", Enums.Monitor.MEMORY);
-            ResponseEntity<ExchangeData> response = restTemplate.exchange(serverRestUrl, HttpMethod.POST, request, ExchangeData.class);
+            final String url = serverRestUrl + + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;
+
+            ResponseEntity<ExchangeData> response = restTemplate.exchange(url, HttpMethod.POST, request, ExchangeData.class);
             Monitoring.log("##016", Enums.Monitor.MEMORY);
             ExchangeData result = response.getBody();
             if (result==null) {

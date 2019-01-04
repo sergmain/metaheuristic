@@ -34,6 +34,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 
+import static org.junit.Assert.assertTrue;
+
 @Slf4j
 public abstract class PreparingExperiment {
 
@@ -76,6 +78,8 @@ public abstract class PreparingExperiment {
     private BinaryDataService binaryDataService;
 
     public Station station = null;
+    public String stationIdAsStr;
+
     public FlowInstance flowInstance = null;
     public Experiment experiment = null;
     public boolean isCorrectInit = true;
@@ -85,6 +89,8 @@ public abstract class PreparingExperiment {
 
     @Before
     public void beforePreparingExperiment() {
+        assertTrue(globals.isUnitTesting);
+
         try {
             long mills;
 
@@ -103,7 +109,7 @@ public abstract class PreparingExperiment {
             station.setDescription("Test station. Must be deleted automatically");
             stationsRepository.save(station);
             log.info("stationsRepository.save() was finished for {}", System.currentTimeMillis() - mills);
-
+            stationIdAsStr =  Long.toString(station.getId());
 
             // Prepare snippets
             mills = System.currentTimeMillis();

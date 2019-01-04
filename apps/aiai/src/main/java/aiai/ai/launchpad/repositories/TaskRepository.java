@@ -93,4 +93,16 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     @Query("SELECT new aiai.ai.launchpad.experiment.task.TaskWIthType(t, tef.taskType) FROM Task t, ExperimentTaskFeature tef " +
             "where t.id=tef.taskId and tef.featureId=:featureId ")
     Slice<TaskWIthType> findPredictTasks(Pageable pageable, long featureId);
+
+
+    @Query(nativeQuery = true, value = "select z.* "+
+            "from ( "+
+            "           SELECT count(*) count, t.TASK_ORDER "+
+            "           FROM aiai_lp_task t\n"+
+            "           where t.flow_Instance_Id =:flowInstanceId "+
+            "           group by t.TASK_ORDER "+
+            "     ) z "+
+            "order by z.TASK_ORDER asc")
+    List<Object[]> getCountPerOrder(Long flowInstanceId);
+
 }

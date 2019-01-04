@@ -19,6 +19,7 @@ package aiai.ai.service;
 
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.task.TaskService;
+import aiai.ai.preparing.FeatureMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -43,7 +44,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         produceTasks();
         log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
-        flowInstance = flowService.toStarted(flowInstance);
+        toStarted();
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToStation_mustBeNewTask()");
