@@ -409,23 +409,7 @@ public class StationTaskService {
             File systemDir = new File(launchpadDir, path);
             File taskYamlFile = new File(systemDir, Consts.TASK_YAML);
             try {
-                if (systemDir.exists()) {
-                    log.warn("#713.57 task's directory already exists {}", systemDir.getPath());
-                    if (taskYamlFile.exists()) {
-                        File temp = File.createTempFile("",".temp", taskYamlFile.getParentFile());
-                        FileUtils.moveFile(taskYamlFile, temp);
-                        if (taskYamlFile.exists()) {
-                            log.error("#713.58 File task.yaml still exists");
-                        }
-                    }
-                    File tempDir = File.createTempFile("",".temp", systemDir.getParentFile());
-                    //noinspection ResultOfMethodCallIgnored
-                    systemDir.renameTo(tempDir);
-                    FileUtils.deleteDirectory(tempDir);
-                    if (systemDir.exists()) {
-                        log.error("c#713.59 an't delete or more task's dir {}", systemDir.getPath());
-                    }
-                }
+                deleteOrRenameTaskDir(systemDir, taskYamlFile);
                 //noinspection ResultOfMethodCallIgnored
                 systemDir.mkdirs();
                 FileUtils.write(taskYamlFile, StationTaskUtils.toString(task), Charsets.UTF_8, false);
@@ -435,6 +419,28 @@ public class StationTaskService {
                 throw new RuntimeException(es, th);
             }
         }
+    }
+
+    public static boolean deleteOrRenameTaskDir(File systemDir, File taskYamlFile) throws IOException {
+        if (systemDir.exists()) {
+            log.warn("#713.57 task's directory is exist, {}", systemDir.getPath());
+            if (taskYamlFile.exists()) {
+                File temp = new File(taskYamlFile.getParentFile(), Consts.TASK_YAML+".temp" );
+                FileUtils.moveFile(taskYamlFile, temp);
+                if (taskYamlFile.exists()) {
+                    log.error("#713.58 File task.yaml still exists");
+                }
+            }
+            File tempDir = new File(systemDir.getParentFile(), systemDir.getName() + ".temp");
+            //noinspection ResultOfMethodCallIgnored
+            systemDir.renameTo(tempDir);
+            FileUtils.deleteDirectory(tempDir);
+            if (systemDir.exists()) {
+                log.error("c#713.59 an't delete or more task's dir {}", systemDir.getPath());
+                return false;
+            }
+        }
+        return true;
     }
 
     public StationTask setLaunchOn(String launchpadUrl, long taskId) {
