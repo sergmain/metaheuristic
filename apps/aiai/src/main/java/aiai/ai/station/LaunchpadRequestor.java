@@ -175,7 +175,7 @@ public class LaunchpadRequestor {
 
             HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
             Monitoring.log("##015", Enums.Monitor.MEMORY);
-            final String url = serverRestUrl + + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;
+            final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;
 
             ResponseEntity<ExchangeData> response = restTemplate.exchange(url, HttpMethod.POST, request, ExchangeData.class);
             Monitoring.log("##016", Enums.Monitor.MEMORY);
