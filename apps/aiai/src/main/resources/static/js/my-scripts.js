@@ -5,7 +5,7 @@ function focusLoginInput() {
 
 function my_confirm(message, title, actionName, okAction) {
     let $dialog = $( "#dialog-confirm" );
-    // TODO need to check in another way
+    // TODO do we need to check in another way?
     if ($dialog===undefined) {
         console.log("Element with id='dialog-confirm' wasn't found");
         return;
