@@ -61,7 +61,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -244,7 +243,7 @@ public class ExperimentService {
             boolean isExpired = assignedOn!=null && (System.currentTimeMillis() - assignedOn > 90_000);
             if (!isFound && isExpired) {
                 log.info("De-assign task #{} from station #{}", taskId, stationIdAsStr);
-                log.info("\tstatuses: {}", statuses.stream().map( o -> ""+o.taskId).collect(Collectors.toList()));
+                log.info("\tstatuses: {}", statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()));
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tisFound: {}, is expired: {}", isFound, isExpired);
                 Task result = taskPersistencer.resetTask(taskId);

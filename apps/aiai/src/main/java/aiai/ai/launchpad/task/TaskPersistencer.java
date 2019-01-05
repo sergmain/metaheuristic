@@ -1,8 +1,10 @@
 package aiai.ai.launchpad.task;
 
 import aiai.ai.Enums;
+import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
+import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -19,11 +21,13 @@ public class TaskPersistencer {
 
     private static final int NUMBER_OF_TRY = 2;
     private final TaskRepository taskRepository;
+    private final FlowInstanceRepository flowInstanceRepository;
 
     private final Object syncObj = new Object();
 
-    public TaskPersistencer(TaskRepository taskRepository) {
+    public TaskPersistencer(TaskRepository taskRepository, FlowInstanceRepository flowInstanceRepository) {
         this.taskRepository = taskRepository;
+        this.flowInstanceRepository = flowInstanceRepository;
     }
 
     public Task setParams(long taskId, String taskParams) {
@@ -109,6 +113,12 @@ public class TaskPersistencer {
                     task.resultReceived = false;
                     task.resultResourceScheduledOn = 0;
                     taskRepository.save(task);
+
+                    FlowInstance flowInstance = flowInstanceRepository.findById(taskId).orElse(null);
+                    if (flowInstance!=null && task.order<flowInstance.producingOrder) {
+                        flowInstance.producingOrder = task.order;
+                        flowInstanceRepository.save(flowInstance);
+                    }
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.error("#307.25 Error while reseting task, taskId: {}, error: {}",  taskId, e.toString());

@@ -21,10 +21,12 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
 import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
+import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.utils.SimpleSelectOption;
@@ -129,8 +131,9 @@ public class ExperimentsController {
     private final TaskRepository taskRepository;
     private final SnippetCache snippetCache;
     private final FlowInstanceRepository flowInstanceRepository;
+    private final TaskPersistencer taskPersistencer;
 
-    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentCache experimentCache, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, SnippetCache snippetCache, FlowInstanceRepository flowInstanceRepository) {
+    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentCache experimentCache, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, SnippetCache snippetCache, FlowInstanceRepository flowInstanceRepository, TaskPersistencer taskPersistencer) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
         this.experimentRepository = experimentRepository;
@@ -143,6 +146,7 @@ public class ExperimentsController {
         this.taskRepository = taskRepository;
         this.snippetCache = snippetCache;
         this.flowInstanceRepository = flowInstanceRepository;
+        this.taskPersistencer = taskPersistencer;
     }
 
     @GetMapping("/experiments")
@@ -171,8 +175,8 @@ public class ExperimentsController {
         return data;
     }
 
-    @PostMapping("/experiment-feature-progress-console-part/{id}")
-    public String getSequencesConsolePart(Model model, @PathVariable(name="id") Long taskId) {
+    @PostMapping("/experiment-feature-progress-console-part/{taskId}")
+    public String getSequencesConsolePart(Model model, @PathVariable(name="taskId") Long taskId) {
         ConsoleResult result = new ConsoleResult();
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task!=null) {
@@ -233,7 +237,7 @@ public class ExperimentsController {
         return "launchpad/experiment-add-form";
     }
 
-    @GetMapping(value = "/experiment-info/{id}")
+    @GetMapping(value = "/experiment-info/{taskId}")
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
 
         Experiment experiment = experimentCache.findById(id);
@@ -272,7 +276,7 @@ public class ExperimentsController {
         return "launchpad/experiment-info";
     }
 
-    @GetMapping(value = "/experiment-edit/{id}")
+    @GetMapping(value = "/experiment-edit/{taskId}")
     public String edit(@PathVariable Long id, Model model, @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
@@ -374,7 +378,7 @@ public class ExperimentsController {
         snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
     }
 
-    @PostMapping("/experiment-metadata-add-commit/{id}")
+    @PostMapping("/experiment-metadata-add-commit/{taskId}")
     public String metadataAddCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
@@ -404,11 +408,11 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
-    @PostMapping("/experiment-metadata-edit-commit/{id}")
+    @PostMapping("/experiment-metadata-edit-commit/{taskId}")
     public String metadataEditCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.47 experiment wasn't found, id: "+id );
+            redirectAttributes.addFlashAttribute("errorMessage", "#280.47 experiment wasn't found, taskId: "+id );
             return "redirect:/launchpad/experiments";
         }
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
@@ -438,11 +442,11 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
-    @PostMapping("/experiment-snippet-add-commit/{id}")
+    @PostMapping("/experiment-snippet-add-commit/{taskId}")
     public String snippetAddCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.54 experiment wasn't found, id: "+id );
+            redirectAttributes.addFlashAttribute("errorMessage", "#280.54 experiment wasn't found, taskId: "+id );
             return "redirect:/launchpad/experiments";
         }
         Long experimentId = experiment.getId();
@@ -469,7 +473,7 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
-    @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{id}")
+    @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{taskId}")
     public String metadataDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         ExperimentHyperParams hyperParams = experimentHyperParamsRepository.findById(id).orElse(null);
         if (hyperParams == null || experimentId != hyperParams.getExperiment().getId()) {
@@ -484,7 +488,7 @@ public class ExperimentsController {
     public String metadataDefaultAddCommit(@PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.63 experiment wasn't found, id: "+experimentId );
+            redirectAttributes.addFlashAttribute("errorMessage", "#280.63 experiment wasn't found, taskId: "+experimentId );
             return "redirect:/launchpad/experiments";
         }
         if (experiment.getHyperParams()==null) {
@@ -521,7 +525,7 @@ public class ExperimentsController {
         return params;
     }
 
-    @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{id}")
+    @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{taskId}")
     public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         ExperimentSnippet snippet = experimentSnippetRepository.findById(id).orElse(null);
         if (snippet == null || experimentId != snippet.getExperimentId()) {
@@ -532,11 +536,11 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 
-    @GetMapping("/experiment-delete/{id}")
+    @GetMapping("/experiment-delete/{taskId}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.69 experiment wasn't found, id: "+id );
+            redirectAttributes.addFlashAttribute("errorMessage", "#280.69 experiment wasn't found, taskId: "+id );
             return "redirect:/launchpad/experiments";
         }
         model.addAttribute("experiment", experiment);
@@ -556,40 +560,35 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiments";
     }
 
-    @PostMapping("/task-rerun/{id}")
-    public @ResponseBody boolean rerunTask(@PathVariable long id) {
-        if (true) throw new IllegalStateException("Not implemented yet");
+    @PostMapping("/task-rerun/{taskId}")
+    public @ResponseBody boolean rerunTask(@PathVariable long taskId) {
+        Task task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            log.warn("#280.75 Can't re-run task {}, task with such taskId wasn't found", taskId);
+            return false;
+        }
 /*
-        Task seq = taskRepository.findById(id).orElse(null);
-        if (seq == null) {
-            log.warn("#291.01 Can't re-run sequence {}, sequence with such id wasn't found", id);
-            return false;
-        }
-        ExperimentFeature feature = experimentFeatureRepository.findById(seq.experimentFeatureId).orElse(null);
+        ExperimentFeature feature = experimentFeatureRepository.findById(task.experimentFeatureId).orElse(null);
         if (feature == null) {
-            log.warn("#292.01 Can't re-run sequence {}, ExperimentFeature wasn't found for this sequence", id);
+            log.warn("#270.79 Can't re-run task {}, ExperimentFeature wasn't found for this task", taskId);
             return false;
         }
-        Experiment experiment = experimentCache.findById(seq.getExperimentId()).orElse(null);
-        if (experiment == null) {
-            log.warn("#293.01 Can't re-run sequence {}, this sequence is orphan and doesn't belong to any experiment", id);
+*/
+        FlowInstance flowInstance = flowInstanceRepository.findById(task.getFlowInstanceId()).orElse(null);
+        if (flowInstance == null) {
+            log.warn("#270.84 Can't re-run task {}, this task is orphan and doesn't belong to any flowInstance", taskId);
             return false;
         }
 
-        seq.setCompletedOn(null);
-        seq.setCompleted(false);
-        seq.setMetrics(null);
-        seq.setSnippetExecResults(null);
-        seq.setStationId(null);
-        seq.setAssignedOn(null);
-        taskRepository.save(seq);
+        Task t = taskPersistencer.resetTask(taskId);
 
+/*
         feature.setExecStatus(FeatureExecStatus.unknown.code);
         feature.setFinished(false);
         feature.setInProgress(true);
         experimentFeatureRepository.save(feature);
-
 */
-        return true;
+
+        return t!=null;
     }
 }

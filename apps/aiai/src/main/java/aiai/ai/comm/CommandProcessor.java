@@ -113,7 +113,7 @@ public class CommandProcessor {
 
     private Command[] processResendTaskOutputResourceResult(Protocol.ResendTaskOutputResourceResult command) {
         for (Protocol.ResendTaskOutputResourceResult.SimpleStatus status : command.statuses) {
-            launchpadService.getTaskService().processResendTaskOutputResourceResult(status.status, status.taskId);
+            launchpadService.getTaskService().processResendTaskOutputResourceResult(command.getStationId(), status.status, status.taskId);
         }
         return Protocol.NOP_ARRAY;
     }

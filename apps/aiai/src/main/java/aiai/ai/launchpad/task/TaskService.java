@@ -45,10 +45,10 @@ public class TaskService {
         return tasks.stream().map(Task::getId).collect(Collectors.toList());
     }
 
-    public void processResendTaskOutputResourceResult(Enums.ResendTaskOutputResourceStatus status, long taskId) {
+    public void processResendTaskOutputResourceResult(String stationId, Enums.ResendTaskOutputResourceStatus status, long taskId) {
         switch(status) {
             case SEND_SCHEDULED:
-                log.info("output resource was scheduled for re-sending");
+                log.info("Station #{} scheduled the output resource of task #{} for sending. This is normal operation of flow", stationId, taskId);
                 break;
             case RESOURCE_NOT_FOUND:
             case TASK_IS_BROKEN:
@@ -64,7 +64,7 @@ public class TaskService {
                     return;
                 }
 
-                log.info("Task #{} has to be reset, ResendTaskOutputResourceStatus: {}", task.getId(), status );
+                log.info("#317.06 Task #{} has to be reset, ResendTaskOutputResourceStatus: {}", task.getId(), status );
                 Task result = taskPersistencer.resetTask(task.getId());
                 if (result==null) {
                     log.error("#317.07 Reset of task {} was failed. See log for more info.", task.getId());
