@@ -237,7 +237,7 @@ public class ExperimentsController {
         return "launchpad/experiment-add-form";
     }
 
-    @GetMapping(value = "/experiment-info/{taskId}")
+    @GetMapping(value = "/experiment-info/{id}")
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
 
         Experiment experiment = experimentCache.findById(id);
@@ -276,7 +276,7 @@ public class ExperimentsController {
         return "launchpad/experiment-info";
     }
 
-    @GetMapping(value = "/experiment-edit/{taskId}")
+    @GetMapping(value = "/experiment-edit/{id}")
     public String edit(@PathVariable Long id, Model model, @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
@@ -378,7 +378,7 @@ public class ExperimentsController {
         snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
     }
 
-    @PostMapping("/experiment-metadata-add-commit/{taskId}")
+    @PostMapping("/experiment-metadata-add-commit/{id}")
     public String metadataAddCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
@@ -408,11 +408,11 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
-    @PostMapping("/experiment-metadata-edit-commit/{taskId}")
+    @PostMapping("/experiment-metadata-edit-commit/{id}")
     public String metadataEditCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.47 experiment wasn't found, taskId: "+id );
+            redirectAttributes.addFlashAttribute("errorMessage", "#280.47 experiment wasn't found, id: "+id );
             return "redirect:/launchpad/experiments";
         }
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
@@ -442,11 +442,11 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
-    @PostMapping("/experiment-snippet-add-commit/{taskId}")
+    @PostMapping("/experiment-snippet-add-commit/{id}")
     public String snippetAddCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.54 experiment wasn't found, taskId: "+id );
+            redirectAttributes.addFlashAttribute("errorMessage", "#280.54 experiment wasn't found, id: "+id );
             return "redirect:/launchpad/experiments";
         }
         Long experimentId = experiment.getId();
@@ -473,7 +473,7 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
-    @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{taskId}")
+    @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{id}")
     public String metadataDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         ExperimentHyperParams hyperParams = experimentHyperParamsRepository.findById(id).orElse(null);
         if (hyperParams == null || experimentId != hyperParams.getExperiment().getId()) {
@@ -488,7 +488,7 @@ public class ExperimentsController {
     public String metadataDefaultAddCommit(@PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.63 experiment wasn't found, taskId: "+experimentId );
+            redirectAttributes.addFlashAttribute("errorMessage", "#280.63 experiment wasn't found, id: "+experimentId );
             return "redirect:/launchpad/experiments";
         }
         if (experiment.getHyperParams()==null) {
@@ -525,7 +525,7 @@ public class ExperimentsController {
         return params;
     }
 
-    @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{taskId}")
+    @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{id}")
     public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         ExperimentSnippet snippet = experimentSnippetRepository.findById(id).orElse(null);
         if (snippet == null || experimentId != snippet.getExperimentId()) {
@@ -536,11 +536,11 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 
-    @GetMapping("/experiment-delete/{taskId}")
+    @GetMapping("/experiment-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.69 experiment wasn't found, taskId: "+id );
+            redirectAttributes.addFlashAttribute("errorMessage", "#280.69 experiment wasn't found, id: "+id );
             return "redirect:/launchpad/experiments";
         }
         model.addAttribute("experiment", experiment);
