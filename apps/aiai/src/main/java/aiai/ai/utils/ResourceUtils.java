@@ -17,6 +17,7 @@
  */
 package aiai.ai.utils;
 
+import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.station.AssetFile;
 import lombok.extern.slf4j.Slf4j;
@@ -35,10 +36,17 @@ public class ResourceUtils {
      * @return AssetFile
      */
     public static AssetFile prepareDataFile(File rootDir, String id, String resourceFilename) {
-        Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.DATA;
+        return prepareAssetFile(rootDir, id, resourceFilename, Enums.BinaryDataType.DATA.toString());
+    }
+
+    public static AssetFile prepareArtifactFile(File rootDir, String id, String resourceFilename) {
+        return prepareAssetFile(rootDir, id, resourceFilename, Consts.ARTIFACTS_DIR);
+    }
+
+    public static AssetFile prepareAssetFile(File rootDir, String id, String resourceFilename, String assetDirname) {
 
         final AssetFile assetFile = new AssetFile();
-        final File trgDir = new File(rootDir, binaryDataType.toString());
+        final File trgDir = new File(rootDir, assetDirname);
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
             log.error("Can't create resource dir for task: {}", trgDir.getAbsolutePath());

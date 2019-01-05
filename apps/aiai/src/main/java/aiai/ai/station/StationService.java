@@ -75,19 +75,20 @@ public class StationService {
 
         final File file = new File(globals.stationDir, Consts.ENV_YAML_FILE_NAME);
         if (!file.exists()) {
-            log.warn("Station's environment config file doesn't exist: {}", file.getPath());
+            log.warn("#747.01 Station's environment config file doesn't exist: {}", file.getPath());
             return;
         }
         try {
             env = FileUtils.readFileToString(file, Charsets.UTF_8);
             envYaml = EnvYamlUtils.to(env);
             if (envYaml==null) {
-                log.error("env.yaml wasn't found or empty. path: {}{}env.yaml", globals.stationDir, File.separatorChar );
+                log.error("#747.07 env.yaml wasn't found or empty. path: {}{}env.yaml", globals.stationDir, File.separatorChar );
                 throw new IllegalStateException("Station isn't configured, env.yaml is empty or doesn't exist");
             }
         } catch (IOException e) {
-            log.error("Error", e);
-            throw new IllegalStateException("Error while loading file: " + file.getPath(), e);
+            String es = "#747.11 Error while loading file: " + file.getPath();
+            log.error(es, e);
+            throw new IllegalStateException(es, e);
         }
     }
 
@@ -124,7 +125,7 @@ public class StationService {
 
     public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(String launchpadUrl, long taskId) {
         if (launchpadUrl==null) {
-            throw new IllegalStateException("launchpadUrl is null");
+            throw new IllegalStateException("#747.17 launchpadUrl is null");
         }
         File taskDir = stationTaskService.prepareTaskDir(metadataService.launchpadUrlAsCode(launchpadUrl), taskId);
         File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR+File.separatorChar+Consts.PARAMS_YAML);
@@ -135,14 +136,14 @@ public class StationService {
         try {
             params = FileUtils.readFileToString(paramFile, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            log.error("Error reading param file "+ paramFile.getPath(), e);
+            log.error("#747.23 Error reading param file "+ paramFile.getPath(), e);
             return Enums.ResendTaskOutputResourceStatus.TASK_PARAM_FILE_NOT_FOUND;
         }
         final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
-        final AssetFile assetFile = ResourceUtils.prepareDataFile(taskDir, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
+        final AssetFile assetFile = ResourceUtils.prepareArtifactFile(taskDir, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
-            log.info("Resource hasn't been prepared yet, {}", assetFile);
+            log.warn("#747.28 Resource hasn't been prepared yet, {}", assetFile);
             return Enums.ResendTaskOutputResourceStatus.RESOURCE_NOT_FOUND;
         }
         final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(launchpadUrl);
