@@ -234,7 +234,7 @@ public class ServerController {
         try {
             binaryDataService.storeToFile(code, assetFile.file);
         } catch (BinaryDataNotFoundException e) {
-            log.error("#442.16 Error store data to file, code " + code+", file: " + assetFile.file.getPath());
+            log.error("#442.16 Error store data to temp file, data doesn't exist in db, code " + code+", file: " + assetFile.file.getPath());
             return returnEmptyAsGone(response);
         }
         return new HttpEntity<>(new FileSystemResource(assetFile.file.toPath()), getHeader(assetFile.file.length()));
@@ -242,7 +242,7 @@ public class ServerController {
 
     private HttpEntity<AbstractResource> returnEmptyAsGone(HttpServletResponse response) throws IOException {
         response.sendError(HttpServletResponse.SC_GONE);
-        return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
+        return null;
     }
 
     @SuppressWarnings("unused")
