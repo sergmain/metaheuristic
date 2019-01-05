@@ -64,7 +64,7 @@ public class TaskService {
                     return;
                 }
 
-                log.info("Task #{} has to be reset, ResendTaskOutputResourceStatus: ", task.getId(), status );
+                log.info("Task #{} has to be reset, ResendTaskOutputResourceStatus: {}", task.getId(), status );
                 Task result = taskPersistencer.resetTask(task.getId());
                 if (result==null) {
                     log.error("#317.07 Reset of task {} was failed. See log for more info.", task.getId());
