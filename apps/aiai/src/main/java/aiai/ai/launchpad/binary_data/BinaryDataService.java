@@ -69,10 +69,12 @@ public class BinaryDataService {
             BinaryData data = binaryDataRepository.findByCode(code);
             if (data==null) {
                 log.warn("#087.14.01 Binary data for code {} wasn't found", code);
+/*
                 log.warn("#087.14.02 Current codes:");
                 for (String allCode : binaryDataRepository.dumpAllCodes()) {
                     log.warn("\t#087.14.03 {}", allCode);
                 }
+*/
                 throw new BinaryDataNotFoundException("#087.14 Binary data wasn't found, code: " + code);
             }
             FileUtils.copyInputStreamToFile(data.getData().getBinaryStream(), trgFile);
