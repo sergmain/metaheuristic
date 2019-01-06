@@ -220,9 +220,11 @@ public class StationTaskService {
                 log.error("#713.38 StationTask wasn't found for Id " + taskId);
             } else {
                 if (task.getLaunchedOn()==null) {
+                    log.info("\t713.38.1 task #{} doesn't have the launchedOn as inited", taskId);
                     task.setLaunchedOn(System.currentTimeMillis());
                 }
                 if (!result.isOk) {
+                    log.info("\t713.38.2 task #{} finished with an error, set completed to true", taskId);
                     // there are some problems with this task. complete it
                     task.setCompleted(true);
                 }

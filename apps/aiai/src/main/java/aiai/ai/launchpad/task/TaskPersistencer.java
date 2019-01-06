@@ -130,10 +130,13 @@ public class TaskPersistencer {
 
     public Task storeExecResult(SimpleTaskExecResult result) {
         synchronized (syncObj) {
+            SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
+            if (!snippetExec.exec.isOk) {
+                log.info("#307.27 Task #{} finished with error, console: {}", result.taskId, snippetExec.exec.console);
+            }
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
-                    SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
-                    //noinspection UnnecessaryLocalVariable
+                    //UnnecessaryLocalVariable
                     Task t = prepareAndSaveTask(result, snippetExec.exec.isOk ? Enums.TaskExecState.OK : Enums.TaskExecState.ERROR);
                     return t;
                 } catch (ObjectOptimisticLockingFailureException e) {
