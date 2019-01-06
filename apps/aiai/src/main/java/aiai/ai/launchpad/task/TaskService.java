@@ -5,11 +5,15 @@ import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
+import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
+import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.yaml.env.EnvYaml;
+import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
@@ -17,14 +21,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.omg.CORBA.LongHolder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,6 +43,7 @@ public class TaskService {
     private final FlowInstanceRepository flowInstanceRepository;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetRepository snippetRepository;
+    private final StationsRepository stationsRepository;
 
     public List<Long> resourceReceivingChecker(long stationId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), Enums.TaskExecState.OK.value);
@@ -86,12 +91,13 @@ public class TaskService {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, FlowInstanceRepository flowInstanceRepository, TaskParamYamlUtils taskParamYamlUtils, SnippetRepository snippetRepository) {
+    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, FlowInstanceRepository flowInstanceRepository, TaskParamYamlUtils taskParamYamlUtils, SnippetRepository snippetRepository, StationsRepository stationsRepository) {
         this.taskRepository = taskRepository;
         this.taskPersistencer = taskPersistencer;
         this.flowInstanceRepository = flowInstanceRepository;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.snippetRepository = snippetRepository;
+        this.stationsRepository = stationsRepository;
     }
 
     public List<Long> storeAllConsoleResults(List<SimpleTaskExecResult> results) {
@@ -108,7 +114,7 @@ public class TaskService {
         List<Long> anyTaskId = taskRepository.findAnyActiveForStationId(Consts.PAGE_REQUEST_1_REC, stationId);
         if (!anyTaskId.isEmpty()) {
             // this station already has active task
-            log.info("#317.10 can't assign any new task to station #{} because this station has active one #{}", stationId, anyTaskId);
+            log.info("#317.10 can't assign any new task to station #{} because this station has active task #{}", stationId, anyTaskId);
             return EMPTY_RESULT;
         }
 
@@ -130,8 +136,14 @@ public class TaskService {
             flowInstances = Collections.singletonList(flowInstance);
         }
 
+        Station station = stationsRepository.findById(stationId).orElse(null);
+        if (station==null) {
+            log.error("#317.19 Station wasn't found for id: {}", stationId);
+            return EMPTY_RESULT;
+        }
+
         for (FlowInstance flowInstance : flowInstances) {
-            TasksAndAssignToStationResult result = findUnassignedTaskAndAssign(flowInstance, stationId, isAcceptOnlySigned);
+            TasksAndAssignToStationResult result = findUnassignedTaskAndAssign(flowInstance, station, isAcceptOnlySigned);
             if (!result.equals(EMPTY_RESULT)) {
                 return result;
             }
@@ -139,27 +151,44 @@ public class TaskService {
         return EMPTY_RESULT;
     }
 
-    private TasksAndAssignToStationResult findUnassignedTaskAndAssign(FlowInstance flowInstance, long stationId, boolean isAcceptOnlySigned) {
+    private final Map<Long, LongHolder> bannedSince = new HashMap<>();
+
+    private TasksAndAssignToStationResult findUnassignedTaskAndAssign(FlowInstance flowInstance, Station station, boolean isAcceptOnlySigned) {
+
+        LongHolder longHolder = bannedSince.computeIfAbsent(station.getId(), o -> new LongHolder(0));
+        if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
+            return EMPTY_RESULT;
+        }
 
         int page = 0;
         Task resultTask = null;
         Slice<Task> tasks;
         while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), flowInstance.getId(), flowInstance.producingOrder)).hasContent()) {
             for (Task task : tasks) {
+                final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
+
+                SnippetVersion version = SnippetVersion.from(taskParamYaml.snippet.getCode());
+                if (version == null) {
+                    log.warn("#317.23 Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
+                    continue;
+                }
+                Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
+                if (snippet == null) {
+                    log.warn("#317.26 Can't find snippet for code: {}, snippetVersion: {}", taskParamYaml.snippet.getCode(), version);
+                    continue;
+                }
+
+                EnvYaml envYaml = EnvYamlUtils.to(station.getEnv());
+                String interpreter = envYaml.getEnvs().get(snippet.env);
+                if (interpreter==null) {
+                    log.warn("#317.29 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
+                            station.getId(), task.getId(), snippet.env
+                    );
+                    longHolder.value = System.currentTimeMillis();
+                    continue;
+                }
+
                 if (isAcceptOnlySigned) {
-                    final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
-
-                    SnippetVersion version = SnippetVersion.from(taskParamYaml.snippet.getCode());
-                    if (version == null) {
-                        log.warn("#317.23 Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
-                        continue;
-                    }
-                    Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
-                    if (snippet == null) {
-                        log.warn("#317.26 Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
-                        continue;
-                    }
-
                     if (!snippet.isSigned()) {
                         log.warn("#317.31 Snippet with code {} wasn't signed", taskParamYaml.snippet.getCode());
                         continue;
@@ -178,13 +207,17 @@ public class TaskService {
         if (resultTask==null) {
             return EMPTY_RESULT;
         }
+
+        // normal way of operation
+        longHolder.value = 0;
+
         Protocol.AssignedTask.Task assignedTask = new Protocol.AssignedTask.Task();
         assignedTask.setTaskId(resultTask.getId());
         assignedTask.setFlowInstanceId(flowInstance.getId());
         assignedTask.setParams(resultTask.getParams());
 
         resultTask.setAssignedOn(System.currentTimeMillis());
-        resultTask.setStationId(stationId);
+        resultTask.setStationId(station.getId());
         resultTask.setExecState(Enums.TaskExecState.IN_PROGRESS.value);
         resultTask.resultResourceScheduledOn = 0;
 
@@ -192,6 +225,5 @@ public class TaskService {
 
         return new TasksAndAssignToStationResult(assignedTask);
     }
-
 
 }
