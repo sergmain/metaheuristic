@@ -109,8 +109,8 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                                 .add("code", task.getId())
                                 .build(), StandardCharsets.UTF_8)
 */
-                        .connectTimeout(20000)
-                        .socketTimeout(20000);
+                        .connectTimeout(5000)
+                        .socketTimeout(5000);
 
                 RestUtils.addHeaders(request);
 

@@ -122,8 +122,8 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                                         .add("taskId", Long.toString(task.getTaskId()))
                                         .add("code", task.snippetCode)
                                         .build(), StandardCharsets.UTF_8)
-                                .connectTimeout(20000)
-                                .socketTimeout(20000);
+                                .connectTimeout(5000)
+                                .socketTimeout(5000);
 
                         RestUtils.addHeaders(request);
 
