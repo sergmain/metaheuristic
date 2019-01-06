@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@Import({SpringSecurityWebAuxTestConfig.class, AuthenticationProviderForTests.class})
+@Import({SpringSecurityWebAuxTestConfig.class})
 @ActiveProfiles("launchpad")
 public class TestRestPayload {
 
@@ -38,12 +38,6 @@ public class TestRestPayload {
 
     @Autowired
     private WebApplicationContext webApplicationContext;
-
-    @Autowired
-    private Globals globals;
-
-    @Autowired
-    private AuthenticationProviderForTests authenticationProviderForTests;
 
     @Before
     public void setup() {
@@ -54,26 +48,33 @@ public class TestRestPayload {
 
     @Test
     @WithUserDetails("rest")
-    public void testRestPayload() throws Exception {
-/*
-        @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
-        @SuppressWarnings("unused") String stationId,
-        @SuppressWarnings("unused") Long taskId,
-        String code) throws IOException {
-*/
-        //
-//        final String url = "/rest-anon/payload/resource/DATA/qwe321.bin";
+    public void testRestPayload_asRest() throws Exception {
         final String url = "/rest-auth/payload/resource/DATA/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
         //noinspection ConstantConditions
         assertTrue(url.endsWith(".bin"));
-//        globals.isSecureLaunchpadRestUrl = false;
 
-        MvcResult result = mockMvc.perform(
+        mockMvc.perform(
                 get(url + "?stationId=15&taskId=114784&code=aaa-task-114783-ml_model.bin")
                         .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
         )
-                .andExpect(status().isGone())
-                .andReturn();
+                .andExpect(status().isGone());
+
+
+    }
+
+    @Test
+    @WithUserDetails("user")
+    public void testRestPayload_asUser() throws Exception {
+        final String url = "/rest-auth/payload/resource/DATA/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
+        //noinspection ConstantConditions
+        assertTrue(url.endsWith(".bin"));
+
+        mockMvc.perform(
+                get(url + "?stationId=15&taskId=114784&code=aaa-task-114783-ml_model.bin")
+                        .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
+        )
+                .andExpect(status().isForbidden());
+
 
     }
 

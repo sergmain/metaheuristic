@@ -75,11 +75,13 @@ public class CommandProcessor {
                 // processing on station side
                 return resendTaskOutputResource((Protocol.ResendTaskOutputResource) command);
             case ReportStationStatus:
+                // processing on launchpad side
                 return processReportStationStatus((Protocol.ReportStationStatus) command);
             case ReportTaskProcessingResult:
                 // processing on launchpad side
                 return processReportTaskProcessingResult((Protocol.ReportTaskProcessingResult) command);
             case ReportResultDelivering:
+                // processing on station side
                 return processReportResultDelivering((Protocol.ReportResultDelivering) command);
             case FlowInstanceStatus:
                 // processing on station side

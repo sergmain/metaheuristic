@@ -50,7 +50,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@Import({SpringSecurityWebAuxTestConfig.class, AuthenticationProviderForTests.class, TestRest.JsonTestController.class})
+@Import({SpringSecurityWebAuxTestConfig.class, TestRest.JsonTestController.class})
 @ActiveProfiles("launchpad")
 public class TestRest {
 
@@ -65,6 +65,7 @@ public class TestRest {
         }
     }
     private MockMvc mockMvc;
+
     @Autowired
     private StationsRepository stationsRepository;
 
@@ -73,7 +74,7 @@ public class TestRest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
-    // тестируем, что сообщения маршалятся в json
+    // let's test the case with marshalling message to json
     @Test
     public void testNearMessages() throws Exception {
         MvcResult result = mockMvc.perform(get("/rest-anon/test/message")).andExpect(status().isOk()).andReturn();
@@ -108,11 +109,8 @@ public class TestRest {
     }
 
     @Test
-    @WithUserDetails("admin")
+    @WithUserDetails("rest")
     public void whenTestAdminCredentials_thenOk() throws Exception {
-//        if (globals.isSecureLaunchpadRestUrl) {
-//            return;
-//        }
         MvcResult result = mockMvc.perform(get("/rest-auth/test"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
@@ -128,15 +126,12 @@ public class TestRest {
     }
 
     @Test
-//    @WithUserDetails("admin")
+    @WithUserDetails("rest")
     public void testSimpleCommunicationWithServer() throws Exception {
-        if (globals.isSecureLaunchpadRestUrl) {
-            return;
-        }
-        ExchangeData dataReqest = new ExchangeData(new Protocol.Nop());
-        String jsonReqest = JsonUtils.toJson(dataReqest);
-        MvcResult result = mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
-                .content(jsonReqest))
+        ExchangeData dataRequest = new ExchangeData(new Protocol.Nop());
+        String jsonRequest = JsonUtils.toJson(dataRequest);
+        MvcResult result = mockMvc.perform(post("/rest-auth/srv/qwe321").contentType(Consts.APPLICATION_JSON_UTF8)
+                .content(jsonRequest))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
 

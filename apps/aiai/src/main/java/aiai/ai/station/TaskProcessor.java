@@ -88,11 +88,11 @@ public class TaskProcessor {
             final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 
             if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Broken task. LaunchpadUrl is blank.");
+                stationTaskService.markAsFinished(task.launchpadUrl, task.taskId, "Broken task. LaunchpadUrl is blank.");
                 continue;
             }
             if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
+                stationTaskService.markAsFinished(task.launchpadUrl, task.taskId, "Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
                 continue;
             }
 
@@ -138,13 +138,13 @@ public class TaskProcessor {
             }
 
             if (taskParamYaml.snippet==null) {
-                stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Broken task. Snippet isn't defined");
+                stationTaskService.markAsFinished(task.launchpadUrl, task.taskId, "Broken task. Snippet isn't defined");
                 continue;
             }
 
             File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
             if (artifactDir == null) {
-                stationTaskService.finishAndWriteToLog(task.launchpadUrl, task.taskId, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
+                stationTaskService.markAsFinished(task.launchpadUrl, task.taskId, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 
@@ -223,7 +223,7 @@ public class TaskProcessor {
                 log.error("Error exec process " + interpreter, th);
                 result = new ExecProcessService.Result(false, -1, ExceptionUtils.getStackTrace(th));
             }
-            stationTaskService.markAsFinishedIfAllOk(task.launchpadUrl, task.getTaskId(), result);
+            stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(), result);
         }
     }
 

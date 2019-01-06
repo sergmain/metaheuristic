@@ -29,7 +29,6 @@ import aiai.ai.utils.RestUtils;
 import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
-import org.apache.http.client.fluent.Form;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.client.utils.URIBuilder;
@@ -126,7 +125,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 if (parentDir==null) {
                     String es = "Can't get parent dir for asset file " + assetFile.file.getAbsolutePath();
                     log.error(es);
-                    stationTaskService.finishAndWriteToLog(task.launchpad.url, task.taskId, es);
+                    stationTaskService.markAsFinished(task.launchpad.url, task.taskId, es);
                     continue;
                 }
                 File tempFile;
@@ -135,7 +134,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 } catch (IOException e) {
                     String es = "Error creating temp file in parent dir: " + parentDir.getAbsolutePath();
                     log.error(es, e);
-                    stationTaskService.finishAndWriteToLog(task.launchpad.url, task.taskId, es);
+                    stationTaskService.markAsFinished(task.launchpad.url, task.taskId, es);
                     continue;
                 }
                 response.saveContent(tempFile);
@@ -147,7 +146,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             } catch (HttpResponseException e) {
                 if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
                     log.warn("Resource with id {} wasn't found. stop processing task #{}", task.getId(), task.getTaskId());
-                    stationTaskService.finishAndWriteToLog( task.launchpad.url, task.getTaskId(),
+                    stationTaskService.markAsFinished( task.launchpad.url, task.getTaskId(),
                             String.format("Resource %s wasn't found on launchpad. Task #%s is finished.", task.getId(), task.getTaskId() ));
                 } else if (e.getStatusCode() == HttpServletResponse.SC_CONFLICT) {
                     log.warn("Resource with id {} is broken and need to be recreated", task.getId());

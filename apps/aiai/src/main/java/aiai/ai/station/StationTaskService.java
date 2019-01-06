@@ -206,13 +206,26 @@ public class StationTaskService {
         }
     }
 
-    void markAsFinishedIfAllOk(String launchpadUrl, Long taskId, ExecProcessService.Result result) {
+    public void markAsFinished(String launchpadUrl, long taskId, String es) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            markAsFinished(launchpadUrl, taskId, new ExecProcessService.Result(false, -1, es));
+        }
+    }
+
+    void markAsFinished(String launchpadUrl, Long taskId, ExecProcessService.Result result) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             log.info("markAsFinished({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
                 log.error("#713.38 StationTask wasn't found for Id " + taskId);
             } else {
+                if (task.getLaunchedOn()==null) {
+                    task.setLaunchedOn(System.currentTimeMillis());
+                }
+                if (!result.isOk) {
+                    // there are some problems with this task. complete it
+                    task.setCompleted(true);
+                }
                 task.setFinishedOn(System.currentTimeMillis());
                 task.setDelivered(false);
                 task.setReported(false);
@@ -236,24 +249,6 @@ public class StationTaskService {
                 task.setAssetsPrepared(status);
                 save(task);
             }
-        }
-    }
-
-    public void finishAndWriteToLog(String launchpadUrl, long taskId, String es) {
-        synchronized (StationSyncHolder.stationGlobalSync) {
-            StationTask task = findById(launchpadUrl, taskId);
-            if (task == null) {
-                log.error("#713.45 StationTask wasn't found for Id {}", taskId);
-                return;
-            }
-            log.warn(es);
-            task.setLaunchedOn(System.currentTimeMillis());
-            task.setFinishedOn(System.currentTimeMillis());
-
-            SnippetExec snippetExec = new SnippetExec();
-            snippetExec.setExec( new ExecProcessService.Result(false, -1, es) );
-            task.setSnippetExecResult(SnippetExecUtils.toString(snippetExec));
-            save(task);
         }
     }
 
