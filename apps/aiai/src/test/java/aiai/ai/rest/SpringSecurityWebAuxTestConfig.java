@@ -33,6 +33,7 @@ public class SpringSecurityWebAuxTestConfig {
 
     private static final Long ADMIN_USER_ID = 1L;
     private static final Long USER_USER_ID = 2L;
+    private static final Long REST_USER_ID = 3L;
 
     public static class MyUserDetailsManager implements UserDetailsManager {
 
@@ -40,6 +41,7 @@ public class SpringSecurityWebAuxTestConfig {
 
         MyUserDetailsManager(Collection<Account> users) {
             for (Account user : users) {
+//                this.users.put(user.getUsername()+"="+user.getToken(), user);
                 this.users.put(user.getUsername(), user);
             }
         }
@@ -71,7 +73,8 @@ public class SpringSecurityWebAuxTestConfig {
 
         @Override
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-            return users.get(username);
+            Account account = users.get(username);
+            return account;
         }
     }
 
@@ -80,6 +83,21 @@ public class SpringSecurityWebAuxTestConfig {
     public UserDetailsService userDetailsService() {
 
         List<Account> accounts = new ArrayList<>();
+        {
+            Account account = new Account();
+
+            account.setId(REST_USER_ID);
+            account.setUsername("rest");
+            account.setToken("123");
+            account.setAccountNonExpired(true);
+            account.setAccountNonLocked(true);
+            account.setCredentialsNonExpired(true);
+            account.setEnabled(true);
+            account.setPassword("123");
+
+            account.setRoles("ROLE_ACCESS_REST, ACCESS_REST");
+            accounts.add(account);
+        }
         {
             Account account = new Account();
 
@@ -107,7 +125,7 @@ public class SpringSecurityWebAuxTestConfig {
             account.setEnabled(true);
             account.setPassword("123");
 
-            account.setRoles("ROLE_ADMIN");
+            account.setRoles("ROLE_USER");
             accounts.add(account);
         }
 

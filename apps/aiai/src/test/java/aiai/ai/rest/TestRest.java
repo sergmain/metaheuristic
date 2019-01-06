@@ -110,9 +110,9 @@ public class TestRest {
     @Test
     @WithUserDetails("admin")
     public void whenTestAdminCredentials_thenOk() throws Exception {
-        if (globals.isSecureLaunchpadRestUrl) {
-            return;
-        }
+//        if (globals.isSecureLaunchpadRestUrl) {
+//            return;
+//        }
         MvcResult result = mockMvc.perform(get("/rest-auth/test"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();

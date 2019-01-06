@@ -228,20 +228,24 @@ public class ServerController {
         }
 
         if (assetFile==null) {
-            log.error("#442.12 resource with code {} wasn't found", code);
-            return returnEmptyAsGone(response);
+            String es = "#442.12 resource with code "+code+" wasn't found";
+            log.error(es);
+//            return returnEmptyAsGone(response);
+            throw new BinaryDataNotFoundException(es);
         }
         try {
             binaryDataService.storeToFile(code, assetFile.file);
         } catch (BinaryDataNotFoundException e) {
             log.error("#442.16 Error store data to temp file, data doesn't exist in db, code " + code+", file: " + assetFile.file.getPath());
-            return returnEmptyAsGone(response);
+//            return returnEmptyAsGone(response);
+            throw e;
         }
         return new HttpEntity<>(new FileSystemResource(assetFile.file.toPath()), getHeader(assetFile.file.length()));
     }
 
     private HttpEntity<AbstractResource> returnEmptyAsGone(HttpServletResponse response) throws IOException {
         response.sendError(HttpServletResponse.SC_GONE);
+//        return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
         return null;
     }
 
