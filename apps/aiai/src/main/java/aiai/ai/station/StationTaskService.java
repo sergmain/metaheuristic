@@ -96,11 +96,9 @@ public class StationTaskService {
                                 if (taskYamlFile.exists()) {
                                     try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
                                         StationTask task = StationTaskUtils.to(fis);
-                                        if (task.snippetExecResult!=null) {
-                                            SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
-                                            if (!snippetExec.exec.isOk) {
-                                                markAsFinished(launchpadUrl, taskId, snippetExec.exec);
-                                            }
+                                        SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
+                                        if (snippetExec!=null && !snippetExec.exec.isOk) {
+                                            markAsFinished(launchpadUrl, taskId, snippetExec.exec);
                                         }
                                         getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
                                     }
