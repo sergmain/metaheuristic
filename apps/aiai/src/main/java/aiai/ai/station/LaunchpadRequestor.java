@@ -79,10 +79,10 @@ public class LaunchpadRequestor {
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
         this.restTemplate = new RestTemplate();
         this.launchpad = this.launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
-        if (launchpad==null) {
-            throw new IllegalStateException("#775.01 Can'r find launchpad config for url "+ launchpadUrl);
+        if (launchpad == null) {
+            throw new IllegalStateException("#775.01 Can'r find launchpad config for url " + launchpadUrl);
         }
-        final String restUrl = launchpadUrl + (launchpad.launchpadLookup.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
+        final String restUrl = launchpadUrl + (launchpad.launchpadLookup.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL);
         serverRestUrl = restUrl + Consts.SERVER_REST_URL;
 
     }
@@ -105,7 +105,7 @@ public class LaunchpadRequestor {
 
     /**
      * this scheduler is being run at the station side
-     *
+     * <p>
      * long fixedDelay()
      * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
      */
@@ -121,100 +121,97 @@ public class LaunchpadRequestor {
             log.info("LaunchpadRequestor for url {} is inactive", launchpadUrl);
             return;
         }
+        try {
+            Monitoring.log("##010", Enums.Monitor.MEMORY);
+            ExchangeData data = new ExchangeData();
+            final String stationId = metadataService.getStationId(launchpadUrl);
+            if (stationId == null) {
+                data.setCommand(new Protocol.RequestStationId());
+            }
+            data.setStationId(stationId);
 
-        Monitoring.log("##010", Enums.Monitor.MEMORY);
-        ExchangeData data = new ExchangeData();
-        final String stationId = metadataService.getStationId(launchpadUrl);
-        if (stationId==null) {
-            data.setCommand(new Protocol.RequestStationId());
-        }
-        data.setStationId(stationId);
-
-        if (stationId!=null) {
-            // always report about current active sequences, if we have actual stationId
-            data.setCommand(stationTaskService.produceStationTaskStatus(launchpadUrl));
-            data.setCommand(stationService.produceReportStationStatus(launchpad.periods));
-            if (currentExecState.isInited(launchpadUrl)) {
-                Monitoring.log("##011", Enums.Monitor.MEMORY);
-                final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
-                Monitoring.log("##012", Enums.Monitor.MEMORY);
-                if (b) {
-                    data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.isAcceptOnlySignedSnippets));
+            if (stationId != null) {
+                // always report about current active sequences, if we have actual stationId
+                data.setCommand(stationTaskService.produceStationTaskStatus(launchpadUrl));
+                data.setCommand(stationService.produceReportStationStatus(launchpad.periods));
+                if (currentExecState.isInited(launchpadUrl)) {
+                    Monitoring.log("##011", Enums.Monitor.MEMORY);
+                    final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
+                    Monitoring.log("##012", Enums.Monitor.MEMORY);
+                    if (b) {
+                        data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.isAcceptOnlySignedSnippets));
+                    }
+                }
+                if (System.currentTimeMillis() - lastRequestForMissingResources > 15_000) {
+                    data.setCommand(new Protocol.CheckForMissingOutputResources());
+                    lastRequestForMissingResources = System.currentTimeMillis();
                 }
             }
-            if (System.currentTimeMillis() - lastRequestForMissingResources > 15_000) {
-                data.setCommand(new Protocol.CheckForMissingOutputResources());
-                lastRequestForMissingResources = System.currentTimeMillis();
-            }
-        }
 
-        Monitoring.log("##013", Enums.Monitor.MEMORY);
-        reportTaskProcessingResult(data);
-        Monitoring.log("##014", Enums.Monitor.MEMORY);
+            Monitoring.log("##013", Enums.Monitor.MEMORY);
+            reportTaskProcessingResult(data);
+            Monitoring.log("##014", Enums.Monitor.MEMORY);
 
-        List<Command> cmds;
-        synchronized (commands) {
-            cmds = new ArrayList<>(commands);
-            commands.clear();
-        }
-        data.setCommands(cmds);
+            List<Command> cmds;
+            synchronized (commands) {
+                cmds = new ArrayList<>(commands);
+                commands.clear();
+            }
+            data.setCommands(cmds);
 
-        // !!! always use data.setCommand() for correct initializing stationId !!!
+            // !!! always use data.setCommand() for correct initializing stationId !!!
 
-        // we have to pull new tasks from server constantly
-        try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            if (launchpad.launchpadLookup.isSecureRestUrl) {
-                String auth = launchpad.launchpadLookup.restUsername+'='+launchpad.launchpadLookup.restToken + ':' + launchpad.launchpadLookup.restPassword;
-                byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
-                String authHeader = "Basic " + new String(encodedAuth);
-                headers.set("Authorization", authHeader);
-            }
+            // we have to pull new tasks from server constantly
+            try {
+                HttpHeaders headers = new HttpHeaders();
+                headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
+                headers.setContentType(MediaType.APPLICATION_JSON);
+                if (launchpad.launchpadLookup.isSecureRestUrl) {
+                    String auth = launchpad.launchpadLookup.restUsername + '=' + launchpad.launchpadLookup.restToken + ':' + launchpad.launchpadLookup.restPassword;
+                    byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
+                    String authHeader = "Basic " + new String(encodedAuth);
+                    headers.set("Authorization", authHeader);
+                }
 
-            HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
-            Monitoring.log("##015", Enums.Monitor.MEMORY);
-            final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;
+                HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
+                Monitoring.log("##015", Enums.Monitor.MEMORY);
+                final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;
 
-            ResponseEntity<ExchangeData> response = restTemplate.exchange(url, HttpMethod.POST, request, ExchangeData.class);
-            Monitoring.log("##016", Enums.Monitor.MEMORY);
-            ExchangeData result = response.getBody();
-            if (result==null) {
-                log.warn("#775.05 Launchpad returned null as a result");
-                return;
-            }
-            result.launchpadUrl = launchpadUrl;
+                ResponseEntity<ExchangeData> response = restTemplate.exchange(url, HttpMethod.POST, request, ExchangeData.class);
+                Monitoring.log("##016", Enums.Monitor.MEMORY);
+                ExchangeData result = response.getBody();
+                if (result == null) {
+                    log.warn("#775.05 Launchpad returned null as a result");
+                    return;
+                }
+                result.launchpadUrl = launchpadUrl;
 
-            Monitoring.log("##017", Enums.Monitor.MEMORY);
-            addCommands(commandProcessor.processExchangeData(result).getCommands());
-            Monitoring.log("##018", Enums.Monitor.MEMORY);
-        }
-        catch (HttpClientErrorException e) {
-            if (e.getStatusCode()== HttpStatus.UNAUTHORIZED) {
-                log.error("#775.11 Error 401 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
+                Monitoring.log("##017", Enums.Monitor.MEMORY);
+                addCommands(commandProcessor.processExchangeData(result).getCommands());
+                Monitoring.log("##018", Enums.Monitor.MEMORY);
+            } catch (HttpClientErrorException e) {
+                if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
+                    log.error("#775.11 Error 401 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
+                } else if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
+                    log.error("#775.16 Error 403 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
+                } else {
+                    throw e;
+                }
+            } catch (ResourceAccessException e) {
+                Throwable cause = e.getCause();
+                if (cause instanceof SocketException) {
+                    log.error("#775.22 Connection error: {}", cause.toString());
+                } else {
+                    log.error("#775.27 Error", e);
+                }
+            } catch (RestClientException e) {
+                log.error("#775.31 Error accessing url: {}, error: {}", serverRestUrl, e.getMessage());
+                if (e.getMessage() == null || !e.getMessage().contains("503")) {
+                    log.error("#775.35 Stacktrace", e);
+                }
             }
-            else if (e.getStatusCode()== HttpStatus.FORBIDDEN) {
-                log.error("#775.16 Error 403 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
-            }
-            else {
-                throw e;
-            }
-        }
-        catch (ResourceAccessException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof SocketException) {
-                log.error("#775.22 Connection error: {}", cause.toString());
-            }
-            else {
-                log.error("#775.27 Error", e);
-            }
-        }
-        catch (RestClientException e) {
-            log.error("#775.31 Error accessing url: {}, error: {}", serverRestUrl, e.getMessage());
-            if (e.getMessage()==null || !e.getMessage().contains("503")) {
-                log.error("#775.35 Stacktrace", e);
-            }
+        } catch (Throwable e) {
+            log.error("#775.41 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
         }
     }
 

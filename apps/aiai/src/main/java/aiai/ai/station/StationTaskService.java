@@ -162,7 +162,13 @@ public class StationTaskService {
                 return;
             }
             task.setDelivered(true);
-            task.setCompleted( task.isResourceUploaded() );
+
+            // if snippet has finished with an error,
+            // then we don't have to set isCompleted any more
+            // because we've already marked this task as completed
+            if (!task.isCompleted()) {
+                task.setCompleted(task.isResourceUploaded());
+            }
             save(task);
         }
     }
