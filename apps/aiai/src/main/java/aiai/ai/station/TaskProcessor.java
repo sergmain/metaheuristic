@@ -88,11 +88,11 @@ public class TaskProcessor {
             final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 
             if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.markAsFinished(task.launchpadUrl, task.taskId, "Broken task. LaunchpadUrl is blank.");
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. LaunchpadUrl is blank.");
                 continue;
             }
             if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.markAsFinished(task.launchpadUrl, task.taskId, "Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
                 continue;
             }
 
@@ -138,13 +138,13 @@ public class TaskProcessor {
             }
 
             if (taskParamYaml.snippet==null) {
-                stationTaskService.markAsFinished(task.launchpadUrl, task.taskId, "Broken task. Snippet isn't defined");
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Snippet isn't defined");
                 continue;
             }
 
             File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
             if (artifactDir == null) {
-                stationTaskService.markAsFinished(task.launchpadUrl, task.taskId, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 

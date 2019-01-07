@@ -96,6 +96,12 @@ public class StationTaskService {
                                 if (taskYamlFile.exists()) {
                                     try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
                                         StationTask task = StationTaskUtils.to(fis);
+                                        if (task.snippetExecResult!=null) {
+                                            SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
+                                            if (!snippetExec.exec.isOk) {
+                                                markAsFinished(launchpadUrl, taskId, snippetExec.exec);
+                                            }
+                                        }
                                         getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
                                     }
                                     catch (IOException e) {
@@ -212,7 +218,7 @@ public class StationTaskService {
         }
     }
 
-    public void markAsFinished(String launchpadUrl, long taskId, String es) {
+    public void markAsFinishedWithError(String launchpadUrl, long taskId, String es) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             markAsFinished(launchpadUrl, taskId, new ExecProcessService.Result(false, -1, es));
         }
@@ -220,7 +226,7 @@ public class StationTaskService {
 
     void markAsFinished(String launchpadUrl, Long taskId, ExecProcessService.Result result) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            log.info("markAsFinished({}, {})", launchpadUrl, taskId);
+            log.info("markAsFinishedWithError({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
                 log.error("#713.38 StationTask wasn't found for Id " + taskId);
