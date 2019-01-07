@@ -96,7 +96,7 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
 
     @Transactional(readOnly = true)
     @Query("SELECT new aiai.ai.launchpad.experiment.task.TaskWIthType(t, tef.taskType) FROM Task t, ExperimentTaskFeature tef " +
-            "where t.id=tef.taskId and tef.featureId=:featureId ")
+            "where t.id=tef.taskId and tef.featureId=:featureId order by t.id asc ")
     Slice<TaskWIthType> findPredictTasks(Pageable pageable, long featureId);
 
 

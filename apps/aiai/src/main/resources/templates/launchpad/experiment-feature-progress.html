@@ -276,46 +276,6 @@
             return false;
         }
 
-/*
-        function my_confirm(message, title, okAction) {
-            let $dialog = $( "#dialog-confirm" );
-            $dialog.attr('title', title);
-            $( "#dialog-confirmation-text" ).empty().append(message);
-            $dialog.show();
-            $dialog.dialog({
-                resizable: false,
-                height: "auto",
-                width: 400,
-                modal: true,
-                buttons: {
-                    "Re-run": function() {
-                        $( this ).dialog( "close" );
-                        okAction();
-                    },
-                    Cancel: function() {
-                        $( this ).dialog( "close" );
-                    }
-                }
-            });
-        }
-
-        function my_alert(message, title) {
-            let $dialog = $( "#dialog-message" );
-            $dialog.attr('title', title);
-            $( "#dialog-message-text" ).empty().append(message);
-            $dialog.show();
-            $dialog.dialog({
-                modal: true,
-                buttons: {
-                    Ok: function() {
-                        $( this ).dialog( "close" );
-                    }
-                }
-            });
-
-        }
-*/
-
         /**
          * @param {int} id
          */
@@ -339,6 +299,7 @@
         }
 
         // helper functions
+        // TODO move them to my-scripts.js
 
         /**
          * @param {string} s
