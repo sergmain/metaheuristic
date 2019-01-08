@@ -6,7 +6,7 @@ public class FlowUtils {
         return String.format("%s-%d-%d-%s", flowCode, flowId, idx, processCode);
     }
 
-    public static String getResourceCode(String flowCode, long flowId, String processCode, String snippetName, int idx) {
-        return String.format("%s-%d-%d-%s-%s", flowCode, flowId, idx, snippetName, processCode);
+    public static String getResourceCode(long flowId, long flowInstanceId, String processCode, String snippetName, int idx) {
+        return String.format("%d-%d-%d-%s-%s", flowId, flowInstanceId, idx, snippetName, processCode);
     }
 }

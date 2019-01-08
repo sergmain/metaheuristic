@@ -54,7 +54,7 @@ public class FileProcessService {
                     result.numberOfTasks = 0;
                     return result;
                 }
-                String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, process.order);
+                String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, sv.name, process.order);
                 result.outputResourceCodes.add(outputResourceCode);
                 if (isPersist) {
                     createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs);
@@ -69,7 +69,7 @@ public class FileProcessService {
                 result.numberOfTasks = 0;
                 return result;
             }
-            String outputResourceCode = FlowUtils.getResourceCode(flow.code, flow.getId(), process.code, sv.name, process.order);
+            String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, sv.name, process.order);
             result.outputResourceCodes.add(outputResourceCode);
             if (isPersist) {
                 createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs);
