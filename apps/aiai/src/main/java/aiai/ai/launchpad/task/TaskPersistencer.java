@@ -114,14 +114,21 @@ public class TaskPersistencer {
                     task.resultResourceScheduledOn = 0;
                     taskRepository.save(task);
 
-                    FlowInstance flowInstance = flowInstanceRepository.findById(taskId).orElse(null);
-                    if (flowInstance!=null && task.order<flowInstance.producingOrder) {
-                        flowInstance.producingOrder = task.order;
-                        flowInstanceRepository.save(flowInstance);
+                    FlowInstance flowInstance = flowInstanceRepository.findById(task.flowInstanceId).orElse(null);
+                    if (flowInstance != null) {
+                        if (task.order < flowInstance.producingOrder ||
+                                Enums.FlowInstanceExecState.toState(flowInstance.getExecState()) == Enums.FlowInstanceExecState.FINISHED) {
+                            flowInstance.producingOrder = task.order;
+                            flowInstance.execState = Enums.FlowInstanceExecState.STARTED.code;
+                            flowInstanceRepository.save(flowInstance);
+                        }
+                    }
+                    else {
+                        log.warn("#307.24 FlowInstance #{} wasn't found", task.flowInstanceId);
                     }
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.25 Error while reseting task, taskId: {}, error: {}",  taskId, e.toString());
+                    log.error("#307.25 Error while resetting task, taskId: {}, error: {}",  taskId, e.toString());
                 }
             }
         }

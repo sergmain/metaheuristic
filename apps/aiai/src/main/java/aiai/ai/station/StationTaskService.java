@@ -237,7 +237,7 @@ public class StationTaskService {
                 }
                 if (!result.isOk) {
                     log.info("\t713.38.2 task #{} finished with an error, set completed to true", taskId);
-                    // there are some problems with this task. complete it
+                    // there are some problems with this task. mark it as completed
                     task.setCompleted(true);
                 }
                 task.setFinishedOn(System.currentTimeMillis());

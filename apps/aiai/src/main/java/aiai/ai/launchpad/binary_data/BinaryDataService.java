@@ -129,7 +129,7 @@ public class BinaryDataService {
                 data.setFlowInstanceId(flowInstanceId);
             } else {
                 if (!poolCode.equals(data.getPoolCode())) {
-                    // this is exeception for the case when two resources have the same names but different pool codes
+                    // this is exception for the case when two resources have the same names but different pool codes
                     String es = "#087.04 Pool code is different, old: " + data.getPoolCode() + ", new: " + poolCode;
                     log.error(es);
                     throw new IllegalStateException(es);
