@@ -2,22 +2,19 @@ package aiai.ai.launchpad.flow;
 
 import aiai.ai.Consts;
 import aiai.ai.Enums;
-import aiai.ai.Globals;
 import aiai.ai.Monitoring;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.experiment.ExperimentProcessService;
 import aiai.ai.launchpad.experiment.ExperimentProcessValidator;
+import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.file_process.FileProcessService;
 import aiai.ai.launchpad.file_process.FileProcessValidator;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
-import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import lombok.Data;
@@ -40,27 +37,25 @@ import static aiai.ai.Enums.FlowValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR
 public class FlowService {
 
     private final FlowYamlUtils flowYamlUtils;
-    private final ExperimentCache experimentCache;
+    private final ExperimentService experimentService;
     private final BinaryDataService binaryDataService;
 
     private final ExperimentProcessService experimentProcessService;
     private final FileProcessService fileProcessService;
     private final FlowInstanceRepository flowInstanceRepository;
-    private final SnippetCache snippetCache;
     private final TaskRepository taskRepository;
     private final FlowCache flowCache;
 
     private final ExperimentProcessValidator experimentProcessValidator;
     private final FileProcessValidator fileProcessValidator;
 
-    public FlowService(Globals globals, FlowRepository flowRepository, FlowYamlUtils flowYamlUtils, ExperimentCache experimentCache, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, SnippetCache snippetCache, TaskRepository taskRepository, FlowCache flowCache, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator) {
+    public FlowService(FlowYamlUtils flowYamlUtils, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, FlowCache flowCache, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator) {
         this.flowYamlUtils = flowYamlUtils;
-        this.experimentCache = experimentCache;
+        this.experimentService = experimentService;
         this.binaryDataService = binaryDataService;
         this.experimentProcessService = experimentProcessService;
         this.fileProcessService = fileProcessService;
         this.flowInstanceRepository = flowInstanceRepository;
-        this.snippetCache = snippetCache;
         this.taskRepository = taskRepository;
         this.flowCache = flowCache;
         this.experimentProcessValidator = experimentProcessValidator;
@@ -369,6 +364,7 @@ public class FlowService {
             }
             if (count==0) {
                 log.info("FlowInstance #{} was finished", flowInstance.getId());
+                experimentService.updateMaxValueForExperimentFeatures(flowInstance.getId());
                 flowInstance.setCompletedOn(System.currentTimeMillis());
                 flowInstance.setExecState(Enums.FlowInstanceExecState.FINISHED.code);
                 return flowInstanceRepository.save(flowInstance);
@@ -383,6 +379,5 @@ public class FlowService {
         flowInstance.setProducingOrder(flowInstance.getProducingOrder()+1);
         return flowInstanceRepository.save(flowInstance);
     }
-
 
 }

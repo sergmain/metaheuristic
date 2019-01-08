@@ -113,6 +113,7 @@
                 <th width="50">Id</th>
                 <th width="400">Set of features</th>
                 <th width="100">Exec status</th>
+                <th width="100">Max value</th>
                 <th width="100"></th>
             </tr>
             </thead>
@@ -122,6 +123,7 @@
                 <td th:text="${f.id}">Feature Id</td>
                 <td th:text="${f.resourceCodes}">Ids</td>
                 <td th:text="${f.execStatusAsString()}">Exec status</td>
+                <td th:text="${f.maxValue!=null ? f.maxValue : 0 }">Max value</td>
                 <td><a class="pure-button table-nav-button-fill pure-button-primary"
                        th:href="${'/launchpad/experiment-feature-progress/'+ experiment.id + '/' + f.id}">Info</a></td>
             </tr>

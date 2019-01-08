@@ -21,7 +21,6 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
-import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
 import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
@@ -267,7 +266,7 @@ public class ExperimentsController {
         }
 
         ExperimentResult experimentResult = new ExperimentResult();
-        experimentResult.features = experimentFeatureRepository.findByExperimentId(experiment.getId());
+        experimentResult.features = experimentFeatureRepository.findByExperimentIdOrderByMaxValueDesc(experiment.getId());
         experimentResult.flowInstance = flowInstance;
         experimentResult.flowInstanceExecState = Enums.FlowInstanceExecState.toState(flowInstance.execState);
 

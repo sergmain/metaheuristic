@@ -36,6 +36,11 @@ import java.util.stream.Stream;
 @Profile("launchpad")
 public interface TaskRepository extends CrudRepository<Task, Long> {
 
+    @Transactional
+    @Query(value="select t.id, t.metrics from Task t, ExperimentTaskFeature f " +
+            "where t.id=f.taskId and f.featureId=:experimentFeatureId ")
+    Stream<Object[]> findMetricsByExperimentFeatureId(long experimentFeatureId);
+
     @Transactional(readOnly = true)
     Slice<Task> findAll(Pageable pageable);
 
@@ -75,16 +80,6 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     @Query("SELECT t FROM Task t where t.stationId=:stationId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - result_resource_scheduled_on > 15000) ")
     List<Task> findForMissingResultResources(long stationId, long mills, int execState);
-
-
-
-/*
-    @Transactional(readOnly = true)
-    @Query("SELECT t FROM Task t, ExperimentTaskFeature tef " +
-            "where t.id=tef.taskId and tef.featureId=:featureId and " +
-            " t.execState > 1")
-    Slice<Task> findByIsCompletedIsTrueAndFeatureId(Pageable pageable, long featureId);
-*/
 
     @Transactional(readOnly = true)
     // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS

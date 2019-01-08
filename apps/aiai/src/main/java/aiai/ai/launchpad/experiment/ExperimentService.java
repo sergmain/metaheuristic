@@ -55,14 +55,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Service
 @EnableTransactionManagement
@@ -73,41 +71,6 @@ public class ExperimentService {
     private static final HashMap<String, Integer> HASH_MAP = new HashMap<>();
 
     private final ApplicationEventMulticaster eventMulticaster;
-
-    @Service
-    @Profile("launchpad")
-    public static class ParamsSetter {
-
-        private final TaskRepository taskRepository;
-
-        public ParamsSetter(TaskRepository taskRepository) {
-            this.taskRepository = taskRepository;
-        }
-
-        @Transactional
-        public Set<String> getParamsInTransaction(boolean isPersist, FlowInstance flowInstance, Experiment experiment, IntHolder size) {
-            Set<String> taskParams;
-            taskParams = new LinkedHashSet<>();
-
-            size.value = 0;
-            try (Stream<Object[]> stream = taskRepository.findByFlowInstanceId(flowInstance.getId()) ) {
-                stream
-                        .forEach(o -> {
-                            if (taskParams.contains((String) o[1])) {
-                                // delete doubles records
-                                log.warn("!!! Found doubles. ExperimentId: {}, hyperParams: {}", experiment.getId(), o[1]);
-                                if (isPersist) {
-                                    taskRepository.deleteById((Long) o[0]);
-                                }
-
-                            }
-                            taskParams.add((String) o[1]);
-                            size.value += ((String) o[1]).length();
-                        });
-            }
-            return taskParams;
-        }
-    }
 
     @Data
     @NoArgsConstructor
@@ -175,6 +138,7 @@ public class ExperimentService {
     }
 
     private final ParamsSetter paramsSetter;
+    private final MetricsMaxValueCollector metricsMaxValueCollector;
     private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
     private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
@@ -188,8 +152,9 @@ public class ExperimentService {
     private final FlowInstanceRepository flowInstanceRepository;
 
     @Autowired
-    public ExperimentService(ApplicationEventMulticaster eventMulticaster, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter, SnippetRepository snippetRepository) {
+    public ExperimentService(ApplicationEventMulticaster eventMulticaster, MetricsMaxValueCollector metricsMaxValueCollector, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter, SnippetRepository snippetRepository) {
         this.eventMulticaster = eventMulticaster;
+        this.metricsMaxValueCollector = metricsMaxValueCollector;
         this.experimentCache = experimentCache;
         this.taskRepository = taskRepository;
         this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
@@ -224,6 +189,19 @@ public class ExperimentService {
             }
         }
         return true;
+    }
+
+    public void updateMaxValueForExperimentFeatures(Long flowInstanceId) {
+        Experiment e = experimentRepository.findByFlowInstanceId(flowInstanceId);
+        if (e==null) {
+            return;
+        }
+        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(e.getId());
+        for (ExperimentFeature feature : features) {
+            double value = metricsMaxValueCollector.findMaxValueForMetrics(feature.getId());
+            feature.setMaxValue(value);
+            experimentFeatureRepository.save(feature);
+        }
     }
 
     public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {

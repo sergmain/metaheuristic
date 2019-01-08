@@ -47,6 +47,9 @@ public class ExperimentFeature implements Serializable {
     @Column(name = "EXPERIMENT_ID")
     public Long experimentId;
 
+    @Column(name = "MAX_VALUE")
+    public Double maxValue;
+
     public String execStatusAsString() {
         switch(execStatus) {
             case 0:

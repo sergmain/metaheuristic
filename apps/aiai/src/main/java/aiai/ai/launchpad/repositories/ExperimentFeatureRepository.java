@@ -20,8 +20,6 @@ package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
@@ -34,6 +32,9 @@ import java.util.List;
 public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFeature, Long> {
 
     @Transactional(readOnly = true)
+    List<ExperimentFeature> findByExperimentIdOrderByMaxValueDesc(Long experimentId);
+
+    @Transactional(readOnly = true)
     List<ExperimentFeature> findByExperimentId(Long experimentId);
 
     @Query("SELECT f.id, f.resourceCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
@@ -41,35 +42,6 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
 
     @Query("SELECT f.checksumIdCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
     List<String> getChecksumIdCodesByExperimentId(long experimentId);
-
-/*
-    @Transactional(readOnly = true)
-    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and f.isFinished=false and f.isInProgress=true and e.execState=:state")
-    List<ExperimentFeature> findTop1ByIsFinishedIsFalseAndIsInProgressIsTrue(Pageable limit, int state);
-
-    // continue process the same feature
-    @Transactional(readOnly = true)
-    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and f.isFinished=false and f.isInProgress=true and e.execState=:state and e.id=:experimentId")
-    List<ExperimentFeature> findTop1ByIsFinishedIsFalseAndIsInProgressIsTrueAndExperimentId(Pageable limit, int state, long experimentId);
-
-    // find new feature for processing
-    @Transactional(readOnly = true)
-    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and f.isInProgress=false and f.isFinished=false ")
-    List<ExperimentFeature> findTop1ByIsFinishedIsFalseAndIsInProgressIsFalse(Pageable limit);
-
-    @Transactional(readOnly = true)
-    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and e.isLaunched=true and f.isFinished=false ")
-    List<ExperimentFeature> findAllForLaunchedExperimentsAndNotFinishedFeatures();
-
-    @Transactional(readOnly = true)
-    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and e.isLaunched=true and e.execState=:state")
-    List<ExperimentFeature> findAllForLaunchedExperiments(int state);
-
-    @Transactional(readOnly = true)
-    @Query("SELECT f FROM ExperimentFeature f, Experiment e where f.experimentId=e.id and e.isLaunched=true and e.execState<>:state")
-    List<ExperimentFeature> findAllForActiveExperiments(int state);
-*/
-
 
     @Transactional
     void deleteByExperimentId(long experimentId);
