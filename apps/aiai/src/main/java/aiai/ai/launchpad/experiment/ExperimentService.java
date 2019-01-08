@@ -197,8 +197,10 @@ public class ExperimentService {
             return;
         }
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(e.getId());
+        log.info("Start calculatingMaxValueOfMetrics");
         for (ExperimentFeature feature : features) {
-            double value = metricsMaxValueCollector.findMaxValueForMetrics(feature.getId());
+            double value = metricsMaxValueCollector.calcMaxValueForMetrics(feature.getId());
+            log.info("\tFeature #{}, max value: {}", feature.getId(), value);
             feature.setMaxValue(value);
             experimentFeatureRepository.save(feature);
         }

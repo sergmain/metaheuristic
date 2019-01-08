@@ -21,14 +21,6 @@ import java.util.stream.Stream;
 @Slf4j
 public class MetricsMaxValueCollector {
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Value {
-        long featureId;
-        double maxvalue;
-    }
-
     private final TaskRepository taskRepository;
 
     public MetricsMaxValueCollector(TaskRepository taskRepository) {
@@ -36,7 +28,7 @@ public class MetricsMaxValueCollector {
     }
 
     @Transactional
-    public double findMaxValueForMetrics(long featureId) {
+    public double calcMaxValueForMetrics(long featureId) {
 
         try (Stream<Object[]> stream = taskRepository.findMetricsByExperimentFeatureId(featureId) ) {
             //noinspection UnnecessaryLocalVariable
