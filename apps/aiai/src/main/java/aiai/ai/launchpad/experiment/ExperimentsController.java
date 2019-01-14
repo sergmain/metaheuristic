@@ -499,6 +499,7 @@ public class ExperimentsController {
         add(experiment, "optimizer", "[sgd, nadam, adagrad, adadelta, rmsprop, adam, adamax]");
         add(experiment, "batch_size", "[20, 40, 60]");
         add(experiment, "time_steps", "[5, 40, 60]");
+        add(experiment, "metrics_functions", "['#in_top_draw_digit, accuracy', 'accuracy']");
 
         experimentCache.save(experiment);
         return "redirect:/launchpad/experiment-edit/"+experimentId;

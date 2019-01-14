@@ -78,6 +78,18 @@ public class TextExperimentUtils {
     }
 
     @Test
+    public void testVariantsWithSpaces() {
+        ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(" ['#in_top_draw_digit, accuracy', accuracy] ");
+        assertEquals( ExperimentUtils.NumberOfVariants
+                .instanceOf(true, null, 2, Arrays.asList("#in_top_draw_digit, accuracy", "accuracy")), variants);
+        assertTrue(variants.isStatus());
+        variants = ExperimentUtils.getNumberOfVariants(" ['#in_top_draw_digit, accuracy', 'accuracy'] ");
+        assertEquals( ExperimentUtils.NumberOfVariants
+                .instanceOf(true, null, 2, Arrays.asList("#in_top_draw_digit, accuracy", "accuracy")), variants);
+        assertTrue(variants.isStatus());
+    }
+
+    @Test
     public void testGetAllHyperParams() {
 
         Map<String, String> map = new HashMap<>();

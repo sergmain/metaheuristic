@@ -14,7 +14,7 @@
     <script>
         'use strict';
 
-        let /*{boolean}*/ isDebug = false;
+        let /*{boolean}*/ isDebug = true;
         let buttonStateMap = {};
         let buttonAxisStateMap = {};
         let trStateMap = {};
@@ -461,8 +461,8 @@
                                     <tr valign="top">
                                         <div th:remove="tag" th:each="l,idx : ${e.list}" >
                                             <a class='pure-button' href="#"
-                                               th:id="${'button-param-'+e.key+'-'+l.param}"
-                                               th:data-id="${'button-param-'+e.key+'-' + l.param }"
+                                               th:id="${'button-param-'+e.key+'-'+l.param.replace('#','-').replace(' ','_').replace(',','_')}"
+                                               th:data-id="${'button-param-'+e.key+'-' + l.param.replace('#','-').replace(' ','_').replace(',','_') }"
                                                th:data-key="${e.key}"
                                                th:data-idx="${idx.index}"
                                                onclick="switchButton(this.getAttribute('data-id'), this.getAttribute('data-key'), this.getAttribute('data-idx'));"
