@@ -64,12 +64,6 @@ public class Experiment implements Serializable {
     @Column(name = "CODE")
     private String code;
 
-    @Column(name = "EPOCH")
-    private String epoch;
-
-    @Column(name = "EPOCH_VARIANT")
-    private int epochVariant;
-
     @Column(name = "SEED")
     private int seed;
 

@@ -24,12 +24,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.text.matcher.StringMatcher;
 import org.apache.commons.text.matcher.StringMatcherFactory;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class ExperimentUtils {
 
@@ -144,13 +141,6 @@ public class ExperimentUtils {
             st.setQuoteMatcher(StringMatcherFactory.INSTANCE.quoteMatcher());
             st.setTrimmerMatcher(StringMatcherFactory.INSTANCE.trimMatcher());
             for (String s1 : st.getTokenList()) {
-
-                if (s1.length()>1 && s1.charAt(0)=='\'' && s1.charAt(s1.length()-1)=='\'') {
-                    s1 = s1.substring(1, s1.length()-1);
-                }
-                if (s1.length()>1 && s1.charAt(0)=='\"' && s1.charAt(s1.length()-1)=='\"') {
-                    s1 = s1.substring(1, s1.length()-1);
-                }
                 s1 = s1.trim();
                 if (StringUtils.isBlank(s1)) {
                     continue;
@@ -159,13 +149,6 @@ public class ExperimentUtils {
                 variants.values.add(s1);
                 count++;
             }
-/*
-            for (StringTokenizer st = new StringTokenizer(s, "[,] "); st.hasMoreTokens(); ) {
-                String token = st.nextToken();
-                variants.values.add(token);
-                count++;
-            }
-*/
             variants.count = count;
             return variants;
         }

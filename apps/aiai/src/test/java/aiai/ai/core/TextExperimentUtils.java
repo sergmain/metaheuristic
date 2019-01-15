@@ -79,7 +79,8 @@ public class TextExperimentUtils {
 
     @Test
     public void testVariantsWithSpaces() {
-        ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(" ['#in_top_draw_digit, accuracy', accuracy] ");
+        ExperimentUtils.NumberOfVariants variants =
+                ExperimentUtils.getNumberOfVariants(" ['#in_top_draw_digit, accuracy', accuracy] ");
         assertEquals( ExperimentUtils.NumberOfVariants
                 .instanceOf(true, null, 2, Arrays.asList("#in_top_draw_digit, accuracy", "accuracy")), variants);
         assertTrue(variants.isStatus());
@@ -259,42 +260,6 @@ public class TextExperimentUtils {
             }
         }
         throw new IllegalStateException("not found " + yaml);
-    }
-
-    @Test
-    public void testEmptyList() {
-        Map<String, String> map = ExperimentService.toMap(new ArrayList<>(), 1337, "10");
-        List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
-        assertEquals(1, allHyperParams.size());
-
-        List<String> allYamls = new ArrayList<>();
-        String currYaml;
-        for (HyperParams hyperParams : allHyperParams) {
-            currYaml = HyperParamsUtils.toYaml(hyperParams);
-            allYamls.add(currYaml);
-        }
-        assertEquals(1, allYamls.size());
-
-        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"seed","1337"}, {"epoch","10"}}) ) );
-    }
-
-    @Test
-    public void testEmptyList_1() {
-        Map<String, String> map = ExperimentService.toMap(new ArrayList<>(), 1337, "[7, 11, 13]");
-        List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
-        assertEquals(3, allHyperParams.size());
-        List<String> allYamls = new ArrayList<>();
-
-        String currYaml;
-        for (HyperParams hyperParams : allHyperParams) {
-            currYaml = HyperParamsUtils.toYaml(hyperParams);
-            allYamls.add(currYaml);
-        }
-        assertEquals(3, allYamls.size());
-
-        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"seed","1337"}, {"epoch","7"}}) ) );
-        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"seed","1337"}, {"epoch","11"}}) ) );
-        assertTrue(allYamls.contains(toSampleYaml(new String[][]{{"seed","1337"}, {"epoch","13"}}) ) );
     }
 
     @Data

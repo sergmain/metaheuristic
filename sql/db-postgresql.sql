@@ -76,8 +76,6 @@ CREATE TABLE AIAI_LP_EXPERIMENT (
   NAME        VARCHAR(50)   NOT NULL,
   DESCRIPTION VARCHAR(250)  NOT NULL,
   CODE        VARCHAR(50)   NOT NULL,
-  EPOCH       VARCHAR(100)  NOT NULL,
-  EPOCH_VARIANT smallint  NOT NULL,
   SEED          integer,
   NUMBER_OF_TASK         integer not null default 0,
   IS_ALL_TASK_PRODUCED   BOOLEAN not null default false,

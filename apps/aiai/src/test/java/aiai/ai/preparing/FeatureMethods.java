@@ -23,15 +23,12 @@ import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.launchpad.beans.Task;
-import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.launchpad.experiment.feature.FeatureExecStatus;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.task.TaskService;
-import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -128,7 +125,7 @@ public abstract class FeatureMethods extends PreparingFlow {
 
         ExperimentFeature feature = experimentFeatureRepository.findById(sequences1Feature.getId()).orElse(null);
         assertNotNull(feature);
-        assertEquals(FeatureExecStatus.error.code, feature.execStatus);
+        assertEquals(Enums.FeatureExecStatus.error.code, feature.execStatus);
     }
 
     protected Protocol.AssignedTask.Task getTaskAndAssignToStation_mustBeNewTask() {
@@ -177,8 +174,8 @@ public abstract class FeatureMethods extends PreparingFlow {
             snippetExec.setExec( new ExecProcessService.Result(true, 0, "This is sample console output. fit"));
             String yaml = SnippetExecUtils.toString(snippetExec);
 
-            SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
-            results.add(sser);
+            SimpleTaskExecResult ster = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
+            results.add(ster);
         }
 
         taskService.storeAllConsoleResults(results);

@@ -76,14 +76,6 @@
                 <input name="seed" id="seed" type="text" placeholder="seed"  th:field="*{seed}">
                 <span class="pure-form-message">Default value will be used if not defined. Which is 1.</span>
 
-                <label for="epoch">Epoch</label>
-                <input name="epoch" id="epoch" type="text" placeholder="epoch"  th:field="*{epoch}">
-                <span class="pure-form-message">This is a required field.</span>
-                <span class="pure-form-message">Array of concrete values - [10,27,21]</span>
-                <span class="pure-form-message">Array defined in loop - range(10,30,10)</span>
-                <span class="pure-form-message">Array defined in loop - (10,30,10)</span>
-                <span class="pure-form-message">Concrete value - 10</span>
-
                 <table>
                     <tr>
                         <td>
@@ -132,6 +124,13 @@
         </table>
 
         <h1 class="widget-header">Metadata</h1>
+
+        <span class="pure-form-message">Array of concrete values - [10,27,21]</span>
+        <span class="pure-form-message">Array defined in loop - range(10,30,10)</span>
+        <span class="pure-form-message">Array defined in loop - (10,30,10)</span>
+        <span class="pure-form-message">Concrete value - 10</span>
+        <span class="pure-form-message">Array of strings, some strings contain space - ['#some custom accuracy', accuracy] </span>
+
         <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/experiment-metadata-default-add-commit/' + experiment.id}">Fill with default metadatas</a>
         <p>&nbsp;</p>
 

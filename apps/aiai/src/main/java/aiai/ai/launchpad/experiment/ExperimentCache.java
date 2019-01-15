@@ -21,7 +21,6 @@ import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -42,8 +41,9 @@ public class ExperimentCache {
 //    @Cacheable(cacheNames = "experiments", unless="#result==null")
     @CacheEvict(value = "experiments", key = "#result.id")
     public Experiment save(Experiment experiment) {
-        //noinspection CaughtExceptionImmediatelyRethrown,UnusedAssignment
+        // noinspection UnusedAssignment
         Experiment save=null;
+        //noinspection CaughtExceptionImmediatelyRethrown
         try {
             save = experimentRepository.save(experiment);
             return save;

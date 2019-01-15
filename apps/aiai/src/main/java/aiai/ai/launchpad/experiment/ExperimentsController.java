@@ -109,11 +109,10 @@ public class ExperimentsController {
         public String description;
         public String code;
         public int seed;
-        public String epoch;
         public long id;
 
         public static SimpleExperiment to(Experiment e) {
-            return new SimpleExperiment(e.getName(), e.getDescription(), e.getCode(), e.getSeed(), e.getEpoch(), e.getId());
+            return new SimpleExperiment(e.getName(), e.getDescription(), e.getCode(), e.getSeed(), e.getId());
         }
     }
 
@@ -328,7 +327,6 @@ public class ExperimentsController {
         experiment.setName(simpleExperiment.getName());
         experiment.setDescription(simpleExperiment.getDescription());
         experiment.setSeed(simpleExperiment.getSeed());
-        experiment.setEpoch(simpleExperiment.getEpoch());
         experiment.setCode(simpleExperiment.getCode());
         String target = "redirect:/launchpad/experiment-edit/" + experiment.getId();
         return processCommit(model, experiment, target, target, true, redirectAttributes);
@@ -349,16 +347,6 @@ public class ExperimentsController {
             prepareErrorMessage(model, "#280.35 Description of experiment is blank.", isErrorWithRedirect, redirectAttributes);
             return errorTarget;
         }
-        if (StringUtils.isBlank(experiment.getEpoch())) {
-            prepareErrorMessage(model, "#280.39 Epochs of experiment isn't specified.", isErrorWithRedirect, redirectAttributes);
-            return errorTarget;
-        }
-        ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(experiment.getEpoch());
-        if (!numberOfVariants.status) {
-            prepareErrorMessage(model, numberOfVariants.getError(), isErrorWithRedirect, redirectAttributes);
-            return errorTarget;
-        }
-        experiment.setEpochVariant(numberOfVariants.getCount());
         experiment.strip();
         experimentCache.save(experiment);
         return normalTarget;
@@ -494,6 +482,7 @@ public class ExperimentsController {
             experiment.setHyperParams(new ArrayList<>());
         }
 
+        add(experiment, "epoch", "[10]");
         add(experiment, "RNN", "[LSTM, GRU, SimpleRNN]");
         add(experiment, "activation", "[hard_sigmoid, softplus, softmax, softsign, relu, tanh, sigmoid, linear, elu]");
         add(experiment, "optimizer", "[sgd, nadam, adagrad, adadelta, rmsprop, adam, adamax]");

@@ -23,7 +23,6 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import lombok.extern.slf4j.Slf4j;
@@ -169,13 +168,6 @@ public abstract class PreparingExperiment {
 
             // Prepare experiment
             experiment = new Experiment();
-            String epoch = "10";
-            experiment.setEpoch(epoch);
-            ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(experiment.getEpoch());
-            if (!numberOfVariants.status) {
-                throw new IllegalStateException("Something wrong with ExperimentUtils.getNumberOfVariants()");
-            }
-            experiment.setEpochVariant(numberOfVariants.getCount());
             experiment.setName("Test experiment.");
             experiment.setDescription("Test experiment. Must be deleted automatically.");
             experiment.setCode(TEST_EXPERIMENT_CODE_01);

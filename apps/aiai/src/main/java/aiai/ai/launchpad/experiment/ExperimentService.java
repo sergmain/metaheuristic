@@ -450,17 +450,12 @@ public class ExperimentService {
         return map;
     }
 
-    public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed, String epochs) {
+    public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed) {
         List<ExperimentHyperParams> params = new ArrayList<>();
         ExperimentHyperParams p1 = new ExperimentHyperParams();
         p1.setKey(Consts.SEED);
         p1.setValues(Integer.toString(seed));
         params.add(p1);
-
-        ExperimentHyperParams p2 = new ExperimentHyperParams();
-        p2.setKey(Consts.EPOCH);
-        p2.setValues(epochs);
-        params.add(p2);
 
         for (ExperimentHyperParams param : experimentHyperParams) {
             //noinspection UseBulkOperation
@@ -501,7 +496,7 @@ public class ExperimentService {
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
         snippetService.sortSnippetsByType(experimentSnippets);
 
-        final Map<String, String> map = toMap(experiment.getHyperParams(), experiment.getSeed(), experiment.getEpoch());
+        final Map<String, String> map = toMap(experiment.getHyperParams(), experiment.getSeed());
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
         final List<Object[]> features = experimentFeatureRepository.getAsExperimentFeatureSimpleByExperimentId(experiment.getId());
