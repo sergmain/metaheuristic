@@ -15,7 +15,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.yaml.env;
+package aiai.ai.yaml.launchpad_lookup;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -75,21 +75,16 @@ public class TimePeriods {
         return periods;
     }
 
-
-    public boolean isActive(LocalTime curr, TimePeriod period) {
+    private boolean isActive(LocalTime curr, TimePeriods.TimePeriod period) {
         return curr.isEqual(period.start) || curr.isEqual(period.end) || ( curr.isAfter(period.start) && curr.isBefore(period.end));
     }
 
     public boolean isActive(LocalTime curr) {
-        for (TimePeriod period : periods) {
+        for (TimePeriods.TimePeriod period : periods) {
             if (isActive(curr, period)) {
                 return true;
             }
         }
         return false;
-    }
-
-    public boolean isCurrentTimeInactive() {
-        return !isActive(LocalTime.fromMillisOfDay(System.currentTimeMillis()));
     }
 }

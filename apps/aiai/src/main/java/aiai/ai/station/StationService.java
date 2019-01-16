@@ -27,7 +27,7 @@ import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.utils.ResourceUtils;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
-import aiai.ai.yaml.env.TimePeriods;
+import aiai.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
@@ -100,9 +100,9 @@ public class StationService {
         return envYaml;
     }
 
-    Command produceReportStationStatus(TimePeriods periods) {
+    Command produceReportStationStatus(LaunchpadSchedule schedule) {
         //noinspection UnnecessaryLocalVariable
-        Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(getEnv(), periods.asString);
+        Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(getEnv(), schedule.asString);
         return reportStationStatus;
     }
 

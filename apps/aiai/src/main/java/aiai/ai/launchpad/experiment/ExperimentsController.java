@@ -468,6 +468,7 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiment-edit/" + experimentId;
         }
         experimentHyperParamsRepository.deleteById(id);
+        experimentCache.invalidate(experimentId);
         return "redirect:/launchpad/experiment-edit/"+experimentId;
     }
 

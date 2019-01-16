@@ -2,7 +2,8 @@ package aiai.ai.station;
 
 import aiai.ai.Consts;
 import aiai.ai.Globals;
-import aiai.ai.yaml.env.TimePeriods;
+import aiai.ai.yaml.launchpad_lookup.LaunchpadSchedule;
+import aiai.ai.yaml.launchpad_lookup.TimePeriods;
 import aiai.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import aiai.ai.yaml.launchpad_lookup.LaunchpadLookupConfigUtils;
 import lombok.Data;
@@ -35,7 +36,7 @@ public class LaunchpadLookupExtendedService {
     @Data
     public static class LaunchpadLookupExtended {
         public LaunchpadLookupConfig.LaunchpadLookup launchpadLookup;
-        public TimePeriods periods;
+        public LaunchpadSchedule schedule;
     }
 
     @PostConstruct
@@ -59,7 +60,7 @@ public class LaunchpadLookupExtendedService {
             for (LaunchpadLookupConfig.LaunchpadLookup launchpad : launchpadLookupConfig.launchpads) {
                 LaunchpadLookupExtended lookupExtended = new LaunchpadLookupExtended();
                 lookupExtended.launchpadLookup = launchpad;
-                lookupExtended.periods = TimePeriods.from(launchpad.taskProcessingTime);
+                lookupExtended.schedule = new LaunchpadSchedule(launchpad.taskProcessingTime);
                 map.put(launchpad.url, lookupExtended);
             }
             lookupExtendedMap = Collections.unmodifiableMap(map);

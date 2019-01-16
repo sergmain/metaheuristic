@@ -98,8 +98,8 @@ public class TaskProcessor {
 
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
 
-            if (launchpad.periods.isCurrentTimeInactive()) {
-                log.info("Can't process task for url {} at this time, time: {}, permitted period of time: {}", new Date(), launchpad.periods.asString);
+            if (launchpad.schedule.isCurrentTimeInactive()) {
+                log.info("Can't process task for url {} at this time, time: {}, permitted period of time: {}", new Date(), launchpad.schedule.asString);
                 return;
             }
 

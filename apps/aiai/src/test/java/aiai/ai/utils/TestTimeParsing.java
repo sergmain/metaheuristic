@@ -17,19 +17,111 @@
  */
 package aiai.ai.utils;
 
-import aiai.ai.yaml.env.TimePeriods;
+import aiai.ai.yaml.launchpad_lookup.ExtendedTimePeriod;
+import aiai.ai.yaml.launchpad_lookup.ExtendedTimePeriodUtils;
+import aiai.ai.yaml.launchpad_lookup.LaunchpadSchedule;
+import aiai.ai.yaml.launchpad_lookup.TimePeriods;
+import aiai.apps.commons.yaml.YamlUtils;
+import lombok.Data;
+import org.joda.time.DateTime;
+import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
 import org.joda.time.format.DateTimeFormatter;
 import org.junit.Test;
+import org.yaml.snakeyaml.Yaml;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
+import static org.junit.Assert.*;
 
 public class TestTimeParsing {
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormat.forPattern("HH:mm");
+
+    @Data
+    public static class SimpleYamlHolder {
+        public String holder;
+    }
+
+    public static class SimpleYamlHolderUtils {
+        private static Yaml yaml;
+
+        static {
+            yaml = YamlUtils.init(SimpleYamlHolder.class);
+        }
+
+        public static String toString(SimpleYamlHolder config) {
+            return YamlUtils.toString(config, yaml);
+        }
+
+        public static SimpleYamlHolder to(String s) {
+            return (SimpleYamlHolder) YamlUtils.to(s, yaml);
+        }
+
+        public static SimpleYamlHolder to(InputStream is) {
+            return (SimpleYamlHolder) YamlUtils.to(is, yaml);
+        }
+
+        public static SimpleYamlHolder to(File file) {
+            return (SimpleYamlHolder) YamlUtils.to(file, yaml);
+        }
+    }
+
+    @Test
+    public void parseExtendedTimeYaml() throws IOException, ParseException {
+
+
+        SimpleYamlHolder holder;
+        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/extended-time-period.yaml")) {
+            holder = SimpleYamlHolderUtils.to(is);
+        }
+        assertNotNull(holder);
+        assertNotNull(holder.holder);
+        ExtendedTimePeriod period = ExtendedTimePeriodUtils.to(holder.holder);
+
+        assertEquals("0:00-8:45, 19:00-23:59", period.workingDay);
+        assertEquals("0:00-23:59", period.weekend);
+        assertEquals("dd/MM/yyyy", period.dayMask);
+        assertEquals("15/01/2019,16/01/2019", period.holiday);
+        assertEquals("19/01/2019", period.exceptionWorkingDay);
+
+        SimpleDateFormat sdf = new SimpleDateFormat(period.dayMask);
+        Date date = sdf.parse(period.exceptionWorkingDay);
+
+        Calendar c = Calendar.getInstance();
+        c.setTime(date);
+        assertEquals(19, c.get(Calendar.DAY_OF_MONTH));
+        assertEquals(1, c.get(Calendar.MONTH)+1);
+        assertEquals(2019, c.get(Calendar.YEAR));
+        assertEquals(Calendar.SATURDAY, c.get(Calendar.DAY_OF_WEEK));
+
+        LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
+        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm");
+        assertFalse(schedule.isActive(LocalDateTime.parse( "14/01/2019 13:05", fmt)));
+        assertTrue(schedule.isActive(LocalDateTime.parse( "15/01/2019 13:05", fmt)));
+        assertTrue(schedule.isActive(LocalDateTime.parse( "16/01/2019 13:05", fmt)));
+        assertFalse(schedule.isActive(LocalDateTime.parse( "17/01/2019 13:05", fmt)));
+        assertFalse(schedule.isActive(LocalDateTime.parse( "18/01/2019 13:05", fmt)));
+        assertFalse(schedule.isActive(LocalDateTime.parse( "19/01/2019 13:05", fmt)));
+        assertTrue(schedule.isActive(LocalDateTime.parse( "20/01/2019 13:05", fmt)));
+    }
+
+    private Calendar getCalendar(int day, int month, int year) {
+        Calendar c = Calendar.getInstance();
+        c.set(Calendar.DAY_OF_MONTH, day);
+        c.set(Calendar.MONTH, month-1);
+        c.set(Calendar.YEAR, year);
+        c.set(Calendar.HOUR_OF_DAY, 13);
+        c.set(Calendar.MINUTE, 0);
+        return c;
+    }
 
     @Test
     public void testTimePeriodParsing() {

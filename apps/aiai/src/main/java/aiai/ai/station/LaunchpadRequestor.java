@@ -37,7 +37,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.SocketException;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -117,7 +116,7 @@ public class LaunchpadRequestor {
             return;
         }
 
-        if (launchpad.periods.isCurrentTimeInactive()) {
+        if (launchpad.schedule.isCurrentTimeInactive()) {
             log.info("LaunchpadRequestor for url {} is inactive", launchpadUrl);
             return;
         }
@@ -133,7 +132,7 @@ public class LaunchpadRequestor {
             if (stationId != null) {
                 // always report about current active sequences, if we have actual stationId
                 data.setCommand(stationTaskService.produceStationTaskStatus(launchpadUrl));
-                data.setCommand(stationService.produceReportStationStatus(launchpad.periods));
+                data.setCommand(stationService.produceReportStationStatus(launchpad.schedule));
                 if (currentExecState.isInited(launchpadUrl)) {
                     Monitoring.log("##011", Enums.Monitor.MEMORY);
                     final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);

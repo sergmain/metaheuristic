@@ -84,9 +84,20 @@ public class TextExperimentUtils {
         assertEquals( ExperimentUtils.NumberOfVariants
                 .instanceOf(true, null, 2, Arrays.asList("#in_top_draw_digit, accuracy", "accuracy")), variants);
         assertTrue(variants.isStatus());
+
         variants = ExperimentUtils.getNumberOfVariants(" ['#in_top_draw_digit, accuracy', 'accuracy'] ");
         assertEquals( ExperimentUtils.NumberOfVariants
                 .instanceOf(true, null, 2, Arrays.asList("#in_top_draw_digit, accuracy", "accuracy")), variants);
+        assertTrue(variants.isStatus());
+
+        variants = ExperimentUtils.getNumberOfVariants(" '#in_top_draw_digit' ");
+        assertEquals( ExperimentUtils.NumberOfVariants
+                .instanceOf(true, null, 1, Collections.singletonList("#in_top_draw_digit")), variants);
+        assertTrue(variants.isStatus());
+
+        variants = ExperimentUtils.getNumberOfVariants(" #in_top_draw_digit ");
+        assertEquals( ExperimentUtils.NumberOfVariants
+                .instanceOf(true, null, 1, Collections.singletonList("#in_top_draw_digit")), variants);
         assertTrue(variants.isStatus());
     }
 

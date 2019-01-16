@@ -120,14 +120,14 @@ public class ExperimentUtils {
         return allPaths.contains(new HyperParams(Consts.EMPTY_UNMODIFIABLE_MAP, path));
     }
 
+    @SuppressWarnings("UnnecessaryLocalVariable")
     public static NumberOfVariants getNumberOfVariants(String variantsAsStr) {
         if (StringUtils.isBlank(variantsAsStr)) {
             return ZERO_VARIANT;
         }
         String s = variantsAsStr.trim();
         if ( s.charAt(0)!='(' && s.charAt(0)!='[' && !StringUtils.startsWithIgnoreCase(s.toLowerCase(), RANGE)) {
-            final NumberOfVariants variants = new NumberOfVariants(true, null, 1);
-            variants.values.add(s);
+            final NumberOfVariants variants = extractValues(s);
             return variants;
         }
         if (s.startsWith("[")) {
@@ -135,23 +135,10 @@ public class ExperimentUtils {
                 return new NumberOfVariants(false, "Array definition must ends with ']'", 0);
             }
             s = s.substring(1, s.length()-1);
-            int count = 0;
-            final NumberOfVariants variants = new NumberOfVariants(true, null, 0);
-            org.apache.commons.text.StringTokenizer st = new org.apache.commons.text.StringTokenizer( s, "," );
-            st.setQuoteMatcher(StringMatcherFactory.INSTANCE.quoteMatcher());
-            st.setTrimmerMatcher(StringMatcherFactory.INSTANCE.trimMatcher());
-            for (String s1 : st.getTokenList()) {
-                s1 = s1.trim();
-                if (StringUtils.isBlank(s1)) {
-                    continue;
-                }
-
-                variants.values.add(s1);
-                count++;
-            }
-            variants.count = count;
+            final NumberOfVariants variants = extractValues(s);
             return variants;
         }
+
         String s1 = s;
         if (StringUtils.startsWithIgnoreCase(s1,RANGE)) {
             s1 = s1.substring(RANGE.length()).trim();
@@ -183,5 +170,23 @@ public class ExperimentUtils {
             return variants;
         }
         return new NumberOfVariants(false, "Wrong number format for string: " + s, 0);
+    }
+
+    public static NumberOfVariants extractValues(String s) {
+        int count = 0;
+        final NumberOfVariants variants = new NumberOfVariants(true, null, 0);
+        org.apache.commons.text.StringTokenizer st = new org.apache.commons.text.StringTokenizer(s, ",");
+        st.setQuoteMatcher(StringMatcherFactory.INSTANCE.quoteMatcher());
+        st.setTrimmerMatcher(StringMatcherFactory.INSTANCE.trimMatcher());
+        for (String s1 : st.getTokenList()) {
+            s1 = s1.trim();
+            if (StringUtils.isBlank(s1)) {
+                continue;
+            }
+            variants.values.add(s1);
+            count++;
+        }
+        variants.count = count;
+        return variants;
     }
 }

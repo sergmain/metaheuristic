@@ -67,6 +67,11 @@ public class ExperimentCache {
     }
 
     @CacheEvict(cacheNames = {"experiments"}, key = "#id")
+    public void invalidate(Long id) {
+        //
+    }
+
+    @CacheEvict(cacheNames = {"experiments"}, key = "#id")
     public void deleteById(Long id) {
         try {
             experimentRepository.deleteById(id);
