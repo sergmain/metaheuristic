@@ -35,10 +35,12 @@ public class LaunchpadSchedule {
             this.workingDay = TimePeriods.from(config.workingDay);
             this.weekend = TimePeriods.from(config.weekend);
 
-            DateTimeFormatter fmt = DateTimeFormat.forPattern(config.dayMask);
+            if (config.dayMask!=null) {
+                DateTimeFormatter fmt = DateTimeFormat.forPattern(config.dayMask);
 
-            toLocalDate(fmt, config.holiday, holidays);
-            toLocalDate(fmt, config.exceptionWorkingDay, exceptionWorkingDays);
+                toLocalDate(fmt, config.holiday, holidays);
+                toLocalDate(fmt, config.exceptionWorkingDay, exceptionWorkingDays);
+            }
         } catch (ParseException e) {
             log.error("Error", e);
             throw new IllegalStateException("Error", e);
@@ -46,6 +48,9 @@ public class LaunchpadSchedule {
     }
 
     private void toLocalDate(DateTimeFormatter fmt, String datesAsStr, List<LocalDate> dates) throws ParseException {
+        if (StringUtils.isBlank(datesAsStr)) {
+            return;
+        }
         for (java.util.StringTokenizer st = new java.util.StringTokenizer(datesAsStr, ","); st.hasMoreTokens(); ) {
             String token = st.nextToken().trim();
             if (StringUtils.isBlank(token)) {
