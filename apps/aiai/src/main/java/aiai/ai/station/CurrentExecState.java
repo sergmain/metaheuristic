@@ -19,7 +19,7 @@ package aiai.ai.station;
 
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
-import org.omg.CORBA.BooleanHolder;
+import aiai.ai.utils.holders.BoolHolder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -32,15 +32,15 @@ public class CurrentExecState {
     // this is a map for holding the current status of FlowInstance, Not a task
     private final Map<String, Map<Long, Enums.FlowInstanceExecState>> flowInstanceState = new HashMap<>();
 
-    private Map<String, BooleanHolder> isInit = new HashMap<>();
+    private Map<String, BoolHolder> isInit = new HashMap<>();
 
     public boolean isInited(String launchpadUrl) {
-        return isInit.computeIfAbsent(launchpadUrl, v -> new BooleanHolder(false)).value;
+        return isInit.computeIfAbsent(launchpadUrl, v -> new BoolHolder(false)).value;
     }
 
     void register(String launchpadUrl, List<Protocol.FlowInstanceStatus.SimpleStatus> statuses) {
         synchronized(flowInstanceState) {
-            isInit.computeIfAbsent(launchpadUrl, v -> new BooleanHolder()).value = true;
+            isInit.computeIfAbsent(launchpadUrl, v -> new BoolHolder()).value = true;
             // statuses==null when there isn't any flow instance
             if (statuses==null) {
                 flowInstanceState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).clear();

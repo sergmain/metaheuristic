@@ -20,11 +20,11 @@ package aiai.ai.station;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.utils.holders.BoolHolder;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.omg.CORBA.BooleanHolder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -82,7 +82,7 @@ public class ArtifactCleanerAtStation {
             }
             synchronized (StationSyncHolder.stationGlobalSync) {
                 try {
-                    final BooleanHolder isEmpty = new BooleanHolder(true);
+                    final BoolHolder isEmpty = new BoolHolder(true);
                     Files.list(launchpadDir.toPath()).forEach(s -> {
                         isEmpty.value = true;
                         try {

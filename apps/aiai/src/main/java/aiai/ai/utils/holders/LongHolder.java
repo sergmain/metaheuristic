@@ -1,4 +1,4 @@
-package aiai.ai.utils;
+package aiai.ai.utils.holders;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -7,6 +7,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class BoolHolder {
-    public boolean value;
+public class LongHolder {
+    public long value;
 }

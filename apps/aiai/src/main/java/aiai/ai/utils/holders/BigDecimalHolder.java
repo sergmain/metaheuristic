@@ -15,7 +15,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.ai.utils;
+package aiai.ai.utils.holders;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

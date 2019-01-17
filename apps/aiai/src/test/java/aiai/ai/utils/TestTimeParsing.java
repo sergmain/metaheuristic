@@ -23,7 +23,6 @@ import aiai.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import aiai.ai.yaml.launchpad_lookup.TimePeriods;
 import aiai.apps.commons.yaml.YamlUtils;
 import lombok.Data;
-import org.joda.time.DateTime;
 import org.joda.time.LocalDateTime;
 import org.joda.time.LocalTime;
 import org.joda.time.format.DateTimeFormat;
@@ -114,7 +113,7 @@ public class TestTimeParsing {
     }
 
     @Test
-    public void parseExtendedTimeYaml_short() throws IOException, ParseException {
+    public void parseExtendedTimeYaml_short() throws IOException {
 
 
         SimpleYamlHolder holder;
@@ -186,8 +185,6 @@ public class TestTimeParsing {
 
     @Test
     public void testTimeParsing() {
-        String s = "0:00 - 8:45, 19:00 - 23:59";
-
         LocalTime lt1 = LocalTime.parse("0:00", FORMATTER);
         LocalTime lt2 = LocalTime.parse("8:45", FORMATTER);
         LocalTime lt3 = LocalTime.parse("19:00", FORMATTER);

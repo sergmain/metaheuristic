@@ -18,21 +18,16 @@
 package aiai.ai.launchpad;
 
 import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.FlowInstance;
-import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.utils.BoolHolder;
+import aiai.ai.utils.holders.BoolHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 
