@@ -1,0 +1,13 @@
+setup:
+  addons:
+    - plan: 'heroku-postgresql:hobby-basic'
+      as: DATABASE
+build:
+  languages:
+    - java
+  pre:
+    - cp pom-heroku.xml pom.xml
+run:
+  web: >-
+    java $JAVA_OPTS  -XX:-UseGCOverheadLimit -Xms228m -Xmx228m
+    -Dserver.port=$PORT -jar apps/aiai/target/aiai.jar
