@@ -87,7 +87,7 @@ public class Schedulers {
             launchpadService.getArtifactCleanerAtLaunchpad().fixedDelay();
         }
 
-        @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.gc-timeout'), 600, 3600*24*7, 1800)*1000 }")
+        @Scheduled(initialDelay = 1_800_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.gc-timeout'), 600, 3600*24*7, 3600)*1000 }")
         public void garbageCollectionAtLaunchpad() {
             if (globals.isUnitTesting) {
                 return;
