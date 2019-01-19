@@ -29,6 +29,7 @@ import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.utils.SimpleSelectOption;
+import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
@@ -550,6 +551,33 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiments";
     }
 
+    @PostMapping("/experiment-clone-commit")
+    public String experimentCloneCommit(Long id, final RedirectAttributes redirectAttributes) {
+        final Experiment experiment = experimentCache.findById(id);
+        if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#280.73 experiment wasn't found, experimentId: " + id);
+            return "redirect:/launchpad/experiments";
+        }
+        final Experiment e = new Experiment();
+        e.setCode(StrUtils.incCopyNumber(experiment.getCode()));
+        e.setName(StrUtils.incCopyNumber(experiment.getName()));
+        e.setDescription(experiment.getDescription());
+        e.setSeed(experiment.getSeed());
+        e.setCreatedOn(System.currentTimeMillis());
+        e.setHyperParams(
+                experiment.getHyperParams()
+                        .stream()
+                        .map( p -> new ExperimentHyperParams(p.getKey(), p.getValues(), e))
+                        .collect(Collectors.toList()));
+        experimentCache.save(e);
+
+        List<ExperimentSnippet> snippets = experimentSnippetRepository.findByExperimentId(experiment.getId());
+
+        experimentSnippetRepository.saveAll( snippets.stream().map(s -> new ExperimentSnippet(s.getSnippetCode(), s.getType(), e.getId())).collect(Collectors.toList()));
+
+        return "redirect:/launchpad/experiments";
+    }
+
     @PostMapping("/task-rerun/{taskId}")
     public @ResponseBody boolean rerunTask(@PathVariable long taskId) {
         Task task = taskRepository.findById(taskId).orElse(null);
@@ -557,13 +585,6 @@ public class ExperimentsController {
             log.warn("#280.75 Can't re-run task {}, task with such taskId wasn't found", taskId);
             return false;
         }
-/*
-        ExperimentFeature feature = experimentFeatureRepository.findById(task.experimentFeatureId).orElse(null);
-        if (feature == null) {
-            log.warn("#270.79 Can't re-run task {}, ExperimentFeature wasn't found for this task", taskId);
-            return false;
-        }
-*/
         FlowInstance flowInstance = flowInstanceRepository.findById(task.getFlowInstanceId()).orElse(null);
         if (flowInstance == null) {
             log.warn("#270.84 Can't re-run task {}, this task is orphan and doesn't belong to any flowInstance", taskId);
@@ -571,14 +592,6 @@ public class ExperimentsController {
         }
 
         Task t = taskPersistencer.resetTask(taskId);
-
-/*
-        feature.setExecStatus(FeatureExecStatus.unknown.code);
-        feature.setFinished(false);
-        feature.setInProgress(true);
-        experimentFeatureRepository.save(feature);
-*/
-
         return t!=null;
     }
 }

@@ -19,6 +19,7 @@ package aiai.ai.launchpad.beans;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.*;
@@ -29,6 +30,7 @@ import java.io.Serializable;
 @Data
 @EqualsAndHashCode(exclude = {"experiment", "variants"})
 @ToString(exclude = {"experiment"})
+@NoArgsConstructor
 public class ExperimentHyperParams implements Serializable {
     private static final long serialVersionUID = -2816493662535597212L;
 
@@ -49,10 +51,17 @@ public class ExperimentHyperParams implements Serializable {
     @JoinColumn(name = "EXPERIMENT_ID")
     private Experiment experiment;
 
+    public ExperimentHyperParams(String key, String values, Experiment experiment) {
+        this.key = key;
+        this.values = values;
+        this.experiment = experiment;
+    }
+
     /**
      * number of variants for this metadata
      */
     @Transient
     private int variants;
+
 
 }

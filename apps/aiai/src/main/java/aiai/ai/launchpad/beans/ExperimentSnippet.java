@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.beans;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.*;
@@ -27,6 +28,7 @@ import java.io.Serializable;
 @Table(name = "AIAI_LP_EXPERIMENT_SNIPPET")
 @Data
 @ToString
+@NoArgsConstructor
 public class ExperimentSnippet implements Serializable {
     private static final long serialVersionUID = -5262380060868481336L;
 
@@ -45,4 +47,10 @@ public class ExperimentSnippet implements Serializable {
 
     @Column(name = "EXPERIMENT_ID")
     private long experimentId;
+
+    public ExperimentSnippet(String snippetCode, String type, long experimentId) {
+        this.snippetCode = snippetCode;
+        this.type = type;
+        this.experimentId = experimentId;
+    }
 }
