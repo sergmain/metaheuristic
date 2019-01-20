@@ -95,7 +95,7 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke System.gc()");
+            log.warn("Invoke System.gc()");
             System.gc();
         }
 

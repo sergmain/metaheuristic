@@ -15,6 +15,9 @@ public interface FlowRepository extends CrudRepository<Flow, Long> {
     @Transactional(readOnly = true)
     Slice<Flow> findAll(Pageable pageable);
 
+    @Transactional(readOnly = true)
+    Slice<Flow> findAllByOrderByIdDesc(Pageable pageable);
+
     Flow findByCode(String code);
 }
 

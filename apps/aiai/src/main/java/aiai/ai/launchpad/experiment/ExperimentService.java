@@ -510,7 +510,7 @@ public class ExperimentService {
 
         intHolder.value = allHyperParams.size() * experimentSnippets.size();
 
-        log.info("total size of tasks' params is {} bytes", size.value);
+        log.debug("total size of tasks' params is {} bytes", size.value);
         final BoolHolder boolHolder = new BoolHolder();
         final Consumer<Long> longConsumer = o -> {
             if (flowInstance.getId().equals(o)) {

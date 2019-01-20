@@ -81,7 +81,8 @@ public class FlowController {
     @GetMapping("/flows")
     public String flows(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
         pageable = ControllerUtils.fixPageSize(globals.flowRowsLimit, pageable);
-        result.items = flowRepository.findAll(pageable);
+//        result.items = flowRepository.findAll(pageable);
+        result.items = flowRepository.findAllByOrderByIdDesc(pageable);
         return "launchpad/flow/flows";
     }
 
@@ -89,7 +90,8 @@ public class FlowController {
     @PostMapping("/flows-part")
     public String flowsPart(@ModelAttribute Result result, @PageableDefault(size = 10) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.flowRowsLimit, pageable);
-        result.items = flowRepository.findAll(pageable);
+//        result.items = flowRepository.findAll(pageable);
+        result.items = flowRepository.findAllByOrderByIdDesc(pageable);
         return "launchpad/flow/flows :: table";
     }
 

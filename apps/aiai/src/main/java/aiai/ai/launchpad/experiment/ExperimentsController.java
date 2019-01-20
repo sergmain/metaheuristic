@@ -329,6 +329,7 @@ public class ExperimentsController {
         experiment.setDescription(simpleExperiment.getDescription());
         experiment.setSeed(simpleExperiment.getSeed());
         experiment.setCode(simpleExperiment.getCode());
+        experiment.setCreatedOn(System.currentTimeMillis());
         String target = "redirect:/launchpad/experiment-edit/" + experiment.getId();
         return processCommit(model, experiment, target, target, true, redirectAttributes);
     }
