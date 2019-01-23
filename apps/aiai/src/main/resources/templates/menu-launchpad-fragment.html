@@ -1,4 +1,4 @@
-<div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5"
+<div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      sec:authorize="isAuthenticated()"
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
@@ -25,8 +25,10 @@
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/account/accounts'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/account/accounts.html" th:href="@{/launchpad/account/accounts}">Accounts</a>
         </li>
+<!--
         <li th:attr="class=${#httpServletRequest.requestURI.startsWith('/registry/address/address')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="registry/address/addresses.html" th:href="@{/registry/address/addresses}">Addresses</a>
         </li>
+-->
     </ul>
 </div>

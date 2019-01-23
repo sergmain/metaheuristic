@@ -1,5 +1,5 @@
 /*
- * AiAi, Copyright (C) 2017-2018  Serge Maslyukov
+ * AiAi, Copyright (C) 2017-2019  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -138,7 +138,7 @@ public class MultiHttpSecurityConfig {
                     .antMatchers("/static/**/**", "/css/**", "/js/**", "/webjars/**").permitAll()
                     .antMatchers("/favicon.ico", "/", "/index", "/about", "/login", "/jssc", "/error/**").permitAll()
                     .antMatchers("/login").anonymous()
-                    .antMatchers("/logout", "/launchpad/**", "/registry/**", "/station/**").authenticated()
+                    .antMatchers("/logout", "/launchpad/**", "/pilot/**", "/registry/**", "/station/**").authenticated()
                     .antMatchers("/admin/**").hasAnyRole("ADMIN")
                     .antMatchers("/user/**").hasAnyRole("USER")
                     .antMatchers("/**/**").denyAll()

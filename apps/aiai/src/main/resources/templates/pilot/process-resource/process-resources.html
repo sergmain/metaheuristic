@@ -1,0 +1,83 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     layout:decorate="~{layout-pilot}"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+>
+
+<script>
+        var table = function (html) {
+            $('#table').html(html).find('.ajax-elem').each(function () {
+                $(this).click(function () {
+                    $.post($(this).attr('href'), table);
+                    return false;
+                });
+            });
+        };
+
+        $(function () {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+
+            $(document).ajaxSend(function(e, xhr, options) {
+                xhr.setRequestHeader(header, token);
+            });
+            // is this the right usage?
+            $.post('/pilot/process-resource/process-resources-part', table);
+        });
+
+    </script>
+
+    <h1 class="widget-header">Flows instances</h1>
+
+    <a class="pure-button pure-button-primary" href="process-resource-add.html" th:href="@{/pilot/process-resource/process-resource-add}">Add new flow instance and start processing</a>
+    <p></p>
+
+    <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+        <thead>
+        <tr th:align="center">
+            <th>#</th>
+            <th>Flow code</th>
+            <th>Created on</th>
+            <th>Exec state</th>
+            <th colspan="2">&nbsp;</th>
+        </tr>
+        </thead>
+
+        <tbody>
+        <!--/*@thymesVar id="result" type="aiai.ai.pilot.process_resource.ProcessResourceController$ProcessResourceResult"*/-->
+        <tr th:each="r : ${result.resources}">
+            <td th:text="${r.id}">#Id</td>
+            <td th:text="${result.flows.get(r.id).code}">Flow code</td>
+            <td th:text="${#dates.formatISO(r.createdOn)}">CreatedOn</td>
+            <td th:text="${T(aiai.ai.Enums.FlowInstanceExecState).from(r.execState)}">Exec state</td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/pilot/process-resource/process-resource-delete/' + r.id}">Delete</a></td>
+            <td><a class="pure-button pure-button-primary"
+                   th:if="${r.execState==T(aiai.ai.Enums.FlowInstanceExecState).FINISHED.code}"
+                   th:href="${'/pilot/process-resource/process-resource-delete/' + r.id}">Download result</a></td>
+        </tr>
+        <tr>
+            <td colspan="8">
+                <div>
+                    <ul class='pagination pagination-centered'>
+                        <li class="table-nav-padding">
+                            <span th:if='${result.resources.first}' class="table-nav-button">« First</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.resources.first}'
+                               th:href="@{/pilot/process-resource/process-resource-part(page=0,size=${result.resources.pageable.pageSize})}">« First</a>
+                        </li>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.resources.hasPrevious()}' class="table-nav-button">←</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.resources.hasPrevious()}'
+                               th:href="@{/pilot/process-resource/process-resource-part(page=${result.resources.pageable.pageNumber - 1},size=${result.accounts.pageable.pageSize})}" title='Go to previous page'>←</a>
+                        </li>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.resources.hasNext()}' class="table-nav-button">→</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.resources.hasNext()}'
+                               th:href='@{/pilot/process-resource/process-resource-part(page=${result.resources.pageable.pageNumber + 1},size=${result.accounts.pageable.pageSize})}' title='Go to next page'>→</a>
+                        </li>
+                    </ul>
+                </div>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+
+</div>

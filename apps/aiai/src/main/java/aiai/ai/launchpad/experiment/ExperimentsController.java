@@ -1,5 +1,5 @@
 /*
- * AiAi, Copyright (C) 2017-2018  Serge Maslyukov
+ * AiAi, Copyright (C) 2017-2019  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -151,7 +151,8 @@ public class ExperimentsController {
     @GetMapping("/experiments")
     public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
         pageable = ControllerUtils.fixPageSize(globals.experimentRowsLimit, pageable);
-        result.items = experimentRepository.findAll(pageable);
+//        result.items = experimentRepository.findAll(pageable);
+        result.items = experimentRepository.findAllByOrderByIdDesc(pageable);
         return "launchpad/experiments";
     }
 

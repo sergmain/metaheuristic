@@ -1,4 +1,4 @@
-<div xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5" th:if="${#httpServletRequest.requestURI != '/login'}">
+<div xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security" th:if="${#httpServletRequest.requestURI != '/login'}">
     <div sec:authorize="isAnonymous()">
         <h1 class="widget-header">Sign in</h1>
 

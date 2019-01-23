@@ -1,0 +1,45 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
+     layout:decorate="~{layout-pilot}"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">Upload documetn for processing</h1>
+
+        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController$Result"*/-->
+        <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
+              th:action="@{/pilot/process-resource/process-resource-upload-from-file}"
+        >
+            <fieldset>
+
+                <label for="flowId">List of flows</label>
+                <select  id="flowId" class="pure-input-medium" th:name="flowId">
+                    <option th:each="o : ${result.items}" th:value="${o.id}" th:text="${o.code} "></option>
+                </select>
+                <span class="pure-form-message">This is a required field.</span>
+
+                <label for="uploadFile">Document for uploading, only .xml files are supported</label>
+                <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:size="100" style="color:black; background-color:white"/>
+                <div class="fileUpload pure-button pure-button-primary">
+                    <span>Select file</span>
+                    <input name="file" id="uploadBtn" type="file" class="upload">
+                </div>
+                <span class="pure-form-message">This is a required field.</span>
+
+                <table>
+                    <tr>
+                        <td>
+                            <button type="submit" class="pure-button pure-button-primary">Create account</button>
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td>
+                            <a class="pure-button pure-button-primary" href="process-resources.html" th:href="${'/process-resource/process-resources'}">Cancel</a>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+    </div>
+</div>

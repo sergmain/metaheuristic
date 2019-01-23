@@ -1,0 +1,13 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     layout:decorate="~{layout-pilot}"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+>
+
+    <h2 class="title">Pilot index page</h2>
+
+    <p>
+        There is a collection of different pilot interfaces which are a subject to change frequently.
+    </p>
+
+</div>
+

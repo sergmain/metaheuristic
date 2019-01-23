@@ -1,5 +1,5 @@
 /*
- * AiAi, Copyright (C) 2017-2018  Serge Maslyukov
+ * AiAi, Copyright (C) 2017-2019  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -39,6 +39,9 @@ public interface ExperimentRepository extends CrudRepository<Experiment, Long> {
 
     @Transactional(readOnly = true)
     Slice<Experiment> findAll(Pageable pageable);
+
+    @Transactional(readOnly = true)
+    Slice<Experiment> findAllByOrderByIdDesc(Pageable pageable);
 
     Experiment findByFlowInstanceId(long flowInstanceId);
 

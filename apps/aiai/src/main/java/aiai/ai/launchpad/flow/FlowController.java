@@ -1,3 +1,20 @@
+/*
+ * AiAi, Copyright (C) 2017-2019  Serge Maslyukov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package aiai.ai.launchpad.flow;
 
 import aiai.ai.Enums;
@@ -81,7 +98,6 @@ public class FlowController {
     @GetMapping("/flows")
     public String flows(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
         pageable = ControllerUtils.fixPageSize(globals.flowRowsLimit, pageable);
-//        result.items = flowRepository.findAll(pageable);
         result.items = flowRepository.findAllByOrderByIdDesc(pageable);
         return "launchpad/flow/flows";
     }
@@ -90,7 +106,6 @@ public class FlowController {
     @PostMapping("/flows-part")
     public String flowsPart(@ModelAttribute Result result, @PageableDefault(size = 10) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.flowRowsLimit, pageable);
-//        result.items = flowRepository.findAll(pageable);
         result.items = flowRepository.findAllByOrderByIdDesc(pageable);
         return "launchpad/flow/flows :: table";
     }
@@ -318,7 +333,7 @@ public class FlowController {
         return "launchpad/flow/flow-instance-delete";
     }
 
-    private String prepareModel(@PathVariable Long flowId, @PathVariable Long flowInstanceId, Model model, RedirectAttributes redirectAttributes) {
+    private String prepareModel(Long flowId, Long flowInstanceId, Model model, RedirectAttributes redirectAttributes) {
         if (flowId==null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#560.83 flow wasn't found, flowId: " + flowId);
             return "redirect:/launchpad/flow/flows";

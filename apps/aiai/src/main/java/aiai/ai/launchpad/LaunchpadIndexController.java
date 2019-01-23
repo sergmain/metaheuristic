@@ -1,5 +1,5 @@
 /*
- * AiAi, Copyright (C) 2017-2018  Serge Maslyukov
+ * AiAi, Copyright (C) 2017-2019  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ import java.util.Map;
 public class LaunchpadIndexController {
 
     @GetMapping("/index")
-    public String index2(Map<String, Object> model) {
+    public String index() {
         return "launchpad/index";
     }
 
