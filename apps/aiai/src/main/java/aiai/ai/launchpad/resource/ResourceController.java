@@ -21,8 +21,6 @@ import aiai.ai.Globals;
 import aiai.ai.exceptions.StoreNewPartOfRawFileException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.snippet.SnippetCache;
-import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.utils.ControllerUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +38,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * User: Serg
@@ -77,14 +77,10 @@ public class ResourceController {
 
     private final Globals globals;
     private final ResourceService resourceService;
-    private final SnippetService snippetService;
-    private final SnippetCache snippetCache;
     private final BinaryDataService binaryDataService;
 
-    public ResourceController(Globals globals, SnippetService snippetService, SnippetCache snippetCache, BinaryDataService binaryDataService, ResourceService resourceService) {
+    public ResourceController(Globals globals, BinaryDataService binaryDataService, ResourceService resourceService) {
         this.globals = globals;
-        this.snippetService = snippetService;
-        this.snippetCache = snippetCache;
         this.binaryDataService = binaryDataService;
         this.resourceService = resourceService;
     }

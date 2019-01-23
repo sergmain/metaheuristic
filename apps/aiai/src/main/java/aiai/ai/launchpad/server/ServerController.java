@@ -20,15 +20,12 @@ package aiai.ai.launchpad.server;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.ExchangeData;
-import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.task.TaskPersistencer;
-import aiai.ai.station.AssetFile;
-import aiai.ai.utils.ResourceUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.utils.DirUtils;
@@ -38,9 +35,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -122,19 +117,18 @@ public class ServerController {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
-        return deliverResourceToStation(response, typeAsStr, code);
+        return serverService.deliverResourceToStation(typeAsStr, code);
     }
 
     @GetMapping(value="/rest-auth/payload/resource/{type}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> deliverResourceAuth(
-            HttpServletResponse response,
             @PathVariable("type") String typeAsStr,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @SuppressWarnings("unused") String stationId,
             @SuppressWarnings("unused") Long taskId,
-            String code) throws IOException {
+            String code) {
         log.debug("deliverResourceAuth(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
-        return deliverResourceToStation(response, typeAsStr, code);
+        return serverService.deliverResourceToStation(typeAsStr, code);
     }
 
     @PostMapping("/rest-anon/upload/{random-part}")
@@ -210,44 +204,6 @@ public class ServerController {
                 : new UploadResult(status, "#442.08 can't update resultReceived field for task #"+task.getId()+"");
     }
 
-    private HttpEntity<AbstractResource> deliverResourceToStation(HttpServletResponse response, String typeAsStr, String code) throws IOException {
-        Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
-        AssetFile assetFile;
-        switch(binaryDataType) {
-            case SNIPPET:
-                assetFile = ResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, code, null);
-                break;
-            case DATA:
-            case TEST:
-                assetFile = ResourceUtils.prepareDataFile(globals.launchpadResourcesDir, code, null);
-                break;
-            case UNKNOWN:
-            default:
-                throw new IllegalStateException("Unknown type of data: " + binaryDataType);
-        }
-
-        if (assetFile==null) {
-            String es = "#442.12 resource with code "+code+" wasn't found";
-            log.error(es);
-//            return returnEmptyAsGone(response);
-            throw new BinaryDataNotFoundException(es);
-        }
-        try {
-            binaryDataService.storeToFile(code, assetFile.file);
-        } catch (BinaryDataNotFoundException e) {
-            log.error("#442.16 Error store data to temp file, data doesn't exist in db, code " + code+", file: " + assetFile.file.getPath());
-//            return returnEmptyAsGone(response);
-            throw e;
-        }
-        return new HttpEntity<>(new FileSystemResource(assetFile.file.toPath()), getHeader(assetFile.file.length()));
-    }
-
-    private HttpEntity<AbstractResource> returnEmptyAsGone(HttpServletResponse response) throws IOException {
-        response.sendError(HttpServletResponse.SC_GONE);
-//        return new HttpEntity<>(new ByteArrayResource(new byte[0]), getHeader(0));
-        return null;
-    }
-
     @SuppressWarnings("unused")
     @PostMapping("/rest-anon/payload/snippet-checksum/{random-part}")
     public String snippetChecksumAnon(
@@ -293,17 +249,6 @@ public class ServerController {
         log.info("Send checksum for snippet {}");
         return snippet.getChecksum();
     }
-
-    private static HttpHeaders getHeader(long length) {
-        HttpHeaders header = new HttpHeaders();
-        header.setContentLength(length);
-        header.setCacheControl("max-age=0");
-        header.setExpires(0);
-        header.setPragma("no-cache");
-
-        return header;
-    }
-
 
     /**
      * This endpoint is only for testing security. Do not delete

@@ -30,7 +30,9 @@ import aiai.ai.launchpad.experiment.ExperimentProcessValidator;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.file_process.FileProcessService;
 import aiai.ai.launchpad.file_process.FileProcessValidator;
+import aiai.ai.launchpad.repositories.ExperimentTaskFeatureRepository;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
+import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
@@ -40,6 +42,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -62,11 +67,14 @@ public class FlowService {
     private final FlowInstanceRepository flowInstanceRepository;
     private final TaskRepository taskRepository;
     private final FlowCache flowCache;
+    private final FlowRepository flowRepository;
 
     private final ExperimentProcessValidator experimentProcessValidator;
     private final FileProcessValidator fileProcessValidator;
+    private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
+    private final FlowInstanceService flowInstanceService;
 
-    public FlowService(FlowYamlUtils flowYamlUtils, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, FlowCache flowCache, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator) {
+    public FlowService(FlowYamlUtils flowYamlUtils, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, FlowCache flowCache, FlowRepository flowRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, FlowInstanceService flowInstanceService) {
         this.flowYamlUtils = flowYamlUtils;
         this.experimentService = experimentService;
         this.binaryDataService = binaryDataService;
@@ -75,8 +83,11 @@ public class FlowService {
         this.flowInstanceRepository = flowInstanceRepository;
         this.taskRepository = taskRepository;
         this.flowCache = flowCache;
+        this.flowRepository = flowRepository;
         this.experimentProcessValidator = experimentProcessValidator;
         this.fileProcessValidator = fileProcessValidator;
+        this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
+        this.flowInstanceService = flowInstanceService;
     }
 
     public FlowInstance toStarted(FlowInstance flowInstance) {
@@ -120,6 +131,88 @@ public class FlowService {
         if (!flowInstances.isEmpty()) {
             log.info("Producing tasks was finished");
         }
+    }
+
+    public void deleteFlowInstance(Long flowInstanceId, FlowInstance fi) {
+        experimentService.resetExperiment(fi);
+        flowInstanceService.deleteById(flowInstanceId);
+        taskExperimentFeatureRepository.deleteByFlowInstanceId(flowInstanceId);
+        binaryDataService.deleteByFlowInstanceId(flowInstanceId);
+        List<FlowInstance> instances = flowInstanceRepository.findByFlowId(fi.flowId);
+        if (instances.isEmpty()) {
+            Flow flow = flowRepository.findById(fi.flowId).orElse(null);
+            if (flow!=null) {
+                flow.locked = false;
+                flowCache.save(flow);
+            }}
+    }
+
+    public String prepareModel(Long flowId, Long flowInstanceId, Model model, RedirectAttributes redirectAttributes, String redirect) {
+        if (flowId==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.83 flow wasn't found, flowId: " + flowId);
+            return redirect;
+        }
+        if (flowInstanceId==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.85 flowInstanceId is null");
+            return redirect;
+        }
+        final FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
+        if (flowInstance == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.87 flowInstance wasn't found, flowInstanceId: " + flowInstanceId);
+            return redirect;
+        }
+        Flow flow = flowCache.findById(flowId);
+        if (flow == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.89 flow wasn't found, flowId: " + flowId);
+            return redirect;
+        }
+
+        if (!flow.getId().equals(flowInstance.flowId)) {
+            flowInstance.valid=false;
+            flowInstanceRepository.save(flowInstance);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "#560.73 flowId doesn't match to flowInstance.flowId, flowId: " + flowId+", flowInstance.flowId: " + flowInstance.flowId);
+            return redirect;
+        }
+
+        FlowController.FlowInstanceResult result = new FlowController.FlowInstanceResult(flowInstance, flow);
+        model.addAttribute("result", result);
+        return null;
+    }
+
+    public Enums.FlowValidateStatus validateInternal(Model model, Flow flow) {
+        Enums.FlowValidateStatus flowValidateStatus = validate(flow);
+        flow.valid = flowValidateStatus == Enums.FlowValidateStatus.OK;
+        flowCache.save(flow);
+        if (flow.valid) {
+            model.addAttribute("infoMessages", "Validation result: OK");
+        }
+        else {
+            log.error("Validation error: {}", flowValidateStatus);
+            model.addAttribute("errorMessage", "#561.01 Validation error: : " + flowValidateStatus);
+        }
+        return flowValidateStatus;
+    }
+
+    public String flowInstanceTargetExecState(
+            Long flowId, Long id, Model model,
+            RedirectAttributes redirectAttributes, Enums.FlowInstanceExecState execState,
+            String targetRedirectUrl) {
+        String redirectUrl = prepareModel(flowId, id, model, redirectAttributes, targetRedirectUrl);
+        if (redirectUrl != null) {
+            return redirectUrl;
+        }
+        FlowController.FlowInstanceResult result = (FlowController.FlowInstanceResult) model.asMap().get("result");
+        if (result==null) {
+            throw new IllegalStateException("FlowInstanceResult is null");
+        }
+
+        result.flowInstance.setExecState(execState.code);
+        flowInstanceRepository.save(result.flowInstance);
+
+        result.flow.locked = true;
+        flowCache.save(result.flow);
+        return null;
     }
 
     @Data

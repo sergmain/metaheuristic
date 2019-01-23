@@ -18,7 +18,6 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.Task;
-import aiai.ai.launchpad.beans.TaskSimple;
 import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;

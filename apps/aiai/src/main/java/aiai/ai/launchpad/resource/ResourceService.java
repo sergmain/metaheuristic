@@ -18,7 +18,6 @@
 package aiai.ai.launchpad.resource;
 
 import aiai.ai.Enums;
-import aiai.ai.Globals;
 import aiai.ai.exceptions.StoreNewPartOfRawFileException;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import lombok.extern.slf4j.Slf4j;
@@ -35,17 +34,13 @@ import java.io.InputStream;
 @Profile("launchpad")
 public class ResourceService {
 
-    private final Globals globals;
     private final BinaryDataService binaryDataService;
 
-    public ResourceService(Globals globals, BinaryDataService binaryDataService) {
-        this.globals = globals;
+    public ResourceService(BinaryDataService binaryDataService) {
         this.binaryDataService = binaryDataService;
     }
 
-    void storeInitialResource(
-            String originFilename, File tempFile, String code, String poolCode, String filename) {
-
+    public void storeInitialResource(String originFilename, File tempFile, String code, String poolCode, String filename) {
         try {
             try (InputStream is = new FileInputStream(tempFile)) {
                 binaryDataService.save(

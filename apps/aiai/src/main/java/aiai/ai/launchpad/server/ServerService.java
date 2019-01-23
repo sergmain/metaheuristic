@@ -18,17 +18,26 @@
 package aiai.ai.launchpad.server;
 
 import aiai.ai.Enums;
+import aiai.ai.Globals;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.CommandProcessor;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
+import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Station;
+import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
-import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.station.AssetFile;
+import aiai.ai.utils.ResourceUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,13 +47,63 @@ import java.util.stream.Stream;
 
 @Service
 @Profile("launchpad")
+@Slf4j
 public class ServerService {
 
     private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
 
+    private final Globals globals;
+    private final BinaryDataService binaryDataService;
     private final CommandProcessor commandProcessor;
     private final StationsRepository stationsRepository;
     private final CommandSetter commandSetter;
+
+    public HttpEntity<AbstractResource> deliverResourceToStation(String typeAsStr, String code) {
+        Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
+        return deliverResourceToStation(binaryDataType, code);
+    }
+
+    public HttpEntity<AbstractResource> deliverResourceToStation(Enums.BinaryDataType binaryDataType, String code) {
+        return deliverResourceToStation(binaryDataType, code, null);
+    }
+    public HttpEntity<AbstractResource> deliverResourceToStation(Enums.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders) {
+        AssetFile assetFile;
+        switch(binaryDataType) {
+            case SNIPPET:
+                assetFile = ResourceUtils.prepareSnippetFile(globals.launchpadResourcesDir, code, null);
+                break;
+            case DATA:
+            case TEST:
+                assetFile = ResourceUtils.prepareDataFile(globals.launchpadResourcesDir, code, null);
+                break;
+            case UNKNOWN:
+            default:
+                throw new IllegalStateException("Unknown type of data: " + binaryDataType);
+        }
+
+        if (assetFile==null) {
+            String es = "#442.12 resource with code "+code+" wasn't found";
+            log.error(es);
+            throw new BinaryDataNotFoundException(es);
+        }
+        try {
+            binaryDataService.storeToFile(code, assetFile.file);
+        } catch (BinaryDataNotFoundException e) {
+            log.error("#442.16 Error store data to temp file, data doesn't exist in db, code " + code+", file: " + assetFile.file.getPath());
+            throw e;
+        }
+        return new HttpEntity<>(new FileSystemResource(assetFile.file.toPath()), getHeader(httpHeaders, assetFile.file.length()));
+    }
+
+    private static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
+        HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
+        header.setContentLength(length);
+//        header.setCacheControl("max-age=0");
+//        header.setExpires(0);
+//        header.setPragma("no-cache");
+
+        return header;
+    }
 
     @Service
     @Profile("launchpad")
@@ -64,7 +123,9 @@ public class ServerService {
         }
     }
 
-    public ServerService(CommandProcessor commandProcessor, StationsRepository stationsRepository, CommandSetter commandSetter) {
+    public ServerService(Globals globals, BinaryDataService binaryDataService, CommandProcessor commandProcessor, StationsRepository stationsRepository, CommandSetter commandSetter) {
+        this.globals = globals;
+        this.binaryDataService = binaryDataService;
         this.commandProcessor = commandProcessor;
         this.stationsRepository = stationsRepository;
         this.commandSetter = commandSetter;
