@@ -58,15 +58,15 @@ public class ServerService {
     private final StationsRepository stationsRepository;
     private final CommandSetter commandSetter;
 
-    public HttpEntity<AbstractResource> deliverResourceToStation(String typeAsStr, String code) {
+    public HttpEntity<AbstractResource> deliverResource(String typeAsStr, String code) {
         Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
-        return deliverResourceToStation(binaryDataType, code);
+        return deliverResource(binaryDataType, code);
     }
 
-    public HttpEntity<AbstractResource> deliverResourceToStation(Enums.BinaryDataType binaryDataType, String code) {
-        return deliverResourceToStation(binaryDataType, code, null);
+    public HttpEntity<AbstractResource> deliverResource(Enums.BinaryDataType binaryDataType, String code) {
+        return deliverResource(binaryDataType, code, null);
     }
-    public HttpEntity<AbstractResource> deliverResourceToStation(Enums.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders) {
+    public HttpEntity<AbstractResource> deliverResource(Enums.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders) {
         AssetFile assetFile;
         switch(binaryDataType) {
             case SNIPPET:
@@ -98,9 +98,9 @@ public class ServerService {
     private static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
         HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
         header.setContentLength(length);
-//        header.setCacheControl("max-age=0");
-//        header.setExpires(0);
-//        header.setPragma("no-cache");
+        header.setCacheControl("max-age=0");
+        header.setExpires(0);
+        header.setPragma("no-cache");
 
         return header;
     }

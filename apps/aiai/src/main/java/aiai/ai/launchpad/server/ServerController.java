@@ -117,7 +117,7 @@ public class ServerController {
             response.sendError(HttpServletResponse.SC_FORBIDDEN);
             return null;
         }
-        return serverService.deliverResourceToStation(typeAsStr, code);
+        return serverService.deliverResource(typeAsStr, code);
     }
 
     @GetMapping(value="/rest-auth/payload/resource/{type}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
@@ -128,7 +128,7 @@ public class ServerController {
             @SuppressWarnings("unused") Long taskId,
             String code) {
         log.debug("deliverResourceAuth(), globals.isSecureRestUrl: {}, typeAsStr: {}, code: {}", globals.isSecureLaunchpadRestUrl, typeAsStr, code);
-        return serverService.deliverResourceToStation(typeAsStr, code);
+        return serverService.deliverResource(typeAsStr, code);
     }
 
     @PostMapping("/rest-anon/upload/{random-part}")

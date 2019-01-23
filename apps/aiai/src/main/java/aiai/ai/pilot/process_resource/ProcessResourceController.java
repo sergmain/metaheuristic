@@ -43,7 +43,6 @@ import org.springframework.core.io.AbstractResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -309,7 +308,7 @@ public class ProcessResourceController {
         httpHeaders.setContentType(MediaType.APPLICATION_XML);
         httpHeaders.setContentDispositionFormData("attachment", fi.getInputResourcePoolCode()+"-result.xml" );
 
-        return serverService.deliverResourceToStation(Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode, httpHeaders);
+        return serverService.deliverResource(Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode, httpHeaders);
     }
 
 }
