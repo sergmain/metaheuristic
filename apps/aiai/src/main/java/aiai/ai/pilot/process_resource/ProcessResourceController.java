@@ -169,8 +169,9 @@ public class ProcessResourceController {
             }
             log.info("The file {} was successfully uploaded", originFilename);
 
-            final String code = StringUtils.replaceEach(originFilename, new String[] {".", " "}, new String[] {"-", "_"} );
-            final String resourcePoolCode = originFilename  + '-' + System.nanoTime();
+            final String code = StringUtils.replaceEach(originFilename, new String[] {".", " "}, new String[] {"-", "_"} ) + '-' + System.nanoTime();
+//            final String resourcePoolCode = originFilename  + '-' + System.nanoTime();
+            final String resourcePoolCode = code;
 
             try {
                 resourceService.storeInitialResource(originFilename, dataFile, code, resourcePoolCode, originFilename);
