@@ -78,13 +78,10 @@ public class SnippetController {
         log.info("Start deleting snippet with id: {}", id );
         final Snippet snippet = snippetCache.findById(id);
         if (snippet != null) {
-//            redirectAttributes.addFlashAttribute("infoMessages",
-//                    Collections.singleton("Snippet "+id+" was deleted successfully"));
             snippetCache.delete(snippet.getId());
             binaryDataService.deleteByCodeAndDataType(snippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
         }
         return new HttpEntity<>("true");
-//        return "redirect:/launchpad/snippets";
     }
 
     @PostMapping(value = "/snippet-upload-from-file")

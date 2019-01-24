@@ -28,16 +28,16 @@
 
     <h1 class="widget-header">Flows instances</h1>
 
-    <a class="pure-button pure-button-primary" href="process-resource-add.html" th:href="@{/pilot/process-resource/process-resource-add}">Add new flow instance and start processing</a>
+    <a class="pure-button pure-button-primary" href="process-resource-add.html" th:href="@{/pilot/process-resource/process-resource-add}">Upload files and start processing</a>
     <p></p>
 
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr th:align="center">
             <th>#</th>
+            <th>Created on</th>
             <th>Flow code</th>
             <th>Input resource</th>
-            <th>Created on</th>
             <th>Exec state</th>
             <th colspan="2">&nbsp;</th>
         </tr>
@@ -47,9 +47,10 @@
         <!--/*@thymesVar id="result" type="aiai.ai.pilot.process_resource.ProcessResourceController$ProcessResourceResult"*/-->
         <tr th:each="r : ${result.resources}">
             <td th:text="${r.id}">#Id</td>
+            <!--<td th:text="${#dates.formatISO(r.createdOn)}">CreatedOn</td>-->
+            <td th:text="${#dates.format(r.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
             <td th:text="${result.flows.get(r.id)!=null ? result.flows.get(r.id).code : 'Flow wasn''t found'}">Flow code</td>
             <td th:text="${r.inputResourcePoolCode}">Input resource pool code</td>
-            <td th:text="${#dates.formatISO(r.createdOn)}">CreatedOn</td>
             <td th:text="${T(aiai.ai.Enums.FlowInstanceExecState).from(r.execState)}">Exec state</td>
             <td><a class="pure-button pure-button-primary"
                    th:if="${result.flows.get(r.id)!=null}"

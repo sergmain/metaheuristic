@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.resource;
 
 import aiai.ai.Globals;
-import aiai.ai.exceptions.StoreNewPartOfRawFileException;
+import aiai.ai.exceptions.StoreNewFileException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.utils.ControllerUtils;
@@ -131,7 +131,7 @@ public class ResourceController {
 
         try {
             resourceService.storeInitialResource(originFilename, tempFile, code, resourcePoolCode, originFilename);
-        } catch (StoreNewPartOfRawFileException e) {
+        } catch (StoreNewFileException e) {
             log.error("Error", e);
             redirectAttributes.addFlashAttribute("errorMessage", "#172.04 An error while saving data to file, " + e.toString());
             return "redirect:/launchpad/resources";

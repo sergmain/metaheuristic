@@ -19,7 +19,8 @@ package aiai.ai.pilot.process_resource;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.exceptions.StoreNewPartOfRawFileException;
+import aiai.ai.exceptions.StoreNewFileException;
+import aiai.ai.exceptions.StoreNewFileWithRedirectException;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
@@ -34,6 +35,7 @@ import aiai.ai.utils.ControllerUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.utils.DirUtils;
+import aiai.apps.commons.utils.ZipUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -57,6 +59,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -145,14 +148,21 @@ public class ProcessResourceController {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.10 name of uploaded file is null");
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        int idx;
-        if ((idx = originFilename.lastIndexOf('.')) == -1) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.15 The char '.' wasn't found, bad filename: " + originFilename);
+        originFilename = originFilename.toLowerCase();
+        if (!StringUtils.endsWithAny(originFilename, ".xml", ".zip")) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.20 only '.xml' and .zip files are supported, filename: " + originFilename);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        String ext = originFilename.substring(idx).toLowerCase();
-        if (!".xml".equals(ext)) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.20 only '.xml' files is supported, filename: " + originFilename);
+        Flow flow = flowCache.findById(flowId);
+        if (flow == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.31 flow wasn't found, flowId: " + flowId);
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        }
+
+        // validate the flow
+        Enums.FlowValidateStatus validateStatus = flowService.validateInternal(model, flow);
+        if (validateStatus != Enums.FlowValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.37 validation of flow was failed, status: " + validateStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
@@ -162,87 +172,24 @@ public class ProcessResourceController {
                 redirectAttributes.addFlashAttribute("errorMessage", "#990.24 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
                 return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
             }
-            final File dataFile = new File(tempDir, "document.xml");
+
+            final File dataFile = new File(tempDir, "document" + (originFilename.endsWith(".zip") ? ".zip" : ".xml") );
             log.debug("Start storing an uploaded document to disk");
             try(OutputStream os = new FileOutputStream(dataFile)) {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
+
             log.info("The file {} was successfully uploaded", originFilename);
 
-            final String code = StringUtils.replaceEach(originFilename, new String[] {".", " "}, new String[] {"-", "_"} ) + '-' + System.nanoTime();
-//            final String resourcePoolCode = originFilename  + '-' + System.nanoTime();
-            final String resourcePoolCode = code;
-
-            try {
-                resourceService.storeInitialResource(originFilename, dataFile, code, resourcePoolCode, originFilename);
-            } catch (StoreNewPartOfRawFileException e) {
-                log.error("Error", e);
-                redirectAttributes.addFlashAttribute("errorMessage", "#990.26 An error while saving data to file, " + e.toString());
-                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            if (originFilename.endsWith(".zip")) {
+                log.debug("Start unzipping archive");
+                ZipUtils.unzipFolder(dataFile, tempDir);
             }
-            Flow flow = flowCache.findById(flowId);
-            if (flow == null) {
-                redirectAttributes.addFlashAttribute("errorMessage", "#990.31 flow wasn't found, flowId: " + flowId);
-                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
-            }
-
-            // validate the flow
-            Enums.FlowValidateStatus validateStatus = flowService.validateInternal(model, flow);
-            if (validateStatus != Enums.FlowValidateStatus.OK ) {
-                redirectAttributes.addFlashAttribute("errorMessage", "#990.37 validation of flow was failed, status: " + validateStatus);
-                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
-            }
-
-            FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, resourcePoolCode);
-            if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
-                redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating flowInstance: " + producingResult.flowProducingStatus);
-                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
-            }
-
-            // ugly work-around on StaleObjectStateException
-            flow = flowCache.findById(flowId);
-            if (flow == null) {
-                redirectAttributes.addFlashAttribute("errorMessage", "#990.49 flow wasn't found, flowId: " + flowId);
-                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
-            }
-
-            // validate the flow + the flow instance
-            validateStatus = flowService.validateInternal(model, flow);
-            if (validateStatus != Enums.FlowValidateStatus.OK ) {
-                redirectAttributes.addFlashAttribute("errorMessage", "#990.55 validation of flow was failed, status: " + validateStatus);
-                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
-            }
-
-            FlowService.TaskProducingResult countTasks = new FlowService.TaskProducingResult();
-            flowService.produce(false, countTasks, flow, producingResult.flowInstance);
-            if (countTasks.flowProducingStatus != Enums.FlowProducingStatus.OK) {
-                redirectAttributes.addFlashAttribute("errorMessage", "#990.60 validation of flow was failed, status: " + countTasks.flowValidateStatus);
-                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
-            }
-
-            if (globals.maxTasksPerFlow < countTasks.numberOfTasks) {
-                flowService.changeValidStatus(producingResult.flowInstance, false);
-                redirectAttributes.addFlashAttribute("errorMessage",
-                        "#990.67 number of tasks for this flow instance exceeded the allowed maximum number. Flow instance was created but its status is 'not valid'. " +
-                                "Allowed maximum number of tasks: " + globals.maxTasksPerFlow+", tasks in this flow instance:  " + countTasks.numberOfTasks);
-                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
-            }
-            flowService.changeValidStatus(producingResult.flowInstance, true);
-
-            // start producing new tasks
-            String redirectUrl1 = flowService.flowInstanceTargetExecState(
-                    flowId, producingResult.flowInstance.getId(), model, redirectAttributes, Enums.FlowInstanceExecState.PRODUCING, REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
-
-            if (redirectUrl1 != null) {
-                return redirectUrl1;
-            }
-            flowService.createAllTasks();
-            redirectUrl1 = flowService.flowInstanceTargetExecState(
-                    flowId, producingResult.flowInstance.getId(), model, redirectAttributes, Enums.FlowInstanceExecState.STARTED, REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
-
-            if (redirectUrl1 != null) {
-                return redirectUrl1;
-            }
+            log.debug("Start loading file data to db");
+            loadFilesRecursivelyMain(tempDir, model, redirectAttributes, flow);
+        }
+        catch(StoreNewFileWithRedirectException e) {
+            return e.redirect;
         }
         catch (Exception e) {
             log.error("Error", e);
@@ -251,6 +198,105 @@ public class ProcessResourceController {
         }
 
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+    }
+
+    private void loadFilesRecursivelyMain(File startDir, Model model, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
+        loadFilesFromDir(startDir, model, redirectAttributes, flow);
+        loadFilesRecursively(startDir, model, redirectAttributes, flow);
+    }
+
+    private void loadFilesRecursively(File startDir, Model model, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
+        final File[] dirs = startDir.listFiles(File::isDirectory);
+        if (dirs!=null) {
+            for (File dir : dirs) {
+                log.info("Load files from {}", dir.getPath());
+                loadFilesFromDir(dir, model, redirectAttributes, flow);
+                loadFilesRecursively(dir, model, redirectAttributes, flow);
+            }
+        }
+    }
+
+    private void loadFilesFromDir(File srcDir, Model model, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
+        Files.list(srcDir.toPath())
+                .filter( o -> {
+                    File f = o.toFile();
+                    return f.isFile() && f.getName().endsWith(".xml");
+                })
+                .forEach(dataFile -> {
+                    String redirectUrl1 = createAndProcessTask(model, redirectAttributes, dataFile.toFile().getName(), flow, dataFile.toFile());
+                    if (redirectUrl1 != null) {
+                        throw new StoreNewFileWithRedirectException(redirectUrl1);
+                    }
+                });
+    }
+
+
+    public String createAndProcessTask(Model model, RedirectAttributes redirectAttributes, String originFilename, Flow flow, File dataFile) {
+        Enums.FlowValidateStatus validateStatus;
+        final String code = StringUtils.replaceEach(originFilename, new String[] {".", " "}, new String[] {"-", "_"} ) + '-' + System.nanoTime();
+        //noinspection UnnecessaryLocalVariable
+        final String resourcePoolCode = code;
+
+        try {
+            resourceService.storeInitialResource(originFilename, dataFile, code, resourcePoolCode, originFilename);
+        } catch (StoreNewFileException e) {
+            log.error("Error", e);
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.26 An error while saving data to file, " + e.toString());
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        }
+
+        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, resourcePoolCode);
+        if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating flowInstance: " + producingResult.flowProducingStatus);
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        }
+
+        // ugly work-around on StaleObjectStateException
+        Long flowId = flow.getId();
+        flow = flowCache.findById(flowId);
+        if (flow == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.49 flow wasn't found, flowId: " + flowId);
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        }
+
+        // validate the flow + the flow instance
+        validateStatus = flowService.validateInternal(model, flow);
+        if (validateStatus != Enums.FlowValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.55 validation of flow was failed, status: " + validateStatus);
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        }
+
+        FlowService.TaskProducingResult countTasks = new FlowService.TaskProducingResult();
+        flowService.produce(false, countTasks, flow, producingResult.flowInstance);
+        if (countTasks.flowProducingStatus != Enums.FlowProducingStatus.OK) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.60 validation of flow was failed, status: " + countTasks.flowValidateStatus);
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        }
+
+        if (globals.maxTasksPerFlow < countTasks.numberOfTasks) {
+            flowService.changeValidStatus(producingResult.flowInstance, false);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "#990.67 number of tasks for this flow instance exceeded the allowed maximum number. Flow instance was created but its status is 'not valid'. " +
+                            "Allowed maximum number of tasks: " + globals.maxTasksPerFlow+", tasks in this flow instance:  " + countTasks.numberOfTasks);
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        }
+        flowService.changeValidStatus(producingResult.flowInstance, true);
+
+        // start producing new tasks
+        String redirectUrl1 = flowService.flowInstanceTargetExecState(
+                flow.getId(), producingResult.flowInstance.getId(), model, redirectAttributes, Enums.FlowInstanceExecState.PRODUCING, REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+
+        if (redirectUrl1 != null) {
+            return redirectUrl1;
+        }
+        flowService.createAllTasks();
+        redirectUrl1 = flowService.flowInstanceTargetExecState(
+                flow.getId(), producingResult.flowInstance.getId(), model, redirectAttributes, Enums.FlowInstanceExecState.STARTED, REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+
+        if (redirectUrl1 != null) {
+            return redirectUrl1;
+        }
+        return null;
     }
 
     @GetMapping("/process-resource-delete/{flowId}/{flowInstanceId}")
