@@ -63,6 +63,9 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     @Query("SELECT t FROM Task t where t.stationId is null and t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
     Slice<Task> findForAssigning(Pageable pageable, long flowInstanceId, int taskOrder);
 
+    @Query("SELECT max(t.order) as max_order FROM Task t where t.flowInstanceId=:flowInstanceId")
+    Integer findMaxConcreteOrder(long flowInstanceId);
+
     @Query("SELECT t FROM Task t where t.stationId is not null and t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
     List<Task> findWithConcreteOrder(long flowInstanceId, int taskOrder);
 

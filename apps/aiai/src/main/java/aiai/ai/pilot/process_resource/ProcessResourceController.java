@@ -271,7 +271,7 @@ public class ProcessResourceController {
         FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
         if (fi==null) {
             redirectAttributes.addFlashAttribute("errorMessage",
-                    "#560.77 FlowInstance wasn't found, flowInstanceId: " + flowInstanceId );
+                    "#990.77 FlowInstance wasn't found, flowInstanceId: " + flowInstanceId );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         flowService.deleteFlowInstance(flowInstanceId, fi);
@@ -282,23 +282,35 @@ public class ProcessResourceController {
     public HttpEntity<AbstractResource> downloadFile(
             HttpServletResponse response, @PathVariable("flowInstanceId") Long flowInstanceId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName) throws IOException {
+        log.info("#990.82 Start downloadFile(), flowInstanceId: {}", flowInstanceId);
         FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
         if (fi==null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            log.info("#990.84 FlowInstance wasn't found, flowInstanceId: {}", flowInstanceId);
             return null;
         }
 
         if (fi.getExecState()!= Enums.FlowInstanceExecState.FINISHED.code) {
             response.sendError(HttpServletResponse.SC_CONFLICT);
+            log.info("#990.84 File can't be downloaded because flowInstance doesn't have execState==Enums.FlowInstanceExecState.FINISHED, actual {}", fi.getExecState());
             return null;
         }
-        List<Task> tasks = taskRepository.findWithConcreteOrder(fi.getId(), fi.getProducingOrder()-1);
+//        int taskOrder = fi.getProducingOrder() - 1;
+        Integer taskOrder = taskRepository.findMaxConcreteOrder(fi.getId());
+        if (taskOrder==null) {
+            log.info("#990.86 Can't calculate the max task order, flowInstanceId: {}", flowInstanceId);
+            response.sendError(HttpServletResponse.SC_CONFLICT);
+            return null;
+        }
+        List<Task> tasks = taskRepository.findWithConcreteOrder(fi.getId(), taskOrder);
         if (tasks.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            log.info("#990.88 Can't find any task for flowInstanceId {}}", flowInstanceId);
             return null;
         }
         if (tasks.size()>1) {
             response.sendError(HttpServletResponse.SC_CONFLICT);
+            log.info("#990.90 Can't download file because there are more than one task for flowInstanceId {}}", flowInstanceId);
             return null;
         }
         final Task task = tasks.get(0);
