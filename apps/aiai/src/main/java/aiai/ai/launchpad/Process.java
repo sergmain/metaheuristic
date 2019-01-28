@@ -39,6 +39,7 @@ public class Process {
     public List<String> snippetCodes;
     public boolean parallelExec;
 
+    @Deprecated
     public String inputType;
     public String inputResourceCode;
     public String outputType;

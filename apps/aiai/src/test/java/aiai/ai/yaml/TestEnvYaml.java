@@ -31,18 +31,28 @@ public class TestEnvYaml {
     @Test
     public void testEnvYaml() throws IOException {
 
+        EnvYaml envYaml;
         try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/env.yaml")) {
-            EnvYaml envYaml = EnvYamlUtils.to(is);
-            assertNotNull(envYaml);
-            assertNotNull(envYaml.getEnvs());
-            assertEquals(2, envYaml.getEnvs().size());
-            assertEquals("python.exe", envYaml.getEnvs().get("python"));
-            assertEquals("E:\\Anaconda3\\envs\\python-36\\python.exe", envYaml.getEnvs().get("python-3"));
-
-            String s = EnvYamlUtils.toString(envYaml);
-
-            EnvYaml envYaml1 = EnvYamlUtils.to(s);
-            assertEquals(envYaml, envYaml1);
+            envYaml = EnvYamlUtils.to(is);
         }
+        assertNotNull(envYaml);
+        assertNotNull(envYaml.getEnvs());
+        assertEquals(2, envYaml.getEnvs().size());
+        assertEquals("python.exe", envYaml.getEnvs().get("python"));
+        assertEquals("E:\\Anaconda3\\envs\\python-36\\python.exe", envYaml.getEnvs().get("python-3"));
+
+        assertNotNull(envYaml.getDisk());
+        assertEquals(2, envYaml.getDisk().size());
+        assertEquals("code-1", envYaml.getDisk().get(0).code);
+        assertEquals("C:\\storage\\code-1", envYaml.getDisk().get(0).path);
+        assertEquals("code-2", envYaml.getDisk().get(1).code);
+        assertEquals("C:\\storage\\code-2", envYaml.getDisk().get(1).path);
+
+
+
+        String s = EnvYamlUtils.toString(envYaml);
+
+        EnvYaml envYaml1 = EnvYamlUtils.to(s);
+        assertEquals(envYaml, envYaml1);
     }
 }

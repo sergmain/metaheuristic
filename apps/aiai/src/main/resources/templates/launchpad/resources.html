@@ -24,43 +24,63 @@
         });
 
     </script>
-
-    <h1 class="widget-header">Resources</h1>
-
-    <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-          th:action="@{/launchpad/resource-upload-from-file}"
-    >
-                    <fieldset>
-                        <label for="uploadFile">Part of raw file</label>
-                        <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:size="100" style="color:black; background-color:white"/>
-                        <div class="fileUpload pure-button pure-button-primary">
-                            <span>Select file</span>
-                            <input name="file" id="uploadBtn" type="file" class="upload">
-                        </div>
-                        <span class="pure-form-message">This is a required field.</span>
-                    </fieldset>
-                    <fieldset>
-                        <label for="code">Resource code</label>
-                        <input name="code" id="code" type="text" placeholder="code">
-                        <span class="pure-form-message">This is an optional field.</span>
-                    </fieldset>
-                    <fieldset>
-                        <label for="poolCode">Resource pool code</label>
-                        <input name="poolCode" id="poolCode" type="text" placeholder="poolCode">
-                        <span class="pure-form-message">This is a required field.</span>
-                    </fieldset>
-        <p></p>
-        <button type="submit" class="pure-button pure-button-primary">Start uploading file</button>
-    </form>
-
     <script>
         document.getElementById("uploadBtn").onchange = function () {
             document.getElementById("uploadFile").value = this.value;
         };
     </script>
 
+
+    <h1 class="widget-header">Create resource from file</h1>
+
+    <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
+          th:action="@{/launchpad/resource-upload-from-file}"
+    >
+        <fieldset>
+            <label for="uploadFile">File for uploading</label>
+            <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:size="100" style="color:black; background-color:white"/>
+            <div class="fileUpload pure-button pure-button-primary">
+                <span>Select file</span>
+                <input name="file" id="uploadBtn" type="file" class="upload">
+            </div>
+            <span class="pure-form-message">This is a required field.</span>
+        </fieldset>
+        <fieldset>
+            <label for="code">Resource code</label>
+            <input name="code" id="code" type="text" placeholder="Code">
+            <span class="pure-form-message">This is an optional field.</span>
+        </fieldset>
+        <fieldset>
+            <label for="poolCode">Resource pool code</label>
+            <input name="poolCode" id="poolCode" type="text" placeholder="Pool code">
+            <span class="pure-form-message">This is a required field.</span>
+        </fieldset>
+
+    </form>
+
+    <h1 class="widget-header">Register resource in external storage</h1>
+
+    <form class="pure-form" action="#" method="post" th:method="POST"
+          th:action="@{/launchpad/resource-in-external-storage}"
+    >
+        <fieldset>
+            <label for="poolCode1">Resource pool code</label>
+            <input name="poolCode" id="poolCode1" type="text" placeholder="Pool code">
+            <span class="pure-form-message">This is a required field.</span>
+        </fieldset>
+        <fieldset>
+            <label for="storageCode">Resource pool code</label>
+            <input name="storageCode" id="storageCode" type="text" placeholder="Storage code">
+            <span class="pure-form-message">This is a required field if resource is stored in external storage.</span>
+        </fieldset>
+
+        <p></p>
+        <button type="submit" class="pure-button pure-button-primary">Register resource</button>
+    </form>
+
     <p>&nbsp;</p>
 
+    <h1 class="widget-header">List of resources</h1>
     <!--/*@thymesVar id="result" type="aiai.ai.launchpad.resource.ResourceController$Result"*/-->
     <table class="pure-table pure-table-bordered" id="fragment-table" th:fragment="fragment-table">
         <thead>
@@ -74,6 +94,8 @@
             <th>Pool code</th>
             <th>Is manual</th>
             <th>Filename</th>
+            <th>Is external storage</th>
+            <th>Storage code</th>
             <th colspan="1">&nbsp;</th>
         </tr>
         </thead>
@@ -88,10 +110,12 @@
             <td th:text="${p.poolCode}">Pool code</td>
             <td th:text="${p.manual}">is manual</td>
             <td th:text="${p.filename}">Filename</td>
+            <td th:text="${p.externalStorage}">Is external storage</td>
+            <td th:text="${p.storageCode}">Storage code</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/resource-delete/' + p.id}">Delete</a></td>
         </tr>
         <tr>
-            <td colspan="10">
+            <td colspan="12">
                 <div>
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">

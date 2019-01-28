@@ -59,11 +59,9 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     void deleteByPoolCodeAndDataType(String poolCode, int dataType);
 
     @Query(value="select new aiai.ai.launchpad.resource.SimpleResource(" +
-            "b.id, b.version, b.code, b.poolCode, b.dataType, b.uploadTs, b.checksum, b.valid, b.manual, b.filename ) " +
-            "from BinaryData b")
+            "b.id, b.version, b.code, b.poolCode, b.dataType, b.uploadTs, b.checksum, b.valid, b.manual, b.filename, " +
+            "b.externalStorage, b.storageCode ) " +
+            "from BinaryData b where b.manual=true ")
     Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);
-
-    @Query(value="select b.code from BinaryData b")
-    List<String> dumpAllCodes();
 
 }

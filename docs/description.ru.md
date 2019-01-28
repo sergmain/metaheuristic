@@ -63,7 +63,7 @@ layout: default
 установка станции на этом же сервере не рекомендуется для прода,
 и имеет смысл только для целей разработки и тестирования
 
-3.1 Директории
+3.1. Директории
 - для конфигурации стартовой площадки надо выбрать и создать рабочий директорий,
 в котором стартовая площадка будет создавать свои артифакты
 - выбрать директорий, в котором будет запускаться собственно Aiai. Рекомендуемая схема директориев:
@@ -129,6 +129,7 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQL95Dialec
 
 указать специфические для стартовой площадки параметры:
 
+```
 ======================
 aiai.launchpad.enabled=true
 aiai.launchpad.dir=./aiai-launchpad
@@ -148,7 +149,9 @@ aiai.launchpad.rest-username=q1
 aiai.launchpad.rest-token=11
 
 aiai.launchpad.public-key= MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtS3jRjE1wlHcxiqn6fCRvTahRt6LBvhrqxzgo1FcpJ9uZvRUmf3KwszwQoL+Ypw7aM9oxmg15Q+pssKcrulS/ofDfbuusiYdny7wMlil1H11svQM3yGwMl9gjZ2FupaRwpyZkIMj1ILaDhylTudQCBoJgJ/BWyMCDn2kzh5EpV7hkhhfjZ/2/NRIcayQVmMKOikCXR8q1bb3QNQ2HiMyUsBUGzeO2DuvX4n375+SaFIDrse4eGNVbR/ImWw7TeD4wk0h5kJ2VTdgl2J7gVS7gCCMwBN9TVxPErRDxg/OtXreS8VRUd0hOZiadX12KjwI4mjhC4q+geXAq2sC1DOV8wIDAQAB
+
 =========================
+```
 
 aiai.launchpad.is-replace-snapshot - можно ли перезаписывать snapshot-спипеты новыми версиями
 
@@ -324,12 +327,10 @@ processes:
 - code: simple-app
   collectResources: false
   name: Simple snippet
-  inputType: simple-resource-pool
-  outputType: simple-result
-  snippetCodes:
-  - simple-app:1.1
   type: FILE_PROCESSING
   parallelExec: false
+  snippetCodes:
+  - simple-app:1.1
 
 
 
@@ -339,7 +340,7 @@ processes:
 
 
 9. Снипет
-создание снипета, который будет загружен через стартовую площадку состоит из неслоких этапов
+создание снипета, который будет загружен через стартовую площадку состоит из нескольких этапов
 - создать приложение, которое будет обрабатывать данные
 - создать конфиг описания снипета
 - запаковать снипет приложением apps/package-snippet

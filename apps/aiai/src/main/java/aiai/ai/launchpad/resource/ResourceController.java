@@ -38,9 +38,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * User: Serg
@@ -53,8 +50,7 @@ import java.util.Set;
 @Profile("launchpad")
 public class ResourceController {
 
-    private static final Set<String> exts;
-
+/*
     @Data
     public static class ResourceDefinition {
         public String launchpadDirAsString;
@@ -64,11 +60,7 @@ public class ResourceController {
             this.launchpadDirAsString = launchpadDirAsString;
         }
     }
-
-    static {
-        exts = new HashSet<>();
-        Collections.addAll(exts, ".json", ".csv", ".txt", ".xml", ".yaml");
-    }
+*/
 
     @Data
     public static class Result {
@@ -96,7 +88,6 @@ public class ResourceController {
     @PostMapping("/resources-part")
     public String getExperiments(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.resourceRowsLimit, pageable);
-//        result.items = binaryDataService.findAll(pageable);
         result.items = binaryDataService.getAllAsSimpleResources(pageable);
         return "launchpad/resources :: fragment-table";
     }
@@ -109,7 +100,10 @@ public class ResourceController {
             final RedirectAttributes redirectAttributes) {
         File tempFile = globals.createTempFileForLaunchpad("temp-raw-file-");
         if (tempFile.exists()) {
-            tempFile.delete();
+            if (!tempFile.delete() ) {
+                redirectAttributes.addFlashAttribute("errorMessage", "#173.36 can't delete dir " + tempFile.getAbsolutePath());
+                return "redirect:/launchpad/resources";
+            }
         }
         try {
             FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
@@ -139,6 +133,21 @@ public class ResourceController {
         return "redirect:/launchpad/resources";
     }
 
+    @PostMapping(value = "/resource-in-external-storage")
+    public String registerResourceInExternalStorage(
+            @RequestParam(name = "poolCode") String resourcePoolCode,
+            @RequestParam(name = "storageCode") String storageCode,
+            final RedirectAttributes redirectAttributes) {
+        try {
+            binaryDataService.saveWithSpecificStorageUrl(resourcePoolCode, storageCode);
+        } catch (StoreNewFileException e) {
+            log.error("Error", e);
+            redirectAttributes.addFlashAttribute("errorMessage", "#172.04 An error while saving data to file, " + e.toString());
+            return "redirect:/launchpad/resources";
+        }
+        return "redirect:/launchpad/resources";
+    }
+
     @GetMapping("/resource-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         final BinaryData data = binaryDataService.findById(id).orElse(null);
@@ -159,14 +168,5 @@ public class ResourceController {
         }
         binaryDataService.deleteById(id);
         return "redirect:/launchpad/resources";
-    }
-
-    private static boolean checkExtension(String filename) {
-        int idx;
-        if ((idx = filename.lastIndexOf('.')) == -1) {
-            return false;
-        }
-        String ext = filename.substring(idx).toLowerCase();
-        return exts.contains(ext);
     }
 }

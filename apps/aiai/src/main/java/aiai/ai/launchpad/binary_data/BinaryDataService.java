@@ -17,6 +17,7 @@
 
 package aiai.ai.launchpad.binary_data;
 
+import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
@@ -86,12 +87,6 @@ public class BinaryDataService {
             BinaryData data = binaryDataRepository.findByCode(code);
             if (data==null) {
                 log.warn("#087.14.01 Binary data for code {} wasn't found", code);
-/*
-                log.warn("#087.14.02 Current codes:");
-                for (String allCode : binaryDataRepository.dumpAllCodes()) {
-                    log.warn("\t#087.14.03 {}", allCode);
-                }
-*/
                 throw new BinaryDataNotFoundException("#087.14 Binary data wasn't found, code: " + code);
             }
             FileUtils.copyInputStreamToFile(data.getData().getBinaryStream(), trgFile);
@@ -144,10 +139,17 @@ public class BinaryDataService {
                 data.setManual(isManual);
                 data.setFilename(filename);
                 data.setFlowInstanceId(flowInstanceId);
+                data.setStorageUrl(Consts.LAUNCHPAD_STORAGE_URL);
             } else {
                 if (!poolCode.equals(data.getPoolCode())) {
                     // this is exception for the case when two resources have the same names but different pool codes
                     String es = "#087.04 Pool code is different, old: " + data.getPoolCode() + ", new: " + poolCode;
+                    log.error(es);
+                    throw new IllegalStateException(es);
+                }
+                if (!Consts.LAUNCHPAD_STORAGE_URL.equals(data.getStorageUrl())) {
+                    // this is exception for the case when two resources have the same names but different pool codes
+                    String es = "#087.05 Storage url is different, old: " + data.getStorageUrl() + ", new: " + Consts.LAUNCHPAD_STORAGE_URL;
                     log.error(es);
                     throw new IllegalStateException(es);
                 }
@@ -156,6 +158,50 @@ public class BinaryDataService {
 
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
             data.setData(blob);
+
+            binaryDataRepository.save(data);
+
+            return data;
+        }
+        catch(IllegalStateException e) {
+            throw e;
+        }
+        catch(Throwable th) {
+            log.error("#087.09 error storing data to db", th);
+            throw new RuntimeException("Error", th);
+        }
+    }
+
+    public BinaryData saveWithSpecificStorageUrl(String poolCode, String storageUrl) {
+
+        try {
+            List<BinaryData> datas = binaryDataRepository.findAllByPoolCode(poolCode);
+            BinaryData data;
+            if (datas.isEmpty()) {
+                data = new BinaryData();
+            } else {
+                if (datas.size()>1) {
+                    String es = "#087.17 Can't register ref to external storage, too many resources with this pool code: " + poolCode;
+                    log.error(es);
+                    throw new IllegalStateException(es);
+                }
+                data = datas.get(0);
+                if (data.getDataType()!=Enums.BinaryDataType.DATA.value) {
+                    String es = "#087.21 Can't register ref to external storage because record has different type: " + Enums.BinaryDataType.from(data.getDataType());
+                    log.error(es);
+                    throw new IllegalStateException(es);
+                }
+            }
+            data.setType(Enums.BinaryDataType.DATA);
+            data.setValid(true);
+            data.setCode(null);
+            data.setPoolCode(poolCode);
+            data.setManual(true);
+            data.setFilename(null);
+            data.setFlowInstanceId(null);
+            data.setStorageUrl(storageUrl);
+            data.setUploadTs(new Timestamp(System.currentTimeMillis()));
+            data.setData(null);
 
             binaryDataRepository.save(data);
 

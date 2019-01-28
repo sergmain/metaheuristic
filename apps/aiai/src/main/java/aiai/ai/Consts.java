@@ -32,6 +32,9 @@ public class Consts {
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
 
+    public static final String LAUNCHPAD_STORAGE_URL = "launchpad://";
+    public static final String DISK_STORAGE_URL = "disk://";
+
     public static final String SESSIONID_NAME = "JSESSIONID";
 
     public static final String REST_ANON_URL = "/rest-anon";

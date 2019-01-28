@@ -48,7 +48,6 @@ public class TestFlowYamlYaml {
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
-            p.inputType = "raw-part-data";
             p.snippetCodes = Collections.singletonList("snippet-01:1.1");
             p.collectResources = true;
             p.outputType = "assembled-raw";
@@ -129,12 +128,10 @@ public class TestFlowYamlYaml {
     public void testYaml_2() {
         FlowYaml flowYaml = new FlowYaml();
 
-
         Process p1 = new Process();
         p1.name="experiment";
         p1.collectResources = false;
 
-        p1.inputType = "dataset";
         p1.type = Enums.ProcessType.EXPERIMENT;
 
         flowYaml.processes = Collections.singletonList(p1);

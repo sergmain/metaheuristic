@@ -274,9 +274,11 @@ public class FlowService {
         if (flowYaml.getProcesses().isEmpty()) {
             return Enums.FlowValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
+/*
         if (StringUtils.isBlank(flowYaml.getProcesses().get(0).inputType)) {
             return Enums.FlowValidateStatus.INPUT_TYPE_EMPTY_ERROR;
         }
+*/
 
         FlowYaml fl = flowYamlUtils.toFlowYaml(flow.getParams());
 

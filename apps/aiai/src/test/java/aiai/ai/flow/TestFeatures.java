@@ -53,7 +53,6 @@ public class TestFeatures extends PreparingFlow {
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
-            p.inputType = "raw-part-data";
             p.snippetCodes = Collections.singletonList("snippet-01:1.1");
             p.collectResources = true;
             p.outputType = "assembled-raw";
@@ -134,7 +133,6 @@ public class TestFeatures extends PreparingFlow {
         List<String> codes = Arrays.asList("aaa", "bbb", "ccc");
         Process process = new Process();
         process.order=1;
-        process.inputType="input-type";
         IntHolder intHolder = new IntHolder();
         experimentService.produceTasks(true, flow, flowInstance, process, experiment, new HashMap<>(), intHolder);
         log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);

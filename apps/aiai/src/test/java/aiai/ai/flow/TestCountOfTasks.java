@@ -55,7 +55,6 @@ public class TestCountOfTasks extends PreparingFlow {
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
-            p.inputType = "raw-part-data";
             p.snippetCodes = Collections.singletonList("snippet-01:1.1");
             p.collectResources = false;
             p.outputType = "assembled-raw";

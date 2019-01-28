@@ -60,7 +60,9 @@ CREATE TABLE AIAI_LP_DATA (
   CHECKSUM    VARCHAR(2048),
   IS_VALID    BOOLEAN not null default false,
   IS_MANUAL   BOOLEAN not null default false,
-  FILENAME    VARCHAR(150)
+  FILENAME    VARCHAR(150),
+  STORAGE_URL varchar(250) not null
+
 );
 
 CREATE INDEX AIAI_LP_DATA_POOL_CODE_ID_IDX
