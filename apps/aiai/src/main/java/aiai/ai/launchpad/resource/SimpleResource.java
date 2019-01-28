@@ -38,8 +38,7 @@ public class SimpleResource {
     public boolean valid;
     public boolean manual;
     public String filename;
-    public boolean externalStorage;
-    public String storageCode;
+    public String storageUrl;
 
     public String getDataTypeAsStr() {
         return Enums.BinaryDataType.from(dataType).toString();

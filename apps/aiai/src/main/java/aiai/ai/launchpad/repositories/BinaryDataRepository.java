@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import aiai.ai.launchpad.resource.SimpleResource;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,11 @@ import java.util.List;
 @Profile("launchpad")
 public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     List<BinaryData> findAllByDataType(int dataType);
+
+    @Query(value="select new aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
+            "b.code, b.storageUrl ) " +
+            "from BinaryData b where b.poolCode=:poolCode ")
+    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(String poolCode);
 
     List<BinaryData> findAllByPoolCode(String poolCode);
 
@@ -60,7 +66,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
 
     @Query(value="select new aiai.ai.launchpad.resource.SimpleResource(" +
             "b.id, b.version, b.code, b.poolCode, b.dataType, b.uploadTs, b.checksum, b.valid, b.manual, b.filename, " +
-            "b.externalStorage, b.storageCode ) " +
+            "b.storageUrl ) " +
             "from BinaryData b where b.manual=true ")
     Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);
 

@@ -43,6 +43,7 @@ public class Process {
     public String inputType;
     public String inputResourceCode;
     public String outputType;
+    public String outputStorageUrl;
     public String outputResourceCode;
     public List<Meta> metas = new ArrayList<>();
     public int order;

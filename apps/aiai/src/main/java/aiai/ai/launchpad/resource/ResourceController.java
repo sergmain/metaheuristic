@@ -126,8 +126,9 @@ public class ResourceController {
         try {
             resourceService.storeInitialResource(originFilename, tempFile, code, resourcePoolCode, originFilename);
         } catch (StoreNewFileException e) {
-            log.error("Error", e);
-            redirectAttributes.addFlashAttribute("errorMessage", "#172.04 An error while saving data to file, " + e.toString());
+            String es = "#172.04 An error while saving data to file, " + e.toString();
+            log.error(es, e);
+            redirectAttributes.addFlashAttribute("errorMessage", es);
             return "redirect:/launchpad/resources";
         }
         return "redirect:/launchpad/resources";
@@ -135,14 +136,24 @@ public class ResourceController {
 
     @PostMapping(value = "/resource-in-external-storage")
     public String registerResourceInExternalStorage(
+//            @RequestParam(name = "code") String resourceCode,
             @RequestParam(name = "poolCode") String resourcePoolCode,
-            @RequestParam(name = "storageCode") String storageCode,
+            @RequestParam(name = "storageUrl") String storageUrl,
             final RedirectAttributes redirectAttributes) {
+
+        if (!StringUtils.startsWith(storageUrl, "disk://")) {
+            String es = "#172.06 wrong format of storage url: " + storageUrl;
+            log.error(es);
+            redirectAttributes.addFlashAttribute("errorMessage", es);
+            return "redirect:/launchpad/resources";
+        }
+
         try {
-            binaryDataService.saveWithSpecificStorageUrl(resourcePoolCode, storageCode);
+            binaryDataService.saveWithSpecificStorageUrl("disk", resourcePoolCode, storageUrl);
         } catch (StoreNewFileException e) {
-            log.error("Error", e);
-            redirectAttributes.addFlashAttribute("errorMessage", "#172.04 An error while saving data to file, " + e.toString());
+            String es = "#172.08 An error while saving data to file, " + e.toString();
+            log.error(es, e);
+            redirectAttributes.addFlashAttribute("errorMessage", es);
             return "redirect:/launchpad/resources";
         }
         return "redirect:/launchpad/resources";

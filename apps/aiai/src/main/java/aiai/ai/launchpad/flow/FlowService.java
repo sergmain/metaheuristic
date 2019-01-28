@@ -25,6 +25,7 @@ import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
+import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import aiai.ai.launchpad.experiment.ExperimentProcessService;
 import aiai.ai.launchpad.experiment.ExperimentProcessValidator;
 import aiai.ai.launchpad.experiment.ExperimentService;
@@ -50,6 +51,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static aiai.ai.Enums.FlowValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
 
@@ -330,7 +332,7 @@ public class FlowService {
 
     public FlowService.TaskProducingResult createFlowInstance(Flow flow, String startWithResourcePoolCode) {
         FlowService.TaskProducingResult result = new TaskProducingResult();
-        List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(startWithResourcePoolCode);
+        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(startWithResourcePoolCode);
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return result;
@@ -379,11 +381,9 @@ public class FlowService {
 
     public void produce(boolean isPersist, TaskProducingResult result, Flow flow, FlowInstance fi) {
 
-        final Map<String, List<String>> collectedInputs = new HashMap<>();
-
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
-        List<String> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCode);
+        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCode);
         log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
         Monitoring.log("##024", Enums.Monitor.MEMORY);
 
@@ -391,7 +391,14 @@ public class FlowService {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return;
         }
-        collectedInputs.computeIfAbsent(Consts.FLOW_INSTANCE_INPUT_TYPE, k -> new ArrayList<>()).addAll(inputResourceCodes);
+        final Map<String, List<String>> collectedInputs = new HashMap<>();
+        collectedInputs.computeIfAbsent(Consts.FLOW_INSTANCE_INPUT_TYPE,
+                k -> inputResourceCodes.stream().map(o->o.code).collect(Collectors.toList()));
+
+        final Map<String, String> inputStorageUrls = inputResourceCodes
+                .stream()
+                .collect(Collectors.toMap(o -> o.code, o -> o.storageUrl));
+
         Monitoring.log("##025", Enums.Monitor.MEMORY);
 
         result.flowInstance = fi;
@@ -407,12 +414,12 @@ public class FlowService {
             switch(process.type) {
                 case FILE_PROCESSING:
                     Monitoring.log("##026", Enums.Monitor.MEMORY);
-                    produceTaskResult = fileProcessService.produceTasks(isPersist, flow, fi, process, collectedInputs);
+                    produceTaskResult = fileProcessService.produceTasks(isPersist, flow, fi, process, collectedInputs, inputStorageUrls);
                     Monitoring.log("##027", Enums.Monitor.MEMORY);
                     break;
                 case EXPERIMENT:
                     Monitoring.log("##028", Enums.Monitor.MEMORY);
-                    produceTaskResult = experimentProcessService.produceTasks(isPersist, flow, fi, process, collectedInputs);
+                    produceTaskResult = experimentProcessService.produceTasks(isPersist, flow, fi, process, collectedInputs, inputStorageUrls);
                     Monitoring.log("##029", Enums.Monitor.MEMORY);
                     break;
                 default:
@@ -425,6 +432,7 @@ public class FlowService {
             }
             if (!process.collectResources) {
                 collectedInputs.clear();
+                inputStorageUrls.clear();
             }
             Monitoring.log("##030", Enums.Monitor.MEMORY);
             if (produceTaskResult.outputResourceCodes!=null) {

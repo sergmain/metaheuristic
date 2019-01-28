@@ -134,7 +134,8 @@ public class TestFeatures extends PreparingFlow {
         Process process = new Process();
         process.order=1;
         IntHolder intHolder = new IntHolder();
-        experimentService.produceTasks(true, flow, flowInstance, process, experiment, new HashMap<>(), intHolder);
+        // TODO need change empty HashMaps to actual HashMaps with values
+        experimentService.produceTasks(true, flow, flowInstance, process, experiment, new HashMap<>(), new HashMap<>(), intHolder);
         log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
         // some global final check

@@ -58,7 +58,7 @@ public class FileProcessService {
     @SuppressWarnings("Duplicates")
     public FlowService.ProduceTaskResult produceTasks(
             boolean isPersist, Flow flow, FlowInstance flowInstance, Process process,
-            Map<String, List<String>> collectedInputs) {
+            Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls) {
 
         FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
 
@@ -74,7 +74,7 @@ public class FileProcessService {
                 String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, sv.name, process.order);
                 result.outputResourceCodes.add(outputResourceCode);
                 if (isPersist) {
-                    createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs);
+                    createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
                 }
             }
         }
@@ -89,7 +89,7 @@ public class FileProcessService {
             String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, sv.name, process.order);
             result.outputResourceCodes.add(outputResourceCode);
             if (isPersist) {
-                createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs);
+                createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
             }
         }
         result.status = Enums.FlowProducingStatus.OK;
@@ -100,7 +100,7 @@ public class FileProcessService {
     private void createTaskInternal(
             Flow flow, FlowInstance flowInstance, Process process,
             String outputResourceCode,
-            String snippetCode, Map<String, List<String>> collectedInputs) {
+            String snippetCode, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls) {
         if (process.type!= Enums.ProcessType.FILE_PROCESSING) {
             throw new IllegalStateException("#171.01 Wrong type of process, " +
                     "expected: "+ Enums.ProcessType.FILE_PROCESSING+", " +
@@ -118,6 +118,7 @@ public class FileProcessService {
             yaml.inputResourceCodes.put(entry.getKey(), entry.getValue());
         }
         yaml.outputResourceCode = outputResourceCode;
+        yaml.resourceStorageUrls = inputStorageUrls;
 
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
         if (snippet==null) {

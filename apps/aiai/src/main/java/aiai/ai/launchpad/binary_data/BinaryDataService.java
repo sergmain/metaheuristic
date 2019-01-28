@@ -107,9 +107,8 @@ public class BinaryDataService {
         binaryDataRepository.deleteAllByDataType(binaryDataType.value);
     }
 
-    public List<String> getResourceCodesInPool(String inputResourcePoolCode) {
-        return binaryDataRepository.findAllByPoolCode(inputResourcePoolCode)
-                .stream().map(BinaryData::getCode).collect(Collectors.toList());
+    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(String inputResourcePoolCode) {
+        return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode);
     }
 
     public void deleteByCodeAndDataType(String code, Enums.BinaryDataType binaryDataType) {
@@ -172,7 +171,7 @@ public class BinaryDataService {
         }
     }
 
-    public BinaryData saveWithSpecificStorageUrl(String poolCode, String storageUrl) {
+    public BinaryData saveWithSpecificStorageUrl(String resourceCode, String poolCode, String storageUrl) {
 
         try {
             List<BinaryData> datas = binaryDataRepository.findAllByPoolCode(poolCode);
@@ -181,20 +180,28 @@ public class BinaryDataService {
                 data = new BinaryData();
             } else {
                 if (datas.size()>1) {
-                    String es = "#087.17 Can't register ref to external storage, too many resources with this pool code: " + poolCode;
+                    String es = "#087.17 Can't create resource with storage url, too many resources are associated with this pool code: " + poolCode;
                     log.error(es);
                     throw new IllegalStateException(es);
                 }
                 data = datas.get(0);
                 if (data.getDataType()!=Enums.BinaryDataType.DATA.value) {
-                    String es = "#087.21 Can't register ref to external storage because record has different type: " + Enums.BinaryDataType.from(data.getDataType());
+                    String es = "#087.21 Can't create resource with storage url because record has different types: " + Enums.BinaryDataType.from(data.getDataType());
                     log.error(es);
                     throw new IllegalStateException(es);
                 }
+/*
+                if (!data.getCode().equals(resourceCode)) {
+                    String es = "#087.24 Can't create resource with storage url because record has different resource codes, " +
+                            "in db: " + data.getCode()+", new resource code: " + resourceCode;
+                    log.error(es);
+                    throw new IllegalStateException(es);
+                }
+*/
             }
             data.setType(Enums.BinaryDataType.DATA);
             data.setValid(true);
-            data.setCode(null);
+            data.setCode(resourceCode);
             data.setPoolCode(poolCode);
             data.setManual(true);
             data.setFilename(null);

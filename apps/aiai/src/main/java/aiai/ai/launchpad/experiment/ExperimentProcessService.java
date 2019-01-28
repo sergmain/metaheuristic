@@ -48,7 +48,9 @@ public class ExperimentProcessService {
         this.experimentCache = experimentCache;
     }
 
-    public FlowService.ProduceTaskResult produceTasks(boolean isPersist, Flow flow, FlowInstance flowInstance, Process process, Map<String, List<String>> collectedInputs) {
+    public FlowService.ProduceTaskResult produceTasks(
+            boolean isPersist, Flow flow, FlowInstance flowInstance,
+            Process process, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls) {
         Experiment e = experimentRepository.findByCode(process.code);
 
         // real copy of experiment
@@ -79,7 +81,9 @@ public class ExperimentProcessService {
 
         Monitoring.log("##051", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        Enums.FlowProducingStatus status = experimentService.produceTasks(isPersist, flow, flowInstance, process, e, collectedInputs, intHolder);
+        Enums.FlowProducingStatus status = experimentService.produceTasks(
+                isPersist, flow, flowInstance, process, e, collectedInputs, inputStorageUrls, intHolder);
+
         log.info("experimentService.produceTasks() was done for " + (System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##071", Enums.Monitor.MEMORY);
         if (status!= Enums.FlowProducingStatus.OK) {

@@ -485,7 +485,9 @@ public class ExperimentService {
         e = experimentCache.save(e);
     }
 
-    public Enums.FlowProducingStatus produceTasks(boolean isPersist, Flow flow, FlowInstance flowInstance, Process process, Experiment experiment, Map<String, List<String>> collectedInputs, IntHolder intHolder) {
+    public Enums.FlowProducingStatus produceTasks(
+            boolean isPersist, Flow flow, FlowInstance flowInstance, Process process,
+            Experiment experiment, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls, IntHolder intHolder) {
         if (process.type!= Enums.ProcessType.EXPERIMENT) {
             throw new IllegalStateException("Wrong type of process, " +
                     "expected: "+ Enums.ProcessType.EXPERIMENT+", " +
@@ -559,6 +561,8 @@ public class ExperimentService {
                         intHolder.value++;
 
                         TaskParamYaml yaml = new TaskParamYaml();
+                        yaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
+
                         yaml.setHyperParams(hyperParams.toSortedMap());
                         yaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
@@ -607,6 +611,8 @@ public class ExperimentService {
                         } else {
                             throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
                         }
+                        yaml.resourceStorageUrls.put(yaml.outputResourceCode, process.outputStorageUrl);
+
                         ExperimentTaskFeature tef = new ExperimentTaskFeature();
                         tef.setFlowInstanceId(flowInstance.getId());
                         tef.setTaskId(task.getId());

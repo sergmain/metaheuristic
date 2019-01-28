@@ -58,24 +58,32 @@
 
     </form>
 
-    <h1 class="widget-header">Register resource in external storage</h1>
+    <h1 class="widget-header">Create resource with storage url</h1>
 
     <form class="pure-form" action="#" method="post" th:method="POST"
           th:action="@{/launchpad/resource-in-external-storage}"
     >
+<!--
+        <fieldset>
+            <label for="code1">Resource code</label>
+            <input name="code" id="code1" type="text" placeholder="Code">
+            <span class="pure-form-message">This is a required field. Value of this field is storage specific. See a documentation for more info</span>
+        </fieldset>
+-->
         <fieldset>
             <label for="poolCode1">Resource pool code</label>
             <input name="poolCode" id="poolCode1" type="text" placeholder="Pool code">
             <span class="pure-form-message">This is a required field.</span>
         </fieldset>
         <fieldset>
-            <label for="storageCode">Resource pool code</label>
-            <input name="storageCode" id="storageCode" type="text" placeholder="Storage code">
-            <span class="pure-form-message">This is a required field if resource is stored in external storage.</span>
+            <label for="storageUrl">Storage url</label>
+            <input name="storageUrl" id="storageUrl" type="text" placeholder="Storage url">
+            <span class="pure-form-message">This is a required field if resource is stored in other storage than launchpad.
+                Right now, the only one supported type of storage is disk://</span>
         </fieldset>
 
         <p></p>
-        <button type="submit" class="pure-button pure-button-primary">Register resource</button>
+        <button type="submit" class="pure-button pure-button-primary">Create resource</button>
     </form>
 
     <p>&nbsp;</p>
@@ -94,8 +102,7 @@
             <th>Pool code</th>
             <th>Is manual</th>
             <th>Filename</th>
-            <th>Is external storage</th>
-            <th>Storage code</th>
+            <th>Storage url</th>
             <th colspan="1">&nbsp;</th>
         </tr>
         </thead>
@@ -110,8 +117,7 @@
             <td th:text="${p.poolCode}">Pool code</td>
             <td th:text="${p.manual}">is manual</td>
             <td th:text="${p.filename}">Filename</td>
-            <td th:text="${p.externalStorage}">Is external storage</td>
-            <td th:text="${p.storageCode}">Storage code</td>
+            <td th:text="${p.storageUrl}">Storage url</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/resource-delete/' + p.id}">Delete</a></td>
         </tr>
         <tr>

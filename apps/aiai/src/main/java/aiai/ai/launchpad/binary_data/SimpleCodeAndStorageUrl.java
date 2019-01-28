@@ -14,21 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.yaml.task;
 
+package aiai.ai.launchpad.binary_data;
+
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import lombok.NoArgsConstructor;
 
 @Data
-public class TaskParamYaml {
-    public Map<String, List<String>> inputResourceCodes = new HashMap<>();
-    public SimpleSnippet snippet;
-    public Map<String, String> hyperParams;
-    public String outputResourceCode;
-    public Map<String, String> resourceStorageUrls = new HashMap<>();
-    public String workingPath;
-    public boolean clean = false;
+@NoArgsConstructor
+@AllArgsConstructor
+public class SimpleCodeAndStorageUrl {
+    public String code;
+    public String storageUrl;
 }
