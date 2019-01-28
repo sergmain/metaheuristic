@@ -267,7 +267,8 @@
             <!--License	MIT-->
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.2</version>
+			<version>1.18.4</version>
+			<!--<version>1.18.2</version>-->
 			<!--<version>1.16.18</version>-->
 			<!--<version>1.18.0</version>-->
 			<scope>compile</scope>

@@ -2,6 +2,7 @@ package aiai.apps.commons.yaml;
 
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;
@@ -16,15 +17,28 @@ import java.io.InputStream;
 public class YamlUtils {
 
     public static Yaml init(Class<?> clazz) {
+        return initWithTags(clazz, new Class[]{clazz}, null);
+    }
+
+    public static Yaml initWithTags(Class<?> clazz, Class<?>[] clazzMap, TypeDescription customTypeDescription) {
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
         Representer representer = new Representer();
-        representer.addClassTag(clazz, Tag.MAP);
+        if (clazzMap!=null) {
+            for (Class<?> clazzTag : clazzMap) {
+                representer.addClassTag(clazzTag, Tag.MAP);
+            }
+        }
+
+        Constructor constructor = new Constructor(clazz);
+        if (customTypeDescription!=null) {
+            constructor.addTypeDescription(customTypeDescription);
+        }
 
         //noinspection UnnecessaryLocalVariable
-        Yaml yaml = new Yaml(new Constructor(clazz), representer, options);
+        Yaml yaml = new Yaml(constructor, representer, options);
         return yaml;
     }
 
