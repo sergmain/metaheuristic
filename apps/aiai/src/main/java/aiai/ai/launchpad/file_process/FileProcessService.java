@@ -17,6 +17,7 @@
 
 package aiai.ai.launchpad.file_process;
 
+import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
@@ -32,6 +33,7 @@ import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -119,6 +121,8 @@ public class FileProcessService {
         }
         yaml.outputResourceCode = outputResourceCode;
         yaml.resourceStorageUrls = inputStorageUrls;
+        yaml.resourceStorageUrls.put(yaml.outputResourceCode,
+                StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
 
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
         if (snippet==null) {

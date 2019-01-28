@@ -44,7 +44,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
@@ -255,8 +254,8 @@ public class FlowService {
         }
         Monitoring.log("##022", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        produce(isPersist, result, flow, flowInstance);
-        log.info("FlowService.produce() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
+        produceTasks(isPersist, result, flow, flowInstance);
+        log.info("FlowService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 
         return result;
@@ -286,7 +285,12 @@ public class FlowService {
 
         Process lastProcess = null;
         boolean experimentPresent = false;
-        for (Process process : fl.getProcesses()) {
+        List<Process> processes = fl.getProcesses();
+        for (int i = 0; i < processes.size(); i++) {
+            Process process = processes.get(i);
+            if (i+1<processes.size() && StringUtils.isBlank(process.getOutputType())) {
+                return Enums.FlowValidateStatus.OUTPUT_TYPE_EMPTY_ERROR;
+            }
             lastProcess = process;
             if (StringUtils.containsWhitespace(process.code) || StringUtils.contains(process.code, ',') ){
                 return Enums.FlowValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
@@ -379,7 +383,7 @@ public class FlowService {
         return Enums.FlowProducingStatus.OK;
     }
 
-    public void produce(boolean isPersist, TaskProducingResult result, Flow flow, FlowInstance fi) {
+    public void produceTasks(boolean isPersist, TaskProducingResult result, Flow flow, FlowInstance fi) {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();

@@ -274,7 +274,7 @@ public class FlowController {
         }
 
         FlowService.TaskProducingResult countTasks = new FlowService.TaskProducingResult();
-        flowService.produce(false, countTasks, result.flow, producingResult.flowInstance);
+        flowService.produceTasks(false, countTasks, result.flow, producingResult.flowInstance);
         if (countTasks.flowProducingStatus != Enums.FlowProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#560.77 validation of flow was failed, status: " + countTasks.flowValidateStatus);
             return "redirect:/launchpad/flow/flow-instance-add/" + flowId;

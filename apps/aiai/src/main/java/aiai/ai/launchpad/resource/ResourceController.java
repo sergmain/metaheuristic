@@ -136,10 +136,16 @@ public class ResourceController {
 
     @PostMapping(value = "/resource-in-external-storage")
     public String registerResourceInExternalStorage(
-//            @RequestParam(name = "code") String resourceCode,
             @RequestParam(name = "poolCode") String resourcePoolCode,
             @RequestParam(name = "storageUrl") String storageUrl,
             final RedirectAttributes redirectAttributes) {
+
+        if (StringUtils.contains(storageUrl, ' ')) {
+            String es = "#172.05 storage url can't contain 'space' char: " + storageUrl;
+            log.error(es);
+            redirectAttributes.addFlashAttribute("errorMessage", es);
+            return "redirect:/launchpad/resources";
+        }
 
         if (!StringUtils.startsWith(storageUrl, "disk://")) {
             String es = "#172.06 wrong format of storage url: " + storageUrl;
@@ -148,8 +154,9 @@ public class ResourceController {
             return "redirect:/launchpad/resources";
         }
 
+        String code = StringUtils.replaceEach(storageUrl, new String[] {"://", "/", "*", "?"}, new String[] {"-", "-", "-", "-"} );
         try {
-            binaryDataService.saveWithSpecificStorageUrl("disk", resourcePoolCode, storageUrl);
+            binaryDataService.saveWithSpecificStorageUrl(code, resourcePoolCode, storageUrl);
         } catch (StoreNewFileException e) {
             String es = "#172.08 An error while saving data to file, " + e.toString();
             log.error(es, e);

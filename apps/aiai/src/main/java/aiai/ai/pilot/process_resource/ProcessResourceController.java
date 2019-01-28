@@ -267,7 +267,7 @@ public class ProcessResourceController {
         }
 
         FlowService.TaskProducingResult countTasks = new FlowService.TaskProducingResult();
-        flowService.produce(false, countTasks, flow, producingResult.flowInstance);
+        flowService.produceTasks(false, countTasks, flow, producingResult.flowInstance);
         if (countTasks.flowProducingStatus != Enums.FlowProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.60 validation of flow was failed, status: " + countTasks.flowValidateStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
