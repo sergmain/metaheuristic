@@ -21,16 +21,22 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.Protocol;
+import aiai.ai.exceptions.ResourceProviderException;
 import aiai.ai.resource.AssetFile;
+import aiai.ai.resource.ResourceProvider;
+import aiai.ai.resource.ResourceProviderFactory;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.resource.ResourceUtils;
+import aiai.ai.utils.CollectionUtils;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import aiai.ai.yaml.metadata.Metadata;
+import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -54,17 +60,19 @@ public class StationService {
     private final UploadResourceActor uploadResourceActor;
     private final MetadataService metadataService;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
+    private final ResourceProviderFactory resourceProviderFactory;
 
     private String env;
     private EnvYaml envYaml;
 
-    public StationService(Globals globals, StationTaskService stationTaskService, TaskParamYamlUtils taskParamYamlUtils, UploadResourceActor uploadResourceActor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService) {
+    public StationService(Globals globals, StationTaskService stationTaskService, TaskParamYamlUtils taskParamYamlUtils, UploadResourceActor uploadResourceActor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, ResourceProviderFactory resourceProviderFactory) {
         this.globals = globals;
         this.stationTaskService = stationTaskService;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.uploadResourceActor = uploadResourceActor;
         this.metadataService = metadataService;
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
+        this.resourceProviderFactory = resourceProviderFactory;
     }
 
     @PostConstruct
@@ -156,4 +164,52 @@ public class StationService {
         uploadResourceActor.add(uploadResourceTask);
         return Enums.ResendTaskOutputResourceStatus.SEND_SCHEDULED;
     }
+
+    @Data
+    public static class ResultOfChecking {
+        public boolean isAllLoaded = true;
+        public boolean isError = false;
+    }
+
+    public ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.LaunchpadInfo launchpadCode, TaskParamYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
+        ResultOfChecking result = new ResultOfChecking();
+        try {
+            for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
+                final String storageUrl = taskParamYaml.resourceStorageUrls.get(resourceCode);
+                if (storageUrl==null || storageUrl.isBlank()) {
+                    stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode "+ resourceCode);
+                    log.error("storageUrl wasn't found for resourceCode ", resourceCode);
+                    result.isError = true;
+                    break;
+                }
+                ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
+                List<AssetFile> assetFiles = resourceProvider.prepareDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, storageUrl);
+                for (AssetFile assetFile : assetFiles) {
+                    // is this resource prepared?
+                    if (assetFile.isError || !assetFile.isContent) {
+                        result.isAllLoaded=false;
+                        break;
+                    }
+                }
+            }
+        } catch (ResourceProviderException e) {
+            log.error("Error", e);
+            stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
+            result.isError = true;
+            return result;
+        }
+        if (result.isError) {
+            return result;
+        }
+        if (!result.isAllLoaded) {
+            if (task.assetsPrepared) {
+                stationTaskService.markAsAssetPrepared(task.launchpadUrl, task.taskId, false);
+            }
+            result.isError = true;
+            return result;
+        }
+        result.isError = false;
+        return result;
+    }
+
 }

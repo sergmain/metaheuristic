@@ -34,6 +34,7 @@ public class TaskParamYaml {
     // fields which are initialized at station
     public String workingPath;
 
-    // todo isn't so good solution because it doesn't support ftp, hadoop or something else
+    // todo this isn't good solution because it doesn't support ftp, hadoop or something else
+    // todo as a result we'll support only direct access to files
     public Map<String, List<String>> inputResourceAbsolutePaths = new HashMap<>();
 }

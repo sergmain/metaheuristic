@@ -21,7 +21,10 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
+import aiai.ai.exceptions.ResourceProviderException;
 import aiai.ai.resource.AssetFile;
+import aiai.ai.resource.ResourceProvider;
+import aiai.ai.resource.ResourceProviderFactory;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.utils.CollectionUtils;
@@ -61,8 +64,9 @@ public class TaskProcessor {
     private final UploadResourceActor uploadResourceActor;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService ;
     private final MetadataService metadataService;
+    private final ResourceProviderFactory resourceProviderFactory;
 
-    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState, UploadResourceActor uploadResourceActor, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService) {
+    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState, UploadResourceActor uploadResourceActor, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, ResourceProviderFactory resourceProviderFactory) {
         this.globals = globals;
         this.execProcessService = execProcessService;
         this.stationService = stationService;
@@ -72,6 +76,7 @@ public class TaskProcessor {
         this.uploadResourceActor = uploadResourceActor;
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
         this.metadataService = metadataService;
+        this.resourceProviderFactory = resourceProviderFactory;
     }
 
     public void fixedDelay() {
@@ -121,8 +126,55 @@ public class TaskProcessor {
             File taskDir = stationTaskService.prepareTaskDir(task.launchpadUrl, task.taskId);
 
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
-            boolean isAssetsOk = true;
+
+            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadCode, taskParamYaml, launchpad, taskDir);
+            if (resultOfChecking.isError) {
+                continue;
+            }
+            boolean isAllLoaded = resultOfChecking.isAllLoaded;
+
+
+/*
+
+            boolean isAllLoaded = true;
             boolean isError = false;
+            try {
+                for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
+                    final String storageUrl = taskParamYaml.resourceStorageUrls.get(resourceCode);
+                    if (storageUrl==null || storageUrl.isBlank()) {
+                        stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode "+ resourceCode);
+                        log.error("storageUrl wasn't found for resourceCode ", resourceCode);
+                        isError = true;
+                        break;
+                    }
+                    ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
+                    List<AssetFile> assetFiles = resourceProvider.prepareDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, storageUrl);
+                    for (AssetFile assetFile : assetFiles) {
+                        // is this resource prepared?
+                        if (assetFile.isError || !assetFile.isContent) {
+                            isAllLoaded=false;
+                            break;
+                        }
+                    }
+                }
+            } catch (ResourceProviderException e) {
+                log.error("Error", e);
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
+                continue;
+            }
+            if (isError) {
+                continue;
+            }
+            if (!isAllLoaded) {
+                if (task.assetsPrepared) {
+                    stationTaskService.markAsAssetPrepared(task.launchpadUrl, task.taskId, false);
+                }
+                continue;
+            }
+*/
+
+
+/*
             for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
                 String storageUrl = taskParamYaml.resourceStorageUrls.get(resourceCode);
                 if (storageUrl==null) {
@@ -135,18 +187,10 @@ public class TaskProcessor {
                 // is this resource prepared?
                 if (assetFile.isError || !assetFile.isContent) {
                     log.info("Resource hasn't been prepared yet, {}", assetFile);
-                    isAssetsOk = false;
+                    isAllLoaded = false;
                 }
             }
-            if (isError) {
-                continue;
-            }
-            if (!isAssetsOk) {
-                if (task.assetsPrepared) {
-                    stationTaskService.markAsAssetPrepared(task.launchpadUrl, task.taskId, false);
-                }
-                continue;
-            }
+*/
 
             if (taskParamYaml.snippet==null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Snippet isn't defined");
@@ -174,10 +218,10 @@ public class TaskProcessor {
                 // is this snippet prepared?
                 if (snippetAssetFile.isError || !snippetAssetFile.isContent) {
                     log.info("Resource hasn't been prepared yet, {}", snippetAssetFile);
-                    isAssetsOk = false;
+                    isAllLoaded = false;
                 }
             }
-            if (!isAssetsOk) {
+            if (!isAllLoaded) {
                 continue;
             }
 

@@ -107,29 +107,11 @@ public class TaskAssetPreparer {
 
             File taskDir = stationTaskService.prepareTaskDir(launchpadCode, task.taskId);
 
-            boolean isAllLoaded = true;
-            try {
-                for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                    final String storageUrl = taskParamYaml.resourceStorageUrls.get(resourceCode);
-                    if (storageUrl==null || storageUrl.isBlank()) {
-                        log.error("storageUrl wasn't found for resourceCode ", resourceCode);
-                        continue;
-                    }
-                    ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
-                    List<AssetFile> assetFiles = resourceProvider.prepareDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, storageUrl);
-                    for (AssetFile assetFile : assetFiles) {
-                        // is this resource prepared?
-                        if (assetFile.isError || !assetFile.isContent) {
-                            isAllLoaded=false;
-                            break;
-                        }
-                    }
-                }
-            } catch (ResourceProviderException e) {
-                log.error("Error", e);
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
+            StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadCode, taskParamYaml, launchpad, taskDir);
+            if (resultOfChecking.isError) {
                 continue;
             }
+            boolean isAllLoaded = resultOfChecking.isAllLoaded;
 
             File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
             if (!taskParamYaml.snippet.fileProvided) {
