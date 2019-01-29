@@ -368,25 +368,12 @@ public class StationTaskService {
         }
     }
 
-/*
-    private List<StationTask> findAllByFinishedOnIsNotNull(String launchpadUrl) {
-        List<StationTask> list = new ArrayList<>();
-        for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
-            if (task.finishedOn != null) {
-                list.add(task);
-            }
-        }
-        return list;
-    }
-*/
-
     private Stream<StationTask> findAllByFinishedOnIsNotNull(String launchpadUrl) {
         return getMapForLaunchpadUrl(launchpadUrl).values().stream().filter( o -> o.finishedOn!=null);
     }
 
     public Protocol.StationTaskStatus produceStationTaskStatus(String launchpadUrl) {
         Protocol.StationTaskStatus status = new Protocol.StationTaskStatus(new ArrayList<>());
-//        List<StationTask> list = findAllByFinishedOnIsNull(launchpadUrl);
         List<StationTask> list = findAll(launchpadUrl);
         for (StationTask task : list) {
             status.getStatuses().add( new Protocol.StationTaskStatus.SimpleStatus(task.getTaskId()));
@@ -510,7 +497,7 @@ public class StationTaskService {
     public List<StationTask> findAll(String launchpadUrl) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             Collection<StationTask> values = getMapForLaunchpadUrl(launchpadUrl).values();
-            return Collections.unmodifiableList(new ArrayList<>(values));
+            return List.copyOf(values);
         }
     }
 
@@ -525,7 +512,7 @@ public class StationTaskService {
             try {
                 if (systemDir.exists()) {
                     FileUtils.deleteDirectory(systemDir);
-                    // IDK is that bug or side-effect. so delete one more time
+                    // IDK is that a bug or a side-effect. so delete one more time
                     FileUtils.deleteDirectory(systemDir);
                 }
                 Map<Long, StationTask> mapTask = getMapForLaunchpadUrl(launchpadUrl);

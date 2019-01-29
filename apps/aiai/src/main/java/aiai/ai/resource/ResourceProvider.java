@@ -14,25 +14,16 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.yaml.env;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package aiai.ai.resource;
 
-import java.util.*;
+import aiai.ai.station.LaunchpadLookupExtendedService;
+import aiai.ai.yaml.metadata.Metadata;
+import aiai.ai.yaml.station.StationTask;
 
-@Data
-@NoArgsConstructor
-public class EnvYaml {
-    Map<String, String> envs = new LinkedHashMap<>();
-    List<DiskStorage> disk = new ArrayList<>();
+import java.io.File;
+import java.util.List;
 
-    public DiskStorage findDiskStorageByCode(String code) {
-        for (DiskStorage diskStorage : disk) {
-            if (Objects.equals(diskStorage.code, code)) {
-                return diskStorage;
-            }
-        }
-        return null;
-    }
+public interface ResourceProvider {
+    List<AssetFile> prepareDataFile(File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, StationTask task, Metadata.LaunchpadInfo launchpadCode, String resourceCode, String storageUrl);
 }

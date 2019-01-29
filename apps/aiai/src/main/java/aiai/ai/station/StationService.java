@@ -21,9 +21,10 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.Protocol;
+import aiai.ai.resource.AssetFile;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
-import aiai.ai.utils.ResourceUtils;
+import aiai.ai.resource.ResourceUtils;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.launchpad_lookup.LaunchpadSchedule;
@@ -95,7 +96,7 @@ public class StationService {
         return env;
     }
 
-    EnvYaml getEnvYaml() {
+    public EnvYaml getEnvYaml() {
         return envYaml;
     }
 

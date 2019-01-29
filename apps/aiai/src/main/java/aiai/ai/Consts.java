@@ -29,6 +29,7 @@ public class Consts {
 
     public static final int TASK_ORDER_START_VALUE = 1;
 
+    public static final String PROTOCOL_DELIMITER = "://";
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
 

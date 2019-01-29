@@ -29,6 +29,9 @@ public class TaskParamYaml {
     public Map<String, String> hyperParams;
     public String outputResourceCode;
     public Map<String, String> resourceStorageUrls = new HashMap<>();
-    public String workingPath;
     public boolean clean = false;
+
+    // fields which are initialized at station
+    public String workingPath;
+    public List<String> inputResourceAbsolutePaths;
 }

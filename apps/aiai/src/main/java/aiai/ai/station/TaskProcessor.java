@@ -21,10 +21,11 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
+import aiai.ai.resource.AssetFile;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.utils.CollectionUtils;
-import aiai.ai.utils.ResourceUtils;
+import aiai.ai.resource.ResourceUtils;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.task.SimpleSnippet;
@@ -121,13 +122,24 @@ public class TaskProcessor {
 
             final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
             boolean isAssetsOk = true;
+            boolean isError = false;
             for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
+                String storageUrl = taskParamYaml.resourceStorageUrls.get(resourceCode);
+                if (storageUrl==null) {
+                    stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode "+ resourceCode);
+                    isError = true;
+                    break;
+
+                }
                 AssetFile assetFile = ResourceUtils.prepareDataFile(taskDir, resourceCode, null);
                 // is this resource prepared?
                 if (assetFile.isError || !assetFile.isContent) {
                     log.info("Resource hasn't been prepared yet, {}", assetFile);
                     isAssetsOk = false;
                 }
+            }
+            if (isError) {
+                continue;
             }
             if (!isAssetsOk) {
                 if (task.assetsPrepared) {

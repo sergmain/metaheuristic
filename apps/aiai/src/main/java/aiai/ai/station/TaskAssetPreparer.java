@@ -18,12 +18,15 @@ package aiai.ai.station;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.exceptions.ResourceProviderException;
+import aiai.ai.resource.AssetFile;
+import aiai.ai.resource.ResourceProvider;
+import aiai.ai.resource.ResourceProviderFactory;
 import aiai.ai.station.actors.DownloadResourceActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
-import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.utils.CollectionUtils;
-import aiai.ai.utils.ResourceUtils;
+import aiai.ai.resource.ResourceUtils;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
@@ -50,8 +53,10 @@ public class TaskAssetPreparer {
     private final StationTaskService stationTaskService;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
     private final MetadataService metadataService;
+    private final StationService stationService;
+    private final ResourceProviderFactory resourceProviderFactory;
 
-    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService) {
+    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, StationService stationService, ResourceProviderFactory resourceProviderFactory) {
         this.globals = globals;
         this.downloadSnippetActor = downloadSnippetActor;
         this.downloadResourceActor = downloadResourceActor;
@@ -60,6 +65,8 @@ public class TaskAssetPreparer {
         this.stationTaskService = stationTaskService;
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
         this.metadataService = metadataService;
+        this.stationService = stationService;
+        this.resourceProviderFactory = resourceProviderFactory;
     }
 
     public void fixedDelay() {
@@ -101,17 +108,27 @@ public class TaskAssetPreparer {
             File taskDir = stationTaskService.prepareTaskDir(launchpadCode, task.taskId);
 
             boolean isAllLoaded = true;
-            for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                AssetFile assetFile = ResourceUtils.prepareDataFile(taskDir, resourceCode, null);
-                // is this resource prepared?
-                if (!assetFile.isError && assetFile.isContent) {
-                    continue;
+            try {
+                for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
+                    final String storageUrl = taskParamYaml.resourceStorageUrls.get(resourceCode);
+                    if (storageUrl==null || storageUrl.isBlank()) {
+                        log.error("storageUrl wasn't found for resourceCode ", resourceCode);
+                        continue;
+                    }
+                    ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
+                    List<AssetFile> assetFiles = resourceProvider.prepareDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, storageUrl);
+                    for (AssetFile assetFile : assetFiles) {
+                        // is this resource prepared?
+                        if (assetFile.isError || !assetFile.isContent) {
+                            isAllLoaded=false;
+                            break;
+                        }
+                    }
                 }
-                isAllLoaded=false;
-                DownloadResourceTask resourceTask = new DownloadResourceTask(resourceCode, task.getTaskId(), taskDir);
-                resourceTask.launchpad = launchpad.launchpadLookup;
-                resourceTask.stationId = launchpadCode.stationId;
-                downloadResourceActor.add(resourceTask);
+            } catch (ResourceProviderException e) {
+                log.error("Error", e);
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
+                continue;
             }
 
             File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);

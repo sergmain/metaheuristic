@@ -14,25 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.yaml.env;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package aiai.ai.resource;
 
-import java.util.*;
+import org.junit.Test;
 
-@Data
-@NoArgsConstructor
-public class EnvYaml {
-    Map<String, String> envs = new LinkedHashMap<>();
-    List<DiskStorage> disk = new ArrayList<>();
+import static aiai.ai.resource.DiskResourceProvider.*;
+import static org.junit.Assert.assertEquals;
 
-    public DiskStorage findDiskStorageByCode(String code) {
-        for (DiskStorage diskStorage : disk) {
-            if (Objects.equals(diskStorage.code, code)) {
-                return diskStorage;
-            }
-        }
-        return null;
+public class TestParseStorageUrl {
+
+    @Test
+    public void testParse() {
+        String storageUrl = "disk://aaaa/*";
+
+        DiskStorageUri storageUri = parseStorageUrl(storageUrl);
+        assertEquals("aaaa", storageUri.envCode);
+        assertEquals("*", storageUri.resourceCode);
     }
 }

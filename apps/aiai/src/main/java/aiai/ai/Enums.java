@@ -18,6 +18,8 @@ package aiai.ai;
 
 public final class Enums {
 
+    public enum StorageType {launchpad, disk, hadoop, ftp }
+
     public enum UploadResourceStatus {
         OK,
         FILENAME_IS_BLANK,

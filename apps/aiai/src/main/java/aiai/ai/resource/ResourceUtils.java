@@ -14,11 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.utils;
+package aiai.ai.resource;
 
 import aiai.ai.Consts;
 import aiai.ai.Enums;
-import aiai.ai.station.AssetFile;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -42,7 +41,7 @@ public class ResourceUtils {
         return prepareAssetFile(rootDir, id, resourceFilename, Consts.ARTIFACTS_DIR);
     }
 
-    public static AssetFile prepareAssetFile(File rootDir, String id, String resourceFilename, String assetDirname) {
+    private static AssetFile prepareAssetFile(File rootDir, String id, String resourceFilename, String assetDirname) {
 
         final AssetFile assetFile = new AssetFile();
         final File trgDir = new File(rootDir, assetDirname);
