@@ -130,7 +130,7 @@ public class FlowService {
             Monitoring.log("##022", Enums.Monitor.MEMORY);
         }
         if (!flowInstances.isEmpty()) {
-            log.info("Producing tasks was finished");
+            log.info("Producing of tasks was finished");
         }
     }
 

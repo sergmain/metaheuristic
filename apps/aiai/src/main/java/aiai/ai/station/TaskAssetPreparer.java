@@ -18,19 +18,14 @@ package aiai.ai.station;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.exceptions.ResourceProviderException;
 import aiai.ai.resource.AssetFile;
-import aiai.ai.resource.ResourceProvider;
-import aiai.ai.resource.ResourceProviderFactory;
-import aiai.ai.station.actors.DownloadResourceActor;
+import aiai.ai.resource.ResourceUtils;
 import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.tasks.DownloadSnippetTask;
-import aiai.ai.utils.CollectionUtils;
-import aiai.ai.resource.ResourceUtils;
 import aiai.ai.yaml.metadata.Metadata;
+import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
-import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -47,26 +42,22 @@ public class TaskAssetPreparer {
 
     private final Globals globals;
     private final DownloadSnippetActor downloadSnippetActor;
-    private final DownloadResourceActor downloadResourceActor;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final CurrentExecState currentExecState;
     private final StationTaskService stationTaskService;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
     private final MetadataService metadataService;
     private final StationService stationService;
-    private final ResourceProviderFactory resourceProviderFactory;
 
-    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, StationService stationService, ResourceProviderFactory resourceProviderFactory) {
+    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, StationService stationService) {
         this.globals = globals;
         this.downloadSnippetActor = downloadSnippetActor;
-        this.downloadResourceActor = downloadResourceActor;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.currentExecState = currentExecState;
         this.stationTaskService = stationTaskService;
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
         this.metadataService = metadataService;
         this.stationService = stationService;
-        this.resourceProviderFactory = resourceProviderFactory;
     }
 
     public void fixedDelay() {

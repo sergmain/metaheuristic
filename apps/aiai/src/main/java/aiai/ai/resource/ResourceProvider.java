@@ -17,6 +17,7 @@
 
 package aiai.ai.resource;
 
+import aiai.ai.core.ExecProcessService;
 import aiai.ai.station.LaunchpadLookupExtendedService;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
@@ -26,4 +27,16 @@ import java.util.List;
 
 public interface ResourceProvider {
     List<AssetFile> prepareDataFile(File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, StationTask task, Metadata.LaunchpadInfo launchpadCode, String resourceCode, String storageUrl);
+
+    ExecProcessService.Result processResultingFile(
+            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            File outputResourceFile
+    );
+
+    File getOutputResourceFile(
+            String taskDir,
+            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            StationTask task,
+            String outputResourceCode);
 }

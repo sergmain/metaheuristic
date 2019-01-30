@@ -21,13 +21,9 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
-import aiai.ai.exceptions.ResourceProviderException;
 import aiai.ai.resource.AssetFile;
 import aiai.ai.resource.ResourceProvider;
 import aiai.ai.resource.ResourceProviderFactory;
-import aiai.ai.station.actors.UploadResourceActor;
-import aiai.ai.station.tasks.UploadResourceTask;
-import aiai.ai.utils.CollectionUtils;
 import aiai.ai.resource.ResourceUtils;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
@@ -44,9 +40,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,25 +51,25 @@ public class TaskProcessor {
     private final Globals globals;
 
     private final ExecProcessService execProcessService;
-    private final StationService stationService;
     private final TaskParamYamlUtils taskParamYamlUtils;
     private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
-    private final UploadResourceActor uploadResourceActor;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService ;
     private final MetadataService metadataService;
+    private final EnvService envService;
+    private final StationService stationService;
     private final ResourceProviderFactory resourceProviderFactory;
 
-    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationService stationService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState, UploadResourceActor uploadResourceActor, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, ResourceProviderFactory resourceProviderFactory) {
+    public TaskProcessor(Globals globals, ExecProcessService execProcessService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, EnvService envService, StationService stationService, ResourceProviderFactory resourceProviderFactory) {
         this.globals = globals;
         this.execProcessService = execProcessService;
-        this.stationService = stationService;
         this.taskParamYamlUtils = taskParamYamlUtils;
         this.stationTaskService = stationTaskService;
         this.currentExecState = currentExecState;
-        this.uploadResourceActor = uploadResourceActor;
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
         this.metadataService = metadataService;
+        this.envService = envService;
+        this.stationService = stationService;
         this.resourceProviderFactory = resourceProviderFactory;
     }
 
@@ -132,65 +126,13 @@ public class TaskProcessor {
                 continue;
             }
             boolean isAllLoaded = resultOfChecking.isAllLoaded;
-
-
-/*
-
-            boolean isAllLoaded = true;
-            boolean isError = false;
-            try {
-                for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                    final String storageUrl = taskParamYaml.resourceStorageUrls.get(resourceCode);
-                    if (storageUrl==null || storageUrl.isBlank()) {
-                        stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode "+ resourceCode);
-                        log.error("storageUrl wasn't found for resourceCode ", resourceCode);
-                        isError = true;
-                        break;
-                    }
-                    ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
-                    List<AssetFile> assetFiles = resourceProvider.prepareDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, storageUrl);
-                    for (AssetFile assetFile : assetFiles) {
-                        // is this resource prepared?
-                        if (assetFile.isError || !assetFile.isContent) {
-                            isAllLoaded=false;
-                            break;
-                        }
-                    }
-                }
-            } catch (ResourceProviderException e) {
-                log.error("Error", e);
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
-                continue;
-            }
-            if (isError) {
-                continue;
-            }
-            if (!isAllLoaded) {
-                if (task.assetsPrepared) {
-                    stationTaskService.markAsAssetPrepared(task.launchpadUrl, task.taskId, false);
-                }
-                continue;
-            }
-*/
-
-
-/*
-            for (String resourceCode : CollectionUtils.toPlainList(taskParamYaml.inputResourceCodes.values())) {
-                String storageUrl = taskParamYaml.resourceStorageUrls.get(resourceCode);
-                if (storageUrl==null) {
-                    stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode "+ resourceCode);
-                    isError = true;
-                    break;
-
-                }
-                AssetFile assetFile = ResourceUtils.prepareDataFile(taskDir, resourceCode, null);
-                // is this resource prepared?
-                if (assetFile.isError || !assetFile.isContent) {
-                    log.info("Resource hasn't been prepared yet, {}", assetFile);
-                    isAllLoaded = false;
+            for (Map.Entry<String, List<AssetFile>> entry : resultOfChecking.assetFiles.entrySet()) {
+                for (AssetFile assetFile : entry.getValue()) {
+                    taskParamYaml.inputResourceAbsolutePaths
+                            .computeIfAbsent(entry.getKey(), o-> new ArrayList<>())
+                            .add(assetFile.file.getAbsolutePath());
                 }
             }
-*/
 
             if (taskParamYaml.snippet==null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Snippet isn't defined");
@@ -203,7 +145,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            // at this point all required resources have to be downloaded from server
+            // at this point all required resources have to be prepared
 
             taskParamYaml.workingPath = taskDir.getAbsolutePath();
             final String params = taskParamYamlUtils.toString(taskParamYaml);
@@ -225,11 +167,12 @@ public class TaskProcessor {
                 continue;
             }
 
+            // persist params.yaml file
             final File paramFile = prepareParamFile(taskDir, params);
             if (paramFile == null) {
                 break;
             }
-            Interpreter interpreter = new Interpreter(stationService.getEnvYaml().getEnvs().get(snippet.env));
+            Interpreter interpreter = new Interpreter(envService.getEnvYaml().getEnvs().get(snippet.env));
             if (interpreter.list == null) {
                 log.warn("Can't process the task, the interpreter wasn't found for env: {}", snippet.env);
                 break;
@@ -261,17 +204,21 @@ public class TaskProcessor {
                 stationTaskService.storeExecResult(task.launchpadUrl, task.getTaskId(), startedOn, snippet, result, artifactDir);
 
                 if (result.isOk()) {
-                    File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + taskParamYaml.outputResourceCode);
-                    if (resultDataFile.exists()) {
-                        log.info("Register task for uploading result data to server, resultDataFile: {}", resultDataFile.getPath());
-                        UploadResourceTask uploadResourceTask = new UploadResourceTask(task.taskId, resultDataFile);
-                        uploadResourceTask.launchpad = launchpad.launchpadLookup;
-                        uploadResourceTask.stationId = launchpadCode.stationId;
-                        uploadResourceActor.add(uploadResourceTask);
-                    } else {
-                        String es = "Result data file doesn't exist, resultDataFile: " + resultDataFile.getPath();
+                    final String storageUrl = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
+                    if (storageUrl == null || storageUrl.isBlank()) {
+                        String es = "Result data file doesn't exist, resultDataFile: " + taskParamYaml.outputResourceAbsolutePath;
                         log.error(es);
                         result = new ExecProcessService.Result(false, -1, es);
+                    }
+                    else {
+                        ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
+                        ExecProcessService.Result tempResult = resourceProvider.processResultingFile(
+                                launchpad, task, launchpadCode,
+                                new File(taskParamYaml.outputResourceAbsolutePath)
+                        );
+                        if (tempResult!=null) {
+                            result = tempResult;
+                        }
                     }
                 }
             } catch (Throwable th) {

@@ -18,45 +18,46 @@
 package aiai.ai.resource;
 
 import aiai.ai.Consts;
+import aiai.ai.core.ExecProcessService;
 import aiai.ai.exceptions.ResourceProviderException;
+import aiai.ai.station.EnvService;
 import aiai.ai.station.LaunchpadLookupExtendedService;
-import aiai.ai.station.StationService;
-import aiai.ai.station.actors.DownloadResourceActor;
-import aiai.ai.station.tasks.DownloadResourceTask;
+import aiai.ai.station.StationTaskService;
 import aiai.ai.yaml.env.DiskStorage;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.apache.commons.io.FileUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Slf4j
 public class DiskResourceProvider implements ResourceProvider {
 
-    private final StationService stationService;
+    private final EnvService envService;
+    private final StationTaskService stationTaskService;
 
-    private final DownloadResourceActor downloadResourceActor;
-
-    public DiskResourceProvider(StationService stationService, DownloadResourceActor downloadResourceActor) {
-        this.stationService = stationService;
-        this.downloadResourceActor = downloadResourceActor;
+    public DiskResourceProvider(EnvService envService, StationTaskService stationTaskService) {
+        this.envService = envService;
+        this.stationTaskService = stationTaskService;
     }
 
     @Override
-    public List<AssetFile> prepareDataFile(File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, StationTask task, Metadata.LaunchpadInfo launchpadCode, String resourceCode, String storageUrl) {
+    public List<AssetFile> prepareDataFile(
+            File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            String resourceCode, String storageUrl) {
         DiskStorageUri storageUri = parseStorageUrl(storageUrl);
         if (!storageUri.resourceCode.equals("*")) {
             throw new ResourceProviderException("#015.018 The disk storage supports the only one type - '*', actual" + storageUri.resourceCode);
         }
-        EnvYaml env = stationService.getEnvYaml();
+        EnvYaml env = envService.getEnvYaml();
         DiskStorage diskStorage = env.findDiskStorageByCode(storageUri.envCode);
         if (diskStorage==null) {
             throw new ResourceProviderException("#015.020 The disk storage wasn't found for code: " + storageUri.envCode);
@@ -85,9 +86,45 @@ public class DiskResourceProvider implements ResourceProvider {
         }
 */
 
-        // return empty because snippet will use allfiles
-        // which it'll find in path is defined by storageUrl
+        // return empty list because snippet will use all files
+        // which it'll find in path which is defined by storageUrl
         return new ArrayList<>();
+    }
+
+    @Override
+    public ExecProcessService.Result processResultingFile(
+            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            File outputResourceFile
+    ) {
+        if (outputResourceFile.exists()) {
+            log.info("Register task for uploading result data to server, resultDataFile: {}", outputResourceFile.getPath());
+            stationTaskService.setResourceUploadedAndCompleted(launchpad.launchpadLookup.url, task.taskId);
+        } else {
+            String es = "Result data file doesn't exist, resultDataFile: " + outputResourceFile.getPath();
+            log.error(es);
+            return new ExecProcessService.Result(false, -1, es);
+        }
+        return null;    }
+
+    @Override
+    public File getOutputResourceFile(
+            String taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            StationTask task, String outputResourceCode, String storageUrl) {
+
+        DiskStorageUri storageUri = parseStorageUrl(storageUrl);
+        if (!storageUri.resourceCode.equals("*")) {
+            throw new ResourceProviderException("#015.018 The disk storage supports the only one type - '*', actual" + storageUri.resourceCode);
+        }
+        EnvYaml env = envService.getEnvYaml();
+        DiskStorage diskStorage = env.findDiskStorageByCode(storageUri.envCode);
+        if (diskStorage==null) {
+            throw new ResourceProviderException("#015.020 The disk storage wasn't found for code: " + storageUri.envCode);
+        }
+        File path = new File(diskStorage.path);
+        if (!path.exists()) {
+            throw new ResourceProviderException("#015.024 The path of disk storage doesn't exist: " + path.getAbsolutePath());
+        }
     }
 
     @Data
@@ -97,7 +134,7 @@ public class DiskResourceProvider implements ResourceProvider {
         public String resourceCode;
     }
 
-    public static DiskStorageUri parseStorageUrl(String storageUrl) {
+    static DiskStorageUri parseStorageUrl(String storageUrl) {
         if (!storageUrl.startsWith(Consts.DISK_STORAGE_URL)) {
             throw new ResourceProviderException("#015.01 Wrong storageUrl format: " + storageUrl);
         }

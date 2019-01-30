@@ -342,7 +342,6 @@ public class ProcessResourceController {
             log.info("#990.84 File can't be downloaded because flowInstance doesn't have execState==Enums.FlowInstanceExecState.FINISHED, actual {}", fi.getExecState());
             return null;
         }
-//        int taskOrder = fi.getProducingOrder() - 1;
         Integer taskOrder = taskRepository.findMaxConcreteOrder(fi.getId());
         if (taskOrder==null) {
             log.info("#990.86 Can't calculate the max task order, flowInstanceId: {}", flowInstanceId);
