@@ -81,11 +81,12 @@ public class LaunchpadResourceProvider implements ResourceProvider {
 
     @Override
     public File getOutputResourceFile(
-            String taskDir,
-            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task,
-            String outputResourceCode, String storageUrl) {
-            File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + outputResourceCode);
-            return resultDataFile;
+            File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            StationTask task, String outputResourceCode, String storageUrl) {
+
+        //noinspection UnnecessaryLocalVariable
+        File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + outputResourceCode);
+        return resultDataFile;
     }
+
 }

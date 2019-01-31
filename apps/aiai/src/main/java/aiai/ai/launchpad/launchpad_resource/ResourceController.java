@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.resource;
+package aiai.ai.launchpad.launchpad_resource;
 
 import aiai.ai.Globals;
 import aiai.ai.exceptions.StoreNewFileException;

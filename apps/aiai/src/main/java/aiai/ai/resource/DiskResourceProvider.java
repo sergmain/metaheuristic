@@ -99,7 +99,7 @@ public class DiskResourceProvider implements ResourceProvider {
 
     @Override
     public File getOutputResourceFile(
-            String taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, String outputResourceCode, String storageUrl) {
 
         DiskStorageUri storageUri = parseStorageUrl(storageUrl);

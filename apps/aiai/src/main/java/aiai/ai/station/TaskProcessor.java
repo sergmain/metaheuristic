@@ -133,7 +133,12 @@ public class TaskProcessor {
                             .add(assetFile.file.getAbsolutePath());
                 }
             }
-
+            File outputResourceFile = stationService.getOutputResourceFile(task, taskParamYaml, launchpad, taskDir);
+            if (outputResourceFile==null) {
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Can't create outputResourceFile");
+                continue;
+            }
+            taskParamYaml.outputResourceAbsolutePath = outputResourceFile.getAbsolutePath();
             if (taskParamYaml.snippet==null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Snippet isn't defined");
                 continue;

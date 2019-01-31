@@ -35,7 +35,7 @@ public interface ResourceProvider {
     );
 
     File getOutputResourceFile(
-            String taskDir,
+            File taskDir,
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task,
             String outputResourceCode, String storageUrl);

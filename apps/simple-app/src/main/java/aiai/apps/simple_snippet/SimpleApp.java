@@ -56,25 +56,22 @@ public class SimpleApp implements CommandLineRunner {
         String outputFile = getOutputFile();
         System.out.println("output file: " + outputFile);
 
-        FileUtils.copyFile(
-                new File("DATA" + File.separatorChar + inputFile),
-                new File("artifacts" + File.separatorChar + outputFile)
-        );
+        FileUtils.copyFile( new File(inputFile), new File(outputFile) );
     }
 
     public String getOutputFile() {
-        return ""+cfg.get("outputResourceCode");
+        return ""+cfg.get("outputResourceAbsolutePath");
     }
 
     public String getInputFile() {
-        Map<String, List<String>> inputResourceCodes = (Map)cfg.get("inputResourceCodes");
+        Map<String, List<String>> inputResourceCodes = (Map)cfg.get("inputResourceAbsolutePaths");
         Collection<List<String>> values = inputResourceCodes.values();
         if (values.isEmpty()) {
-            throw new IllegalStateException("inputResourceCodes is empty");
+            throw new IllegalStateException("inputResourceAbsolutePaths is empty");
         }
         List<String> list = values.iterator().next();
         if (list.isEmpty()) {
-            throw new IllegalStateException("inputResourceCodes/list  is empty");
+            throw new IllegalStateException("inputResourceAbsolutePaths/list  is empty");
         }
         return list.get(0);
     }

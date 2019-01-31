@@ -29,7 +29,7 @@ import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.launchpad.resource.ResourceService;
+import aiai.ai.launchpad.launchpad_resource.ResourceService;
 import aiai.ai.launchpad.server.ServerService;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.yaml.task.TaskParamYaml;

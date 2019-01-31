@@ -23,7 +23,7 @@ import aiai.ai.Globals;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.repositories.BinaryDataRepository;
-import aiai.ai.launchpad.resource.SimpleResource;
+import aiai.ai.launchpad.launchpad_resource.SimpleResource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.hibernate.Hibernate;
@@ -42,7 +42,6 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @Transactional

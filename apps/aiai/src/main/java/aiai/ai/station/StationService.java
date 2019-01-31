@@ -178,4 +178,25 @@ public class StationService {
         return result;
     }
 
+    public File getOutputResourceFile(StationTask task, TaskParamYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
+        try {
+            final String storageUrl = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
+            if (storageUrl == null || storageUrl.isBlank()) {
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode " + taskParamYaml.outputResourceCode);
+                log.error("storageUrl wasn't found for resourceCode ", taskParamYaml.outputResourceCode);
+                return null;
+            }
+
+            ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
+            //noinspection UnnecessaryLocalVariable
+            File outputResourceFile = resourceProvider.getOutputResourceFile(
+                    taskDir, launchpad, task, taskParamYaml.outputResourceCode, storageUrl);
+            return outputResourceFile;
+        } catch (ResourceProviderException e) {
+            log.error("Error", e);
+            stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
+            return null;
+        }
+    }
+
 }
