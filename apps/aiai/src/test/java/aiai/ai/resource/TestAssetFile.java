@@ -14,31 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 package aiai.ai.resource;
 
-import lombok.Data;
-import lombok.ToString;
+import org.junit.Test;
 
 import java.io.File;
 
-@Data
-public class AssetFile {
-    public File file;
-    public long fileLength;
-    public boolean isError;
-    public boolean isContent;
-    public boolean isExist;
-    public boolean provided = false;
+import static org.junit.Assert.assertNotNull;
 
-    @Override
-    public String toString() {
-        return "AssetFile{" +
-                "file=" + file.getPath() +
-                ", fileLength=" + fileLength +
-                ", isError=" + isError +
-                ", isContent=" + isContent +
-                ", isExist=" + isExist +
-                ", isProvided=" + provided +
-                '}';
+public class TestAssetFile {
+
+    @Test
+    public void testAssetFile() {
+        File f = new File("/aaa/*");
+        String absolutePath = f.getAbsolutePath();
+        assertNotNull(absolutePath);
+        System.out.println(absolutePath);
     }
 }

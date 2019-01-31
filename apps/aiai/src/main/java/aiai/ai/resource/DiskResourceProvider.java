@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -54,9 +54,6 @@ public class DiskResourceProvider implements ResourceProvider {
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String resourceCode, String storageUrl) {
         DiskStorageUri storageUri = parseStorageUrl(storageUrl);
-        if (!storageUri.resourceCode.equals("*")) {
-            throw new ResourceProviderException("#015.018 The disk storage supports the only one type - '*', actual" + storageUri.resourceCode);
-        }
         EnvYaml env = envService.getEnvYaml();
         DiskStorage diskStorage = env.findDiskStorageByCode(storageUri.envCode);
         if (diskStorage==null) {
@@ -67,28 +64,21 @@ public class DiskResourceProvider implements ResourceProvider {
             throw new ResourceProviderException("#015.024 The path of disk storage doesn't exist: " + path.getAbsolutePath());
         }
 
-/*
-        try {
-            Files.list(path.toPath()).forEach(t -> {
-                try {
-                    File taskYaml = new File(t.toFile(), Consts.TASK_YAML);
-                    if (!taskYaml.exists()) {
-                        FileUtils.deleteDirectory(t.toFile());
-                        // IDK is that bug or side-effect. so delete one more time
-                        FileUtils.deleteDirectory(t.toFile());
-                    }
-                } catch (IOException e) {
-                    log.error("#090.01 Error while deleting path {}, this isn't fatal error.", t);
-                }
-            });
-        } catch (IOException e) {
-            throw new ResourceProviderException("#015.030 Error while getting list of files in " + path.getAbsolutePath()+", error: " + e.toString());
+        AssetFile assetFile;
+        if (storageUri.resourceCode.endsWith("*")) {
+            assetFile = new AssetFile();
+            assetFile.setFile( new File(path, storageUri.resourceCode) );
+            assetFile.setProvided(true);
+            assetFile.setContent(true);
+            assetFile.setError(false);
+            assetFile.setExist(true);
+            assetFile.setFileLength(0);
         }
-*/
+        else {
+            assetFile = ResourceUtils.prepareAssetFile(path, null, storageUri.resourceCode);
+        }
 
-        // return empty list because snippet will use all files
-        // which it'll find in path which is defined by storageUrl
-        return new ArrayList<>();
+        return Collections.singletonList(assetFile);
     }
 
     @Override
@@ -113,9 +103,7 @@ public class DiskResourceProvider implements ResourceProvider {
             StationTask task, String outputResourceCode, String storageUrl) {
 
         DiskStorageUri storageUri = parseStorageUrl(storageUrl);
-        if (!storageUri.resourceCode.equals("*")) {
-            throw new ResourceProviderException("#015.018 The disk storage supports the only one type - '*', actual" + storageUri.resourceCode);
-        }
+
         EnvYaml env = envService.getEnvYaml();
         DiskStorage diskStorage = env.findDiskStorageByCode(storageUri.envCode);
         if (diskStorage==null) {
@@ -125,6 +113,8 @@ public class DiskResourceProvider implements ResourceProvider {
         if (!path.exists()) {
             throw new ResourceProviderException("#015.024 The path of disk storage doesn't exist: " + path.getAbsolutePath());
         }
+
+        return new File(path, outputResourceCode);
     }
 
     @Data
@@ -139,9 +129,15 @@ public class DiskResourceProvider implements ResourceProvider {
             throw new ResourceProviderException("#015.01 Wrong storageUrl format: " + storageUrl);
         }
         String uri = storageUrl.substring(Consts.DISK_STORAGE_URL.length());
-        if (uri.indexOf('/')!=uri.lastIndexOf('/')) {
-            throw new ResourceProviderException("#015.05 Wrong storageUrl format: " + storageUrl);
+        int idx = uri.indexOf('/');
+        if (idx!=-1) {
+            if (uri.indexOf('/') != uri.lastIndexOf('/')) {
+                throw new ResourceProviderException("#015.05 Wrong storageUrl format: " + storageUrl);
+            }
+            return new DiskStorageUri(uri.substring(0, uri.indexOf('/')), uri.substring(uri.indexOf('/') + 1));
         }
-        return new DiskStorageUri(uri.substring(0, uri.indexOf('/')), uri.substring(uri.indexOf('/')+1));
+        else {
+            return new DiskStorageUri(uri, null);
+        }
     }
 }

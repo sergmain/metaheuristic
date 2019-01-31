@@ -84,7 +84,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
             String taskDir,
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task,
-            String outputResourceCode) {
+            String outputResourceCode, String storageUrl) {
             File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + outputResourceCode);
             return resultDataFile;
     }

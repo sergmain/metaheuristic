@@ -21,15 +21,19 @@ import org.junit.Test;
 
 import static aiai.ai.resource.DiskResourceProvider.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 public class TestParseStorageUrl {
 
     @Test
     public void testParse() {
-        String storageUrl = "disk://aaaa/*";
 
-        DiskStorageUri storageUri = parseStorageUrl(storageUrl);
+        DiskStorageUri storageUri = parseStorageUrl("disk://aaaa/*");
         assertEquals("aaaa", storageUri.envCode);
         assertEquals("*", storageUri.resourceCode);
+
+        storageUri = parseStorageUrl("disk://bbb");
+        assertEquals("bbb", storageUri.envCode);
+        assertNull(storageUri.resourceCode);
     }
 }

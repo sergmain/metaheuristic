@@ -38,5 +38,5 @@ public interface ResourceProvider {
             String taskDir,
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task,
-            String outputResourceCode);
+            String outputResourceCode, String storageUrl);
 }

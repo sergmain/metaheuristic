@@ -41,21 +41,24 @@ public class ResourceUtils {
         return prepareAssetFile(rootDir, id, resourceFilename, Consts.ARTIFACTS_DIR);
     }
 
-    private static AssetFile prepareAssetFile(File rootDir, String id, String resourceFilename, String assetDirname) {
+    private static AssetFile prepareAssetFile(File rootDir, String id, String resourceFilename, String assetDirname ) {
+        final File assetDir = new File(rootDir, assetDirname);
+        return prepareAssetFile(assetDir, id, resourceFilename);
+    }
 
+    public static AssetFile prepareAssetFile(File assetDir, String id, String resourceFilename) {
         final AssetFile assetFile = new AssetFile();
-        final File trgDir = new File(rootDir, assetDirname);
-        if (!trgDir.exists() && !trgDir.mkdirs()) {
+        if (!assetDir.exists() && !assetDir.mkdirs()) {
             assetFile.isError = true;
-            log.error("Can't create resource dir for task: {}", trgDir.getAbsolutePath());
+            log.error("Can't create resource dir for task: {}", assetDir.getAbsolutePath());
             return assetFile;
         }
         if (StringUtils.isNotBlank(resourceFilename)) {
-            assetFile.file = new File(trgDir, resourceFilename);
+            assetFile.file = new File(assetDir, resourceFilename);
         }
         else {
             final String resId = id.replace(':', '_');
-            assetFile.file = new File(trgDir, "" + resId);
+            assetFile.file = new File(assetDir, "" + resId);
         }
         assetFile.isExist = assetFile.file.exists();
 
