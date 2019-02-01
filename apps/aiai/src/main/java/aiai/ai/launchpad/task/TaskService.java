@@ -97,8 +97,14 @@ public class TaskService {
                     flowInstanceRepository.save(flowInstance);
                 }
                 break;
-            case RESOURCE_ON_EXTERNAL_STORAGE:
-                log.info("#317.28 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of flow", taskId);
+            case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
+                Enums.UploadResourceStatus uploadResourceStatus = taskPersistencer.setResultReceived(taskId, true);
+                if (uploadResourceStatus==Enums.UploadResourceStatus.OK) {
+                    log.info("#317.28 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of flow", taskId);
+                }
+                else {
+                    log.info("#317.30 can't update isCompleted field for task #{}", taskId);
+                }
                 break;
         }
     }

@@ -24,7 +24,6 @@ import aiai.ai.exceptions.ResourceProviderException;
 import aiai.ai.resource.*;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
-import aiai.ai.utils.CollectionUtils;
 import aiai.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
@@ -127,7 +126,7 @@ public class StationService {
             }
         }
         if (resourceProvider instanceof DiskResourceProvider) {
-            return Enums.ResendTaskOutputResourceStatus.RESOURCE_ON_EXTERNAL_STORAGE;
+            return Enums.ResendTaskOutputResourceStatus.OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE;
         }
 
         final AssetFile assetFile = ResourceUtils.prepareArtifactFile(taskDir, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
@@ -167,7 +166,7 @@ public class StationService {
                         break;
                     }
                     ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
-                    List<AssetFile> assetFiles = resourceProvider.prepareDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, storageUrl);
+                    List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, storageUrl);
                     result.assetFiles.computeIfAbsent(key, o -> new ArrayList<>()).addAll(assetFiles);
                     for (AssetFile assetFile : assetFiles) {
                         // is this resource prepared?

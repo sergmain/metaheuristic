@@ -26,7 +26,7 @@ import java.io.File;
 import java.util.List;
 
 public interface ResourceProvider {
-    List<AssetFile> prepareDataFile(File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, StationTask task, Metadata.LaunchpadInfo launchpadCode, String resourceCode, String storageUrl);
+    List<AssetFile> prepareForDownloadingDataFile(File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, StationTask task, Metadata.LaunchpadInfo launchpadCode, String resourceCode, String storageUrl);
 
     ExecProcessService.Result processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,

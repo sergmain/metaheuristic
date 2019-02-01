@@ -49,7 +49,7 @@ public class DiskResourceProvider implements ResourceProvider {
     }
 
     @Override
-    public List<AssetFile> prepareDataFile(
+    public List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String resourceCode, String storageUrl) {
