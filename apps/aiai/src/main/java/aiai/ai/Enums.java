@@ -32,7 +32,7 @@ public final class Enums {
     public enum Monitor { MEMORY }
 
     public enum ResendTaskOutputResourceStatus {
-        SEND_SCHEDULED, RESOURCE_NOT_FOUND, TASK_IS_BROKEN, TASK_PARAM_FILE_NOT_FOUND
+        SEND_SCHEDULED, RESOURCE_NOT_FOUND, TASK_IS_BROKEN, TASK_PARAM_FILE_NOT_FOUND, RESOURCE_ON_EXTERNAL_STORAGE
     }
 
     public enum ProcessType {

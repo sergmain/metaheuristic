@@ -91,9 +91,8 @@ public class ProcessResourceController {
     private final ResourceService resourceService;
     private final ServerService serverService;
     private final TaskRepository taskRepository;
-    private final TaskParamYamlUtils taskParamYamlUtils;
 
-    public ProcessResourceController(Globals globals, FlowInstanceRepository flowInstanceRepository, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, ResourceService resourceService, ServerService serverService, TaskRepository taskRepository, TaskParamYamlUtils taskParamYamlUtils) {
+    public ProcessResourceController(Globals globals, FlowInstanceRepository flowInstanceRepository, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, ResourceService resourceService, ServerService serverService, TaskRepository taskRepository) {
         this.globals = globals;
         this.flowInstanceRepository = flowInstanceRepository;
         this.flowRepository = flowRepository;
@@ -102,7 +101,6 @@ public class ProcessResourceController {
         this.resourceService = resourceService;
         this.serverService = serverService;
         this.taskRepository = taskRepository;
-        this.taskParamYamlUtils = taskParamYamlUtils;
     }
 
     @GetMapping("/process-resources")
@@ -360,7 +358,7 @@ public class ProcessResourceController {
             return null;
         }
         final Task task = tasks.get(0);
-        final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
+        final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_XML);

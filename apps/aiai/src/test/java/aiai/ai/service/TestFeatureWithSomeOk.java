@@ -59,6 +59,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         TaskService.TasksAndAssignToStationResult sequences1 = taskService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getFlowInstanceId());
         assertNotNull(sequences1);
+
         if (true) throw new IllegalStateException("Not implemented yet");
         final ExperimentFeature feature = null;
 //        final ExperimentFeature feature = sequences1.getFeature();

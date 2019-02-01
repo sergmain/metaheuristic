@@ -38,6 +38,9 @@ public class Task implements Serializable {
     @Version
     private Integer version;
 
+    /**
+     * TaskParamYaml represented as String
+     */
     @Column(name = "PARAMS")
     public String params;
 

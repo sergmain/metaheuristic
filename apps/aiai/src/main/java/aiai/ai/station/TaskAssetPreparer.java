@@ -42,17 +42,15 @@ public class TaskAssetPreparer {
 
     private final Globals globals;
     private final DownloadSnippetActor downloadSnippetActor;
-    private final TaskParamYamlUtils taskParamYamlUtils;
     private final CurrentExecState currentExecState;
     private final StationTaskService stationTaskService;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
     private final MetadataService metadataService;
     private final StationService stationService;
 
-    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, TaskParamYamlUtils taskParamYamlUtils, CurrentExecState currentExecState, StationTaskService stationTaskService, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, StationService stationService) {
+    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, CurrentExecState currentExecState, StationTaskService stationTaskService, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, StationService stationService) {
         this.globals = globals;
         this.downloadSnippetActor = downloadSnippetActor;
-        this.taskParamYamlUtils = taskParamYamlUtils;
         this.currentExecState = currentExecState;
         this.stationTaskService = stationTaskService;
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
@@ -88,7 +86,7 @@ public class TaskAssetPreparer {
                 log.info("Deleted orphan task {}", task);
                 continue;
             }
-            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
             if (taskParamYaml.inputResourceCodes.isEmpty()) {
                 log.warn("taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;

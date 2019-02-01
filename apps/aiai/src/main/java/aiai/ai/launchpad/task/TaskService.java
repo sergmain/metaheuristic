@@ -58,7 +58,6 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final FlowInstanceRepository flowInstanceRepository;
-    private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetRepository snippetRepository;
     private final StationsRepository stationsRepository;
 
@@ -70,26 +69,26 @@ public class TaskService {
     public void processResendTaskOutputResourceResult(String stationId, Enums.ResendTaskOutputResourceStatus status, long taskId) {
         switch(status) {
             case SEND_SCHEDULED:
-                log.info("Station #{} scheduled the output resource of task #{} for sending. This is normal operation of flow", stationId, taskId);
+                log.info("#317.01 Station #{} scheduled the output resource of task #{} for sending. This is normal operation of flow", stationId, taskId);
                 break;
             case RESOURCE_NOT_FOUND:
             case TASK_IS_BROKEN:
             case TASK_PARAM_FILE_NOT_FOUND:
                 Task task = taskRepository.findById(taskId).orElse(null);
                 if (task==null) {
-                    log.warn("#317.01 Task obsolete and was already deleted");
+                    log.warn("#317.05 Task obsolete and was already deleted");
                     return;
                 }
                 FlowInstance flowInstance = flowInstanceRepository.findById(task.flowInstanceId).orElse(null);
                 if (flowInstance==null) {
-                    log.warn("#317.04 FlowInstance for this task was already deleted");
+                    log.warn("#317.11 FlowInstance for this task was already deleted");
                     return;
                 }
 
-                log.info("#317.06 Task #{} has to be reset, ResendTaskOutputResourceStatus: {}", task.getId(), status );
+                log.info("#317.17 Task #{} has to be reset, ResendTaskOutputResourceStatus: {}", task.getId(), status );
                 Task result = taskPersistencer.resetTask(task.getId());
                 if (result==null) {
-                    log.error("#317.07 Reset of task {} was failed. See log for more info.", task.getId());
+                    log.error("#317.22 Reset of task {} was failed. See log for more info.", task.getId());
                     break;
                 }
 
@@ -97,6 +96,9 @@ public class TaskService {
                     flowInstance.setProducingOrder(task.order);
                     flowInstanceRepository.save(flowInstance);
                 }
+                break;
+            case RESOURCE_ON_EXTERNAL_STORAGE:
+                log.info("#317.28 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of flow", taskId);
                 break;
         }
     }
@@ -108,11 +110,10 @@ public class TaskService {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, FlowInstanceRepository flowInstanceRepository, TaskParamYamlUtils taskParamYamlUtils, SnippetRepository snippetRepository, StationsRepository stationsRepository) {
+    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, FlowInstanceRepository flowInstanceRepository, SnippetRepository snippetRepository, StationsRepository stationsRepository) {
         this.taskRepository = taskRepository;
         this.taskPersistencer = taskPersistencer;
         this.flowInstanceRepository = flowInstanceRepository;
-        this.taskParamYamlUtils = taskParamYamlUtils;
         this.snippetRepository = snippetRepository;
         this.stationsRepository = stationsRepository;
     }
@@ -131,7 +132,7 @@ public class TaskService {
         List<Long> anyTaskId = taskRepository.findAnyActiveForStationId(Consts.PAGE_REQUEST_1_REC, stationId);
         if (!anyTaskId.isEmpty()) {
             // this station already has active task
-            log.info("#317.10 can't assign any new task to station #{} because this station has active task #{}", stationId, anyTaskId);
+            log.info("#317.34 can't assign any new task to station #{} because this station has active task #{}", stationId, anyTaskId);
             return EMPTY_RESULT;
         }
 
@@ -143,11 +144,11 @@ public class TaskService {
         else {
             FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
             if (flowInstance==null) {
-                log.warn("#317.11 Flow instance wasn't found for id: {}", flowInstanceId);
+                log.warn("#317.39 Flow instance wasn't found for id: {}", flowInstanceId);
                 return EMPTY_RESULT;
             }
             if (flowInstance.execState!=Enums.FlowInstanceExecState.STARTED.code) {
-                log.warn("#317.16 Flow instance wasn't started.Current exec state: {}", Enums.FlowInstanceExecState.toState(flowInstance.execState));
+                log.warn("#317.42 Flow instance wasn't started.Current exec state: {}", Enums.FlowInstanceExecState.toState(flowInstance.execState));
                 return EMPTY_RESULT;
             }
             flowInstances = Collections.singletonList(flowInstance);
@@ -155,7 +156,7 @@ public class TaskService {
 
         Station station = stationsRepository.findById(stationId).orElse(null);
         if (station==null) {
-            log.error("#317.19 Station wasn't found for id: {}", stationId);
+            log.error("#317.47 Station wasn't found for id: {}", stationId);
             return EMPTY_RESULT;
         }
 
@@ -182,23 +183,23 @@ public class TaskService {
         Slice<Task> tasks;
         while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), flowInstance.getId(), flowInstance.producingOrder)).hasContent()) {
             for (Task task : tasks) {
-                final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
+                final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
                 SnippetVersion version = SnippetVersion.from(taskParamYaml.snippet.getCode());
                 if (version == null) {
-                    log.warn("#317.23 Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
+                    log.warn("#317.53 Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
                     continue;
                 }
                 Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
                 if (snippet == null) {
-                    log.warn("#317.26 Can't find snippet for code: {}, snippetVersion: {}", taskParamYaml.snippet.getCode(), version);
+                    log.warn("#317.59 Can't find snippet for code: {}, snippetVersion: {}", taskParamYaml.snippet.getCode(), version);
                     continue;
                 }
 
                 EnvYaml envYaml = EnvYamlUtils.to(station.getEnv());
                 String interpreter = envYaml.getEnvs().get(snippet.env);
                 if (interpreter==null) {
-                    log.warn("#317.29 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
+                    log.warn("#317.64 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
                             station.getId(), task.getId(), snippet.env
                     );
                     longHolder.value = System.currentTimeMillis();
@@ -207,7 +208,7 @@ public class TaskService {
 
                 if (isAcceptOnlySigned) {
                     if (!snippet.isSigned()) {
-                        log.warn("#317.31 Snippet with code {} wasn't signed", taskParamYaml.snippet.getCode());
+                        log.warn("#317.69 Snippet with code {} wasn't signed", taskParamYaml.snippet.getCode());
                         continue;
                     }
                     resultTask = task;

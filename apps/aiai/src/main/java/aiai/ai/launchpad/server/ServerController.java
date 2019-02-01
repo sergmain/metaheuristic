@@ -62,16 +62,14 @@ public class ServerController {
     private final SnippetRepository snippetRepository;
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final TaskParamYamlUtils taskParamYamlUtils;
 
-    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService, SnippetRepository snippetRepository, TaskRepository taskRepository, TaskPersistencer taskPersistencer, TaskParamYamlUtils taskParamYamlUtils) {
+    public ServerController(Globals globals, ServerService serverService, BinaryDataService binaryDataService, SnippetRepository snippetRepository, TaskRepository taskRepository, TaskPersistencer taskPersistencer) {
         this.globals = globals;
         this.serverService = serverService;
         this.binaryDataService = binaryDataService;
         this.snippetRepository = snippetRepository;
         this.taskRepository = taskRepository;
         this.taskPersistencer = taskPersistencer;
-        this.taskParamYamlUtils = taskParamYamlUtils;
     }
 
     @PostMapping("/rest-anon/registry")
@@ -171,7 +169,7 @@ public class ServerController {
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#442.83 taskId is null" );
         }
 
-        final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
+        final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
         try {
             File tempDir = DirUtils.createTempDir("upload-resource-");

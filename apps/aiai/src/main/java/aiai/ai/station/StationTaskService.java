@@ -56,15 +56,13 @@ public class StationTaskService {
 
     private final Globals globals;
     private final CurrentExecState currentExecState;
-    private final TaskParamYamlUtils taskParamYamlUtils;
     private final MetadataService metadataService;
 
     private final Map<String, Map<Long, StationTask>> map = new ConcurrentHashMap<>();
 
-    public StationTaskService(Globals globals, CurrentExecState currentExecState, TaskParamYamlUtils taskParamYamlUtils, MetadataService metadataService) {
+    public StationTaskService(Globals globals, CurrentExecState currentExecState, MetadataService metadataService) {
         this.currentExecState = currentExecState;
         this.globals = globals;
-        this.taskParamYamlUtils = taskParamYamlUtils;
         this.metadataService = metadataService;
     }
 
@@ -395,7 +393,7 @@ public class StationTaskService {
             task.params = params;
             task.metrics = null;
             task.snippetExecResult = null;
-            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
+            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(params);
             task.clean = taskParamYaml.clean;
             task.launchpadUrl = launchpadUrl;
             task.createdOn = System.currentTimeMillis();

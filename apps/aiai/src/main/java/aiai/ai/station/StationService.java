@@ -21,10 +21,7 @@ import aiai.ai.Enums;
 import aiai.ai.comm.Command;
 import aiai.ai.comm.Protocol;
 import aiai.ai.exceptions.ResourceProviderException;
-import aiai.ai.resource.AssetFile;
-import aiai.ai.resource.ResourceProvider;
-import aiai.ai.resource.ResourceProviderFactory;
-import aiai.ai.resource.ResourceUtils;
+import aiai.ai.resource.*;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.utils.CollectionUtils;
@@ -53,16 +50,14 @@ import java.util.Map;
 public class StationService {
 
     private final StationTaskService stationTaskService;
-    private final TaskParamYamlUtils taskParamYamlUtils;
     private final UploadResourceActor uploadResourceActor;
     private final MetadataService metadataService;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
     private final EnvService envService;
     private final ResourceProviderFactory resourceProviderFactory;
 
-    public StationService(StationTaskService stationTaskService, TaskParamYamlUtils taskParamYamlUtils, UploadResourceActor uploadResourceActor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, EnvService envService, ResourceProviderFactory resourceProviderFactory) {
+    public StationService(StationTaskService stationTaskService, UploadResourceActor uploadResourceActor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, EnvService envService, ResourceProviderFactory resourceProviderFactory) {
         this.stationTaskService = stationTaskService;
-        this.taskParamYamlUtils = taskParamYamlUtils;
         this.uploadResourceActor = uploadResourceActor;
         this.metadataService = metadataService;
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
@@ -102,7 +97,7 @@ public class StationService {
 
     public Enums.ResendTaskOutputResourceStatus resendTaskOutputResource(String launchpadUrl, long taskId) {
         if (launchpadUrl==null) {
-            throw new IllegalStateException("#747.17 launchpadUrl is null");
+            throw new IllegalStateException("#747.07 launchpadUrl is null");
         }
         File taskDir = stationTaskService.prepareTaskDir(metadataService.launchpadUrlAsCode(launchpadUrl), taskId);
         File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR+File.separatorChar+Consts.PARAMS_YAML);
@@ -113,11 +108,28 @@ public class StationService {
         try {
             params = FileUtils.readFileToString(paramFile, StandardCharsets.UTF_8);
         } catch (IOException e) {
-            log.error("#747.23 Error reading param file "+ paramFile.getPath(), e);
+            log.error("#747.13 Error reading param file "+ paramFile.getPath(), e);
             return Enums.ResendTaskOutputResourceStatus.TASK_PARAM_FILE_NOT_FOUND;
         }
-        if (true) throw new IllegalStateException("Need to switch to StorageUrl");
-        final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
+        final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(params);
+        final String storageUrl = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
+        ResourceProvider resourceProvider = null;
+        if (storageUrl == null || storageUrl.isBlank()) {
+            log.error("##747.19 storageUrl wasn't found for outputResourceCode ", taskParamYaml.outputResourceCode);
+            return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
+        }
+        else {
+            try {
+                resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
+            } catch (ResourceProviderException e) {
+                log.error("#747.23 storageUrl wasn't found for outputResourceCode ", taskParamYaml.outputResourceCode);
+                return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
+            }
+        }
+        if (resourceProvider instanceof DiskResourceProvider) {
+            return Enums.ResendTaskOutputResourceStatus.RESOURCE_ON_EXTERNAL_STORAGE;
+        }
+
         final AssetFile assetFile = ResourceUtils.prepareArtifactFile(taskDir, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
@@ -150,7 +162,7 @@ public class StationService {
                     final String storageUrl = taskParamYaml.resourceStorageUrls.get(resourceCode);
                     if (storageUrl == null || storageUrl.isBlank()) {
                         stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode " + resourceCode);
-                        log.error("storageUrl wasn't found for resourceCode ", resourceCode);
+                        log.error("#747.34 storageUrl wasn't found for resourceCode ", resourceCode);
                         result.isError = true;
                         break;
                     }
@@ -191,7 +203,7 @@ public class StationService {
             final String storageUrl = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
             if (storageUrl == null || storageUrl.isBlank()) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode " + taskParamYaml.outputResourceCode);
-                log.error("storageUrl wasn't found for resourceCode ", taskParamYaml.outputResourceCode);
+                log.error("#747.39 storageUrl wasn't found for resourceCode ", taskParamYaml.outputResourceCode);
                 return null;
             }
 
@@ -201,7 +213,7 @@ public class StationService {
                     taskDir, launchpad, task, taskParamYaml.outputResourceCode, storageUrl);
             return outputResourceFile;
         } catch (ResourceProviderException e) {
-            log.error("Error", e);
+            log.error("#747.42 Error", e);
             stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
             return null;
         }

@@ -47,12 +47,10 @@ import java.util.Map;
 @Profile("launchpad")
 public class FileProcessService {
 
-    private final TaskParamYamlUtils taskParamYamlUtils;
     private final TaskRepository taskRepository;
     private final SnippetRepository snippetRepository;
 
-    public FileProcessService(TaskParamYamlUtils taskParamYamlUtils, TaskRepository taskRepository, SnippetRepository snippetRepository) {
-        this.taskParamYamlUtils = taskParamYamlUtils;
+    public FileProcessService(TaskRepository taskRepository, SnippetRepository snippetRepository) {
         this.taskRepository = taskRepository;
         this.snippetRepository = snippetRepository;
     }
@@ -141,7 +139,7 @@ public class FileProcessService {
         );
         yaml.clean = flow.clean;
 
-        String taskParams = taskParamYamlUtils.toString(yaml);
+        String taskParams = TaskParamYamlUtils.toString(yaml);
 
         Task task = new Task();
         task.setFlowInstanceId(flowInstance.getId());

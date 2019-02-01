@@ -144,14 +144,13 @@ public class ExperimentService {
     private final TaskPersistencer taskPersistencer;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final SnippetRepository snippetRepository;
-    private final TaskParamYamlUtils taskParamYamlUtils;
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
     private final ExperimentTaskFeatureRepository experimentTaskFeatureRepository;
     private final FlowInstanceRepository flowInstanceRepository;
 
     @Autowired
-    public ExperimentService(ApplicationEventMulticaster eventMulticaster, MetricsMaxValueCollector metricsMaxValueCollector, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, TaskParamYamlUtils taskParamYamlUtils, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter, SnippetRepository snippetRepository) {
+    public ExperimentService(ApplicationEventMulticaster eventMulticaster, MetricsMaxValueCollector metricsMaxValueCollector, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter, SnippetRepository snippetRepository) {
         this.eventMulticaster = eventMulticaster;
         this.metricsMaxValueCollector = metricsMaxValueCollector;
         this.experimentCache = experimentCache;
@@ -159,7 +158,6 @@ public class ExperimentService {
         this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
         this.taskPersistencer = taskPersistencer;
         this.experimentFeatureRepository = experimentFeatureRepository;
-        this.taskParamYamlUtils = taskParamYamlUtils;
         this.snippetService = snippetService;
         this.experimentRepository = experimentRepository;
         this.experimentTaskFeatureRepository = experimentTaskFeatureRepository;
@@ -322,7 +320,7 @@ public class ExperimentService {
                 }
             }
 
-            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
             int idxX = mapX.get(taskParamYaml.hyperParams.get(paramCleared.get(0)));
             int idxY = mapY.get(taskParamYaml.hyperParams.get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
@@ -348,7 +346,7 @@ public class ExperimentService {
 
         List<Task> selected = new ArrayList<>();
         for (Task task : list) {
-            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
             boolean[] isOk = new boolean[taskParamYaml.hyperParams.size()];
             int idx = 0;
             for (Map.Entry<String, String> entry : taskParamYaml.hyperParams.entrySet()) {
@@ -634,7 +632,7 @@ public class ExperimentService {
                         );
                         yaml.clean = flow.clean;
 
-                        String currTaskParams = taskParamYamlUtils.toString(yaml);
+                        String currTaskParams = TaskParamYamlUtils.toString(yaml);
 
                         processed++;
                         if (processed % 100 == 0) {

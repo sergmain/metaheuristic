@@ -22,11 +22,9 @@ import aiai.ai.yaml.task.TaskParamYamlUtils;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,9 +32,6 @@ import java.util.Map;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class TestTaskParamYaml {
-
-    @Autowired
-    private TaskParamYamlUtils taskParamYamlUtils;
 
     @Test
     public void testSequenceYaml() {
@@ -51,10 +46,10 @@ public class TestTaskParamYaml {
         seq.setHyperParams(map);
         seq.setSnippet(new SimpleSnippet("fit", "123", "file.txt", "112233", "python.exe",  false, false, " aaa bbb"));
 
-        String s = taskParamYamlUtils.toString(seq);
+        String s = TaskParamYamlUtils.toString(seq);
         System.out.println(s);
 
-        TaskParamYaml seq1 = taskParamYamlUtils.toTaskYaml(s);
+        TaskParamYaml seq1 = TaskParamYamlUtils.toTaskYaml(s);
         Assert.assertEquals(seq, seq1);
     }
 }

@@ -51,7 +51,6 @@ public class TaskProcessor {
     private final Globals globals;
 
     private final ExecProcessService execProcessService;
-    private final TaskParamYamlUtils taskParamYamlUtils;
     private final StationTaskService stationTaskService;
     private final CurrentExecState currentExecState;
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService ;
@@ -60,10 +59,9 @@ public class TaskProcessor {
     private final StationService stationService;
     private final ResourceProviderFactory resourceProviderFactory;
 
-    public TaskProcessor(Globals globals, ExecProcessService execProcessService, TaskParamYamlUtils taskParamYamlUtils, StationTaskService stationTaskService, CurrentExecState currentExecState, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, EnvService envService, StationService stationService, ResourceProviderFactory resourceProviderFactory) {
+    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationTaskService stationTaskService, CurrentExecState currentExecState, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, EnvService envService, StationService stationService, ResourceProviderFactory resourceProviderFactory) {
         this.globals = globals;
         this.execProcessService = execProcessService;
-        this.taskParamYamlUtils = taskParamYamlUtils;
         this.stationTaskService = stationTaskService;
         this.currentExecState = currentExecState;
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
@@ -119,7 +117,7 @@ public class TaskProcessor {
 
             File taskDir = stationTaskService.prepareTaskDir(task.launchpadUrl, task.taskId);
 
-            final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
             StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadCode, taskParamYaml, launchpad, taskDir);
             if (resultOfChecking.isError) {
@@ -153,7 +151,7 @@ public class TaskProcessor {
             // at this point all required resources have to be prepared
 
             taskParamYaml.workingPath = taskDir.getAbsolutePath();
-            final String params = taskParamYamlUtils.toString(taskParamYaml);
+            final String params = TaskParamYamlUtils.toString(taskParamYaml);
 
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
             SimpleSnippet snippet = taskParamYaml.getSnippet();

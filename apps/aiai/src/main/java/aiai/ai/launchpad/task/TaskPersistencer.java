@@ -18,13 +18,19 @@
 package aiai.ai.launchpad.task;
 
 import aiai.ai.Enums;
+import aiai.ai.exceptions.ResourceProviderException;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.resource.DiskResourceProvider;
+import aiai.ai.resource.ResourceProvider;
+import aiai.ai.resource.ResourceProviderFactory;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
+import aiai.ai.yaml.task.TaskParamYaml;
+import aiai.ai.yaml.task.TaskParamYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -39,12 +45,14 @@ public class TaskPersistencer {
     private static final int NUMBER_OF_TRY = 2;
     private final TaskRepository taskRepository;
     private final FlowInstanceRepository flowInstanceRepository;
+    private final ResourceProviderFactory resourceProviderFactory;
 
     private final Object syncObj = new Object();
 
-    public TaskPersistencer(TaskRepository taskRepository, FlowInstanceRepository flowInstanceRepository) {
+    public TaskPersistencer(TaskRepository taskRepository, FlowInstanceRepository flowInstanceRepository, ResourceProviderFactory resourceProviderFactory) {
         this.taskRepository = taskRepository;
         this.flowInstanceRepository = flowInstanceRepository;
+        this.resourceProviderFactory = resourceProviderFactory;
     }
 
     public Task setParams(long taskId, String taskParams) {
@@ -179,14 +187,33 @@ public class TaskPersistencer {
         }
         task.setExecState(state.value);
 
-        if (true) throw new IllegalStateException("Need to implement logic then output resource is on disk");
-
-        if (state==Enums.TaskExecState.ERROR) {
+        TaskParamYaml yaml = TaskParamYamlUtils.toTaskYaml(task.params);
+        final String storageUrl = yaml.resourceStorageUrls.get(yaml.outputResourceCode);
+        boolean isError = false;
+        ResourceProvider resourceProvider = null;
+        if (storageUrl == null || storageUrl.isBlank()) {
+            log.error("#307.42 storageUrl wasn't found for outputResourceCode ", yaml.outputResourceCode);
+            isError = true;
+        }
+        else {
+            try {
+                resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
+            } catch (ResourceProviderException e) {
+                isError = true;
+                log.error("#307.53 storageUrl wasn't found for outputResourceCode ", yaml.outputResourceCode);
+            }
+        }
+        if (isError || state==Enums.TaskExecState.ERROR) {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
             // TODO !!! add here statuses to tasks which are in chain after this one
             // TODO we have to stop processing flow if there any error in tasks
         }
+        else if (resourceProvider instanceof DiskResourceProvider) {
+            task.setCompleted(true);
+            task.setCompletedOn(System.currentTimeMillis());
+        }
+
         task.setSnippetExecResults(result.getResult());
         task.setMetrics(result.getMetrics());
         task.resultResourceScheduledOn = System.currentTimeMillis();
