@@ -160,7 +160,7 @@ public class TaskPersistencer {
             }
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
-                    //UnnecessaryLocalVariable
+                    //noinspection UnnecessaryLocalVariable
                     Task t = prepareAndSaveTask(result, snippetExec.exec.isOk ? Enums.TaskExecState.OK : Enums.TaskExecState.ERROR);
                     return t;
                 } catch (ObjectOptimisticLockingFailureException e) {
@@ -178,10 +178,14 @@ public class TaskPersistencer {
             return null;
         }
         task.setExecState(state.value);
+
+        if (true) throw new IllegalStateException("Need to implement logic then output resource is on disk");
+
         if (state==Enums.TaskExecState.ERROR) {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
-            // TODO add here statuses to tasks which are in chain after this one
+            // TODO !!! add here statuses to tasks which are in chain after this one
+            // TODO we have to stop processing flow if there any error in tasks
         }
         task.setSnippetExecResults(result.getResult());
         task.setMetrics(result.getMetrics());

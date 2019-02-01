@@ -76,6 +76,13 @@ public class StationService {
         return reportStationStatus;
     }
 
+    /**
+     * mark tasks as delivered.
+     * By delivering it means that result of exec was delivered to launchpad
+     *
+     * @param launchpadUrl String
+     * @param ids List&lt;String> list if task ids
+     */
     public void markAsDelivered(String launchpadUrl, List<Long> ids) {
         for (Long id : ids) {
             stationTaskService.setDelivered(launchpadUrl, id);
@@ -109,6 +116,7 @@ public class StationService {
             log.error("#747.23 Error reading param file "+ paramFile.getPath(), e);
             return Enums.ResendTaskOutputResourceStatus.TASK_PARAM_FILE_NOT_FOUND;
         }
+        if (true) throw new IllegalStateException("Need to switch to StorageUrl");
         final TaskParamYaml taskParamYaml = taskParamYamlUtils.toTaskYaml(params);
         final AssetFile assetFile = ResourceUtils.prepareArtifactFile(taskDir, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
         // is this resource prepared?

@@ -180,7 +180,7 @@ public class StationTaskService {
 
     public void setResourceUploadedAndCompleted(String launchpadUrl, Long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            log.info("setResourceUploaded({}, {})", launchpadUrl, taskId);
+            log.info("setResourceUploadedAndCompleted({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
                 log.error("#713.29 StationTask wasn't found for Id {}", taskId);

@@ -88,10 +88,10 @@ public class DiskResourceProvider implements ResourceProvider {
             File outputResourceFile
     ) {
         if (outputResourceFile.exists()) {
-            log.info("Register task for uploading result data to server, resultDataFile: {}", outputResourceFile.getPath());
+            log.info("The result data was already written to file {}, no need to upload to launchpad", outputResourceFile.getPath());
             stationTaskService.setResourceUploadedAndCompleted(launchpad.launchpadLookup.url, task.taskId);
         } else {
-            String es = "Result data file doesn't exist, resultDataFile: " + outputResourceFile.getPath();
+            String es = "Result data file wasn't found, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
             return new ExecProcessService.Result(false, -1, es);
         }
