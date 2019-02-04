@@ -234,15 +234,20 @@ public class FlowController {
     }
 
     @PostMapping("/flow-instance-add-commit")
-    public String flowInstanceAddCommit(@ModelAttribute("result") FlowListResult result, Model model, Long flowId, String poolCode, final RedirectAttributes redirectAttributes) {
+    public String flowInstanceAddCommit(@ModelAttribute("result") FlowListResult result, Model model, Long flowId, String poolCode, String inputResourceParams, final RedirectAttributes redirectAttributes) {
         result.flow = flowCache.findById(flowId);
         if (result.flow == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#560.65 flow wasn't found, flowId: " + flowId);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
 
-        if (StringUtils.isBlank(poolCode)) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.60 inputResourcePoolCode of FlowInstance is empty");
+        if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams) ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.60 both inputResourcePoolCode of FlowInstance and inputResourceParams are empty");
+            return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
+        }
+
+        if (StringUtils.isNotBlank(poolCode) && StringUtils.isNotBlank(inputResourceParams) ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.61 both inputResourcePoolCode of FlowInstance and inputResourceParams aren't empty");
             return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
         }
 
@@ -253,7 +258,8 @@ public class FlowController {
             return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
         }
 
-        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(result.flow, poolCode);
+        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(result.flow, 
+                StringUtils.isNotBlank(inputResourceParams) ?inputResourceParams : FlowService.asInputResourceParams(poolCode));
         if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#560.72 Error creating flowInstance: " + producingResult.flowProducingStatus);
             return "redirect:/launchpad/flow/flow-instance-add/" + flowId;

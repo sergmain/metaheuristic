@@ -4,7 +4,7 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">New flow instance</h1>
+        <h1 class="widget-header">New flow instance with single input</h1>
 
         <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController$FlowListResult"*/-->
         <form class="pure-form pure-form-stacked" action="#" th:method="POST" th:action="@{/launchpad/flow/flow-instance-add-commit}" accept-charset="UTF-8" id="flow-instance-add-form" name="f">
@@ -34,5 +34,36 @@
                 </table>
             </fieldset>
         </form>
+
+        <h1 class="widget-header">New flow instance with multiply inputs</h1>
+        <form class="pure-form pure-form-stacked" action="#" th:method="POST" th:action="@{/launchpad/flow/flow-instance-add-commit}" accept-charset="UTF-8" id="flow-instance-multiply-add-form" name="f">
+            <input type="hidden" name="flowId" th:value="${result.flow.id}"/>
+            <fieldset>
+
+                <p th:text="${'Flow code: ' + result.flow.code}"></p>
+                <p>&nbsp;</p>
+
+
+                <label for="inputResourceParams">Input resources of flow instance</label>
+                <textarea name="inputResourceParams" id="inputResourceParams" placeholder="Input resources of flow instance" cols="70" rows="15"
+                          maxlength="10000"></textarea>
+                <span class="pure-form-message"></span>
+
+                <p>&nbsp;</p>
+                <table>
+                    <tr>
+                        <td>
+                            <button type="submit" class="pure-button pure-button-primary">Create</button>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+
+        <h1 class="widget-header">&nbsp;</h1>
+
+        <a class="pure-button pure-button-primary" href="flow-instances.html" th:href="${'/launchpad/flow/flow-instances/' + result.currentFlowId}">Cancel</a>
+
+
     </div>
 </div>

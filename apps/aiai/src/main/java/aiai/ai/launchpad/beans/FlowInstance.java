@@ -44,7 +44,7 @@ public class FlowInstance implements Serializable {
     public Long completedOn;
 
     @Column(name = "INPUT_POOL_CODE")
-    public String inputResourcePoolCode;
+    public String inputResourcePoolCodes;
 
     @Column(name = "PRODUCING_ORDER")
     public int producingOrder;

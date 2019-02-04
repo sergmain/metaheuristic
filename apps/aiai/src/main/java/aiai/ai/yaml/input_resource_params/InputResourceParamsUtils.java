@@ -14,15 +14,18 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.yaml.hyper_params;
+package aiai.ai.yaml.input_resource_params;
 
-import aiai.ai.yaml.task.TaskParamYaml;
+import aiai.ai.yaml.metrics.Metrics;
+import aiai.apps.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.representer.Representer;
 
-public class HyperParamsUtils {
+import java.io.InputStream;
+
+public class InputResourceParamsUtils {
 
     private static Yaml yaml;
 
@@ -31,25 +34,19 @@ public class HyperParamsUtils {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        yaml = new Yaml(new Constructor(HyperParams.class), new Representer(), options);
+        yaml = new Yaml(new Constructor(InputResourceParams.class), new Representer(), options);
     }
 
-    public static String toString(HyperParams hyperParams) {
-        return yaml.dump(hyperParams);
+    public static String toString(InputResourceParams params) {
+        return yaml.dump(params);
     }
 
-    public static HyperParams toHyperParamsYaml(String s) {
+    public static InputResourceParams to(InputStream is) {
+        return (InputResourceParams) YamlUtils.to(is, yaml);
+    }
+
+    public static InputResourceParams to(String s) {
         return yaml.load(s);
     }
-
-    public static String toYaml(HyperParams hyperParams) {
-        if (hyperParams==null) {
-            return null;
-        }
-        String mapYaml;
-        mapYaml = yaml.dump(hyperParams.toSortedMap());
-        return mapYaml;
-    }
-
 
 }

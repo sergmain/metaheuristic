@@ -362,7 +362,7 @@ public class ProcessResourceController {
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_XML);
-        httpHeaders.setContentDispositionFormData("attachment", fi.getInputResourcePoolCode()+"-result.xml" );
+        httpHeaders.setContentDispositionFormData("attachment", fi.getInputResourcePoolCodes()+"-result.xml" );
 
         return serverService.deliverResource(Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode, httpHeaders);
     }

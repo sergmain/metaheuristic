@@ -50,14 +50,14 @@
             <!--<td th:text="${#dates.formatISO(r.createdOn)}">CreatedOn</td>-->
             <td th:text="${#dates.format(r.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
             <td th:text="${result.flows.get(r.id)!=null ? result.flows.get(r.id).code : 'Flow wasn''t found'}">Flow code</td>
-            <td th:text="${r.inputResourcePoolCode}">Input resource pool code</td>
+            <td th:text="${r.inputResourcePoolCodes}">Input resource pool code</td>
             <td th:text="${T(aiai.ai.Enums.FlowInstanceExecState).from(r.execState)}">Exec state</td>
             <td><a class="pure-button pure-button-primary"
                    th:if="${result.flows.get(r.id)!=null}"
                    th:href="${'/pilot/process-resource/process-resource-delete/' + result.flows.get(r.id).id + '/' + r.id}">Delete</a></td>
             <td><a class="pure-button pure-button-primary"
                    th:if="${r.execState==T(aiai.ai.Enums.FlowInstanceExecState).FINISHED.code}"
-                   th:href="${'/pilot/process-resource/process-resource-download-result/' + r.id + '/' + r.inputResourcePoolCode+'.xml'}">Download result</a></td>
+                   th:href="${'/pilot/process-resource/process-resource-download-result/' + r.id + '/' + r.inputResourcePoolCodes+'.xml'}">Download result</a></td>
         </tr>
         <tr>
             <td colspan="8">

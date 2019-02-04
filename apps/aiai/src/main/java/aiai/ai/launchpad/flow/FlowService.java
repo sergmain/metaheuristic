@@ -125,7 +125,7 @@ public class FlowService {
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
-            log.info("Producing tasks for flow.code: {}, input resource pool: {}",flow.code, flowInstance.inputResourcePoolCode);
+            log.info("Producing tasks for flow.code: {}, input resource pool: {}",flow.code, flowInstance.inputResourcePoolCodes);
             produceAllTasks(true, flow, flowInstance);
             Monitoring.log("##022", Enums.Monitor.MEMORY);
         }
@@ -347,7 +347,7 @@ public class FlowService {
         fi.setCreatedOn(System.currentTimeMillis());
         fi.setExecState(Enums.FlowInstanceExecState.NONE.code);
         fi.setCompletedOn(null);
-        fi.setInputResourcePoolCode(startWithResourcePoolCode);
+        fi.setInputResourcePoolCodes(startWithResourcePoolCode);
         fi.setProducingOrder(Consts.TASK_ORDER_START_VALUE);
         fi.setValid(true);
 
@@ -387,7 +387,7 @@ public class FlowService {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
-        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCode);
+        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCodes);
         log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
         Monitoring.log("##024", Enums.Monitor.MEMORY);
 
@@ -504,4 +504,8 @@ public class FlowService {
         return flowInstanceRepository.save(flowInstance);
     }
 
+    public static String asInputResourceParams(String poolCode) {
+        return ""+Consts.FLOW_INSTANCE_INPUT_TYPE+":\n" +
+                "- " + poolCode;
+    }
 }
