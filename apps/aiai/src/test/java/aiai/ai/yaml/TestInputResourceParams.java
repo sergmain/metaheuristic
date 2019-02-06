@@ -39,11 +39,12 @@ public class TestInputResourceParams {
         }
 
 /*
+    params:
         aaaa:
-        - bbb
-        - ccc
+            - bbb
+            - ccc
         dddd:
-        - eee
+            - eee
 */
 
         assertTrue(yaml.params.containsKey("aaaa"));
