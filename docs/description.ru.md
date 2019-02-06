@@ -110,7 +110,7 @@ aiai.thread-number=3
 spring.profiles.active=launchpad
 
 для mysql
-spring.datasource.url = jdbc:mysql://localhost:3306/aiai?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&autoReconnect=true&failOverReadOnly=false&maxReconnects=10&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=America/Los_Angeles
+spring.datasource.url = jdbc:mysql://localhost:3306/aiai?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&autoReconnect=true&failOverReadOnly=false&maxReconnects=10&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=America/Los_Angeles&sslMode=DISABLED
 spring.datasource.username = aiai
 spring.datasource.password = qwe321
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
