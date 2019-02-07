@@ -1,6 +1,6 @@
-params:
+poolCodes:
   aaaa:
-    - bbb
-    - ccc
+  - bbb
+  - ccc
   dddd:
-    - eee
+  - eee

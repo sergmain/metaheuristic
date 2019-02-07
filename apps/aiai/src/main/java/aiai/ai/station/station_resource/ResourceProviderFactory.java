@@ -15,15 +15,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.resource;
+package aiai.ai.station.station_resource;
 
-import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.exceptions.ResourceProviderException;
-import org.apache.commons.lang3.StringUtils;
+import aiai.ai.resource.ResourceUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 @Service
+@Profile("station")
 public class ResourceProviderFactory {
 
     public final DiskResourceProvider diskResourceProvider;
@@ -34,12 +35,9 @@ public class ResourceProviderFactory {
         this.launchpadResourceProvider = launchpadResourceProvider;
     }
 
+    @SuppressWarnings("Duplicates")
     public ResourceProvider getResourceProvider(String storageUrl) {
-        int idx = StringUtils.indexOf(storageUrl, Consts.PROTOCOL_DELIMITER);
-        if (idx==-1) {
-            throw new ResourceProviderException("Bad format of storageUrl: " + storageUrl);
-        }
-        Enums.StorageType storageType = Enums.StorageType.valueOf( storageUrl.substring(0, idx) );
+        Enums.StorageType storageType = ResourceUtils.getStorageType(storageUrl);
         switch(storageType) {
             case launchpad:
                 return launchpadResourceProvider;
@@ -51,4 +49,5 @@ public class ResourceProviderFactory {
                 throw new ResourceProviderException("Unknown storageType: " + storageType);
         }
     }
+
 }

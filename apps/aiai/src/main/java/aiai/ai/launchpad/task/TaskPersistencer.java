@@ -24,9 +24,7 @@ import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.resource.DiskResourceProvider;
-import aiai.ai.resource.ResourceProvider;
-import aiai.ai.resource.ResourceProviderFactory;
+import aiai.ai.resource.ResourceUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
@@ -35,7 +33,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Slf4j
@@ -45,14 +42,12 @@ public class TaskPersistencer {
     private static final int NUMBER_OF_TRY = 2;
     private final TaskRepository taskRepository;
     private final FlowInstanceRepository flowInstanceRepository;
-    private final ResourceProviderFactory resourceProviderFactory;
 
     private final Object syncObj = new Object();
 
-    public TaskPersistencer(TaskRepository taskRepository, FlowInstanceRepository flowInstanceRepository, ResourceProviderFactory resourceProviderFactory) {
+    public TaskPersistencer(TaskRepository taskRepository, FlowInstanceRepository flowInstanceRepository) {
         this.taskRepository = taskRepository;
         this.flowInstanceRepository = flowInstanceRepository;
-        this.resourceProviderFactory = resourceProviderFactory;
     }
 
     public Task setParams(long taskId, String taskParams) {
@@ -77,8 +72,7 @@ public class TaskPersistencer {
 
     public Enums.UploadResourceStatus setResultReceived(long taskId, boolean value) {
         synchronized (syncObj) {
-            int i=0;
-            for (i = 0; i < NUMBER_OF_TRY; i++) {
+            for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
                     Task task = taskRepository.findById(taskId).orElse(null);
                     if (task == null) {
@@ -101,6 +95,7 @@ public class TaskPersistencer {
         return Enums.UploadResourceStatus.PROBLEM_WITH_OPTIMISTIC_LOCKING;
     }
 
+    @SuppressWarnings("unused")
     public Task assignTask(Task task, long stationId) {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
@@ -160,6 +155,7 @@ public class TaskPersistencer {
         return null;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public Task storeExecResult(SimpleTaskExecResult result) {
         synchronized (syncObj) {
             SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
@@ -190,14 +186,14 @@ public class TaskPersistencer {
         TaskParamYaml yaml = TaskParamYamlUtils.toTaskYaml(task.params);
         final String storageUrl = yaml.resourceStorageUrls.get(yaml.outputResourceCode);
         boolean isError = false;
-        ResourceProvider resourceProvider = null;
+        Enums.StorageType storageType = null;
         if (storageUrl == null || storageUrl.isBlank()) {
             log.error("#307.42 storageUrl wasn't found for outputResourceCode ", yaml.outputResourceCode);
             isError = true;
         }
         else {
             try {
-                resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
+                storageType = ResourceUtils.getStorageType(storageUrl);
             } catch (ResourceProviderException e) {
                 isError = true;
                 log.error("#307.53 storageUrl wasn't found for outputResourceCode ", yaml.outputResourceCode);
@@ -209,7 +205,7 @@ public class TaskPersistencer {
             // TODO !!! add here statuses to tasks which are in chain after this one
             // TODO we have to stop processing flow if there any error in tasks
         }
-        else if (resourceProvider instanceof DiskResourceProvider) {
+        else if (storageType== Enums.StorageType.disk) {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
         }

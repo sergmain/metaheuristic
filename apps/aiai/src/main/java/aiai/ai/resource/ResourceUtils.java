@@ -18,6 +18,9 @@ package aiai.ai.resource;
 
 import aiai.ai.Consts;
 import aiai.ai.Enums;
+import aiai.ai.exceptions.ResourceProviderException;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -50,7 +53,7 @@ public class ResourceUtils {
         final AssetFile assetFile = new AssetFile();
         if (!assetDir.exists() && !assetDir.mkdirs()) {
             assetFile.isError = true;
-            log.error("Can't create resource dir for task: {}", assetDir.getAbsolutePath());
+            log.error("#025.42 Can't create resource dir for task: {}", assetDir.getAbsolutePath());
             return assetFile;
         }
         if (StringUtils.isNotBlank(resourceFilename)) {
@@ -81,14 +84,14 @@ public class ResourceUtils {
         final File trgDir = new File(baseDir, Enums.BinaryDataType.SNIPPET.toString());
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
-            log.error("Can't create snippet dir: {}", trgDir.getAbsolutePath());
+            log.error("#025.37 Can't create snippet dir: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
         final String resId = id.replace(':', '_');
         final File resDir = new File(trgDir, resId);
         if (!resDir.exists() && !resDir.mkdirs()) {
             assetFile.isError = true;
-            log.error("Can't create resource dir: {}", resDir.getAbsolutePath());
+            log.error("#025.35 Can't create resource dir: {}", resDir.getAbsolutePath());
             return assetFile;
         }
         assetFile.file = StringUtils.isNotBlank(resourceFilename)
@@ -108,4 +111,39 @@ public class ResourceUtils {
         }
         return assetFile;
     }
+
+    public static Enums.StorageType getStorageType(String storageUrl) {
+        Enums.StorageType storageType;
+        int idx = StringUtils.indexOf(storageUrl, Consts.PROTOCOL_DELIMITER);
+        if (idx==-1) {
+            throw new ResourceProviderException("#025.15 Bad format of storageUrl: " + storageUrl);
+        }
+        storageType = Enums.StorageType.valueOf( storageUrl.substring(0, idx) );
+        return storageType;
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class DiskStorageUri {
+        public String envCode;
+        public String resourceCode;
+    }
+
+    public static DiskStorageUri parseStorageUrl(String storageUrl) {
+        if (!storageUrl.startsWith(Consts.DISK_STORAGE_URL)) {
+            throw new ResourceProviderException("#025.01 Wrong storageUrl format: " + storageUrl);
+        }
+        String uri = storageUrl.substring(Consts.DISK_STORAGE_URL.length());
+        int idx = uri.indexOf('/');
+        if (idx!=-1) {
+            if (uri.indexOf('/') != uri.lastIndexOf('/')) {
+                throw new ResourceProviderException("#025.05 Wrong storageUrl format: " + storageUrl);
+            }
+            return new DiskStorageUri(uri.substring(0, uri.indexOf('/')), uri.substring(uri.indexOf('/') + 1));
+        }
+        else {
+            return new DiskStorageUri(uri, null);
+        }
+    }
+
 }

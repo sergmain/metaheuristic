@@ -14,9 +14,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.yaml.input_resource_params;
+package aiai.ai.yaml.input_resource_param;
 
-import aiai.ai.yaml.metrics.Metrics;
 import aiai.apps.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -25,7 +24,7 @@ import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.InputStream;
 
-public class InputResourceParamsUtils {
+public class InputResourceParamUtils {
 
     private static Yaml yaml;
 
@@ -34,18 +33,18 @@ public class InputResourceParamsUtils {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        yaml = new Yaml(new Constructor(InputResourceParams.class), new Representer(), options);
+        yaml = new Yaml(new Constructor(InputResourceParam.class), new Representer(), options);
     }
 
-    public static String toString(InputResourceParams params) {
+    public static String toString(InputResourceParam params) {
         return yaml.dump(params);
     }
 
-    public static InputResourceParams to(InputStream is) {
-        return (InputResourceParams) YamlUtils.to(is, yaml);
+    public static InputResourceParam to(InputStream is) {
+        return (InputResourceParam) YamlUtils.to(is, yaml);
     }
 
-    public static InputResourceParams to(String s) {
+    public static InputResourceParam to(String s) {
         return yaml.load(s);
     }
 

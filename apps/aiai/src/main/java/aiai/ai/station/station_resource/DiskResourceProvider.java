@@ -15,11 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.resource;
+package aiai.ai.station.station_resource;
 
-import aiai.ai.Consts;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.exceptions.ResourceProviderException;
+import aiai.ai.resource.AssetFile;
+import aiai.ai.resource.ResourceUtils;
 import aiai.ai.station.EnvService;
 import aiai.ai.station.LaunchpadLookupExtendedService;
 import aiai.ai.station.StationTaskService;
@@ -27,9 +28,8 @@ import aiai.ai.yaml.env.DiskStorage;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -38,6 +38,7 @@ import java.util.List;
 
 @Service
 @Slf4j
+@Profile("station")
 public class DiskResourceProvider implements ResourceProvider {
 
     private final EnvService envService;
@@ -53,7 +54,7 @@ public class DiskResourceProvider implements ResourceProvider {
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String resourceCode, String storageUrl) {
-        DiskStorageUri storageUri = parseStorageUrl(storageUrl);
+        ResourceUtils.DiskStorageUri storageUri = ResourceUtils.parseStorageUrl(storageUrl);
         EnvYaml env = envService.getEnvYaml();
         DiskStorage diskStorage = env.findDiskStorageByCode(storageUri.envCode);
         if (diskStorage==null) {
@@ -102,7 +103,7 @@ public class DiskResourceProvider implements ResourceProvider {
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, String outputResourceCode, String storageUrl) {
 
-        DiskStorageUri storageUri = parseStorageUrl(storageUrl);
+        ResourceUtils.DiskStorageUri storageUri = ResourceUtils.parseStorageUrl(storageUrl);
 
         EnvYaml env = envService.getEnvYaml();
         DiskStorage diskStorage = env.findDiskStorageByCode(storageUri.envCode);
@@ -117,27 +118,4 @@ public class DiskResourceProvider implements ResourceProvider {
         return new File(path, outputResourceCode);
     }
 
-    @Data
-    @AllArgsConstructor
-    public static class DiskStorageUri {
-        public String envCode;
-        public String resourceCode;
-    }
-
-    static DiskStorageUri parseStorageUrl(String storageUrl) {
-        if (!storageUrl.startsWith(Consts.DISK_STORAGE_URL)) {
-            throw new ResourceProviderException("#015.01 Wrong storageUrl format: " + storageUrl);
-        }
-        String uri = storageUrl.substring(Consts.DISK_STORAGE_URL.length());
-        int idx = uri.indexOf('/');
-        if (idx!=-1) {
-            if (uri.indexOf('/') != uri.lastIndexOf('/')) {
-                throw new ResourceProviderException("#015.05 Wrong storageUrl format: " + storageUrl);
-            }
-            return new DiskStorageUri(uri.substring(0, uri.indexOf('/')), uri.substring(uri.indexOf('/') + 1));
-        }
-        else {
-            return new DiskStorageUri(uri, null);
-        }
-    }
 }

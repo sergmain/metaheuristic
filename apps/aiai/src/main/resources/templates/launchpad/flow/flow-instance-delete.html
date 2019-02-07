@@ -7,27 +7,17 @@
         <h1 class="widget-header">Delete flow instance</h1>
 
         <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController$FlowInstanceResult"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${result.flow}" action="#">
-            <fieldset>
-                <label for="code">Code of flow</label>
-                <input name="code" id="code" type="text" placeholder="code" th:field="*{code}">
+        <p>Code of flow:</p>
+        <pre style="width:50%" th:text="${result.flow.code}"></pre>
 
-                <label for="params">Parameters of flow</label>
-                <textarea name="params" id="params" placeholder="Parameters of flow" cols="70" rows="15" th:field="*{params}" maxlength="10000"></textarea>
-            </fieldset>
-        </form>
+        <p>Parameters of flow:</p>
+        <pre style="width:50%" th:text="${result.flow.params}"></pre>
 
-        <form class="pure-form pure-form-stacked" action="#">
-            <fieldset>
-                <label for="inputResourcePoolCode">Input resource pool code</label>
-                <input name="inputResourcePoolCode" id="inputResourcePoolCode" type="text" placeholder="code" th:value="${result.flowInstance.inputResourcePoolCodes}">
+        <p>Input resource pool codes:</p>
+        <pre style="width:50%" th:text="${result.flowInstance.inputResourceParam}"></pre>
 
-                <label for="execState">Exec state</label>
-                <input name="execState" id="execState" type="text" placeholder="execState"
-                       th:value="${T(aiai.ai.Enums.FlowInstanceExecState).from(result.flowInstance.execState)}">
-
-            </fieldset>
-        </form>
+        <p>Exec state:</p>
+        <pre style="width:50%" th:text="${T(aiai.ai.Enums.FlowInstanceExecState).from(result.flowInstance.execState)}"></pre>
 
         <table>
             <tr>
@@ -47,14 +37,12 @@
                     &nbsp;
                 </td>
                 <td>
-                    <a class="pure-button pure-button-primary" href="flow-instances.html" th:href="${'/launchpad/flow/flow-instances/' + result.flow.id}">Cancel</a>
-<!--
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/flow/flow-instances}" accept-charset="UTF-8" id="flow-instance-delete-cancel" name="f">
+                    <!--<a class="pure-button pure-button-primary" href="flow-instances.html" th:href="${'/launchpad/flow/flow-instances/' + result.flow.id}">Cancel</a>-->
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="${'/launchpad/flow/flow-instances/' + result.flow.id}" accept-charset="UTF-8" id="flow-instance-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>
                     </form>
--->
                 </td>
             </tr>
         </table>

@@ -14,4 +14,7 @@ alter table aiai_lp_data
 alter table aiai_lp_data
   modify POOL_CODE VARCHAR(200) not null;
 
+alter table aiai_lp_flow_instance
+  change INPUT_POOL_CODE INPUT_RESOURCE_PARAM TEXT not null;
+
 

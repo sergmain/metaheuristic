@@ -79,7 +79,9 @@ layout: default
 git clone https://github.com/sergmain/aiai.git git
 
 3.3 Сборка
-для сборки проекта требуется java8
+для сборки проекта требуется java 11. 
+Скачать текущий релиз JDK11 можно по ссылке https://jdk.java.net/11/
+
 в директории \aiai\git запустить
 mvn-all.bat
 

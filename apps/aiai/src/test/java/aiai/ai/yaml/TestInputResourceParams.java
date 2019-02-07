@@ -17,10 +17,8 @@
 
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.input_resource_params.InputResourceParams;
-import aiai.ai.yaml.input_resource_params.InputResourceParamsUtils;
-import aiai.ai.yaml.task_params_new.TaskParamNewYaml;
-import aiai.ai.yaml.task_params_new.TaskParamYamlNewUtils;
+import aiai.ai.yaml.input_resource_param.InputResourceParam;
+import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -33,13 +31,13 @@ public class TestInputResourceParams {
     @Test
     public void test() throws IOException {
 
-        InputResourceParams yaml;
+        InputResourceParam yaml;
         try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/input_resource_params/input-resource-params.yaml")) {
-            yaml = InputResourceParamsUtils.to(is);
+            yaml = InputResourceParamUtils.to(is);
         }
 
 /*
-    params:
+    poolCodes:
         aaaa:
             - bbb
             - ccc
@@ -47,12 +45,12 @@ public class TestInputResourceParams {
             - eee
 */
 
-        assertTrue(yaml.params.containsKey("aaaa"));
-        assertTrue(yaml.params.containsKey("dddd"));
+        assertTrue(yaml.poolCodes.containsKey("aaaa"));
+        assertTrue(yaml.poolCodes.containsKey("dddd"));
 
-        assertTrue(yaml.params.get("aaaa").contains("bbb"));
-        assertTrue(yaml.params.get("aaaa").contains("ccc"));
-        assertTrue(yaml.params.get("dddd").contains("eee"));
+        assertTrue(yaml.poolCodes.get("aaaa").contains("bbb"));
+        assertTrue(yaml.poolCodes.get("aaaa").contains("ccc"));
+        assertTrue(yaml.poolCodes.get("dddd").contains("eee"));
 
     }
 }

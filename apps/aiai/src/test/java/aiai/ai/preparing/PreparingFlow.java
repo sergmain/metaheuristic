@@ -17,6 +17,7 @@
 
 package aiai.ai.preparing;
 
+import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.flow.TaskCollector;
 import aiai.ai.launchpad.Process;
@@ -32,6 +33,7 @@ import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
+import aiai.ai.yaml.input_resource_param.InputResourceParam;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -39,8 +41,10 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 
 import static org.junit.Assert.assertTrue;
 
@@ -79,6 +83,9 @@ public abstract class PreparingFlow extends PreparingExperiment {
     public Snippet s4 = null;
     public Snippet s5 = null;
     public FlowInstance flowInstance = null;
+
+    public InputResourceParam inputResourceParam;
+
 
     public abstract String getFlowParamsAsYaml();
 
@@ -188,6 +195,9 @@ public abstract class PreparingFlow extends PreparingExperiment {
                 true, "file-03.txt",
                 null);
 
+        inputResourceParam = new InputResourceParam();
+        inputResourceParam.poolCodes = new HashMap<>();
+        inputResourceParam.poolCodes.computeIfAbsent(Consts.FLOW_INSTANCE_INPUT_TYPE, o-> new ArrayList<>()).add(INPUT_POOL_CODE);
     }
 
     private Snippet createSnippet(String snippetCode) {

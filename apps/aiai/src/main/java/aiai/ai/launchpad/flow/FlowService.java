@@ -37,6 +37,8 @@ import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
+import aiai.ai.yaml.input_resource_param.InputResourceParam;
+import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -125,7 +127,7 @@ public class FlowService {
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
-            log.info("Producing tasks for flow.code: {}, input resource pool: {}",flow.code, flowInstance.inputResourcePoolCodes);
+            log.info("Producing tasks for flow.code: {}, input resource pool: \n{}",flow.code, flowInstance.inputResourceParam);
             produceAllTasks(true, flow, flowInstance);
             Monitoring.log("##022", Enums.Monitor.MEMORY);
         }
@@ -334,9 +336,11 @@ public class FlowService {
         public int numberOfTasks;
     }
 
-    public FlowService.TaskProducingResult createFlowInstance(Flow flow, String startWithResourcePoolCode) {
+    public FlowService.TaskProducingResult createFlowInstance(Flow flow, String inputResourceParam) {
         FlowService.TaskProducingResult result = new TaskProducingResult();
-        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(startWithResourcePoolCode);
+
+        InputResourceParam resourceParam = InputResourceParamUtils.to(inputResourceParam);
+        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParam.getAllCodes());
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return result;
@@ -347,7 +351,7 @@ public class FlowService {
         fi.setCreatedOn(System.currentTimeMillis());
         fi.setExecState(Enums.FlowInstanceExecState.NONE.code);
         fi.setCompletedOn(null);
-        fi.setInputResourcePoolCodes(startWithResourcePoolCode);
+        fi.setInputResourceParam(inputResourceParam);
         fi.setProducingOrder(Consts.TASK_ORDER_START_VALUE);
         fi.setValid(true);
 
@@ -387,7 +391,8 @@ public class FlowService {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
-        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(fi.inputResourcePoolCodes);
+        InputResourceParam resourceParams = InputResourceParamUtils.to(fi.inputResourceParam);
+        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllCodes());
         log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
         Monitoring.log("##024", Enums.Monitor.MEMORY);
 
@@ -505,7 +510,7 @@ public class FlowService {
     }
 
     public static String asInputResourceParams(String poolCode) {
-        return ""+Consts.FLOW_INSTANCE_INPUT_TYPE+":\n" +
-                "- " + poolCode;
+        return "params:\n  "+Consts.FLOW_INSTANCE_INPUT_TYPE+":\n" +
+                "  - " + poolCode;
     }
 }

@@ -25,6 +25,7 @@ import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingExperiment;
 import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.yaml.flow.FlowYaml;
+import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -123,7 +124,7 @@ public class TestCountOfTasks extends PreparingFlow {
         Enums.FlowValidateStatus status = flowService.validate(flow);
         assertEquals(Enums.FlowValidateStatus.OK, status);
 
-        FlowService.TaskProducingResult result = flowService.createFlowInstance(flow, PreparingFlow.INPUT_POOL_CODE);
+        FlowService.TaskProducingResult result = flowService.createFlowInstance(flow, InputResourceParamUtils.toString(inputResourceParam));
         flowInstance = result.flowInstance;
         assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
         assertNotNull(flowInstance);

@@ -190,6 +190,7 @@ public class StationTaskService {
         }
     }
 
+    @SuppressWarnings("unused")
     public void setCompleted(String launchpadUrl, Long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             log.info("setCompleted({}, {})", launchpadUrl, taskId);
@@ -315,24 +316,6 @@ public class StationTaskService {
             taskTemp.setSnippetExecResult(yaml);
             taskTemp.setLaunchedOn(startedOn);
             save(taskTemp);
-        }
-    }
-
-    public List<StationTask> findAllByFinishedOnIsNull(String launchpadUrl) {
-        synchronized (StationSyncHolder.stationGlobalSync) {
-/*
-            List<StationTask> list = map.computeIfAbsent(launchpadUrl, m -> new HashMap<>())
-                    .values()
-                    .stream()
-                    .filter( o -> o.finishedOn!=null).collect(Collectors.toList());
-*/
-            List<StationTask> list = new ArrayList<>();
-            for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
-                if (task.finishedOn == null) {
-                    list.add(task);
-                }
-            }
-            return list;
         }
     }
 

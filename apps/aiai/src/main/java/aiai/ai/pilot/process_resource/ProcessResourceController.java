@@ -26,12 +26,14 @@ import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.flow.FlowCache;
 import aiai.ai.launchpad.flow.FlowService;
+import aiai.ai.launchpad.launchpad_resource.ResourceService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.launchpad.launchpad_resource.ResourceService;
 import aiai.ai.launchpad.server.ServerService;
 import aiai.ai.utils.ControllerUtils;
+import aiai.ai.yaml.input_resource_param.InputResourceParam;
+import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.utils.DirUtils;
@@ -243,7 +245,7 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, resourcePoolCode);
+        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, FlowService.asInputResourceParams(resourcePoolCode));
         if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating flowInstance: " + producingResult.flowProducingStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -362,9 +364,18 @@ public class ProcessResourceController {
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_XML);
-        httpHeaders.setContentDispositionFormData("attachment", fi.getInputResourcePoolCodes()+"-result.xml" );
+        httpHeaders.setContentDispositionFormData("attachment", getResultFileName(fi.getInputResourceParam())+"-result.xml" );
 
         return serverService.deliverResource(Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode, httpHeaders);
+    }
+
+    private static String getResultFileName(String inputResourceParams) {
+        InputResourceParam resourceParams = InputResourceParamUtils.to(inputResourceParams);
+        List<String> codes = resourceParams.getAllCodes();
+        if (codes.isEmpty()) {
+            throw new IllegalStateException("#990.92 Pool codes not found.");
+        }
+        return codes.size() == 1 ? codes.get(0) : "result-file-" + System.nanoTime();
     }
 
 }

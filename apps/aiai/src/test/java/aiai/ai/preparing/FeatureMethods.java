@@ -28,6 +28,7 @@ import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.task.TaskService;
+import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -84,7 +85,7 @@ public abstract class FeatureMethods extends PreparingFlow {
         Enums.FlowValidateStatus status = flowService.validate(flow);
         assertEquals(Enums.FlowValidateStatus.OK, status);
 
-        FlowService.TaskProducingResult result = flowService.createFlowInstance(flow, PreparingFlow.INPUT_POOL_CODE);
+        FlowService.TaskProducingResult result = flowService.createFlowInstance(flow, InputResourceParamUtils.toString(inputResourceParam));
         flowInstance = result.flowInstance;
         assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
         assertNotNull(flowInstance);

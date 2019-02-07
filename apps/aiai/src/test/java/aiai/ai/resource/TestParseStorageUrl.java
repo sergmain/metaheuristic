@@ -19,7 +19,6 @@ package aiai.ai.resource;
 
 import org.junit.Test;
 
-import static aiai.ai.resource.DiskResourceProvider.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
@@ -28,11 +27,11 @@ public class TestParseStorageUrl {
     @Test
     public void testParse() {
 
-        DiskStorageUri storageUri = parseStorageUrl("disk://aaaa/*");
+        ResourceUtils.DiskStorageUri storageUri = ResourceUtils.parseStorageUrl("disk://aaaa/*");
         assertEquals("aaaa", storageUri.envCode);
         assertEquals("*", storageUri.resourceCode);
 
-        storageUri = parseStorageUrl("disk://bbb");
+        storageUri = ResourceUtils.parseStorageUrl("disk://bbb");
         assertEquals("bbb", storageUri.envCode);
         assertNull(storageUri.resourceCode);
     }

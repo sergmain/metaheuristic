@@ -34,7 +34,9 @@ public class CurrentExecState {
     private Map<String, BoolHolder> isInit = new HashMap<>();
 
     public boolean isInited(String launchpadUrl) {
-        return isInit.computeIfAbsent(launchpadUrl, v -> new BoolHolder(false)).value;
+        synchronized(flowInstanceState) {
+            return isInit.computeIfAbsent(launchpadUrl, v -> new BoolHolder(false)).value;
+        }
     }
 
     void register(String launchpadUrl, List<Protocol.FlowInstanceStatus.SimpleStatus> statuses) {

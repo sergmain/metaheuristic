@@ -15,14 +15,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.yaml.input_resource_params;
+package aiai.ai.yaml.input_resource_param;
 
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Data
-public class InputResourceParams {
-    public Map<String, List<String>> params;
+public class InputResourceParam {
+    public Map<String, List<String>> poolCodes;
+
+    public List<String> getAllCodes() {
+        List<String> codes = new ArrayList<>();
+        poolCodes.values().forEach(codes::addAll);
+        return codes;
+    }
 }

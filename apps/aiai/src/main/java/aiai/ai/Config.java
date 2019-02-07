@@ -65,7 +65,12 @@ public class Config {
             @Override
             protected Cache createConcurrentMapCache(final String name) {
                 return new ConcurrentMapCache(name,
-                        CacheBuilder.newBuilder().expireAfterWrite(30, TimeUnit.DAYS).maximumSize(1000).build().asMap(), false);
+                        CacheBuilder
+                                .newBuilder()
+                                .expireAfterWrite(1, TimeUnit.DAYS)
+                                .maximumSize(50)
+                                .build()
+                                .asMap(), false);
             }
         };
 

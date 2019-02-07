@@ -15,9 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.resource;
+package aiai.ai.station.station_resource;
 
 import aiai.ai.core.ExecProcessService;
+import aiai.ai.resource.AssetFile;
 import aiai.ai.station.LaunchpadLookupExtendedService;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;

@@ -15,10 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.resource;
+package aiai.ai.station.station_resource;
 
 import aiai.ai.Consts;
 import aiai.ai.core.ExecProcessService;
+import aiai.ai.resource.AssetFile;
+import aiai.ai.resource.ResourceUtils;
 import aiai.ai.station.LaunchpadLookupExtendedService;
 import aiai.ai.station.actors.DownloadResourceActor;
 import aiai.ai.station.actors.UploadResourceActor;
@@ -27,6 +29,7 @@ import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -35,6 +38,7 @@ import java.util.List;
 
 @Service
 @Slf4j
+@Profile("station")
 public class LaunchpadResourceProvider implements ResourceProvider {
 
     private final DownloadResourceActor downloadResourceActor;

@@ -39,7 +39,7 @@
         <tr>
             <th>Id</th>
             <th>Flow code</th>
-            <th>Pool code</th>
+            <th>Input pool codes</th>
             <th>Created on</th>
             <th>Is flow valid</th>
             <th>Is flow instance valid</th>
@@ -52,7 +52,7 @@
         <tr th:each="i : ${result.instances}">
             <td th:text="${i.id}">#Id</td>
             <td th:text="${result.flows.get(i.id).code}">Flow code</td>
-            <td th:text="${i.inputResourcePoolCodes}">Pool code</td>
+            <td th:text="${i.inputResourceParam}">Input pool codes</td>
             <td th:text="${#dates.format(i.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
             <td th:text="${result.flows.get(i.id).valid}">Is flow valid</td>
             <td th:text="${i.valid}">Is flow instance valid</td>

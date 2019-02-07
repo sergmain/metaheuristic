@@ -106,7 +106,7 @@ public class BinaryDataService {
         binaryDataRepository.deleteAllByDataType(binaryDataType.value);
     }
 
-    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(String inputResourcePoolCode) {
+    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode) {
         return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode);
     }
 
