@@ -187,7 +187,7 @@ aiai.launchpad.master-password
 spring.profiles.active=station
 
 aiai.station.enabled=true
-aiai.station.dir=./aiai-station
+aiai.station.dir=./station
 
 
 aiai.station.launchpad-url=http://host:8080
@@ -277,7 +277,7 @@ java -jar apps/gen-keys/target/gen-keys.jar
 
 для генерации ключей в формате aiai (bcrypt, 10 циклов) запустить
 
-java -jar apps/gen-keys/target/gen-passwords.jar <master password> <rest password>
+java -jar apps/gen-passwords/target/gen-passwords.jar <master password> <rest password>
 
 результат работы поместить в соответствующие параметры:
 master password --> aiai.master-password
