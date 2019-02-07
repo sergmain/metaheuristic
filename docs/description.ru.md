@@ -190,12 +190,6 @@ aiai.station.enabled=true
 aiai.station.dir=./station
 
 
-aiai.station.launchpad-url=http://host:8080
-aiai.station.server-rest-password=123
-aiai.station.accept-only-signed-snippets=false
-aiai.station.active-time: 0:00-8:45, 19:00-23:59
-
-
 
 aiai.station.launchpad-url - url по которому находится стартовая площадка
 для aiai.station.server-rest-password необходимо испольховать тот же пароль,
@@ -241,6 +235,9 @@ restPassword: пароль для rest урл
 restUsername: пароль для rest
 restToken: токен для rest
 taskProcessingTime: время, когда задачи с данной стартовой площадки активны,
+      workingDay:  время для запуска в рабочие дни
+      weekend: время для запуска в выходные дни
+
     например 0:00 - 23:59 или 0:00 - 8:45, 19:00 - 23:59
 publicKey: публичный ключ для данной стартовой площадки
 isAcceptOnlySignedSnippets: принимать только подписанные снипеты
