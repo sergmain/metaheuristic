@@ -39,6 +39,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -248,6 +249,8 @@ public abstract class PreparingFlow extends PreparingExperiment {
             }
             try {
                 taskRepository.deleteByFlowInstanceId(flowInstance.getId());
+            } catch (ObjectOptimisticLockingFailureException th) {
+                //
             } catch (Throwable th) {
                 log.error("Error while taskRepository.deleteByFlowInstanceId()", th);
             }
