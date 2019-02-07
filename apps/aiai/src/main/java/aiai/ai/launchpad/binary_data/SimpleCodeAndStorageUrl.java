@@ -26,5 +26,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SimpleCodeAndStorageUrl {
     public String code;
+    public String poolCode;
     public String storageUrl;
 }

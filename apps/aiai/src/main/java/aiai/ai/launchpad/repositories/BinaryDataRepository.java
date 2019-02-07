@@ -41,7 +41,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     List<BinaryData> findAllByDataType(int dataType);
 
     @Query(value="select new aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
-            "b.code, b.storageUrl ) " +
+            "b.code, b.poolCode, b.storageUrl ) " +
             "from BinaryData b where b.poolCode in :poolCodes ")
     List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes);
 

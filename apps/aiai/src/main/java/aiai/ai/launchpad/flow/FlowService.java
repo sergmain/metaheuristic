@@ -401,8 +401,10 @@ public class FlowService {
             return;
         }
         final Map<String, List<String>> collectedInputs = new HashMap<>();
-        collectedInputs.computeIfAbsent(Consts.FLOW_INSTANCE_INPUT_TYPE,
-                k -> inputResourceCodes.stream().map(o->o.code).collect(Collectors.toList()));
+
+        inputResourceCodes.forEach(o-> {
+            collectedInputs.computeIfAbsent(o.poolCode, p -> new ArrayList<>()).add(o.code);
+        });
 
         final Map<String, String> inputStorageUrls = inputResourceCodes
                 .stream()
@@ -510,7 +512,7 @@ public class FlowService {
     }
 
     public static String asInputResourceParams(String poolCode) {
-        return "params:\n  "+Consts.FLOW_INSTANCE_INPUT_TYPE+":\n" +
+        return "poolCodes:\n  "+Consts.FLOW_INSTANCE_INPUT_TYPE+":\n" +
                 "  - " + poolCode;
     }
 }
