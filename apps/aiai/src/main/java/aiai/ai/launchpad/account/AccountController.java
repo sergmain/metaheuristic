@@ -118,7 +118,7 @@ public class AccountController {
     @GetMapping(value = "/account-edit/{id}")
     public String edit(@PathVariable Long id, Model model){
         Optional<Account> optionalAcc = accountRepository.findById(id);
-        if (!optionalAcc.isPresent()) {
+        if (optionalAcc.isEmpty()) {
             return "redirect:/launchpad/account/accounts";
         }
         Account account = optionalAcc.get();
@@ -130,7 +130,7 @@ public class AccountController {
     @PostMapping("/account-edit-form-commit")
     public String editFormCommit(Account account) {
         Optional<Account> optionalAcc = accountRepository.findById(account.getId());
-        if (!optionalAcc.isPresent()) {
+        if (optionalAcc.isEmpty()) {
             return "redirect:/launchpad/account/accounts";
         }
         Account a = optionalAcc.get();
@@ -143,7 +143,7 @@ public class AccountController {
     @GetMapping(value = "/account-password-edit/{id}")
     public String passwordEdit(@PathVariable Long id, Model model){
         Optional<Account> optionalAcc = accountRepository.findById(id);
-        if (!optionalAcc.isPresent()) {
+        if (optionalAcc.isEmpty()) {
             return "redirect:/launchpad/account/accounts";
         }
         Account account = optionalAcc.get();
@@ -155,7 +155,7 @@ public class AccountController {
     @PostMapping("/account-password-edit-form-commit")
     public String passwordEditFormCommit(Model model, Account account) {
         Optional<Account> optionalAcc = accountRepository.findById(account.getId());
-        if (!optionalAcc.isPresent()) {
+        if (optionalAcc.isEmpty()) {
             return "redirect:/launchpad/account/accounts";
         }
         Account a = optionalAcc.get();
