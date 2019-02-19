@@ -392,21 +392,21 @@ public class FlowService {
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
         InputResourceParam resourceParams = InputResourceParamUtils.to(fi.inputResourceParam);
-        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllCodes());
+        List<SimpleCodeAndStorageUrl> initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllCodes());
         log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
         Monitoring.log("##024", Enums.Monitor.MEMORY);
 
-        if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
+        if (initialInputResourceCodes==null || initialInputResourceCodes.isEmpty()) {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return;
         }
         final Map<String, List<String>> collectedInputs = new HashMap<>();
 
-        inputResourceCodes.forEach(o-> {
+        initialInputResourceCodes.forEach(o-> {
             collectedInputs.computeIfAbsent(o.poolCode, p -> new ArrayList<>()).add(o.code);
         });
 
-        final Map<String, String> inputStorageUrls = inputResourceCodes
+        final Map<String, String> inputStorageUrls = initialInputResourceCodes
                 .stream()
                 .collect(Collectors.toMap(o -> o.code, o -> o.storageUrl));
 
@@ -442,15 +442,12 @@ public class FlowService {
                 return;
             }
             if (!process.collectResources) {
+                collectedInputs.values().forEach(o-> o.forEach(inputStorageUrls::remove));
                 collectedInputs.clear();
-                inputStorageUrls.clear();
             }
             Monitoring.log("##030", Enums.Monitor.MEMORY);
             if (produceTaskResult.outputResourceCodes!=null) {
-                for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
-                    List<String> list = collectedInputs.computeIfAbsent(process.outputType, k -> new ArrayList<>());
-                    list.add(outputResourceCode);
-                }
+                collectedInputs.computeIfAbsent(process.outputType, k -> new ArrayList<>()).addAll(produceTaskResult.outputResourceCodes);
             }
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }

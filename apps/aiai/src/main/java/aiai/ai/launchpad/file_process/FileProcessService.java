@@ -73,6 +73,8 @@ public class FileProcessService {
                 }
                 String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, sv.name, process.order);
                 result.outputResourceCodes.add(outputResourceCode);
+                inputStorageUrls.put(outputResourceCode,
+                        StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                 if (isPersist) {
                     createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
                 }
@@ -88,6 +90,8 @@ public class FileProcessService {
             }
             String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, sv.name, process.order);
             result.outputResourceCodes.add(outputResourceCode);
+            inputStorageUrls.put(outputResourceCode,
+                    StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
             if (isPersist) {
                 createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
             }
@@ -119,8 +123,6 @@ public class FileProcessService {
         }
         yaml.outputResourceCode = outputResourceCode;
         yaml.resourceStorageUrls = inputStorageUrls;
-        yaml.resourceStorageUrls.put(yaml.outputResourceCode,
-                StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
 
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
         if (snippet==null) {

@@ -609,7 +609,7 @@ public class ExperimentService {
                         } else {
                             throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
                         }
-                        yaml.resourceStorageUrls.put(yaml.outputResourceCode, process.outputStorageUrl);
+                        yaml.resourceStorageUrls.put(yaml.outputResourceCode, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
 
                         ExperimentTaskFeature tef = new ExperimentTaskFeature();
                         tef.setFlowInstanceId(flowInstance.getId());
