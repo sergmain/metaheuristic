@@ -24,12 +24,6 @@
         });
 
     </script>
-    <script>
-        document.getElementById("uploadBtn").onchange = function () {
-            document.getElementById("uploadFile").value = this.value;
-        };
-    </script>
-
 
     <h1 class="widget-header">Create resource from file</h1>
 
@@ -59,6 +53,14 @@
         <p></p>
         <button type="submit" class="pure-button pure-button-primary">Create resource</button>
     </form>
+
+    <script>
+         // Do not move upper. Must be placed after <input name="file" id="uploadBtn" type="file" class="upload">
+        document.getElementById("uploadBtn").onchange = function () {
+            document.getElementById("uploadFile").value = this.value;
+        };
+    </script>
+
 
     <h1 class="widget-header">Create resource with storage url</h1>
 
