@@ -82,9 +82,11 @@ public class ExperimentProcessValidator implements ProcessValidator {
             return Enums.FlowValidateStatus.EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR;
         }
 
+/*
         if (process.metas==null || process.metas.isEmpty()) {
             return Enums.FlowValidateStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
         }
+*/
 
         Process.Meta m1 = process.getMeta("dataset");
         if (m1 ==null || StringUtils.isBlank(m1.getValue())) {

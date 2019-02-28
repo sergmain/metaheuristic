@@ -60,6 +60,7 @@
     <p>&nbsp;</p>
 
     <script>
+        // Do not move upper. Must be placed after <input name="file" id="uploadBtn" type="file" class="upload">
         document.getElementById("uploadBtn").onchange = function () {
             document.getElementById("uploadFile").value = this.value;
         };

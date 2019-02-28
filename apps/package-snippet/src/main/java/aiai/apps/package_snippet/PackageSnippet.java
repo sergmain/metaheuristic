@@ -15,7 +15,7 @@
  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
  */
-package aiai.apps.sign_snippet;
+package aiai.apps.package_snippet;
 
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.SecUtils;
