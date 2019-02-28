@@ -38,6 +38,10 @@ with open(yaml_file, 'r') as stream:
 
 print(params['hyperParams'])
 
+output_file_path = params['outputResourceAbsolutePath']
+with open(output_file_path, 'w') as output_file:
+    output_file.write("Ok")
+    output_file.close()
 
 print(str(datetime.now()))
 

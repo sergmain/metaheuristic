@@ -73,6 +73,10 @@ public class ExperimentProcessService {
         }
 
         List<String> features = collectedInputs.get(meta.getValue());
+        if (features==null) {
+            result.status = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
+            return result;
+        }
         long mills = System.currentTimeMillis();
         IntHolder intHolder = new IntHolder();
         experimentService.produceFeaturePermutations(isPersist, e.getId(), features, intHolder);

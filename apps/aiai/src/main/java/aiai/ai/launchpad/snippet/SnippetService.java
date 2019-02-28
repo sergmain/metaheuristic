@@ -93,7 +93,7 @@ public class SnippetService {
         return snippets;
     }
 
-    public void sortSnippetsByType(List<ExperimentSnippet> snippets) {
+    public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
         snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
     }
 

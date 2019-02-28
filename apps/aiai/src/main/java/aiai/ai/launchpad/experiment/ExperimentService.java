@@ -603,9 +603,14 @@ public class ExperimentService {
                             if (prevTask == null) {
                                 throw new IllegalStateException("prevTask is null");
                             }
-                            yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(getModelFilename(prevTask));
+                            String modelFilename = getModelFilename(prevTask);
+                            yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(modelFilename);
                             yaml.outputResourceCode = "task-" + task.getId() + "-output-stub-for-predict";
                             type = Enums.ExperimentTaskType.PREDICT;
+
+                            // TODO add implementation of disk storage for models
+                            yaml.resourceStorageUrls.put(modelFilename, Consts.LAUNCHPAD_STORAGE_URL);
+//                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                         } else {
                             throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
                         }

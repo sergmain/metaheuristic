@@ -36,6 +36,13 @@ yaml_file = os.path.join(artifact_path, 'params.yaml')
 with open(yaml_file, 'r') as stream:
     params = (yaml.load(stream))
 
+
+output_file_path = params['outputResourceAbsolutePath']
+with open(output_file_path, 'w') as output_file:
+    output_file.write("Ok")
+    output_file.close()
+
+
 print(params['hyperParams'])
 print('Done.')
 print(str(datetime.now()))

@@ -1,12 +1,12 @@
 snippets:
     - name: simple-metrics.fit
-      version: 1.0
+      version: 1.1
       type: fit
       file: simple-metrics-fit.py
       metrics: false
       env: python-3
     - name: simple-metrics.predict
-      version: 1.0
+      version: 1.1
       type: predict
       file: simple-metrics-predict.py
       metrics: true
