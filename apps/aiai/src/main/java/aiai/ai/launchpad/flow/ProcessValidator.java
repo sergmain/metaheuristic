@@ -22,5 +22,5 @@ import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
 
 public interface ProcessValidator {
-    Enums.FlowValidateStatus validate(Flow flow, Process process);
+    Enums.FlowValidateStatus validate(Flow flow, Process process, boolean isFirst);
 }

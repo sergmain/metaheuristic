@@ -55,7 +55,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
     // TODO ! experiment has to be stateless and have its own instances
 
     @Override
-    public Enums.FlowValidateStatus validate(Flow flow, Process process) {
+    public Enums.FlowValidateStatus validate(Flow flow, Process process, boolean isFirst) {
         if (process.snippetCodes!=null && process.snippetCodes.size() > 0) {
             return Enums.FlowValidateStatus.SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR;
         }
@@ -82,25 +82,24 @@ public class ExperimentProcessValidator implements ProcessValidator {
             return Enums.FlowValidateStatus.EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR;
         }
 
-/*
-        if (process.metas==null || process.metas.isEmpty()) {
-            return Enums.FlowValidateStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
-        }
-*/
+        if (!isFirst) {
+            if (process.metas == null || process.metas.isEmpty()) {
+                return Enums.FlowValidateStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
+            }
 
-        Process.Meta m1 = process.getMeta("dataset");
-        if (m1 ==null || StringUtils.isBlank(m1.getValue())) {
-            return Enums.FlowValidateStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
+            Process.Meta m1 = process.getMeta("dataset");
+            if (m1 == null || StringUtils.isBlank(m1.getValue())) {
+                return Enums.FlowValidateStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
+            }
+            Process.Meta m2 = process.getMeta("assembled-raw");
+            if (m2 == null || StringUtils.isBlank(m2.getValue())) {
+                return Enums.FlowValidateStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
+            }
+            Process.Meta m3 = process.getMeta("feature");
+            if (m3 == null || StringUtils.isBlank(m3.getValue())) {
+                return Enums.FlowValidateStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
+            }
         }
-        Process.Meta m2 = process.getMeta("assembled-raw");
-        if (m2 ==null || StringUtils.isBlank(m2.getValue())) {
-            return Enums.FlowValidateStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
-        }
-        Process.Meta m3 = process.getMeta("feature");
-        if (m3 ==null || StringUtils.isBlank(m3.getValue())) {
-            return Enums.FlowValidateStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
-        }
-
         return null;
     }
 }

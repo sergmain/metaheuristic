@@ -323,7 +323,7 @@ public class FlowService {
             else {
                 return PROCESS_VALIDATOR_NOT_FOUND_ERROR;
             }
-            Enums.FlowValidateStatus status = processValidator.validate(flow, process);
+            Enums.FlowValidateStatus status = processValidator.validate(flow, process, i==0);
             if (status!=null) {
                 return status;
             }

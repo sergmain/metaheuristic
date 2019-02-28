@@ -40,7 +40,7 @@ public class FileProcessValidator implements ProcessValidator {
     }
 
     @Override
-    public Enums.FlowValidateStatus validate(Flow flow, Process process) {
+    public Enums.FlowValidateStatus validate(Flow flow, Process process, boolean isFirst) {
         if (process.getSnippetCodes() == null || process.getSnippetCodes().isEmpty()) {
             return Enums.FlowValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }
