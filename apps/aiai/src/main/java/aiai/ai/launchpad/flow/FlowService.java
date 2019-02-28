@@ -47,6 +47,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -92,6 +93,8 @@ public class FlowService {
         this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
         this.flowInstanceService = flowInstanceService;
     }
+
+    // TODO need to check all numbers of errors. Must be as #701.xx
 
     public FlowInstance toStarted(FlowInstance flowInstance) {
         FlowInstance fi = flowInstanceRepository.findById(flowInstance.getId()).orElse(null);
@@ -184,7 +187,13 @@ public class FlowService {
     }
 
     public Enums.FlowValidateStatus validateInternal(Model model, Flow flow) {
-        Enums.FlowValidateStatus flowValidateStatus = validate(flow);
+        Enums.FlowValidateStatus flowValidateStatus;
+        try {
+            flowValidateStatus = validate(flow);
+        } catch (YAMLException e) {
+            model.addAttribute("errorMessage", "#560.34 Error while parsing yaml config, " + e.toString());
+            return Enums.FlowValidateStatus.YAML_PARSING_ERROR;
+        }
         flow.valid = flowValidateStatus == Enums.FlowValidateStatus.OK;
         flowCache.save(flow);
         if (flow.valid) {

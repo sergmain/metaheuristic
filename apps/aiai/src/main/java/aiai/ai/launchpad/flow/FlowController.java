@@ -164,13 +164,7 @@ public class FlowController {
             return errorTarget;
         }
         flow = flowCache.save(flow);
-        Enums.FlowValidateStatus flowValidateStatus;
-        try {
-            flowValidateStatus = flowService.validateInternal(model, flow);
-        } catch (YAMLException e) {
-            model.addAttribute("errorMessage", "#560.34 Error while parsing yaml config, " + e.toString());
-            return normalTarget;
-        }
+        Enums.FlowValidateStatus flowValidateStatus = flowService.validateInternal(model, flow);
         if (flowValidateStatus == Enums.FlowValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", "Validation result: OK");
         }
