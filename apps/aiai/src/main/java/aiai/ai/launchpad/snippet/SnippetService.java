@@ -178,8 +178,7 @@ public class SnippetService {
     /**
      * load snippets from directory
      *
-     * @param srcDir
-     * @throws IOException
+     * @param srcDir File
      */
     private void loadSnippetsFromDir(File srcDir) throws IOException {
         File yamlConfigFile = new File(srcDir, "snippets.yaml");
@@ -196,21 +195,26 @@ public class SnippetService {
                 log.error(status.error);
                 continue;
             }
-            String sum;
+            String sum=null;
             File file = null;
             long length=0;
-            if (snippetConfig.fileProvided) {
-                sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippetConfig.env.getBytes()));
+            if (globals.isSnippetChecksumRequired) {
+                if (snippetConfig.fileProvided) {
+                    sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippetConfig.env.getBytes()));
+                }
+                else {
+                    file = new File(srcDir, snippetConfig.file);
+                    if (!file.exists()) {
+                        throw new IllegalStateException("File " + snippetConfig.file + " wasn't found in " + srcDir.getAbsolutePath());
+                    }
+                    try (InputStream inputStream = new FileInputStream(file)) {
+                        sum = Checksum.Type.SHA256.getChecksum(inputStream);
+                    }
+                    length = file.length();
+                }
             }
             else {
-                file = new File(srcDir, snippetConfig.file);
-                if (!file.exists()) {
-                    throw new IllegalStateException("File " + snippetConfig.file + " wasn't found in " + srcDir.getAbsolutePath());
-                }
-                try (InputStream inputStream = new FileInputStream(file)) {
-                    sum = Checksum.Type.SHA256.getChecksum(inputStream);
-                }
-                length = file.length();
+                throw new IllegalStateException("Not implemented yet");
             }
             Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
             if (snippet!=null) {
@@ -266,7 +270,7 @@ public class SnippetService {
             }
             snippet.setSigned(isSigned);
         } else {
-            // calc the new checksum
+            // set the new checksum
             snippet.checksum = new Checksum(Checksum.Type.SHA256, sum).toJson();
             snippet.setSigned(false);
         }

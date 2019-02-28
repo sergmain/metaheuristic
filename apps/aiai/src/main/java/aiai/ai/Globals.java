@@ -49,6 +49,12 @@ public class Globals {
     @Value("${aiai.launchpad.is-ssl-required:#{true}}")
     public boolean isSslRequired = true;
 
+    @Value("${aiai.launchpad.snippet-checksum-required:#{true}}")
+    public boolean isSnippetChecksumRequired = true;
+
+    @Value("${aiai.launchpad.snippet-signature-required:#{true}}")
+    public boolean isSnippetSignatureRequired = true;
+
     @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.master-username')) }")
     public String launchpadMasterUsername;
 

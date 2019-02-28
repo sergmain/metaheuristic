@@ -35,6 +35,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -163,7 +164,14 @@ public class FlowController {
             return errorTarget;
         }
         flow = flowCache.save(flow);
-        if (flowService.validateInternal(model, flow)== Enums.FlowValidateStatus.OK ) {
+        Enums.FlowValidateStatus flowValidateStatus;
+        try {
+            flowValidateStatus = flowService.validateInternal(model, flow);
+        } catch (YAMLException e) {
+            model.addAttribute("errorMessage", "#560.34 Error while parsing yaml config, " + e.toString());
+            return errorTarget;
+        }
+        if (flowValidateStatus == Enums.FlowValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", "Validation result: OK");
         }
         return normalTarget;
