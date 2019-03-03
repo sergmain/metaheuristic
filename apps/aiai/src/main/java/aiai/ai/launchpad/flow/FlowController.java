@@ -293,6 +293,7 @@ public class FlowController {
         return "redirect:/launchpad/flow/flow-instances/" + flowId;
     }
 
+    @SuppressWarnings("Duplicates")
     @GetMapping(value = "/flow-instance-edit/{flowId}/{flowInstanceId}")
     public String flowInstanceEdit(@PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
         FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
@@ -303,6 +304,7 @@ public class FlowController {
         return "launchpad/flow/flow-instance-edit/" + flowId +'/' + flowInstanceId;
     }
 
+    @SuppressWarnings("Duplicates")
     @GetMapping("/flow-instance-delete/{flowId}/{flowInstanceId}")
     public String flowInstanceDelete(@PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
         FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
@@ -313,6 +315,7 @@ public class FlowController {
         return "launchpad/flow/flow-instance-delete";
     }
 
+    @SuppressWarnings("Duplicates")
     @PostMapping("/flow-instance-delete-commit")
     public String flowInstanceDeleteCommit(Long flowId, Long flowInstanceId, final RedirectAttributes redirectAttributes) {
         FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
@@ -340,6 +343,7 @@ public class FlowController {
         }
         FlowData.OperationStatusRest status = flowService.flowInstanceTargetExecState(flowId, id, execState);
         if (status.errorMessage != null) {
+            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessage);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
 

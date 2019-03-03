@@ -283,36 +283,42 @@ public class ProcessResourceController {
         flowService.changeValidStatus(producingResult.flowInstance, true);
 
         // start producing new tasks
-        String redirectUrl1 = flowService.flowInstanceTargetExecState(
-                flow.getId(), producingResult.flowInstance.getId(), model, redirectAttributes, Enums.FlowInstanceExecState.PRODUCING, REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+        FlowData.OperationStatusRest operationStatus = flowService.flowInstanceTargetExecState(
+                flow.getId(), producingResult.flowInstance.getId(), Enums.FlowInstanceExecState.PRODUCING);
 
-        if (redirectUrl1 != null) {
-            return redirectUrl1;
+        if (operationStatus.errorMessage != null) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessage);
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         flowService.createAllTasks();
-        redirectUrl1 = flowService.flowInstanceTargetExecState(
-                flow.getId(), producingResult.flowInstance.getId(), model, redirectAttributes, Enums.FlowInstanceExecState.STARTED, REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+        operationStatus = flowService.flowInstanceTargetExecState(
+                flow.getId(), producingResult.flowInstance.getId(), Enums.FlowInstanceExecState.STARTED);
 
-        if (redirectUrl1 != null) {
-            return redirectUrl1;
+        if (operationStatus.errorMessage != null) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessage);
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         return null;
     }
 
+    @SuppressWarnings("Duplicates")
     @GetMapping("/process-resource-delete/{flowId}/{flowInstanceId}")
-    public String processResourceDelete(@PathVariable Long flowId, @PathVariable Long flowInstanceId, Model model, final RedirectAttributes redirectAttributes) {
-        String redirectUrl = flowService.prepareModel(flowId, flowInstanceId, model, redirectAttributes, REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
-        if (redirectUrl != null) {
-            return redirectUrl;
+    public String processResourceDelete(@PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
+        FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
+        if (result.errorMessage != null) {
+            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessage);
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         return "pilot/process-resource/process-resource-delete";
     }
 
+    @SuppressWarnings("Duplicates")
     @PostMapping("/process-resource-delete-commit")
-    public String processResourceDeleteCommit(Long flowId, Long flowInstanceId, Model model, final RedirectAttributes redirectAttributes) {
-        String redirectUrl = flowService.prepareModel(flowId, flowInstanceId, model, redirectAttributes, REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
-        if (redirectUrl != null) {
-            return redirectUrl;
+    public String processResourceDeleteCommit(Long flowId, Long flowInstanceId, final RedirectAttributes redirectAttributes) {
+        FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
+        if (result.errorMessage != null) {
+            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessage);
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
         FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
