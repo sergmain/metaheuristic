@@ -35,8 +35,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import org.yaml.snakeyaml.error.YAMLException;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -127,8 +127,10 @@ public class FlowController {
         }
         model.addAttribute("flow", flow);
 
-        flowService.validateInternal(model, flow);
+        FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
         model.addAttribute("flow", flow);
+        model.addAttribute("errorMessage", flowValidation.errorMessage);
+        model.addAttribute("infoMessage", flowValidation.infoMessages);
         return "launchpad/flow/flow-edit";
     }
 
@@ -164,9 +166,9 @@ public class FlowController {
             return errorTarget;
         }
         flow = flowCache.save(flow);
-        Enums.FlowValidateStatus flowValidateStatus = flowService.validateInternal(model, flow);
-        if (flowValidateStatus == Enums.FlowValidateStatus.OK ) {
-            redirectAttributes.addFlashAttribute("infoMessages", "Validation result: OK");
+        FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
+        if (flowValidation.status == Enums.FlowValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
         return normalTarget;
     }
@@ -209,19 +211,10 @@ public class FlowController {
     }
 
     private void prepareFlowInstanceResult(FlowInstancesResult result, Long id, Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.flowInstanceRowsLimit, pageable);
-        result.instances = flowInstanceRepository.findByFlowId(pageable, id);
+        FlowData.FlowInstancesResultRest r = flowService.getFlowInstancesResult(id, pageable);
+        result.instances = r.instances;
         result.currentFlowId = id;
-
-        for (FlowInstance flowInstance : result.instances) {
-            Flow flow = flowCache.findById(flowInstance.getFlowId());
-            if (flow==null) {
-                log.warn("#560.51 Found flowInstance with wrong flowId. flowId: {}", flowInstance.getFlowId());
-                continue;
-            }
-            result.flows.put(flowInstance.getId(), flow);
-        }
-        int i=0;
+        result.flows = r.flows;
     }
 
     @GetMapping(value = "/flow-instance-add/{id}")
@@ -254,9 +247,9 @@ public class FlowController {
         }
 
         // validate the flow
-        Enums.FlowValidateStatus validateStatus = flowService.validateInternal(model, result.flow);
-        if (validateStatus != Enums.FlowValidateStatus.OK ) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.70 validation of flow was failed, status: " + validateStatus);
+        FlowData.FlowValidation flowValidation = flowService.validateInternal(result.flow);
+        if (flowValidation.status != Enums.FlowValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.70 validation of flow was failed, status: " + flowValidation.status);
             return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
         }
 
@@ -275,9 +268,9 @@ public class FlowController {
         }
 
         // validate the flow + the flow instance
-        validateStatus = flowService.validateInternal(model, result.flow);
-        if (validateStatus != Enums.FlowValidateStatus.OK ) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.75 validation of flow was failed, status: " + validateStatus);
+        flowValidation = flowService.validateInternal(result.flow);
+        if (flowValidation.status != Enums.FlowValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#560.75 validation of flow was failed, status: " + flowValidation.status);
             return "redirect:/launchpad/flow/flow-instance-add/" + flowId;
         }
 
@@ -301,30 +294,32 @@ public class FlowController {
     }
 
     @GetMapping(value = "/flow-instance-edit/{flowId}/{flowInstanceId}")
-    public String flowInstanceEdit(@PathVariable Long flowId, @PathVariable Long flowInstanceId, Model model, final RedirectAttributes redirectAttributes) {
-        String redirectUrl = flowService.prepareModel(flowId, flowInstanceId, model, redirectAttributes, REDIRECT_LAUNCHPAD_FLOW_FLOWS);
-        if (redirectUrl != null) {
-            return redirectUrl;
+    public String flowInstanceEdit(@PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
+        FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
+        if (result.errorMessage != null) {
+            redirectAttributes.addFlashAttribute("errorMessage",result.errorMessage);
+            return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
         return "launchpad/flow/flow-instance-edit/" + flowId +'/' + flowInstanceId;
     }
 
     @GetMapping("/flow-instance-delete/{flowId}/{flowInstanceId}")
-    public String flowInstanceDelete(@PathVariable Long flowId, @PathVariable Long flowInstanceId, Model model, final RedirectAttributes redirectAttributes) {
-        String redirectUrl = flowService.prepareModel(flowId, flowInstanceId, model, redirectAttributes, REDIRECT_LAUNCHPAD_FLOW_FLOWS);
-        if (redirectUrl != null) {
-            return redirectUrl;
+    public String flowInstanceDelete(@PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
+        FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
+        if (result.errorMessage != null) {
+            redirectAttributes.addFlashAttribute("errorMessage",result.errorMessage);
+            return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
         return "launchpad/flow/flow-instance-delete";
     }
 
     @PostMapping("/flow-instance-delete-commit")
-    public String flowInstanceDeleteCommit(Long flowId, Long flowInstanceId, Model model, final RedirectAttributes redirectAttributes) {
-        String redirectUrl = flowService.prepareModel(flowId, flowInstanceId, model, redirectAttributes, REDIRECT_LAUNCHPAD_FLOW_FLOWS);
-        if (redirectUrl != null) {
-            return redirectUrl;
+    public String flowInstanceDeleteCommit(Long flowId, Long flowInstanceId, final RedirectAttributes redirectAttributes) {
+        FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
+        if (result.errorMessage != null) {
+            redirectAttributes.addFlashAttribute("errorMessage",result.errorMessage);
+            return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
-
         FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
         if (fi==null) {
             redirectAttributes.addFlashAttribute("errorMessage",
@@ -343,9 +338,9 @@ public class FlowController {
                     "#560.87 Unknown exec state, state: " + state);
             return "redirect:/launchpad/flow/flow-instances/" + flowId;
         }
-        String redirectUrl1 = flowService.flowInstanceTargetExecState(flowId, id, model, redirectAttributes, execState, REDIRECT_LAUNCHPAD_FLOW_FLOWS);
-        if (redirectUrl1 != null) {
-            return redirectUrl1;
+        FlowData.OperationStatusRest status = flowService.flowInstanceTargetExecState(flowId, id, execState);
+        if (status.errorMessage != null) {
+            return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
 
         return "redirect:/launchpad/flow/flow-instances/" + flowId;

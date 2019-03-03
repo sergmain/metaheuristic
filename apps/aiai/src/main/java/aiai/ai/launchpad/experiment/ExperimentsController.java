@@ -263,7 +263,7 @@ public class ExperimentsController {
             hyperParams.setVariants( variants.status ?variants.count : 0 );
         }
         if (experiment.getFlowInstanceId()==null) {
-            model.addAttribute("infoMessages", Collections.singleton("Launch is disabled, dataset isn't assigned"));
+            model.addAttribute("infoMessages", Collections.singletonList("Launch is disabled, dataset isn't assigned"));
         }
 
         ExperimentResult experimentResult = new ExperimentResult();

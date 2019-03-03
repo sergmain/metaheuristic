@@ -18,6 +18,8 @@ package aiai.ai;
 
 public final class Enums {
 
+    public enum OperationStatus {OK, ERROR}
+
     public enum StorageType {launchpad, disk, hadoop, ftp }
 
     public enum UploadResourceStatus {
@@ -185,7 +187,7 @@ public final class Enums {
         ERROR,
     }
 
-    public enum FlowValidateStatus { OK,
+    public enum FlowValidateStatus { OK, NOT_VERIFIED_YET,
         YAML_PARSING_ERROR,
         ALREADY_PRODUCED_ERROR,
         NOT_VALIDATED_YET_ERROR,

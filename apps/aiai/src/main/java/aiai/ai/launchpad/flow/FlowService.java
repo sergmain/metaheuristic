@@ -19,6 +19,7 @@ package aiai.ai.launchpad.flow;
 
 import aiai.ai.Consts;
 import aiai.ai.Enums;
+import aiai.ai.Globals;
 import aiai.ai.Monitoring;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
@@ -35,6 +36,7 @@ import aiai.ai.launchpad.repositories.ExperimentTaskFeatureRepository;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.utils.ControllerUtils;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
@@ -44,15 +46,13 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.Model;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static aiai.ai.Enums.FlowValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
@@ -62,6 +62,7 @@ import static aiai.ai.Enums.FlowValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR
 @Profile("launchpad")
 public class FlowService {
 
+    private final Globals globals;
     private final FlowYamlUtils flowYamlUtils;
     private final ExperimentService experimentService;
     private final BinaryDataService binaryDataService;
@@ -78,7 +79,8 @@ public class FlowService {
     private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
     private final FlowInstanceService flowInstanceService;
 
-    public FlowService(FlowYamlUtils flowYamlUtils, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, FlowCache flowCache, FlowRepository flowRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, FlowInstanceService flowInstanceService) {
+    public FlowService(Globals globals, FlowYamlUtils flowYamlUtils, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, FlowCache flowCache, FlowRepository flowRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, FlowInstanceService flowInstanceService) {
+        this.globals = globals;
         this.flowYamlUtils = flowYamlUtils;
         this.experimentService = experimentService;
         this.binaryDataService = binaryDataService;
@@ -153,70 +155,61 @@ public class FlowService {
             }}
     }
 
-    public String prepareModel(Long flowId, Long flowInstanceId, Model model, RedirectAttributes redirectAttributes, String redirect) {
+    public FlowData.FlowInstanceResultRest prepareModel(Long flowId, Long flowInstanceId) {
         if (flowId==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.83 flow wasn't found, flowId: " + flowId);
-            return redirect;
+            return new FlowData.FlowInstanceResultRest("#560.83 flow wasn't found, flowId: " + flowId);
         }
         if (flowInstanceId==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.85 flowInstanceId is null");
-            return redirect;
+            return new FlowData.FlowInstanceResultRest("#560.85 flowInstanceId is null");
         }
         final FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
         if (flowInstance == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.87 flowInstance wasn't found, flowInstanceId: " + flowInstanceId);
-            return redirect;
+            return new FlowData.FlowInstanceResultRest("#560.87 flowInstance wasn't found, flowInstanceId: " + flowInstanceId);
         }
         Flow flow = flowCache.findById(flowId);
         if (flow == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.89 flow wasn't found, flowId: " + flowId);
-            return redirect;
+            return new FlowData.FlowInstanceResultRest("#560.89 flow wasn't found, flowId: " + flowId);
         }
 
         if (!flow.getId().equals(flowInstance.flowId)) {
             flowInstance.valid=false;
             flowInstanceRepository.save(flowInstance);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "#560.73 flowId doesn't match to flowInstance.flowId, flowId: " + flowId+", flowInstance.flowId: " + flowInstance.flowId);
-            return redirect;
+            return new FlowData.FlowInstanceResultRest("#560.73 flowId doesn't match to flowInstance.flowId, flowId: " + flowId+", flowInstance.flowId: " + flowInstance.flowId);
         }
 
-        FlowController.FlowInstanceResult result = new FlowController.FlowInstanceResult(flowInstance, flow);
-        model.addAttribute("result", result);
-        return null;
+        FlowData.FlowInstanceResultRest result = new FlowData.FlowInstanceResultRest(flow, flowInstance);
+        return result;
     }
 
-    public Enums.FlowValidateStatus validateInternal(Model model, Flow flow) {
-        Enums.FlowValidateStatus flowValidateStatus;
+    public FlowData.FlowValidation validateInternal(Flow flow) {
+        final FlowData.FlowValidation flowValidation = new FlowData.FlowValidation();
         try {
-            flowValidateStatus = validate(flow);
+            flowValidation.status = validate(flow);
         } catch (YAMLException e) {
-            model.addAttribute("errorMessage", "#560.34 Error while parsing yaml config, " + e.toString());
-            return Enums.FlowValidateStatus.YAML_PARSING_ERROR;
+            flowValidation.errorMessage = "#560.34 Error while parsing yaml config, " + e.toString();
+            flowValidation.status = Enums.FlowValidateStatus.YAML_PARSING_ERROR;
         }
-        flow.valid = flowValidateStatus == Enums.FlowValidateStatus.OK;
+        flow.valid = flowValidation.status == Enums.FlowValidateStatus.OK;
         flowCache.save(flow);
         if (flow.valid) {
-            model.addAttribute("infoMessages", "Validation result: OK");
+            flowValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
         else {
-            log.error("Validation error: {}", flowValidateStatus);
-            model.addAttribute("errorMessage", "#561.01 Validation error: : " + flowValidateStatus);
+            log.error("Validation error: {}", flowValidation.status);
+            flowValidation.errorMessage = "#561.01 Validation error: : " + flowValidation.status;
         }
-        return flowValidateStatus;
+        return flowValidation;
     }
 
-    public String flowInstanceTargetExecState(
-            Long flowId, Long id, Model model,
-            RedirectAttributes redirectAttributes, Enums.FlowInstanceExecState execState,
-            String targetRedirectUrl) {
-        String redirectUrl = prepareModel(flowId, id, model, redirectAttributes, targetRedirectUrl);
-        if (redirectUrl != null) {
-            return redirectUrl;
+    public FlowData.OperationStatusRest flowInstanceTargetExecState(
+            Long flowId, Long id, Enums.FlowInstanceExecState execState) {
+        FlowData.FlowInstanceResultRest result = prepareModel(flowId, id);
+        if (result.errorMessage != null) {
+            return new FlowData.OperationStatusRest(Enums.OperationStatus.ERROR, result.errorMessage);
         }
-        FlowController.FlowInstanceResult result = (FlowController.FlowInstanceResult) model.asMap().get("result");
-        if (result==null) {
-            throw new IllegalStateException("FlowInstanceResult is null");
+
+        if (result.flow==null || result.flowInstance==null) {
+            throw new IllegalStateException("Error: (result.flow==null || result.flowInstance==null)");
         }
 
         result.flowInstance.setExecState(execState.code);
@@ -224,7 +217,24 @@ public class FlowService {
 
         result.flow.locked = true;
         flowCache.save(result.flow);
-        return null;
+        return FlowData.OPERATION_STATUS_OK;
+    }
+
+    public FlowData.FlowInstancesResultRest getFlowInstancesResult(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
+        pageable = ControllerUtils.fixPageSize(globals.flowInstanceRowsLimit, pageable);
+        FlowData.FlowInstancesResultRest result = new FlowData.FlowInstancesResultRest();
+        result.instances = flowInstanceRepository.findByFlowId(pageable, id);
+        result.currentFlowId = id;
+
+        for (FlowInstance flowInstance : result.instances) {
+            Flow flow = flowCache.findById(flowInstance.getFlowId());
+            if (flow==null) {
+                log.warn("#560.51 Found flowInstance with wrong flowId. flowId: {}", flowInstance.getFlowId());
+                continue;
+            }
+            result.flows.put(flowInstance.getId(), flow);
+        }
+        return result;
     }
 
     @Data

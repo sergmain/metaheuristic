@@ -25,6 +25,7 @@ import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.flow.FlowCache;
+import aiai.ai.launchpad.flow.FlowData;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.launchpad_resource.ResourceService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
@@ -160,9 +161,9 @@ public class ProcessResourceController {
         }
 
         // validate the flow
-        Enums.FlowValidateStatus validateStatus = flowService.validateInternal(model, flow);
-        if (validateStatus != Enums.FlowValidateStatus.OK ) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.37 validation of flow was failed, status: " + validateStatus);
+        FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
+        if (flowValidation.status != Enums.FlowValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.37 validation of flow was failed, status: " + flowValidation.status);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
@@ -232,7 +233,6 @@ public class ProcessResourceController {
 
 
     public String createAndProcessTask(Model model, RedirectAttributes redirectAttributes, String originFilename, Flow flow, File dataFile) {
-        Enums.FlowValidateStatus validateStatus;
         final String code = StringUtils.replaceEach(originFilename, new String[] {".", " "}, new String[] {"-", "_"} ) + '-' + System.nanoTime();
         //noinspection UnnecessaryLocalVariable
         final String resourcePoolCode = code;
@@ -260,9 +260,9 @@ public class ProcessResourceController {
         }
 
         // validate the flow + the flow instance
-        validateStatus = flowService.validateInternal(model, flow);
-        if (validateStatus != Enums.FlowValidateStatus.OK ) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.55 validation of flow was failed, status: " + validateStatus);
+        FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
+        if (flowValidation.status != Enums.FlowValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.55 validation of flow was failed, status: " + flowValidation.status);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
