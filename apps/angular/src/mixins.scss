@@ -1,0 +1,115 @@
+@mixin flowCardLayout() {
+    .flow-card {
+        width: 100%;
+
+        .mat-card-header {
+            margin: 0 -16px;
+        }
+    }
+}
+
+@mixin simpleTable() {
+    .simple-table {
+        table {
+            width: 100%;
+        }
+        th{
+            white-space: nowrap;
+        }
+        td,
+        th {
+            vertical-align: baseline;
+            padding: 8px 12px;
+        }
+
+        th:first-child,
+        td:first-child {
+            padding-left: 24px;
+        }
+
+        th:last-child,
+        td:last-child {
+            padding-right: 24px;
+        }
+
+        tr {
+            height: auto;
+        }
+    }
+}
+
+
+@mixin tablePageLayout() {
+    .body {
+        display: flex;
+        flex-direction: column;
+
+        >* {
+            margin: 8px 0;
+        }
+
+        >*:first-child {
+            margin-top: 0;
+        }
+
+        >*:last-child {
+            margin-bottom: 0;
+        }
+
+        h1 {
+            margin: 0;
+        }
+
+        table {
+            padding: 0 8px;
+            width: 100%;
+        }
+
+        td {
+            padding: 8px 8px;
+            vertical-align: baseline;
+        }
+
+        th {
+            padding: 0 8px;
+        }
+
+
+        .body-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: calc(-1.25em + 8px);
+            margin-top: calc(-1.25em + 8px);
+
+            h1 {
+                line-height: 1;
+                font-weight: normal;
+                flex: 0.66;
+            }
+
+            .mat-input-element {
+                text-align: right;
+            }
+
+            .mat-form-field {
+                flex: 0.33;
+            }
+        }
+
+        .body-footer {
+            justify-content: flex-end;
+            display: flex;
+        }
+
+        .buttons {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+
+            >* {
+                margin-left: 8px;
+            }
+        }
+    }
+}

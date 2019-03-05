@@ -1,0 +1,98 @@
+.app-view {
+    height: 100%;
+}
+
+.app-view-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    display: flex;
+}
+
+.app-view-header__row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.app-view-header__left {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    justify-content: space-between;
+
+    >* {
+        margin-right: 8px;
+    }
+}
+
+.app-view-header__right {
+    display: flex;
+    height: 100%;
+    align-items: center;
+
+    >* {
+        margin-left: 8px;
+    }
+
+}
+
+.app-view-body {
+    min-height: 100%;
+}
+
+.app-view-sidenav {
+    position: fixed;
+    top: 64px;
+    bottom: 0;
+    width: 200px;
+    display: flex;
+}
+
+.app-view-sidenav-list {
+    display: flex;
+    justify-content: space-between;
+    height: 100%;
+    padding: 8px 0;
+}
+
+.app-view-sidenav-content {
+    margin-top: 64px;
+    padding: 16px;
+    overflow :hidden;
+}
+
+.flex {
+    display: flex;
+}
+
+.space-between {
+    justify-content: space-between;
+    margin: 0 -16px;
+
+    >* {
+        margin: 0 16px;
+    }
+
+}
+
+.flex-start {
+    align-items: flex-start;
+}
+
+.mat-button.active {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+
+
+.app-view__nav-button {
+    opacity: 0.5;
+    pointer-events: none;
+
+    &--show {
+        opacity: 1;
+            pointer-events: all;
+    }
+}

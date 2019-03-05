@@ -1,0 +1,71 @@
+<div class="body">
+    <div class="body-header">
+        <h1>Instances of Flow {{ id }}</h1>
+        <mat-form-field>
+            <input matInput (keyup)="applyFilter($event.target.value)">
+        </mat-form-field>
+    </div>
+    <mat-card class="flow-card">
+        <table mat-table [dataSource]="dataSource" class="mat-table">
+            <ng-container matColumnDef="id">
+                <th mat-header-cell *matHeaderCellDef>Id</th>
+                <td mat-cell *matCellDef="let el">{{el.id}}</td>
+            </ng-container>
+            <ng-container matColumnDef="flowCode">
+                <th mat-header-cell *matHeaderCellDef>Flow Code</th>
+                <td mat-cell *matCellDef="let el">{{el.flowCode}}</td>
+            </ng-container>
+            <ng-container matColumnDef="inputPoolCodes">
+                <th mat-header-cell *matHeaderCellDef>Input Pool Codes</th>
+                <td mat-cell *matCellDef="let el">{{el.inputPoolCodes}}</td>
+            </ng-container>
+            <ng-container matColumnDef="createdOn">
+                <th mat-header-cell *matHeaderCellDef>Created On</th>
+                <td mat-cell *matCellDef="let el">{{el.createdOn}}</td>
+            </ng-container>
+            <ng-container matColumnDef="isFlowValid">
+                <th mat-header-cell *matHeaderCellDef>Is Flow Valid</th>
+                <td mat-cell *matCellDef="let el">{{el.isFlowValid}}</td>
+            </ng-container>
+            <ng-container matColumnDef="isFlowInstanceValid">
+                <th mat-header-cell *matHeaderCellDef>Is Flow Instance Valid</th>
+                <td mat-cell *matCellDef="let el">{{el.isFlowInstanceValid}}</td>
+            </ng-container>
+            <ng-container matColumnDef="execState">
+                <th mat-header-cell *matHeaderCellDef>ExecState</th>
+                <td mat-cell *matCellDef="let el">{{el.execState}}</td>
+            </ng-container>
+            <ng-container matColumnDef="completedOn">
+                <th mat-header-cell *matHeaderCellDef>Completed on</th>
+                <td mat-cell *matCellDef="let el">{{el.completedOn}}</td>
+            </ng-container>
+            <ng-container matColumnDef="bts">
+                <th mat-header-cell *matHeaderCellDef></th>
+                <td mat-cell *matCellDef="let el">
+                    <div class="buttons">
+                        <button mat-flat-button color="primary" [routerLink]="['/launchpad/flows',el.id,'edit']">
+                            Edit
+                        </button>
+                        <button mat-flat-button color="primary" [routerLink]="['/launchpad/flows',el.id,'instances']">
+                            Instances
+                        </button>
+                        <button mat-flat-button color="warn" routerLink="/launchpad">
+                            Delete
+                        </button>
+                    </div>
+                </td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="columnsToDisplay"></tr>
+            <tr mat-row *matRowDef="let row; columns: columnsToDisplay;"></tr>
+        </table>
+        <div>
+            <mat-paginator [pageSizeOptions]="[10]" hidePageSize></mat-paginator>
+        </div>
+    </mat-card>
+    <div class="body-footer">
+        <div></div>
+        <div>
+            <button mat-flat-button color="primary" routerLink="/launchpad/flows/add">Add Instance</button>
+        </div>
+    </div>
+</div>

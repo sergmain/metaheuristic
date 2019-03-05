@@ -1,0 +1,86 @@
+$mat-vista-blue: (
+    50 : #ecf1ee,
+    100 : #cfddd5,
+    200 : #afc6ba,
+    300 : #8eaf9e,
+    400 : #769e89,
+    500 : #5e8d74,
+    600 : #56856c,
+    700 : #4c7a61,
+    800 : #427057,
+    900 : #315d44,
+    A100 : #abffce,
+    A200 : #78ffb0,
+    A400 : #45ff93,
+    A700 : #2bff84,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #000000,
+        400 : #000000,
+        500 : #ffffff,
+        600 : #ffffff,
+        700 : #ffffff,
+        800 : #ffffff,
+        900 : #ffffff,
+        A100 : #000000,
+        A200 : #000000,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
+
+$mat-vista-blue-dark: (
+    50 : #e6e7e5,
+    100 : #c0c3bf,
+    200 : #979b95,
+    300 : #6d726a,
+    400 : #4d544a,
+    500 : #2e362a,
+    600 : #293025,
+    700 : #23291f,
+    800 : #1d2219,
+    900 : #12160f,
+    A100 : #9dff5b,
+    A200 : #7eff28,
+    A400 : #62f400,
+    A700 : #57da00,
+    contrast: (
+        50 : #000000,
+        100 : #000000,
+        200 : #000000,
+        300 : #ffffff,
+        400 : #ffffff,
+        500 : #ffffff,
+        600 : #ffffff,
+        700 : #ffffff,
+        800 : #ffffff,
+        900 : #ffffff,
+        A100 : #000000,
+        A200 : #000000,
+        A400 : #000000,
+        A700 : #000000,
+    )
+);
+
+
+@import '~@angular/material/theming';
+@include mat-core();
+
+.light-theme{
+    $light-primary: mat-palette($mat-vista-blue);
+    $light-accent:  mat-palette($mat-vista-blue, A200, A100, A400);
+    $light-warn:    mat-palette($mat-red);
+    $light-theme: mat-light-theme($light-primary, $light-accent, $light-warn);
+    @include angular-material-theme($light-theme);
+}
+
+
+.dark-theme {
+    $dark-primary: mat-palette($mat-vista-blue-dark);
+    $dark-accent:  mat-palette($mat-vista-blue-dark, 400);
+    $dark-warn:    mat-palette($mat-red);
+    $dark-theme: mat-dark-theme($dark-primary, $dark-accent, $dark-warn);
+    @include angular-material-theme($dark-theme);
+}

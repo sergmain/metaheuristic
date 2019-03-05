@@ -1,0 +1,35 @@
+ct-section-caption General info
+ct-cols
+	ct-col(size=4)
+		.simple-table
+			table(mat-table '[dataSource]'="tables.features.table")
+				ng-container(matColumnDef="key")
+					th(mat-header-cell *matHeaderCellDef) Key
+					td(mat-cell *matCellDef="let el") {{el[0]}}
+				ng-container(matColumnDef="value")
+					th(mat-header-cell *matHeaderCellDef) Value
+					td(mat-cell *matCellDef="let el") {{el[1]}}
+				tr(mat-header-row *matHeaderRowDef="tables.features.columnsToDisplay")
+				tr(mat-row *matRowDef="let row; columns: tables.features.columnsToDisplay;")
+	ct-col(size=8)
+		.simple-table.general-info
+			table(mat-table '[dataSource]'="tables.hyperParameters.table")
+				ng-container(matColumnDef="key")
+					th(mat-header-cell *matHeaderCellDef) Key
+					td(mat-cell *matCellDef="let el") {{el.key}}
+				ng-container(matColumnDef="values")
+					th(mat-header-cell *matHeaderCellDef) Value
+					td(mat-cell *matCellDef="let el") 
+						span(*ngFor="let button of el.values;")
+							button(mat-stroked-button ) {{button}}
+				ng-container(matColumnDef="axes")
+					th(mat-header-cell *matHeaderCellDef) X, Y axes for plotting
+					td(mat-cell *matCellDef="let el") 
+						button(mat-stroked-button
+						'[class.mat-flat-button]'="pickedAxes.includes(el)"
+						'[class.mat-stroked-button]'="!pickedAxes.includes(el)"
+						'[color]'="pickedAxes.includes(el) ? 'primary' : ''" 
+						'(click)'="pickAxis(el)")
+							|Axis 
+				tr(mat-header-row *matHeaderRowDef="tables.hyperParameters.columnsToDisplay")
+				tr(mat-row *matRowDef="let row; columns: tables.hyperParameters.columnsToDisplay;")

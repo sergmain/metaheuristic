@@ -1,0 +1,40 @@
+<mat-card class="flow-card">
+    <h3>Flow {{id}}</h3>
+    <mat-card-content>
+        <mat-form-field appearance="outline">
+            <mat-label>Code</mat-label>
+            <input matInput name="code" [(ngModel)]="flow.codeOfFlow" value="">
+            <mat-hint>Hint</mat-hint>
+            <!--             
+            <mat-error *ngIf="emailFormControl.hasError('email') && !emailFormControl.hasError('required')">
+                Error
+            </mat-error>
+            <mat-error *ngIf="emailFormControl.hasError('required')">
+                Value is <strong>required</strong>
+            </mat-error> 
+-->
+        </mat-form-field>
+        <br />
+        <br />
+        <mat-form-field appearance="outline">
+            <mat-label>Parameters</mat-label>
+            <textarea matInput name="parameters" [(ngModel)]="flow.parameters" value="" cdkTextareaAutosize cdkAutosizeMinRows="3"></textarea>
+            <mat-hint>Hint</mat-hint>
+            <!--             
+            <mat-error *ngIf="emailFormControl.hasError('email') && !emailFormControl.hasError('required')">
+                Error
+            </mat-error>
+            <mat-error *ngIf="emailFormControl.hasError('required')">
+                Value is <strong>required</strong>
+            </mat-error> 
+-->
+        </mat-form-field>
+    </mat-card-content>
+    <mat-card-actions>
+        <div class="flex flex-end">
+            <button mat-flat-button (click)="cancel()">Cancel</button>
+            <button mat-flat-button (click)="validate()" color="primary" title="">Validate</button>
+            <button mat-flat-button (click)="save()" color="primary" title="">Save Changes</button>
+        </div>
+    </mat-card-actions>
+</mat-card>

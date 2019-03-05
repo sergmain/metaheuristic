@@ -1,0 +1,65 @@
+<mat-card>
+    <mat-card-header>
+        <mat-card-title>New Account</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+        <mat-form-field appearance="outline">
+            <mat-label>Username</mat-label>
+            <input matInput>
+            <mat-hint>This is a required field.</mat-hint>
+            <!--             
+            <mat-error *ngIf="emailFormControl.hasError('email') && !emailFormControl.hasError('required')">
+                Error
+            </mat-error>
+            <mat-error *ngIf="emailFormControl.hasError('required')">
+                Value is <strong>required</strong>
+            </mat-error> 
+-->
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+            <mat-label>Password</mat-label>
+            <input matInput>
+            <mat-hint>This is a required field.</mat-hint>
+            <!--             
+            <mat-error *ngIf="emailFormControl.hasError('email') && !emailFormControl.hasError('required')">
+                Error
+            </mat-error>
+            <mat-error *ngIf="emailFormControl.hasError('required')">
+                Value is <strong>required</strong>
+            </mat-error> 
+-->
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+            <mat-label>Password again</mat-label>
+            <input matInput>
+            <mat-hint>This is a required field.</mat-hint>
+            <!--             
+            <mat-error *ngIf="emailFormControl.hasError('email') && !emailFormControl.hasError('required')">
+                Error
+            </mat-error>
+            <mat-error *ngIf="emailFormControl.hasError('required')">
+                Value is <strong>required</strong>
+            </mat-error> 
+-->
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+            <mat-label>Public name</mat-label>
+            <input matInput>
+            <mat-hint>This is a required field.</mat-hint>
+            <!--             
+            <mat-error *ngIf="emailFormControl.hasError('email') && !emailFormControl.hasError('required')">
+                Error
+            </mat-error>
+            <mat-error *ngIf="emailFormControl.hasError('required')">
+                Value is <strong>required</strong>
+            </mat-error> 
+-->
+        </mat-form-field>
+    </mat-card-content>
+    <mat-card-actions>
+        <div class="flex flex-end">
+            <button mat-flat-button (click)="cancel()">Cancel</button>
+            <button mat-flat-button (click)="create()" color="primary" title="">Create</button>
+        </div>
+    </mat-card-actions>
+</mat-card>
