@@ -47,7 +47,7 @@
             <td th:text="${r.id}">Sample Item</td>
             <td th:text="${r.ip}">Sample IP address</td>
             <td th:text="${r.description}">Sample Description</td>
-            <td th:text="${r.env}">Environment</td>
+            <td><pre th:if="${r.env}!=null" th:text="${r.env}">Input pool codes</pre></td>
             <td th:text="${r.activeTime}">Active time</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-edit/' + r.id}">Edit</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-delete/' + r.id}">Delete</a></td>

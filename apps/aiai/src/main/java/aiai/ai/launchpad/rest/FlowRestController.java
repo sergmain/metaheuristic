@@ -15,13 +15,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.flow;
+package aiai.ai.launchpad.rest;
 
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.flow.FlowCache;
+import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
+import aiai.ai.launchpad.rest.data.FlowData;
+import aiai.ai.launchpad.rest.data.OperationStatusRest;
 import aiai.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -33,9 +37,10 @@ import org.springframework.web.bind.annotation.*;
 import static aiai.ai.Enums.*;
 
 @RestController
-@RequestMapping("/launchpad/rest/flow")
+@RequestMapping("/ng/launchpad/flow")
 @Slf4j
 @Profile("launchpad")
+@CrossOrigin(origins="*", maxAge=3600)
 public class FlowRestController {
 
     private final Globals globals;
@@ -119,13 +124,13 @@ public class FlowRestController {
     }
 
     @PostMapping("/flow-delete-commit")
-    public FlowData.OperationStatusRest deleteCommit(Long id) {
+    public OperationStatusRest deleteCommit(Long id) {
         Flow flow = flowCache.findById(id);
         if (flow == null) {
-            return new FlowData.OperationStatusRest(OperationStatus.ERROR, "#560.50 flow wasn't found, flowId: " + id);
+            return new OperationStatusRest(OperationStatus.ERROR, "#560.50 flow wasn't found, flowId: " + id);
         }
         flowCache.deleteById(id);
-        return FlowData.OPERATION_STATUS_OK;
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     // ============= Flow instances =============
@@ -214,28 +219,28 @@ public class FlowRestController {
     }
 
     @PostMapping("/flow-instance-delete-commit")
-    public FlowData.OperationStatusRest flowInstanceDeleteCommit(Long flowId, Long flowInstanceId) {
+    public OperationStatusRest flowInstanceDeleteCommit(Long flowId, Long flowInstanceId) {
         FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
         if (result.errorMessage != null) {
-            return new FlowData.OperationStatusRest(OperationStatus.ERROR, result.errorMessage);
+            return new OperationStatusRest(OperationStatus.ERROR, result.errorMessage);
         }
 
         FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
         if (fi==null) {
-            return new FlowData.OperationStatusRest(OperationStatus.ERROR, "#560.84 FlowInstance wasn't found, flowInstanceId: " + flowInstanceId );
+            return new OperationStatusRest(OperationStatus.ERROR, "#560.84 FlowInstance wasn't found, flowInstanceId: " + flowInstanceId );
         }
         flowService.deleteFlowInstance(flowInstanceId, fi);
-        return FlowData.OPERATION_STATUS_OK;
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @GetMapping("/flow-instance-target-exec-state/{flowId}/{state}/{id}")
-    public FlowData.OperationStatusRest flowInstanceTargetExecState(@PathVariable Long flowId, @PathVariable String state, @PathVariable Long id) {
+    public OperationStatusRest flowInstanceTargetExecState(@PathVariable Long flowId, @PathVariable String state, @PathVariable Long id) {
         FlowInstanceExecState execState = FlowInstanceExecState.valueOf(state.toUpperCase());
         if (execState== FlowInstanceExecState.UNKNOWN) {
-            return new FlowData.OperationStatusRest(OperationStatus.ERROR, "#560.87 Unknown exec state, state: " + state);
+            return new OperationStatusRest(OperationStatus.ERROR, "#560.87 Unknown exec state, state: " + state);
         }
         //noinspection UnnecessaryLocalVariable
-        FlowData.OperationStatusRest status = flowService.flowInstanceTargetExecState(flowId, id, execState);
+        OperationStatusRest status = flowService.flowInstanceTargetExecState(flowId, id, execState);
         return status;
     }
 

@@ -389,7 +389,7 @@ public class ExperimentService {
         return true;
     }
 
-    public Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
+    Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
         ExperimentsController.TasksResult result = new ExperimentsController.TasksResult();
 
         result.items = taskRepository.findPredictTasks(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
@@ -447,7 +447,7 @@ public class ExperimentService {
         return map;
     }
 
-    public static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed) {
+    private static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed) {
         List<ExperimentHyperParams> params = new ArrayList<>();
         ExperimentHyperParams p1 = new ExperimentHyperParams();
         p1.setKey(Consts.SEED);
@@ -480,6 +480,7 @@ public class ExperimentService {
         e.setFeatureProduced(false);
         e.setAllTaskProduced(false);
         e.setNumberOfTask(0);
+        //noinspection UnusedAssignment
         e = experimentCache.save(e);
     }
 
@@ -493,7 +494,7 @@ public class ExperimentService {
         }
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-        snippetService.sortSnippetsByType(experimentSnippets);
+        SnippetService.sortSnippetsByType(experimentSnippets);
 
         final Map<String, String> map = toMap(experiment.getHyperParams(), experiment.getSeed());
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
@@ -538,7 +539,7 @@ public class ExperimentService {
                 for (HyperParams hyperParams : allHyperParams) {
 
                     int orderAdd = 0;
-                    Task prevTask = null;
+                    Task prevTask;
                     Task task = null;
                     for (ExperimentSnippet experimentSnippet : experimentSnippets) {
                         if (boolHolder.value) {
@@ -674,6 +675,7 @@ public class ExperimentService {
             }
             experimentTemp.setNumberOfTask(totalVariants);
             experimentTemp.setAllTaskProduced(true);
+            //noinspection UnusedAssignment
             experimentTemp = experimentCache.save(experimentTemp);
         }
         return Enums.FlowProducingStatus.OK;
@@ -731,14 +733,4 @@ public class ExperimentService {
             experimentCache.save(e);
         }
     }
-
-    private boolean isExist(List<ExperimentFeature> features, String f) {
-        for (ExperimentFeature feature : features) {
-            if (feature.getResourceCodes().equals(f)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
 }

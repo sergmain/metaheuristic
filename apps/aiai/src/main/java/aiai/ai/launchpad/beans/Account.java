@@ -98,4 +98,8 @@ public class Account implements UserDetails {
         }
         return authList;
     }
+
+    public String getLogin() {
+        return username + '=' + token;
+    }
 }

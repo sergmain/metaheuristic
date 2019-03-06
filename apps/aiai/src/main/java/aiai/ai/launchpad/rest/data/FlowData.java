@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.flow;
+package aiai.ai.launchpad.rest.data;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Flow;
@@ -26,34 +26,9 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class FlowData {
-
-    public static final OperationStatusRest OPERATION_STATUS_OK = new OperationStatusRest(Enums.OperationStatus.OK);
-
-    @Data
-    public static class BaseClassRest {
-        public String errorMessage;
-        public List<String> infoMessages;
-    }
-
-    @Data
-    @EqualsAndHashCode(callSuper = false)
-    @NoArgsConstructor
-    public static class OperationStatusRest extends BaseClassRest {
-        public Enums.OperationStatus status;
-
-        public OperationStatusRest(Enums.OperationStatus status) {
-            this.status = status;
-        }
-
-        public OperationStatusRest(Enums.OperationStatus status, String errorMessage) {
-            this.status = status;
-            this.errorMessage = errorMessage;
-        }
-    }
 
     @Data
     @EqualsAndHashCode(callSuper = false)

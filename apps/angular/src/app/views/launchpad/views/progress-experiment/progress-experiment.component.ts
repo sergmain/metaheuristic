@@ -13,7 +13,7 @@ import { PlotComponent } from 'angular-plotly.js';
 export class ProgressExperimentComponent implements OnInit {
 
     @ViewChild(PlotComponent)
-    plotly: PlotComponent
+    plotly: PlotComponent;
 
 
 

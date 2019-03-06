@@ -22,6 +22,8 @@ import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.repositories.*;
+import aiai.ai.launchpad.rest.data.FlowData;
+import aiai.ai.launchpad.rest.data.OperationStatusRest;
 import aiai.ai.utils.ControllerUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -306,12 +308,15 @@ public class FlowController {
 
     @SuppressWarnings("Duplicates")
     @GetMapping("/flow-instance-delete/{flowId}/{flowInstanceId}")
-    public String flowInstanceDelete(@PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
+    public String flowInstanceDelete(Model model, @PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
         FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
         if (result.errorMessage != null) {
             redirectAttributes.addFlashAttribute("errorMessage",result.errorMessage);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
+        FlowController.FlowInstanceResult r = new FlowController.FlowInstanceResult(result.flowInstance, result.flow);
+        model.addAttribute("result", r);
+
         return "launchpad/flow/flow-instance-delete";
     }
 
@@ -341,7 +346,7 @@ public class FlowController {
                     "#560.87 Unknown exec state, state: " + state);
             return "redirect:/launchpad/flow/flow-instances/" + flowId;
         }
-        FlowData.OperationStatusRest status = flowService.flowInstanceTargetExecState(flowId, id, execState);
+        OperationStatusRest status = flowService.flowInstanceTargetExecState(flowId, id, execState);
         if (status.errorMessage != null) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessage);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;

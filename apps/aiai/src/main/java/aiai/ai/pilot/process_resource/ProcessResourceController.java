@@ -25,12 +25,13 @@ import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.flow.FlowCache;
-import aiai.ai.launchpad.flow.FlowData;
+import aiai.ai.launchpad.rest.data.FlowData;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.launchpad_resource.ResourceService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.launchpad.rest.data.OperationStatusRest;
 import aiai.ai.launchpad.server.ServerService;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
@@ -283,7 +284,7 @@ public class ProcessResourceController {
         flowService.changeValidStatus(producingResult.flowInstance, true);
 
         // start producing new tasks
-        FlowData.OperationStatusRest operationStatus = flowService.flowInstanceTargetExecState(
+        OperationStatusRest operationStatus = flowService.flowInstanceTargetExecState(
                 flow.getId(), producingResult.flowInstance.getId(), Enums.FlowInstanceExecState.PRODUCING);
 
         if (operationStatus.errorMessage != null) {

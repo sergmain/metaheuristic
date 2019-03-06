@@ -36,6 +36,8 @@ import aiai.ai.launchpad.repositories.ExperimentTaskFeatureRepository;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.launchpad.rest.data.FlowData;
+import aiai.ai.launchpad.rest.data.OperationStatusRest;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
@@ -201,11 +203,11 @@ public class FlowService {
         return flowValidation;
     }
 
-    public FlowData.OperationStatusRest flowInstanceTargetExecState(
+    public OperationStatusRest flowInstanceTargetExecState(
             Long flowId, Long id, Enums.FlowInstanceExecState execState) {
         FlowData.FlowInstanceResultRest result = prepareModel(flowId, id);
         if (result.errorMessage != null) {
-            return new FlowData.OperationStatusRest(Enums.OperationStatus.ERROR, result.errorMessage);
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, result.errorMessage);
         }
 
         if (result.flow==null || result.flowInstance==null) {
@@ -217,7 +219,7 @@ public class FlowService {
 
         result.flow.locked = true;
         flowCache.save(result.flow);
-        return FlowData.OPERATION_STATUS_OK;
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public FlowData.FlowInstancesResultRest getFlowInstancesResult(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {

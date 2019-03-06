@@ -110,6 +110,32 @@ public class MultiHttpSecurityConfig {
     }
 
     @Configuration
+    @Order(3)
+    public class AngularSecurityConfig extends WebSecurityConfigurerAdapter {
+
+        final CsrfTokenRepository csrfTokenRepository;
+
+        @Autowired
+        public AngularSecurityConfig(CsrfTokenRepository csrfTokenRepository) {
+            this.csrfTokenRepository = csrfTokenRepository;
+        }
+
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            http
+                    .csrf().csrfTokenRepository(csrfTokenRepository)
+//                    .csrf().disable()
+                    .and()
+                    .authorizeRequests()
+                    .antMatchers("/ng/login").permitAll()
+                    .and()
+                    .antMatcher("/ng/**").authorizeRequests().anyRequest().authenticated()
+                    .and()
+                    .httpBasic();
+        }
+    }
+
+    @Configuration
     @Order
     public static class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
