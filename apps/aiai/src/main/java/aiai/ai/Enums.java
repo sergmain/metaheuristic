@@ -188,6 +188,8 @@ public final class Enums {
     }
 
     public enum FlowValidateStatus { OK, NOT_VERIFIED_YET,
+        FLOW_NOT_FOUND_ERROR,
+        FLOW_INSTANCE_NOT_FOUND_ERROR,
         YAML_PARSING_ERROR,
         ALREADY_PRODUCED_ERROR,
         NOT_VALIDATED_YET_ERROR,

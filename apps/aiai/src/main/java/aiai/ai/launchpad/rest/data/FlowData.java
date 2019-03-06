@@ -43,6 +43,11 @@ public class FlowData {
         public Flow flow;
         public Enums.FlowValidateStatus status = Enums.FlowValidateStatus.NOT_VERIFIED_YET;
 
+        public FlowResultRest(String errorMessage, Enums.FlowValidateStatus status) {
+            this.status = status;
+            this.errorMessage = errorMessage;
+        }
+
         public FlowResultRest(String errorMessage) {
             this.errorMessage = errorMessage;
         }

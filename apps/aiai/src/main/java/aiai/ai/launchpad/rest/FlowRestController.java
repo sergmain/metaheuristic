@@ -70,7 +70,9 @@ public class FlowRestController {
     public FlowData.FlowResultRest edit(@PathVariable Long id) {
         final Flow flow = flowCache.findById(id);
         if (flow == null) {
-            return new FlowData.FlowResultRest("#560.01 flow wasn't found, flowId: " + id);
+            return new FlowData.FlowResultRest(
+                    "#560.01 flow wasn't found, flowId: " + id,
+                    FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
         }
         return new FlowData.FlowResultRest(flow);
     }
@@ -79,7 +81,8 @@ public class FlowRestController {
     public FlowData.FlowResultRest validate(@PathVariable Long id) {
         final Flow flow = flowCache.findById(id);
         if (flow == null) {
-            return new FlowData.FlowResultRest("#560.02 flow wasn't found, flowId: " + id);
+            return new FlowData.FlowResultRest("#560.02 flow wasn't found, flowId: " + id,
+                    FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
         }
         FlowData.FlowResultRest result = new FlowData.FlowResultRest(flow);
         FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
@@ -98,7 +101,9 @@ public class FlowRestController {
     public FlowData.FlowResultRest editFormCommit(Flow flowModel) {
         Flow flow = flowCache.findById(flowModel.getId());
         if (flow == null) {
-            return new FlowData.FlowResultRest("#560.10 flow wasn't found, flowId: " + flowModel.getId());
+            return new FlowData.FlowResultRest(
+                    "#560.10 flow wasn't found, flowId: " + flowModel.getId(),
+                    FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
         }
         flow.setCode(flowModel.getCode());
         flow.setParams(flowModel.getParams());
@@ -127,7 +132,8 @@ public class FlowRestController {
     public OperationStatusRest deleteCommit(Long id) {
         Flow flow = flowCache.findById(id);
         if (flow == null) {
-            return new OperationStatusRest(OperationStatus.ERROR, "#560.50 flow wasn't found, flowId: " + id);
+            return new OperationStatusRest(OperationStatus.ERROR,
+                    "#560.50 flow wasn't found, flowId: " + id);
         }
         flowCache.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
