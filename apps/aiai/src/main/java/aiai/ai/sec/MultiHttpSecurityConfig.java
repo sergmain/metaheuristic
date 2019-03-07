@@ -123,9 +123,9 @@ public class MultiHttpSecurityConfig {
         @Override
         protected void configure(HttpSecurity http) throws Exception {
             http
-                    .csrf().csrfTokenRepository(csrfTokenRepository)
-//                    .csrf().disable()
-                    .and()
+//                    .csrf().csrfTokenRepository(csrfTokenRepository)
+//                    .and()
+                    .csrf().disable()
                     .authorizeRequests()
                     .antMatchers("/ng/login").permitAll()
                     .and()
