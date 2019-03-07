@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve --open",
     "build": "ng build",
+    "run": "npm run start",
     "b2": "ng build --baseHref=/aiai-app/ --prod=true",
     "test": "ng test",
     "lint": "ng lint",
@@ -13,7 +14,7 @@
   },
   "private": true,
   "dependencies": {
-    "@angular/animations": "^7.2.4",
+    "@angular/animations": "7.2.4",
     "@angular/cdk": "7.3.2",
     "@angular/common": "7.2.4",
     "@angular/compiler": "7.2.4",

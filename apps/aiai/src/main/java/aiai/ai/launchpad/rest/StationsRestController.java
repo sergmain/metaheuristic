@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/ng/launchpad")
 @Profile("launchpad")
+@CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
 public class StationsRestController {
 

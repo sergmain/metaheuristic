@@ -34,6 +34,7 @@ import java.util.Collection;
 @RequestMapping("/ng")
 @Slf4j
 @Profile("launchpad")
+@CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
 public class AuthRestController {
 

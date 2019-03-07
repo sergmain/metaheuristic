@@ -40,6 +40,7 @@ import static aiai.ai.Enums.*;
 @RequestMapping("/ng/launchpad/flow")
 @Slf4j
 @Profile("launchpad")
+@CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
 public class FlowRestController {
 
