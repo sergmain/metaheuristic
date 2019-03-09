@@ -360,10 +360,6 @@ public class ExperimentsController {
         }
     }
 
-    public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
-        snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
-    }
-
     @PostMapping("/experiment-metadata-add-commit/{id}")
     public String metadataAddCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(id);
@@ -453,7 +449,7 @@ public class ExperimentsController {
         List<ExperimentSnippet> list = new ArrayList<>(experimentSnippets);
         list.add(ts);
 
-        sortSnippetsByType(list);
+        ExperimentService.sortSnippetsByType(list);
 
         experimentSnippetRepository.saveAll(list);
         return "redirect:/launchpad/experiment-edit/"+id;

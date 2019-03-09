@@ -188,6 +188,10 @@ public class ExperimentService {
         return true;
     }
 
+    public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
+        snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
+    }
+
     public PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
         Experiment experiment= experimentCache.findById(experimentId);
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);

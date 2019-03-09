@@ -17,7 +17,7 @@
 package aiai.ai.core;
 
 import aiai.ai.launchpad.beans.ExperimentSnippet;
-import aiai.ai.launchpad.experiment.ExperimentsController;
+import aiai.ai.launchpad.experiment.ExperimentService;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class TestSnippetSorting {
         Collections.addAll(snippets, s1, s2);
         assertEquals("predict", snippets.get(0).type);
         assertEquals("fit", snippets.get(1).type);
-        ExperimentsController.sortSnippetsByType(snippets);
+        ExperimentService.sortSnippetsByType(snippets);
         assertEquals("fit", snippets.get(0).type);
         assertEquals("predict", snippets.get(1).type);
     }

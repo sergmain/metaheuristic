@@ -26,6 +26,7 @@ import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.rest.data.ExperimentData;
+import aiai.ai.launchpad.rest.data.OperationStatusRest;
 import aiai.ai.launchpad.rest.data.SnippetData;
 import aiai.ai.launchpad.rest.data.TasksData;
 import aiai.ai.launchpad.snippet.SnippetCache;
@@ -33,7 +34,6 @@ import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
-import aiai.ai.utils.SimpleSelectOption;
 import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -256,68 +256,49 @@ public class ExperimentRestController {
     }
 
     @PostMapping("/experiment-add-form-commit")
-    public String addFormCommit(Model model, Experiment experiment, final RedirectAttributes redirectAttributes) {
-        return processCommit(model, experiment,  "launchpad/experiment-add-form", "redirect:/launchpad/experiments", false, redirectAttributes);
+    public OperationStatusRest addFormCommit(Experiment experiment) {
+        return processCommit(experiment);
     }
 
     @PostMapping("/experiment-edit-form-commit")
-    public String editFormCommit(Model model, SimpleExperiment simpleExperiment, final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest editFormCommit(SimpleExperiment simpleExperiment) {
         Experiment experiment = experimentCache.findById(simpleExperiment.id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.23 experiment wasn't found, experimentId: " + simpleExperiment.id);
-            return "redirect:/launchpad/experiments";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.23 experiment wasn't found, experimentId: " + simpleExperiment.id);
         }
         experiment.setName(simpleExperiment.getName());
         experiment.setDescription(simpleExperiment.getDescription());
         experiment.setSeed(simpleExperiment.getSeed());
         experiment.setCode(simpleExperiment.getCode());
         experiment.setCreatedOn(System.currentTimeMillis());
-        String target = "redirect:/launchpad/experiment-edit/" + experiment.getId();
-        return processCommit(model, experiment, target, target, true, redirectAttributes);
+
+        return processCommit(experiment);
     }
 
-    private String processCommit(Model model, Experiment experiment,
-                                 String errorTarget, String normalTarget,
-                                 boolean isErrorWithRedirect, final RedirectAttributes redirectAttributes) {
+    private OperationStatusRest processCommit(Experiment experiment) {
         if (StringUtils.isBlank(experiment.getName())) {
-            prepareErrorMessage(model, "#280.27 Name of experiment is blank.", isErrorWithRedirect, redirectAttributes);
-            return errorTarget;
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#280.27 Name of experiment is blank.");
         }
         if (StringUtils.isBlank(experiment.getCode())) {
-            prepareErrorMessage(model, "#280.31 Code of experiment is blank.", isErrorWithRedirect, redirectAttributes);
-            return errorTarget;
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.31 Code of experiment is blank.");
         }
         if (StringUtils.isBlank(experiment.getDescription())) {
-            prepareErrorMessage(model, "#280.35 Description of experiment is blank.", isErrorWithRedirect, redirectAttributes);
-            return errorTarget;
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.35 Description of experiment is blank.");
         }
         experiment.strip();
         experimentCache.save(experiment);
-        return normalTarget;
-    }
 
-    private void prepareErrorMessage(Model model, String msg, boolean isErrorWithRedirect, final RedirectAttributes redirectAttributes) {
-        if (isErrorWithRedirect) {
-            redirectAttributes.addFlashAttribute("errorMessage", msg);
-        }
-        else {
-            model.addAttribute("errorMessage", msg);
-        }
-    }
-
-    public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
-        snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @PostMapping("/experiment-metadata-add-commit/{id}")
-    public String metadataAddCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest metadataAddCommit(@PathVariable Long id, String key, String value) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return "redirect:/launchpad/experiments";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment not found");
         }
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.42 hyper param's key and value must not be null, key: "+key+", value: " + value );
-            return "redirect:/launchpad/experiment-edit/"+id;
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.42 hyper param's key and value must not be null, key: "+key+", value: " + value );
         }
         if (experiment.getHyperParams()==null) {
             experiment.setHyperParams(new ArrayList<>());
@@ -325,8 +306,7 @@ public class ExperimentRestController {
         String keyFinal = key.trim();
         boolean isExist = experiment.getHyperParams().stream().map(ExperimentHyperParams::getKey).anyMatch(keyFinal::equals);
         if (isExist) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.45 hyper parameter "+key+" already exist");
-            return "redirect:/launchpad/experiment-edit/"+id;
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.45 hyper parameter "+key+" already exist");
         }
 
         ExperimentHyperParams m = new ExperimentHyperParams();
@@ -334,21 +314,19 @@ public class ExperimentRestController {
         m.setKey(keyFinal);
         m.setValues(value.trim());
         experiment.getHyperParams().add(m);
-
         experimentCache.save(experiment);
-        return "redirect:/launchpad/experiment-edit/"+id;
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @PostMapping("/experiment-metadata-edit-commit/{id}")
-    public String metadataEditCommit(@PathVariable Long id, String key, String value, final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest metadataEditCommit(@PathVariable Long id, String key, String value) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.47 experiment wasn't found, id: "+id );
-            return "redirect:/launchpad/experiments";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.47 experiment wasn't found, id: "+id );
         }
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.51 hyper param's key and value must not be null, key: "+key+", value: " + value );
-            return "redirect:/launchpad/experiment-edit/"+id;
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.51 hyper param's key and value must not be null, key: "+key+", value: " + value );
         }
         if (experiment.getHyperParams()==null) {
             experiment.setHyperParams(new ArrayList<>());
@@ -370,23 +348,21 @@ public class ExperimentRestController {
         m.setValues(value.trim());
 
         experimentCache.save(experiment);
-        return "redirect:/launchpad/experiment-edit/"+id;
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @PostMapping("/experiment-snippet-add-commit/{id}")
-    public String snippetAddCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest snippetAddCommit(@PathVariable Long id, String code, final RedirectAttributes redirectAttributes) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.54 experiment wasn't found, id: "+id );
-            return "redirect:/launchpad/experiments";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.54 experiment wasn't found, id: "+id );
         }
         Long experimentId = experiment.getId();
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experimentId);
 
         SnippetVersion version = SnippetVersion.from(code);
         if (version==null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.57 wrong format of snippet code: "+code);
-            return "redirect:/launchpad/experiments";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.57 wrong format of snippet code: "+code);
         }
         Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
 
@@ -398,30 +374,28 @@ public class ExperimentRestController {
         List<ExperimentSnippet> list = new ArrayList<>(experimentSnippets);
         list.add(ts);
 
-        sortSnippetsByType(list);
-
+        ExperimentService.sortSnippetsByType(list);
         experimentSnippetRepository.saveAll(list);
-        return "redirect:/launchpad/experiment-edit/"+id;
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{id}")
-    public String metadataDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest metadataDeleteCommit(@PathVariable long experimentId, @PathVariable Long id) {
         ExperimentHyperParams hyperParams = experimentHyperParamsRepository.findById(id).orElse(null);
         if (hyperParams == null || experimentId != hyperParams.getExperiment().getId()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.61 Hyper parameters misconfigured, try again.");
-            return "redirect:/launchpad/experiment-edit/" + experimentId;
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.61 Hyper parameters misconfigured, try again.");
         }
         experimentHyperParamsRepository.deleteById(id);
         experimentCache.invalidate(experimentId);
-        return "redirect:/launchpad/experiment-edit/"+experimentId;
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @GetMapping("/experiment-metadata-default-add-commit/{experimentId}")
-    public String metadataDefaultAddCommit(@PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest metadataDefaultAddCommit(@PathVariable long experimentId) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.63 experiment wasn't found, id: "+experimentId );
-            return "redirect:/launchpad/experiments";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.63 experiment wasn't found, id: "+experimentId );
         }
         if (experiment.getHyperParams()==null) {
             experiment.setHyperParams(new ArrayList<>());
@@ -434,9 +408,9 @@ public class ExperimentRestController {
         add(experiment, "batch_size", "[20, 40, 60]");
         add(experiment, "time_steps", "[5, 40, 60]");
         add(experiment, "metrics_functions", "['#in_top_draw_digit, accuracy', 'accuracy']");
-
         experimentCache.save(experiment);
-        return "redirect:/launchpad/experiment-edit/"+experimentId;
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     private void add(Experiment experiment, String key, String value) {
@@ -460,46 +434,42 @@ public class ExperimentRestController {
     }
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{id}")
-    public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest snippetDeleteCommit(@PathVariable long experimentId, @PathVariable Long id) {
         ExperimentSnippet snippet = experimentSnippetRepository.findById(id).orElse(null);
         if (snippet == null || experimentId != snippet.getExperimentId()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.66 Snippet is misconfigured. Try again" );
-            return "redirect:/launchpad/experiment-edit/" + experimentId;
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.66 Snippet is misconfigured. Try again" );
         }
         experimentSnippetRepository.deleteById(id);
-        return "redirect:/launchpad/experiment-edit/"+experimentId;
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    @GetMapping("/experiment-delete/{id}")
-    public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
+    @GetMapping("/experiment/{id}")
+    public ExperimentData.ExperimentResultRest getExperiment(@PathVariable Long id) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.69 experiment wasn't found, id: "+id );
-            return "redirect:/launchpad/experiments";
+            return new ExperimentData.ExperimentResultRest("#280.69 experiment wasn't found, id: "+id );
         }
-        model.addAttribute("experiment", experiment);
-        return "launchpad/experiment-delete";
+        return new ExperimentData.ExperimentResultRest(experiment);
     }
 
     @PostMapping("/experiment-delete-commit")
-    public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest deleteCommit(Long id) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.71 experiment wasn't found, experimentId: " + id);
-            return "redirect:/launchpad/experiments";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#280.71 experiment wasn't found, experimentId: " + id);
         }
         experimentSnippetRepository.deleteByExperimentId(id);
         experimentFeatureRepository.deleteByExperimentId(id);
         experimentCache.deleteById(id);
-        return "redirect:/launchpad/experiments";
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @PostMapping("/experiment-clone-commit")
-    public String experimentCloneCommit(Long id, final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest experimentCloneCommit(Long id) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.73 experiment wasn't found, experimentId: " + id);
-            return "redirect:/launchpad/experiments";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#280.73 experiment wasn't found, experimentId: " + id);
         }
         final Experiment e = new Experiment();
         e.setCode(StrUtils.incCopyNumber(experiment.getCode()));
@@ -515,27 +485,27 @@ public class ExperimentRestController {
         experimentCache.save(e);
 
         List<ExperimentSnippet> snippets = experimentSnippetRepository.findByExperimentId(experiment.getId());
-
         experimentSnippetRepository.saveAll( snippets.stream().map(s -> new ExperimentSnippet(s.getSnippetCode(), s.getType(), e.getId())).collect(Collectors.toList()));
 
-        return "redirect:/launchpad/experiments";
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     @PostMapping("/task-rerun/{taskId}")
-    public @ResponseBody boolean rerunTask(@PathVariable long taskId) {
+    public @ResponseBody OperationStatusRest rerunTask(@PathVariable long taskId) {
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
-            log.warn("#280.75 Can't re-run task {}, task with such taskId wasn't found", taskId);
-            return false;
+            String es = "#280.75 Can't re-run task "+taskId+", task with such taskId wasn't found";
+            log.warn(es);
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, es);
         }
         FlowInstance flowInstance = flowInstanceRepository.findById(task.getFlowInstanceId()).orElse(null);
         if (flowInstance == null) {
-            log.warn("#270.84 Can't re-run task {}, this task is orphan and doesn't belong to any flowInstance", taskId);
-            return false;
+            String es = "#270.84 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any flowInstance";
+            log.warn(es);
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, es);
         }
-
         Task t = taskPersistencer.resetTask(taskId);
-        return t!=null;
+        return new OperationStatusRest(t!=null ? Enums.OperationStatus.OK : Enums.OperationStatus.ERROR, null);
     }
 
 }
