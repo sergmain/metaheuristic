@@ -17,18 +17,23 @@
 
 package aiai.ai.launchpad.rest.data;
 
-import lombok.AllArgsConstructor;
+import aiai.ai.launchpad.beans.ExperimentSnippet;
+import aiai.ai.utils.SimpleSelectOption;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.List;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserData {
-    public String username;
-    public String publicName;
-    public Collection<GrantedAuthority> authorities;
+public class SnippetData {
+
+    @Data
+    public static class SnippetResult {
+        public List<SimpleSelectOption> selectOptions = new ArrayList<>();
+        public List<ExperimentSnippet> snippets = new ArrayList<>();
+
+        public void sortSnippetsByOrder() {
+//            snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
+        }
+    }
+
 }

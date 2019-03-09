@@ -22,7 +22,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class BaseClassRest {
+public class BaseDataClass {
     public String errorMessage;
     public List<String> infoMessages;
 }

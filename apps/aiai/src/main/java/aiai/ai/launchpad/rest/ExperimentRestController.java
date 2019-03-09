@@ -15,14 +15,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.experiment;
+package aiai.ai.launchpad.rest;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
-import aiai.ai.launchpad.experiment.task.TaskWIthType;
+import aiai.ai.launchpad.experiment.ExperimentCache;
+import aiai.ai.launchpad.experiment.ExperimentService;
+import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.repositories.*;
+import aiai.ai.launchpad.rest.data.ExperimentData;
+import aiai.ai.launchpad.rest.data.SnippetData;
+import aiai.ai.launchpad.rest.data.TasksData;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
@@ -42,7 +47,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -50,62 +54,18 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/**
- * User: Serg
- * Date: 12.06.2017
- * Time: 20:22
- */
-@Controller
-@RequestMapping("/launchpad")
+@SuppressWarnings("Duplicates")
+@RestController
+@RequestMapping("/ng/launchpad/experiment")
 @Slf4j
 @Profile("launchpad")
-public class ExperimentsController {
+@CrossOrigin
+//@CrossOrigin(origins="*", maxAge=3600)
+public class ExperimentRestController {
 
-    private final Globals globals;
-
-    private final SnippetRepository snippetRepository;
-
-    private final SnippetService snippetService;
-    private final ExperimentRepository experimentRepository;
     @Data
     public static class Result {
         public Slice<Experiment> items;
-    }
-
-    @Data
-    public static class TasksResult {
-        public Slice<TaskWIthType> items;
-    }
-
-    @Data
-    public static class ConsoleResult {
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class SimpleConsoleOutput {
-            public int exitCode;
-            public boolean isOk;
-            public String console;
-        }
-        public final List<SimpleConsoleOutput> items = new ArrayList<>();
-    }
-
-    @Data
-    public static class SnippetResult {
-        public List<SimpleSelectOption> selectOptions = new ArrayList<>();
-        public List<ExperimentSnippet> snippets = new ArrayList<>();
-
-        public void sortSnippetsByOrder() {
-//            snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
-        }
-    }
-
-    @Data
-    public static class ExperimentResult {
-        public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
-        public List<ExperimentFeature> features;
-        public FlowInstance flowInstance;
-        public Enums.FlowInstanceExecState flowInstanceExecState;
     }
 
     @Data
@@ -122,17 +82,21 @@ public class ExperimentsController {
             return new SimpleExperiment(e.getName(), e.getDescription(), e.getCode(), e.getSeed(), e.getId());
         }
     }
+
+    private final Globals globals;
+    private final SnippetRepository snippetRepository;
+    private final SnippetService snippetService;
+    private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
     private final ExperimentService experimentService;
     private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
     private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final TaskRepository taskRepository;
-    private final SnippetCache snippetCache;
     private final FlowInstanceRepository flowInstanceRepository;
     private final TaskPersistencer taskPersistencer;
 
-    public ExperimentsController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentCache experimentCache, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, SnippetCache snippetCache, FlowInstanceRepository flowInstanceRepository, TaskPersistencer taskPersistencer) {
+    public ExperimentRestController(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentCache experimentCache, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, SnippetCache snippetCache, FlowInstanceRepository flowInstanceRepository, TaskPersistencer taskPersistencer) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
         this.experimentRepository = experimentRepository;
@@ -143,25 +107,14 @@ public class ExperimentsController {
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.taskRepository = taskRepository;
-        this.snippetCache = snippetCache;
         this.flowInstanceRepository = flowInstanceRepository;
         this.taskPersistencer = taskPersistencer;
     }
 
     @GetMapping("/experiments")
-    public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
+    public ExperimentData.ExperimentsResultRest init(@PageableDefault(size = 5) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.experimentRowsLimit, pageable);
-//        result.items = experimentRepository.findAll(pageable);
-        result.items = experimentRepository.findAllByOrderByIdDesc(pageable);
-        return "launchpad/experiments";
-    }
-
-    // for AJAX
-    @PostMapping("/experiments-part")
-    public String getExperiments(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.experimentRowsLimit, pageable);
-        result.items = experimentRepository.findAll(pageable);
-        return "launchpad/experiments :: table";
+        return new ExperimentData.ExperimentsResultRest(experimentRepository.findAllByOrderByIdDesc(pageable));
     }
 
     @PostMapping("/experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
@@ -172,38 +125,39 @@ public class ExperimentsController {
     }
 
     @PostMapping("/experiment-feature-progress-console-part/{taskId}")
-    public String getTasksConsolePart(Model model, @PathVariable(name="taskId") Long taskId) {
-        ConsoleResult result = new ConsoleResult();
+    public ExperimentData.ConsoleResult getTasksConsolePart(@PathVariable(name="taskId") Long taskId) {
+        ExperimentData.ConsoleResult result = new ExperimentData.ConsoleResult();
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task!=null) {
             SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
             if (snippetExec!=null) {
                 final ExecProcessService.Result execResult = snippetExec.getExec();
-                result.items.add(new ConsoleResult.SimpleConsoleOutput(execResult.exitCode, execResult.isOk, execResult.console));
+                result.items.add(new ExperimentData.ConsoleResult.SimpleConsoleOutput(execResult.exitCode, execResult.isOk, execResult.console));
             }
             else {
-
+                log.warn("snippetExec is null for tasId {}", taskId);
             }
         }
-        model.addAttribute("consoleResult", result);
-
-        return "launchpad/experiment-feature-progress :: fragment-console-table";
+        return result;
     }
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
-    public String getFeatureProgressPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
+    public ExperimentData.ExperimentFeatureProgressRest getFeatureProgressPart(
+            @PathVariable Long experimentId, @PathVariable Long featureId,
+            @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
         Experiment experiment= experimentCache.findById(experimentId);
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
 
-        TasksResult result = new TasksResult();
+        ExperimentData.ExperimentFeatureProgressRest data = new ExperimentData.ExperimentFeatureProgressRest();
+        TasksData.TasksResultRest result = new TasksData.TasksResultRest();
         result.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
-        model.addAttribute("result", result);
-        model.addAttribute("experiment", experiment);
-        model.addAttribute("feature", feature);
-        model.addAttribute("consoleResult", new ConsoleResult());
+        data.tasksResult = result;
+        data.experiment = experiment;
+        data.experimentFeature = feature;
+        data.consoleResult = new ExperimentData.ConsoleResult();
 
-        return "launchpad/experiment-feature-progress :: fragment-table";
+        return data;
     }
 
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
@@ -226,29 +180,19 @@ public class ExperimentsController {
         return "launchpad/experiment-feature-progress";
     }
 
-
-    @GetMapping(value = "/experiment-add")
-    public String add(@ModelAttribute("experiment") Experiment experiment) {
-        experiment.setSeed(1);
-        return "launchpad/experiment-add-form";
-    }
-
     @GetMapping(value = "/experiment-info/{id}")
-    public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
+    public ExperimentData.ExperimentFeatureProgressRest info(@PathVariable Long id) {
 
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.09 experiment wasn't found, experimentId: " + id);
-            return "redirect:/launchpad/experiments";
+            return new ExperimentData.ExperimentFeatureProgressRest("#280.09 experiment wasn't found, experimentId: " + id);
         }
         if (experiment.getFlowInstanceId() == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.12 experiment wasn't startet yet, experimentId: " + id);
-            return "redirect:/launchpad/experiments";
+            return new ExperimentData.ExperimentFeatureProgressRest("#280.12 experiment wasn't startet yet, experimentId: " + id);
         }
         FlowInstance flowInstance = flowInstanceRepository.findById(experiment.getFlowInstanceId()).orElse(null);
         if (flowInstance == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#280.16 experiment has broken ref to flowInstance, experimentId: " + id);
-            return "redirect:/launchpad/experiments";
+            return new ExperimentData.ExperimentFeatureProgressRest("#280.16 experiment has broken ref to flowInstance, experimentId: " + id);
         }
 
         for (ExperimentHyperParams hyperParams : experiment.getHyperParams()) {
@@ -258,18 +202,19 @@ public class ExperimentsController {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParams.getValues());
             hyperParams.setVariants( variants.status ?variants.count : 0 );
         }
+        ExperimentData.ExperimentFeatureProgressRest experimentInfoRest = new ExperimentData.ExperimentFeatureProgressRest();
         if (experiment.getFlowInstanceId()==null) {
-            model.addAttribute("infoMessages", Collections.singletonList("Launch is disabled, dataset isn't assigned"));
+            experimentInfoRest.infoMessages = Collections.singletonList("Launch is disabled, dataset isn't assigned");
         }
 
-        ExperimentResult experimentResult = new ExperimentResult();
+        ExperimentData.ExperimentResult experimentResult = new ExperimentData.ExperimentResult();
         experimentResult.features = experimentFeatureRepository.findByExperimentIdOrderByMaxValueDesc(experiment.getId());
         experimentResult.flowInstance = flowInstance;
         experimentResult.flowInstanceExecState = Enums.FlowInstanceExecState.toState(flowInstance.execState);
 
-        model.addAttribute("experiment", experiment);
-        model.addAttribute("experimentResult", experimentResult);
-        return "launchpad/experiment-info";
+        experimentInfoRest.experiment = experiment;
+        experimentInfoRest.experimentResult = experimentResult;
+        return experimentInfoRest;
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
@@ -280,7 +225,7 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiments";
         }
         Iterable<Snippet> snippets = snippetRepository.findAll();
-        SnippetResult snippetResult = new SnippetResult();
+        SnippetData.SnippetResult snippetResult = new SnippetData.SnippetResult();
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
         snippetResult.snippets = experimentSnippets;
@@ -300,7 +245,7 @@ public class ExperimentsController {
                     else return false;
                 });
 
-        ExperimentResult experimentResult = new ExperimentResult();
+        ExperimentData.ExperimentResult experimentResult = new ExperimentData.ExperimentResult();
 
         snippetResult.sortSnippetsByOrder();
         model.addAttribute("experiment", experiment);
@@ -592,4 +537,5 @@ public class ExperimentsController {
         Task t = taskPersistencer.resetTask(taskId);
         return t!=null;
     }
+
 }

@@ -188,6 +188,15 @@ public class ExperimentService {
         return true;
     }
 
+    public PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
+        Experiment experiment= experimentCache.findById(experimentId);
+        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
+
+        //noinspection UnnecessaryLocalVariable
+        ExperimentService.PlotData data = findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
+        return data;
+    }
+
     public void updateMaxValueForExperimentFeatures(Long flowInstanceId) {
         Experiment e = experimentRepository.findByFlowInstanceId(flowInstanceId);
         if (e==null) {
@@ -231,7 +240,7 @@ public class ExperimentService {
         }
     }
 
-    Slice<TaskWIthType> findTasks(Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
+    public Slice<TaskWIthType> findTasks(Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
         if (experiment == null || feature == null) {
             return Page.empty();
         } else {
@@ -255,7 +264,7 @@ public class ExperimentService {
         }
     }
 
-    PlotData findExperimentTaskForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
+    public PlotData findExperimentTaskForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
         if (experiment == null || feature == null) {
             return EMPTY_PLOT_DATA;
         } else {
@@ -389,7 +398,7 @@ public class ExperimentService {
         return true;
     }
 
-    Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
+    public Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
         ExperimentsController.TasksResult result = new ExperimentsController.TasksResult();
 
         result.items = taskRepository.findPredictTasks(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());

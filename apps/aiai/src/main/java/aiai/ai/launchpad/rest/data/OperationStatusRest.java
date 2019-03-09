@@ -24,7 +24,7 @@ import lombok.NoArgsConstructor;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
-public class OperationStatusRest extends BaseClassRest {
+public class OperationStatusRest extends BaseDataClass {
 
     public static final OperationStatusRest OPERATION_STATUS_OK = new OperationStatusRest(Enums.OperationStatus.OK);
     public Enums.OperationStatus status;

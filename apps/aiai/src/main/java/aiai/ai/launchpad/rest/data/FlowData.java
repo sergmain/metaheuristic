@@ -32,14 +32,14 @@ public class FlowData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class FlowsResultRest extends BaseClassRest {
+    public static class FlowsResultRest extends BaseDataClass {
         public Slice<Flow> items;
     }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class FlowResultRest extends BaseClassRest {
+    public static class FlowResultRest extends BaseDataClass {
         public Flow flow;
         public Enums.FlowValidateStatus status = Enums.FlowValidateStatus.NOT_VERIFIED_YET;
 
@@ -59,7 +59,7 @@ public class FlowData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class FlowInstancesResultRest extends BaseClassRest {
+    public static class FlowInstancesResultRest extends BaseDataClass {
         public Slice<FlowInstance> instances;
         public long currentFlowId;
         public Map<Long, Flow> flows = new HashMap<>();
@@ -69,7 +69,7 @@ public class FlowData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class FlowInstanceResultRest extends BaseClassRest {
+    public static class FlowInstanceResultRest extends BaseDataClass {
         public FlowInstance flowInstance;
         public Flow flow;
 
@@ -90,7 +90,7 @@ public class FlowData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class FlowValidation extends BaseClassRest{
+    public static class FlowValidation extends BaseDataClass {
         public Enums.FlowValidateStatus status;
     }
 }

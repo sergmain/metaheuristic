@@ -15,20 +15,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.rest.data;
+package aiai.ai.launchpad.rest;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Collection;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserData {
-    public String username;
-    public String publicName;
-    public Collection<GrantedAuthority> authorities;
+@RestController
+@RequestMapping("/ng/launchpad/snippet")
+@Slf4j
+@Profile("launchpad")
+@CrossOrigin
+public class SnippetRestController {
 }

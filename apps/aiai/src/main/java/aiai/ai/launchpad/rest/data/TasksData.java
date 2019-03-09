@@ -17,18 +17,23 @@
 
 package aiai.ai.launchpad.rest.data;
 
+import aiai.ai.launchpad.beans.Experiment;
+import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.data.domain.Slice;
 
-import java.util.Collection;
+public class TasksData {
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserData {
-    public String username;
-    public String publicName;
-    public Collection<GrantedAuthority> authorities;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class TasksResultRest extends BaseDataClass {
+        public Slice<TaskWIthType> items;
+    }
+
+
 }

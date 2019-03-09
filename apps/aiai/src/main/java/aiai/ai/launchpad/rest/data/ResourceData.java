@@ -17,18 +17,37 @@
 
 package aiai.ai.launchpad.rest.data;
 
+import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.launchpad.launchpad_resource.SimpleResource;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
+import org.springframework.data.domain.Slice;
 
-import java.util.Collection;
+public class ResourceData {
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserData {
-    public String username;
-    public String publicName;
-    public Collection<GrantedAuthority> authorities;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class ResourcesResultRest extends BaseDataClass {
+        public Slice<SimpleResource> items;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class ResourceResultRest extends BaseDataClass {
+        public BinaryData data;
+
+        public ResourceResultRest(String errorMessage) {
+            this.errorMessage = errorMessage;
+        }
+
+        public ResourceResultRest(BinaryData data) {
+            this.data = data;
+        }
+    }
+
 }
