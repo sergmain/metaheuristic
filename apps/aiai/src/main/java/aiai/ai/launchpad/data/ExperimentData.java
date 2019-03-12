@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.rest.data;
+package aiai.ai.launchpad.data;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Experiment;
@@ -48,7 +48,7 @@ public class ExperimentData {
         public Experiment experiment;
 
         public ExperimentResultRest(String errorMessage) {
-            this.errorMessage = errorMessage;
+            addErrorMessage(errorMessage);
         }
 
         public ExperimentResultRest(Experiment experiment) {
@@ -64,7 +64,7 @@ public class ExperimentData {
         public ExperimentResult experimentResult;
 
         public ExperimentInfoRest(String errorMessage) {
-            this.errorMessage = errorMessage;
+            addErrorMessage(errorMessage);
         }
 
         public ExperimentInfoRest(Experiment experiment, ExperimentResult experimentResult) {
@@ -105,7 +105,7 @@ public class ExperimentData {
         public ConsoleResult consoleResult;
 
         public ExperimentFeatureProgressRest(String errorMessage) {
-            this.errorMessage = errorMessage;
+            addErrorMessage(errorMessage);
         }
 
         public ExperimentFeatureProgressRest(Experiment experiment, ExperimentResult experimentResult) {

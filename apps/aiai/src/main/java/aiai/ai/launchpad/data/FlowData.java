@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.rest.data;
+package aiai.ai.launchpad.data;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Flow;
@@ -25,6 +25,7 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,11 +46,11 @@ public class FlowData {
 
         public FlowResultRest(String errorMessage, Enums.FlowValidateStatus status) {
             this.status = status;
-            this.errorMessage = errorMessage;
+            this.errorMessages = Collections.singletonList(errorMessage);
         }
 
         public FlowResultRest(String errorMessage) {
-            this.errorMessage = errorMessage;
+            this.errorMessages = Collections.singletonList(errorMessage);
         }
 
         public FlowResultRest(Flow flow) {
@@ -74,7 +75,7 @@ public class FlowData {
         public Flow flow;
 
         public FlowInstanceResultRest(String errorMessage) {
-            this.errorMessage = errorMessage;
+            this.errorMessages = Collections.singletonList(errorMessage);
         }
 
         public FlowInstanceResultRest(Flow flow) {

@@ -15,25 +15,35 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.rest.data;
+package aiai.ai.launchpad.data;
 
-import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.experiment.task.TaskWIthType;
-import lombok.AllArgsConstructor;
+import aiai.ai.launchpad.beans.Station;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
-public class TasksData {
+public class StationData {
 
     @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class TasksResultRest extends BaseDataClass {
-        public Slice<TaskWIthType> items;
+    public static class StationsResultRest extends BaseDataClass {
+        public Slice<Station> items;
     }
 
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class StationResultRest extends BaseDataClass {
+        public Station station;
+
+        public StationResultRest(String errorMessage) {
+            addErrorMessage(errorMessage);
+        }
+
+        public StationResultRest(Station station) {
+            this.station = station;
+        }
+    }
 
 }

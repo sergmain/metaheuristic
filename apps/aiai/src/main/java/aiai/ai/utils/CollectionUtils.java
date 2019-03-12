@@ -23,6 +23,9 @@ import java.util.List;
 
 public class CollectionUtils {
 
+    public static boolean isNotEmpty(Collection<?> collection) {
+        return collection!=null && !collection.isEmpty();
+    }
 
     public static List<String> toPlainList(Collection<List<String>> inputResourceCodes) {
         final List<String> codes = new ArrayList<>();

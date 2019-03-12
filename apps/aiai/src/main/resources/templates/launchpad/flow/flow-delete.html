@@ -6,8 +6,8 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Station</h1>
 
-        <!--/*@thymesVar id="flow" type="aiai.ai.launchpad.beans.Flow"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${flow}">
+        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.FlowData$FlowResultRest"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${result.flow}">
             <fieldset>
                 <label for="code">Code of flow</label>
                 <input name="code" id="code" type="text" placeholder="code" th:field="*{code}">
@@ -22,7 +22,7 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${flow}" th:method="post" th:action="@{/launchpad/flow/flow-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${result.flow}" th:method="post" th:action="@{/launchpad/flow/flow-delete-commit}"
                           accept-charset="UTF-8"
                           id="flow-delete-commit"
                           name="f">

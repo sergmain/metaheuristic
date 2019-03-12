@@ -15,14 +15,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.rest.data;
+package aiai.ai.launchpad.data;
 
+import aiai.ai.launchpad.beans.ExperimentSnippet;
+import aiai.ai.utils.SimpleSelectOption;
 import lombok.Data;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@Data
-public class BaseDataClass {
-    public String errorMessage;
-    public List<String> infoMessages;
+public class SnippetData {
+
+    @Data
+    public static class SnippetResult {
+        public List<SimpleSelectOption> selectOptions = new ArrayList<>();
+        public List<ExperimentSnippet> snippets = new ArrayList<>();
+
+        public void sortSnippetsByOrder() {
+//            snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
+        }
+    }
+
 }

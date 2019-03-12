@@ -3,6 +3,7 @@
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
+    <!-- Right now isn't used -->
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Flow edit</h1>
 

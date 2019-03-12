@@ -15,20 +15,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.rest.data;
+package aiai.ai.launchpad.data;
 
-import lombok.AllArgsConstructor;
+import aiai.ai.utils.CollectionUtils;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.springframework.security.core.GrantedAuthority;
 
-import java.util.Collection;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserData {
-    public String username;
-    public String publicName;
-    public Collection<GrantedAuthority> authorities;
+public class BaseDataClass {
+    public List<String> errorMessages;
+    public List<String> infoMessages;
+
+    public void addErrorMessage(String errorMessage) {
+        if (errorMessages==null) {
+            errorMessages = new ArrayList<>();
+        }
+        errorMessages.add(errorMessage);
+    }
+
+    public boolean isErrorMessages() {
+        return CollectionUtils.isNotEmpty(errorMessages);
+    }
 }

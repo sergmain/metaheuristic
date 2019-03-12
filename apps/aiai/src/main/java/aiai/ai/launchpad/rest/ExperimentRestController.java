@@ -25,10 +25,10 @@ import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.repositories.*;
-import aiai.ai.launchpad.rest.data.ExperimentData;
-import aiai.ai.launchpad.rest.data.OperationStatusRest;
-import aiai.ai.launchpad.rest.data.SnippetData;
-import aiai.ai.launchpad.rest.data.TasksData;
+import aiai.ai.launchpad.data.ExperimentData;
+import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.ai.launchpad.data.SnippetData;
+import aiai.ai.launchpad.data.TasksData;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
@@ -505,7 +505,7 @@ public class ExperimentRestController {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, es);
         }
         Task t = taskPersistencer.resetTask(taskId);
-        return new OperationStatusRest(t!=null ? Enums.OperationStatus.OK : Enums.OperationStatus.ERROR, null);
+        return new OperationStatusRest(t!=null ? Enums.OperationStatus.OK : Enums.OperationStatus.ERROR);
     }
 
 }

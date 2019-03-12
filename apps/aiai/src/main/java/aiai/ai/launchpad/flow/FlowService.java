@@ -36,8 +36,8 @@ import aiai.ai.launchpad.repositories.ExperimentTaskFeatureRepository;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.launchpad.rest.data.FlowData;
-import aiai.ai.launchpad.rest.data.OperationStatusRest;
+import aiai.ai.launchpad.data.FlowData;
+import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
@@ -188,7 +188,7 @@ public class FlowService {
         try {
             flowValidation.status = validate(flow);
         } catch (YAMLException e) {
-            flowValidation.errorMessage = "#560.34 Error while parsing yaml config, " + e.toString();
+            flowValidation.addErrorMessage("#560.34 Error while parsing yaml config, " + e.toString());
             flowValidation.status = Enums.FlowValidateStatus.YAML_PARSING_ERROR;
         }
         flow.valid = flowValidation.status == Enums.FlowValidateStatus.OK;
@@ -198,16 +198,16 @@ public class FlowService {
         }
         else {
             log.error("Validation error: {}", flowValidation.status);
-            flowValidation.errorMessage = "#561.01 Validation error: : " + flowValidation.status;
+            flowValidation.addErrorMessage("#561.01 Validation error: : " + flowValidation.status);
         }
         return flowValidation;
     }
 
     public OperationStatusRest flowInstanceTargetExecState(
-            Long flowId, Long id, Enums.FlowInstanceExecState execState) {
-        FlowData.FlowInstanceResultRest result = prepareModel(flowId, id);
-        if (result.errorMessage != null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, result.errorMessage);
+            Long flowId, Long flowInstanceId, Enums.FlowInstanceExecState execState) {
+        FlowData.FlowInstanceResultRest result = prepareModel(flowId, flowInstanceId);
+        if (result.isErrorMessages()) {
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, result.errorMessages);
         }
 
         if (result.flow==null || result.flowInstance==null) {

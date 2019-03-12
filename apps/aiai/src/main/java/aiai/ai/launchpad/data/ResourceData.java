@@ -15,34 +15,38 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.rest.data;
+package aiai.ai.launchpad.data;
 
-import aiai.ai.launchpad.beans.Station;
+import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.launchpad.launchpad_resource.SimpleResource;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
-public class StationData {
+public class ResourceData {
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class StationsResultRest extends BaseDataClass {
-        public Slice<Station> items;
+    public static class ResourcesResultRest extends BaseDataClass {
+        public Slice<SimpleResource> items;
     }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class StationResultRest extends BaseDataClass {
-        public Station station;
+    public static class ResourceResultRest extends BaseDataClass {
+        public BinaryData data;
 
-        public StationResultRest(String errorMessage) {
-            this.errorMessage = errorMessage;
+        public ResourceResultRest(String errorMessage) {
+            addErrorMessage(errorMessage);
         }
 
-        public StationResultRest(Station station) {
-            this.station = station;
+        public ResourceResultRest(BinaryData data) {
+            this.data = data;
         }
     }
 

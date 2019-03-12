@@ -25,13 +25,13 @@ import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.flow.FlowCache;
-import aiai.ai.launchpad.rest.data.FlowData;
+import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.launchpad_resource.ResourceService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.launchpad.rest.data.OperationStatusRest;
+import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.server.ServerService;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
@@ -287,16 +287,16 @@ public class ProcessResourceController {
         OperationStatusRest operationStatus = flowService.flowInstanceTargetExecState(
                 flow.getId(), producingResult.flowInstance.getId(), Enums.FlowInstanceExecState.PRODUCING);
 
-        if (operationStatus.errorMessage != null) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessage);
+        if (operationStatus.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         flowService.createAllTasks();
         operationStatus = flowService.flowInstanceTargetExecState(
                 flow.getId(), producingResult.flowInstance.getId(), Enums.FlowInstanceExecState.STARTED);
 
-        if (operationStatus.errorMessage != null) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessage);
+        if (operationStatus.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         return null;
@@ -306,8 +306,8 @@ public class ProcessResourceController {
     @GetMapping("/process-resource-delete/{flowId}/{flowInstanceId}")
     public String processResourceDelete(@PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
         FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
-        if (result.errorMessage != null) {
-            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessage);
+        if (result.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         return "pilot/process-resource/process-resource-delete";
@@ -317,8 +317,8 @@ public class ProcessResourceController {
     @PostMapping("/process-resource-delete-commit")
     public String processResourceDeleteCommit(Long flowId, Long flowInstanceId, final RedirectAttributes redirectAttributes) {
         FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
-        if (result.errorMessage != null) {
-            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessage);
+        if (result.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", result.isErrorMessages());
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 

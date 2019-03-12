@@ -14,12 +14,15 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.launchpad.rest.data;
+package aiai.ai.launchpad.data;
 
 import aiai.ai.Enums;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+
+import java.util.Collections;
+import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = false)
@@ -33,9 +36,14 @@ public class OperationStatusRest extends BaseDataClass {
         this.status = status;
     }
 
+    public OperationStatusRest(Enums.OperationStatus status, List<String> errorMessages) {
+        this.status = status;
+        this.errorMessages = errorMessages;
+    }
+
     public OperationStatusRest(Enums.OperationStatus status, String errorMessage) {
         this.status = status;
-        this.errorMessage = errorMessage;
+        this.errorMessages = Collections.singletonList(errorMessage);
     }
 
 }

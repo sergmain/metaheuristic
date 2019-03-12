@@ -80,4 +80,8 @@ public class Consts {
     public static final String FLOW_INSTANCE_INPUT_TYPE = "flow-instance-input-type";
     public static final String ML_MODEL_BIN = "ml_model.bin";
     public static final String LOCALHOST_IP = "127.0.0.1";
+
+
+    public static final String MODEL_ATTR_ERROR_MESSAGE = "errorMessage";
+    public static final String MODEL_ATTR_INFO_MESSAGES = "infoMessages";
 }

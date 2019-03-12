@@ -16,8 +16,13 @@
  */
 package aiai.ai.utils;
 
+import aiai.ai.Consts;
+import aiai.ai.launchpad.data.BaseDataClass;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.ui.Model;
+
+import java.util.List;
 
 public class ControllerUtils {
 
@@ -26,5 +31,16 @@ public class ControllerUtils {
             pageable = PageRequest.of(pageable.getPageNumber(), limit);
         }
         return pageable;
+    }
+
+    public static void addMessagesToModel(Model model, BaseDataClass baseData) {
+        if (CollectionUtils.isNotEmpty(baseData.errorMessages)) {
+            List errorMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_ERROR_MESSAGE));
+            errorMessages.addAll(baseData.errorMessages);
+        }
+        if (CollectionUtils.isNotEmpty(baseData.infoMessages)) {
+            List infoMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_INFO_MESSAGES));
+            infoMessages.addAll(baseData.infoMessages);
+        }
     }
 }

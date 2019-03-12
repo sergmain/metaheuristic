@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.rest;
 
 import aiai.ai.launchpad.beans.Account;
-import aiai.ai.launchpad.rest.data.UserData;
+import aiai.ai.launchpad.data.UserData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -38,6 +38,7 @@ import java.util.Collection;
 //@CrossOrigin(origins="*", maxAge=3600)
 public class AuthRestController {
 
+    // this end-point is used by angular's part
     @RequestMapping("/user")
     public UserData user(Principal user) {
         UsernamePasswordAuthenticationToken passwordAuthenticationToken = (UsernamePasswordAuthenticationToken) user;
