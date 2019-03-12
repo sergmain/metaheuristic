@@ -23,13 +23,18 @@ import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.binary_data.BinaryDataService;
+import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import aiai.ai.utils.holders.IntHolder;
+import aiai.ai.yaml.input_resource_param.InputResourceParam;
+import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -41,16 +46,22 @@ public class ExperimentProcessService {
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
+    private final BinaryDataService binaryDataService;
 
-    public ExperimentProcessService(ExperimentService experimentService, ExperimentRepository experimentRepository, ExperimentCache experimentCache) {
+    public ExperimentProcessService(ExperimentService experimentService, ExperimentRepository experimentRepository, ExperimentCache experimentCache, BinaryDataService binaryDataService) {
         this.experimentService = experimentService;
         this.experimentRepository = experimentRepository;
         this.experimentCache = experimentCache;
+        this.binaryDataService = binaryDataService;
     }
 
     public FlowService.ProduceTaskResult produceTasks(
             boolean isPersist, Flow flow, FlowInstance flowInstance,
-            Process process, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls) {
+            Process process, FlowService.ResourcePools pools) {
+
+        Map<String, List<String>> collectedInputs = pools.collectedInputs;
+        Map<String, String> inputStorageUrls = pools.inputStorageUrls;
+
         Experiment e = experimentRepository.findByCode(process.code);
 
         // real copy of experiment
@@ -72,11 +83,24 @@ public class ExperimentProcessService {
             return result;
         }
 
+        if (!collectedInputs.containsKey(meta.getValue())) {
+            List<SimpleCodeAndStorageUrl> initialInputResourceCodes = binaryDataService.getResourceCodesInPool(
+                    Collections.singletonList(meta.getValue()));
+
+            FlowService.ResourcePools metaPools = new FlowService.ResourcePools(initialInputResourceCodes);
+            if (metaPools.status!=Enums.FlowProducingStatus.OK) {
+                result.status = Enums.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                return result;
+            }
+            pools.merge(metaPools);
+        }
+
         List<String> features = collectedInputs.get(meta.getValue());
         if (features==null) {
-            result.status = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
+            result.status = Enums.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
             return result;
         }
+
         long mills = System.currentTimeMillis();
         IntHolder intHolder = new IntHolder();
         experimentService.produceFeaturePermutations(isPersist, e.getId(), features, intHolder);

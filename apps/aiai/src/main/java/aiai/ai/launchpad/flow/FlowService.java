@@ -408,6 +408,49 @@ public class FlowService {
         return Enums.FlowProducingStatus.OK;
     }
 
+    @Data
+    @NoArgsConstructor
+    public static class ResourcePools {
+        public final Map<String, List<String>> collectedInputs = new HashMap<>();
+        public Map<String, String> inputStorageUrls=null;
+        public Enums.FlowProducingStatus status = Enums.FlowProducingStatus.OK;
+
+        public ResourcePools(List<SimpleCodeAndStorageUrl> initialInputResourceCodes) {
+
+            if (initialInputResourceCodes==null || initialInputResourceCodes.isEmpty()) {
+                status = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
+                return;
+            }
+
+            initialInputResourceCodes.forEach(o-> {
+                collectedInputs.computeIfAbsent(o.poolCode, p -> new ArrayList<>()).add(o.code);
+            });
+
+            inputStorageUrls = initialInputResourceCodes
+                    .stream()
+                    .collect(Collectors.toMap(o -> o.code, o -> o.storageUrl));
+
+        }
+
+        public void clean() {
+            collectedInputs.values().forEach(o-> o.forEach(inputStorageUrls::remove));
+            collectedInputs.clear();
+        }
+
+        public void add(String outputType, List<String> outputResourceCodes) {
+            if (outputResourceCodes!=null) {
+                collectedInputs.computeIfAbsent(outputType, k -> new ArrayList<>()).addAll(outputResourceCodes);
+            }
+        }
+
+        public void merge(ResourcePools metaPools) {
+            metaPools.collectedInputs.forEach((key, value) -> collectedInputs.merge(
+                    key, value, (o, o1) -> {o.addAll(o1); return o;} )
+            );
+            inputStorageUrls.putAll(metaPools.inputStorageUrls);
+        }
+    }
+
     public void produceTasks(boolean isPersist, TaskProducingResult result, Flow flow, FlowInstance fi) {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
@@ -415,21 +458,12 @@ public class FlowService {
         InputResourceParam resourceParams = InputResourceParamUtils.to(fi.inputResourceParam);
         List<SimpleCodeAndStorageUrl> initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllCodes());
         log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
-        Monitoring.log("##024", Enums.Monitor.MEMORY);
 
-        if (initialInputResourceCodes==null || initialInputResourceCodes.isEmpty()) {
-            result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
+        ResourcePools pools = new ResourcePools(initialInputResourceCodes);
+        if (pools.status!= Enums.FlowProducingStatus.OK) {
+            result.flowProducingStatus = pools.status;
             return;
         }
-        final Map<String, List<String>> collectedInputs = new HashMap<>();
-
-        initialInputResourceCodes.forEach(o-> {
-            collectedInputs.computeIfAbsent(o.poolCode, p -> new ArrayList<>()).add(o.code);
-        });
-
-        final Map<String, String> inputStorageUrls = initialInputResourceCodes
-                .stream()
-                .collect(Collectors.toMap(o -> o.code, o -> o.storageUrl));
 
         Monitoring.log("##025", Enums.Monitor.MEMORY);
 
@@ -446,12 +480,12 @@ public class FlowService {
             switch(process.type) {
                 case FILE_PROCESSING:
                     Monitoring.log("##026", Enums.Monitor.MEMORY);
-                    produceTaskResult = fileProcessService.produceTasks(isPersist, flow, fi, process, collectedInputs, inputStorageUrls);
+                    produceTaskResult = fileProcessService.produceTasks(isPersist, flow, fi, process, pools);
                     Monitoring.log("##027", Enums.Monitor.MEMORY);
                     break;
                 case EXPERIMENT:
                     Monitoring.log("##028", Enums.Monitor.MEMORY);
-                    produceTaskResult = experimentProcessService.produceTasks(isPersist, flow, fi, process, collectedInputs, inputStorageUrls);
+                    produceTaskResult = experimentProcessService.produceTasks(isPersist, flow, fi, process, pools);
                     Monitoring.log("##029", Enums.Monitor.MEMORY);
                     break;
                 default:
@@ -463,13 +497,10 @@ public class FlowService {
                 return;
             }
             if (!process.collectResources) {
-                collectedInputs.values().forEach(o-> o.forEach(inputStorageUrls::remove));
-                collectedInputs.clear();
+                pools.clean();
             }
             Monitoring.log("##030", Enums.Monitor.MEMORY);
-            if (produceTaskResult.outputResourceCodes!=null) {
-                collectedInputs.computeIfAbsent(process.outputType, k -> new ArrayList<>()).addAll(produceTaskResult.outputResourceCodes);
-            }
+            pools.add(process.outputType, produceTaskResult.outputResourceCodes);
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }
         toProduced(isPersist, result, fi);

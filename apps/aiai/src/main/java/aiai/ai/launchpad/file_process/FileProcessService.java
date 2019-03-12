@@ -57,8 +57,11 @@ public class FileProcessService {
 
     @SuppressWarnings("Duplicates")
     public FlowService.ProduceTaskResult produceTasks(
-            boolean isPersist, Flow flow, FlowInstance flowInstance, Process process,
-            Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls) {
+            boolean isPersist, Flow flow, FlowInstance flowInstance,
+            Process process, FlowService.ResourcePools pools) {
+
+        Map<String, List<String>> collectedInputs = pools.collectedInputs;
+        Map<String, String> inputStorageUrls = pools.inputStorageUrls;
 
         FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
 

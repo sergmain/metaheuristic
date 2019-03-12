@@ -116,7 +116,7 @@ public class FlowTopLevelService {
             return new FlowData.FlowResultRest("#560.33 flow with such code already exists, code: " + flow.code);
         }
         FlowData.FlowResultRest result = new FlowData.FlowResultRest(flowCache.save(flow));
-        FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
+        FlowData.FlowValidation flowValidation = flowService.validateInternal(result.flow);
         result.infoMessages = flowValidation.infoMessages;
         result.errorMessages = flowValidation.errorMessages;
         return result;
@@ -149,20 +149,26 @@ public class FlowTopLevelService {
 
         FlowData.FlowInstanceResultRest result = new FlowData.FlowInstanceResultRest(flowCache.findById(flowId));
         if (result.flow == null) {
-            result.errorMessages = Collections.singletonList("#560.60 flow wasn't found, flowId: " + flowId);
+            result.addErrorMessage("#560.60 flow wasn't found, flowId: " + flowId);
             return result;
         }
 
         // validate the flow
         FlowData.FlowValidation flowValidation = flowService.validateInternal(result.flow);
         if (flowValidation.status != Enums.FlowValidateStatus.OK ) {
-            return new FlowData.FlowInstanceResultRest("#560.70 validation of flow was failed, status: " + flowValidation.status);
+            result.errorMessages = flowValidation.errorMessages;
+            return result;
         }
 
         FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(result.flow,
                 StringUtils.isNotBlank(inputResourceParams) ?inputResourceParams : FlowService.asInputResourceParams(poolCode));
-        if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
-            return new FlowData.FlowInstanceResultRest("#560.72 Error creating flowInstance: " + producingResult.flowProducingStatus);
+        if (producingResult.flowProducingStatus!=Enums.FlowProducingStatus.OK) {
+/*
+            if (producingResult.flowProducingStatus!=Enums.FlowProducingStatus.OK &&
+                    producingResult.flowProducingStatus!=Enums.FlowProducingStatus.NOT_VALIDATED_YET_ERROR)  {
+*/
+            result.addErrorMessage("#560.72 Error creating flowInstance: " + producingResult.flowProducingStatus);
+            return result;
         }
         result.flowInstance = producingResult.flowInstance;
 
@@ -175,20 +181,26 @@ public class FlowTopLevelService {
         // validate the flow + the flow instance
         flowValidation = flowService.validateInternal(result.flow);
         if (flowValidation.status != Enums.FlowValidateStatus.OK ) {
-            return new FlowData.FlowInstanceResultRest("#560.75 validation of flow was failed, status: " + flowValidation.status);
+            result.errorMessages = flowValidation.errorMessages;
+            return result;
         }
+        result.flow = flowCache.findById(flowId);
 
         FlowService.TaskProducingResult countTasks = new FlowService.TaskProducingResult();
+        countTasks.flowValidateStatus = Enums.FlowValidateStatus.OK;
+
         flowService.produceTasks(false, countTasks, result.flow, producingResult.flowInstance);
         if (countTasks.flowProducingStatus != Enums.FlowProducingStatus.OK) {
-            return new FlowData.FlowInstanceResultRest("#560.77 validation of flow was failed, status: " + countTasks.flowValidateStatus);
+            flowService.changeValidStatus(producingResult.flowInstance, false);
+            result.addErrorMessage("#560.77 flow producing was failed, status: " + countTasks.flowProducingStatus);
+            return result;
         }
 
         if (globals.maxTasksPerFlow < countTasks.numberOfTasks) {
             flowService.changeValidStatus(producingResult.flowInstance, false);
-            return new FlowData.FlowInstanceResultRest(
-                    "#560.81 number of tasks for this flow instance exceeded the allowed maximum number. Flow instance was created but its status is 'not valid'. " +
-                            "Allowed maximum number of tasks: " + globals.maxTasksPerFlow+", tasks in this flow instance:  " + countTasks.numberOfTasks);
+            result.addErrorMessage("#560.81 number of tasks for this flow instance exceeded the allowed maximum number. Flow instance was created but its status is 'not valid'. " +
+                    "Allowed maximum number of tasks: " + globals.maxTasksPerFlow+", tasks in this flow instance:  " + countTasks.numberOfTasks);
+            return result;
         }
         flowService.changeValidStatus(producingResult.flowInstance, true);
 

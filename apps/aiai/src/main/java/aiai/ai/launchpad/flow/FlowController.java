@@ -123,7 +123,7 @@ public class FlowController {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
-        model.addAttribute("result", flowResultRest);
+        model.addAttribute("flow", flowResultRest.flow);
         return "launchpad/flow/flow-edit";
     }
 
@@ -136,7 +136,7 @@ public class FlowController {
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
 
-        model.addAttribute("result", flowResultRest);
+        model.addAttribute("flow", flowResultRest.flow);
         model.addAttribute("infoMessages", flowResultRest.infoMessages);
         model.addAttribute("errorMessage", flowResultRest.errorMessages);
         return "launchpad/flow/flow-edit";
@@ -161,7 +161,8 @@ public class FlowController {
         FlowData.FlowResultRest flowResultRest = flowTopLevelService.updateFlow(flowModel);
         if (flowResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", flowResultRest.errorMessages);
-            return "launchpad/flow/flow-edit";
+//            return "launchpad/flow/flow-edit";
+            return "redirect:/launchpad/flow/flow-edit/"+flowResultRest.flow.getId();
         }
 
         if (flowResultRest.status==Enums.FlowValidateStatus.OK ) {
@@ -178,7 +179,7 @@ public class FlowController {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
-        model.addAttribute("result", flowResultRest);
+        model.addAttribute("flow", flowResultRest.flow);
         return "launchpad/flow/flow-delete";
     }
 
@@ -230,7 +231,7 @@ public class FlowController {
 
         if (flowInstanceResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", flowInstanceResultRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
+//            return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
         return "redirect:/launchpad/flow/flow-instances/" + flowId;
     }

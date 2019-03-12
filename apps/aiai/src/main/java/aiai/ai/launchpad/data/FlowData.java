@@ -75,7 +75,7 @@ public class FlowData {
         public Flow flow;
 
         public FlowInstanceResultRest(String errorMessage) {
-            this.errorMessages = Collections.singletonList(errorMessage);
+            this.addErrorMessage(errorMessage);
         }
 
         public FlowInstanceResultRest(Flow flow) {
