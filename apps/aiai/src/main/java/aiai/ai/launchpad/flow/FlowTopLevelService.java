@@ -139,17 +139,19 @@ public class FlowTopLevelService {
     }
 
     public FlowData.FlowInstanceResultRest addFlowInstance(Long flowId, String poolCode, String inputResourceParams) {
-        if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams) ) {
-            return new FlowData.FlowInstanceResultRest("#560.63 both inputResourcePoolCode of FlowInstance and inputResourceParams are empty");
-        }
-
-        if (StringUtils.isNotBlank(poolCode) && StringUtils.isNotBlank(inputResourceParams) ) {
-            return new FlowData.FlowInstanceResultRest("#560.65 both inputResourcePoolCode of FlowInstance and inputResourceParams aren't empty");
-        }
-
         FlowData.FlowInstanceResultRest result = new FlowData.FlowInstanceResultRest(flowCache.findById(flowId));
         if (result.flow == null) {
             result.addErrorMessage("#560.60 flow wasn't found, flowId: " + flowId);
+            return result;
+        }
+
+        if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams) ) {
+            result.addErrorMessage("#560.63 both inputResourcePoolCode of FlowInstance and inputResourceParams are empty");
+            return result;
+        }
+
+        if (StringUtils.isNotBlank(poolCode) && StringUtils.isNotBlank(inputResourceParams) ) {
+            result.addErrorMessage("#560.65 both inputResourcePoolCode of FlowInstance and inputResourceParams aren't empty");
             return result;
         }
 
@@ -163,10 +165,6 @@ public class FlowTopLevelService {
         FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(result.flow,
                 StringUtils.isNotBlank(inputResourceParams) ?inputResourceParams : FlowService.asInputResourceParams(poolCode));
         if (producingResult.flowProducingStatus!=Enums.FlowProducingStatus.OK) {
-/*
-            if (producingResult.flowProducingStatus!=Enums.FlowProducingStatus.OK &&
-                    producingResult.flowProducingStatus!=Enums.FlowProducingStatus.NOT_VALIDATED_YET_ERROR)  {
-*/
             result.addErrorMessage("#560.72 Error creating flowInstance: " + producingResult.flowProducingStatus);
             return result;
         }

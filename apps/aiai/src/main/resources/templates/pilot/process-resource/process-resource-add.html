@@ -6,7 +6,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Upload file for processing</h1>
 
-        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.flow.FlowController$Result"*/-->
+        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.FlowData.FlowsResultRest"*/-->
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
               th:action="@{/pilot/process-resource/process-resource-upload-from-file}"
         >

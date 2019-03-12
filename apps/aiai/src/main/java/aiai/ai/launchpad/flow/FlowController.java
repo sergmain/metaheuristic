@@ -17,31 +17,22 @@
 
 package aiai.ai.launchpad.flow;
 
-import aiai.ai.Consts;
 import aiai.ai.Enums;
-import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Flow;
-import aiai.ai.launchpad.beans.FlowInstance;
-import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
-import aiai.ai.utils.CollectionUtils;
 import aiai.ai.utils.ControllerUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 
 @Controller
 @RequestMapping("/launchpad/flow")
@@ -51,44 +42,9 @@ public class FlowController {
 
     private static final String REDIRECT_LAUNCHPAD_FLOW_FLOWS = "redirect:/launchpad/flow/flows";
 
-    @Data
-    public static class Result {
-        public Slice<Flow> items;
-    }
-
-    @Data
-    public static class FlowInstancesResult {
-        public long currentFlowId;
-        public Slice<FlowInstance> instances;
-        public Map<Long, Flow> flows = new HashMap<>();
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class FlowInstanceResult {
-        public FlowInstance flowInstance;
-        public Flow flow;
-    }
-
-    @Data
-    public static class FlowListResult {
-        public Flow flow;
-        public long currentFlowId;
-    }
-
-    private final Globals globals;
-    private final FlowCache flowCache;
-    private final FlowService flowService;
-    private final FlowRepository flowRepository;
-    private final FlowInstanceRepository flowInstanceRepository;
     private final FlowTopLevelService flowTopLevelService;
 
-    public FlowController(Globals globals, FlowCache flowCache, FlowService flowService, FlowRepository flowRepository1, FlowInstanceRepository flowInstanceRepository, FlowTopLevelService flowTopLevelService) {
-        this.globals = globals;
-        this.flowCache = flowCache;
-        this.flowService = flowService;
-        this.flowRepository = flowRepository1;
-        this.flowInstanceRepository = flowInstanceRepository;
+    public FlowController(FlowTopLevelService flowTopLevelService) {
         this.flowTopLevelService = flowTopLevelService;
     }
 
@@ -209,7 +165,7 @@ public class FlowController {
 
     @SuppressWarnings("Duplicates")
     @GetMapping(value = "/flow-instance-add/{id}")
-    public String flowInstanceAdd(@ModelAttribute("result") FlowListResult result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+    public String flowInstanceAdd(@ModelAttribute("result") FlowData.FlowListResult result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         FlowData.FlowResultRest flowResultRest = flowTopLevelService.getFlow(id);
         if (flowResultRest.status==Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
@@ -221,7 +177,7 @@ public class FlowController {
     }
 
     @PostMapping("/flow-instance-add-commit")
-    public String flowInstanceAddCommit(@ModelAttribute("result") FlowListResult result, Long flowId, String poolCode, String inputResourceParams, final RedirectAttributes redirectAttributes) {
+    public String flowInstanceAddCommit(@ModelAttribute("result") FlowData.FlowListResult result, Long flowId, String poolCode, String inputResourceParams, final RedirectAttributes redirectAttributes) {
         FlowData.FlowInstanceResultRest flowInstanceResultRest = flowTopLevelService.addFlowInstance(flowId, poolCode, inputResourceParams);
         result.flow = flowInstanceResultRest.flow;
         if (result.flow == null) {
@@ -231,20 +187,8 @@ public class FlowController {
 
         if (flowInstanceResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", flowInstanceResultRest.errorMessages);
-//            return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
         return "redirect:/launchpad/flow/flow-instances/" + flowId;
-    }
-
-    // Right now isn't used
-    @GetMapping(value = "/flow-instance-edit/{flowId}/{flowInstanceId}")
-    public String flowInstanceEdit(@PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
-        if (result.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage",result.errorMessages);
-            return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
-        }
-        return "launchpad/flow/flow-instance-edit/" + flowId +'/' + flowInstanceId;
     }
 
     @GetMapping("/flow-instance-delete/{flowId}/{flowInstanceId}")

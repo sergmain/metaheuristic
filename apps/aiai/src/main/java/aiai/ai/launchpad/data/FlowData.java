@@ -94,4 +94,20 @@ public class FlowData {
     public static class FlowValidation extends BaseDataClass {
         public Enums.FlowValidateStatus status;
     }
+
+    /*
+            @Data
+            public static class Result {
+                public Slice<Flow> items;
+            }
+
+        */
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class FlowListResult extends BaseDataClass {
+        public Flow flow;
+        public long currentFlowId;
+    }
 }
