@@ -24,6 +24,7 @@ import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.server.ServerService;
+import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.FeatureMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -33,6 +34,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -45,6 +47,9 @@ public class TestTaskRequest extends FeatureMethods {
 
     @Autowired
     public ServerService serverService;
+
+    @Autowired
+    public TaskService taskService;
 
     @Override
     public String getFlowParamsAsYaml() {
@@ -65,7 +70,15 @@ public class TestTaskRequest extends FeatureMethods {
             data.setStationId(stationIdAsStr);
             data.setCommand(new Protocol.RequestTask(false));
 
-            ExchangeData d = serverService.processRequest(data, Consts.LOCALHOST_IP);
+//            ExchangeData d = serverService.processRequest(data, Consts.LOCALHOST_IP);
+            Protocol.AssignedTask r = new Protocol.AssignedTask();
+            TaskService.TasksAndAssignToStationResult result = taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
+            if (result.getSimpleTask()!=null) {
+                r.tasks = Collections.singletonList(result.getSimpleTask());
+            }
+            ExchangeData d = new ExchangeData();
+            d.setAssignedTask(r);
+
             assertNotNull(d);
             assertNotNull(d.getAssignedTask());
             assertNotNull(d.getAssignedTask().tasks);

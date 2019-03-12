@@ -154,7 +154,7 @@ public class TaskService {
                 return EMPTY_RESULT;
             }
             if (flowInstance.execState!=Enums.FlowInstanceExecState.STARTED.code) {
-                log.warn("#317.42 Flow instance wasn't started.Current exec state: {}", Enums.FlowInstanceExecState.toState(flowInstance.execState));
+                log.warn("#317.42 Flow instance wasn't started. Current exec state: {}", Enums.FlowInstanceExecState.toState(flowInstance.execState));
                 return EMPTY_RESULT;
             }
             flowInstances = Collections.singletonList(flowInstance);

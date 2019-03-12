@@ -24,6 +24,8 @@ import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
+import aiai.ai.yaml.env.EnvYaml;
+import aiai.ai.yaml.env.EnvYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -101,9 +103,22 @@ public abstract class PreparingExperiment {
             station = new Station();
             mills = System.currentTimeMillis();
             log.info("Start stationsRepository.save()");
+
+            EnvYaml envYaml = new EnvYaml();
+            envYaml.getEnvs().put("python-3", "C:\\Anaconda3\\envs\\python-36\\python.exe" );
+            envYaml.getEnvs().put("env-snippet-01", "python.exe" );
+            envYaml.getEnvs().put("env-snippet-02", "python.exe" );
+            envYaml.getEnvs().put("env-snippet-03", "python.exe" );
+            envYaml.getEnvs().put("env-snippet-04", "python.exe" );
+            envYaml.getEnvs().put("env-snippet-05", "python.exe" );
+            String env = EnvYamlUtils.toString(envYaml);
+            station.setEnv(env);
+
+/*
             station.setEnv("envs:\n" +
                     "  python-3: C:\\Anaconda3\\envs\\python-36\\python.exe\n" +
                     "");
+*/
             station.setDescription("Test station. Must be deleted automatically");
             stationsRepository.save(station);
             log.info("stationsRepository.save() was finished for {}", System.currentTimeMillis() - mills);
