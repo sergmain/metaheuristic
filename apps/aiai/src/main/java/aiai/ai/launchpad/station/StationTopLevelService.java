@@ -42,22 +42,22 @@ public class StationTopLevelService {
         this.repository = repository;
     }
 
-    public StationData.StationsResultRest getStations(Pageable pageable) {
+    public StationData.StationsResult getStations(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.stationRowsLimit, pageable);
-        StationData.StationsResultRest result = new StationData.StationsResultRest();
+        StationData.StationsResult result = new StationData.StationsResult();
         result.items = repository.findAll(pageable);
         return result;
     }
 
-    public StationData.StationResultRest getStation(Long id) {
+    public StationData.StationResult getStation(Long id) {
         //noinspection UnnecessaryLocalVariable
-        StationData.StationResultRest r = new StationData.StationResultRest(repository.findById(id).orElse(null));
+        StationData.StationResult r = new StationData.StationResult(repository.findById(id).orElse(null));
         return r;
     }
 
-    public StationData.StationResultRest saveStation(Station station) {
+    public StationData.StationResult saveStation(Station station) {
         //noinspection UnnecessaryLocalVariable
-        StationData.StationResultRest r = new StationData.StationResultRest(repository.save(station));
+        StationData.StationResult r = new StationData.StationResult(repository.save(station));
         return r;
     }
 

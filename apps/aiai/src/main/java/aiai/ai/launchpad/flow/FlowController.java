@@ -74,7 +74,7 @@ public class FlowController {
     @SuppressWarnings("Duplicates")
     @GetMapping(value = "/flow-edit/{id}")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowResultRest flowResultRest = flowTopLevelService.getFlow(id);
+        FlowData.FlowResult flowResultRest = flowTopLevelService.getFlow(id);
         if (flowResultRest.status==Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
@@ -86,7 +86,7 @@ public class FlowController {
     @SuppressWarnings("Duplicates")
     @GetMapping(value = "/flow-validate/{id}")
     public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowResultRest flowResultRest = flowTopLevelService.validateFlow(id);
+        FlowData.FlowResult flowResultRest = flowTopLevelService.validateFlow(id);
         if (flowResultRest.status==Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
@@ -100,7 +100,7 @@ public class FlowController {
 
     @PostMapping("/flow-add-commit")
     public String addFormCommit(Model model, Flow flow, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowResultRest flowResultRest = flowTopLevelService.addFlow(flow);
+        FlowData.FlowResult flowResultRest = flowTopLevelService.addFlow(flow);
         if (flowResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", flowResultRest.errorMessages);
             return "launchpad/flow/flow-add";
@@ -114,7 +114,7 @@ public class FlowController {
 
     @PostMapping("/flow-edit-commit")
     public String editFormCommit(Model model, Flow flowModel, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowResultRest flowResultRest = flowTopLevelService.updateFlow(flowModel);
+        FlowData.FlowResult flowResultRest = flowTopLevelService.updateFlow(flowModel);
         if (flowResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", flowResultRest.errorMessages);
 //            return "launchpad/flow/flow-edit";
@@ -130,7 +130,7 @@ public class FlowController {
     @SuppressWarnings("Duplicates")
     @GetMapping("/flow-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowResultRest flowResultRest = flowTopLevelService.getFlow(id);
+        FlowData.FlowResult flowResultRest = flowTopLevelService.getFlow(id);
         if (flowResultRest.status==Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
@@ -166,7 +166,7 @@ public class FlowController {
     @SuppressWarnings("Duplicates")
     @GetMapping(value = "/flow-instance-add/{id}")
     public String flowInstanceAdd(@ModelAttribute("result") FlowData.FlowListResult result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowResultRest flowResultRest = flowTopLevelService.getFlow(id);
+        FlowData.FlowResult flowResultRest = flowTopLevelService.getFlow(id);
         if (flowResultRest.status==Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;

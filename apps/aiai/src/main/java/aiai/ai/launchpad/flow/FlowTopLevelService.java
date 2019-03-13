@@ -60,23 +60,23 @@ public class FlowTopLevelService {
         return result;
     }
 
-    public FlowData.FlowResultRest getFlow(Long id) {
+    public FlowData.FlowResult getFlow(Long id) {
         final Flow flow = flowCache.findById(id);
         if (flow == null) {
-            return new FlowData.FlowResultRest(
+            return new FlowData.FlowResult(
                     "#560.01 flow wasn't found, flowId: " + id,
                     Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
         }
-        return new FlowData.FlowResultRest(flow);
+        return new FlowData.FlowResult(flow);
     }
 
-    public FlowData.FlowResultRest validateFlow(Long id) {
+    public FlowData.FlowResult validateFlow(Long id) {
         final Flow flow = flowCache.findById(id);
         if (flow == null) {
-            return new FlowData.FlowResultRest("#560.02 flow wasn't found, flowId: " + id,
+            return new FlowData.FlowResult("#560.02 flow wasn't found, flowId: " + id,
                     Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
         }
-        FlowData.FlowResultRest result = new FlowData.FlowResultRest(flow);
+        FlowData.FlowResult result = new FlowData.FlowResult(flow);
         FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
         result.errorMessages = flowValidation.errorMessages;
         result.infoMessages = flowValidation.infoMessages;
@@ -84,14 +84,14 @@ public class FlowTopLevelService {
         return result;
     }
 
-    public FlowData.FlowResultRest addFlow(Flow flow) {
+    public FlowData.FlowResult addFlow(Flow flow) {
         return processFlowCommit(flow);
     }
 
-    public FlowData.FlowResultRest updateFlow(Flow flowModel) {
+    public FlowData.FlowResult updateFlow(Flow flowModel) {
         Flow flow = flowCache.findById(flowModel.getId());
         if (flow == null) {
-            return new FlowData.FlowResultRest(
+            return new FlowData.FlowResult(
                     "#560.10 flow wasn't found, flowId: " + flowModel.getId(),
                     Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
         }
@@ -100,18 +100,18 @@ public class FlowTopLevelService {
         return processFlowCommit(flow);
     }
 
-    private FlowData.FlowResultRest processFlowCommit(Flow flow) {
+    private FlowData.FlowResult processFlowCommit(Flow flow) {
         if (StringUtils.isBlank(flow.code)) {
-            return new FlowData.FlowResultRest("#560.20 code of flow is empty");
+            return new FlowData.FlowResult("#560.20 code of flow is empty");
         }
         if (StringUtils.isBlank(flow.code)) {
-            return new FlowData.FlowResultRest("#560.30 flow is empty");
+            return new FlowData.FlowResult("#560.30 flow is empty");
         }
         Flow f = flowRepository.findByCode(flow.code);
         if (f!=null && !f.getId().equals(flow.getId())) {
-            return new FlowData.FlowResultRest("#560.33 flow with such code already exists, code: " + flow.code);
+            return new FlowData.FlowResult("#560.33 flow with such code already exists, code: " + flow.code);
         }
-        FlowData.FlowResultRest result = new FlowData.FlowResultRest(flowCache.save(flow));
+        FlowData.FlowResult result = new FlowData.FlowResult(flowCache.save(flow));
         FlowData.FlowValidation flowValidation = flowService.validateInternal(result.flow);
         result.infoMessages = flowValidation.infoMessages;
         result.errorMessages = flowValidation.errorMessages;
@@ -130,7 +130,7 @@ public class FlowTopLevelService {
 
     // ============= Flow instances =============
 
-    public FlowData.FlowInstancesResultRest getFlowInstances(Long id, Pageable pageable) {
+    public FlowData.FlowInstancesResult getFlowInstances(Long id, Pageable pageable) {
         return flowService.getFlowInstancesResult(id, pageable);
     }
 

@@ -17,28 +17,16 @@
 
 package aiai.ai.launchpad.rest;
 
-import aiai.ai.Enums;
-import aiai.ai.Globals;
-import aiai.ai.exceptions.StoreNewFileException;
-import aiai.ai.launchpad.beans.BinaryData;
-import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.launchpad_resource.ResourceService;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.data.ResourceData;
 import aiai.ai.launchpad.launchpad_resource.ResourceTopLevelService;
-import aiai.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.File;
-import java.io.IOException;
 
 @RestController
 @RequestMapping("/ng/launchpad/resource")
@@ -55,7 +43,7 @@ public class ResourceRestController {
     }
 
     @GetMapping("/resources")
-    public ResourceData.ResourcesResultRest getResources(@PageableDefault(size = 5) Pageable pageable) {
+    public ResourceData.ResourcesResult getResources(@PageableDefault(size = 5) Pageable pageable) {
         return resourceTopLevelService.getResources(pageable);
     }
 
@@ -75,7 +63,7 @@ public class ResourceRestController {
     }
 
     @GetMapping("/resource/{id}")
-    public ResourceData.ResourceResultRest get(@PathVariable Long id) {
+    public ResourceData.ResourceResult get(@PathVariable Long id) {
         return resourceTopLevelService.getResourceById(id);
     }
 

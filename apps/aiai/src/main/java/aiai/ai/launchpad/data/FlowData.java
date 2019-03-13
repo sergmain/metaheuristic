@@ -40,27 +40,27 @@ public class FlowData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class FlowResultRest extends BaseDataClass {
+    public static class FlowResult extends BaseDataClass {
         public Flow flow;
         public Enums.FlowValidateStatus status = Enums.FlowValidateStatus.NOT_VERIFIED_YET;
 
-        public FlowResultRest(String errorMessage, Enums.FlowValidateStatus status) {
+        public FlowResult(String errorMessage, Enums.FlowValidateStatus status) {
             this.status = status;
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public FlowResultRest(String errorMessage) {
+        public FlowResult(String errorMessage) {
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public FlowResultRest(Flow flow) {
+        public FlowResult(Flow flow) {
             this.flow = flow;
         }
     }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class FlowInstancesResultRest extends BaseDataClass {
+    public static class FlowInstancesResult extends BaseDataClass {
         public Slice<FlowInstance> instances;
         public long currentFlowId;
         public Map<Long, Flow> flows = new HashMap<>();

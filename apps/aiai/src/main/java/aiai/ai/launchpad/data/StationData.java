@@ -27,21 +27,21 @@ public class StationData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class StationsResultRest extends BaseDataClass {
+    public static class StationsResult extends BaseDataClass {
         public Slice<Station> items;
     }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class StationResultRest extends BaseDataClass {
+    public static class StationResult extends BaseDataClass {
         public Station station;
 
-        public StationResultRest(String errorMessage) {
+        public StationResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public StationResultRest(Station station) {
+        public StationResult(Station station) {
             this.station = station;
         }
     }

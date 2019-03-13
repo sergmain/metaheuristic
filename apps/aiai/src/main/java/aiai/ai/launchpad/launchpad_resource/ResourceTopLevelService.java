@@ -29,10 +29,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -53,9 +50,9 @@ public class ResourceTopLevelService {
         this.resourceService = resourceService;
     }
 
-    public ResourceData.ResourcesResultRest getResources(Pageable pageable) {
+    public ResourceData.ResourcesResult getResources(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.resourceRowsLimit, pageable);
-        return new ResourceData.ResourcesResultRest(binaryDataService.getAllAsSimpleResources(pageable));
+        return new ResourceData.ResourcesResult(binaryDataService.getAllAsSimpleResources(pageable));
     }
 
     public OperationStatusRest createResourceFromFile(
@@ -119,12 +116,12 @@ public class ResourceTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public ResourceData.ResourceResultRest getResourceById(Long id) {
+    public ResourceData.ResourceResult getResourceById(Long id) {
         final BinaryData data = binaryDataService.findById(id).orElse(null);
         if (data==null) {
-            return new ResourceData.ResourceResultRest("#172.10 Resource wasn't found for id: " + id);
+            return new ResourceData.ResourceResult("#172.10 Resource wasn't found for id: " + id);
         }
-        return new ResourceData.ResourceResultRest(data);
+        return new ResourceData.ResourceResult(data);
     }
 
     public OperationStatusRest deleteResource(Long id) {

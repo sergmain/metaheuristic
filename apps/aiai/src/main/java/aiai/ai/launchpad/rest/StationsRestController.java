@@ -40,17 +40,17 @@ public class StationsRestController {
     }
 
     @GetMapping("/stations")
-    public StationData.StationsResultRest init(@PageableDefault(size = 5) Pageable pageable) {
+    public StationData.StationsResult init(@PageableDefault(size = 5) Pageable pageable) {
         return stationTopLevelService.getStations(pageable);
     }
 
     @GetMapping(value = "/station/{id}")
-    public StationData.StationResultRest getStation(@PathVariable Long id) {
+    public StationData.StationResult getStation(@PathVariable Long id) {
         return stationTopLevelService.getStation(id);
     }
 
     @PostMapping("/station-form-commit")
-    public StationData.StationResultRest formCommit(@RequestBody Station station) {
+    public StationData.StationResult formCommit(@RequestBody Station station) {
         return stationTopLevelService.saveStation(station);
     }
 

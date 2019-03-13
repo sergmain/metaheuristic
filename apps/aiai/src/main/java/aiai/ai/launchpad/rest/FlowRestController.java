@@ -47,22 +47,22 @@ public class FlowRestController {
     }
 
     @GetMapping(value = "/flow/{id}")
-    public FlowData.FlowResultRest edit(@PathVariable Long id) {
+    public FlowData.FlowResult edit(@PathVariable Long id) {
         return flowTopLevelService.getFlow(id);
     }
 
     @GetMapping(value = "/flow-validate/{id}")
-    public FlowData.FlowResultRest validate(@PathVariable Long id) {
+    public FlowData.FlowResult validate(@PathVariable Long id) {
         return flowTopLevelService.validateFlow(id);
     }
 
     @PostMapping("/flow-add-commit")
-    public FlowData.FlowResultRest addFormCommit(@RequestBody Flow flow) {
+    public FlowData.FlowResult addFormCommit(@RequestBody Flow flow) {
         return flowTopLevelService.addFlow(flow);
     }
 
     @PostMapping("/flow-edit-commit")
-    public FlowData.FlowResultRest editFormCommit(Flow flow) {
+    public FlowData.FlowResult editFormCommit(Flow flow) {
         return flowTopLevelService.updateFlow(flow);
     }
 
@@ -74,7 +74,7 @@ public class FlowRestController {
     // ============= Flow instances =============
 
     @GetMapping("/flow-instances/{id}")
-    public FlowData.FlowInstancesResultRest flowInstances(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
+    public FlowData.FlowInstancesResult flowInstances(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
         return flowTopLevelService.getFlowInstances(id, pageable);
     }
 

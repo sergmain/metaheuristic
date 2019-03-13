@@ -112,9 +112,9 @@ public class ExperimentRestController {
     }
 
     @GetMapping("/experiments")
-    public ExperimentData.ExperimentsResultRest init(@PageableDefault(size = 5) Pageable pageable) {
+    public ExperimentData.ExperimentsResult init(@PageableDefault(size = 5) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.experimentRowsLimit, pageable);
-        return new ExperimentData.ExperimentsResultRest(experimentRepository.findAllByOrderByIdDesc(pageable));
+        return new ExperimentData.ExperimentsResult(experimentRepository.findAllByOrderByIdDesc(pageable));
     }
 
     @PostMapping("/experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
@@ -142,14 +142,14 @@ public class ExperimentRestController {
     }
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
-    public ExperimentData.ExperimentFeatureProgressRest getFeatureProgressPart(
+    public ExperimentData.ExperimentFeatureProgress getFeatureProgressPart(
             @PathVariable Long experimentId, @PathVariable Long featureId,
             @PathVariable String[] params, @PageableDefault(size = 10) Pageable pageable) {
         Experiment experiment= experimentCache.findById(experimentId);
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
 
-        ExperimentData.ExperimentFeatureProgressRest data = new ExperimentData.ExperimentFeatureProgressRest();
-        TasksData.TasksResultRest result = new TasksData.TasksResultRest();
+        ExperimentData.ExperimentFeatureProgress data = new ExperimentData.ExperimentFeatureProgress();
+        TasksData.TasksResult result = new TasksData.TasksResult();
         result.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
         data.tasksResult = result;
@@ -181,18 +181,18 @@ public class ExperimentRestController {
     }
 
     @GetMapping(value = "/experiment-info/{id}")
-    public ExperimentData.ExperimentFeatureProgressRest info(@PathVariable Long id) {
+    public ExperimentData.ExperimentFeatureProgress info(@PathVariable Long id) {
 
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new ExperimentData.ExperimentFeatureProgressRest("#280.09 experiment wasn't found, experimentId: " + id);
+            return new ExperimentData.ExperimentFeatureProgress("#280.09 experiment wasn't found, experimentId: " + id);
         }
         if (experiment.getFlowInstanceId() == null) {
-            return new ExperimentData.ExperimentFeatureProgressRest("#280.12 experiment wasn't startet yet, experimentId: " + id);
+            return new ExperimentData.ExperimentFeatureProgress("#280.12 experiment wasn't startet yet, experimentId: " + id);
         }
         FlowInstance flowInstance = flowInstanceRepository.findById(experiment.getFlowInstanceId()).orElse(null);
         if (flowInstance == null) {
-            return new ExperimentData.ExperimentFeatureProgressRest("#280.16 experiment has broken ref to flowInstance, experimentId: " + id);
+            return new ExperimentData.ExperimentFeatureProgress("#280.16 experiment has broken ref to flowInstance, experimentId: " + id);
         }
 
         for (ExperimentHyperParams hyperParams : experiment.getHyperParams()) {
@@ -202,12 +202,12 @@ public class ExperimentRestController {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParams.getValues());
             hyperParams.setVariants( variants.status ?variants.count : 0 );
         }
-        ExperimentData.ExperimentFeatureProgressRest experimentInfoRest = new ExperimentData.ExperimentFeatureProgressRest();
+        ExperimentData.ExperimentFeatureProgress experimentInfoRest = new ExperimentData.ExperimentFeatureProgress();
         if (experiment.getFlowInstanceId()==null) {
             experimentInfoRest.infoMessages = Collections.singletonList("Launch is disabled, dataset isn't assigned");
         }
 
-        ExperimentData.ExperimentResult experimentResult = new ExperimentData.ExperimentResult();
+        ExperimentData.ExperimentExtendedResult experimentResult = new ExperimentData.ExperimentExtendedResult();
         experimentResult.features = experimentFeatureRepository.findByExperimentIdOrderByMaxValueDesc(experiment.getId());
         experimentResult.flowInstance = flowInstance;
         experimentResult.flowInstanceExecState = Enums.FlowInstanceExecState.toState(flowInstance.execState);
@@ -245,7 +245,7 @@ public class ExperimentRestController {
                     else return false;
                 });
 
-        ExperimentData.ExperimentResult experimentResult = new ExperimentData.ExperimentResult();
+        ExperimentData.ExperimentExtendedResult experimentResult = new ExperimentData.ExperimentExtendedResult();
 
         snippetResult.sortSnippetsByOrder();
         model.addAttribute("experiment", experiment);
@@ -444,12 +444,12 @@ public class ExperimentRestController {
     }
 
     @GetMapping("/experiment/{id}")
-    public ExperimentData.ExperimentResultRest getExperiment(@PathVariable Long id) {
+    public ExperimentData.ExperimentResult getExperiment(@PathVariable Long id) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new ExperimentData.ExperimentResultRest("#280.69 experiment wasn't found, id: "+id );
+            return new ExperimentData.ExperimentResult("#280.69 experiment wasn't found, id: "+id );
         }
-        return new ExperimentData.ExperimentResultRest(experiment);
+        return new ExperimentData.ExperimentResult(experiment);
     }
 
     @PostMapping("/experiment-delete-commit")

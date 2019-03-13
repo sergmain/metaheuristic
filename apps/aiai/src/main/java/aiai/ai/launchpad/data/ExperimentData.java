@@ -37,21 +37,21 @@ public class ExperimentData {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class ExperimentsResultRest extends BaseDataClass {
+    public static class ExperimentsResult extends BaseDataClass {
         public Slice<Experiment> items;
     }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class ExperimentResultRest extends BaseDataClass {
+    public static class ExperimentResult extends BaseDataClass {
         public Experiment experiment;
 
-        public ExperimentResultRest(String errorMessage) {
+        public ExperimentResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ExperimentResultRest(Experiment experiment) {
+        public ExperimentResult(Experiment experiment) {
             this.experiment = experiment;
         }
     }
@@ -59,15 +59,15 @@ public class ExperimentData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class ExperimentInfoRest extends BaseDataClass {
+    public static class ExperimentInfo extends BaseDataClass {
         public Experiment experiment;
-        public ExperimentResult experimentResult;
+        public ExperimentExtendedResult experimentResult;
 
-        public ExperimentInfoRest(String errorMessage) {
+        public ExperimentInfo(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ExperimentInfoRest(Experiment experiment, ExperimentResult experimentResult) {
+        public ExperimentInfo(Experiment experiment, ExperimentExtendedResult experimentResult) {
             this.experiment = experiment;
             this.experimentResult = experimentResult;
         }
@@ -87,7 +87,7 @@ public class ExperimentData {
     }
 
     @Data
-    public static class ExperimentResult {
+    public static class ExperimentExtendedResult {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeature> features;
         public FlowInstance flowInstance;
@@ -97,18 +97,18 @@ public class ExperimentData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class ExperimentFeatureProgressRest extends BaseDataClass {
-        public TasksData.TasksResultRest tasksResult;
+    public static class ExperimentFeatureProgress extends BaseDataClass {
+        public TasksData.TasksResult tasksResult;
         public Experiment experiment;
         public ExperimentFeature experimentFeature;
-        public ExperimentResult experimentResult;
+        public ExperimentExtendedResult experimentResult;
         public ConsoleResult consoleResult;
 
-        public ExperimentFeatureProgressRest(String errorMessage) {
+        public ExperimentFeatureProgress(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ExperimentFeatureProgressRest(Experiment experiment, ExperimentResult experimentResult) {
+        public ExperimentFeatureProgress(Experiment experiment, ExperimentExtendedResult experimentResult) {
             this.experiment = experiment;
             this.experimentResult = experimentResult;
         }

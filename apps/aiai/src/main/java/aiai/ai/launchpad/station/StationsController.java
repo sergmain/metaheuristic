@@ -48,7 +48,7 @@ public class StationsController {
 
     @GetMapping("/stations")
     public String getStations(Model model, @PageableDefault(size = 5) Pageable pageable) {
-        StationData.StationsResultRest stationsResultRest = stationTopLevelService.getStations(pageable);
+        StationData.StationsResult stationsResultRest = stationTopLevelService.getStations(pageable);
         ControllerUtils.addMessagesToModel(model, stationsResultRest);
         model.addAttribute("result", stationsResultRest);
         return "launchpad/stations";
@@ -57,7 +57,7 @@ public class StationsController {
     // for AJAX
     @PostMapping("/stations-part")
     public String getStationsForAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
-        StationData.StationsResultRest stationsResultRest = stationTopLevelService.getStations(pageable);
+        StationData.StationsResult stationsResultRest = stationTopLevelService.getStations(pageable);
         model.addAttribute("result", stationsResultRest);
         return "launchpad/stations";
     }
@@ -70,7 +70,7 @@ public class StationsController {
 
     @GetMapping(value = "/station-edit/{id}")
     public String edit(@PathVariable Long id, Model model) {
-        StationData.StationResultRest stationResultRest = stationTopLevelService.getStation(id);
+        StationData.StationResult stationResultRest = stationTopLevelService.getStation(id);
         // TODO add handler of errorMessages
         model.addAttribute("station", stationResultRest.station);
         return "launchpad/station-form";
@@ -84,7 +84,7 @@ public class StationsController {
 
     @GetMapping("/station-delete/{id}")
     public String delete(@PathVariable Long id, Model model) {
-        StationData.StationResultRest stationResultRest = stationTopLevelService.getStation(id);
+        StationData.StationResult stationResultRest = stationTopLevelService.getStation(id);
         // TODO add handler of errorMessages
         model.addAttribute("station", stationResultRest.station);
         return "launchpad/station-delete";

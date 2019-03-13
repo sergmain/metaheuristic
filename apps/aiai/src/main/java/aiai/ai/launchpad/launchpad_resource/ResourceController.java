@@ -53,7 +53,7 @@ public class ResourceController {
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
                        @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                        @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
-        ResourceData.ResourcesResultRest resourcesResultRest = resourceTopLevelService.getResources(pageable);
+        ResourceData.ResourcesResult resourcesResultRest = resourceTopLevelService.getResources(pageable);
         ControllerUtils.addMessagesToModel(model, resourcesResultRest);
         model.addAttribute("result", resourcesResultRest);
         return "launchpad/resources";
@@ -62,7 +62,7 @@ public class ResourceController {
     // for AJAX
     @PostMapping("/resources-part")
     public String getResourcesForAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
-        ResourceData.ResourcesResultRest resourcesResultRest = resourceTopLevelService.getResources(pageable);
+        ResourceData.ResourcesResult resourcesResultRest = resourceTopLevelService.getResources(pageable);
         model.addAttribute("result", resourcesResultRest);
         return "launchpad/resources :: fragment-table";
     }
@@ -96,7 +96,7 @@ public class ResourceController {
 
     @GetMapping("/resource-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        ResourceData.ResourceResultRest resourceResultRest = resourceTopLevelService.getResourceById(id);
+        ResourceData.ResourceResult resourceResultRest = resourceTopLevelService.getResourceById(id);
         if (resourceResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", resourceResultRest.errorMessages);
             return "redirect:/launchpad/resources";

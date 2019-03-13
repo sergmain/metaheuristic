@@ -30,7 +30,7 @@ public class TasksData {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class TasksResultRest extends BaseDataClass {
+    public static class TasksResult extends BaseDataClass {
         public Slice<TaskWIthType> items;
     }
 

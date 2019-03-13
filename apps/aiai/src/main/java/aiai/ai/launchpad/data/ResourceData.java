@@ -31,21 +31,21 @@ public class ResourceData {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class ResourcesResultRest extends BaseDataClass {
+    public static class ResourcesResult extends BaseDataClass {
         public Slice<SimpleResource> items;
     }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class ResourceResultRest extends BaseDataClass {
+    public static class ResourceResult extends BaseDataClass {
         public BinaryData data;
 
-        public ResourceResultRest(String errorMessage) {
+        public ResourceResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ResourceResultRest(BinaryData data) {
+        public ResourceResult(BinaryData data) {
             this.data = data;
         }
     }
