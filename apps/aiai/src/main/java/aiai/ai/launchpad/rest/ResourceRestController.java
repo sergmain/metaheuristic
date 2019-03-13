@@ -25,6 +25,7 @@ import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.launchpad_resource.ResourceService;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.data.ResourceData;
+import aiai.ai.launchpad.launchpad_resource.ResourceTopLevelService;
 import aiai.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -47,113 +48,39 @@ import java.io.IOException;
 //@CrossOrigin(origins="*", maxAge=3600)
 public class ResourceRestController {
 
-    private final Globals globals;
-    private final ResourceService resourceService;
-    private final BinaryDataService binaryDataService;
+    private final ResourceTopLevelService resourceTopLevelService;
 
-    public ResourceRestController(Globals globals, BinaryDataService binaryDataService, ResourceService resourceService) {
-        this.globals = globals;
-        this.binaryDataService = binaryDataService;
-        this.resourceService = resourceService;
+    public ResourceRestController(ResourceTopLevelService resourceTopLevelService) {
+        this.resourceTopLevelService = resourceTopLevelService;
     }
 
     @GetMapping("/resources")
     public ResourceData.ResourcesResultRest getResources(@PageableDefault(size = 5) Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.resourceRowsLimit, pageable);
-        return new ResourceData.ResourcesResultRest(binaryDataService.getAllAsSimpleResources(pageable));
+        return resourceTopLevelService.getResources(pageable);
     }
-
-/*
-    @RequestMapping(method = RequestMethod.POST, headers = ("content-type=multipart/*"), produces = "application/json", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
-    @ResponseBody
-    @ResponseStatus(value = HttpStatus.CREATED)
-    public void handleFileUpload(@RequestPart(required = true) MultipartFile file) {
-        storageService.store(file);  //your service to handle upload.
-    }
-*/
 
     @PostMapping(value = "/resource-upload-from-file", headers = ("content-type=multipart/*"), produces = "application/json", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
     public OperationStatusRest createResourceFromFile(
             @RequestPart MultipartFile file,
             @RequestParam(name = "code") String resourceCode,
             @RequestParam(name = "poolCode") String resourcePoolCode ) {
-        File tempFile = globals.createTempFileForLaunchpad("temp-raw-file-");
-        if (tempFile.exists()) {
-            if (!tempFile.delete() ) {
-                return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                        "#173.36 can't delete dir " + tempFile.getAbsolutePath());
-            }
-        }
-        try {
-            FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
-        } catch (IOException e) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#173.06 can't persist uploaded file as " +
-                            tempFile.getAbsolutePath()+", error: " + e.toString());
-        }
-
-        String originFilename = file.getOriginalFilename();
-        if (originFilename == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#172.01 name of uploaded file is null");
-        }
-        String code = StringUtils.isNotBlank(resourceCode)
-                ? resourceCode
-                : resourcePoolCode + '-' + originFilename;
-
-        try {
-            resourceService.storeInitialResource(originFilename, tempFile, code, resourcePoolCode, originFilename);
-        } catch (StoreNewFileException e) {
-            String es = "#172.04 An error while saving data to file, " + e.toString();
-            log.error(es, e);
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, es);
-        }
-        return OperationStatusRest.OPERATION_STATUS_OK;
+        return resourceTopLevelService.createResourceFromFile(file, resourceCode, resourcePoolCode);
     }
 
     @PostMapping(value = "/resource-in-external-storage")
     public OperationStatusRest registerResourceInExternalStorage(
             @RequestParam(name = "poolCode") String resourcePoolCode,
             @RequestParam(name = "storageUrl") String storageUrl ) {
-
-        if (StringUtils.contains(storageUrl, ' ')) {
-            String es = "#172.05 storage url can't contain 'space' char: " + storageUrl;
-            log.error(es);
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, es);
-        }
-
-        if (!StringUtils.startsWith(storageUrl, "disk://")) {
-            String es = "#172.06 wrong format of storage url: " + storageUrl;
-            log.error(es);
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, es);
-        }
-
-        String code = StringUtils.replaceEach(storageUrl, new String[] {"://", "/", "*", "?"}, new String[] {"-", "-", "-", "-"} );
-        try {
-            binaryDataService.saveWithSpecificStorageUrl(code, resourcePoolCode, storageUrl);
-        } catch (StoreNewFileException e) {
-            String es = "#172.08 An error while saving data to file, " + e.toString();
-            log.error(es, e);
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, es);
-        }
-        return OperationStatusRest.OPERATION_STATUS_OK;
+        return resourceTopLevelService.registerResourceInExternalStorage(resourcePoolCode, storageUrl);
     }
 
     @GetMapping("/resource/{id}")
     public ResourceData.ResourceResultRest get(@PathVariable Long id) {
-        final BinaryData data = binaryDataService.findById(id).orElse(null);
-        if (data==null) {
-            return new ResourceData.ResourceResultRest("#172.10 Resource wasn't found for id: " + id);
-        }
-        return new ResourceData.ResourceResultRest(data);
+        return resourceTopLevelService.getResourceById(id);
     }
 
     @PostMapping("/resource-delete-commit")
     public OperationStatusRest deleteResource(Long id) {
-        final BinaryData data = binaryDataService.findById(id).orElse(null);
-        if (data==null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#172.20 Resource wasn't found for id: " + id);
-        }
-        binaryDataService.deleteById(id);
-        return OperationStatusRest.OPERATION_STATUS_OK;
+        return resourceTopLevelService.deleteResource(id);
     }
 }

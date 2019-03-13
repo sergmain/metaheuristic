@@ -17,12 +17,10 @@
 
 package aiai.ai.launchpad.rest;
 
-import aiai.ai.Enums;
-import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Station;
-import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.data.StationData;
+import aiai.ai.launchpad.station.StationTopLevelService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -35,42 +33,29 @@ import org.springframework.web.bind.annotation.*;
 //@CrossOrigin(origins="*", maxAge=3600)
 public class StationsRestController {
 
-    private final Globals globals;
-    private final StationsRepository repository;
+    private final StationTopLevelService stationTopLevelService;
 
-    public StationsRestController(Globals globals, StationsRepository repository) {
-        this.globals = globals;
-        this.repository = repository;
+    public StationsRestController(StationTopLevelService stationTopLevelService) {
+        this.stationTopLevelService = stationTopLevelService;
     }
 
     @GetMapping("/stations")
     public StationData.StationsResultRest init(@PageableDefault(size = 5) Pageable pageable) {
-        StationData.StationsResultRest result = new StationData.StationsResultRest();
-        result.items = repository.findAll(pageable);
-        return result;
+        return stationTopLevelService.getStations(pageable);
     }
 
     @GetMapping(value = "/station/{id}")
     public StationData.StationResultRest getStation(@PathVariable Long id) {
-        //noinspection UnnecessaryLocalVariable
-        StationData.StationResultRest r = new StationData.StationResultRest(repository.findById(id).orElse(null));
-        return r;
+        return stationTopLevelService.getStation(id);
     }
 
     @PostMapping("/station-form-commit")
     public StationData.StationResultRest formCommit(@RequestBody Station station) {
-        //noinspection UnnecessaryLocalVariable
-        StationData.StationResultRest r = new StationData.StationResultRest(repository.save(station));
-        return r;
+        return stationTopLevelService.saveStation(station);
     }
 
     @PostMapping("/station-delete-commit")
-    public OperationStatusRest deleteCommit(Long id) {
-        Station station = repository.findById(id).orElse(null);
-        if (station == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#076.042 Station wasn't found, stationId: " + id);
-        }
-        repository.deleteById(id);
-        return OperationStatusRest.OPERATION_STATUS_OK;
+    public OperationStatusRest deleteStationCommit(Long id) {
+        return stationTopLevelService.deleteStationById(id);
     }
 }

@@ -17,20 +17,18 @@
 
 package aiai.ai.launchpad.station;
 
-import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Station;
-import aiai.ai.launchpad.repositories.StationsRepository;
+import aiai.ai.launchpad.data.StationData;
 import aiai.ai.utils.ControllerUtils;
-import lombok.Data;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Optional;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * User: Serg
@@ -42,27 +40,26 @@ import java.util.Optional;
 @Profile("launchpad")
 public class StationsController {
 
-    private final Globals globals;
-    private final StationsRepository repository;
+    private final StationTopLevelService stationTopLevelService;
 
-    public StationsController(Globals globals, StationsRepository repository) {
-        this.globals = globals;
-        this.repository = repository;
+    public StationsController(StationTopLevelService stationTopLevelService) {
+        this.stationTopLevelService = stationTopLevelService;
     }
 
     @GetMapping("/stations")
-    public String init(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.stationRowsLimit, pageable);
-        result.items = repository.findAll(pageable);
+    public String getStations(Model model, @PageableDefault(size = 5) Pageable pageable) {
+        StationData.StationsResultRest stationsResultRest = stationTopLevelService.getStations(pageable);
+        ControllerUtils.addMessagesToModel(model, stationsResultRest);
+        model.addAttribute("result", stationsResultRest);
         return "launchpad/stations";
     }
 
     // for AJAX
     @PostMapping("/stations-part")
-    public String getStations(@ModelAttribute Result result, @PageableDefault(size = 5) Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(globals.stationRowsLimit, pageable);
-        result.items = repository.findAll(pageable);
-        return "launchpad/stations :: table";
+    public String getStationsForAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
+        StationData.StationsResultRest stationsResultRest = stationTopLevelService.getStations(pageable);
+        model.addAttribute("result", stationsResultRest);
+        return "launchpad/stations";
     }
 
     @GetMapping(value = "/station-add")
@@ -73,35 +70,30 @@ public class StationsController {
 
     @GetMapping(value = "/station-edit/{id}")
     public String edit(@PathVariable Long id, Model model) {
-        model.addAttribute("station", repository.findById(id));
+        StationData.StationResultRest stationResultRest = stationTopLevelService.getStation(id);
+        // TODO add handler of errorMessages
+        model.addAttribute("station", stationResultRest.station);
         return "launchpad/station-form";
     }
 
     @PostMapping("/station-form-commit")
-    public String formCommit(Station station) {
-        repository.save(station);
+    public String saveStation(Station station) {
+        stationTopLevelService.saveStation(station);
         return "redirect:/launchpad/stations";
     }
 
     @GetMapping("/station-delete/{id}")
     public String delete(@PathVariable Long id, Model model) {
-        final Optional<Station> value = repository.findById(id);
-        if (!value.isPresent()) {
-            return "redirect:/launchpad/stations";
-        }
-        model.addAttribute("station", value.get());
+        StationData.StationResultRest stationResultRest = stationTopLevelService.getStation(id);
+        // TODO add handler of errorMessages
+        model.addAttribute("station", stationResultRest.station);
         return "launchpad/station-delete";
     }
 
     @PostMapping("/station-delete-commit")
     public String deleteCommit(Long id) {
-        repository.deleteById(id);
+        stationTopLevelService.deleteStationById(id);
         return "redirect:/launchpad/stations";
-    }
-
-    @Data
-    public static class Result {
-        public Slice<Station> items;
     }
 
 }
