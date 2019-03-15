@@ -157,29 +157,29 @@ public class FlowService {
             }}
     }
 
-    public FlowData.FlowInstanceResultRest prepareModel(Long flowId, Long flowInstanceId) {
+    public FlowData.FlowInstanceResult prepareModel(Long flowId, Long flowInstanceId) {
         if (flowId==null) {
-            return new FlowData.FlowInstanceResultRest("#560.83 flow wasn't found, flowId: " + flowId);
+            return new FlowData.FlowInstanceResult("#560.83 flow wasn't found, flowId: " + flowId);
         }
         if (flowInstanceId==null) {
-            return new FlowData.FlowInstanceResultRest("#560.85 flowInstanceId is null");
+            return new FlowData.FlowInstanceResult("#560.85 flowInstanceId is null");
         }
         final FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
         if (flowInstance == null) {
-            return new FlowData.FlowInstanceResultRest("#560.87 flowInstance wasn't found, flowInstanceId: " + flowInstanceId);
+            return new FlowData.FlowInstanceResult("#560.87 flowInstance wasn't found, flowInstanceId: " + flowInstanceId);
         }
         Flow flow = flowCache.findById(flowId);
         if (flow == null) {
-            return new FlowData.FlowInstanceResultRest("#560.89 flow wasn't found, flowId: " + flowId);
+            return new FlowData.FlowInstanceResult("#560.89 flow wasn't found, flowId: " + flowId);
         }
 
         if (!flow.getId().equals(flowInstance.flowId)) {
             flowInstance.valid=false;
             flowInstanceRepository.save(flowInstance);
-            return new FlowData.FlowInstanceResultRest("#560.73 flowId doesn't match to flowInstance.flowId, flowId: " + flowId+", flowInstance.flowId: " + flowInstance.flowId);
+            return new FlowData.FlowInstanceResult("#560.73 flowId doesn't match to flowInstance.flowId, flowId: " + flowId+", flowInstance.flowId: " + flowInstance.flowId);
         }
 
-        FlowData.FlowInstanceResultRest result = new FlowData.FlowInstanceResultRest(flow, flowInstance);
+        FlowData.FlowInstanceResult result = new FlowData.FlowInstanceResult(flow, flowInstance);
         return result;
     }
 
@@ -205,7 +205,7 @@ public class FlowService {
 
     public OperationStatusRest flowInstanceTargetExecState(
             Long flowId, Long flowInstanceId, Enums.FlowInstanceExecState execState) {
-        FlowData.FlowInstanceResultRest result = prepareModel(flowId, flowInstanceId);
+        FlowData.FlowInstanceResult result = prepareModel(flowId, flowInstanceId);
         if (result.isErrorMessages()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, result.errorMessages);
         }

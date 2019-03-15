@@ -42,7 +42,7 @@ public class FlowRestController {
     }
 
     @GetMapping("/flows")
-    public FlowData.FlowsResultRest flows(@PageableDefault(size = 5) Pageable pageable) {
+    public FlowData.FlowsResult flows(@PageableDefault(size = 5) Pageable pageable) {
         return flowTopLevelService.getFlows(pageable);
     }
 
@@ -62,7 +62,7 @@ public class FlowRestController {
     }
 
     @PostMapping("/flow-edit-commit")
-    public FlowData.FlowResult editFormCommit(Flow flow) {
+    public FlowData.FlowResult editFormCommit(@RequestBody Flow flow) {
         return flowTopLevelService.updateFlow(flow);
     }
 
@@ -79,12 +79,12 @@ public class FlowRestController {
     }
 
     @PostMapping("/flow-instance-add-commit")
-    public FlowData.FlowInstanceResultRest flowInstanceAddCommit(Long flowId, String poolCode, String inputResourceParams) {
+    public FlowData.FlowInstanceResult flowInstanceAddCommit(Long flowId, String poolCode, String inputResourceParams) {
         return flowTopLevelService.addFlowInstance(flowId, poolCode, inputResourceParams);
     }
 
     @GetMapping(value = "/flow-instance/{flowId}/{flowInstanceId}")
-    public FlowData.FlowInstanceResultRest flowInstanceEdit(@PathVariable Long flowId, @PathVariable Long flowInstanceId) {
+    public FlowData.FlowInstanceResult flowInstanceEdit(@PathVariable Long flowId, @PathVariable Long flowInstanceId) {
         return flowTopLevelService.getFlowInstanceExtended(flowId, flowInstanceId);
     }
 

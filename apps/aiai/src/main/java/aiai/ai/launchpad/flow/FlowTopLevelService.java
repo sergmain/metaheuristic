@@ -52,9 +52,9 @@ public class FlowTopLevelService {
         this.flowInstanceRepository = flowInstanceRepository;
     }
 
-    public FlowData.FlowsResultRest getFlows(Pageable pageable) {
+    public FlowData.FlowsResult getFlows(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.flowRowsLimit, pageable);
-        FlowData.FlowsResultRest result = new FlowData.FlowsResultRest();
+        FlowData.FlowsResult result = new FlowData.FlowsResult();
         result.items = flowRepository.findAllByOrderByIdDesc(pageable);
         result.items.forEach( o -> o.params = null );
         return result;
@@ -134,8 +134,8 @@ public class FlowTopLevelService {
         return flowService.getFlowInstancesResult(id, pageable);
     }
 
-    public FlowData.FlowInstanceResultRest addFlowInstance(Long flowId, String poolCode, String inputResourceParams) {
-        FlowData.FlowInstanceResultRest result = new FlowData.FlowInstanceResultRest(flowCache.findById(flowId));
+    public FlowData.FlowInstanceResult addFlowInstance(Long flowId, String poolCode, String inputResourceParams) {
+        FlowData.FlowInstanceResult result = new FlowData.FlowInstanceResult(flowCache.findById(flowId));
         if (result.flow == null) {
             result.addErrorMessage("#560.60 flow wasn't found, flowId: " + flowId);
             return result;
@@ -169,7 +169,7 @@ public class FlowTopLevelService {
         // ugly work-around on StaleObjectStateException
         result.flow = flowCache.findById(flowId);
         if (result.flow == null) {
-            return new FlowData.FlowInstanceResultRest("#560.73 flow wasn't found, flowId: " + flowId);
+            return new FlowData.FlowInstanceResult("#560.73 flow wasn't found, flowId: " + flowId);
         }
 
         // validate the flow + the flow instance
@@ -201,14 +201,14 @@ public class FlowTopLevelService {
         return result;
     }
 
-    public FlowData.FlowInstanceResultRest getFlowInstanceExtended(Long flowId, Long flowInstanceId) {
+    public FlowData.FlowInstanceResult getFlowInstanceExtended(Long flowId, Long flowInstanceId) {
         //noinspection UnnecessaryLocalVariable
-        FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
+        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
         return result;
     }
 
     public OperationStatusRest deleteFlowInstanceById(Long flowId, Long flowInstanceId) {
-        FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
+        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
         if (CollectionUtils.isNotEmpty(result.errorMessages)) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, result.errorMessages);
         }

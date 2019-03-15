@@ -52,7 +52,7 @@ public class FlowController {
     public String flows(Model model, @PageableDefault(size = 5) Pageable pageable,
                         @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                         @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
-        FlowData.FlowsResultRest flowsResultRest = flowTopLevelService.getFlows(pageable);
+        FlowData.FlowsResult flowsResultRest = flowTopLevelService.getFlows(pageable);
         ControllerUtils.addMessagesToModel(model, flowsResultRest);
         model.addAttribute("result", flowsResultRest);
         return "launchpad/flow/flows";
@@ -61,7 +61,7 @@ public class FlowController {
     // for AJAX
     @PostMapping("/flows-part")
     public String flowsPart(Model model, @PageableDefault(size = 10) Pageable pageable) {
-        FlowData.FlowsResultRest flowsResultRest = flowTopLevelService.getFlows(pageable);
+        FlowData.FlowsResult flowsResultRest = flowTopLevelService.getFlows(pageable);
         model.addAttribute("result", flowsResultRest);
         return "launchpad/flow/flows :: table";
     }
@@ -165,20 +165,19 @@ public class FlowController {
 
     @SuppressWarnings("Duplicates")
     @GetMapping(value = "/flow-instance-add/{id}")
-    public String flowInstanceAdd(@ModelAttribute("result") FlowData.FlowListResult result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+    public String flowInstanceAdd(@ModelAttribute("result") FlowData.FlowResult result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         FlowData.FlowResult flowResultRest = flowTopLevelService.getFlow(id);
         if (flowResultRest.status==Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
         result.flow = flowResultRest.flow;
-        result.currentFlowId = id;
         return "launchpad/flow/flow-instance-add";
     }
 
     @PostMapping("/flow-instance-add-commit")
-    public String flowInstanceAddCommit(@ModelAttribute("result") FlowData.FlowListResult result, Long flowId, String poolCode, String inputResourceParams, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowInstanceResultRest flowInstanceResultRest = flowTopLevelService.addFlowInstance(flowId, poolCode, inputResourceParams);
+    public String flowInstanceAddCommit(@ModelAttribute("result") FlowData.FlowResult result, Long flowId, String poolCode, String inputResourceParams, final RedirectAttributes redirectAttributes) {
+        FlowData.FlowInstanceResult flowInstanceResultRest = flowTopLevelService.addFlowInstance(flowId, poolCode, inputResourceParams);
         result.flow = flowInstanceResultRest.flow;
         if (result.flow == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#560.60 flow wasn't found, flowId: " + flowId);
@@ -193,7 +192,7 @@ public class FlowController {
 
     @GetMapping("/flow-instance-delete/{flowId}/{flowInstanceId}")
     public String flowInstanceDelete(Model model, @PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowInstanceResultRest result = flowTopLevelService.getFlowInstanceExtended(flowId, flowInstanceId);
+        FlowData.FlowInstanceResult result = flowTopLevelService.getFlowInstanceExtended(flowId, flowInstanceId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;

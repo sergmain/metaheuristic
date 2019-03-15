@@ -10,7 +10,7 @@
 
         <h1 class="widget-header">New flow instance with single input</h1>
 
-        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.FlowData.FlowResult"*/-->
+        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.FlowData$FlowResult"*/-->
         <form class="pure-form pure-form-stacked" action="#" th:method="POST" th:action="@{/launchpad/flow/flow-instance-add-commit}" accept-charset="UTF-8" id="flow-instance-add-form" name="f">
             <input type="hidden" name="flowId" th:value="${result.flow.id}"/>
             <fieldset>
@@ -69,7 +69,7 @@ poolCodes:
 
         <h1 class="widget-header">&nbsp;</h1>
 
-        <a class="pure-button pure-button-primary" href="flow-instances.html" th:href="${'/launchpad/flow/flow-instances/' + result.currentFlowId}">Cancel</a>
+        <a class="pure-button pure-button-primary" href="flow-instances.html" th:href="${'/launchpad/flow/flow-instances/' + result.flow.id}">Cancel</a>
 
 
     </div>

@@ -305,7 +305,7 @@ public class ProcessResourceController {
     @SuppressWarnings("Duplicates")
     @GetMapping("/process-resource-delete/{flowId}/{flowInstanceId}")
     public String processResourceDelete(@PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
+        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -316,7 +316,7 @@ public class ProcessResourceController {
     @SuppressWarnings("Duplicates")
     @PostMapping("/process-resource-delete-commit")
     public String processResourceDeleteCommit(Long flowId, Long flowInstanceId, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowInstanceResultRest result = flowService.prepareModel(flowId, flowInstanceId);
+        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.isErrorMessages());
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;

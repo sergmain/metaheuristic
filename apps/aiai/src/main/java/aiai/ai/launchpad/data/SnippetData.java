@@ -18,13 +18,23 @@
 package aiai.ai.launchpad.data;
 
 import aiai.ai.launchpad.beans.ExperimentSnippet;
+import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.utils.SimpleSelectOption;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class SnippetData {
+
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class Result extends BaseDataClass {
+        Iterable<Snippet> snippets;
+    }
+
 
     @Data
     public static class SnippetResult {

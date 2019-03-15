@@ -33,7 +33,7 @@ public class FlowData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class FlowsResultRest extends BaseDataClass {
+    public static class FlowsResult extends BaseDataClass {
         public Slice<Flow> items;
     }
 
@@ -70,19 +70,19 @@ public class FlowData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class FlowInstanceResultRest extends BaseDataClass {
+    public static class FlowInstanceResult extends BaseDataClass {
         public FlowInstance flowInstance;
         public Flow flow;
 
-        public FlowInstanceResultRest(String errorMessage) {
+        public FlowInstanceResult(String errorMessage) {
             this.addErrorMessage(errorMessage);
         }
 
-        public FlowInstanceResultRest(Flow flow) {
+        public FlowInstanceResult(Flow flow) {
             this.flow = flow;
         }
 
-        public FlowInstanceResultRest(Flow flow, FlowInstance flowInstance) {
+        public FlowInstanceResult(Flow flow, FlowInstance flowInstance) {
             this.flow = flow;
             this.flowInstance = flowInstance;
         }
