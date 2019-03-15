@@ -19,64 +19,73 @@ package aiai.ai.launchpad.snippet;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Snippet;
+import aiai.ai.launchpad.binary_data.BinaryDataService;
+import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.ai.launchpad.data.SnippetData;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.springframework.http.HttpEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
-@SuppressWarnings("Duplicates")
 @Service
+@Slf4j
 public class SnippetTopLevelService {
 
-/*
+    private final SnippetRepository snippetRepository;
+    private final SnippetCache snippetCache;
+    private final SnippetService snippetService;
+    private final BinaryDataService binaryDataService;
+
+    public SnippetTopLevelService(SnippetRepository snippetRepository, SnippetCache snippetCache, SnippetService snippetService, BinaryDataService binaryDataService) {
+        this.snippetRepository = snippetRepository;
+        this.snippetCache = snippetCache;
+        this.snippetService = snippetService;
+        this.binaryDataService = binaryDataService;
+    }
 
     @GetMapping("/snippets")
-    public String init(@ModelAttribute SnippetController.Result result,
-                       @ModelAttribute("errorMessage") final String errorMessage,
-                       @ModelAttribute("infoMessages") final String infoMessages) {
+    public SnippetData.SnippetsResult getSnippets() {
+        SnippetData.SnippetsResult result = new SnippetData.SnippetsResult();
         result.snippets = snippetRepository.findAll();
-        return "launchpad/snippets";
+        return result;
     }
 
-    @GetMapping("/snippet-delete/{id}")
-    public HttpEntity<String> delete(@ModelAttribute SnippetController.Result result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest deleteSnippetById(Long id) {
         log.info("Start deleting snippet with id: {}", id );
         final Snippet snippet = snippetCache.findById(id);
-        if (snippet != null) {
-            snippetCache.delete(snippet.getId());
-            binaryDataService.deleteByCodeAndDataType(snippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
+        if (snippet == null) {
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+                    "#422.50 snippet wasn't found, flowId: " + id);
         }
-        return new HttpEntity<>("true");
+        snippetCache.delete(snippet.getId());
+        binaryDataService.deleteByCodeAndDataType(snippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    @PostMapping(value = "/snippet-upload-from-file")
-    public String uploadSnippet(final MultipartFile file, final RedirectAttributes redirectAttributes) {
+    public OperationStatusRest uploadSnippet(final MultipartFile file) {
 
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#422.01 name of uploaded file is null");
-            return "redirect:/launchpad/snippets";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+                    "#422.01 name of uploaded file is null");
         }
         int idx;
         if ((idx = originFilename.lastIndexOf('.')) == -1) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#422.02 '.' wasn't found, bad filename: " + originFilename);
-            return "redirect:/launchpad/snippets";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+                    "#422.02 '.' wasn't found, bad filename: " + originFilename);
         }
         String ext = originFilename.substring(idx).toLowerCase();
         if (!".zip".equals(ext)) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#422.03 only '.zip' files is supported, filename: " + originFilename);
-            return "redirect:/launchpad/snippets";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+                    "#422.03 only '.zip' files is supported, filename: " + originFilename);
         }
 
         final String location = System.getProperty("java.io.tmpdir");
@@ -84,8 +93,8 @@ public class SnippetTopLevelService {
         try {
             File tempDir = DirUtils.createTempDir("snippet-upload-");
             if (tempDir==null || tempDir.isFile()) {
-                redirectAttributes.addFlashAttribute("errorMessage", "#422.04 can't create temporary directory in " + location);
-                return "redirect:/launchpad/snippets";
+                return new OperationStatusRest(Enums.OperationStatus.ERROR,
+                        "#422.04 can't create temporary directory in " + location);
             }
             final File zipFile = new File(tempDir, "snippet.zip");
             log.debug("Start storing an uploaded snippet to disk");
@@ -99,13 +108,12 @@ public class SnippetTopLevelService {
         }
         catch (Exception e) {
             log.error("Error", e);
-            redirectAttributes.addFlashAttribute("errorMessage", "#422.05 can't load snippets, Error: " + e.toString());
-            return "redirect:/launchpad/snippets";
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+                    "#422.05 can't load snippets, Error: " + e.toString());
         }
 
         log.debug("All done. Send redirect");
-        return "redirect:/launchpad/snippets";
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-*/
 }

@@ -31,8 +31,8 @@ public class SnippetData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
-    public static class Result extends BaseDataClass {
-        Iterable<Snippet> snippets;
+    public static class SnippetsResult extends BaseDataClass {
+        public Iterable<Snippet> snippets;
     }
 
     @Data

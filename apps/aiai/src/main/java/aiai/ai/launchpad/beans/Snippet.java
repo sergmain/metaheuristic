@@ -17,8 +17,6 @@
 package aiai.ai.launchpad.beans;
 
 import lombok.Data;
-import lombok.ToString;
-import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
 import java.io.Serializable;

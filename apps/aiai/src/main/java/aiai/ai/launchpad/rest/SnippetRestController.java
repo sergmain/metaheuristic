@@ -17,16 +17,38 @@
 
 package aiai.ai.launchpad.rest;
 
-import lombok.extern.slf4j.Slf4j;
+import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.ai.launchpad.data.SnippetData;
+import aiai.ai.launchpad.snippet.SnippetTopLevelService;
 import org.springframework.context.annotation.Profile;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/ng/launchpad/snippet")
-@Slf4j
 @Profile("launchpad")
 @CrossOrigin
 public class SnippetRestController {
+
+    private final SnippetTopLevelService snippetTopLevelService;
+
+    public SnippetRestController(SnippetTopLevelService snippetTopLevelService) {
+        this.snippetTopLevelService = snippetTopLevelService;
+    }
+
+    @GetMapping("/snippets")
+    public SnippetData.SnippetsResult getSnippets() {
+        return snippetTopLevelService.getSnippets();
+    }
+
+    @GetMapping("/snippet-delete/{id}")
+    public OperationStatusRest deleteCommit(@PathVariable Long id) {
+        return snippetTopLevelService.deleteSnippetById(id);
+    }
+
+    @PostMapping(value = "/snippet-upload-from-file")
+    public OperationStatusRest uploadSnippet(final MultipartFile file) {
+        return snippetTopLevelService.uploadSnippet(file);
+    }
+
 }
