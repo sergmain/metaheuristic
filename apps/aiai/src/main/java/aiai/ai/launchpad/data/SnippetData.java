@@ -35,7 +35,6 @@ public class SnippetData {
         Iterable<Snippet> snippets;
     }
 
-
     @Data
     public static class SnippetResult {
         public List<SimpleSelectOption> selectOptions = new ArrayList<>();

@@ -59,7 +59,7 @@ public class StationsController {
     public String getStationsForAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
         StationData.StationsResult stationsResultRest = stationTopLevelService.getStations(pageable);
         model.addAttribute("result", stationsResultRest);
-        return "launchpad/stations";
+        return "launchpad/stations :: table";
     }
 
     @GetMapping(value = "/station-add")
