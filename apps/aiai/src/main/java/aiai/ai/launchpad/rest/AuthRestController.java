@@ -19,7 +19,6 @@ package aiai.ai.launchpad.rest;
 
 import aiai.ai.launchpad.beans.Account;
 import aiai.ai.launchpad.data.UserData;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
@@ -32,7 +31,6 @@ import java.util.Collection;
 
 @RestController
 @RequestMapping("/ng")
-@Slf4j
 @Profile("launchpad")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)

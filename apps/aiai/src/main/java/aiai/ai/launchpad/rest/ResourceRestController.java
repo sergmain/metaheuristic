@@ -20,7 +20,6 @@ package aiai.ai.launchpad.rest;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.data.ResourceData;
 import aiai.ai.launchpad.launchpad_resource.ResourceTopLevelService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -30,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/ng/launchpad/resource")
-@Slf4j
 @Profile("launchpad")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)

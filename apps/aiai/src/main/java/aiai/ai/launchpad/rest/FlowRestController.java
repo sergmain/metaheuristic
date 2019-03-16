@@ -21,7 +21,6 @@ import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.flow.FlowTopLevelService;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -29,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/ng/launchpad/flow")
-@Slf4j
 @Profile("launchpad")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)

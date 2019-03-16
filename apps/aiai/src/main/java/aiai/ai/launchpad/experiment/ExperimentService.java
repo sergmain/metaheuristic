@@ -22,6 +22,7 @@ import aiai.ai.Monitoring;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.data.TasksData;
 import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import aiai.ai.launchpad.flow.FlowInstanceService;
 import aiai.ai.launchpad.repositories.*;
@@ -39,11 +40,7 @@ import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -61,80 +58,15 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static aiai.ai.launchpad.data.ExperimentData.*;
+
 @Service
 @EnableTransactionManagement
 @Slf4j
 @Profile("launchpad")
 public class ExperimentService {
 
-    private static final HashMap<String, Integer> HASH_MAP = new HashMap<>();
-
     private final ApplicationEventMulticaster eventMulticaster;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class HyperParamElement {
-        String param;
-        boolean isSelected;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class HyperParamList {
-        String key;
-        public final List<HyperParamElement> list = new ArrayList<>();
-        public boolean isSelectable() {
-            return list.size()>1;
-        }
-    }
-
-    @Data
-    public static class HyperParamResult {
-        public final List<HyperParamList> elements = new ArrayList<>();
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class MetricElement {
-        public final List<BigDecimalHolder> values = new ArrayList<>();
-        public String params;
-
-        public static int compare(MetricElement o2, MetricElement o1) {
-            for (int i = 0; i < Math.min(o1.values.size(), o2.values.size()); i++) {
-                final BigDecimalHolder holder1 = o1.values.get(i);
-                if (holder1 == null) {
-                    return -1;
-                }
-                final BigDecimalHolder holder2 = o2.values.get(i);
-                if (holder2 == null) {
-                    return -1;
-                }
-                int c = ObjectUtils.compare(holder1.value, holder2.value);
-                if (c != 0) {
-                    return c;
-                }
-            }
-            return Integer.compare(o1.values.size(), o2.values.size());        }
-    }
-
-    @Data
-    public static class MetricsResult {
-        public final LinkedHashSet<String> metricNames = new LinkedHashSet<>();
-        public final List<MetricElement> metrics = new ArrayList<>();
-    }
-
-    public static final PlotData EMPTY_PLOT_DATA = new PlotData();
-
-    @Data
-    @NoArgsConstructor
-    public static class PlotData {
-        public List<String> x = new ArrayList<>();
-        public List<String> y = new ArrayList<>();
-        public BigDecimal[][] z;
-    }
 
     private final ParamsSetter paramsSetter;
     private final MetricsMaxValueCollector metricsMaxValueCollector;
@@ -197,7 +129,7 @@ public class ExperimentService {
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
 
         //noinspection UnnecessaryLocalVariable
-        ExperimentService.PlotData data = findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
+        PlotData data = findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
         return data;
     }
 
@@ -368,7 +300,7 @@ public class ExperimentService {
                         isOk[idx] = true;
                         continue;
                     }
-                    final Map<String, Integer> map = paramByIndex.getOrDefault(entry.getKey(), HASH_MAP);
+                    final Map<String, Integer> map = paramByIndex.getOrDefault(entry.getKey(), new HashMap<>());
                     if (map.isEmpty()) {
                         continue;
                     }
@@ -402,10 +334,10 @@ public class ExperimentService {
         return true;
     }
 
-    public Map<String, Object> prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
-        ExperimentsController.TasksResult result = new ExperimentsController.TasksResult();
+    public ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
+        TasksData.TasksResult tasksResult = new TasksData.TasksResult();
 
-        result.items = taskRepository.findPredictTasks(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
+        tasksResult.items = taskRepository.findPredictTasks(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
 
         HyperParamResult hyperParamResult = new HyperParamResult();
         for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
@@ -449,15 +381,15 @@ public class ExperimentService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
-        Map<String, Object> map = new HashMap<>();
-        map.put("metrics", metricsResult);
-        map.put("params", hyperParamResult);
-        map.put("result", result);
-        map.put("experiment", experiment);
-        map.put("feature", experimentFeature);
-        map.put("consoleResult", new ExperimentsController.ConsoleResult());
+        ExperimentFeatureExtendedResult result = new ExperimentFeatureExtendedResult();
+        result.metricsResult = metricsResult;
+        result.hyperParamResult = hyperParamResult;
+        result.tasksResult = tasksResult;
+        result.experiment = experiment;
+        result.experimentFeature = experimentFeature;
+        result.consoleResult = new ConsoleResult();
 
-        return map;
+        return result;
     }
 
     private static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed) {

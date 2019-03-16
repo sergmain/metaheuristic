@@ -4,12 +4,12 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
      sec:authorize="isAuthenticated()"
 >
-    <!--/*@thymeslet id="result" type="aiai.ai.launchpad.experiment.ExperimentsController$TasksResult"*/-->
+    <!--/*@thymeslet id="result" type="aiai.ai.launchpad.data.TasksData$TasksResult"*/-->
     <!--/*@thymeslet id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
     <!--/*@thymeslet id="feature" type="aiai.ai.launchpad.beans.ExperimentFeature"*/-->
-    <!--/*@thymeslet id="consoleResult" type="aiai.ai.launchpad.experiment.ExperimentsController$ConsoleResult"*/-->
-    <!--/*@thymeslet id="params" type="aiai.ai.launchpad.experiment.ExperimentService$HyperParamResult"*/-->
-    <!--/*@thymeslet id="metrics" type="aiai.ai.launchpad.experiment.ExperimentService$MetricsResult"*/-->
+    <!--/*@thymeslet id="consoleResult" type="aiai.ai.launchpad.data.ExperimentData$ConsoleResult"*/-->
+    <!--/*@thymeslet id="params" type="aiai.ai.launchpad.data.ExperimentData$HyperParamResult"*/-->
+    <!--/*@thymeslet id="metrics" type="aiai.ai.launchpad.data.ExperimentData$MetricsResult"*/-->
 
     <script>
         'use strict';

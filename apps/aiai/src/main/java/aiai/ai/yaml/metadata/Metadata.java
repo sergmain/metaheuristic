@@ -16,7 +16,6 @@
  */
 package aiai.ai.yaml.metadata;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -30,7 +29,8 @@ public class Metadata {
     @NoArgsConstructor
     @ToString
     public static class LaunchpadInfo {
-        @Deprecated
+
+        // right now this field isn't used
         public String value;
         public String code;
         public String stationId;

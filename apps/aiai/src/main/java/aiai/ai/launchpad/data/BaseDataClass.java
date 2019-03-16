@@ -36,7 +36,18 @@ public class BaseDataClass {
         errorMessages.add(errorMessage);
     }
 
+    public void addInfoMessage(String infoMessage) {
+        if (infoMessages==null) {
+            infoMessages = new ArrayList<>();
+        }
+        infoMessages.add(infoMessage);
+    }
+
     public boolean isErrorMessages() {
         return CollectionUtils.isNotEmpty(errorMessages);
+    }
+
+    public boolean isInfoMessages() {
+        return CollectionUtils.isNotEmpty(infoMessages);
     }
 }

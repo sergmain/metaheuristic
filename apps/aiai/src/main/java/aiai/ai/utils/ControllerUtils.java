@@ -33,6 +33,7 @@ public class ControllerUtils {
         return pageable;
     }
 
+    @SuppressWarnings("unchecked")
     public static void addMessagesToModel(Model model, BaseDataClass baseData) {
         if (CollectionUtils.isNotEmpty(baseData.errorMessages)) {
             List errorMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_ERROR_MESSAGE));
