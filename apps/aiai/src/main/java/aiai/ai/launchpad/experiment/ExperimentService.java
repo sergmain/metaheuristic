@@ -431,7 +431,7 @@ public class ExperimentService {
 
     public Enums.FlowProducingStatus produceTasks(
             boolean isPersist, Flow flow, FlowInstance flowInstance, Process process,
-            Experiment experiment, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls, IntHolder intHolder) {
+            Experiment experiment, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls, IntHolder numberOfTasks) {
         if (process.type!= Enums.ProcessType.EXPERIMENT) {
             throw new IllegalStateException("Wrong type of process, " +
                     "expected: "+ Enums.ProcessType.EXPERIMENT+", " +
@@ -453,7 +453,7 @@ public class ExperimentService {
         // feature has real value only when isPersist==true
         int totalVariants = features.size() * allHyperParams.size() * 2;
 
-        intHolder.value = allHyperParams.size() * experimentSnippets.size();
+        numberOfTasks.value = allHyperParams.size() * experimentSnippets.size();
 
         log.debug("total size of tasks' params is {} bytes", size.value);
         final BoolHolder boolHolder = new BoolHolder();
@@ -502,7 +502,7 @@ public class ExperimentService {
                             taskRepository.save(task);
                         }
                         // inc number of tasks
-                        intHolder.value++;
+                        numberOfTasks.value++;
 
                         TaskParamYaml yaml = new TaskParamYaml();
                         yaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
@@ -511,6 +511,8 @@ public class ExperimentService {
                         yaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
                             if ("feature".equals(entry.getKey())) {
+                                log.warn("!!!!!! This situation need to be investigated");
+                                log.warn("flowInstance inputResourceParam:\n"+ flowInstance.inputResourceParam );
                                 continue;
                             }
                             Process.Meta meta = process.getMetas()
@@ -518,11 +520,14 @@ public class ExperimentService {
                                     .filter(o -> o.value.equals(entry.getKey()))
                                     .findFirst()
                                     .orElse(null);
-                            if (meta == null) {
-                                log.error("Validation of flow #{} was failed. Meta with value {} wasn't found.", flowInstance.flowId, entry.getKey());
-                                continue;
+
+                            if (meta != null) {
+                                yaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
                             }
-                            yaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
+//                            else {
+//                                log.error("Validation of flow #{} was failed. Meta with value {} wasn't found.", flowInstance.flowId, entry.getKey());
+//                                continue;
+//                            }
                         }
                         Snippet snippet = localCache.get(experimentSnippet.getSnippetCode());
                         if (snippet == null) {
@@ -561,6 +566,12 @@ public class ExperimentService {
                             throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
                         }
                         yaml.resourceStorageUrls.put(yaml.outputResourceCode, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
+
+                        yaml.inputResourceCodes.forEach((key, value) -> {
+                            HashSet<String> set = new HashSet<>(value);
+                            value.clear();
+                            value.addAll(set);
+                        });
 
                         ExperimentTaskFeature tef = new ExperimentTaskFeature();
                         tef.setFlowInstanceId(flowInstance.getId());

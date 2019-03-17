@@ -263,6 +263,7 @@ public class ExperimentTopLevelService {
         if (experiment.getSeed()==0) {
             experiment.setSeed(1);
         }
+        experiment.setCreatedOn(System.currentTimeMillis());
         return processCommit(experiment);
     }
 

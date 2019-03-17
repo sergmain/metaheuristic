@@ -164,7 +164,7 @@ public class StationService {
                     final String storageUrl = taskParamYaml.resourceStorageUrls.get(resourceCode);
                     if (storageUrl == null || storageUrl.isBlank()) {
                         stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode " + resourceCode);
-                        log.error("#747.34 storageUrl wasn't found for resourceCode ", resourceCode);
+                        log.error("#747.34 storageUrl wasn't found for resourceCode {}", resourceCode);
                         result.isError = true;
                         break;
                     }

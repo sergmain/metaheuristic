@@ -27,11 +27,15 @@ import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
+import aiai.ai.utils.CollectionUtils;
 import aiai.ai.utils.holders.IntHolder;
+import aiai.ai.yaml.input_resource_param.InputResourceParam;
+import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +45,7 @@ import java.util.Map;
 @Profile("launchpad")
 public class ExperimentProcessService {
 
+    private static final String FEATURE_POOL_CODE_TYPE = "feature";
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
@@ -75,28 +80,44 @@ public class ExperimentProcessService {
             e = experimentCache.save(e);
         }
 
-        Process.Meta meta = process.getMeta("feature");
+        Process.Meta meta = process.getMeta(FEATURE_POOL_CODE_TYPE);
+
+        List<String> features;
         if (meta==null) {
-            result.status = Enums.FlowProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
-            return result;
+            InputResourceParam resourceParams = InputResourceParamUtils.to(flowInstance.inputResourceParam);
+            List<String> list = resourceParams.getPoolCodes().get(FEATURE_POOL_CODE_TYPE);
+            if (CollectionUtils.isEmpty(list)) {
+                result.status = Enums.FlowProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
+                return result;
+            }
+            features = new ArrayList<>();
+            for (String poolCode : list) {
+                List<String> newResources = collectedInputs.get(poolCode);
+                if (newResources==null) {
+                    result.status = Enums.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                    return result;
+                }
+                features.addAll(newResources);
+            }
         }
+        else {
+            if (!collectedInputs.containsKey(meta.getValue())) {
+                List<SimpleCodeAndStorageUrl> initialInputResourceCodes = binaryDataService.getResourceCodesInPool(
+                        Collections.singletonList(meta.getValue()));
 
-        if (!collectedInputs.containsKey(meta.getValue())) {
-            List<SimpleCodeAndStorageUrl> initialInputResourceCodes = binaryDataService.getResourceCodesInPool(
-                    Collections.singletonList(meta.getValue()));
+                FlowService.ResourcePools metaPools = new FlowService.ResourcePools(initialInputResourceCodes);
+                if (metaPools.status != Enums.FlowProducingStatus.OK) {
+                    result.status = Enums.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                    return result;
+                }
+                pools.merge(metaPools);
+            }
 
-            FlowService.ResourcePools metaPools = new FlowService.ResourcePools(initialInputResourceCodes);
-            if (metaPools.status!=Enums.FlowProducingStatus.OK) {
+            features = collectedInputs.get(meta.getValue());
+            if (features==null) {
                 result.status = Enums.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                 return result;
             }
-            pools.merge(metaPools);
-        }
-
-        List<String> features = collectedInputs.get(meta.getValue());
-        if (features==null) {
-            result.status = Enums.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
-            return result;
         }
 
         long mills = System.currentTimeMillis();

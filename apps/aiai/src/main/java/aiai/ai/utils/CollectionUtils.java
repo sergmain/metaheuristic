@@ -33,4 +33,7 @@ public class CollectionUtils {
         return codes;
     }
 
+    public static boolean isEmpty(List<String> list) {
+        return !isNotEmpty(list);
+    }
 }

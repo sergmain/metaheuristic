@@ -27,8 +27,8 @@ import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -37,6 +37,7 @@ import java.io.OutputStream;
 
 @Service
 @Slf4j
+@Profile("launchpad")
 public class SnippetTopLevelService {
 
     private final SnippetRepository snippetRepository;
@@ -51,7 +52,6 @@ public class SnippetTopLevelService {
         this.binaryDataService = binaryDataService;
     }
 
-    @GetMapping("/snippets")
     public SnippetData.SnippetsResult getSnippets() {
         SnippetData.SnippetsResult result = new SnippetData.SnippetsResult();
         result.snippets = snippetRepository.findAll();

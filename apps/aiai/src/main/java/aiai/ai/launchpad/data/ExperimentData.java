@@ -43,7 +43,7 @@ public class ExperimentData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class HyperParamsResult {
-        public List<ExperimentHyperParams> items;
+        public List<ExperimentHyperParams> items = new ArrayList<>();
 
         public static HyperParamsResult getInstance(Experiment experiment) {
             HyperParamsResult r = new HyperParamsResult();
