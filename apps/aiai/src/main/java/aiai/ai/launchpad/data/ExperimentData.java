@@ -78,20 +78,20 @@ public class ExperimentData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class MetricElement {
-        public final List<BigDecimalHolder> values = new ArrayList<>();
+        public final List<BigDecimal> values = new ArrayList<>();
         public String params;
 
         public static int compare(MetricElement o2, MetricElement o1) {
             for (int i = 0; i < Math.min(o1.values.size(), o2.values.size()); i++) {
-                final BigDecimalHolder holder1 = o1.values.get(i);
+                final BigDecimal holder1 = o1.values.get(i);
                 if (holder1 == null) {
                     return -1;
                 }
-                final BigDecimalHolder holder2 = o2.values.get(i);
+                final BigDecimal holder2 = o2.values.get(i);
                 if (holder2 == null) {
                     return -1;
                 }
-                int c = ObjectUtils.compare(holder1.value, holder2.value);
+                int c = ObjectUtils.compare(holder1, holder2);
                 if (c != 0) {
                     return c;
                 }

@@ -16,6 +16,7 @@
  */
 package aiai.ai.launchpad.beans;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -30,6 +31,7 @@ import java.io.Serializable;
 @EqualsAndHashCode(exclude = {"experiment", "variants"})
 @ToString(exclude = {"experiment"})
 @NoArgsConstructor
+//@JsonIgnoreProperties( { "applications" })
 public class ExperimentHyperParams implements Serializable {
     private static final long serialVersionUID = -2816493662535597212L;
 
@@ -46,6 +48,7 @@ public class ExperimentHyperParams implements Serializable {
     @Column(name = "HYPER_PARAM_VALUES")
     private String values;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "EXPERIMENT_ID")
     private Experiment experiment;

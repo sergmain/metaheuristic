@@ -507,7 +507,7 @@
                     <tbody>
                     <tr th:each="m, g : ${metrics.metrics}" valign="top">
                         <div th:remove="tag" th:each="v : ${m.values}">
-                            <td th:text="${v.value}">Metric value</td>
+                            <td th:text="${v}">Metric value</td>
                         </div>
                         <td th:text="${m.params}">Hyper params</td>
                     </tr>

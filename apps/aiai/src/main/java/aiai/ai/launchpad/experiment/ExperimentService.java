@@ -371,9 +371,7 @@ public class ExperimentService {
         for (Map<String, BigDecimal> value : values) {
             MetricElement element = new MetricElement();
             for (String metricName : metricsResult.metricNames) {
-                BigDecimalHolder holder = new BigDecimalHolder();
-                holder.value = value.get(metricName);
-                element.values.add(holder);
+                element.values.add(value.get(metricName));
             }
             elements.add(element);
         }
