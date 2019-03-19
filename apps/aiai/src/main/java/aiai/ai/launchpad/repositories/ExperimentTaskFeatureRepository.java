@@ -23,6 +23,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 @Profile("launchpad")
 public interface ExperimentTaskFeatureRepository extends CrudRepository<ExperimentTaskFeature, Long> {
@@ -31,4 +33,6 @@ public interface ExperimentTaskFeatureRepository extends CrudRepository<Experime
     void deleteByFlowInstanceId(long flowInstanceId);
 
     ExperimentTaskFeature findByTaskId(Long taskId);
+
+    List<ExperimentTaskFeature> findByFlowInstanceId(long flowInstanceID);
 }

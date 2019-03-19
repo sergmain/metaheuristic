@@ -42,6 +42,8 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     @Transactional(readOnly = true)
     Slice<Task> findAll(Pageable pageable);
 
+    List<Task> findAllByFlowInstanceId(long flowInstanceId);
+
     @Query(value="select t.id, t.flowInstanceId from Task t")
     Stream<Object[]> findAllAsTaskSimple(Pageable pageable);
 

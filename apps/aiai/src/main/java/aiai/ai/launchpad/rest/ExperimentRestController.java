@@ -66,6 +66,11 @@ public class ExperimentRestController {
         return experimentTopLevelService.getTasksConsolePart(taskId);
     }
 
+    @GetMapping("/experiment-feature-progress-console/{taskId}")
+    public ConsoleResult getTasksConsole(@PathVariable(name="taskId") Long taskId) {
+        return experimentTopLevelService.getTasksConsolePart(taskId);
+    }
+
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
     public ExperimentFeatureExtendedResult getFeatureProgressPart(@PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
         return experimentTopLevelService.getFeatureProgressPart(experimentId, featureId, params, pageable);

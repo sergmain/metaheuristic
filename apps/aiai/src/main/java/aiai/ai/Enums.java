@@ -18,6 +18,8 @@ package aiai.ai;
 
 public final class Enums {
 
+    public enum StoringStatus {OK, CANT_BE_STORED}
+
     public enum OperationStatus {OK, ERROR}
 
     public enum StorageType {launchpad, disk, hadoop, ftp }

@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.beans;
 
 import aiai.ai.launchpad.experiment.ExperimentUtils;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -52,7 +53,7 @@ public class Experiment implements Serializable {
     private Integer version;
 
     @Column(name = "FLOW_INSTANCE_ID")
-    private Long flowInstanceId;
+    public Long flowInstanceId;
 
     @Column(name = "NAME")
     private String name;
@@ -82,7 +83,7 @@ public class Experiment implements Serializable {
 
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
-    private List<ExperimentHyperParams> hyperParams;
+    public  List<ExperimentHyperParams> hyperParams;
 
     public void strip() {
         name = StringUtils.strip(name);
@@ -90,10 +91,12 @@ public class Experiment implements Serializable {
         code = StringUtils.strip(code);
     }
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Map<String, Map<String, Integer>> getHyperParamsAsMap() {
         return getHyperParamsAsMap(true);
     }
 
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Map<String, Map<String, Integer>> getHyperParamsAsMap(boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
         for (ExperimentHyperParams hyperParam : getHyperParams()) {

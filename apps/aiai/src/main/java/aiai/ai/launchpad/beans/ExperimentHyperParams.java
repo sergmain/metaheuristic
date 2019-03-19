@@ -62,8 +62,7 @@ public class ExperimentHyperParams implements Serializable {
     /**
      * number of variants for this metadata
      */
-    @Transient
-    private int variants;
+    public int variants;
 
 
 }

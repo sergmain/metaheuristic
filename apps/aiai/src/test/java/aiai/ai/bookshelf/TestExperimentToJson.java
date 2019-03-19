@@ -15,11 +15,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.library;
+package aiai.ai.bookshelf;
 
+import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Experiment;
+import aiai.ai.launchpad.beans.Flow;
+import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.bookshelf.BookshelfService;
+import aiai.ai.launchpad.bookshelf.ExperimentStoredToBookshelf;
 import aiai.ai.launchpad.data.ExperimentData;
 import aiai.ai.launchpad.experiment.ExperimentTopLevelService;
+import aiai.ai.launchpad.repositories.FlowInstanceRepository;
+import aiai.ai.launchpad.repositories.FlowRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -30,6 +37,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.IOException;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
@@ -37,6 +46,9 @@ public class TestExperimentToJson {
 
     @Autowired
     private ExperimentTopLevelService experimentTopLevelService;
+
+    @Autowired
+    private BookshelfService bookshelfService;
 
     private static ObjectMapper mapper;
 
@@ -60,5 +72,21 @@ public class TestExperimentToJson {
 
         System.out.println("json =\n" + json);
         Experiment e = null;
+    }
+
+    @Test
+    public void toExperimtStoredOnBookshelfToJson() throws IOException {
+
+        long experimentId = 224;
+
+        BookshelfService.StoredToBookshelfWithStatus r = bookshelfService.toExperimentStoredToBookshelf(experimentId);
+        if (r.status!= Enums.StoringStatus.OK) {
+            throw new IllegalStateException("experiment can't be stored");
+        }
+        String json = mapper.writeValueAsString(r.experimentStoredToBookshelf);
+
+        System.out.println("json =\n" + json);
+        ExperimentStoredToBookshelf estb1 = mapper.readValue(json, ExperimentStoredToBookshelf.class);
+        System.out.println("estb1 = " + estb1);
     }
 }

@@ -16,9 +16,8 @@
  */
 package aiai.ai.launchpad.beans;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import javax.persistence.*;
@@ -56,6 +55,7 @@ public class Task implements Serializable {
     @Column(name = "IS_COMPLETED")
     public boolean isCompleted;
 
+    @JsonIgnore
     @Column(name = "SNIPPET_EXEC_RESULTS")
     public String snippetExecResults;
 
