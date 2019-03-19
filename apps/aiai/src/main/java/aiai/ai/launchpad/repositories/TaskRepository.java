@@ -44,6 +44,10 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
 
     List<Task> findAllByFlowInstanceId(long flowInstanceId);
 
+    @Transactional
+    @Query(value="select t from Task t where t.flowInstanceId=:flowInstanceId")
+    Stream<Task> findAllByFlowInstanceIdAsStream(long flowInstanceId);
+
     @Query(value="select t.id, t.flowInstanceId from Task t")
     Stream<Object[]> findAllAsTaskSimple(Pageable pageable);
 

@@ -22,6 +22,7 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.flow.FlowCache;
 import aiai.ai.launchpad.repositories.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -39,17 +40,35 @@ public class BookshelfService {
     private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentTaskFeatureRepository experimentTaskFeatureRepository;
     private final TaskRepository taskRepository;
+    private final ConsoleFormBookshelfService consoleFormBookshelfService;
 
-    public static final StoredToBookshelfWithStatus CANT_BE_STORED_ERROR = new StoredToBookshelfWithStatus();
+    public static final StoredToBookshelfWithStatus CANT_BE_STORED_ERROR = new StoredToBookshelfWithStatus(Enums.StoringStatus.CANT_BE_STORED);
+    public static final ConsoleStoredToBookshelfWithStatus CONSOLE_CANT_BE_STORED_ERROR = new ConsoleStoredToBookshelfWithStatus(Enums.StoringStatus.CANT_BE_STORED);
 
     @Data
+    @NoArgsConstructor
     public static class StoredToBookshelfWithStatus {
         public ExperimentStoredToBookshelf experimentStoredToBookshelf;
         public Enums.StoringStatus status;
+
+        public StoredToBookshelfWithStatus(Enums.StoringStatus status) {
+            this.status = status;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ConsoleStoredToBookshelfWithStatus {
+        public ConsoleOutputStoredToBookshelf consoleOutputStoredToBookshelf;
+        public Enums.StoringStatus status;
+
+        public ConsoleStoredToBookshelfWithStatus(Enums.StoringStatus status) {
+            this.status = status;
+        }
     }
 
     @Autowired
-    public BookshelfService(FlowCache flowCache, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, ExperimentSnippetRepository experimentSnippetRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, TaskRepository taskRepository) {
+    public BookshelfService(FlowCache flowCache, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository, ExperimentFeatureRepository experimentFeatureRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, ExperimentSnippetRepository experimentSnippetRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, TaskRepository taskRepository, ConsoleFormBookshelfService consoleFormBookshelfService) {
         this.flowCache = flowCache;
         this.flowInstanceRepository = flowInstanceRepository;
         this.experimentRepository = experimentRepository;
@@ -57,6 +76,7 @@ public class BookshelfService {
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentTaskFeatureRepository = experimentTaskFeatureRepository;
         this.taskRepository = taskRepository;
+        this.consoleFormBookshelfService = consoleFormBookshelfService;
     }
 
     public StoredToBookshelfWithStatus toExperimentStoredToBookshelf(long experimentId) {
@@ -85,6 +105,23 @@ public class BookshelfService {
                 features, experiment.hyperParams, snippets, taskFeatures, tasks
         );
         result.status = Enums.StoringStatus.OK;
+        return result;
+    }
+
+    @SuppressWarnings("Duplicates")
+    public ConsoleStoredToBookshelfWithStatus toConsoleOutputStoredToBookshelf(long experimentId) {
+        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
+        if (experiment==null) {
+            return CONSOLE_CANT_BE_STORED_ERROR;
+        }
+        FlowInstance flowInstance = flowInstanceRepository.findById(experiment.flowInstanceId).orElse(null);
+        if (flowInstance==null) {
+            return CONSOLE_CANT_BE_STORED_ERROR;
+        }
+        ConsoleStoredToBookshelfWithStatus result = new ConsoleStoredToBookshelfWithStatus();
+
+        result.consoleOutputStoredToBookshelf = consoleFormBookshelfService.collectConsoleOutputs(flowInstance.id);
+
         return result;
     }
 }

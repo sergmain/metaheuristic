@@ -93,7 +93,7 @@ public final class Enums {
         }
     }
 
-    public enum BinaryDataType { UNKNOWN(0), DATA(1), SNIPPET(2), TEST(3);
+    public enum BinaryDataType { UNKNOWN(0), DATA(1), SNIPPET(2), TEST(3), CONSOLE(4);
 
         public int value;
         BinaryDataType(int value) {
@@ -108,6 +108,8 @@ public final class Enums {
                     return SNIPPET;
                 case 3:
                     return TEST;
+                case 4:
+                    return CONSOLE;
                 default:
                     return UNKNOWN;
             }
