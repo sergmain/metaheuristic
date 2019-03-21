@@ -14,6 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 package aiai.ai.launchpad.beans;
 
 import lombok.Data;
@@ -22,10 +23,10 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_LP_FLOW")
+@Table(name = "AIAI_LP_BOOKSHELF")
 @Data
-public class Flow implements Serializable {
-    private static final long serialVersionUID = 6764501814772365639L;
+public class Bookshelf implements Serializable {
+    private static final long serialVersionUID = 7957119875203281523L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,22 +35,7 @@ public class Flow implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "CODE")
-    public String code;
-
-    @Column(name="CREATED_ON")
-    public long createdOn;
-
-    @Column(name = "PARAMS")
-    public String params;
-
-    @Column(name = "IS_LOCKED")
-    public boolean locked;
-
-    @Column(name = "IS_VALID")
-    public boolean valid;
-
-    @Transient
-    public boolean clean;
+    @Column(name = "EXPERIMENT")
+    public String experiment;
 
 }

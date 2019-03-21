@@ -61,7 +61,10 @@ public class ExperimentHyperParams implements Serializable {
 
     /**
      * number of variants for this metadata
+     *
+     * this field must be @Transient to exclude it from sql query
      */
+    @Transient
     public int variants;
 
 

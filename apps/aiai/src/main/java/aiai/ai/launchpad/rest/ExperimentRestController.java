@@ -44,7 +44,7 @@ public class ExperimentRestController {
     }
 
     @GetMapping("/experiments")
-    public ExperimentsResult getExperiments(Pageable pageable) {
+    public ExperimentsResult getExperiments(@PageableDefault(size = 5) Pageable pageable) {
         return experimentTopLevelService.getExperiments(pageable);
     }
 
