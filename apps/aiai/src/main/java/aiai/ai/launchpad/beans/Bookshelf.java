@@ -26,7 +26,7 @@ import java.io.Serializable;
 @Table(name = "AIAI_LP_BOOKSHELF")
 @Data
 public class Bookshelf implements Serializable {
-    private static final long serialVersionUID = 7957119875203281523L;
+    private static final long serialVersionUID = -1225513309547283331L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -37,5 +37,14 @@ public class Bookshelf implements Serializable {
 
     @Column(name = "EXPERIMENT")
     public String experiment;
+
+    @Column(name = "NAME")
+    private String name;
+
+    @Column(name = "DESCRIPTION")
+    private String description;
+
+    @Column(name = "CODE")
+    private String code;
 
 }

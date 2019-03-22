@@ -19,14 +19,18 @@ package aiai.ai.launchpad.bookshelf;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.data.BaseDataClass;
+import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.flow.FlowCache;
 import aiai.ai.launchpad.repositories.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -46,24 +50,36 @@ public class BookshelfService {
     public static final ConsoleStoredToBookshelfWithStatus CONSOLE_CANT_BE_STORED_ERROR = new ConsoleStoredToBookshelfWithStatus(Enums.StoringStatus.CANT_BE_STORED);
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class StoredToBookshelfWithStatus {
+    public static class StoredToBookshelfWithStatus extends BaseDataClass {
         public ExperimentStoredToBookshelf experimentStoredToBookshelf;
         public Enums.StoringStatus status;
 
         public StoredToBookshelfWithStatus(Enums.StoringStatus status) {
             this.status = status;
         }
+
+        public StoredToBookshelfWithStatus(Enums.StoringStatus status, String errorMessage) {
+            this.status = status;
+            this.errorMessages = Collections.singletonList(errorMessage);
+        }
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class ConsoleStoredToBookshelfWithStatus {
+    public static class ConsoleStoredToBookshelfWithStatus extends BaseDataClass {
         public ConsoleOutputStoredToBookshelf consoleOutputStoredToBookshelf;
         public Enums.StoringStatus status;
 
         public ConsoleStoredToBookshelfWithStatus(Enums.StoringStatus status) {
             this.status = status;
+        }
+
+        public ConsoleStoredToBookshelfWithStatus(Enums.StoringStatus status, String errorMessage) {
+            this.status = status;
+            this.errorMessages = Collections.singletonList(errorMessage);
         }
     }
 
@@ -79,6 +95,17 @@ public class BookshelfService {
         this.consoleFormBookshelfService = consoleFormBookshelfService;
     }
 
+    public OperationStatusRest toBookshelf(Long experimentId) {
+        StoredToBookshelfWithStatus stored = toExperimentStoredToBookshelf(experimentId);
+        if (stored.isErrorMessages()) {
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, stored.errorMessages);
+        }
+
+        if (true) throw new IllegalStateException("not implemented");
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    @SuppressWarnings("Duplicates")
     public StoredToBookshelfWithStatus toExperimentStoredToBookshelf(long experimentId) {
 
         Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
@@ -87,11 +114,13 @@ public class BookshelfService {
         }
         FlowInstance flowInstance = flowInstanceRepository.findById(experiment.flowInstanceId).orElse(null);
         if (flowInstance==null) {
-            return CANT_BE_STORED_ERROR;
+            return new StoredToBookshelfWithStatus(Enums.StoringStatus.CANT_BE_STORED,
+                    "#604.05 can't find flowInstance for this experiment");
         }
         Flow flow = flowCache.findById(flowInstance.flowId);
         if (flow==null) {
-            return CANT_BE_STORED_ERROR;
+            return new StoredToBookshelfWithStatus(Enums.StoringStatus.CANT_BE_STORED,
+                    "#604.10 can't find flow for this experiment");
         }
         StoredToBookshelfWithStatus result = new StoredToBookshelfWithStatus();
 

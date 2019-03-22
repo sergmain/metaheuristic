@@ -29,7 +29,6 @@ import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
-import aiai.ai.utils.SimpleSelectOption;
 import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -44,7 +43,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,25 +56,6 @@ import static aiai.ai.launchpad.data.ExperimentData.*;
 @Slf4j
 @Profile("launchpad")
 public class ExperimentTopLevelService {
-
-    public static class SnippetResult {
-        public List<SimpleSelectOption> selectOptions = new ArrayList<>();
-        public List<ExperimentSnippet> snippets = new ArrayList<>();
-
-        public void sortSnippetsByOrder() {
-//            snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
-        }
-    }
-
-/*
-    @Data
-    public static class ExperimentResult {
-        public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
-        public List<ExperimentFeature> features;
-        public FlowInstance flowInstance;
-        public Enums.FlowInstanceExecState flowInstanceExecState;
-    }
-*/
 
     @Data
     @NoArgsConstructor

@@ -4,27 +4,34 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
      sec:authorize="isAuthenticated()"
 >
-
     <h1 class="widget-header">The experiment info</h1>
 
-    <!--/*@thymesVar id="infoMessages" type="java.util.List"*/-->
-    <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.experiment.ExperimentsController$Experi2mentResult"*/-->
+    <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.data.ExperimentData$ExperimentInfoResult"*/-->
     <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
-    <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
 
     <h1 class="widget-header">Progress of experiment</h1>
-    <table class="pure-table pure-table-bordered" >
-        <thead>
+    <table>
         <tr>
-            <th width="150">Flow instance Exec state</th>
-        </tr>
-        </thead>
-        <tbody>
-        <tr>
-            <td th:text="${experimentResult.flowInstanceExecState}">exec state</td>
+            <td width="50%">
+                <table class="pure-table pure-table-bordered" >
+                    <thead>
+                    <tr>
+                        <th width="150">Flow instance Exec state</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td th:text="${experimentResult.flowInstanceExecState}">exec state</td>
+                    </tr>
+                </table>
+            </td>
+            <td width="50%">
+                <a class="pure-button table-nav-button-fill pure-button-primary"
+                   th:href="${'/launchpad/experiment-to-bookshelf/'+ experiment.id }">to Bookshelf</a>
+
+            </td>
         </tr>
     </table>
-
     <p>&nbsp;</p>
 
         <h1 class="widget-header">General info</h1>
@@ -81,27 +88,26 @@
         <p>&nbsp;</p>
 
 <!--
-        <h1 class="widget-header">Dataset features</h1>
-        <table class="pure-table pure-table-bordered" id="table-group" th:fragment="table-group" th:if="${experimentResult.dataset!=null}">
+        <h1 class="widget-header">Features</h1>
+        <table class="pure-table pure-table-bordered" id="table-group" th:if="${!experimentResult.features.isEmpty()}">
             <thead>
             <tr>
                 <th width="50">Id</th>
-                <th width="100">Is required</th>
-                <th width="700">Snippet</th>
+                <th width="600">Resource code</th>
             </tr>
             </thead>
 
             <tbody>
-            <tr th:each="g : ${experimentResult.dataset.features}">
+            <tr th:each="g : ${experimentResult.features}">
                 <td th:text="${g.id}">Feature Id</td>
-                <td th:text="${g.required ? 'Yes' : 'No'}">Is required</td>
+                <td th:text="${g.resourceCodes}">Resource codes</td>
             </tr>
             </tbody>
         </table>
-        <p th:if="${experimentResult.dataset==null}">Dataset isn't assigned</p>
--->
+        <p th:if="${experimentResult.features.isEmpty()}">Features isn't assigned</p>
 
         <p>&nbsp;</p>
+-->
 
     <div th:remove="tag">
         <h1 class="widget-header">Features</h1>
