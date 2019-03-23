@@ -1,0 +1,645 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+     layout:decorate="~{layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+     sec:authorize="isAuthenticated()"
+>
+    <!--/*@thymeslet id="result" type="aiai.ai.launchpad.data.TasksData$TasksResult"*/-->
+    <!--/*@thymeslet id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
+    <!--/*@thymeslet id="feature" type="aiai.ai.launchpad.beans.ExperimentFeature"*/-->
+    <!--/*@thymeslet id="consoleResult" type="aiai.ai.launchpad.data.ExperimentData$ConsoleResult"*/-->
+    <!--/*@thymeslet id="params" type="aiai.ai.launchpad.data.ExperimentData$HyperParamResult"*/-->
+    <!--/*@thymeslet id="metrics" type="aiai.ai.launchpad.data.ExperimentData$MetricsResult"*/-->
+
+    <script>
+        'use strict';
+
+        let /*{boolean}*/ isDebug = true;
+        let buttonStateMap = {};
+        let buttonAxisStateMap = {};
+        let trStateMap = {};
+        let metricsStateMap = {};
+        let /*{string}*/ paramFilter = ',';
+        let /*{string}*/ paramFilterAxis = ',';
+        let /*boolean*/ isDrawEnabled = false;
+
+        // Plotly stuff
+        let layout = {
+            title: 'Metrics',
+            showlegend: false,
+            autosize: false,
+            width: 800,
+            height: 800,
+            scene: {
+                xaxis: {type: 'category', title: ''},
+                yaxis: {type: 'category', title: ''},
+                zaxis: {title: ''}
+            }
+        };
+
+        let table = function (html) {
+            let html1 = $('#fragment-table').html(html);
+
+            html1.find('.ajax-elem').each(function () {
+                $(this).click(function () {
+                    $( '#fragment-console-table' ).empty();
+                    trStateMap = {};
+
+                    let /*{string}*/ url = $(this).attr('href');
+                    printLogMain('url: ' + url);
+                    // /launchpad/experiment-feature-progress-part/82/428/,/part?page=1&size=10
+                    let /*{string}*/ urlPart1 = url.substring(0, url.indexOf(',/part'));
+                    let /*{string}*/ urlPart = urlPart1.substring(0, urlPart1.lastIndexOf('/'));
+                    let /*{string}*/ urlParams = url.substring(url.indexOf('?'));
+
+                    printLogMain('urlPart: ' + urlPart+', urlParam: ' + urlParams);
+                    let /*{string}*/ urlFinal = urlPart + '/' + paramFilter + '/part' + urlParams;
+                    printLogMain('urlFinal: ' + urlFinal);
+
+                    $.post(urlFinal, table);
+                    return false;
+                });
+            });
+
+            html1.find('.ajax-elem-console').each(function () {
+                $(this).click(function () {
+                    let $1 = $(this);
+                    let origId = $1.attr('id');
+                    $.post( $1.attr('href'), function(data ) {
+                        $( '#fragment-console-table' ).empty().append( data );
+                        $( '#fragment-table' ).find('.ajax-elem-console').each(function () {
+                            printLogMain('origId: ' + origId);
+                            let $2 = $(this);
+                            printLogMain('$(this).id: ' + $2.attr('id'));
+                            printLogMain('$(this).class: ' + $2.attr('class'));
+                            let newClass = origId===$2.attr('id') ?  'ajax-elem-console table-nav-button pure-button pure-button-selected' : 'ajax-elem-console table-nav-button pure-button';
+                            printLogMain('newClass: ' + newClass);
+                            $2.attr('class', newClass) ;
+                        });
+                    });
+                    return false;
+                });
+            });
+
+            return false;
+        };
+
+        $(function () {
+            let token = $("meta[name='_csrf']").attr("content");
+            let header = $("meta[name='_csrf_header']").attr("content");
+
+            $(document).ajaxSend(function (e, xhr, options) {
+                xhr.setRequestHeader(header, token);
+            });
+
+            $.post('/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]]+'/,/part', table);
+        });
+
+        /**
+         * @param {string} trId
+         * @param {int} order
+         */
+        function switchTr(trId, order) {
+            printLogTr("trId: " + trId+', order: ' + order+', trStateMap.hasOwnProperty(trId): ' + trStateMap.hasOwnProperty(trId));
+            if (!trStateMap.hasOwnProperty(trId)) {
+                trStateMap[trId] = order===1 ? 'hide' : 'show';
+            }
+            let state = trStateMap[trId];
+            printLogTr('state : ' + state);
+            if (state==='show') {
+                $('#'+trId).hide();
+                trStateMap[trId] = 'hide'
+            }
+            else if (state==='hide') {
+                $('#'+trId).show();
+                trStateMap[trId] = 'show'            }
+            else {
+                console.warn('Unknown state: ' + state)
+            }
+            printLogTr('trStateMap[trId] : ' + trStateMap[trId]);
+
+            return false;
+        }
+
+        function switchMetrics() {
+            let trId = 'some-id--doesnt-matter-which';
+            printLog("metricsStateMap.hasOwnProperty(trId): " + trStateMap.hasOwnProperty(trId));
+            if (!metricsStateMap.hasOwnProperty(trId)) {
+                metricsStateMap[trId] = 'hide';
+            }
+            let state = metricsStateMap[trId];
+            printLogMetrics('state : ' + state);
+            if (state==='show') {
+                $('#metrics-main-p').show();
+                $('#metrics-main-table').hide();
+                metricsStateMap[trId] = 'hide'
+            }
+            else if (state==='hide') {
+                $('#metrics-main-p').hide();
+                $('#metrics-main-table').show();
+                metricsStateMap[trId] = 'show'            }
+            else {
+                console.warn('Unknown state: ' + state)
+            }
+            printLogMetrics('metricsStateMap[trId] : ' + metricsStateMap[trId]);
+
+            return false;
+        }
+
+        /**
+         * @param {string} state
+         * @param {string} key
+         * @param {int} idx
+         * @constructor
+         */
+        function ButtonState(state, key, idx) {
+            this.state = state;
+            this.key = key;
+            this.idx = idx;
+        }
+
+        ButtonState.prototype.getState = function() {
+            return this.state;
+        };
+
+        ButtonState.prototype.getIndex = function() {
+            return this.idx;
+        };
+
+        ButtonState.prototype.toString = function() {
+            return 'ButtonState(state: ' + this.state + ', key: ' +this.key+ ', idx: ' +this.idx+')';
+        };
+
+        /**
+         * @param {string} id
+         * @param {string} key
+         */
+        function switchButtonAxis(id, key) {
+            printLogButtonAxis('id: ' + id);
+            if (!buttonAxisStateMap.hasOwnProperty(id)) {
+                printLogButtonAxis('#1 buttonStateMap.hasOwnProperty(id): ' + buttonAxisStateMap.hasOwnProperty(id));
+                buttonAxisStateMap[id] = new ButtonState('hide', key, 0);
+            }
+            let buttonState = buttonAxisStateMap[id];
+            printLogButtonAxis("#1 buttonState: " + buttonState.toString());
+            printLogButtonAxis("buttonState.getState()==='show': " + (buttonState.getState()==='show'));
+            printLogButtonAxis("buttonState.getState()==='hide': " + (buttonState.getState()==='hide'));
+
+            let numberSelected = getNumberSelected();
+            printLogButtonAxis('numberSelected: ' + numberSelected);
+            if (buttonState.getState()==='show') {
+                buttonAxisStateMap[id] = new ButtonState('hide', key, 0);
+                numberSelected--;
+            }
+            else if (buttonState.getState()==='hide') {
+                if (numberSelected>1) {
+                    return;
+                }
+                buttonAxisStateMap[id] = new ButtonState('show', key, 0);
+                numberSelected++;
+            }
+            else {
+                console.warn('Unknown state: ' + buttonState.getState())
+            }
+
+            $('#'+id).toggleClass("pure-button-primary");
+            isDrawEnabled = (numberSelected===2);
+            $('#button-draw-plot').toggleClass("pure-button-primary", isDrawEnabled);
+            $('#fragment-console-table' ).empty();
+            paramFilterAxis = paramsForUrlAxis();
+
+            printCurrentState();
+            printLogButtonAxis("#2 buttonState: " + buttonState.toString());
+            printLogButtonAxis('#2 buttonAxisStateMap.hasOwnProperty(id): ' + buttonAxisStateMap.hasOwnProperty(id));
+            printLogButtonAxis('numberSelected: ' + numberSelected);
+            printLogButtonAxis('paramFilterAxis: ' + paramFilterAxis);
+
+            return false;
+        }
+
+        function drawPlot() {
+            if (isDrawEnabled) {
+                let url = '/launchpad/experiment-feature-plot-data-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/' + paramFilterAxis + '/part';
+                printLogButtonAxis('url for plot data: ' + url);
+                $.post(url, function(data ) {
+                    printLogButtonAxis('json for plotting:\n' + data);
+                    let x1 = data['x'];
+                    let y1 = data['y'];
+                    let z1 = data['z'];
+
+                    let data_plot = {x:x1, y:y1, z: z1, type: 'surface'};
+
+                    // Plotting the surfaces
+                    Plotly.newPlot('plot-place', [data_plot], layout);
+                });
+            }
+            return false;
+        }
+
+        /**
+         * @param {string} id
+         * @param {string} key
+         * @param {int} idx
+         */
+        function switchButton(id, key, idx) {
+            printLogButton('id: ' + id + ', key: ' + key + ', idx: ' + idx);
+            if (!buttonStateMap.hasOwnProperty(id)) {
+                printLogButton('#1 buttonStateMap.hasOwnProperty(id): ' + buttonStateMap.hasOwnProperty(id));
+                buttonStateMap[id] = new ButtonState('hide', key, idx);
+            }
+            let buttonState = buttonStateMap[id];
+            let $1 = $('#'+id);
+            $1.toggleClass("pure-button-primary");
+            printLogButton("#1 buttonState: " + buttonState.toString());
+            printLogButton("buttonState.getState()==='show'" + (buttonState.getState()==='show'));
+            printLogButton("buttonState.getState()==='hide'" + (buttonState.getState()==='hide'));
+            if (buttonState.getState()==='show') {
+                buttonStateMap[id] = new ButtonState('hide', key, idx);
+            }
+            else if (buttonState.getState()==='hide') {
+                buttonStateMap[id] = new ButtonState('show', key, idx);
+            }
+            else {
+                console.warn('Unknown state: ' + buttonState.getState())
+            }
+            printLogButton("#2 buttonState: " + buttonState.toString());
+            printLogButton('#2 buttonStateMap.hasOwnProperty(id): ' + buttonStateMap.hasOwnProperty(id));
+
+            $( '#fragment-console-table' ).empty();
+            printLogButton('state: ' + buttonStateMap[id].state + ', idx: ' +buttonStateMap[id].idx);
+            paramFilter = paramsForUrl();
+            let url = '/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
+            printLogButton('url: '+ url);
+            $.post(url, table);
+            printLogButton('');
+
+            return false;
+        }
+
+        /**
+         * @param {int} id
+         */
+        function rerunTask(id) {
+            // console.log("Start rerunTask()");
+            my_confirm('Do you really want to re-run this task?', 'Re-run task?', "Re-run", function() {
+                console.log("re-run was confirmed.");
+                $.post('/launchpad/task-rerun/' + id, function(status) {
+                    // console.log("task-rerun is finished, Status: " + status);
+                    if (status===true) {
+                        // console.log("task-rerun is finished, status " + status);
+                        my_alert('Task was prepared for re-run. You need update page to see changes', 'Status');
+                    }
+                    else {
+                        // console.log("task-rerun is finished, status " + status);
+                        my_alert('There is some problem with re-run this sequence. Status: '+status+'. Try to reload this page', 'Status');
+                    }
+                });
+            });
+            return false;
+        }
+
+        // helper functions
+        // TODO move them to my-scripts.js
+
+        /**
+         * @param {string} s
+         */
+        function printLogMain( s ) {
+            printLog('MAIN', s );
+        }
+
+        /**
+         * @param {string} s
+         */
+        function printLogMetrics( s ) {
+            printLog('METRICS', s );
+        }
+
+        /**
+         * @param {string} s
+         */
+        function printLogTr( s ) {
+            printLog('TR', s );
+        }
+
+        /**
+         * @param {string} s
+         */
+        function printLogButton( s ) {
+            printLog('BUTTON', s );
+        }
+
+        /**
+         * @param {string} s
+         */
+        function printLogButtonAxis( s ) {
+            printLog('BUTTON-AXIS', s );
+        }
+
+        /**
+         * @param {string} tag
+         * @param {string} s
+         */
+        function printLog(tag, s ) {
+            if (isDebug) {
+                console.log(tag+', '+ s);
+            }
+        }
+
+        function paramsForUrlAxis() {
+            let suffix = '';
+            Object.keys(buttonAxisStateMap).forEach(
+                function(key) {
+                    let buttonState = buttonAxisStateMap[key];
+                    if (buttonState.state==='show') {
+                        suffix += ( buttonState.key + ',');
+                    }
+                }
+            );
+            return suffix === '' ? ',' : suffix;
+        }
+
+        function paramsForUrl() {
+            printLogButton('anySelected: ' + isAnySelected());
+
+            let suffix = '';
+            Object.keys(buttonStateMap).forEach(
+                function(key) {
+                    let buttonState = buttonStateMap[key];
+                    if (buttonState.state==='show') {
+                        suffix += ( buttonState.key + '-' + buttonState.idx + ',');
+                    }
+                }
+            );
+            return suffix === '' ? ',' : suffix;
+        }
+
+        /**
+         * @return {int}
+         */
+        function getNumberSelected() {
+            let num = 0;
+            Object.keys(buttonAxisStateMap).forEach(
+                function(key) {
+                    let buttonState = buttonAxisStateMap[key];
+                    if (buttonState.state==='show') {
+                        num++;
+                    }
+                }
+            );
+            return num;
+        }
+
+        function printCurrentState() {
+            Object.keys(buttonAxisStateMap).forEach(
+                function(key) {
+                    let buttonState = buttonAxisStateMap[key];
+                    printLogButtonAxis('   key: ' + key+', ' + buttonState.toString()+', state: ' + buttonState.state+', buttonState.getState()===\'show\': ' + (buttonState.state==='show'));
+                }
+            );
+        }
+
+        /**
+         * @return {boolean}
+         */
+        function isAnySelected() {
+            let b = false;
+            Object.keys(buttonStateMap).forEach(
+                function(key) {
+                    let buttonState = buttonStateMap[key];
+                    printLogButton('   key: ' + key+', ' + buttonState.toString()+', state: ' + buttonState.state+', buttonState.getState()===\'show\': ' + (buttonState.state==='show'));
+                    if (buttonState.state==='show') {
+                        b = true;
+                    }
+                }
+            );
+            return b;
+        }
+
+    </script>
+
+    <div id="dialog-confirm" style="display:none" title="">
+        <p id="dialog-confirmation-text"><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span></p>
+    </div>
+    <div id="dialog-message" style="display:none" title="">
+        <p id="dialog-message-text"></p>
+    </div>
+
+    <h1 class="widget-header">The experiment info</h1>
+
+    <h1 class="widget-header">General info</h1>
+    <table>
+        <tr  valign="top">
+            <td>
+                <table class="pure-table pure-table-bordered">
+                    <tbody>
+                    <tr><td>#Id</td><td  th:text="${feature.id}">#Id</td></tr>
+                    <tr><td>Feature ids</td><td th:text="${feature.resourceCodes}">Resource codes</td></tr>
+                    <tr><td>Exec status</td><td th:text="${feature.execStatusAsString()}">Exec status</td></tr>
+                    </tbody>
+                </table>
+            </td>
+            <td width="50">&nbsp;</td>
+            <td>
+                <table class="pure-table pure-table-bordered">
+                    <thead>
+                    <tr>
+                        <th>Hyper param name</th>
+                        <th></th>
+                        <th>Hyper param values</th>
+                        <th>X,Y axes for plotting</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="e, g : ${params.elements}" valign="top">
+                            <td th:text="${e.key}">Hyper param key</td>
+                            <td width="20">&nbsp;</td>
+                            <td th:if="${not e.isSelectable()}" th:text="${e.list[0].param}">Just value</td>
+                            <td th:if="${e.isSelectable()}">
+                                <table class="pure-table pure-table-bordered">
+                                    <tbody>
+                                    <tr valign="top">
+                                        <div th:remove="tag" th:each="l,idx : ${e.list}" >
+                                            <a class='pure-button' href="#"
+                                               th:id="${'button-param-'+e.key+'-'+l.param.replace('#','-').replace(' ','_').replace(',','_')}"
+                                               th:data-id="${'button-param-'+e.key+'-' + l.param.replace('#','-').replace(' ','_').replace(',','_') }"
+                                               th:data-key="${e.key}"
+                                               th:data-idx="${idx.index}"
+                                               onclick="switchButton(this.getAttribute('data-id'), this.getAttribute('data-key'), this.getAttribute('data-idx'));"
+                                               title='Hyper param' th:text="${l.param}">param value</a>
+                                            &nbsp;
+                                        </div>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </td>
+                            <td>
+                                <a class='pure-button' href="#" th:id="${'button-axis-'+g.index}"
+                                   th:if="${e.list.size()>1}"
+                                   th:data-id="${'button-axis-'+g.index}"
+                                   th:data-key="${e.key}"
+                                   onclick="switchButtonAxis(this.getAttribute('data-id'), this.getAttribute('data-key'));"
+                                   th:text='Axis'>Axis for plotting</a>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <p>&nbsp;</p>
+
+    <h1 class="widget-header" onclick="switchMetrics();" >Metrics</h1>
+    <p id="metrics-main-p">Metrics is hidden</p>
+    <table style="display:none" id="metrics-main-table">
+        <tr valign="top">
+            <td>
+                <h1 class="widget-header">As the table</h1>
+                <table class="pure-table pure-table-bordered" id="fragment-metrics-value-table" th:fragment="fragment-metrics-value-table">
+                    <thead>
+                    <tr>
+                        <div th:remove="tag" th:each="m, g : ${metrics.metricNames}">
+                            <th th:text="${m}">Metric name</th>
+                        </div>
+                        <th>Hyper params</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="m, g : ${metrics.metrics}" valign="top">
+                        <div th:remove="tag" th:each="v : ${m.values}">
+                            <td th:text="${v}">Metric value</td>
+                        </div>
+                        <td th:text="${m.params}">Hyper params</td>
+                    </tr>
+                    <tr>
+                        <td th:colspan="${metrics.metrics.size()}">
+                            <div th:if="${feature!=null and experiment!=null}">
+                                <ul class='pagination pagination-centered'>
+                                    <li class="table-nav-padding">
+                                        <span th:if='${result.items.first}' class="table-nav-button">« First</span>
+                                        <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                                    </li>
+                                    <li class="table-nav-padding">
+                                        <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
+                                        <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                                    </li>
+                                    <li class="table-nav-padding">
+                                        <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
+                                        <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </td>
+            <td width="20">&nbsp;</td>
+            <td>
+                <h1 class="widget-header">As the graph</h1>
+                <table class="pure-table" id="fragment-metrics-graph-table" th:fragment="fragment-metrics-graph-table">
+                    <tbody>
+                    <tr>
+                        <td width="200">
+                            <p id="axes-selected">Axes: </p>
+                        </td>
+                        <td style="border-left:0">
+                            <a class='pure-button' href="#" id='button-draw-plot'
+                               onclick="drawPlot();"
+                               th:text="${'Draw plot'}">Axis for plotting</a>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <td width="800" id="plot-place" colspan="2">
+                            <!--<div id="plot-place" style="width:800px; height:800px;"></div>-->
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+    <p>&nbsp;</p>
+
+
+    <table>
+        <tr valign="top">
+            <td>
+                <h1 class="widget-header">Tasks</h1>
+                <table class="pure-table pure-table-bordered" id="fragment-table" th:fragment="fragment-table">
+                   <tbody>
+                    <div th:remove="tag" th:each="s, g : ${result.items}">
+                        <tr valign="top">
+                            <td th:text="${s.task.id}" rowspan="3">Task Id</td>
+                                <td th:text="${'type: ' + s.typeAsString()}"></td>
+                                <td th:text="${'assigned: ' + #dates.format(s.task.assignedOn, 'dd-MMM-yy HH:mm')}">assigned on</td>
+                        </tr>
+                        <tr valign="top">
+                            <td th:text="${'completed: ' + s.task.isCompleted}">completed on</td>
+                            <td th:text="${'completed: ' + #dates.format(s.task.completedOn, 'dd-MMM-yy HH:mm')}">completed on</td>
+                        </tr>
+                        <tr valign="top">
+                            <td>
+                                <a class='ajax-elem-console table-nav-button pure-button' th:id="${'a-console-'+ g.index}" href="#"
+                                   th:href="@{/launchpad/experiment-feature-progress-console-part/{id}/(id=${s.task.id})}"
+                                   title='Console output'>Info</a>
+                            </td>
+                            <td>
+                                <a class='table-nav-button pure-button' href="#"
+                                   th:data-id="${s.task.id}"
+                                   onclick="rerunTask( this.getAttribute('data-id') ); return false;"
+                                   title='Console output'>Re-run</a>
+                            </td>
+                        </tr>
+                    </div>
+                    <tr>
+                        <td colspan="6">
+                            <div th:if="${feature!=null and experiment!=null}">
+                                <ul class='pagination pagination-centered'>
+                                    <li class="table-nav-padding">
+                                        <span th:if='${result.items.first}' class="table-nav-button">« First</span>
+                                        <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                                    </li>
+                                    <li class="table-nav-padding">
+                                        <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
+                                        <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                                    </li>
+                                    <li class="table-nav-padding">
+                                        <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
+                                        <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
+                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+                <p>&nbsp;</p>
+
+                <a class="pure-button pure-button-primary" href="experiment-info.html" th:href="${'/launchpad/experiment-info/' + experiment.id }">To experiment info</a>
+
+            </td>
+            <td width="20">&nbsp;</td>
+            <td>
+                <h1 class="widget-header">Console output</h1>
+                <table class="pure-table pure-table-bordered" id="fragment-console-table" th:fragment="fragment-console-table">
+                    <tbody>
+                    <div  th:remove="tag" th:each="c, g : ${consoleResult.items}" >
+                        <tr><td th:text="${'exit code: ' + c.exitCode + ', isOk: ' + c.isOk}">Current state</td></tr>
+                        <tr><td><pre th:text="${c.console}">console output</pre></td></tr>
+                    </div>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </table>
+
+
+</div>

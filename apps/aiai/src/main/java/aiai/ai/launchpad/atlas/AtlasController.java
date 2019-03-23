@@ -15,9 +15,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.bookshelf;
+package aiai.ai.launchpad.atlas;
 
-import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.experiment.ExperimentCache;
@@ -25,27 +24,26 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/launchpad/bookshelf")
+@RequestMapping("/launchpad/atlas")
 @Slf4j
 @Profile("launchpad")
-public class BookshelfController {
+public class AtlasController {
 
-    private final BookshelfService bookshelfService;
+    private final AtlasService atlasService;
     private final ExperimentCache experimentCache;
 
-    public BookshelfController(BookshelfService bookshelfService, ExperimentCache experimentCache) {
-        this.bookshelfService = bookshelfService;
+    public AtlasController(AtlasService atlasService, ExperimentCache experimentCache) {
+        this.atlasService = atlasService;
         this.experimentCache = experimentCache;
     }
 
-    @GetMapping(value = "/experiment-to-bookshelf/{id}")
-    public String toBookshelf(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
+    @GetMapping(value = "/experiment-to-atlas/{id}")
+    public String toAtlas(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
 
         Experiment experiment = experimentCache.findById(id);
         if (experiment==null) {
@@ -60,13 +58,13 @@ public class BookshelfController {
             return "redirect:/launchpad/experiment-info/"+id;
         }
 
-        OperationStatusRest status = bookshelfService.toBookshelf(experiment.flowInstanceId, id);
+        OperationStatusRest status = atlasService.toAtlas(experiment.flowInstanceId, id);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
         else {
             redirectAttributes.addFlashAttribute("infoMessages",
-                    "Experiment was successfully stored to bookshelf");
+                    "Experiment was successfully stored to atlas");
         }
         return "redirect:/launchpad/experiment-info/"+id;
 

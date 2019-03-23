@@ -1,0 +1,51 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+     layout:decorate="~{layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">Delete Experiment</h1>
+
+        <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
+        <form class="form-horizontal" th:object="${experiment}">
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Name:</label>
+                <div class="col-sm-10">
+                    <input name="name" id="name" type="text" placeholder="Name" th:field="*{name}" th:disabled="true"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-sm-2 control-label">Description:</label>
+                <div class="col-sm-10">
+                    <input name="description" id="description" type="text" placeholder="Description" th:field="*{description}" th:disabled="true"/>
+                </div>
+            </div>
+        </form>
+
+        <table>
+            <tr>
+                <td>
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${experiment}" th:method="post" th:action="@{/launchpad/experiment-delete-commit}"
+                          accept-charset="UTF-8"
+                          id="experiment-delete-commit"
+                          name="f">
+                        <input type="hidden" th:field="*{id}"/>
+                        <fieldset>
+                            <button type="submit" class="pure-button pure-button-primary">Delete</button>
+                        </fieldset>
+                    </form>
+                </td>
+                <td>
+                    &nbsp;
+                </td>
+                <td>
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/experiments}" accept-charset="UTF-8" id="dataset-delete-cancel" name="f">
+                        <fieldset>
+                            <button type="submit" class="pure-button pure-button-primary">Cancel</button>
+                        </fieldset>
+                    </form>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

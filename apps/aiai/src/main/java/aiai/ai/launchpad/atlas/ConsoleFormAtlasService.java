@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.bookshelf;
+package aiai.ai.launchpad.atlas;
 
 import aiai.ai.exceptions.BreakForEachException;
 import aiai.ai.launchpad.beans.Task;
@@ -33,7 +33,7 @@ import java.util.stream.Stream;
 
 @Service
 @Slf4j
-public class ConsoleFormBookshelfService {
+public class ConsoleFormAtlasService {
 
     private static ObjectMapper mapper;
 
@@ -45,16 +45,16 @@ public class ConsoleFormBookshelfService {
 
     private final TaskRepository taskRepository;
 
-    public ConsoleFormBookshelfService(TaskRepository taskRepository) {
+    public ConsoleFormAtlasService(TaskRepository taskRepository) {
         this.taskRepository = taskRepository;
     }
 
     @Transactional
-    public ConsoleOutputStoredToBookshelf collectConsoleOutputs(long flowInstanceId) {
+    public ConsoleOutputStoredToAtlas collectConsoleOutputs(long flowInstanceId) {
 
         File tempDir = DirUtils.createTempDir("store-console-");
         if (tempDir == null) {
-            return new ConsoleOutputStoredToBookshelf("#605.10 Can't create temporary directory");
+            return new ConsoleOutputStoredToAtlas("#605.10 Can't create temporary directory");
         }
         try {
             File output = File.createTempFile("output-", ".txt", tempDir);
@@ -64,7 +64,7 @@ public class ConsoleFormBookshelfService {
                  final PrintWriter pw = new PrintWriter(os, false, StandardCharsets.UTF_8)
             ) {
                 stream.forEach(o -> {
-                    ConsoleOutputStoredToBookshelf.TaskOutput taskOutput = new ConsoleOutputStoredToBookshelf.TaskOutput();
+                    ConsoleOutputStoredToAtlas.TaskOutput taskOutput = new ConsoleOutputStoredToAtlas.TaskOutput();
                     taskOutput.taskId = o.getId();
                     taskOutput.console = o.snippetExecResults;
                     try {
@@ -78,16 +78,16 @@ public class ConsoleFormBookshelfService {
                     }
                 });
             }
-            return new ConsoleOutputStoredToBookshelf(output);
+            return new ConsoleOutputStoredToAtlas(output);
         }
         catch(BreakForEachException e) {
             String es = "#605.18 Error while dumping of console outputs " + e.getCause().toString();
             log.error(es);
-            return new ConsoleOutputStoredToBookshelf(es);
+            return new ConsoleOutputStoredToAtlas(es);
         } catch (IOException e) {
             String es = "#605.14 Error while creating dump of console outputs " + e.toString();
             log.error(es);
-            return new ConsoleOutputStoredToBookshelf(es);
+            return new ConsoleOutputStoredToAtlas(es);
         }
     }
 }

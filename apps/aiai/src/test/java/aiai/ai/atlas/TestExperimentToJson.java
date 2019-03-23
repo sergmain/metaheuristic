@@ -15,12 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.bookshelf;
+package aiai.ai.atlas;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.bookshelf.BookshelfService;
-import aiai.ai.launchpad.bookshelf.ExperimentStoredToBookshelf;
+import aiai.ai.launchpad.atlas.AtlasService;
+import aiai.ai.launchpad.atlas.ExperimentStoredToAtlas;
 import aiai.ai.launchpad.data.ExperimentData;
 import aiai.ai.launchpad.experiment.ExperimentTopLevelService;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -44,7 +44,7 @@ public class TestExperimentToJson {
     private ExperimentTopLevelService experimentTopLevelService;
 
     @Autowired
-    private BookshelfService bookshelfService;
+    private AtlasService atlasService;
 
     private static ObjectMapper mapper;
 
@@ -71,18 +71,18 @@ public class TestExperimentToJson {
     }
 
     @Test
-    public void toExperimentStoredOnBookshelfToJson() throws IOException {
+    public void toExperimentStoredToAtlasToJson() throws IOException {
 
         long experimentId = 224;
 
-        BookshelfService.StoredToBookshelfWithStatus r = bookshelfService.toExperimentStoredToBookshelf(experimentId);
+        AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(experimentId);
         if (r.status!= Enums.StoringStatus.OK) {
             throw new IllegalStateException("experiment can't be stored");
         }
-        String json = bookshelfService.toJson(r.experimentStoredToBookshelf);
+        String json = atlasService.toJson(r.experimentStoredToAtlas);
 
         System.out.println("json =\n" + json);
-        ExperimentStoredToBookshelf estb1 = mapper.readValue(json, ExperimentStoredToBookshelf.class);
+        ExperimentStoredToAtlas estb1 = mapper.readValue(json, ExperimentStoredToAtlas.class);
         System.out.println("estb1 = " + estb1);
     }
 }

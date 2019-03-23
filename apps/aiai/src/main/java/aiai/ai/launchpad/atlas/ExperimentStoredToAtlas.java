@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.bookshelf;
+package aiai.ai.launchpad.atlas;
 
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.utils.CollectionUtils;
@@ -31,7 +31,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class ExperimentStoredToBookshelf {
+public class ExperimentStoredToAtlas {
 
     @Data
     @NoArgsConstructor
@@ -131,7 +131,7 @@ public class ExperimentStoredToBookshelf {
     public List<ExperimentTaskFeatureOnShelf> taskFeatures = new ArrayList<>();
     public List<TaskOnShelf> tasks = new ArrayList<>();
 
-    public ExperimentStoredToBookshelf(
+    public ExperimentStoredToAtlas(
             Flow flow, FlowInstance flowInstance, Experiment experiment,
             List<ExperimentFeature> features, List<ExperimentHyperParams> hyperParams,
             List<ExperimentSnippet> snippets, List<ExperimentTaskFeature> taskFeatures,

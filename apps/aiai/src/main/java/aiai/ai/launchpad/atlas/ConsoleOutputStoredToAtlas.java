@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.bookshelf;
+package aiai.ai.launchpad.atlas;
 
 import aiai.ai.launchpad.data.BaseDataClass;
 import lombok.Data;
@@ -28,7 +28,7 @@ import java.util.Collections;
 @Data
 @EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
-public class ConsoleOutputStoredToBookshelf extends BaseDataClass {
+public class ConsoleOutputStoredToAtlas extends BaseDataClass {
 
     @Data
     @NoArgsConstructor
@@ -37,11 +37,11 @@ public class ConsoleOutputStoredToBookshelf extends BaseDataClass {
         public String console;
     }
 
-    public ConsoleOutputStoredToBookshelf(String errorMessage) {
+    public ConsoleOutputStoredToAtlas(String errorMessage) {
         this.errorMessages = Collections.singletonList(errorMessage);
     }
 
-    public ConsoleOutputStoredToBookshelf(File dumpOfConsoleOutputs) {
+    public ConsoleOutputStoredToAtlas(File dumpOfConsoleOutputs) {
         this.dumpOfConsoleOutputs = dumpOfConsoleOutputs;
     }
 

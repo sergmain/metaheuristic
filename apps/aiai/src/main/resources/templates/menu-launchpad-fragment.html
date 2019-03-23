@@ -13,6 +13,9 @@
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/experiments'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/experiments.html" th:href="@{/launchpad/experiments}">Experiments</a>
         </li>
+        <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/atlas/atlas-experiments'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="launchpad/atlas/atlas-experiments.html" th:href="@{/launchpad/atlas/atlas-experiments}">Atlas</a>
+        </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/resources'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/resources.html" th:href="@{/launchpad/resources}">Resources</a>
         </li>

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.bookshelf;
+package aiai.ai.launchpad.atlas;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.*;
@@ -47,7 +47,7 @@ import java.util.List;
 @Slf4j
 @Service
 @Profile("launchpad")
-public class BookshelfService {
+public class AtlasService {
 
     private static ObjectMapper mapper;
 
@@ -65,25 +65,25 @@ public class BookshelfService {
     private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentTaskFeatureRepository experimentTaskFeatureRepository;
     private final TaskRepository taskRepository;
-    private final ConsoleFormBookshelfService consoleFormBookshelfService;
-    private final BookshelfRepository bookshelfRepository;
+    private final ConsoleFormAtlasService consoleFormAtlasService;
+    private final AtlasRepository atlasRepository;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
-    public static class StoredToBookshelfWithStatus extends BaseDataClass {
-        public ExperimentStoredToBookshelf experimentStoredToBookshelf;
+    public static class StoredToAtlasWithStatus extends BaseDataClass {
+        public ExperimentStoredToAtlas experimentStoredToAtlas;
         public Enums.StoringStatus status;
 
         @SuppressWarnings("WeakerAccess")
-        public StoredToBookshelfWithStatus(Enums.StoringStatus status, String errorMessage) {
+        public StoredToAtlasWithStatus(Enums.StoringStatus status, String errorMessage) {
             this.status = status;
             this.errorMessages = Collections.singletonList(errorMessage);
         }
     }
 
     @Autowired
-    public BookshelfService(FlowCache flowCache, FlowInstanceRepository flowInstanceRepository, ExperimentCache experimentCache, ExperimentFeatureRepository experimentFeatureRepository, BinaryDataService binaryDataService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, TaskRepository taskRepository, ConsoleFormBookshelfService consoleFormBookshelfService, BookshelfRepository bookshelfRepository) {
+    public AtlasService(FlowCache flowCache, FlowInstanceRepository flowInstanceRepository, ExperimentCache experimentCache, ExperimentFeatureRepository experimentFeatureRepository, BinaryDataService binaryDataService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, TaskRepository taskRepository, ConsoleFormAtlasService consoleFormAtlasService, AtlasRepository atlasRepository) {
         this.flowCache = flowCache;
         this.flowInstanceRepository = flowInstanceRepository;
         this.experimentCache = experimentCache;
@@ -92,16 +92,16 @@ public class BookshelfService {
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentTaskFeatureRepository = experimentTaskFeatureRepository;
         this.taskRepository = taskRepository;
-        this.consoleFormBookshelfService = consoleFormBookshelfService;
-        this.bookshelfRepository = bookshelfRepository;
+        this.consoleFormAtlasService = consoleFormAtlasService;
+        this.atlasRepository = atlasRepository;
     }
 
-    public OperationStatusRest toBookshelf(long flowInstanceId, long experimentId) {
-        StoredToBookshelfWithStatus stored = toExperimentStoredToBookshelf(experimentId);
+    public OperationStatusRest toAtlas(long flowInstanceId, long experimentId) {
+        StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(experimentId);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, stored.errorMessages);
         }
-        if (flowInstanceId!=stored.experimentStoredToBookshelf.flowInstance.id) {
+        if (flowInstanceId!=stored.experimentStoredToAtlas.flowInstance.id) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment can't be stored, flowInstanceId is different");
         }
         String poolCode = getPoolCodeForExperiment(flowInstanceId, experimentId);
@@ -109,20 +109,20 @@ public class BookshelfService {
         if (!codes.isEmpty()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment already stored");
         }
-        Bookshelf b = new Bookshelf();
+        Atlas b = new Atlas();
         try {
-            b.experiment = toJson(stored.experimentStoredToBookshelf);
+            b.experiment = toJson(stored.experimentStoredToAtlas);
         } catch (JsonProcessingException e) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
                     "General error while storing experiment, " + e.toString());
         }
-        b.name = stored.experimentStoredToBookshelf.experiment.getName();
-        b.description = stored.experimentStoredToBookshelf.experiment.getDescription();
-        b.code = stored.experimentStoredToBookshelf.experiment.getCode();
-        bookshelfRepository.save(b);
+        b.name = stored.experimentStoredToAtlas.experiment.getName();
+        b.description = stored.experimentStoredToAtlas.experiment.getDescription();
+        b.code = stored.experimentStoredToAtlas.experiment.getCode();
+        atlasRepository.save(b);
 
-        ConsoleOutputStoredToBookshelf filed = toConsoleOutputStoredToBookshelf(
-                stored.experimentStoredToBookshelf.flowInstance.id);
+        ConsoleOutputStoredToAtlas filed = toConsoleOutputStoredToAtlas(
+                stored.experimentStoredToAtlas.flowInstance.id);
         if (filed.isErrorMessages()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, filed.errorMessages);
         }
@@ -152,31 +152,31 @@ public class BookshelfService {
         return String.format("stored-experiment-%d-%d",flowInstanceId, experimentId);
     }
 
-    public StoredToBookshelfWithStatus toExperimentStoredToBookshelf(long experimentId) {
+    public StoredToAtlasWithStatus toExperimentStoredToAtlas(long experimentId) {
 
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment==null) {
-            return new StoredToBookshelfWithStatus(Enums.StoringStatus.CANT_BE_STORED,
+            return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.02 can't find experiment for id: " + experimentId);
         }
         FlowInstance flowInstance = flowInstanceRepository.findById(experiment.flowInstanceId).orElse(null);
         if (flowInstance==null) {
-            return new StoredToBookshelfWithStatus(Enums.StoringStatus.CANT_BE_STORED,
+            return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.05 can't find flowInstance for this experiment");
         }
         Flow flow = flowCache.findById(flowInstance.flowId);
         if (flow==null) {
-            return new StoredToBookshelfWithStatus(Enums.StoringStatus.CANT_BE_STORED,
+            return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.10 can't find flow for this experiment");
         }
-        StoredToBookshelfWithStatus result = new StoredToBookshelfWithStatus();
+        StoredToAtlasWithStatus result = new StoredToAtlasWithStatus();
 
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experimentId);
         List<ExperimentSnippet> snippets = experimentSnippetRepository.findByExperimentId(experimentId);
         List<ExperimentTaskFeature> taskFeatures = experimentTaskFeatureRepository.findByFlowInstanceId(flowInstance.id);
         List<Task> tasks = taskRepository.findAllByFlowInstanceId(flowInstance.id);
 
-        result.experimentStoredToBookshelf = new ExperimentStoredToBookshelf(
+        result.experimentStoredToAtlas = new ExperimentStoredToAtlas(
                 flow, flowInstance, experiment,
                 features, experiment.hyperParams, snippets, taskFeatures, tasks
         );
@@ -184,16 +184,16 @@ public class BookshelfService {
         return result;
     }
 
-    public String toJson(ExperimentStoredToBookshelf stored) throws JsonProcessingException {
+    public String toJson(ExperimentStoredToAtlas stored) throws JsonProcessingException {
         //noinspection UnnecessaryLocalVariable
         String json = mapper.writeValueAsString(stored);
         return json;
     }
 
     @SuppressWarnings("WeakerAccess")
-    public ConsoleOutputStoredToBookshelf toConsoleOutputStoredToBookshelf(long flowInstanceId) {
+    public ConsoleOutputStoredToAtlas toConsoleOutputStoredToAtlas(long flowInstanceId) {
         //noinspection UnnecessaryLocalVariable
-        ConsoleOutputStoredToBookshelf result = consoleFormBookshelfService.collectConsoleOutputs(
+        ConsoleOutputStoredToAtlas result = consoleFormAtlasService.collectConsoleOutputs(
                 flowInstanceId);
         return result;
     }

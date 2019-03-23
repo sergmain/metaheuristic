@@ -28,7 +28,7 @@ import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
-import aiai.ai.launchpad.bookshelf.BookshelfService;
+import aiai.ai.launchpad.atlas.AtlasService;
 import aiai.ai.launchpad.experiment.ExperimentProcessService;
 import aiai.ai.launchpad.experiment.ExperimentProcessValidator;
 import aiai.ai.launchpad.experiment.ExperimentService;
@@ -75,14 +75,14 @@ public class FlowService {
     private final FlowCache flowCache;
     private final FlowRepository flowRepository;
 
-    private final BookshelfService bookshelfService;
+    private final AtlasService atlasService;
     private final ExperimentRepository experimentRepository;
     private final ExperimentProcessValidator experimentProcessValidator;
     private final FileProcessValidator fileProcessValidator;
     private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
     private final FlowInstanceService flowInstanceService;
 
-    public FlowService(Globals globals, FlowYamlUtils flowYamlUtils, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, FlowCache flowCache, FlowRepository flowRepository, BookshelfService bookshelfService, ExperimentRepository experimentRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, FlowInstanceService flowInstanceService) {
+    public FlowService(Globals globals, FlowYamlUtils flowYamlUtils, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, FlowCache flowCache, FlowRepository flowRepository, AtlasService atlasService, ExperimentRepository experimentRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, FlowInstanceService flowInstanceService) {
         this.globals = globals;
         this.flowYamlUtils = flowYamlUtils;
         this.experimentService = experimentService;
@@ -93,7 +93,7 @@ public class FlowService {
         this.taskRepository = taskRepository;
         this.flowCache = flowCache;
         this.flowRepository = flowRepository;
-        this.bookshelfService = bookshelfService;
+        this.atlasService = atlasService;
         this.experimentRepository = experimentRepository;
         this.experimentProcessValidator = experimentProcessValidator;
         this.fileProcessValidator = fileProcessValidator;
@@ -554,10 +554,10 @@ public class FlowService {
 
                 Experiment e = experimentRepository.findByFlowInstanceId(instance.id);
                 if (e==null) {
-                    log.warn("#701.23 Can't store experiment to bookshelf" );
+                    log.warn("#701.23 Can't store experiment to atlas" );
                     return instance;
                 }
-                bookshelfService.toBookshelf(instance.id, e.getId());
+                atlasService.toAtlas(instance.id, e.getId());
                 return instance;
             }
             return flowInstance;

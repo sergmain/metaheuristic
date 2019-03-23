@@ -15,36 +15,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.beans;
+package aiai.ai.launchpad.repositories;
 
-import lombok.Data;
+import aiai.ai.launchpad.beans.Atlas;
+import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.persistence.*;
-import java.io.Serializable;
-
-@Entity
-@Table(name = "AIAI_LP_BOOKSHELF")
-@Data
-public class Bookshelf implements Serializable {
-    private static final long serialVersionUID = -1225513309547283331L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
-
-    @Version
-    public Integer version;
-
-    @Column(name = "EXPERIMENT")
-    public String experiment;
-
-    @Column(name = "NAME")
-    public String name;
-
-    @Column(name = "DESCRIPTION")
-    public String description;
-
-    @Column(name = "CODE")
-    public String code;
-
+@Repository
+@Transactional
+@Profile("launchpad")
+public interface AtlasRepository extends JpaRepository<Atlas, Long> {
 }
