@@ -23,6 +23,7 @@ import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import aiai.ai.launchpad.data.BaseDataClass;
 import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.flow.FlowCache;
 import aiai.ai.launchpad.repositories.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -59,7 +60,7 @@ public class BookshelfService {
     private final BinaryDataService binaryDataService;
     private final FlowCache flowCache;
     private final FlowInstanceRepository flowInstanceRepository;
-    private final ExperimentRepository experimentRepository;
+    private final ExperimentCache experimentCache;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentTaskFeatureRepository experimentTaskFeatureRepository;
@@ -82,10 +83,10 @@ public class BookshelfService {
     }
 
     @Autowired
-    public BookshelfService(FlowCache flowCache, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository, ExperimentFeatureRepository experimentFeatureRepository, BinaryDataService binaryDataService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, TaskRepository taskRepository, ConsoleFormBookshelfService consoleFormBookshelfService, BookshelfRepository bookshelfRepository) {
+    public BookshelfService(FlowCache flowCache, FlowInstanceRepository flowInstanceRepository, ExperimentCache experimentCache, ExperimentFeatureRepository experimentFeatureRepository, BinaryDataService binaryDataService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, TaskRepository taskRepository, ConsoleFormBookshelfService consoleFormBookshelfService, BookshelfRepository bookshelfRepository) {
         this.flowCache = flowCache;
         this.flowInstanceRepository = flowInstanceRepository;
-        this.experimentRepository = experimentRepository;
+        this.experimentCache = experimentCache;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.binaryDataService = binaryDataService;
         this.experimentSnippetRepository = experimentSnippetRepository;
@@ -95,12 +96,15 @@ public class BookshelfService {
         this.bookshelfRepository = bookshelfRepository;
     }
 
-    OperationStatusRest toBookshelf(Long experimentId) {
+    public OperationStatusRest toBookshelf(long flowInstanceId, long experimentId) {
         StoredToBookshelfWithStatus stored = toExperimentStoredToBookshelf(experimentId);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, stored.errorMessages);
         }
-        String poolCode = getPoolCodeForExperiment(experimentId);
+        if (flowInstanceId!=stored.experimentStoredToBookshelf.flowInstance.id) {
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment can't be stored, flowInstanceId is different");
+        }
+        String poolCode = getPoolCodeForExperiment(flowInstanceId, experimentId);
         List<SimpleCodeAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode));
         if (!codes.isEmpty()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment already stored");
@@ -144,13 +148,13 @@ public class BookshelfService {
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static String getPoolCodeForExperiment(Long experimentId) {
-        return "stored-experiment-" + experimentId;
+    public static String getPoolCodeForExperiment(long flowInstanceId, long experimentId) {
+        return String.format("stored-experiment-%d-%d",flowInstanceId, experimentId);
     }
 
     public StoredToBookshelfWithStatus toExperimentStoredToBookshelf(long experimentId) {
 
-        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
+        Experiment experiment = experimentCache.findById(experimentId);
         if (experiment==null) {
             return new StoredToBookshelfWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.02 can't find experiment for id: " + experimentId);

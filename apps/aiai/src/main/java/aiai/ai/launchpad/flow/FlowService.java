@@ -22,20 +22,19 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.Monitoring;
 import aiai.ai.launchpad.Process;
+import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
+import aiai.ai.launchpad.bookshelf.BookshelfService;
 import aiai.ai.launchpad.experiment.ExperimentProcessService;
 import aiai.ai.launchpad.experiment.ExperimentProcessValidator;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.file_process.FileProcessService;
 import aiai.ai.launchpad.file_process.FileProcessValidator;
-import aiai.ai.launchpad.repositories.ExperimentTaskFeatureRepository;
-import aiai.ai.launchpad.repositories.FlowInstanceRepository;
-import aiai.ai.launchpad.repositories.FlowRepository;
-import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.utils.ControllerUtils;
@@ -76,12 +75,14 @@ public class FlowService {
     private final FlowCache flowCache;
     private final FlowRepository flowRepository;
 
+    private final BookshelfService bookshelfService;
+    private final ExperimentRepository experimentRepository;
     private final ExperimentProcessValidator experimentProcessValidator;
     private final FileProcessValidator fileProcessValidator;
     private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
     private final FlowInstanceService flowInstanceService;
 
-    public FlowService(Globals globals, FlowYamlUtils flowYamlUtils, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, FlowCache flowCache, FlowRepository flowRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, FlowInstanceService flowInstanceService) {
+    public FlowService(Globals globals, FlowYamlUtils flowYamlUtils, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, FlowCache flowCache, FlowRepository flowRepository, BookshelfService bookshelfService, ExperimentRepository experimentRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, FlowInstanceService flowInstanceService) {
         this.globals = globals;
         this.flowYamlUtils = flowYamlUtils;
         this.experimentService = experimentService;
@@ -92,6 +93,8 @@ public class FlowService {
         this.taskRepository = taskRepository;
         this.flowCache = flowCache;
         this.flowRepository = flowRepository;
+        this.bookshelfService = bookshelfService;
+        this.experimentRepository = experimentRepository;
         this.experimentProcessValidator = experimentProcessValidator;
         this.fileProcessValidator = fileProcessValidator;
         this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
@@ -547,7 +550,15 @@ public class FlowService {
                 experimentService.updateMaxValueForExperimentFeatures(flowInstance.getId());
                 flowInstance.setCompletedOn(System.currentTimeMillis());
                 flowInstance.setExecState(Enums.FlowInstanceExecState.FINISHED.code);
-                return flowInstanceRepository.save(flowInstance);
+                FlowInstance instance = flowInstanceRepository.save(flowInstance);
+
+                Experiment e = experimentRepository.findByFlowInstanceId(instance.id);
+                if (e==null) {
+                    log.warn("#701.23 Can't store experiment to bookshelf" );
+                    return instance;
+                }
+                bookshelfService.toBookshelf(instance.id, e.getId());
+                return instance;
             }
             return flowInstance;
         }

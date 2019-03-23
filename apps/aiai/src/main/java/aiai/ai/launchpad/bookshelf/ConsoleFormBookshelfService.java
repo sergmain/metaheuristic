@@ -68,10 +68,6 @@ public class ConsoleFormBookshelfService {
                     taskOutput.taskId = o.getId();
                     taskOutput.console = o.snippetExecResults;
                     try {
-                        pw.print(o.getId());
-                        pw.print(',');
-                        pw.println(',');
-
                         String json = mapper.writeValueAsString(taskOutput);
 
                         pw.print(o.getId());

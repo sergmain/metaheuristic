@@ -17,7 +17,10 @@
 
 package aiai.ai.launchpad.bookshelf;
 
+import aiai.ai.Enums;
+import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.ai.launchpad.experiment.ExperimentCache;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
@@ -34,14 +37,30 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class BookshelfController {
 
     private final BookshelfService bookshelfService;
+    private final ExperimentCache experimentCache;
 
-    public BookshelfController(BookshelfService bookshelfService) {
+    public BookshelfController(BookshelfService bookshelfService, ExperimentCache experimentCache) {
         this.bookshelfService = bookshelfService;
+        this.experimentCache = experimentCache;
     }
 
     @GetMapping(value = "/experiment-to-bookshelf/{id}")
-    public String toBookshelf(@PathVariable Long id, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
-        OperationStatusRest status = bookshelfService.toBookshelf(id);
+    public String toBookshelf(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
+
+        Experiment experiment = experimentCache.findById(id);
+        if (experiment==null) {
+            redirectAttributes.addFlashAttribute("errorMessages",
+                    "# can't find experiment for id: " + id);
+            return "redirect:/launchpad/experiment-info/"+id;
+        }
+
+        if (experiment.flowInstanceId==null) {
+            redirectAttributes.addFlashAttribute("errorMessages",
+                    "# This experiment isn't bound to FlowInstance");
+            return "redirect:/launchpad/experiment-info/"+id;
+        }
+
+        OperationStatusRest status = bookshelfService.toBookshelf(experiment.flowInstanceId, id);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
