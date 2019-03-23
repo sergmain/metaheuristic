@@ -17,12 +17,18 @@
 
 package aiai.ai.launchpad.bookshelf;
 
+import aiai.ai.launchpad.data.BaseDataClass;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.io.File;
+import java.util.Collections;
+
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
-public class ConsoleOutputStoredToBookshelf {
+public class ConsoleOutputStoredToBookshelf extends BaseDataClass {
 
     @Data
     @NoArgsConstructor
@@ -31,5 +37,13 @@ public class ConsoleOutputStoredToBookshelf {
         public String console;
     }
 
-    public String allConsoles;
+    public ConsoleOutputStoredToBookshelf(String errorMessage) {
+        this.errorMessages = Collections.singletonList(errorMessage);
+    }
+
+    public ConsoleOutputStoredToBookshelf(File dumpOfConsoleOutputs) {
+        this.dumpOfConsoleOutputs = dumpOfConsoleOutputs;
+    }
+
+    public File dumpOfConsoleOutputs;
 }

@@ -17,15 +17,31 @@
 
 package aiai.ai.launchpad.bookshelf;
 
+import aiai.ai.exceptions.BreakForEachException;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.apps.commons.utils.DirUtils;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.stream.Stream;
 
 @Service
+@Slf4j
 public class ConsoleFormBookshelfService {
+
+    private static ObjectMapper mapper;
+
+    static {
+        mapper = new ObjectMapper();
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
+    }
 
     private final TaskRepository taskRepository;
 
@@ -33,17 +49,49 @@ public class ConsoleFormBookshelfService {
         this.taskRepository = taskRepository;
     }
 
-    @SuppressWarnings("Duplicates")
     @Transactional
     public ConsoleOutputStoredToBookshelf collectConsoleOutputs(long flowInstanceId) {
 
-        try (Stream<Task> stream = taskRepository.findAllByFlowInstanceIdAsStream(flowInstanceId) ) {
-            stream.forEach(o -> {
-                        ConsoleOutputStoredToBookshelf.TaskOutput taskOutput = new ConsoleOutputStoredToBookshelf.TaskOutput();
-                        taskOutput.taskId = o.getId();
-                        taskOutput.console = o.snippetExecResults;
-                    });
+        File tempDir = DirUtils.createTempDir("store-console-");
+        if (tempDir == null) {
+            return new ConsoleOutputStoredToBookshelf("#605.10 Can't create temporary directory");
         }
-        return null;
+        try {
+            File output = File.createTempFile("output-", ".txt", tempDir);
+
+            try (Stream<Task> stream = taskRepository.findAllByFlowInstanceIdAsStream(flowInstanceId);
+                 final OutputStream os = new FileOutputStream(output);
+                 final PrintWriter pw = new PrintWriter(os, false, StandardCharsets.UTF_8)
+            ) {
+                stream.forEach(o -> {
+                    ConsoleOutputStoredToBookshelf.TaskOutput taskOutput = new ConsoleOutputStoredToBookshelf.TaskOutput();
+                    taskOutput.taskId = o.getId();
+                    taskOutput.console = o.snippetExecResults;
+                    try {
+                        pw.print(o.getId());
+                        pw.print(',');
+                        pw.println(',');
+
+                        String json = mapper.writeValueAsString(taskOutput);
+
+                        pw.print(o.getId());
+                        pw.print(',');
+                        pw.println(json);
+                    } catch (IOException e) {
+                        throw new BreakForEachException(e);
+                    }
+                });
+            }
+            return new ConsoleOutputStoredToBookshelf(output);
+        }
+        catch(BreakForEachException e) {
+            String es = "#605.18 Error while dumping of console outputs " + e.getCause().toString();
+            log.error(es);
+            return new ConsoleOutputStoredToBookshelf(es);
+        } catch (IOException e) {
+            String es = "#605.14 Error while creating dump of console outputs " + e.toString();
+            log.error(es);
+            return new ConsoleOutputStoredToBookshelf(es);
+        }
     }
 }

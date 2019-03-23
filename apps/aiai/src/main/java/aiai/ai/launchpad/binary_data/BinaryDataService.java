@@ -118,6 +118,7 @@ public class BinaryDataService {
         binaryDataRepository.deleteByPoolCodeAndDataType(poolCode, binaryDataType.value);
     }
 
+    @SuppressWarnings("Duplicates")
     public BinaryData save(InputStream is, long size,
                            Enums.BinaryDataType binaryDataType, String code, String poolCode,
                            boolean isManual, String filename, Long flowInstanceId) {

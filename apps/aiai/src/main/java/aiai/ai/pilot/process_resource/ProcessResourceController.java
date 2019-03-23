@@ -335,7 +335,7 @@ public class ProcessResourceController {
     @GetMapping(value="/process-resource-download-result/{flowInstanceId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadFile(
             HttpServletResponse response, @PathVariable("flowInstanceId") Long flowInstanceId,
-            @SuppressWarnings("unused") @PathVariable("fileName") String fileName) throws IOException {
+            @SuppressWarnings("unused") @PathVariable("fileName") String fileName/*, final RedirectAttributes redirectAttributes*/) throws IOException {
         log.info("#990.82 Start downloadFile(), flowInstanceId: {}", flowInstanceId);
         FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
         if (fi==null) {
@@ -364,6 +364,9 @@ public class ProcessResourceController {
         if (tasks.size()>1) {
             response.sendError(HttpServletResponse.SC_CONFLICT);
             log.info("#990.90 Can't download file because there are more than one task for flowInstanceId {}}", flowInstanceId);
+//            redirectAttributes.addFlashAttribute("errorMessage", "#990.10 name of uploaded file is null");
+//            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+
             return null;
         }
         final Task task = tasks.get(0);

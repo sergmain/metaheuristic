@@ -15,36 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.beans;
+package aiai.ai.exceptions;
 
-import lombok.Data;
+import java.io.IOException;
 
-import javax.persistence.*;
-import java.io.Serializable;
-
-@Entity
-@Table(name = "AIAI_LP_BOOKSHELF")
-@Data
-public class Bookshelf implements Serializable {
-    private static final long serialVersionUID = -1225513309547283331L;
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
-
-    @Version
-    public Integer version;
-
-    @Column(name = "EXPERIMENT")
-    public String experiment;
-
-    @Column(name = "NAME")
-    public String name;
-
-    @Column(name = "DESCRIPTION")
-    public String description;
-
-    @Column(name = "CODE")
-    public String code;
-
+public class BreakForEachException extends RuntimeException {
+    public BreakForEachException(Throwable cause) {
+        super(cause);
+    }
 }

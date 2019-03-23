@@ -45,6 +45,10 @@ public class BookshelfController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
+        else {
+            redirectAttributes.addFlashAttribute("infoMessages",
+                    "Experiment was successfully stored to bookshelf");
+        }
         return "redirect:/launchpad/experiment-info/"+id;
 
     }
