@@ -17,6 +17,7 @@
 
 package aiai.ai.launchpad.experiment;
 
+import aiai.ai.launchpad.atlas.AtlasService;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.data.ExperimentData;
 import aiai.ai.launchpad.data.OperationStatusRest;
@@ -45,9 +46,13 @@ import java.util.ArrayList;
 public class ExperimentsController {
 
     private final ExperimentTopLevelService experimentTopLevelService;
+    private final AtlasService atlasService;
+    private final ExperimentCache experimentCache;
 
-    public ExperimentsController(ExperimentTopLevelService experimentTopLevelService) {
+    public ExperimentsController(ExperimentTopLevelService experimentTopLevelService, AtlasService atlasService, ExperimentCache experimentCache) {
         this.experimentTopLevelService = experimentTopLevelService;
+        this.atlasService = atlasService;
+        this.experimentCache = experimentCache;
     }
 
     @GetMapping("/experiments")
@@ -260,4 +265,34 @@ public class ExperimentsController {
         OperationStatusRest status = experimentTopLevelService.rerunTask(taskId);
         return !status.isErrorMessages();
     }
+
+    @GetMapping(value = "/experiment-to-atlas/{id}")
+    public String toAtlas(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
+
+        Experiment experiment = experimentCache.findById(id);
+        if (experiment==null) {
+            redirectAttributes.addFlashAttribute("errorMessages",
+                    "# can't find experiment for id: " + id);
+            return "redirect:/launchpad/experiment-info/"+id;
+        }
+
+        if (experiment.flowInstanceId==null) {
+            redirectAttributes.addFlashAttribute("errorMessages",
+                    "# This experiment isn't bound to FlowInstance");
+            return "redirect:/launchpad/experiment-info/"+id;
+        }
+
+        OperationStatusRest status = atlasService.toAtlas(experiment.flowInstanceId, id);
+        if (status.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+        }
+        else {
+            redirectAttributes.addFlashAttribute("infoMessages",
+                    "Experiment was successfully stored to atlas");
+        }
+        return "redirect:/launchpad/experiment-info/"+id;
+
+    }
+
+
 }

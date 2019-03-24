@@ -17,9 +17,14 @@
 
 package aiai.ai.launchpad.repositories;
 
+import aiai.ai.launchpad.atlas.AtlasSimple;
 import aiai.ai.launchpad.beans.Atlas;
+import aiai.ai.launchpad.beans.Experiment;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,4 +32,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 @Profile("launchpad")
 public interface AtlasRepository extends JpaRepository<Atlas, Long> {
+
+    @Transactional(readOnly = true)
+    @Query(value="select new aiai.ai.launchpad.atlas.AtlasSimple(" +
+            "b.id, b.experiment, b.name, b.description ) from Atlas b order by b.id desc")
+    Slice<AtlasSimple> findAllAsSimple(Pageable pageable);
+
+    @Transactional(readOnly = true)
+    Slice<Atlas> findAllByOrderByIdDesc(Pageable pageable);
+
 }

@@ -18,14 +18,17 @@
 package aiai.ai.launchpad.atlas;
 
 import aiai.ai.Enums;
+import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
+import aiai.ai.launchpad.data.AtlasData;
 import aiai.ai.launchpad.data.BaseDataClass;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.flow.FlowCache;
 import aiai.ai.launchpad.repositories.*;
+import aiai.ai.utils.ControllerUtils;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -35,6 +38,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.io.FileInputStream;
@@ -57,6 +61,7 @@ public class AtlasService {
         mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
     }
 
+    private final Globals globals;
     private final BinaryDataService binaryDataService;
     private final FlowCache flowCache;
     private final FlowInstanceRepository flowInstanceRepository;
@@ -83,7 +88,8 @@ public class AtlasService {
     }
 
     @Autowired
-    public AtlasService(FlowCache flowCache, FlowInstanceRepository flowInstanceRepository, ExperimentCache experimentCache, ExperimentFeatureRepository experimentFeatureRepository, BinaryDataService binaryDataService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, TaskRepository taskRepository, ConsoleFormAtlasService consoleFormAtlasService, AtlasRepository atlasRepository) {
+    public AtlasService(Globals globals, FlowCache flowCache, FlowInstanceRepository flowInstanceRepository, ExperimentCache experimentCache, ExperimentFeatureRepository experimentFeatureRepository, BinaryDataService binaryDataService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, TaskRepository taskRepository, ConsoleFormAtlasService consoleFormAtlasService, AtlasRepository atlasRepository) {
+        this.globals = globals;
         this.flowCache = flowCache;
         this.flowInstanceRepository = flowInstanceRepository;
         this.experimentCache = experimentCache;
@@ -94,6 +100,13 @@ public class AtlasService {
         this.taskRepository = taskRepository;
         this.consoleFormAtlasService = consoleFormAtlasService;
         this.atlasRepository = atlasRepository;
+    }
+
+    public AtlasData.AtlasSimpleExperiments getAtlasExperiments(Pageable pageable) {
+        pageable = ControllerUtils.fixPageSize(globals.atlasExperimentRowsLimit, pageable);
+        AtlasData.AtlasSimpleExperiments result = new AtlasData.AtlasSimpleExperiments();
+        result.items = atlasRepository.findAllAsSimple(pageable);
+        return result;
     }
 
     public OperationStatusRest toAtlas(long flowInstanceId, long experimentId) {

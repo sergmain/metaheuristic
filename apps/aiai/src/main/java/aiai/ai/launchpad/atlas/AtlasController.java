@@ -17,17 +17,23 @@
 
 package aiai.ai.launchpad.atlas;
 
-import aiai.ai.launchpad.beans.Experiment;
+import aiai.ai.launchpad.data.AtlasData;
+import aiai.ai.launchpad.data.ExperimentData;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.experiment.ExperimentCache;
+import aiai.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.util.ArrayList;
+
+@SuppressWarnings("Duplicates")
 @Controller
 @RequestMapping("/launchpad/atlas")
 @Slf4j
@@ -35,40 +41,69 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 public class AtlasController {
 
     private final AtlasService atlasService;
-    private final ExperimentCache experimentCache;
 
     public AtlasController(AtlasService atlasService, ExperimentCache experimentCache) {
         this.atlasService = atlasService;
-        this.experimentCache = experimentCache;
     }
 
-    @GetMapping(value = "/experiment-to-atlas/{id}")
-    public String toAtlas(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
+    @GetMapping("/atlas-experiments")
+    public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
+                       @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
+                       @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
+        AtlasData.AtlasSimpleExperiments atlasExperiments = atlasService.getAtlasExperiments(pageable);
+        ControllerUtils.addMessagesToModel(model, atlasExperiments);
+        model.addAttribute("result", atlasExperiments);
+        return "launchpad/atlas/atlas-experiments";
+    }
 
-        Experiment experiment = experimentCache.findById(id);
-        if (experiment==null) {
-            redirectAttributes.addFlashAttribute("errorMessages",
-                    "# can't find experiment for id: " + id);
-            return "redirect:/launchpad/experiment-info/"+id;
+    // for AJAX
+    @PostMapping("/atlas-experiments-part")
+    public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable) {
+        AtlasData.AtlasSimpleExperiments atlasExperiments = atlasService.getAtlasExperiments(pageable);
+        model.addAttribute("result", atlasExperiments);
+        return "launchpad/atlas/atlas-experiments :: table";
+    }
+
+/*
+    @GetMapping(value = "/atlas-experiment-info/{id}")
+    public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
+        ExperimentData.ExperimentInfoExtendedResult result =
+                AtlasTopLevelService.getExperimentInfo(id);
+        if (result.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
+            return "redirect:/launchpad/atlas/atlas-experiments";
         }
 
-        if (experiment.flowInstanceId==null) {
-            redirectAttributes.addFlashAttribute("errorMessages",
-                    "# This experiment isn't bound to FlowInstance");
-            return "redirect:/launchpad/experiment-info/"+id;
+        if (result.isInfoMessages()) {
+            model.addAttribute("infoMessages", result.infoMessages);
         }
 
-        OperationStatusRest status = atlasService.toAtlas(experiment.flowInstanceId, id);
+        model.addAttribute("experiment", result.experiment);
+        model.addAttribute("experimentResult", result.experimentInfo);
+        return "launchpad/atlas/atlas-experiment-info";
+    }
+
+    @GetMapping("/atlas-experiment-delete/{id}")
+    public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
+        ExperimentData.ExperimentResult result = AtlasTopLevelService.getExperiment(id);
+        if (result.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
+            return "redirect:/launchpad/atlas/atlas-experiments";
+        }
+        model.addAttribute("experiment", result.experiment);
+        return "launchpad/atlas/atlas-experiment-delete";
+    }
+
+    @PostMapping("/atlas-experiment-delete-commit")
+    public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = AtlasTopLevelService.experimentDeleteCommit(id);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        else {
-            redirectAttributes.addFlashAttribute("infoMessages",
-                    "Experiment was successfully stored to atlas");
-        }
-        return "redirect:/launchpad/experiment-info/"+id;
-
+        return "redirect:/launchpad/atlas/atlas-experiments";
     }
+
+*/
 
 
 }
