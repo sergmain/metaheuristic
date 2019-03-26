@@ -41,7 +41,7 @@
         <div th:remove="tag" th:each="r : ${result.items}" >
             <tr>
                 <td th:text="${r.description}">description</td>
-                <td rowspan="2"><a class="pure-button pure-button-primary" th:disabled="${r.flowInstanceId==null}" th:href="${'/launchpad/atlas/atlas-experiment-info/' + r.id}">Details</a></td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-info/' + r.id}">Details</a></td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-delete/' + r.id}">Delete</a></td>
             </tr>
             <tr valign="top">

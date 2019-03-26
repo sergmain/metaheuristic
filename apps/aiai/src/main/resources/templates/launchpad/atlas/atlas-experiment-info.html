@@ -28,11 +28,6 @@
             <td width="50">
                 &nbsp;
             </td>
-            <td valign="top">
-                <a class="pure-button table-nav-button-fill pure-button-primary"
-                   th:href="${'/launchpad/experiment-to-atlas/'+ experiment.id }">to Atlas</a>
-
-            </td>
         </tr>
     </table>
     <p>&nbsp;</p>
@@ -132,14 +127,14 @@
                 <td th:text="${f.execStatusAsString()}">Exec status</td>
                 <td th:text="${f.maxValue!=null ? f.maxValue : 0 }">Max value</td>
                 <td><a class="pure-button table-nav-button-fill pure-button-primary"
-                       th:href="${'/launchpad/experiment-feature-progress/'+ experiment.id + '/' + f.id}">Info</a></td>
+                       th:href="${'/launchpad/atlas/atlas-experiment-feature-progress/'+ experiment.id + '/' + f.id}">Info</a></td>
             </tr>
             </tbody>
         </table>
         <p>&nbsp;</p>
     </div>
 
-        <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">To list of experiments</a>
+        <a class="pure-button pure-button-primary" href="atlas-experiments.html" th:href="${'/launchpad/atlas/atlas-experiments'}">To list of experiments</a>
 
 
 </div>

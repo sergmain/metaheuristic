@@ -17,15 +17,44 @@
 
 package aiai.ai.launchpad.data;
 
+import aiai.ai.Enums;
 import aiai.ai.launchpad.atlas.AtlasSimple;
+import aiai.ai.launchpad.atlas.ExperimentStoredToAtlas;
 import aiai.ai.launchpad.beans.Atlas;
+import aiai.ai.launchpad.beans.Experiment;
+import aiai.ai.launchpad.beans.ExperimentFeature;
+import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.utils.SimpleSelectOption;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class AtlasData {
+
+    @Data
+    public static class ExperimentInfo {
+        public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
+        public List<ExperimentStoredToAtlas.ExperimentFeatureOnShelf > features;
+        public FlowInstance flowInstance;
+        public Enums.FlowInstanceExecState flowInstanceExecState;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class ExperimentInfoExtended extends BaseDataClass {
+        public Experiment experiment;
+        public ExperimentInfo experimentInfo;
+
+        public ExperimentInfoExtended(String errorMessage) {
+            addErrorMessage(errorMessage);
+        }
+    }
 
     @Data
     @NoArgsConstructor

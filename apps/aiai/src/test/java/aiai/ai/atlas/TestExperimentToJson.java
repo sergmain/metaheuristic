@@ -82,7 +82,7 @@ public class TestExperimentToJson {
         String json = atlasService.toJson(r.experimentStoredToAtlas);
 
         System.out.println("json =\n" + json);
-        ExperimentStoredToAtlas estb1 = mapper.readValue(json, ExperimentStoredToAtlas.class);
+        ExperimentStoredToAtlas estb1 = atlasService.fromJson(json);
         System.out.println("estb1 = " + estb1);
     }
 }

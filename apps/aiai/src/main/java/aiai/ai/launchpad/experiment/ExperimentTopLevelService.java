@@ -42,7 +42,6 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -433,7 +432,6 @@ public class ExperimentTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    @PostMapping("/experiment-delete-commit")
     public OperationStatusRest experimentDeleteCommit(Long id) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {

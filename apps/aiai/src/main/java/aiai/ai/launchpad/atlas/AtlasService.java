@@ -132,6 +132,7 @@ public class AtlasService {
         b.name = stored.experimentStoredToAtlas.experiment.getName();
         b.description = stored.experimentStoredToAtlas.experiment.getDescription();
         b.code = stored.experimentStoredToAtlas.experiment.getCode();
+        b.createdOn = stored.experimentStoredToAtlas.experiment.getCreatedOn();
         atlasRepository.save(b);
 
         ConsoleOutputStoredToAtlas filed = toConsoleOutputStoredToAtlas(
@@ -196,6 +197,13 @@ public class AtlasService {
         result.status = Enums.StoringStatus.OK;
         return result;
     }
+
+    public ExperimentStoredToAtlas fromJson(String json) throws IOException {
+        //noinspection UnnecessaryLocalVariable
+        ExperimentStoredToAtlas estb1 = mapper.readValue(json, ExperimentStoredToAtlas.class);
+        return estb1;
+    }
+
 
     public String toJson(ExperimentStoredToAtlas stored) throws JsonProcessingException {
         //noinspection UnnecessaryLocalVariable

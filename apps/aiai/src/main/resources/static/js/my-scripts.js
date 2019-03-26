@@ -1,3 +1,60 @@
+// helper functions
+// TODO move them to my-scripts.js
+
+let /*{boolean}*/ isDebug = false;
+
+/**
+ * @param {string} s
+ */
+function printLogError( s ) {
+    printLog('ERROR', s );
+}
+
+/**
+ * @param {string} s
+ */
+function printLogMain( s ) {
+    printLog('MAIN', s );
+}
+
+/**
+ * @param {string} s
+ */
+function printLogMetrics( s ) {
+    printLog('METRICS', s );
+}
+
+/**
+ * @param {string} s
+ */
+function printLogTr( s ) {
+    printLog('TR', s );
+}
+
+/**
+ * @param {string} s
+ */
+function printLogButton( s ) {
+    printLog('BUTTON', s );
+}
+
+/**
+ * @param {string} s
+ */
+function printLogButtonAxis( s ) {
+    printLog('BUTTON-AXIS', s );
+}
+
+/**
+ * @param {string} tag
+ * @param {string} s
+ */
+function printLog(tag, s ) {
+    if (isDebug) {
+        console.log(tag+', '+ s);
+    }
+}
+
 function focusLoginInput() {
     var textbox = document.getElementById("j_username");
     textbox.focus();

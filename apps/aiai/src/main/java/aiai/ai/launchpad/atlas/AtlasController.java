@@ -41,9 +41,11 @@ import java.util.ArrayList;
 public class AtlasController {
 
     private final AtlasService atlasService;
+    private final AtlasTopLevelService atlasTopLevelService;
 
-    public AtlasController(AtlasService atlasService, ExperimentCache experimentCache) {
+    public AtlasController(AtlasService atlasService, ExperimentCache experimentCache, AtlasTopLevelService atlasTopLevelService) {
         this.atlasService = atlasService;
+        this.atlasTopLevelService = atlasTopLevelService;
     }
 
     @GetMapping("/atlas-experiments")
@@ -64,11 +66,9 @@ public class AtlasController {
         return "launchpad/atlas/atlas-experiments :: table";
     }
 
-/*
     @GetMapping(value = "/atlas-experiment-info/{id}")
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
-        ExperimentData.ExperimentInfoExtendedResult result =
-                AtlasTopLevelService.getExperimentInfo(id);
+        AtlasData.ExperimentInfoExtended result = atlasTopLevelService.getExperimentInfo(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return "redirect:/launchpad/atlas/atlas-experiments";
@@ -85,25 +85,77 @@ public class AtlasController {
 
     @GetMapping("/atlas-experiment-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        ExperimentData.ExperimentResult result = AtlasTopLevelService.getExperiment(id);
+        AtlasData.ExperimentInfoExtended result = atlasTopLevelService.getExperimentInfo(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return "redirect:/launchpad/atlas/atlas-experiments";
         }
+
+        if (result.isInfoMessages()) {
+            model.addAttribute("infoMessages", result.infoMessages);
+        }
+
         model.addAttribute("experiment", result.experiment);
         return "launchpad/atlas/atlas-experiment-delete";
     }
 
     @PostMapping("/atlas-experiment-delete-commit")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = AtlasTopLevelService.experimentDeleteCommit(id);
+        OperationStatusRest status = atlasTopLevelService.experimentDeleteCommit(id);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
         return "redirect:/launchpad/atlas/atlas-experiments";
     }
 
-*/
+/*
 
+    @PostMapping("/atlas-experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
+    public @ResponseBody
+    ExperimentData.PlotData getPlotData(
+            @PathVariable Long experimentId, @PathVariable Long featureId,
+            @PathVariable String[] params, @PathVariable String[] paramsAxis) {
+        return experimentTopLevelService.getPlotData(experimentId, featureId, params, paramsAxis);
+    }
+
+    @PostMapping("/atlas-experiment-feature-progress-console-part/{taskId}")
+    public String getTasksConsolePart(Model model, @PathVariable(name="taskId") Long taskId) {
+        ExperimentData.ConsoleResult result = experimentTopLevelService.getTasksConsolePart(taskId);
+        model.addAttribute("consoleResult", result);
+        return "launchpad/experiment-feature-progress :: fragment-console-table";
+    }
+
+    @PostMapping("/atlas-experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
+    public String getFeatureProgressPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
+        ExperimentData.ExperimentFeatureExtendedResult experimentProgressResult =
+                experimentTopLevelService.getFeatureProgressPart(experimentId, featureId, params, pageable);
+
+        model.addAttribute("result", experimentProgressResult.tasksResult);
+        model.addAttribute("experiment", experimentProgressResult.experiment);
+        model.addAttribute("feature", experimentProgressResult.experimentFeature);
+        model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
+
+        return "launchpad/experiment-feature-progress :: fragment-table";
+    }
+
+    @GetMapping(value = "/atlas-experiment-feature-progress/{experimentId}/{featureId}")
+    public String getFeatures(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, final RedirectAttributes redirectAttributes ) {
+        ExperimentData.ExperimentFeatureExtendedResult experimentProgressResult =
+                experimentTopLevelService.getExperimentFeatureExtended(experimentId, featureId);
+        if (experimentProgressResult.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", experimentProgressResult.errorMessages);
+            return "redirect:/launchpad/experiments";
+        }
+        model.addAttribute("metrics", experimentProgressResult.metricsResult);
+        model.addAttribute("params", experimentProgressResult.hyperParamResult);
+        model.addAttribute("result", experimentProgressResult.tasksResult);
+        model.addAttribute("experiment", experimentProgressResult.experiment);
+        model.addAttribute("feature", experimentProgressResult.experimentFeature);
+        model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
+
+        return "launchpad/experiment-feature-progress";
+    }
+
+*/
 
 }

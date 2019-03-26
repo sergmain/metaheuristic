@@ -47,4 +47,7 @@ public class Atlas implements Serializable {
     @Column(name = "CODE")
     public String code;
 
+    @Column(name="CREATED_ON")
+    public long createdOn;
+
 }
