@@ -247,4 +247,8 @@ public class BinaryDataService {
     public Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable) {
         return binaryDataRepository.getAllAsSimpleResources(pageable);
     }
+
+    public List<BinaryData> getByPoolCodeAndType(String poolCode, Enums.BinaryDataType type) {
+        return binaryDataRepository.findAllByPoolCodeAAndDataType(poolCode, type.value);
+    }
 }

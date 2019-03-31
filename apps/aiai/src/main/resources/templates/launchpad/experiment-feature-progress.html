@@ -4,12 +4,12 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
      sec:authorize="isAuthenticated()"
 >
-    <!--/*@thymeslet id="result" type="aiai.ai.launchpad.data.TasksData$TasksResult"*/-->
-    <!--/*@thymeslet id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
-    <!--/*@thymeslet id="feature" type="aiai.ai.launchpad.beans.ExperimentFeature"*/-->
-    <!--/*@thymeslet id="consoleResult" type="aiai.ai.launchpad.data.ExperimentData$ConsoleResult"*/-->
-    <!--/*@thymeslet id="params" type="aiai.ai.launchpad.data.ExperimentData$HyperParamResult"*/-->
-    <!--/*@thymeslet id="metrics" type="aiai.ai.launchpad.data.ExperimentData$MetricsResult"*/-->
+    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.TasksData$TasksResult"*/-->
+    <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
+    <!--/*@thymesVar id="feature" type="aiai.ai.launchpad.beans.ExperimentFeature"*/-->
+    <!--/*@thymesVar id="consoleResult" type="aiai.ai.launchpad.data.ExperimentData$ConsoleResult"*/-->
+    <!--/*@thymesVar id="params" type="aiai.ai.launchpad.data.ExperimentData$HyperParamResult"*/-->
+    <!--/*@thymesVar id="metrics" type="aiai.ai.launchpad.data.ExperimentData$MetricsResult"*/-->
 
     <script>
         'use strict';

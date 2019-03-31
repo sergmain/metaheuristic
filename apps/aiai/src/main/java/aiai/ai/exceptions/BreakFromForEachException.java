@@ -17,10 +17,8 @@
 
 package aiai.ai.exceptions;
 
-import java.io.IOException;
-
-public class BreakForEachException extends RuntimeException {
-    public BreakForEachException(Throwable cause) {
+public class BreakFromForEachException extends RuntimeException {
+    public BreakFromForEachException(Throwable cause) {
         super(cause);
     }
 }

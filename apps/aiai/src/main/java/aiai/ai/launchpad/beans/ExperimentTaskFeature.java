@@ -31,7 +31,7 @@ public class ExperimentTaskFeature implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public Long id;
 
     @Version
     private Integer version;
@@ -46,5 +46,5 @@ public class ExperimentTaskFeature implements Serializable {
     public Long featureId;
 
     @Column(name = "TASK_TYPE")
-    private int taskType;
+    public int taskType;
 }

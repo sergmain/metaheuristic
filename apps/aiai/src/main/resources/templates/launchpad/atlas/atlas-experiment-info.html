@@ -8,6 +8,7 @@
 
     <!--/*@thymesVar id="experimentResult" type="aiai.ai.launchpad.data.ExperimentData$ExperimentInfoResult"*/-->
     <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
+    <!--/*@thymesVar id="atlas" type="aiai.ai.launchpad.beans.Atlas"*/-->
 
     <h1 class="widget-header">Progress of experiment</h1>
     <table>
@@ -40,7 +41,7 @@
             <tr><td>Name</td><td th:text="${experiment.name}">name</td></tr>
             <tr><td>Description</td><td th:text="${experiment.description}">desc</td></tr>
             <tr><td>Seed</td><td th:text="${experiment.seed}">seed</td></tr>
-            <tr><td>Number of tasks</td><td th:text="${experiment.getNumberOfTask()}">Number of sequnces</td></tr>
+            <tr><td>Number of tasks</td><td th:text="${experiment.getNumberOfTask()}">Number of tasks</td></tr>
             </tbody>
         </table>
         <p>&nbsp;</p>
@@ -127,7 +128,7 @@
                 <td th:text="${f.execStatusAsString()}">Exec status</td>
                 <td th:text="${f.maxValue!=null ? f.maxValue : 0 }">Max value</td>
                 <td><a class="pure-button table-nav-button-fill pure-button-primary"
-                       th:href="${'/launchpad/atlas/atlas-experiment-feature-progress/'+ experiment.id + '/' + f.id}">Info</a></td>
+                       th:href="${'/launchpad/atlas/atlas-experiment-feature-progress/'+ atlas.id + '/'+ experiment.id + '/' + f.id}">Info</a></td>
             </tr>
             </tbody>
         </table>

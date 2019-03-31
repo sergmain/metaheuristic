@@ -17,7 +17,7 @@
 
 package aiai.ai.launchpad.atlas;
 
-import aiai.ai.exceptions.BreakForEachException;
+import aiai.ai.exceptions.BreakFromForEachException;
 import aiai.ai.launchpad.beans.Task;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.apps.commons.utils.DirUtils;
@@ -74,13 +74,13 @@ public class ConsoleFormAtlasService {
                         pw.print(',');
                         pw.println(json);
                     } catch (IOException e) {
-                        throw new BreakForEachException(e);
+                        throw new BreakFromForEachException(e);
                     }
                 });
             }
             return new ConsoleOutputStoredToAtlas(output);
         }
-        catch(BreakForEachException e) {
+        catch(BreakFromForEachException e) {
             String es = "#605.18 Error while dumping of console outputs " + e.getCause().toString();
             log.error(es);
             return new ConsoleOutputStoredToAtlas(es);
@@ -89,5 +89,9 @@ public class ConsoleFormAtlasService {
             log.error(es);
             return new ConsoleOutputStoredToAtlas(es);
         }
+    }
+
+    public ConsoleOutputStoredToAtlas.TaskOutput fromJson(String json) throws IOException {
+        return mapper.readValue(json, ConsoleOutputStoredToAtlas.TaskOutput.class);
     }
 }

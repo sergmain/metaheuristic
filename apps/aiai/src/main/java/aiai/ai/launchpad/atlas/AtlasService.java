@@ -214,8 +214,7 @@ public class AtlasService {
     @SuppressWarnings("WeakerAccess")
     public ConsoleOutputStoredToAtlas toConsoleOutputStoredToAtlas(long flowInstanceId) {
         //noinspection UnnecessaryLocalVariable
-        ConsoleOutputStoredToAtlas result = consoleFormAtlasService.collectConsoleOutputs(
-                flowInstanceId);
+        ConsoleOutputStoredToAtlas result = consoleFormAtlasService.collectConsoleOutputs(flowInstanceId);
         return result;
     }
 }

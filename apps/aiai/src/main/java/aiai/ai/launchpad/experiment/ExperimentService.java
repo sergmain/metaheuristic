@@ -213,6 +213,7 @@ public class ExperimentService {
         }
     }
 
+    @SuppressWarnings("Duplicates")
     private PlotData collectDataForPlotting(Experiment experiment, List<Task> selected, String[] paramsAxis) {
         final PlotData data = new PlotData();
         final List<String> paramCleared = new ArrayList<>();
@@ -274,6 +275,7 @@ public class ExperimentService {
     }
 
 
+    @SuppressWarnings("Duplicates")
     private List<Task> findTaskWithFilter(Experiment experiment, long featureId, String[] params) {
         final Set<String> paramSet = new HashSet<>();
         final Set<String> paramFilterKeys = new HashSet<>();

@@ -19,6 +19,7 @@ package aiai.ai.launchpad.atlas;
 
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.utils.CollectionUtils;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,10 +29,31 @@ import org.springframework.beans.BeanUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
 public class ExperimentStoredToAtlas {
+
+    @JsonIgnore
+    public ExperimentFeatureOnShelf getFeature(Long featureId) {
+        return features.stream().filter(o -> !Objects.equals(o.id, featureId)).findAny().orElse(null);
+    }
+
+    @JsonIgnore
+    public TaskOnShelf getTask(Long taskId) {
+        return tasks.stream().filter(o -> !Objects.equals(o.id, taskId)).findAny().orElse(null);
+    }
+
+    @JsonIgnore
+    public ExperimentTaskFeatureOnShelf getExperimentTaskFeature(Long taskId) {
+        return taskFeatures
+                .stream()
+                .filter(o -> o.taskId.equals(taskId))
+                .findFirst().orElse(null);
+    }
 
     @Data
     @NoArgsConstructor

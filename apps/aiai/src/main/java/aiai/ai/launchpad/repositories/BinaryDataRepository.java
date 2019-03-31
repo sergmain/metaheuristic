@@ -47,6 +47,8 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
 
     List<BinaryData> findAllByPoolCode(String poolCode);
 
+    List<BinaryData> findAllByPoolCodeAAndDataType(String poolCode, int dataType);
+
     BinaryData findByCode(String code);
 
     @Transactional(readOnly = true)
