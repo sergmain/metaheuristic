@@ -165,12 +165,12 @@ public class AtlasTopLevelService {
     }
 
     public AtlasData.PlotData findExperimentTaskForPlot(
-            ExperimentStoredToAtlas estb1, ExperimentFeature feature, String[] params, String[] paramsAxis) {
-        if (estb1.experiment == null || feature == null) {
+            ExperimentStoredToAtlas estb, ExperimentFeature feature, String[] params, String[] paramsAxis) {
+        if (estb.experiment == null || feature == null) {
             return AtlasData.EMPTY_PLOT_DATA;
         } else {
-            List<Task> selected = getTasksForFeatureIdAndParams(estb1, feature, params);
-            return collectDataForPlotting(estb1.experiment, selected, paramsAxis);
+            List<Task> selected = getTasksForFeatureIdAndParams(estb, feature, params);
+            return collectDataForPlotting(estb, selected, paramsAxis);
         }
     }
 
@@ -191,7 +191,7 @@ public class AtlasTopLevelService {
         return selected;
     }
 
-    private AtlasData.PlotData collectDataForPlotting(Experiment experiment, List<Task> selected, String[] paramsAxis) {
+    private AtlasData.PlotData collectDataForPlotting(ExperimentStoredToAtlas estb, List<Task> selected, String[] paramsAxis) {
         final AtlasData.PlotData data = new AtlasData.PlotData();
         final List<String> paramCleared = new ArrayList<>();
         for (String param : paramsAxis) {
@@ -205,7 +205,7 @@ public class AtlasTopLevelService {
         if (paramCleared.size()!=2) {
             throw new IllegalStateException("Wrong number of params for axes. Expected: 2, actual: " + paramCleared.size());
         }
-        Map<String, Map<String, Integer>> map = experiment.getHyperParamsAsMap(false);
+        Map<String, Map<String, Integer>> map = estb.getHyperParamsAsMap(false);
         data.x.addAll(map.get(paramCleared.get(0)).keySet());
         data.y.addAll(map.get(paramCleared.get(1)).keySet());
 
@@ -345,17 +345,17 @@ public class AtlasTopLevelService {
     }
 
     public AtlasData.ExperimentFeatureExtendedResult prepareExperimentFeatures(
-            ExperimentStoredToAtlas estb1,
+            ExperimentStoredToAtlas estb,
             Experiment experiment, final ExperimentFeature experimentFeature) {
 
         TasksData.TasksResult tasksResult = new TasksData.TasksResult();
 
-        final Map<Long, Integer> taskToTaskType = estb1.taskFeatures
+        final Map<Long, Integer> taskToTaskType = estb.taskFeatures
                 .stream()
                 .filter(taskFeature -> taskFeature.featureId.equals(experimentFeature.id))
                 .collect(Collectors.toMap(o -> o.taskId, o -> o.taskType));
 
-        List<TaskWIthType> taskWIthTypes = estb1.tasks.stream()
+        List<TaskWIthType> taskWIthTypes = estb.tasks.stream()
                 .filter(o->taskToTaskType.containsKey(o.id))
                 .sorted(Comparator.comparingLong(o -> o.id))
                 .limit(11)
@@ -375,7 +375,7 @@ public class AtlasTopLevelService {
 
 
         AtlasData.HyperParamResult hyperParamResult = new AtlasData.HyperParamResult();
-        for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
+        for (ExperimentHyperParams hyperParam : estb.getHyperParams()) {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
             ExperimentData.HyperParamList list = new ExperimentData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
@@ -390,7 +390,7 @@ public class AtlasTopLevelService {
         final AtlasData.MetricsResult metricsResult = new AtlasData.MetricsResult();
         final List<Map<String, BigDecimal>> values = new ArrayList<>();
 
-        estb1.tasks.stream()
+        estb.tasks.stream()
                 .filter(o->taskToTaskType.containsKey(o.id) && o.execState > 1)
                 .forEach( o-> {
                     MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(o.metrics) );
@@ -458,9 +458,11 @@ public class AtlasTopLevelService {
         if (datas.isEmpty()) {
             return new AtlasData.ConsoleResult("#280.27 Can't find a console output");
         }
-        BinaryData data = binaryDataService.getBinaryData(datas.get(0).id);
+
+        // TODO need to refactor to use InputStream
+        byte[] bytes = binaryDataService.getDataAsBytes(datas.get(0).id);
         ConsoleOutputStoredToAtlas.TaskOutput taskOutput = null;
-        try(InputStream is = new ByteArrayInputStream(data.getBytes())) {
+        try(InputStream is = new ByteArrayInputStream(bytes)) {
             LineIterator it = IOUtils.lineIterator(is, StandardCharsets.UTF_8);
             String taskIdAsStr = Long.toString(taskId);
             while (it.hasNext()) {
@@ -471,7 +473,9 @@ public class AtlasTopLevelService {
                     continue;
                 }
                 if (taskIdAsStr.equals(line.substring(0, idx))) {
-                    taskOutput = consoleFormAtlasService.fromJson(line.substring(idx));
+                    String json = line.substring(idx+1);
+                    taskOutput = consoleFormAtlasService.fromJson(json);
+                    break;
                 }
             }
         } catch (IOException e) {

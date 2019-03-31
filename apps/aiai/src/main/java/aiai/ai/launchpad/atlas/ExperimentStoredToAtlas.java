@@ -18,19 +18,18 @@
 package aiai.ai.launchpad.atlas;
 
 import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.utils.CollectionUtils;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.springframework.beans.BeanUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Data
@@ -39,12 +38,12 @@ public class ExperimentStoredToAtlas {
 
     @JsonIgnore
     public ExperimentFeatureOnShelf getFeature(Long featureId) {
-        return features.stream().filter(o -> !Objects.equals(o.id, featureId)).findAny().orElse(null);
+        return features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
     }
 
     @JsonIgnore
     public TaskOnShelf getTask(Long taskId) {
-        return tasks.stream().filter(o -> !Objects.equals(o.id, taskId)).findAny().orElse(null);
+        return tasks.stream().filter(o -> Objects.equals(o.id, taskId)).findAny().orElse(null);
     }
 
     @JsonIgnore
@@ -53,6 +52,24 @@ public class ExperimentStoredToAtlas {
                 .stream()
                 .filter(o -> o.taskId.equals(taskId))
                 .findFirst().orElse(null);
+    }
+
+    @SuppressWarnings("Duplicates")
+    @JsonIgnore
+    public Map<String, Map<String, Integer>> getHyperParamsAsMap(boolean isFull) {
+        final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
+        for (ExperimentHyperParams hyperParam : getHyperParams()) {
+            ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
+            Map<String, Integer> map = new LinkedHashMap<>();
+            paramByIndex.put(hyperParam.getKey(), map);
+            for (int i = 0; i <ofVariants.values.size(); i++) {
+                String value = ofVariants.values.get(i);
+
+
+                map.put(isFull ? hyperParam.getKey()+'-'+value : value , i);
+            }
+        }
+        return paramByIndex;
     }
 
     @Data

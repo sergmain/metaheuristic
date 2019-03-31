@@ -47,7 +47,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
 
     List<BinaryData> findAllByPoolCode(String poolCode);
 
-    List<BinaryData> findAllByPoolCodeAAndDataType(String poolCode, int dataType);
+    List<BinaryData> findAllByPoolCodeAndDataType(String poolCode, int dataType);
 
     BinaryData findByCode(String code);
 

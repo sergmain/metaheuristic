@@ -110,7 +110,7 @@ public class AtlasController {
     }
 
 
-    @GetMapping(value = "/atlas-experiment-feature-progress/{atlasId}/{{experimentId}/{featureId}")
+    @GetMapping(value = "/atlas-experiment-feature-progress/{atlasId}/{experimentId}/{featureId}")
     public String getFeatures(
             Model model,
             @PathVariable Long atlasId,
@@ -122,7 +122,7 @@ public class AtlasController {
                 atlasTopLevelService.getExperimentFeatureExtended(atlasId, experimentId, featureId);
         if (experimentProgressResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", experimentProgressResult.errorMessages);
-            return "redirect:/launchpad/atlas/atlas-experiments";
+            return "redirect:/launchpad/atlas/atlas-experiment-info/" + atlasId;
         }
         model.addAttribute("metrics", experimentProgressResult.metricsResult);
         model.addAttribute("params", experimentProgressResult.hyperParamResult);

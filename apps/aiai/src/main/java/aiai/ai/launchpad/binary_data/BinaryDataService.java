@@ -26,6 +26,7 @@ import aiai.ai.launchpad.repositories.BinaryDataRepository;
 import aiai.ai.launchpad.launchpad_resource.SimpleResource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
@@ -35,8 +36,8 @@ import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
-import java.io.File;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -78,6 +79,20 @@ public class BinaryDataService {
             return data;
         } catch (SQLException e) {
             throw new IllegalStateException("SQL error", e);
+        }
+    }
+
+    public byte[] getDataAsBytes(long id) {
+        try {
+            BinaryData data = binaryDataRepository.findById(id).orElse(null);
+            if (data==null) {
+                return null;
+            }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            IOUtils.copy(data.getData().getBinaryStream(), baos, 20000);
+            return baos.toByteArray();
+        } catch (IOException | SQLException e) {
+            throw new IllegalStateException("Unexpected error", e);
         }
     }
 
@@ -249,6 +264,6 @@ public class BinaryDataService {
     }
 
     public List<BinaryData> getByPoolCodeAndType(String poolCode, Enums.BinaryDataType type) {
-        return binaryDataRepository.findAllByPoolCodeAAndDataType(poolCode, type.value);
+        return binaryDataRepository.findAllByPoolCodeAndDataType(poolCode, type.value);
     }
 }
