@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.station;
 
 import aiai.ai.launchpad.beans.Station;
+import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.data.StationData;
 import aiai.ai.utils.ControllerUtils;
 import org.springframework.context.annotation.Profile;
@@ -29,6 +30,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * User: Serg
@@ -58,41 +60,49 @@ public class StationsController {
     @PostMapping("/stations-part")
     public String getStationsForAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
         StationData.StationsResult stationsResultRest = stationTopLevelService.getStations(pageable);
+        ControllerUtils.addMessagesToModel(model, stationsResultRest);
         model.addAttribute("result", stationsResultRest);
         return "launchpad/stations :: table";
     }
 
-    @GetMapping(value = "/station-add")
-    public String add(Model model) {
-        model.addAttribute("station", new Station());
-        return "launchpad/station-form";
-    }
-
     @GetMapping(value = "/station-edit/{id}")
-    public String edit(@PathVariable Long id, Model model) {
+    public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         StationData.StationResult stationResultRest = stationTopLevelService.getStation(id);
-        // TODO add handler of errorMessages
+        if (stationResultRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", stationResultRest.errorMessages);
+            return "redirect:/launchpad/stations";
+        }
+        ControllerUtils.addMessagesToModel(model, stationResultRest);
         model.addAttribute("station", stationResultRest.station);
         return "launchpad/station-form";
     }
 
     @PostMapping("/station-form-commit")
-    public String saveStation(Station station) {
-        stationTopLevelService.saveStation(station);
+    public String saveStation(Station station, final RedirectAttributes redirectAttributes) {
+        StationData.StationResult r = stationTopLevelService.saveStation(station);
+        if (r.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
+        }
         return "redirect:/launchpad/stations";
     }
 
     @GetMapping("/station-delete/{id}")
-    public String delete(@PathVariable Long id, Model model) {
+    public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         StationData.StationResult stationResultRest = stationTopLevelService.getStation(id);
-        // TODO add handler of errorMessages
+        if (stationResultRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", stationResultRest.errorMessages);
+            return "redirect:/launchpad/stations";
+        }
         model.addAttribute("station", stationResultRest.station);
         return "launchpad/station-delete";
     }
 
     @PostMapping("/station-delete-commit")
-    public String deleteCommit(Long id) {
-        stationTopLevelService.deleteStationById(id);
+    public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest r = stationTopLevelService.deleteStationById(id);
+        if (r.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
+        }
         return "redirect:/launchpad/stations";
     }
 
