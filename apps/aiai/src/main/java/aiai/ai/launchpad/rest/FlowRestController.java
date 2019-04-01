@@ -78,7 +78,8 @@ public class FlowRestController {
 
     @PostMapping("/flow-instance-add-commit")
     public FlowData.FlowInstanceResult flowInstanceAddCommit(Long flowId, String poolCode, String inputResourceParams) {
-        return flowTopLevelService.addFlowInstance(flowId, poolCode, inputResourceParams);
+        FlowData.FlowInstanceResult flowInstanceResult = flowTopLevelService.addFlowInstance(flowId, poolCode, inputResourceParams);
+        return flowInstanceResult;
     }
 
     @GetMapping(value = "/flow-instance/{flowId}/{flowInstanceId}")
