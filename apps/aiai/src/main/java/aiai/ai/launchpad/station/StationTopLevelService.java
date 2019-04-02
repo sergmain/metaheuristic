@@ -20,7 +20,6 @@ package aiai.ai.launchpad.station;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Station;
-import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.data.StationData;
 import aiai.ai.launchpad.repositories.StationsRepository;
@@ -71,7 +70,7 @@ public class StationTopLevelService {
     public OperationStatusRest deleteStationById(Long id) {
         Station station = repository.findById(id).orElse(null);
         if (station == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#076.042 Station wasn't found, stationId: " + id);
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#807.15 Station wasn't found, stationId: " + id);
         }
         repository.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
