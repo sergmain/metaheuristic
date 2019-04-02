@@ -20,6 +20,7 @@ package aiai.ai.launchpad.station;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Station;
+import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.data.StationData;
 import aiai.ai.launchpad.repositories.StationsRepository;
@@ -56,8 +57,14 @@ public class StationTopLevelService {
     }
 
     public StationData.StationResult saveStation(Station station) {
+        Station s = repository.findById(station.getId()).orElse(null);
+        if (s==null) {
+            return new StationData.StationResult("#807.05 station wasn't found, stationId: " + station.getId());
+        }
+        s.ip = station.ip;
+        s.description = station.description;
         //noinspection UnnecessaryLocalVariable
-        StationData.StationResult r = new StationData.StationResult(repository.save(station));
+        StationData.StationResult r = new StationData.StationResult(repository.save(s));
         return r;
     }
 

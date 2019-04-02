@@ -34,22 +34,22 @@ public class Station implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public Long id;
 
     @Version
-    private Integer version;
+    public Integer version;
 
     @Column(name = "IP")
-    private String ip;
+    public String ip;
 
     @Column(name = "DESCRIPTION")
-    private String description;
+    public String description;
 
     @Column(name = "ENV")
-    private String env;
+    public String env;
 
     @Column(name = "ACTIVE_TIME")
-    private String activeTime;
+    public String activeTime;
 
 }
 
