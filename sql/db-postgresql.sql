@@ -189,7 +189,7 @@ CREATE TABLE AIAI_LP_FLOW_INSTANCE (
   CREATED_ON    bigint NOT NULL,
   COMPLETED_ON  bigint,
   INPUT_RESOURCE_PARAM  TEXT NOT NULL,
-  PRODUCING_ORDER integer not null NOT NULL,
+  PRODUCING_ORDER integer NOT NULL,
   IS_VALID      BOOLEAN not null default false,
   EXEC_STATE   smallint not null default 0
 );

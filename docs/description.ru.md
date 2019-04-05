@@ -80,7 +80,7 @@ git clone https://github.com/sergmain/aiai.git git
 
 3.3 Сборка
 для сборки проекта требуется java 11. 
-Скачать текущий релиз JDK11 можно по ссылке https://jdk.java.net/11/
+Скачать текущий релиз JDK11 надо по ссылке https://jdk.java.net/11/
 
 в директории \aiai\git запустить
 mvn-all.bat
@@ -97,7 +97,7 @@ Postgresql  - sql/db-postgresql.sql
 за основу можно взять файл, который доступен по url -
 https://github.com/sergmain/aiai/blob/master/apps/aiai/src/main/resources/application.properties
 
-при этом заменив значения из окружения на конкретные значения
+при этом заменив значения, которые берутся из окружения, на конкретные значения
 
 3.5.1 общие значения для стартовой площадки и станции
 aiai.thread-number=3
