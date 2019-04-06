@@ -135,7 +135,7 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQL95Dialec
 ```
 ======================
 aiai.launchpad.enabled=true
-aiai.launchpad.dir=./aiai-launchpad
+aiai.launchpad.dir=./launchpad
 aiai.launchpad.is-replace-snapshot=true
 
 aiai.launchpad.is-ssl-required=false
@@ -246,6 +246,12 @@ spring.profiles.active=launchpad, station
 или
 spring.profiles.active=station
 
+!Внимание! данная инструкция написана для случая когда используютсф оба профиля.
+поэтому параметр spring.profiles.active в apllication.properties должен быть следующим:
+
+spring.profiles.active=launchpad, station
+  
+
 
 3.9 конфигурация Http сервера на стороне стартовой площадки
 3.9.1 IP адрес
@@ -260,12 +266,16 @@ server.address=127.0.0.1
 java -jar apps/gen-keys/target/gen-keys.jar
 
 новые ключи (публичный и частный) будут напечатаны в консоле
+как и где будут использоваться публичный и частный ключи будет написано далее
 
 5. apps/gen-passwords
 
-для генерации ключей в формате aiai (bcrypt, 10 циклов) запустить
+для преобразования паролей в формат aiai (bcrypt, 10 циклов) запустить
 
 java -jar apps/gen-passwords/target/gen-passwords.jar <master password> <rest password>
+
+<master password> - пароль для доступа к веб-консоле стартовой площадки
+<rest password> - пароль для доступа к rest-api
 
 результат работы поместить в соответствующие параметры:
 master password --> aiai.master-password
