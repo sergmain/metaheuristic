@@ -118,7 +118,8 @@ spring.datasource.password = qwe321
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQL57Dialect
 
-временную зону для mysql выбрать согласно документации на mysql и изменить в spring.datasource.url
+временную зону в url для mysql ( serverTimezone=America/Los_Angeles ) выбрать согласно документации на mysql 
+и изменить в spring.datasource.url
 в приведеном выше примере временная зона - serverTimezone=America/Los_Angele
 
 для postgresql
@@ -189,18 +190,6 @@ spring.profiles.active=station
 aiai.station.enabled=true
 aiai.station.dir=./station
 
-
-
-aiai.station.launchpad-url - url по которому находится стартовая площадка
-для aiai.station.server-rest-password необходимо испольховать тот же пароль,
-что использовался для aiai.rest-password, только в незашифрованном виде
-параметр aiai.station.active-time используется для определение периода времени, когда
-станция будет выполнять вычисления. стартовое время и конечное включаются в активный период
-последним времене в сутка является 23:59
-количество периодов неограничено, каждый период должен отделяться запятой
-
-параметр aiai.station.accept-only-signed-snippets настоятельно рекомендуется установить
-в true, если старновая площадка находится за пределами DMZ
 
 3.7.2 Конфигурация launchpad.yaml
 Для конфигурации стартовых площадок, с которыми будет взаимодействовать конкретная станция используется
