@@ -34,12 +34,14 @@ import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.server.ServerService;
 import aiai.ai.utils.ControllerUtils;
+import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
+import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -64,9 +66,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/pilot/process-resource")
@@ -151,7 +152,7 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         originFilename = originFilename.toLowerCase();
-        if (!StringUtils.endsWithAny(originFilename, ".xml", ".zip")) {
+        if (!StringUtils.endsWithAny(originFilename, ".xml", ".zip", ".doc", ".docx")) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.20 only '.xml' and .zip files are supported, filename: " + originFilename);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
@@ -175,7 +176,9 @@ public class ProcessResourceController {
                 return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
             }
 
-            final File dataFile = new File(tempDir, "document" + (originFilename.endsWith(".zip") ? ".zip" : ".xml") );
+            String ext = StrUtils.getExtension(originFilename);
+
+            final File dataFile = new File(tempDir, "document" + ext );
             log.debug("Start storing an uploaded document to disk");
             try(OutputStream os = new FileOutputStream(dataFile)) {
                 IOUtils.copy(file.getInputStream(), os, 32000);
@@ -186,9 +189,14 @@ public class ProcessResourceController {
             if (originFilename.endsWith(".zip")) {
                 log.debug("Start unzipping archive");
                 ZipUtils.unzipFolder(dataFile, tempDir);
+                log.debug("Start loading file data to db");
+                loadFilesFromDirAfterZip(tempDir, redirectAttributes, flow);
             }
-            log.debug("Start loading file data to db");
-            loadFilesRecursivelyMain(tempDir, model, redirectAttributes, flow);
+            else {
+                log.debug("Start loading file data to db");
+                loadFilesFromDir(tempDir, redirectAttributes, flow);
+//                loadFilesRecursivelyMain(tempDir, model, redirectAttributes, flow);
+            }
         }
         catch(StoreNewFileWithRedirectException e) {
             return e.redirect;
@@ -202,11 +210,14 @@ public class ProcessResourceController {
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
     }
 
+/*
     private void loadFilesRecursivelyMain(File startDir, Model model, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
         loadFilesFromDir(startDir, model, redirectAttributes, flow);
         loadFilesRecursively(startDir, model, redirectAttributes, flow);
     }
+*/
 
+/*
     private void loadFilesRecursively(File startDir, Model model, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
         final File[] dirs = startDir.listFiles(File::isDirectory);
         if (dirs!=null) {
@@ -217,29 +228,67 @@ public class ProcessResourceController {
             }
         }
     }
+*/
 
-    private void loadFilesFromDir(File srcDir, Model model, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
+    private void loadFilesFromDir(File srcDir, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
         Files.list(srcDir.toPath())
                 .filter( o -> {
                     File f = o.toFile();
-                    return f.isFile() && f.getName().endsWith(".xml");
+                    return f.isFile() && !f.getName().endsWith(".zip");
                 })
                 .forEach(dataFile -> {
-                    String redirectUrl1 = createAndProcessTask(model, redirectAttributes, dataFile.toFile().getName(), flow, dataFile.toFile());
+                    String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, Collections.singletonList(dataFile.toFile()));
                     if (redirectUrl1 != null) {
                         throw new StoreNewFileWithRedirectException(redirectUrl1);
                     }
                 });
     }
 
+    private void loadFilesFromDirAfterZip(File srcDir, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
+        Files.list(srcDir.toPath())
+                .filter( o -> {
+                    File f = o.toFile();
+                    return !f.getName().endsWith(".zip");
+                })
+                .forEach(dataFile -> {
+                    if (dataFile.toFile().isDirectory()) {
+                        try {
+                            final List<File> files = new ArrayList<>();
+                            Files.list(dataFile)
+                                    .filter( o -> o.toFile().isFile())
+                                    .forEach( f -> files.add(f.toFile()));
 
-    public String createAndProcessTask(Model model, RedirectAttributes redirectAttributes, String originFilename, Flow flow, File dataFile) {
-        final String code = StringUtils.replaceEach(originFilename, new String[] {".", " "}, new String[] {"-", "_"} ) + '-' + System.nanoTime();
-        //noinspection UnnecessaryLocalVariable
-        final String resourcePoolCode = code;
+                            String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, files);
+                            if (redirectUrl1 != null) {
+                                throw new StoreNewFileWithRedirectException(redirectUrl1);
+                            }
+                        } catch (IOException e) {
+                            log.error("Error", e);
+                            redirectAttributes.addFlashAttribute("errorMessage", "#990.25 An error while saving data to file, " + e.toString());
+                            throw new StoreNewFileWithRedirectException(REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+                        }
+                    }
+                    else {
+                        String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, Collections.singletonList(dataFile.toFile()));
+                        if (redirectUrl1 != null) {
+                            throw new StoreNewFileWithRedirectException(redirectUrl1);
+                        }
+                    }
+                });
+    }
 
+
+    public String createAndProcessTask(RedirectAttributes redirectAttributes, Flow flow, List<File> dataFile) {
+        long nanoTime = System.nanoTime();
+        final String resourcePoolCode = "pilot-pool-code-"+ nanoTime +"-" + UUID.randomUUID();
         try {
-            resourceService.storeInitialResource(originFilename, dataFile, code, resourcePoolCode, originFilename);
+            for (File file : dataFile) {
+                String originFilename = file.getName();
+                String name = StrUtils.getName(originFilename);
+                String ext = StrUtils.getExtension(originFilename);
+                final String code = StringUtils.replaceEach(name, new String[] {" "}, new String[] {"_"} ) + '-' + nanoTime + ext;
+                resourceService.storeInitialResource(originFilename, file, code, resourcePoolCode, originFilename);
+            }
         } catch (StoreNewFileException e) {
             log.error("Error", e);
             redirectAttributes.addFlashAttribute("errorMessage", "#990.26 An error while saving data to file, " + e.toString());

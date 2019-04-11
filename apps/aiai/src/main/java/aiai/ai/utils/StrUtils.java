@@ -22,6 +22,22 @@ import lombok.extern.slf4j.Slf4j;
 public class StrUtils {
     private static final String COPY_NUMBER_PREFIX = "Copy #";
 
+    public static String getExtension(String filename) {
+        if (filename==null) {
+            return null;
+        }
+        int idx = filename.lastIndexOf('.');
+        return idx!=-1 ? filename.substring(idx) : "";
+    }
+
+    public static String getName(String filename) {
+        if (filename==null) {
+            return null;
+        }
+        int idx = filename.lastIndexOf('.');
+        return idx!=-1 ? filename.substring(0, idx) : filename;
+    }
+
     public static String incCopyNumber(String s) {
         if (!s.startsWith(COPY_NUMBER_PREFIX)) {
             return formatString(s, 2);

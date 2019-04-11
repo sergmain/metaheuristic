@@ -73,7 +73,7 @@
             <!--based on BSD License-->
             <groupId>org.hsqldb</groupId>
             <artifactId>hsqldb</artifactId>
-            <version>2.4.1</version>
+            <version>${hsqldb.version}</version>
         </dependency>
 
 
@@ -88,7 +88,7 @@
             <!--Apache-2.0-->
             <groupId>nz.net.ultraq.thymeleaf</groupId>
 			<artifactId>thymeleaf-layout-dialect</artifactId>
-			<version>2.3.0</version>
+			<version>${thymeleaf-layout-dialect.version}</version>
 			<exclusions>
 				<exclusion>
 					<groupId>org.codehaus.groovy</groupId>
@@ -169,13 +169,11 @@
 			<scope>test</scope>
 		</dependency>
 
-<!--
 		<dependency>
 			<groupId>org.springframework.security.oauth</groupId>
 			<artifactId>spring-security-oauth2</artifactId>
 			<version>${oauth.version}</version>
 		</dependency>
--->
 
 		<dependency>
 			<groupId>org.springframework.security.oauth.boot</groupId>
@@ -230,7 +228,7 @@
             <!--License	Apache 2.0-->
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-lang3</artifactId>
-            <!--<version>3.6</version>-->
+            <version>${commons-lang3.version}</version>
         </dependency>
 
 		<!-- https://mvnrepository.com/artifact/commons-io/commons-io -->
@@ -252,7 +250,7 @@
             <!-- License Apache 2.0 -->
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>fluent-hc</artifactId>
-            <version>4.5.6</version>
+            <version>${httpclient.version}</version>
             <exclusions>
                 <exclusion>
                     <artifactId>commons-logging</artifactId>
@@ -263,7 +261,7 @@
 		<dependency>
 			<groupId>org.apache.httpcomponents</groupId>
 			<artifactId>httpmime</artifactId>
-			<version>4.5.6</version>
+			<version>${httpclient.version}</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.projectlombok/lombok -->
@@ -271,13 +269,13 @@
             <!--License	MIT-->
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.4</version>
+			<version>${lombok.version}</version>
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
 			<artifactId>postgresql</artifactId>
-			<version>42.2.4</version>
+			<version>${postgresql.version}</version>
 		</dependency>
 
 		<dependency>
@@ -292,9 +290,10 @@
             <!--License	MIT-->
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>2.22.0</version>
+            <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
+
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
