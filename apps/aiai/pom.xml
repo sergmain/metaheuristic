@@ -37,7 +37,7 @@
 	</parent>
 
 	<properties>
-		<oauth.version>2.3.3.RELEASE</oauth.version>
+		<oauth.version>2.3.5.RELEASE</oauth.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
@@ -178,7 +178,7 @@
 		<dependency>
 			<groupId>org.springframework.security.oauth.boot</groupId>
 			<artifactId>spring-security-oauth2-autoconfigure</artifactId>
-			<version>2.1.1.RELEASE</version>
+			<version>2.1.4.RELEASE</version>
 		</dependency>
 
 		<!-- End of spring's section -->

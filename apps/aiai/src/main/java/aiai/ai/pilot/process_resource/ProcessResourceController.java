@@ -24,14 +24,14 @@ import aiai.ai.exceptions.StoreNewFileWithRedirectException;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
-import aiai.ai.launchpad.flow.FlowCache;
 import aiai.ai.launchpad.data.FlowData;
+import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.ai.launchpad.flow.FlowCache;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.launchpad_resource.ResourceService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.server.ServerService;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.utils.StrUtils;
@@ -41,7 +41,6 @@ import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
-import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -59,15 +58,12 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.yaml.snakeyaml.Yaml;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/pilot/process-resource")
@@ -76,6 +72,13 @@ import java.util.stream.Collectors;
 public class ProcessResourceController {
 
     private static final String REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES = "redirect:/pilot/process-resource/process-resources";
+    private static final String SINGLE_CODE = "  - ";
+    private static final String MAIN_DOCUMENT_POOL_CODE = "mainDocument";
+    private static final String ATTACHMENTS_POOL_CODE = "attachments";
+
+    private static Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml");
+
+    private static final String CONFIG_FILE = "config.yaml";
 
     @Data
     public static class ProcessResourceResult {
@@ -195,49 +198,29 @@ public class ProcessResourceController {
             else {
                 log.debug("Start loading file data to db");
                 loadFilesFromDir(tempDir, redirectAttributes, flow);
-//                loadFilesRecursivelyMain(tempDir, model, redirectAttributes, flow);
             }
         }
         catch(StoreNewFileWithRedirectException e) {
             return e.redirect;
         }
-        catch (Exception e) {
-            log.error("Error", e);
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.73 can't load document, Error: " + e.toString());
+        catch (Throwable th) {
+            log.error("Error", th);
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.73 can't load document, Error: " + th.toString());
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
     }
 
-/*
-    private void loadFilesRecursivelyMain(File startDir, Model model, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
-        loadFilesFromDir(startDir, model, redirectAttributes, flow);
-        loadFilesRecursively(startDir, model, redirectAttributes, flow);
-    }
-*/
-
-/*
-    private void loadFilesRecursively(File startDir, Model model, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
-        final File[] dirs = startDir.listFiles(File::isDirectory);
-        if (dirs!=null) {
-            for (File dir : dirs) {
-                log.info("Load files from {}", dir.getPath());
-                loadFilesFromDir(dir, model, redirectAttributes, flow);
-                loadFilesRecursively(dir, model, redirectAttributes, flow);
-            }
-        }
-    }
-*/
-
     private void loadFilesFromDir(File srcDir, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
         Files.list(srcDir.toPath())
                 .filter( o -> {
                     File f = o.toFile();
-                    return f.isFile() && !f.getName().endsWith(".zip");
+                    return f.isFile() && !EXCLUDE_EXT.contains(StrUtils.getExtension(f.getName()));
                 })
                 .forEach(dataFile -> {
-                    String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, Collections.singletonList(dataFile.toFile()));
+                    File file = dataFile.toFile();
+                    String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, Collections.singletonList(file), file);
                     if (redirectUrl1 != null) {
                         throw new StoreNewFileWithRedirectException(redirectUrl1);
                     }
@@ -245,31 +228,38 @@ public class ProcessResourceController {
     }
 
     private void loadFilesFromDirAfterZip(File srcDir, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
+
         Files.list(srcDir.toPath())
                 .filter( o -> {
                     File f = o.toFile();
-                    return !f.getName().endsWith(".zip");
+                    return !EXCLUDE_EXT.contains(StrUtils.getExtension(f.getName()));
                 })
                 .forEach(dataFile -> {
-                    if (dataFile.toFile().isDirectory()) {
+                    File file = dataFile.toFile();
+                    if (file.isDirectory()) {
                         try {
+                            final File mainDocFile = getMainDocumentFile(file, redirectAttributes);
                             final List<File> files = new ArrayList<>();
                             Files.list(dataFile)
-                                    .filter( o -> o.toFile().isFile())
-                                    .forEach( f -> files.add(f.toFile()));
+                                    .filter(o -> o.toFile().isFile())
+                                    .forEach(f -> files.add(f.toFile()));
 
-                            String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, files);
+                            String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, files, mainDocFile);
                             if (redirectUrl1 != null) {
                                 throw new StoreNewFileWithRedirectException(redirectUrl1);
                             }
-                        } catch (IOException e) {
-                            log.error("Error", e);
-                            redirectAttributes.addFlashAttribute("errorMessage", "#990.25 An error while saving data to file, " + e.toString());
+                        }
+                        catch (StoreNewFileWithRedirectException e) {
+                                throw e;
+                        }
+                        catch (Throwable th) {
+                            log.error("Error", th);
+                            redirectAttributes.addFlashAttribute("errorMessage", "#990.25 An error while saving data to file, " + th.toString());
                             throw new StoreNewFileWithRedirectException(REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
                         }
                     }
                     else {
-                        String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, Collections.singletonList(dataFile.toFile()));
+                        String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, Collections.singletonList(file), file);
                         if (redirectUrl1 != null) {
                             throw new StoreNewFileWithRedirectException(redirectUrl1);
                         }
@@ -277,17 +267,78 @@ public class ProcessResourceController {
                 });
     }
 
+    private File getMainDocumentFile(File srcDir, RedirectAttributes redirectAttributes) throws IOException {
+        File configFile = new File(srcDir, CONFIG_FILE);
+        if (!configFile.exists()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.18 config.yaml file wasn't found in path " + srcDir.getPath());
+            throw new StoreNewFileWithRedirectException(REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+        }
 
-    public String createAndProcessTask(RedirectAttributes redirectAttributes, Flow flow, List<File> dataFile) {
+        if (!configFile.isFile()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.19 config.yaml must be a file, not a directory");
+            throw new StoreNewFileWithRedirectException(REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+        }
+        Yaml yaml = new Yaml();
+
+        String mainDocument;
+        try (InputStream is = new FileInputStream(configFile)) {
+            Map<String, Object> config = yaml.load(is);
+            mainDocument = config.get(MAIN_DOCUMENT_POOL_CODE).toString();
+        }
+
+        if (StringUtils.isBlank(mainDocument)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.17 config.yaml must contain non-empty field '" + MAIN_DOCUMENT_POOL_CODE + "' ");
+            throw new StoreNewFileWithRedirectException(REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+        }
+
+        final File mainDocFile = new File(srcDir, mainDocument);
+        if (!mainDocFile.exists()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.16 main document file "+mainDocument+" wasn't found in path " + srcDir.getPath());
+            throw new StoreNewFileWithRedirectException(REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+        }
+        return mainDocFile;
+    }
+
+    public static String asInputResourceParams(String mainDocCode, List<String> attachmentCodes) {
+        String yaml = "poolCodes:\n  " + MAIN_DOCUMENT_POOL_CODE + ":\n" +
+                SINGLE_CODE + mainDocCode;
+
+        if (attachmentCodes.isEmpty()) {
+            return yaml;
+        }
+        yaml += "\n  " + ATTACHMENTS_POOL_CODE + ":\n";
+        for (String code : attachmentCodes) {
+            //noinspection StringConcatenationInLoop
+            yaml += (SINGLE_CODE + code + '\n');
+        }
+        return yaml;
+    }
+
+    public String createAndProcessTask(RedirectAttributes redirectAttributes, Flow flow, List<File> dataFile, File mainDocFile) {
         long nanoTime = System.nanoTime();
-        final String resourcePoolCode = "pilot-pool-code-"+ nanoTime +"-" + UUID.randomUUID();
+        List<String> attachments = new ArrayList<>();
+        String mainDocCode = null;
         try {
             for (File file : dataFile) {
                 String originFilename = file.getName();
+                if (EXCLUDE_EXT.contains(StrUtils.getExtension(originFilename))) {
+                    continue;
+                }
                 String name = StrUtils.getName(originFilename);
                 String ext = StrUtils.getExtension(originFilename);
                 final String code = StringUtils.replaceEach(name, new String[] {" "}, new String[] {"_"} ) + '-' + nanoTime + ext;
-                resourceService.storeInitialResource(originFilename, file, code, resourcePoolCode, originFilename);
+
+                String poolCode;
+                if (file.equals(mainDocFile)) {
+                    poolCode = MAIN_DOCUMENT_POOL_CODE;
+                    mainDocCode = code;
+                }
+                else {
+                    poolCode = ATTACHMENTS_POOL_CODE;
+                    attachments.add(code);
+                }
+
+                resourceService.storeInitialResource(originFilename, file, code, poolCode, originFilename);
             }
         } catch (StoreNewFileException e) {
             log.error("Error", e);
@@ -295,7 +346,13 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, FlowService.asInputResourceParams(resourcePoolCode));
+        if (mainDocCode==null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.28 main document wasn't found" );
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        }
+
+        final String paramYaml = asInputResourceParams(mainDocCode, attachments);
+        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, paramYaml);
         if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating flowInstance: " + producingResult.flowProducingStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -353,12 +410,13 @@ public class ProcessResourceController {
 
     @SuppressWarnings("Duplicates")
     @GetMapping("/process-resource-delete/{flowId}/{flowInstanceId}")
-    public String processResourceDelete(@PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
+    public String processResourceDelete(Model model, @PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
         FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
+        model.addAttribute("result", result);
         return "pilot/process-resource/process-resource-delete";
     }
 

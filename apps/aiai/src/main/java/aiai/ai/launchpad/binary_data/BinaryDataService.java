@@ -121,8 +121,12 @@ public class BinaryDataService {
         binaryDataRepository.deleteAllByDataType(binaryDataType.value);
     }
 
-    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode) {
-        return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode);
+    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode, long flowInstanceId) {
+        return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode, flowInstanceId);
+    }
+
+    public List<SimpleCodeAndStorageUrl> getResourceCodes(List<String> inputResourceCode) {
+        return binaryDataRepository.getCodeAndStorageUrl(inputResourceCode);
     }
 
     public void deleteByCodeAndDataType(String code, Enums.BinaryDataType binaryDataType) {

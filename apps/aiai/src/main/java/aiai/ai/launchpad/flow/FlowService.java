@@ -364,7 +364,7 @@ public class FlowService {
         FlowService.TaskProducingResult result = new TaskProducingResult();
 
         InputResourceParam resourceParam = InputResourceParamUtils.to(inputResourceParam);
-        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParam.getAllCodes());
+        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodes(resourceParam.getAllCodes());
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return result;
@@ -459,7 +459,7 @@ public class FlowService {
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
         InputResourceParam resourceParams = InputResourceParamUtils.to(fi.inputResourceParam);
-        List<SimpleCodeAndStorageUrl> initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllCodes());
+        List<SimpleCodeAndStorageUrl> initialInputResourceCodes = binaryDataService.getResourceCodes(resourceParams.getAllCodes());
         log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
 
         ResourcePools pools = new ResourcePools(initialInputResourceCodes);

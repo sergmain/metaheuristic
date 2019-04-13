@@ -159,7 +159,7 @@ public class FlowTopLevelService {
         }
 
         FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(result.flow,
-                StringUtils.isNotBlank(inputResourceParams) ?inputResourceParams : FlowService.asInputResourceParams(poolCode));
+                StringUtils.isNotBlank(inputResourceParams) ? inputResourceParams : FlowService.asInputResourceParams(poolCode));
         if (producingResult.flowProducingStatus!=Enums.FlowProducingStatus.OK) {
             result.addErrorMessage("#560.72 Error creating flowInstance: " + producingResult.flowProducingStatus);
             return result;

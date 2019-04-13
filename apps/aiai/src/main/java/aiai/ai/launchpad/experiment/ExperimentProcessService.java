@@ -103,7 +103,8 @@ public class ExperimentProcessService {
         else {
             if (!collectedInputs.containsKey(meta.getValue())) {
                 List<SimpleCodeAndStorageUrl> initialInputResourceCodes = binaryDataService.getResourceCodesInPool(
-                        Collections.singletonList(meta.getValue()));
+                        Collections.singletonList(meta.getValue()), flowInstance.getId()
+                );
 
                 FlowService.ResourcePools metaPools = new FlowService.ResourcePools(initialInputResourceCodes);
                 if (metaPools.status != Enums.FlowProducingStatus.OK) {

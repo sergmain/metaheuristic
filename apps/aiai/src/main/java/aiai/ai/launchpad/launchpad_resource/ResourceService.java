@@ -47,6 +47,7 @@ public class ResourceService {
                         is, tempFile.length(), Enums.BinaryDataType.DATA, code, poolCode, true, filename, null);
             }
         } catch (IOException e) {
+            log.error("Error", e);
             throw new StoreNewFileException(tempFile.getPath(), originFilename);
         }
     }

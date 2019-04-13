@@ -118,7 +118,7 @@ public class AtlasService {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment can't be stored, flowInstanceId is different");
         }
         String poolCode = getPoolCodeForExperiment(flowInstanceId, experimentId);
-        List<SimpleCodeAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode));
+        List<SimpleCodeAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), flowInstanceId);
         if (!codes.isEmpty()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment already stored");
         }
