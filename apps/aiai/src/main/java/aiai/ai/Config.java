@@ -18,6 +18,7 @@
 package aiai.ai;
 
 import aiai.ai.launchpad.repositories.RefToLaunchpadRepositories;
+import aiai.ai.pilot.process_resource.RefToPilotRepositories;
 import com.google.common.cache.CacheBuilder;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.springframework.cache.Cache;
@@ -44,7 +45,7 @@ import java.util.concurrent.TimeUnit;
 @Configuration
 @EnableCaching
 @EnableTransactionManagement
-@EnableJpaRepositories(basePackageClasses = {RefToLaunchpadRepositories.class} )
+@EnableJpaRepositories(basePackageClasses = {RefToLaunchpadRepositories.class, RefToPilotRepositories.class} )
 public class Config {
 
     private final Globals globals;

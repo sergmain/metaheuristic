@@ -33,6 +33,8 @@ import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.server.ServerService;
+import aiai.ai.pilot.beans.Batch;
+import aiai.ai.pilot.beans.BatchFlowInstance;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
@@ -47,6 +49,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
@@ -82,7 +86,7 @@ public class ProcessResourceController {
 
     @Data
     public static class ProcessResourceResult {
-        public Slice<FlowInstance> resources;
+        public Slice<Batch> resources;
         public Map<Long, Flow> flows = new HashMap<>();
     }
 
@@ -99,8 +103,10 @@ public class ProcessResourceController {
     private final ResourceService resourceService;
     private final ServerService serverService;
     private final TaskRepository taskRepository;
+    private final BatchRepository batchRepository;
+    private final BatchFlowInstanceRepository batchFlowInstanceRepository;
 
-    public ProcessResourceController(Globals globals, FlowInstanceRepository flowInstanceRepository, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, ResourceService resourceService, ServerService serverService, TaskRepository taskRepository) {
+    public ProcessResourceController(Globals globals, FlowInstanceRepository flowInstanceRepository, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, ResourceService resourceService, ServerService serverService, TaskRepository taskRepository, BatchRepository batchRepository, BatchFlowInstanceRepository batchFlowInstanceRepository) {
         this.globals = globals;
         this.flowInstanceRepository = flowInstanceRepository;
         this.flowRepository = flowRepository;
@@ -109,6 +115,8 @@ public class ProcessResourceController {
         this.resourceService = resourceService;
         this.serverService = serverService;
         this.taskRepository = taskRepository;
+        this.batchRepository = batchRepository;
+        this.batchFlowInstanceRepository = batchFlowInstanceRepository;
     }
 
     @GetMapping("/process-resources")
@@ -127,15 +135,15 @@ public class ProcessResourceController {
 
     private void prepareProcessResourcesResult(ProcessResourceResult result, Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(100, pageable);
-        result.resources = flowInstanceRepository.findAllByOrderByExecStateDescCompletedOnDesc(pageable);
+        result.resources = batchRepository.findAllByOrderByCreatedOnDesc(pageable);
 
-        for (FlowInstance flowInstance : result.resources) {
-            Flow flow = flowCache.findById(flowInstance.getFlowId());
+        for (Batch batch : result.resources) {
+            Flow flow = flowCache.findById(batch.getFlowId());
             if (flow==null) {
-                log.warn("#990.01 Found flowInstance with wrong flowId. flowId: {}", flowInstance.getFlowId());
+                log.warn("#990.01 Found batch with wrong flowId. flowId: {}", batch.getFlowId());
                 continue;
             }
-            result.flows.put(flowInstance.getId(), flow);
+            result.flows.put(batch.getId(), flow);
         }
         int i=0;
     }
@@ -187,17 +195,20 @@ public class ProcessResourceController {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
 
+            Batch batch = new Batch(flow.id);
+            batchRepository.save(batch);
+
             log.info("The file {} was successfully uploaded", originFilename);
 
             if (originFilename.endsWith(".zip")) {
                 log.debug("Start unzipping archive");
                 ZipUtils.unzipFolder(dataFile, tempDir);
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(tempDir, redirectAttributes, flow);
+                loadFilesFromDirAfterZip(batch, tempDir, redirectAttributes, flow);
             }
             else {
                 log.debug("Start loading file data to db");
-                loadFilesFromDir(tempDir, redirectAttributes, flow);
+                loadFilesFromDir(batch, tempDir, redirectAttributes, flow);
             }
         }
         catch(StoreNewFileWithRedirectException e) {
@@ -212,7 +223,7 @@ public class ProcessResourceController {
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
     }
 
-    private void loadFilesFromDir(File srcDir, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
+    private void loadFilesFromDir(Batch batch, File srcDir, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
         Files.list(srcDir.toPath())
                 .filter( o -> {
                     File f = o.toFile();
@@ -220,14 +231,14 @@ public class ProcessResourceController {
                 })
                 .forEach(dataFile -> {
                     File file = dataFile.toFile();
-                    String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, Collections.singletonList(file), file);
+                    String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, flow, Collections.singletonList(file), file);
                     if (redirectUrl1 != null) {
                         throw new StoreNewFileWithRedirectException(redirectUrl1);
                     }
                 });
     }
 
-    private void loadFilesFromDirAfterZip(File srcDir, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
+    private void loadFilesFromDirAfterZip(Batch batch, File srcDir, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
 
         Files.list(srcDir.toPath())
                 .filter( o -> {
@@ -244,7 +255,7 @@ public class ProcessResourceController {
                                     .filter(o -> o.toFile().isFile())
                                     .forEach(f -> files.add(f.toFile()));
 
-                            String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, files, mainDocFile);
+                            String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, flow, files, mainDocFile);
                             if (redirectUrl1 != null) {
                                 throw new StoreNewFileWithRedirectException(redirectUrl1);
                             }
@@ -259,7 +270,7 @@ public class ProcessResourceController {
                         }
                     }
                     else {
-                        String redirectUrl1 = createAndProcessTask(redirectAttributes, flow, Collections.singletonList(file), file);
+                        String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, flow, Collections.singletonList(file), file);
                         if (redirectUrl1 != null) {
                             throw new StoreNewFileWithRedirectException(redirectUrl1);
                         }
@@ -314,7 +325,7 @@ public class ProcessResourceController {
         return yaml;
     }
 
-    public String createAndProcessTask(RedirectAttributes redirectAttributes, Flow flow, List<File> dataFile, File mainDocFile) {
+    public String createAndProcessTask(Batch batch, RedirectAttributes redirectAttributes, Flow flow, List<File> dataFile, File mainDocFile) {
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
         String mainDocCode = null;
@@ -357,6 +368,10 @@ public class ProcessResourceController {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating flowInstance: " + producingResult.flowProducingStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
+        BatchFlowInstance bfi = new BatchFlowInstance();
+        bfi.batchId=batch.id;
+        bfi.flowInstanceId=producingResult.flowInstance.id;
+        batchFlowInstanceRepository.save(bfi);
 
         // ugly work-around on StaleObjectStateException
         Long flowId = flow.getId();
@@ -409,7 +424,7 @@ public class ProcessResourceController {
     }
 
     @SuppressWarnings("Duplicates")
-    @GetMapping("/process-resource-delete/{flowId}/{flowInstanceId}")
+    @GetMapping("/process-resource-delete/{flowId}/{batchId}")
     public String processResourceDelete(Model model, @PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
         FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
         if (result.isErrorMessages()) {
@@ -432,45 +447,46 @@ public class ProcessResourceController {
         FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
         if (fi==null) {
             redirectAttributes.addFlashAttribute("errorMessage",
-                    "#990.77 FlowInstance wasn't found, flowInstanceId: " + flowInstanceId );
+                    "#990.77 FlowInstance wasn't found, batchId: " + flowInstanceId );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         flowService.deleteFlowInstance(flowInstanceId, fi);
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
     }
 
-    @GetMapping(value="/process-resource-download-result/{flowInstanceId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value= "/process-resource-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadFile(
-            HttpServletResponse response, @PathVariable("flowInstanceId") Long flowInstanceId,
+            HttpServletResponse response, @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName/*, final RedirectAttributes redirectAttributes*/) throws IOException {
-        log.info("#990.82 Start downloadFile(), flowInstanceId: {}", flowInstanceId);
-        FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
-        if (fi==null) {
+        log.info("#990.82 Start downloadFile(), batchId: {}", batchId);
+        Batch batch = batchRepository.findById(batchId).orElse(null);
+        if (batch==null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            log.info("#990.84 FlowInstance wasn't found, flowInstanceId: {}", flowInstanceId);
+            log.info("#990.84 Batch wasn't found, batchId: {}", batchId);
             return null;
         }
 
-        if (fi.getExecState()!= Enums.FlowInstanceExecState.FINISHED.code) {
+/*
+        if (batch.getExecState()!= Enums.FlowInstanceExecState.FINISHED.code) {
             response.sendError(HttpServletResponse.SC_CONFLICT);
-            log.info("#990.84 File can't be downloaded because flowInstance doesn't have execState==Enums.FlowInstanceExecState.FINISHED, actual {}", fi.getExecState());
+            log.info("#990.84 File can't be downloaded because flowInstance doesn't have execState==Enums.FlowInstanceExecState.FINISHED, actual {}", batch.getExecState());
             return null;
         }
-        Integer taskOrder = taskRepository.findMaxConcreteOrder(fi.getId());
+        Integer taskOrder = taskRepository.findMaxConcreteOrder(batch.getId());
         if (taskOrder==null) {
-            log.info("#990.86 Can't calculate the max task order, flowInstanceId: {}", flowInstanceId);
+            log.info("#990.86 Can't calculate the max task order, batchId: {}", batchId);
             response.sendError(HttpServletResponse.SC_CONFLICT);
             return null;
         }
-        List<Task> tasks = taskRepository.findWithConcreteOrder(fi.getId(), taskOrder);
+        List<Task> tasks = taskRepository.findWithConcreteOrder(batch.getId(), taskOrder);
         if (tasks.isEmpty()) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            log.info("#990.88 Can't find any task for flowInstanceId {}}", flowInstanceId);
+            log.info("#990.88 Can't find any task for batchId {}}", batchId);
             return null;
         }
         if (tasks.size()>1) {
             response.sendError(HttpServletResponse.SC_CONFLICT);
-            log.info("#990.90 Can't download file because there are more than one task for flowInstanceId {}}", flowInstanceId);
+            log.info("#990.90 Can't download file because there are more than one task for batchId {}}", batchId);
 //            redirectAttributes.addFlashAttribute("errorMessage", "#990.10 name of uploaded file is null");
 //            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
 
@@ -478,12 +494,30 @@ public class ProcessResourceController {
         }
         final Task task = tasks.get(0);
         final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+*/
 
         HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_XML);
-        httpHeaders.setContentDispositionFormData("attachment", getResultFileName(fi.getInputResourceParam())+"-result.xml" );
+//        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+//                getResultFileName(batch.getInputResourceParam())+"-result.xml"
+//        httpHeaders.setContentDispositionFormData("attachment","result.zip");
+//        return serverService.deliverResource(Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode, httpHeaders);
 
-        return serverService.deliverResource(Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode, httpHeaders);
+        httpHeaders.setContentType(MediaType.APPLICATION_XML);
+        httpHeaders.setContentDispositionFormData("attachment","result.xml");
+
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Aaaa>aaa</Aaaa>";
+        byte[] bytes = xml.getBytes();
+        return new HttpEntity<>(new ByteArrayResource(bytes), getHeader(httpHeaders, bytes.length));
+    }
+
+    private static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
+        HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
+        header.setContentLength(length);
+        header.setCacheControl("max-age=0");
+        header.setExpires(0);
+        header.setPragma("no-cache");
+
+        return header;
     }
 
     private static String getResultFileName(String inputResourceParams) {
