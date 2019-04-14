@@ -75,6 +75,9 @@ public interface TaskRepository extends CrudRepository<Task, Long> {
     @Query("SELECT t FROM Task t where t.stationId is not null and t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
     List<Task> findWithConcreteOrder(long flowInstanceId, int taskOrder);
 
+    @Query("SELECT t FROM Task t where t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
+    List<Task> findAnyWithConcreteOrder(long flowInstanceId, int taskOrder);
+
     @Query("SELECT t.id FROM Task t where t.stationId is null and t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
     List<Long> findAnyNotAssignedWithConcreteOrder(Pageable limit, long flowInstanceId, int taskOrder);
 

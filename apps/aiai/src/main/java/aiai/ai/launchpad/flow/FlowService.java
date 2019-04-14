@@ -554,7 +554,7 @@ public class FlowService {
 
                 Experiment e = experimentRepository.findByFlowInstanceId(instance.id);
                 if (e==null) {
-                    log.warn("#701.23 Can't store experiment to atlas" );
+                    log.warn("#701.23 Can't store an experiment to atlas, the flowInstance "+instance.id+" doesn't contain an experiment" );
                     return instance;
                 }
                 atlasService.toAtlas(instance.id, e.getId());

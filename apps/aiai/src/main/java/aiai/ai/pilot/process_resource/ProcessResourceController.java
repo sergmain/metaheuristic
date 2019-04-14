@@ -37,8 +37,6 @@ import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.server.ServerService;
 import aiai.ai.pilot.beans.Batch;
 import aiai.ai.pilot.beans.BatchFlowInstance;
-import aiai.ai.resource.AssetFile;
-import aiai.ai.resource.ResourceUtils;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
@@ -47,17 +45,19 @@ import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -85,15 +85,25 @@ public class ProcessResourceController {
     private static final String SINGLE_CODE = "  - ";
     private static final String MAIN_DOCUMENT_POOL_CODE = "mainDocument";
     private static final String ATTACHMENTS_POOL_CODE = "attachments";
+    private static final String RESULT_ZIP = "result.zip";
 
     private static Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml");
 
     private static final String CONFIG_FILE = "config.yaml";
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProcessResourceItem {
+        public Batch batch;
+        public Flow flow;
+        public String execStateStr;
+        public boolean finished;
+    }
+
+    @Data
     public static class ProcessResourceResult {
-        public Slice<Batch> resources;
-        public Map<Long, Flow> flows = new HashMap<>();
+        public Page<ProcessResourceItem> items;
     }
 
     @Data
@@ -107,20 +117,18 @@ public class ProcessResourceController {
     private final FlowCache flowCache;
     private final FlowService flowService;
     private final ResourceService resourceService;
-    private final ServerService serverService;
     private final TaskRepository taskRepository;
     private final BatchRepository batchRepository;
     private final BatchFlowInstanceRepository batchFlowInstanceRepository;
     private final BinaryDataService binaryDataService;
 
-    public ProcessResourceController(Globals globals, FlowInstanceRepository flowInstanceRepository, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, ResourceService resourceService, ServerService serverService, TaskRepository taskRepository, BatchRepository batchRepository, BatchFlowInstanceRepository batchFlowInstanceRepository, BinaryDataService binaryDataService) {
+    public ProcessResourceController(Globals globals, FlowInstanceRepository flowInstanceRepository, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchFlowInstanceRepository batchFlowInstanceRepository, BinaryDataService binaryDataService) {
         this.globals = globals;
         this.flowInstanceRepository = flowInstanceRepository;
         this.flowRepository = flowRepository;
         this.flowCache = flowCache;
         this.flowService = flowService;
         this.resourceService = resourceService;
-        this.serverService = serverService;
         this.taskRepository = taskRepository;
         this.batchRepository = batchRepository;
         this.batchFlowInstanceRepository = batchFlowInstanceRepository;
@@ -143,16 +151,37 @@ public class ProcessResourceController {
 
     private void prepareProcessResourcesResult(ProcessResourceResult result, Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(100, pageable);
-        result.resources = batchRepository.findAllByOrderByCreatedOnDesc(pageable);
+        Page<Batch> batches = batchRepository.findAllByOrderByCreatedOnDesc(pageable);
 
-        for (Batch batch : result.resources) {
+        List<ProcessResourceItem> items = new ArrayList<>();
+        long total = batches.getTotalElements();
+        for (Batch batch : batches) {
             Flow flow = flowCache.findById(batch.getFlowId());
             if (flow==null) {
                 log.warn("#990.01 Found batch with wrong flowId. flowId: {}", batch.getFlowId());
+                total--;
                 continue;
             }
-            result.flows.put(batch.getId(), flow);
+            List<BatchFlowInstance> bfis = batchFlowInstanceRepository.findAllByBatchId(batch.id);
+            boolean isFinished = true;
+            for (BatchFlowInstance bfi : bfis) {
+                FlowInstance fi  =flowInstanceRepository.findById(bfi.flowInstanceId).orElse(null);
+                if (fi==null) {
+                    String msg = "#990.03 Batch #" + batch.id + " contains broken flowInstanceId - #" + bfi.flowInstanceId;
+                    log.warn(msg);
+                    continue;
+                }
+                if (fi.execState != Enums.FlowInstanceExecState.ERROR.code &&
+                        fi.execState != Enums.FlowInstanceExecState.FINISHED.code) {
+                    isFinished = false;
+                }
+            }
+            String execStateStr = isFinished ? "FINISHED" : "IN PROGRESS";
+            items.add( new ProcessResourceItem(batch, flow, execStateStr, isFinished));
         }
+        result.items = new PageImpl<>(items, pageable, total);
+
+        //noinspection unused
         int i=0;
     }
 
@@ -433,8 +462,9 @@ public class ProcessResourceController {
 
     @SuppressWarnings("Duplicates")
     @GetMapping("/process-resource-delete/{flowId}/{batchId}")
-    public String processResourceDelete(Model model, @PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
+    public String processResourceDelete(Model model, @PathVariable Long flowId, @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
+        if (true) throw new IllegalStateException("Not implemented yet");
+        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, batchId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -463,10 +493,10 @@ public class ProcessResourceController {
     }
 
     @GetMapping(value= "/process-resource-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public HttpEntity<AbstractResource> downloadFile(
+    public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletResponse response, @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName/*, final RedirectAttributes redirectAttributes*/) throws IOException {
-        log.info("#990.82 Start downloadFile(), batchId: {}", batchId);
+        log.info("#990.82 Start downloadProcessingResult(), batchId: {}", batchId);
         Batch batch = batchRepository.findById(batchId).orElse(null);
         if (batch==null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
@@ -487,22 +517,25 @@ public class ProcessResourceController {
                 log.warn(msg);
                 continue;
             }
+            String mainDocument = getMainDocument(fi.getInputResourceParam());
+
             Integer taskOrder = taskRepository.findMaxConcreteOrder(fi.id);
             if (taskOrder==null) {
-                String msg = "#990.82 Can't get taskOrder, batchId: " + batch.id + ", flowInstanceId: " + bfi.flowInstanceId;
+                String msg = "#990.82, "+mainDocument+", Can't get taskOrder, " +
+                        "batchId: " + batch.id + ", flowInstanceId: " + bfi.flowInstanceId;
                 log.warn(msg);
                 status += (msg + '\n');
                 continue;
             }
-            List<Task> tasks = taskRepository.findWithConcreteOrder(fi.getId(), taskOrder);
+            List<Task> tasks = taskRepository.findAnyWithConcreteOrder(fi.getId(), taskOrder);
             if (tasks.isEmpty()) {
-                String msg = "#990.88 Can't find any task for batchId: " + batchId;
+                String msg = "#990.88, "+mainDocument+", Can't find any task for batchId: " + batchId;
                 log.info(msg);
                 status += (msg + '\n');
                 continue;
             }
             if (tasks.size()>1) {
-                String msg = "#990.90 Can't download file because there are more than one task, " +
+                String msg = "#990.90, "+mainDocument+", Can't download file because there are more than one task, " +
                         "batchId: "+batch.id+", flowInstanceId: " + fi.id;
                 log.info(msg);
                 status += (msg + '\n');
@@ -512,13 +545,12 @@ public class ProcessResourceController {
             final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
             if (fi.getExecState()!= Enums.FlowInstanceExecState.FINISHED.code) {
-                status += ("#990.95 Task hasn't completed yet, " +
+                status += ("#990.95, "+mainDocument+", Task hasn't completed yet, " +
                         "batchId:" + batch.id + ", flowInstanceId: " + fi.id +", " +
                         "taskId: " + task.id + '\n');
                 continue;
             }
 
-            String mainDocument = getMainDocument(fi.getInputResourceParam());
             File mainDocFile = new File(zipDir, mainDocument);
 
             try {
@@ -532,19 +564,18 @@ public class ProcessResourceController {
             }
 
             String msg = "#990.08 status - Ok, doc: "+mainDocFile.getName()+", batchId: " + batch.id + ", flowInstanceId: " + bfi.flowInstanceId;
-            log.warn(msg);
             status += (msg + '\n');
 
         }
         File statusFile = new File(zipDir, "status.txt");
         FileUtils.write(statusFile, status, StandardCharsets.UTF_8);
-        File zipFile = new File(resultDir, "result.zip");
+        File zipFile = new File(resultDir, RESULT_ZIP);
         ZipUtils.createZip(zipDir, zipFile);
 
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        httpHeaders.setContentDispositionFormData("attachment","result.zip");
+        httpHeaders.setContentDispositionFormData("attachment", RESULT_ZIP);
         return new HttpEntity<>(new FileSystemResource(zipFile), getHeader(httpHeaders, zipFile.length()));
     }
 
