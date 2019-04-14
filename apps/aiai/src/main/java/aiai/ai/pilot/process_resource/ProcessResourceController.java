@@ -19,11 +19,13 @@ package aiai.ai.pilot.process_resource;
 
 import aiai.ai.Enums;
 import aiai.ai.Globals;
+import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.exceptions.StoreNewFileException;
 import aiai.ai.exceptions.StoreNewFileWithRedirectException;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Task;
+import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.flow.FlowCache;
@@ -35,6 +37,8 @@ import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.server.ServerService;
 import aiai.ai.pilot.beans.Batch;
 import aiai.ai.pilot.beans.BatchFlowInstance;
+import aiai.ai.resource.AssetFile;
+import aiai.ai.resource.ResourceUtils;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
@@ -45,6 +49,7 @@ import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -66,6 +71,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 
@@ -105,8 +111,9 @@ public class ProcessResourceController {
     private final TaskRepository taskRepository;
     private final BatchRepository batchRepository;
     private final BatchFlowInstanceRepository batchFlowInstanceRepository;
+    private final BinaryDataService binaryDataService;
 
-    public ProcessResourceController(Globals globals, FlowInstanceRepository flowInstanceRepository, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, ResourceService resourceService, ServerService serverService, TaskRepository taskRepository, BatchRepository batchRepository, BatchFlowInstanceRepository batchFlowInstanceRepository) {
+    public ProcessResourceController(Globals globals, FlowInstanceRepository flowInstanceRepository, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, ResourceService resourceService, ServerService serverService, TaskRepository taskRepository, BatchRepository batchRepository, BatchFlowInstanceRepository batchFlowInstanceRepository, BinaryDataService binaryDataService) {
         this.globals = globals;
         this.flowInstanceRepository = flowInstanceRepository;
         this.flowRepository = flowRepository;
@@ -117,6 +124,7 @@ public class ProcessResourceController {
         this.taskRepository = taskRepository;
         this.batchRepository = batchRepository;
         this.batchFlowInstanceRepository = batchFlowInstanceRepository;
+        this.binaryDataService = binaryDataService;
     }
 
     @GetMapping("/process-resources")
@@ -466,48 +474,78 @@ public class ProcessResourceController {
             return null;
         }
 
-/*
-        if (batch.getExecState()!= Enums.FlowInstanceExecState.FINISHED.code) {
-            response.sendError(HttpServletResponse.SC_CONFLICT);
-            log.info("#990.84 File can't be downloaded because flowInstance doesn't have execState==Enums.FlowInstanceExecState.FINISHED, actual {}", batch.getExecState());
-            return null;
-        }
-        Integer taskOrder = taskRepository.findMaxConcreteOrder(batch.getId());
-        if (taskOrder==null) {
-            log.info("#990.86 Can't calculate the max task order, batchId: {}", batchId);
-            response.sendError(HttpServletResponse.SC_CONFLICT);
-            return null;
-        }
-        List<Task> tasks = taskRepository.findWithConcreteOrder(batch.getId(), taskOrder);
-        if (tasks.isEmpty()) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            log.info("#990.88 Can't find any task for batchId {}}", batchId);
-            return null;
-        }
-        if (tasks.size()>1) {
-            response.sendError(HttpServletResponse.SC_CONFLICT);
-            log.info("#990.90 Can't download file because there are more than one task for batchId {}}", batchId);
-//            redirectAttributes.addFlashAttribute("errorMessage", "#990.10 name of uploaded file is null");
-//            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        List<BatchFlowInstance> bfis = batchFlowInstanceRepository.findAllByBatchId(batch.id);
+        String status = "";
+        File resultDir = DirUtils.createTempDir("prepare-doc-processing-result-");
+        File zipDir = new File(resultDir, "zip");
 
-            return null;
+        for (BatchFlowInstance bfi : bfis) {
+            FlowInstance fi  =flowInstanceRepository.findById(bfi.flowInstanceId).orElse(null);
+            if (fi==null) {
+                String msg = "#990.80 Batch #" + batch.id + " contains broken flowInstanceId - #" + bfi.flowInstanceId;
+                status += (msg + '\n');
+                log.warn(msg);
+                continue;
+            }
+            Integer taskOrder = taskRepository.findMaxConcreteOrder(fi.id);
+            if (taskOrder==null) {
+                String msg = "#990.82 Can't get taskOrder, batchId: " + batch.id + ", flowInstanceId: " + bfi.flowInstanceId;
+                log.warn(msg);
+                status += (msg + '\n');
+                continue;
+            }
+            List<Task> tasks = taskRepository.findWithConcreteOrder(fi.getId(), taskOrder);
+            if (tasks.isEmpty()) {
+                String msg = "#990.88 Can't find any task for batchId: " + batchId;
+                log.info(msg);
+                status += (msg + '\n');
+                continue;
+            }
+            if (tasks.size()>1) {
+                String msg = "#990.90 Can't download file because there are more than one task, " +
+                        "batchId: "+batch.id+", flowInstanceId: " + fi.id;
+                log.info(msg);
+                status += (msg + '\n');
+                continue;
+            }
+            final Task task = tasks.get(0);
+            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+
+            if (fi.getExecState()!= Enums.FlowInstanceExecState.FINISHED.code) {
+                status += ("#990.95 Task hasn't completed yet, " +
+                        "batchId:" + batch.id + ", flowInstanceId: " + fi.id +", " +
+                        "taskId: " + task.id + '\n');
+                continue;
+            }
+
+            String mainDocument = getMainDocument(fi.getInputResourceParam());
+            File mainDocFile = new File(zipDir, mainDocument);
+
+            try {
+                binaryDataService.storeToFile(taskParamYaml.outputResourceCode, mainDocFile);
+            } catch (BinaryDataNotFoundException e) {
+                String msg = "#990.06 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.outputResourceCode +
+                        ", file: " + mainDocFile.getPath();
+                log.error(msg);
+                status += (msg + '\n');
+                continue;
+            }
+
+            String msg = "#990.08 status - Ok, doc: "+mainDocFile.getName()+", batchId: " + batch.id + ", flowInstanceId: " + bfi.flowInstanceId;
+            log.warn(msg);
+            status += (msg + '\n');
+
         }
-        final Task task = tasks.get(0);
-        final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
-*/
+        File statusFile = new File(zipDir, "status.txt");
+        FileUtils.write(statusFile, status, StandardCharsets.UTF_8);
+        File zipFile = new File(resultDir, "result.zip");
+        ZipUtils.createZip(zipDir, zipFile);
+
 
         HttpHeaders httpHeaders = new HttpHeaders();
-//        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-//                getResultFileName(batch.getInputResourceParam())+"-result.xml"
-//        httpHeaders.setContentDispositionFormData("attachment","result.zip");
-//        return serverService.deliverResource(Enums.BinaryDataType.DATA, taskParamYaml.outputResourceCode, httpHeaders);
-
-        httpHeaders.setContentType(MediaType.APPLICATION_XML);
-        httpHeaders.setContentDispositionFormData("attachment","result.xml");
-
-        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><Aaaa>aaa</Aaaa>";
-        byte[] bytes = xml.getBytes();
-        return new HttpEntity<>(new ByteArrayResource(bytes), getHeader(httpHeaders, bytes.length));
+        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        httpHeaders.setContentDispositionFormData("attachment","result.zip");
+        return new HttpEntity<>(new FileSystemResource(zipFile), getHeader(httpHeaders, zipFile.length()));
     }
 
     private static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
@@ -527,6 +565,18 @@ public class ProcessResourceController {
             throw new IllegalStateException("#990.92 Pool codes not found.");
         }
         return codes.size() == 1 ? codes.get(0) : "result-file-" + System.nanoTime();
+    }
+
+    private static String getMainDocument(String inputResourceParams) {
+        InputResourceParam resourceParams = InputResourceParamUtils.to(inputResourceParams);
+        List<String> codes = resourceParams.poolCodes.get(MAIN_DOCUMENT_POOL_CODE);
+        if (codes.isEmpty()) {
+            throw new IllegalStateException("#990.92 Main document section is missed. inputResourceParams:\n" + inputResourceParams);
+        }
+        if (codes.size()>1) {
+            throw new IllegalStateException("#990.92 Main document section contains more than one main document. inputResourceParams:\n" + inputResourceParams);
+        }
+        return codes.get(0);
     }
 
 }

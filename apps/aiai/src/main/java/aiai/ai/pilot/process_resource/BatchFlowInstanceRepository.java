@@ -23,8 +23,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Repository
 @Transactional
 @Profile("launchpad")
 public interface BatchFlowInstanceRepository extends JpaRepository<BatchFlowInstance, Long> {
+
+    List<BatchFlowInstance> findAllByBatchId(long batchId);
 }
