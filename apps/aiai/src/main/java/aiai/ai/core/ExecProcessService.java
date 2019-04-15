@@ -20,15 +20,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
-import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @Slf4j
@@ -43,20 +43,12 @@ public class ExecProcessService {
         public String console;
     }
 
-    private static class StreamHolder {
-        private InputStream is;
+
+    public static class StreamHolder {
+        public InputStream is;
     }
 
-    // TODO 2018-10-30 need to implement for station side
-/*
-    private final LogDataRepository logDataRepository;
-
-    public ProcessService(LogDataRepository logDataRepository) {
-        this.logDataRepository = logDataRepository;
-    }
-*/
-
-    public Result execCommand(List<String> cmd, File execDir, File consoleLogFile) throws IOException, InterruptedException {
+    public Result execCommand(List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate) throws IOException, InterruptedException {
         ProcessBuilder pb = new ProcessBuilder();
         pb.command(cmd);
         pb.directory(execDir);
@@ -65,12 +57,23 @@ public class ExecProcessService {
 
         final StreamHolder streamHolder = new StreamHolder();
         int exitCode;
+        final AtomicLong timeout = new AtomicLong(0);
+        if (timeoutBeforeTerminate!=null && timeoutBeforeTerminate!=0) {
+            timeout.set( TimeUnit.SECONDS.toMillis(timeoutBeforeTerminate) );
+        }
+        Thread timeoutThread = null;
+        log.info("timeoutBeforeTerminate: {}", timeoutBeforeTerminate );
+        log.info("timeout: {}", timeout.get() );
+
         try (final FileOutputStream fos = new FileOutputStream(consoleLogFile);
                 BufferedOutputStream bos = new BufferedOutputStream(fos)) {
+            final AtomicBoolean isRun = new AtomicBoolean(false);
             final Thread reader = new Thread(() -> {
                 try {
+                    log.info("thread #" + Thread.currentThread().getId() + ", start receiving stream from external process");
                     streamHolder.is = process.getInputStream();
                     int c;
+                    isRun.set(true);
                     while ((c = streamHolder.is.read()) != -1) {
                         bos.write(c);
                     }
@@ -81,6 +84,25 @@ public class ExecProcessService {
             });
             reader.start();
 
+            if (timeout.get()>0) {
+                timeoutThread = new Thread(() -> {
+                    try {
+                        while (!isRun.get()) {
+                            log.info("thread #" + Thread.currentThread().getId() + " is waiting for reader thread, time - " + new Date());
+                            Thread.sleep(TimeUnit.MILLISECONDS.toMillis(500));
+                        }
+                        log.info("thread #" + Thread.currentThread().getId() + ", time before sleep - " + new Date());
+                        Thread.sleep(timeout.longValue());
+                        log.info("thread #" + Thread.currentThread().getId() + ", time before destroy - " + new Date());
+                        process.destroy();
+                        log.info("thread #" + Thread.currentThread().getId() + ", time after destroy - " + new Date());
+                    } catch (InterruptedException e) {
+                        log.info("thread #" + Thread.currentThread().getId() + ", current thread was interrupted");
+                    }
+                });
+                timeoutThread.start();
+            }
+
             exitCode = process.waitFor();
             reader.join();
         }
@@ -88,6 +110,14 @@ public class ExecProcessService {
             try {
                 if (streamHolder.is!=null) {
                     streamHolder.is.close();
+                }
+            }
+            catch(Throwable th) {
+                log.warn("Error with closing InputStream", th);
+            }
+            try {
+                if (timeoutThread!=null && timeoutThread.isAlive()) {
+                    timeoutThread.interrupt();
                 }
             }
             catch(Throwable th) {

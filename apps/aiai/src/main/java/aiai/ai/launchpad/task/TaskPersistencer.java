@@ -30,6 +30,7 @@ import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -56,7 +57,7 @@ public class TaskPersistencer {
                 try {
                     Task task = taskRepository.findById(taskId).orElse(null);
                     if (task == null) {
-                        log.warn("#307.01 Task with taskId {} wasn't found", taskParams, taskId);
+                        log.warn("#307.01 Task with taskId {} wasn't found", taskId);
                         return null;
                     }
                     task.setParams(taskParams);
@@ -107,7 +108,7 @@ public class TaskPersistencer {
 
                     taskRepository.save(task);
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.21 Error assign task {}, taskId: {}, error: {}", task.toString(), e.toString());
+                    log.error("#307.21 Error assign task {}, taskId: {}, error: {}", task.toString(), task.id, e.toString());
                 }
             }
         }
@@ -160,7 +161,9 @@ public class TaskPersistencer {
         synchronized (syncObj) {
             SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
             if (!snippetExec.exec.isOk) {
-                log.info("#307.27 Task #{} finished with error, console: {}", result.taskId, snippetExec.exec.console);
+                log.info("#307.27 Task #{} finished with error, console: {}",
+                        result.taskId,
+                        StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<console output is empty>");
             }
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
@@ -188,7 +191,7 @@ public class TaskPersistencer {
         boolean isError = false;
         Enums.StorageType storageType = null;
         if (storageUrl == null || storageUrl.isBlank()) {
-            log.error("#307.42 storageUrl wasn't found for outputResourceCode ", yaml.outputResourceCode);
+            log.error("#307.42 storageUrl wasn't found for outputResourceCode {}", yaml.outputResourceCode);
             isError = true;
         }
         else {
@@ -196,7 +199,7 @@ public class TaskPersistencer {
                 storageType = ResourceUtils.getStorageType(storageUrl);
             } catch (ResourceProviderException e) {
                 isError = true;
-                log.error("#307.53 storageUrl wasn't found for outputResourceCode ", yaml.outputResourceCode);
+                log.error("#307.53 storageUrl wasn't found for outputResourceCode {}", yaml.outputResourceCode);
             }
         }
         if (isError || state==Enums.TaskExecState.ERROR) {

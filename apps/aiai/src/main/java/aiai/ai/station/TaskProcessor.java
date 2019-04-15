@@ -201,7 +201,7 @@ public class TaskProcessor {
                 long startedOn = System.currentTimeMillis();
 
                 // Exec snippet
-                result = execProcessService.execCommand(cmd, taskDir, consoleLogFile);
+                result = execProcessService.execCommand(cmd, taskDir, consoleLogFile, taskParamYaml.timeoutBeforeTerminate);
 
                 // Store result
                 stationTaskService.storeExecResult(task.launchpadUrl, task.getTaskId(), startedOn, snippet, result, artifactDir);

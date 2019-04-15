@@ -395,7 +395,6 @@ public class FlowService {
             return;
         }
         fi.setExecState(Enums.FlowInstanceExecState.STOPPED.code);
-//        fi.setProducingOrder();
         flowInstanceRepository.save(fi);
     }
 
@@ -406,7 +405,6 @@ public class FlowService {
 
     public Enums.FlowProducingStatus toProducing(FlowInstance fi) {
         fi.setExecState(Enums.FlowInstanceExecState.PRODUCING.code);
-//        fi.setProducingOrder();
         flowInstanceRepository.save(fi);
         return Enums.FlowProducingStatus.OK;
     }
@@ -554,7 +552,7 @@ public class FlowService {
 
                 Experiment e = experimentRepository.findByFlowInstanceId(instance.id);
                 if (e==null) {
-                    log.warn("#701.23 Can't store an experiment to atlas, the flowInstance "+instance.id+" doesn't contain an experiment" );
+                    log.info("#701.23 Can't store an experiment to atlas, the flowInstance "+instance.id+" doesn't contain an experiment" );
                     return instance;
                 }
                 atlasService.toAtlas(instance.id, e.getId());

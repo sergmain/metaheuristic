@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
 public class SimpleApp implements CommandLineRunner {
@@ -39,11 +40,14 @@ public class SimpleApp implements CommandLineRunner {
     private Map<String, Object> cfg;
 
     @Override
-    public void run(String... args) throws IOException {
+    public void run(String... args) throws IOException, InterruptedException {
         if (args.length==0) {
             System.out.println("Parameter file wasn't specified");
             System.exit(-1);
         }
+        // sleep for testing timeoutBeforeTerminate
+        Thread.sleep(TimeUnit.SECONDS.toMillis(10));
+
         File yamlFile = new File(args[0]);
         String config = FileUtils.readFileToString(yamlFile, "utf-8");
         System.out.println("Yaml config file:\n"+config);

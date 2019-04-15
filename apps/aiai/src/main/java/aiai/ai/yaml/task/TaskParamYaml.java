@@ -31,6 +31,13 @@ public class TaskParamYaml {
     public Map<String, String> resourceStorageUrls = new HashMap<>();
     public boolean clean = false;
 
+    /**
+     * Timeout before terminate a process with snippet
+     * value in seconds
+     * null or 0 mean the infinite execution
+     */
+    public Long timeoutBeforeTerminate;
+
     // fields which are initialized at station
     public String workingPath;
 

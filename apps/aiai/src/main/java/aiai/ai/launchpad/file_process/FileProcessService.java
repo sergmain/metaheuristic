@@ -143,6 +143,7 @@ public class FileProcessService {
                 snippet.params
         );
         yaml.clean = flow.clean;
+        yaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
         String taskParams = TaskParamYamlUtils.toString(yaml);
 
