@@ -376,14 +376,21 @@ snippets:
       fileProvided: true
 
 
-используя приложние apps/package-snippet запаковать и подписать снипет
+используя приложние apps/package-snippet запаковать и подписать снипет. 
+package-snippet описан в п.10
 
 
 10. apps/package-snippet
 
 для запаковывания снипета и его подписания необходимо запустить
+- создать временный директорий
+- в данном временном директории создать файл snippets.yaml и заполнить его настройками согласно п.9.3
+- из временного директория запустить 
 
-java -jar apps/package-snippet/target/package-snippet.jar snippet.zip ../private-key.txt
+java -jar \aiai\git\apps/package-snippet/target/package-snippet.jar snippet.zip <path to private key file>
+
+- для корректного запуска <path to private key file> должен указывать на созданный ранее частный ключ, например:
+ \aiai\git\private-key.txt
 
 первый параметр (в примере это snippet.zip) указывает название архива в который будет запакован снипет
 если второй параметр определен, то снипет будет подписан.

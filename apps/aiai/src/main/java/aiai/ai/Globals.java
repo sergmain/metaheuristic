@@ -124,6 +124,7 @@ public class Globals {
 
     public File stationResourcesDir;
     public File stationTaskDir;
+    public File stationEnvHotDeployDir;
 
     public PublicKey launchpadPublicKey = null;
 
