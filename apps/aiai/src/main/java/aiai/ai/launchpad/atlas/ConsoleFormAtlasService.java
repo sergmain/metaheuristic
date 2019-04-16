@@ -24,6 +24,7 @@ import aiai.apps.commons.utils.DirUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,6 +34,7 @@ import java.util.stream.Stream;
 
 @Service
 @Slf4j
+@Profile("launchpad")
 public class ConsoleFormAtlasService {
 
     private static ObjectMapper mapper;
