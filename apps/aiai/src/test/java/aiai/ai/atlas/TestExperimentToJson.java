@@ -73,6 +73,7 @@ public class TestExperimentToJson {
     @Test
     public void toExperimentStoredToAtlasToJson() throws IOException {
 
+        // TODO rewrite this to use real experiment from aiai.ai.preparing.PreparingExperiment
         long experimentId = 224;
 
         AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(experimentId);

@@ -27,7 +27,9 @@ import java.util.Map;
 public class InputResourceParam {
     public Map<String, List<String>> poolCodes;
 
-    public List<String> getAllCodes() {
+    public boolean preservePoolNames;
+
+    public List<String> getAllPoolCodes() {
         List<String> codes = new ArrayList<>();
         poolCodes.values().forEach(codes::addAll);
         return codes;

@@ -507,7 +507,7 @@ public class ExperimentService {
                         yaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
 
                         yaml.setHyperParams(hyperParams.toSortedMap());
-                        // TODO need to implement unit-test for flow without metas in experiment
+                        // TODO need to implement an unit-test for a flow without metas in experiment
                         // TODO and see that features are correctly defined
                         yaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {

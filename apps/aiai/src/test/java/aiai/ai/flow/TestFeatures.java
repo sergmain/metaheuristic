@@ -125,7 +125,9 @@ public class TestFeatures extends PreparingFlow {
 
         assertNotNull(features);
         // TODO 777 - just random number. need to change value for working test
-        assertEquals(777, features.size());
+        assertEquals(
+                "TODO 777 - just random number. need to change value for working test",
+                777, features.size());
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.produceTasks()");

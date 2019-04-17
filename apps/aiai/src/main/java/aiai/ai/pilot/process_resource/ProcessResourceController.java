@@ -34,7 +34,6 @@ import aiai.ai.launchpad.launchpad_resource.ResourceService;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.launchpad.server.ServerService;
 import aiai.ai.pilot.beans.Batch;
 import aiai.ai.pilot.beans.BatchFlowInstance;
 import aiai.ai.utils.ControllerUtils;
@@ -82,7 +81,7 @@ import java.util.*;
 public class ProcessResourceController {
 
     private static final String REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES = "redirect:/pilot/process-resource/process-resources";
-    private static final String SINGLE_CODE = "  - ";
+    private static final String ITEM_LIST_PREFIX = "  - ";
     private static final String MAIN_DOCUMENT_POOL_CODE = "mainDocument";
     private static final String ATTACHMENTS_POOL_CODE = "attachments";
     private static final String RESULT_ZIP = "result.zip";
@@ -347,25 +346,22 @@ public class ProcessResourceController {
         return mainDocFile;
     }
 
-    public static String asInputResourceParams(String mainDocCode, List<String> attachmentCodes) {
-        String yaml = "poolCodes:\n  " + MAIN_DOCUMENT_POOL_CODE + ":\n" +
-                SINGLE_CODE + mainDocCode;
-
+    private static String asInputResourceParams(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
+        String yaml ="preservePoolNames: true\n" +
+                "poolCodes:\n  " + MAIN_DOCUMENT_POOL_CODE + ":\n" + ITEM_LIST_PREFIX + mainPoolCode;
         if (attachmentCodes.isEmpty()) {
             return yaml;
         }
-        yaml += "\n  " + ATTACHMENTS_POOL_CODE + ":\n";
-        for (String code : attachmentCodes) {
-            //noinspection StringConcatenationInLoop
-            yaml += (SINGLE_CODE + code + '\n');
-        }
+        yaml += "\n  " + ATTACHMENTS_POOL_CODE + ":\n" + ITEM_LIST_PREFIX + attachPoolCode + '\n';
         return yaml;
     }
 
     public String createAndProcessTask(Batch batch, RedirectAttributes redirectAttributes, Flow flow, List<File> dataFile, File mainDocFile) {
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
-        String mainDocCode = null;
+        String mainPoolCode = String.format("%d-%s-%d", flow.id, MAIN_DOCUMENT_POOL_CODE, nanoTime);
+        String attachPoolCode = String.format("%d-%s-%d", flow.id, ATTACHMENTS_POOL_CODE, nanoTime);
+        boolean isMainDocPresent = false;
         try {
             for (File file : dataFile) {
                 String originFilename = file.getName();
@@ -378,11 +374,11 @@ public class ProcessResourceController {
 
                 String poolCode;
                 if (file.equals(mainDocFile)) {
-                    poolCode = MAIN_DOCUMENT_POOL_CODE;
-                    mainDocCode = code;
+                    poolCode = mainPoolCode;
+                    isMainDocPresent = true;
                 }
                 else {
-                    poolCode = ATTACHMENTS_POOL_CODE;
+                    poolCode = attachPoolCode;
                     attachments.add(code);
                 }
 
@@ -394,12 +390,12 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        if (mainDocCode==null) {
+        if (!isMainDocPresent) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.28 main document wasn't found" );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        final String paramYaml = asInputResourceParams(mainDocCode, attachments);
+        final String paramYaml = asInputResourceParams(mainPoolCode, attachPoolCode, attachments);
         FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, paramYaml);
         if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating flowInstance: " + producingResult.flowProducingStatus);
@@ -591,7 +587,7 @@ public class ProcessResourceController {
 
     private static String getResultFileName(String inputResourceParams) {
         InputResourceParam resourceParams = InputResourceParamUtils.to(inputResourceParams);
-        List<String> codes = resourceParams.getAllCodes();
+        List<String> codes = resourceParams.getAllPoolCodes();
         if (codes.isEmpty()) {
             throw new IllegalStateException("#990.92 Pool codes not found.");
         }

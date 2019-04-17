@@ -364,7 +364,7 @@ public class FlowService {
         FlowService.TaskProducingResult result = new TaskProducingResult();
 
         InputResourceParam resourceParam = InputResourceParamUtils.to(inputResourceParam);
-        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParam.getAllCodes());
+        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParam.getAllPoolCodes());
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
             result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return result;
@@ -452,18 +452,60 @@ public class FlowService {
         }
     }
 
+    @SuppressWarnings("Duplicates")
     public void produceTasks(boolean isPersist, TaskProducingResult result, Flow flow, FlowInstance fi) {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
         InputResourceParam resourceParams = InputResourceParamUtils.to(fi.inputResourceParam);
-        List<SimpleCodeAndStorageUrl> initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllCodes());
+        List<SimpleCodeAndStorageUrl> initialInputResourceCodes;
+        initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllPoolCodes());
         log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
 
         ResourcePools pools = new ResourcePools(initialInputResourceCodes);
         if (pools.status!= Enums.FlowProducingStatus.OK) {
             result.flowProducingStatus = pools.status;
             return;
+        }
+        if (resourceParams.preservePoolNames) {
+/*
+            final Map<String, String> inputStorageUrls = new HashMap<>();
+            pools.inputStorageUrls.forEach( (key, value) -> {
+                String newKey = null;
+                for (Map.Entry<String, List<String>> entry : resourceParams.poolCodes.entrySet()) {
+                    if (entry.getValue().contains(key)) {
+                        newKey = entry.getKey();
+                        break;
+                    }
+                }
+                if (newKey==null) {
+                    log.error("#701.08 Can't find key for pool code {}", key );
+                    result.flowProducingStatus = Enums.FlowProducingStatus.ERROR;
+                    return;
+                }
+                inputStorageUrls.put(newKey, value);
+            });
+            pools.inputStorageUrls.clear();
+            pools.inputStorageUrls.putAll(inputStorageUrls);
+*/
+            final Map<String, List<String>> collectedInputs = new HashMap<>();
+            pools.collectedInputs.forEach( (key, value) -> {
+                String newKey = null;
+                for (Map.Entry<String, List<String>> entry : resourceParams.poolCodes.entrySet()) {
+                    if (entry.getValue().contains(key)) {
+                        newKey = entry.getKey();
+                        break;
+                    }
+                }
+                if (newKey==null) {
+                    log.error("#701.09 Can't find key for pool code {}", key );
+                    result.flowProducingStatus = Enums.FlowProducingStatus.ERROR;
+                    return;
+                }
+                collectedInputs.put(newKey, value);
+            });
+            pools.collectedInputs.clear();
+            pools.collectedInputs.putAll(collectedInputs);
         }
 
         Monitoring.log("##025", Enums.Monitor.MEMORY);
