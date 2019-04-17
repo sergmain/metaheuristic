@@ -507,12 +507,12 @@ public class ExperimentService {
                         yaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
 
                         yaml.setHyperParams(hyperParams.toSortedMap());
+                        // TODO need to implement unit-test for flow without metas in experiment
+                        // TODO and see that features are correctly defined
                         yaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
                             if ("feature".equals(entry.getKey())) {
-                                log.warn("!!!!!! This situation need to be investigated");
-                                log.warn("flowInstance inputResourceParam:\n"+ flowInstance.inputResourceParam );
-                                continue;
+                                log.info("Output type is the same as flowInstance inputResourceParam:\n"+ flowInstance.inputResourceParam );
                             }
                             Process.Meta meta = process.getMetas()
                                     .stream()
@@ -523,10 +523,6 @@ public class ExperimentService {
                             if (meta != null) {
                                 yaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
                             }
-//                            else {
-//                                log.error("Validation of flow #{} was failed. Meta with value {} wasn't found.", flowInstance.flowId, entry.getKey());
-//                                continue;
-//                            }
                         }
                         Snippet snippet = localCache.get(experimentSnippet.getSnippetCode());
                         if (snippet == null) {

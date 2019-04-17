@@ -64,6 +64,7 @@ public class Consts {
     public static final String SYSTEM_DIR = "system";
     public static final String RESOURCES_DIR = "resources";
     public static final String TASK_DIR = "task";
+    public static final String ENV_HOT_DEPLOY_DIR = "env-hot-deploy";
     public static final String ARTIFACTS_DIR = "artifacts";
 
     public static final String METADATA_YAML_FILE_NAME = "metadata.yaml";

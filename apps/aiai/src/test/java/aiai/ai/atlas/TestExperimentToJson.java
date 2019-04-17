@@ -77,7 +77,7 @@ public class TestExperimentToJson {
 
         AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(experimentId);
         if (r.status!= Enums.StoringStatus.OK) {
-            throw new IllegalStateException("experiment can't be stored");
+            throw new IllegalStateException("experiment can't be stored, status: " + r.status+", error: " + r.errorMessages);
         }
         String json = atlasService.toJson(r.experimentStoredToAtlas);
 

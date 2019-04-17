@@ -125,6 +125,10 @@ public class BinaryDataService {
         return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode, flowInstanceId);
     }
 
+    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode) {
+        return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode);
+    }
+
     public List<SimpleCodeAndStorageUrl> getResourceCodes(List<String> inputResourceCode) {
         return binaryDataRepository.getCodeAndStorageUrl(inputResourceCode);
     }

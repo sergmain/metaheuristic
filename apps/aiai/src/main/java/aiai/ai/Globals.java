@@ -147,6 +147,8 @@ public class Globals {
             stationResourcesDir.mkdirs();
             stationTaskDir = new File(stationDir, Consts.TASK_DIR);
             stationTaskDir.mkdirs();
+            stationEnvHotDeployDir = new File(stationDir, Consts.TASK_DIR);
+            stationEnvHotDeployDir.mkdirs();
         }
 
         if (isLaunchpadEnabled && launchpadDir==null) {

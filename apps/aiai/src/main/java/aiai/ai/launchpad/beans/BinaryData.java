@@ -53,6 +53,12 @@ public class BinaryData implements Serializable {
     @Column(name = "DATA_TYPE")
     private int dataType;
 
+    /**
+     * This field is initialized only for data resources which were produced while processing flow instance.
+     * The data resource which is using as input resources must not have flowInstanceId.
+     * Also this fiels is used as refId for deleting any resources which were produced
+     * while flow instance was processed.
+     */
     @Column(name = "FLOW_INSTANCE_ID")
     private Long flowInstanceId;
 

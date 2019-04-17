@@ -42,10 +42,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 
 import static org.junit.Assert.assertTrue;
 
@@ -100,7 +97,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
 
             p.snippetCodes = Collections.singletonList("snippet-01:1.1");
             p.collectResources = false;
-            p.outputType = "assembled-raw";
+            p.outputType = "assembled-raw-output";
 
             flowYaml.processes.add(p);
         }
@@ -112,7 +109,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
 
             p.snippetCodes = Collections.singletonList("snippet-02:1.1");
             p.collectResources = true;
-            p.outputType = "dataset-processing";
+            p.outputType = "dataset-processing-output";
 
             flowYaml.processes.add(p);
         }
@@ -124,8 +121,8 @@ public abstract class PreparingFlow extends PreparingExperiment {
 
             p.snippetCodes = Arrays.asList("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
             p.parallelExec = true;
-            p.collectResources = false;
-            p.outputType = "feature";
+            p.collectResources = true;
+            p.outputType = "feature-output";
 
             flowYaml.processes.add(p);
         }
@@ -137,9 +134,9 @@ public abstract class PreparingFlow extends PreparingExperiment {
 
             p.metas.addAll(
                     Arrays.asList(
-                            new Process.Meta("assembled-raw", "assembled-raw", null),
-                            new Process.Meta("dataset", "dataset-processing", null),
-                            new Process.Meta("feature", "feature", null)
+                            new Process.Meta("assembled-raw", "assembled-raw-output", null),
+                            new Process.Meta("dataset", "dataset-processing-output", null),
+                            new Process.Meta("feature", "feature-output", null)
                     )
             );
 
@@ -188,11 +185,11 @@ public abstract class PreparingFlow extends PreparingExperiment {
                 true, "file-01.txt",
                 null);
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE,
+                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+2, INPUT_POOL_CODE,
                 true, "file-02.txt",
                 null);
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE,
+                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+3, INPUT_POOL_CODE,
                 true, "file-03.txt",
                 null);
 
