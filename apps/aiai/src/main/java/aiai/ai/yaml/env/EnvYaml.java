@@ -20,12 +20,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 @NoArgsConstructor
 public class EnvYaml {
-    Map<String, String> envs = new LinkedHashMap<>();
-    List<DiskStorage> disk = new ArrayList<>();
+    public final Map<String, String> envs = new ConcurrentHashMap<>();
+    public final List<DiskStorage> disk = new ArrayList<>();
 
     public DiskStorage findDiskStorageByCode(String code) {
         for (DiskStorage diskStorage : disk) {

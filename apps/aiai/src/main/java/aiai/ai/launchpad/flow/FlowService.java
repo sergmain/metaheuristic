@@ -468,26 +468,6 @@ public class FlowService {
             return;
         }
         if (resourceParams.preservePoolNames) {
-/*
-            final Map<String, String> inputStorageUrls = new HashMap<>();
-            pools.inputStorageUrls.forEach( (key, value) -> {
-                String newKey = null;
-                for (Map.Entry<String, List<String>> entry : resourceParams.poolCodes.entrySet()) {
-                    if (entry.getValue().contains(key)) {
-                        newKey = entry.getKey();
-                        break;
-                    }
-                }
-                if (newKey==null) {
-                    log.error("#701.08 Can't find key for pool code {}", key );
-                    result.flowProducingStatus = Enums.FlowProducingStatus.ERROR;
-                    return;
-                }
-                inputStorageUrls.put(newKey, value);
-            });
-            pools.inputStorageUrls.clear();
-            pools.inputStorageUrls.putAll(inputStorageUrls);
-*/
             final Map<String, List<String>> collectedInputs = new HashMap<>();
             pools.collectedInputs.forEach( (key, value) -> {
                 String newKey = null;

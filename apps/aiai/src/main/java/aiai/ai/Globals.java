@@ -147,7 +147,7 @@ public class Globals {
             stationResourcesDir.mkdirs();
             stationTaskDir = new File(stationDir, Consts.TASK_DIR);
             stationTaskDir.mkdirs();
-            stationEnvHotDeployDir = new File(stationDir, Consts.TASK_DIR);
+            stationEnvHotDeployDir = new File(stationDir, Consts.ENV_HOT_DEPLOY_DIR);
             stationEnvHotDeployDir.mkdirs();
         }
 

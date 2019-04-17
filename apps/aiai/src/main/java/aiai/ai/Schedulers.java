@@ -22,6 +22,7 @@ import aiai.ai.station.*;
 import aiai.ai.station.actors.DownloadResourceActor;
 import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.actors.UploadResourceActor;
+import aiai.ai.station.env.EnvService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -101,6 +102,7 @@ public class Schedulers {
     }
 
     // Station schedulers
+    @SuppressWarnings("FieldCanBeLocal")
     @Service
     @EnableScheduling
     @Slf4j
@@ -117,11 +119,12 @@ public class Schedulers {
         private final MetadataService metadataService;
         private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
         private final CurrentExecState currentExecState;
+        private final EnvService envService;
 
         private final RoundRobinForLaunchpad roundRobin;
         private final Map<String, LaunchpadRequestor> launchpadRequestorMap = new HashMap<>();
 
-        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, CommandProcessor commandProcessor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, CurrentExecState currentExecState) {
+        public StationSchedulers(Globals globals, TaskAssetPreparer taskAssigner, TaskProcessor taskProcessor, DownloadSnippetActor downloadSnippetActor, DownloadResourceActor downloadResourceActor, UploadResourceActor uploadResourceActor, ArtifactCleanerAtStation artifactCleaner, StationService stationService, StationTaskService stationTaskService, CommandProcessor commandProcessor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, CurrentExecState currentExecState, EnvService envService) {
             this.globals = globals;
             this.taskAssigner = taskAssigner;
             this.taskProcessor = taskProcessor;
@@ -129,6 +132,7 @@ public class Schedulers {
             this.downloadResourceActor = downloadResourceActor;
             this.uploadResourceActor = uploadResourceActor;
             this.artifactCleaner = artifactCleaner;
+            this.envService = envService;
 
             if (launchpadLookupExtendedService.lookupExtendedMap==null) {
                 throw new IllegalStateException("launchpad.yaml wasn't configured");
@@ -148,6 +152,18 @@ public class Schedulers {
             }
         }
 
+        @Scheduled(initialDelay = 20_000, fixedDelay = 5_000)
+        public void monitorHotDeployDir() {
+            if (globals.isUnitTesting) {
+                return;
+            }
+            if (!globals.isStationEnabled) {
+                return;
+            }
+            log.info("Run envHotDeployService.monitorHotDeployDir()");
+            envService.monitorHotDeployDir();
+        }
+
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.request-launchpad'), 3, 20, 10)*1000 }")
         public void launchRequester() {
             if (globals.isUnitTesting) {
@@ -158,7 +174,7 @@ public class Schedulers {
             }
 
             String url = roundRobin.next();
-            log.info("LaunchpadRequestor.fixedDelay() for url {}", url);
+            log.info("Run launchpadRequestor.fixedDelay() for url {}", url);
             launchpadRequestorMap.get(url).fixedDelay();
         }
 
@@ -170,7 +186,7 @@ public class Schedulers {
             if (!globals.isStationEnabled) {
                 return;
             }
-            log.info("TaskAssigner.fixedDelay()");
+            log.info("Run taskAssigner.fixedDelay()");
             taskAssigner.fixedDelay();
         }
 
@@ -182,7 +198,7 @@ public class Schedulers {
             if (!globals.isStationEnabled) {
                 return;
             }
-            log.info("SequenceProcessor.fixedDelay()");
+            log.info("Run taskProcessor.fixedDelay()");
             taskProcessor.fixedDelay();
         }
 
@@ -194,7 +210,7 @@ public class Schedulers {
             if (!globals.isStationEnabled) {
                 return;
             }
-            log.info("DownloadSnippetActor.fixedDelay()");
+            log.info("Run downloadSnippetActor.fixedDelay()");
             downloadSnippetActor.fixedDelay();
         }
 
@@ -206,7 +222,7 @@ public class Schedulers {
             if (!globals.isStationEnabled) {
                 return;
             }
-            log.info("DownloadSnippetActor.fixedDelay()");
+            log.info("Run downloadSnippetActor.fixedDelay()");
             downloadResourceActor.fixedDelay();
         }
 
@@ -218,7 +234,7 @@ public class Schedulers {
             if (!globals.isStationEnabled) {
                 return;
             }
-            log.info("UploadResourceActor.fixedDelay()");
+            log.info("Run uploadResourceActor.fixedDelay()");
             uploadResourceActor.fixedDelay();
         }
 
@@ -230,7 +246,7 @@ public class Schedulers {
             if (!globals.isStationEnabled) {
                 return;
             }
-            log.info("ArtifactCleaner.fixedDelay()");
+            log.info("Run artifactCleaner.fixedDelay()");
             artifactCleaner.fixedDelay();
         }
     }

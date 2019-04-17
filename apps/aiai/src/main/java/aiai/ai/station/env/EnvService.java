@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.station;
+package aiai.ai.station.env;
 
 import aiai.ai.Consts;
 import aiai.ai.Globals;
@@ -28,7 +28,11 @@ import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -74,6 +78,47 @@ public class EnvService {
 
     public EnvYaml getEnvYaml() {
         return envYaml;
+    }
+
+
+    public void monitorHotDeployDir() {
+        if (globals.isUnitTesting) {
+            return;
+        }
+        if (!globals.isStationEnabled) {
+            return;
+        }
+
+        if (!globals.stationEnvHotDeployDir.exists()) {
+            globals.stationEnvHotDeployDir.mkdirs();
+        }
+        try {
+            Files.list(globals.stationEnvHotDeployDir.toPath())
+                    .filter( o -> {
+                        File f = o.toFile();
+                        return f.getName().endsWith(".yaml");
+                    })
+                    .forEach(dataFile -> {
+                        File file = dataFile.toFile();
+                        if (file.isFile()) {
+                            try (InputStream is = new FileInputStream(file)) {
+                                EnvYaml env = EnvYamlUtils.to(is);
+                                env.envs.forEach((key, value) -> {
+                                    if (envYaml.envs.containsKey(key)) {
+                                        log.warn("Environment already has key {}", key);
+                                        return;
+                                    }
+                                    envYaml.envs.put(key, value);
+                                });
+                            } catch (Throwable th) {
+                                log.error("Can't read file " + file.getAbsolutePath(), th);
+                            }
+                        }
+                        file.delete();
+                    });
+        } catch (Throwable th) {
+            log.error("Error", th);
+        }
     }
 
 }
