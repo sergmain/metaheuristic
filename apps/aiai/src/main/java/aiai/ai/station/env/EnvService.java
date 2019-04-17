@@ -31,8 +31,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Service
 @Slf4j
@@ -42,6 +44,7 @@ public class EnvService {
 
     private String env;
     private EnvYaml envYaml;
+    private File envYamlFile;
 
     public EnvService(Globals globals) {
         this.globals = globals;
@@ -53,33 +56,40 @@ public class EnvService {
             return;
         }
 
-        final File file = new File(globals.stationDir, Consts.ENV_YAML_FILE_NAME);
-        if (!file.exists()) {
-            log.warn("#747.01 Station's environment config file doesn't exist: {}", file.getPath());
+        envYamlFile = new File(globals.stationDir, Consts.ENV_YAML_FILE_NAME);
+        if (!envYamlFile.exists()) {
+            log.warn("#747.01 Station's environment config file doesn't exist: {}", envYamlFile.getPath());
             return;
         }
         try {
-            env = FileUtils.readFileToString(file, Charsets.UTF_8);
+            env = FileUtils.readFileToString(envYamlFile, Charsets.UTF_8);
             envYaml = EnvYamlUtils.to(env);
             if (envYaml==null) {
                 log.error("#747.07 env.yaml wasn't found or empty. path: {}{}env.yaml", globals.stationDir, File.separatorChar );
                 throw new IllegalStateException("Station isn't configured, env.yaml is empty or doesn't exist");
             }
         } catch (IOException e) {
-            String es = "#747.11 Error while loading file: " + file.getPath();
+            String es = "#747.11 Error while loading file: " + envYamlFile.getPath();
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
     }
 
     public String getEnv() {
-        return env;
+        synchronized (this) {
+            return env;
+        }
+    }
+
+    private void setEnv(String env) {
+        synchronized (this) {
+            this.env = env;
+        }
     }
 
     public EnvYaml getEnvYaml() {
         return envYaml;
     }
-
 
     public void monitorHotDeployDir() {
         if (globals.isUnitTesting) {
@@ -108,6 +118,7 @@ public class EnvService {
                                         log.warn("Environment already has key {}", key);
                                         return;
                                     }
+                                    log.info("new env record was added, key: {}, value: {}", key, value);
                                     envYaml.envs.put(key, value);
                                 });
                             } catch (Throwable th) {
@@ -116,6 +127,10 @@ public class EnvService {
                         }
                         file.delete();
                     });
+
+            String newEnv = EnvYamlUtils.toString(envYaml);
+            FileUtils.writeStringToFile(envYamlFile, newEnv, StandardCharsets.UTF_8);
+            setEnv(newEnv);
         } catch (Throwable th) {
             log.error("Error", th);
         }
