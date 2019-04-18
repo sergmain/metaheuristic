@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.*;
 
 import static aiai.ai.launchpad.data.ExperimentData.*;
 
-@SuppressWarnings("Duplicates")
 @RestController
 @RequestMapping("/ng/launchpad/experiment")
 @Slf4j

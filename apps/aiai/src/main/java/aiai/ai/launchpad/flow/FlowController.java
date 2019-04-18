@@ -34,6 +34,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 
+@SuppressWarnings("Duplicates")
 @Controller
 @RequestMapping("/launchpad/flow")
 @Slf4j
@@ -117,7 +118,6 @@ public class FlowController {
         FlowData.FlowResult flowResultRest = flowTopLevelService.updateFlow(flowModel);
         if (flowResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", flowResultRest.errorMessages);
-//            return "launchpad/flow/flow-edit";
             return "redirect:/launchpad/flow/flow-edit/"+flowResultRest.flow.getId();
         }
 
