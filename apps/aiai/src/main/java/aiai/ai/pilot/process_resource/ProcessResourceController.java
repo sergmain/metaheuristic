@@ -459,8 +459,10 @@ public class ProcessResourceController {
     @SuppressWarnings("Duplicates")
     @GetMapping("/process-resource-delete/{flowId}/{batchId}")
     public String processResourceDelete(Model model, @PathVariable Long flowId, @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
+
         if (true) throw new IllegalStateException("Not implemented yet");
-        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, batchId);
+        long flowInstanceId = -1L;
+        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -484,7 +486,7 @@ public class ProcessResourceController {
                     "#990.77 FlowInstance wasn't found, batchId: " + flowInstanceId );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        flowService.deleteFlowInstance(flowInstanceId, fi);
+        flowService.deleteFlowInstance(flowInstanceId, fi.flowId);
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
     }
 

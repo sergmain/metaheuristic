@@ -409,9 +409,9 @@ public class ExperimentService {
         return experimentHyperParams.stream().collect(Collectors.toMap(ExperimentHyperParams::getKey, ExperimentHyperParams::getValues, (a, b) -> b, HashMap::new));
     }
 
-    public void resetExperiment(FlowInstance flowInstance) {
+    public void resetExperiment(long flowInstanceId) {
 
-        Experiment e = experimentRepository.findByFlowInstanceId(flowInstance.getId());
+        Experiment e = experimentRepository.findByFlowInstanceId(flowInstanceId);
         if (e==null) {
             return;
         }

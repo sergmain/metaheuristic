@@ -146,14 +146,14 @@ public class FlowService {
         }
     }
 
-    public void deleteFlowInstance(Long flowInstanceId, FlowInstance fi) {
-        experimentService.resetExperiment(fi);
+    public void deleteFlowInstance(Long flowInstanceId, long flowId) {
+        experimentService.resetExperiment(flowInstanceId);
         flowInstanceService.deleteById(flowInstanceId);
         taskExperimentFeatureRepository.deleteByFlowInstanceId(flowInstanceId);
         binaryDataService.deleteByFlowInstanceId(flowInstanceId);
-        List<FlowInstance> instances = flowInstanceRepository.findByFlowId(fi.flowId);
+        List<FlowInstance> instances = flowInstanceRepository.findByFlowId(flowId);
         if (instances.isEmpty()) {
-            Flow flow = flowRepository.findById(fi.flowId).orElse(null);
+            Flow flow = flowRepository.findById(flowId).orElse(null);
             if (flow!=null) {
                 flow.locked = false;
                 flowCache.save(flow);

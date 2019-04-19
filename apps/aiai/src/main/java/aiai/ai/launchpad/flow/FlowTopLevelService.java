@@ -217,7 +217,7 @@ public class FlowTopLevelService {
         if (fi==null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, "#560.84 FlowInstance wasn't found, flowInstanceId: " + flowInstanceId );
         }
-        flowService.deleteFlowInstance(flowInstanceId, fi);
+        flowService.deleteFlowInstance(flowInstanceId, fi.flowId);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
