@@ -97,7 +97,7 @@ public class TaskProcessor {
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
 
             if (launchpad.schedule.isCurrentTimeInactive()) {
-                log.info("Can't process task for url {} at this time, time: {}, permitted period of time: {}", new Date(), launchpad.schedule.asString);
+                log.info("Can't process task for url {} at this time, time: {}, permitted period of time: {}", task.launchpadUrl, new Date(), launchpad.schedule.asString);
                 return;
             }
 
@@ -112,7 +112,7 @@ public class TaskProcessor {
             }
 
             if (state!=Enums.FlowInstanceExecState.STARTED) {
-                log.info("The state for FlowInstance #{}, host is {}, skip it", task.flowInstanceId, task.launchpadUrl, state);
+                log.info("The state for FlowInstance #{}, host: {}, is {}, skip it", task.flowInstanceId, task.launchpadUrl, state);
                 continue;
             }
 

@@ -141,6 +141,31 @@ public class TestTimeParsing {
     }
 
     @Test
+    public void parseExtendedTimeYaml_alwaysPermitted() throws IOException {
+        SimpleYamlHolder holder;
+        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/extended-time-period-always-permitted.yaml")) {
+            holder = SimpleYamlHolderUtils.to(is);
+        }
+        assertNotNull(holder);
+        assertNotNull(holder.holder);
+        ExtendedTimePeriod period = ExtendedTimePeriodUtils.to(holder.holder);
+
+        assertEquals("0:00-23:59", period.workingDay);
+        assertEquals("0:00-23:59", period.weekend);
+        assertNull(period.dayMask);
+        assertNull(period.holiday);
+        assertNull(period.exceptionWorkingDay);
+
+        LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
+        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm");
+        assertTrue(schedule.isActive(LocalDateTime.parse( "14/01/2019 23:59", fmt)));
+
+        DateTimeFormatter fmt1 = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss");
+        LocalDateTime time = LocalDateTime.parse("14/01/2019 23:59:29", fmt1);
+        assertTrue(schedule.isActive(time));
+    }
+
+    @Test
     public void testTimePeriodParsing() {
         String s = "0:00    - 8:45, 19:00 -   23:59";
 

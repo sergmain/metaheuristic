@@ -121,7 +121,7 @@ public class ExecProcessService {
                 }
             }
             catch(Throwable th) {
-                log.warn("Error with closing InputStream", th);
+                log.warn("Error with interrupting InputStream", th);
             }
         }
 

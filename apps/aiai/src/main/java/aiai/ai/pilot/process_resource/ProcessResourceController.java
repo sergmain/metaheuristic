@@ -40,6 +40,8 @@ import aiai.ai.utils.ControllerUtils;
 import aiai.ai.utils.StrUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
+import aiai.ai.yaml.snippet_exec.SnippetExec;
+import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.utils.DirUtils;
@@ -540,6 +542,24 @@ public class ProcessResourceController {
                 continue;
             }
             final Task task = tasks.get(0);
+            Enums.TaskExecState execState = Enums.TaskExecState.from(task.execState);
+            switch (execState) {
+                case NONE:
+                case IN_PROGRESS:
+                    status += ("#990.50, "+mainDocument+", Task hasn't completed yet, status: " +Enums.TaskExecState.from(task.execState) +
+                            ", batchId:" + batch.id + ", flowInstanceId: " + fi.id +", " +
+                            "taskId: " + task.id + '\n');
+                    continue;
+                case ERROR:
+                    SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
+                    status += ("#990.52, "+mainDocument+", Task was completed with error, batchId:" + batch.id + ", flowInstanceId: " + fi.id +", " +
+                            "taskId: " + task.id + "\n" +
+                            "isOk: " + snippetExec.exec.isOk + "\n" +
+                            "exitCode: " + snippetExec.exec.exitCode + "\n" +
+                            "console:\n" + snippetExec.exec.console + "\n\n");
+                    continue;
+            }
+
             final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
             if (fi.getExecState()!= Enums.FlowInstanceExecState.FINISHED.code) {

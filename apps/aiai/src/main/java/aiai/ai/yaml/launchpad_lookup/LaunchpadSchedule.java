@@ -94,7 +94,10 @@ public class LaunchpadSchedule {
         }
     }
 
-    public boolean isActive(LocalDateTime curr) {
+    public boolean isActive(final LocalDateTime time) {
+        int secs = time.getSecondOfMinute();
+        final LocalDateTime curr = time.minusSeconds(secs);
+
         if (holidays.contains(curr.toLocalDate())) {
             return weekend.isActive(curr.toLocalTime());
         }
