@@ -55,7 +55,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static aiai.ai.Enums.FlowValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
+import static aiai.api.v1.EnumsApi.FlowValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
 
 @Service
 @Slf4j
@@ -191,9 +191,9 @@ public class FlowService {
             flowValidation.status = validate(flow);
         } catch (YAMLException e) {
             flowValidation.addErrorMessage("#560.34 Error while parsing yaml config, " + e.toString());
-            flowValidation.status = Enums.FlowValidateStatus.YAML_PARSING_ERROR;
+            flowValidation.status = EnumsApi.FlowValidateStatus.YAML_PARSING_ERROR;
         }
-        flow.valid = flowValidation.status == Enums.FlowValidateStatus.OK;
+        flow.valid = flowValidation.status == EnumsApi.FlowValidateStatus.OK;
         flowCache.save(flow);
         if (flow.valid) {
             flowValidation.infoMessages = Collections.singletonList("Validation result: OK");
@@ -244,18 +244,18 @@ public class FlowService {
     @Data
     @NoArgsConstructor
     public static class TaskProducingResult {
-        public Enums.FlowValidateStatus flowValidateStatus = Enums.FlowValidateStatus.NOT_VALIDATED_YET_ERROR;
-        public Enums.FlowProducingStatus flowProducingStatus = Enums.FlowProducingStatus.NOT_PRODUCING_YET_ERROR;
+        public EnumsApi.FlowValidateStatus flowValidateStatus = EnumsApi.FlowValidateStatus.NOT_VALIDATED_YET_ERROR;
+        public EnumsApi.FlowProducingStatus flowProducingStatus = EnumsApi.FlowProducingStatus.NOT_PRODUCING_YET_ERROR;
         public List<Task> tasks = new ArrayList<>();
         public FlowYaml flowYaml;
         public FlowInstance flowInstance;
         public int numberOfTasks;
 
         public Enums.TaskProducingStatus getStatus() {
-            if (flowValidateStatus != Enums.FlowValidateStatus.OK) {
+            if (flowValidateStatus != EnumsApi.FlowValidateStatus.OK) {
                 return Enums.TaskProducingStatus.VERIFY_ERROR;
             }
-            if (flowProducingStatus!= Enums.FlowProducingStatus.OK) {
+            if (flowProducingStatus!= EnumsApi.FlowProducingStatus.OK) {
                 return Enums.TaskProducingStatus.PRODUCING_ERROR;
             }
             return Enums.TaskProducingStatus.OK;
@@ -265,14 +265,14 @@ public class FlowService {
     public TaskProducingResult produceAllTasks(boolean isPersist, Flow flow, FlowInstance flowInstance ) {
         TaskProducingResult result = new TaskProducingResult();
         if (isPersist && flowInstance.getExecState()!=Enums.FlowInstanceExecState.PRODUCING.code) {
-            result.flowValidateStatus = Enums.FlowValidateStatus.ALREADY_PRODUCED_ERROR;
+            result.flowValidateStatus = EnumsApi.FlowValidateStatus.ALREADY_PRODUCED_ERROR;
             return result;
         }
         long mills = System.currentTimeMillis();
         result.flowValidateStatus = validate(flow);
         log.info("Flow was validated for "+(System.currentTimeMillis() - mills) + " ms.");
-        if (result.flowValidateStatus != Enums.FlowValidateStatus.OK &&
-                result.flowValidateStatus != Enums.FlowValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
+        if (result.flowValidateStatus != EnumsApi.FlowValidateStatus.OK &&
+                result.flowValidateStatus != EnumsApi.FlowValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
             log.error("#701.07 Can't produce tasks, error: {}", result.flowValidateStatus);
             toStopped(isPersist, flowInstance.getId());
             return result;
@@ -286,19 +286,19 @@ public class FlowService {
         return result;
     }
 
-    public Enums.FlowValidateStatus validate(Flow flow) {
+    public EnumsApi.FlowValidateStatus validate(Flow flow) {
         if (flow==null) {
-            return Enums.FlowValidateStatus.NO_ANY_PROCESSES_ERROR;
+            return EnumsApi.FlowValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
         if (StringUtils.isBlank(flow.code)) {
-            return Enums.FlowValidateStatus.FLOW_CODE_EMPTY_ERROR;
+            return EnumsApi.FlowValidateStatus.FLOW_CODE_EMPTY_ERROR;
         }
         if (StringUtils.isBlank(flow.params)) {
-            return Enums.FlowValidateStatus.FLOW_PARAMS_EMPTY_ERROR;
+            return EnumsApi.FlowValidateStatus.FLOW_PARAMS_EMPTY_ERROR;
         }
         FlowYaml flowYaml = flowYamlUtils.toFlowYaml(flow.params);
         if (flowYaml.getProcesses().isEmpty()) {
-            return Enums.FlowValidateStatus.NO_ANY_PROCESSES_ERROR;
+            return EnumsApi.FlowValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
 /*
         if (StringUtils.isBlank(flowYaml.getProcesses().get(0).inputType)) {
@@ -314,17 +314,17 @@ public class FlowService {
         for (int i = 0; i < processes.size(); i++) {
             Process process = processes.get(i);
             if (i+1<processes.size() && StringUtils.isBlank(process.getOutputType())) {
-                return Enums.FlowValidateStatus.OUTPUT_TYPE_EMPTY_ERROR;
+                return EnumsApi.FlowValidateStatus.OUTPUT_TYPE_EMPTY_ERROR;
             }
             lastProcess = process;
             if (StringUtils.containsWhitespace(process.code) || StringUtils.contains(process.code, ',') ){
-                return Enums.FlowValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
+                return EnumsApi.FlowValidateStatus.PROCESS_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
             if (StringUtils.containsWhitespace(process.inputResourceCode) || StringUtils.contains(process.inputResourceCode, ',') ){
-                return Enums.FlowValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
+                return EnumsApi.FlowValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
             if (StringUtils.containsWhitespace(process.outputResourceCode) || StringUtils.contains(process.outputResourceCode, ',') ){
-                return Enums.FlowValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
+                return EnumsApi.FlowValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
             ProcessValidator processValidator;
             if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
@@ -337,24 +337,24 @@ public class FlowService {
             else {
                 return PROCESS_VALIDATOR_NOT_FOUND_ERROR;
             }
-            Enums.FlowValidateStatus status = processValidator.validate(flow, process, i==0);
+            EnumsApi.FlowValidateStatus status = processValidator.validate(flow, process, i==0);
             if (status!=null) {
                 return status;
             }
 
             if (process.parallelExec && (process.snippetCodes==null || process.snippetCodes.size()<2)) {
-                return Enums.FlowValidateStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
+                return EnumsApi.FlowValidateStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
             }
         }
         if (experimentPresent && lastProcess.type!= EnumsApi.ProcessType.EXPERIMENT) {
-            return  Enums.FlowValidateStatus.EXPERIMENT_MUST_BE_LAST_PROCESS_ERROR;
+            return  EnumsApi.FlowValidateStatus.EXPERIMENT_MUST_BE_LAST_PROCESS_ERROR;
         }
-        return Enums.FlowValidateStatus.OK;
+        return EnumsApi.FlowValidateStatus.OK;
     }
 
     @Data
     public static class ProduceTaskResult {
-        public Enums.FlowProducingStatus status;
+        public EnumsApi.FlowProducingStatus status;
         public List<String> outputResourceCodes;
         public int numberOfTasks;
     }
@@ -365,7 +365,7 @@ public class FlowService {
         InputResourceParam resourceParam = InputResourceParamUtils.to(inputResourceParam);
         List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParam.getAllPoolCodes());
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
-            result.flowProducingStatus = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
+            result.flowProducingStatus = EnumsApi.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
             return result;
         }
 
@@ -379,7 +379,7 @@ public class FlowService {
         fi.setValid(true);
 
         flowInstanceRepository.save(fi);
-        result.flowProducingStatus = Enums.FlowProducingStatus.OK;
+        result.flowProducingStatus = EnumsApi.FlowProducingStatus.OK;
         result.flowInstance = fi;
 
         return result;
@@ -402,10 +402,10 @@ public class FlowService {
         flowInstanceRepository.save(fi);
     }
 
-    public Enums.FlowProducingStatus toProducing(FlowInstance fi) {
+    public EnumsApi.FlowProducingStatus toProducing(FlowInstance fi) {
         fi.setExecState(Enums.FlowInstanceExecState.PRODUCING.code);
         flowInstanceRepository.save(fi);
-        return Enums.FlowProducingStatus.OK;
+        return EnumsApi.FlowProducingStatus.OK;
     }
 
     @Data
@@ -413,12 +413,12 @@ public class FlowService {
     public static class ResourcePools {
         public final Map<String, List<String>> collectedInputs = new HashMap<>();
         public Map<String, String> inputStorageUrls=null;
-        public Enums.FlowProducingStatus status = Enums.FlowProducingStatus.OK;
+        public EnumsApi.FlowProducingStatus status = EnumsApi.FlowProducingStatus.OK;
 
         public ResourcePools(List<SimpleCodeAndStorageUrl> initialInputResourceCodes) {
 
             if (initialInputResourceCodes==null || initialInputResourceCodes.isEmpty()) {
-                status = Enums.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
+                status = EnumsApi.FlowProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
                 return;
             }
 
@@ -462,7 +462,7 @@ public class FlowService {
         log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
 
         ResourcePools pools = new ResourcePools(initialInputResourceCodes);
-        if (pools.status!= Enums.FlowProducingStatus.OK) {
+        if (pools.status!= EnumsApi.FlowProducingStatus.OK) {
             result.flowProducingStatus = pools.status;
             return;
         }
@@ -478,7 +478,7 @@ public class FlowService {
                 }
                 if (newKey==null) {
                     log.error("#701.09 Can't find key for pool code {}", key );
-                    result.flowProducingStatus = Enums.FlowProducingStatus.ERROR;
+                    result.flowProducingStatus = EnumsApi.FlowProducingStatus.ERROR;
                     return;
                 }
                 collectedInputs.put(newKey, value);
@@ -494,7 +494,7 @@ public class FlowService {
         result.flowYaml = flowYamlUtils.toFlowYaml(flow.getParams());
         flow.clean = result.flowYaml.clean;
         int idx = Consts.TASK_ORDER_START_VALUE;
-        result.flowProducingStatus = Enums.FlowProducingStatus.OK;
+        result.flowProducingStatus = EnumsApi.FlowProducingStatus.OK;
         for (Process process : result.flowYaml.getProcesses()) {
             process.order = idx++;
 
@@ -514,7 +514,7 @@ public class FlowService {
                     throw new IllegalStateException("#701.11 Unknown process type");
             }
             result.numberOfTasks += produceTaskResult.numberOfTasks;
-            if (produceTaskResult.status != Enums.FlowProducingStatus.OK) {
+            if (produceTaskResult.status != EnumsApi.FlowProducingStatus.OK) {
                 result.flowProducingStatus = produceTaskResult.status;
                 return;
             }
@@ -527,7 +527,7 @@ public class FlowService {
         }
         toProduced(isPersist, result, fi);
 
-        result.flowProducingStatus = Enums.FlowProducingStatus.OK;
+        result.flowProducingStatus = EnumsApi.FlowProducingStatus.OK;
 
     }
 

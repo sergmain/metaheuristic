@@ -17,10 +17,10 @@
 
 package aiai.ai.launchpad.flow;
 
-import aiai.ai.Enums;
+import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
 
 public interface ProcessValidator {
-    Enums.FlowValidateStatus validate(Flow flow, Process process, boolean isFirst);
+    EnumsApi.FlowValidateStatus validate(Flow flow, Process process, boolean isFirst);
 }

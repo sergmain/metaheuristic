@@ -430,7 +430,7 @@ public class ExperimentService {
         e = experimentCache.save(e);
     }
 
-    public Enums.FlowProducingStatus produceTasks(
+    public EnumsApi.FlowProducingStatus produceTasks(
             boolean isPersist, Flow flow, FlowInstance flowInstance, Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls, IntHolder numberOfTasks) {
         if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
@@ -471,7 +471,7 @@ public class ExperimentService {
             eventMulticaster.addApplicationListener(listener);
             FlowInstance instance = flowInstanceRepository.findById(flowInstance.getId()).orElse(null);
             if (instance==null) {
-                return Enums.FlowProducingStatus.FLOW_INSTANCE_WAS_DELETED;
+                return EnumsApi.FlowProducingStatus.FLOW_INSTANCE_WAS_DELETED;
             }
 
             for (Object[] feature : features) {
@@ -489,7 +489,7 @@ public class ExperimentService {
                     Task task = null;
                     for (ExperimentSnippet experimentSnippet : experimentSnippets) {
                         if (boolHolder.value) {
-                            return Enums.FlowProducingStatus.FLOW_INSTANCE_WAS_DELETED;
+                            return EnumsApi.FlowProducingStatus.FLOW_INSTANCE_WAS_DELETED;
                         }
                         prevTask = task;
 
@@ -605,7 +605,7 @@ public class ExperimentService {
                         if (isPersist) {
                             task = taskPersistencer.setParams(task.getId(), currTaskParams);
                             if (task == null) {
-                                return Enums.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
+                                return EnumsApi.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
                         }
                     }
@@ -624,14 +624,14 @@ public class ExperimentService {
             Experiment experimentTemp = experimentCache.findById(experiment.getId());
             if (experimentTemp == null) {
                 log.warn("Experiment for id {} doesn't exist anymore", experiment.getId());
-                return Enums.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
+                return EnumsApi.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
             }
             experimentTemp.setNumberOfTask(totalVariants);
             experimentTemp.setAllTaskProduced(true);
             //noinspection UnusedAssignment
             experimentTemp = experimentCache.save(experimentTemp);
         }
-        return Enums.FlowProducingStatus.OK;
+        return EnumsApi.FlowProducingStatus.OK;
     }
 
     private String getModelFilename(Task task) {

@@ -79,24 +79,24 @@ public class TestFlowService extends PreparingFlow {
         assertFalse(flowYaml.processes.isEmpty());
         assertEquals(EnumsApi.ProcessType.EXPERIMENT, flowYaml.processes.get(flowYaml.processes.size()-1).type);
 
-        Enums.FlowValidateStatus status = flowService.validate(flow);
-        assertEquals(Enums.FlowValidateStatus.OK, status);
+        EnumsApi.FlowValidateStatus status = flowService.validate(flow);
+        assertEquals(EnumsApi.FlowValidateStatus.OK, status);
 
         FlowService.TaskProducingResult result = flowService.createFlowInstance(flow, InputResourceParamUtils.toString(inputResourceParam));
         flowInstance = result.flowInstance;
 
-        assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
+        assertEquals(EnumsApi.FlowProducingStatus.OK, result.flowProducingStatus);
         assertNotNull(flowInstance);
         assertEquals(Enums.FlowInstanceExecState.NONE.code, flowInstance.execState);
 
 
-        Enums.FlowProducingStatus producingStatus = flowService.toProducing(flowInstance);
-        assertEquals(Enums.FlowProducingStatus.OK, producingStatus);
+        EnumsApi.FlowProducingStatus producingStatus = flowService.toProducing(flowInstance);
+        assertEquals(EnumsApi.FlowProducingStatus.OK, producingStatus);
         assertEquals(Enums.FlowInstanceExecState.PRODUCING.code, flowInstance.execState);
 
         result = flowService.produceAllTasks(true, flow, flowInstance);
         flowInstance = result.flowInstance;
-        assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
+        assertEquals(EnumsApi.FlowProducingStatus.OK, result.flowProducingStatus);
         assertEquals(Enums.FlowInstanceExecState.PRODUCED.code, flowInstance.execState);
 
         experiment = experimentCache.findById(experiment.getId());

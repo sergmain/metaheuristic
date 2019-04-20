@@ -18,7 +18,6 @@
 package aiai.ai.launchpad.file_process;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.*;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.flow.FlowService;
@@ -68,7 +67,7 @@ public class FileProcessService {
             for (String snippetCode : process.snippetCodes) {
                 SnippetVersion sv = SnippetVersion.from(snippetCode);
                 if (sv==null) {
-                    result.status = Enums.FlowProducingStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
+                    result.status = EnumsApi.FlowProducingStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
                     result.numberOfTasks = 0;
                     return result;
                 }
@@ -85,7 +84,7 @@ public class FileProcessService {
             String snippetCode = process.snippetCodes.get(0);
             SnippetVersion sv = SnippetVersion.from(snippetCode);
             if (sv==null) {
-                result.status = Enums.FlowProducingStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
+                result.status = EnumsApi.FlowProducingStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
                 result.numberOfTasks = 0;
                 return result;
             }
@@ -97,7 +96,7 @@ public class FileProcessService {
                 createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
             }
         }
-        result.status = Enums.FlowProducingStatus.OK;
+        result.status = EnumsApi.FlowProducingStatus.OK;
         result.numberOfTasks = result.outputResourceCodes.size();
         return result;
     }

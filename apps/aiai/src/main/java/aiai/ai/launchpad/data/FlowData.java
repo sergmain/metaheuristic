@@ -17,9 +17,9 @@
 
 package aiai.ai.launchpad.data;
 
-import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.api.v1.EnumsApi;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -42,9 +42,9 @@ public class FlowData {
     @NoArgsConstructor
     public static class FlowResult extends BaseDataClass {
         public Flow flow;
-        public Enums.FlowValidateStatus status = Enums.FlowValidateStatus.NOT_VERIFIED_YET;
+        public EnumsApi.FlowValidateStatus status = EnumsApi.FlowValidateStatus.NOT_VERIFIED_YET;
 
-        public FlowResult(String errorMessage, Enums.FlowValidateStatus status) {
+        public FlowResult(String errorMessage, EnumsApi.FlowValidateStatus status) {
             this.status = status;
             this.errorMessages = Collections.singletonList(errorMessage);
         }
@@ -92,7 +92,7 @@ public class FlowData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class FlowValidation extends BaseDataClass {
-        public Enums.FlowValidateStatus status;
+        public EnumsApi.FlowValidateStatus status;
     }
 
     /*

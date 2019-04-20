@@ -27,6 +27,7 @@ import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.FlowRepository;
 import aiai.ai.utils.CollectionUtils;
 import aiai.ai.utils.ControllerUtils;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -65,7 +66,7 @@ public class FlowTopLevelService {
         if (flow == null) {
             return new FlowData.FlowResult(
                     "#560.01 flow wasn't found, flowId: " + id,
-                    Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
+                    EnumsApi.FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
         }
         return new FlowData.FlowResult(flow);
     }
@@ -74,7 +75,7 @@ public class FlowTopLevelService {
         final Flow flow = flowCache.findById(id);
         if (flow == null) {
             return new FlowData.FlowResult("#560.02 flow wasn't found, flowId: " + id,
-                    Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
+                    EnumsApi.FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
         }
         FlowData.FlowResult result = new FlowData.FlowResult(flow);
         FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
@@ -93,7 +94,7 @@ public class FlowTopLevelService {
         if (flow == null) {
             return new FlowData.FlowResult(
                     "#560.10 flow wasn't found, flowId: " + flowModel.getId(),
-                    Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
+                    EnumsApi.FlowValidateStatus.FLOW_NOT_FOUND_ERROR );
         }
         flow.setCode(flowModel.getCode());
         flow.setParams(flowModel.getParams());
@@ -153,14 +154,14 @@ public class FlowTopLevelService {
 
         // validate the flow
         FlowData.FlowValidation flowValidation = flowService.validateInternal(result.flow);
-        if (flowValidation.status != Enums.FlowValidateStatus.OK ) {
+        if (flowValidation.status != EnumsApi.FlowValidateStatus.OK ) {
             result.errorMessages = flowValidation.errorMessages;
             return result;
         }
 
         FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(result.flow,
                 StringUtils.isNotBlank(inputResourceParams) ? inputResourceParams : FlowService.asInputResourceParams(poolCode));
-        if (producingResult.flowProducingStatus!=Enums.FlowProducingStatus.OK) {
+        if (producingResult.flowProducingStatus!= EnumsApi.FlowProducingStatus.OK) {
             result.addErrorMessage("#560.72 Error creating flowInstance: " + producingResult.flowProducingStatus);
             return result;
         }
@@ -174,17 +175,17 @@ public class FlowTopLevelService {
 
         // validate the flow + the flow instance
         flowValidation = flowService.validateInternal(result.flow);
-        if (flowValidation.status != Enums.FlowValidateStatus.OK ) {
+        if (flowValidation.status != EnumsApi.FlowValidateStatus.OK ) {
             result.errorMessages = flowValidation.errorMessages;
             return result;
         }
         result.flow = flowCache.findById(flowId);
 
         FlowService.TaskProducingResult countTasks = new FlowService.TaskProducingResult();
-        countTasks.flowValidateStatus = Enums.FlowValidateStatus.OK;
+        countTasks.flowValidateStatus = EnumsApi.FlowValidateStatus.OK;
 
         flowService.produceTasks(false, countTasks, result.flow, producingResult.flowInstance);
-        if (countTasks.flowProducingStatus != Enums.FlowProducingStatus.OK) {
+        if (countTasks.flowProducingStatus != EnumsApi.FlowProducingStatus.OK) {
             flowService.changeValidStatus(producingResult.flowInstance, false);
             result.addErrorMessage("#560.77 flow producing was failed, status: " + countTasks.flowProducingStatus);
             return result;

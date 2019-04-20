@@ -21,6 +21,7 @@ import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.ExperimentFeature;
+import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
@@ -82,18 +83,18 @@ public abstract class FeatureMethods extends PreparingFlow {
     }
 
     protected void produceTasks() {
-        Enums.FlowValidateStatus status = flowService.validate(flow);
-        assertEquals(Enums.FlowValidateStatus.OK, status);
+        EnumsApi.FlowValidateStatus status = flowService.validate(flow);
+        assertEquals(EnumsApi.FlowValidateStatus.OK, status);
 
         FlowService.TaskProducingResult result = flowService.createFlowInstance(flow, InputResourceParamUtils.toString(inputResourceParam));
         flowInstance = result.flowInstance;
-        assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
+        assertEquals(EnumsApi.FlowProducingStatus.OK, result.flowProducingStatus);
         assertNotNull(flowInstance);
         assertEquals(Enums.FlowInstanceExecState.NONE.code, flowInstance.execState);
 
 
-        Enums.FlowProducingStatus producingStatus = flowService.toProducing(flowInstance);
-        assertEquals(Enums.FlowProducingStatus.OK, producingStatus);
+        EnumsApi.FlowProducingStatus producingStatus = flowService.toProducing(flowInstance);
+        assertEquals(EnumsApi.FlowProducingStatus.OK, producingStatus);
         assertEquals(Enums.FlowInstanceExecState.PRODUCING.code, flowInstance.execState);
 
         List<Object[]> tasks01 = taskCollector.getTasks(result.flowInstance);
@@ -109,7 +110,7 @@ public abstract class FeatureMethods extends PreparingFlow {
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
         flowInstance = result.flowInstance;
-        assertEquals(Enums.FlowProducingStatus.OK, result.flowProducingStatus);
+        assertEquals(EnumsApi.FlowProducingStatus.OK, result.flowProducingStatus);
         assertEquals(Enums.FlowInstanceExecState.PRODUCED.code, flowInstance.execState);
 
         experiment = experimentCache.findById(experiment.getId());

@@ -17,11 +17,11 @@
 
 package aiai.ai.launchpad.flow;
 
-import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.utils.ControllerUtils;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -76,7 +76,7 @@ public class FlowController {
     @GetMapping(value = "/flow-edit/{id}")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         FlowData.FlowResult flowResultRest = flowTopLevelService.getFlow(id);
-        if (flowResultRest.status==Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
+        if (flowResultRest.status== EnumsApi.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
@@ -88,7 +88,7 @@ public class FlowController {
     @GetMapping(value = "/flow-validate/{id}")
     public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         FlowData.FlowResult flowResultRest = flowTopLevelService.validateFlow(id);
-        if (flowResultRest.status==Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
+        if (flowResultRest.status== EnumsApi.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
@@ -107,7 +107,7 @@ public class FlowController {
             return "launchpad/flow/flow-add";
         }
 
-        if (flowResultRest.status==Enums.FlowValidateStatus.OK ) {
+        if (flowResultRest.status== EnumsApi.FlowValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
         return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
@@ -121,7 +121,7 @@ public class FlowController {
             return "redirect:/launchpad/flow/flow-edit/"+flowResultRest.flow.getId();
         }
 
-        if (flowResultRest.status==Enums.FlowValidateStatus.OK ) {
+        if (flowResultRest.status== EnumsApi.FlowValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
         return "redirect:/launchpad/flow/flow-edit/"+flowResultRest.flow.getId();
@@ -131,7 +131,7 @@ public class FlowController {
     @GetMapping("/flow-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         FlowData.FlowResult flowResultRest = flowTopLevelService.getFlow(id);
-        if (flowResultRest.status==Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
+        if (flowResultRest.status== EnumsApi.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }
@@ -167,7 +167,7 @@ public class FlowController {
     @GetMapping(value = "/flow-instance-add/{id}")
     public String flowInstanceAdd(@ModelAttribute("result") FlowData.FlowResult result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         FlowData.FlowResult flowResultRest = flowTopLevelService.getFlow(id);
-        if (flowResultRest.status==Enums.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
+        if (flowResultRest.status== EnumsApi.FlowValidateStatus.FLOW_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", flowResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;
         }

@@ -17,7 +17,6 @@
 
 package aiai.ai.flow;
 
-import aiai.ai.Enums;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.preparing.PreparingFlow;
@@ -108,8 +107,8 @@ public class TestFeatures extends PreparingFlow {
 
     @Test
     public void testFeatures() {
-        Enums.FlowValidateStatus status = flowService.validate(flow);
-        assertEquals(Enums.FlowValidateStatus.OK, status);
+        EnumsApi.FlowValidateStatus status = flowService.validate(flow);
+        assertEquals(EnumsApi.FlowValidateStatus.OK, status);
 
 
         // produce artifacts - features, sequences,...

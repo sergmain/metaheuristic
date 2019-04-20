@@ -24,8 +24,8 @@ import aiai.ai.exceptions.StoreNewFileException;
 import aiai.ai.exceptions.StoreNewFileWithRedirectException;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
-import aiai.ai.launchpad.beans.TaskImpl;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
@@ -214,7 +214,7 @@ public class ProcessResourceController {
 
         // validate the flow
         FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
-        if (flowValidation.status != Enums.FlowValidateStatus.OK ) {
+        if (flowValidation.status != EnumsApi.FlowValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.37 validation of flow was failed, status: " + flowValidation.status);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
@@ -400,7 +400,7 @@ public class ProcessResourceController {
 
         final String paramYaml = asInputResourceParams(mainPoolCode, attachPoolCode, attachments);
         FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, paramYaml);
-        if (producingResult.flowProducingStatus!= Enums.FlowProducingStatus.OK) {
+        if (producingResult.flowProducingStatus!= EnumsApi.FlowProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating flowInstance: " + producingResult.flowProducingStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
@@ -419,14 +419,14 @@ public class ProcessResourceController {
 
         // validate the flow + the flow instance
         FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
-        if (flowValidation.status != Enums.FlowValidateStatus.OK ) {
+        if (flowValidation.status != EnumsApi.FlowValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.55 validation of flow was failed, status: " + flowValidation.status);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
         FlowService.TaskProducingResult countTasks = new FlowService.TaskProducingResult();
         flowService.produceTasks(false, countTasks, flow, producingResult.flowInstance);
-        if (countTasks.flowProducingStatus != Enums.FlowProducingStatus.OK) {
+        if (countTasks.flowProducingStatus != EnumsApi.FlowProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.60 validation of flow was failed, status: " + countTasks.flowValidateStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }

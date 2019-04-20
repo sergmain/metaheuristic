@@ -17,7 +17,7 @@
 
 package aiai.ai.launchpad.file_process;
 
-import aiai.ai.Enums;
+import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.Snippet;
@@ -40,25 +40,25 @@ public class FileProcessValidator implements ProcessValidator {
     }
 
     @Override
-    public Enums.FlowValidateStatus validate(Flow flow, Process process, boolean isFirst) {
+    public EnumsApi.FlowValidateStatus validate(Flow flow, Process process, boolean isFirst) {
         if (process.getSnippetCodes() == null || process.getSnippetCodes().isEmpty()) {
-            return Enums.FlowValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
+            return EnumsApi.FlowValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }
         for (String snippetCode : process.snippetCodes) {
             SnippetVersion sv = SnippetVersion.from(snippetCode);
             if (sv==null) {
                 log.error("#175.01 Wrong format of snippet code: {}, process: {}", snippetCode, process);
-                return Enums.FlowValidateStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
+                return EnumsApi.FlowValidateStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
             }
             Snippet snippet = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
             if (snippet==null) {
                 log.error("#175.07 Snippet wasn't found for code: {}, process: {}", snippetCode, process);
-                return Enums.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+                return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }
 
         if (!process.parallelExec && process.snippetCodes.size()>1) {
-            return Enums.FlowValidateStatus.TOO_MANY_SNIPPET_CODES_ERROR;
+            return EnumsApi.FlowValidateStatus.TOO_MANY_SNIPPET_CODES_ERROR;
         }
 
         return null;

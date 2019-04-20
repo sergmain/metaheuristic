@@ -19,6 +19,7 @@ package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Enums;
 import aiai.ai.Monitoring;
+import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.Flow;
@@ -71,7 +72,7 @@ public class ExperimentProcessService {
         e = experimentCache.findById(e.getId());
         FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
         if (e==null) {
-            result.status = Enums.FlowProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
+            result.status = EnumsApi.FlowProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
             return result;
         }
 
@@ -87,14 +88,14 @@ public class ExperimentProcessService {
             InputResourceParam resourceParams = InputResourceParamUtils.to(flowInstance.inputResourceParam);
             List<String> list = resourceParams.getPoolCodes().get(FEATURE_POOL_CODE_TYPE);
             if (CollectionUtils.isEmpty(list)) {
-                result.status = Enums.FlowProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
+                result.status = EnumsApi.FlowProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
                 return result;
             }
             features = new ArrayList<>();
             for (String poolCode : list) {
                 List<String> newResources = collectedInputs.get(poolCode);
                 if (newResources==null) {
-                    result.status = Enums.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                    result.status = EnumsApi.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
                 features.addAll(newResources);
@@ -107,8 +108,8 @@ public class ExperimentProcessService {
                 );
 
                 FlowService.ResourcePools metaPools = new FlowService.ResourcePools(initialInputResourceCodes);
-                if (metaPools.status != Enums.FlowProducingStatus.OK) {
-                    result.status = Enums.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                if (metaPools.status != EnumsApi.FlowProducingStatus.OK) {
+                    result.status = EnumsApi.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
                 pools.merge(metaPools);
@@ -116,7 +117,7 @@ public class ExperimentProcessService {
 
             features = collectedInputs.get(meta.getValue());
             if (features==null) {
-                result.status = Enums.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                result.status = EnumsApi.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                 return result;
             }
         }
@@ -129,12 +130,12 @@ public class ExperimentProcessService {
 
         Monitoring.log("##051", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        Enums.FlowProducingStatus status = experimentService.produceTasks(
+        EnumsApi.FlowProducingStatus status = experimentService.produceTasks(
                 isPersist, flow, flowInstance, process, e, collectedInputs, inputStorageUrls, intHolder);
 
         log.info("experimentService.produceTasks() was done for " + (System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##071", Enums.Monitor.MEMORY);
-        if (status!= Enums.FlowProducingStatus.OK) {
+        if (status!= EnumsApi.FlowProducingStatus.OK) {
             log.error("Tasks weren't produced successfully.");
         }
 
