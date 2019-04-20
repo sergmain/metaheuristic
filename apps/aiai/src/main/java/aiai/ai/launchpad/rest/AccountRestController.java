@@ -57,13 +57,13 @@ public class AccountRestController {
     }
 
     @PostMapping("/account-edit-commit")
-    public AccountData.AccountResult editFormCommit(@RequestBody Account account) {
-        return accountTopLevelService.editFormCommit(account);
+    public OperationStatusRest editFormCommit(Long id, String publicName, boolean enabled) {
+        return accountTopLevelService.editFormCommit(id, publicName, enabled);
     }
 
     @PostMapping("/account-password-edit-commit")
-    public AccountData.AccountResult passwordEditFormCommit(@RequestBody Account account) {
-        return accountTopLevelService.passwordEditFormCommit(account);
+    public OperationStatusRest passwordEditFormCommit(Long id, String password, String password2) {
+        return accountTopLevelService.passwordEditFormCommit(id, password, password2);
     }
 
 }

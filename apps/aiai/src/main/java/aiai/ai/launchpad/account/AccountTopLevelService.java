@@ -20,31 +20,19 @@ package aiai.ai.launchpad.account;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Account;
-import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.data.AccountData;
-import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.repositories.AccountRepository;
 import aiai.ai.utils.ControllerUtils;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 
-import java.util.Optional;
 import java.util.UUID;
 
-@SuppressWarnings("Duplicates")
 @Slf4j
 @Profile("launchpad")
 @Service
@@ -108,33 +96,35 @@ public class AccountTopLevelService {
         return new AccountData.AccountResult(account);
     }
 
-    public AccountData.AccountResult editFormCommit(Account acc) {
-        Account account = accountRepository.findById(acc.id).orElse(null);
+    public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled) {
+        Account account = accountRepository.findById(accountId).orElse(null);
         if (account == null) {
-            return new AccountData.AccountResult("#565.01 account wasn't found, accountId: " + acc.id);
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#565.01 account wasn't found, accountId: " + accountId);
         }
-        account.setEnabled(account.isEnabled());
-        account.setPublicName(account.getPublicName());
+        account.setEnabled(enabled);
+        account.setPublicName(publicName);
         accountRepository.save(account);
-        return new AccountData.AccountResult(account);
+        return new OperationStatusRest(Enums.OperationStatus.OK,"The data of account was changed successfully", null);
     }
 
-    public AccountData.AccountResult passwordEditFormCommit(Account account) {
-        Account a = accountRepository.findById(account.id).orElse(null);
+    public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2) {
+        Account a = accountRepository.findById(accountId).orElse(null);
         if (a == null) {
-            return new AccountData.AccountResult("#565.01 account wasn't found, accountId: " + account.id);
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#565.01 account wasn't found, accountId: " + accountId);
         }
-        if (StringUtils.isBlank(account.getPassword()) || StringUtils.isBlank(account.getPassword2())) {
-            return new AccountData.AccountResult("#237.11 Both passwords must be not null");
+        a.setPassword(password);
+        a.setPassword2(password2);
+        if (StringUtils.isBlank(a.getPassword()) || StringUtils.isBlank(a.getPassword2())) {
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#237.11 Both passwords must be not null");
         }
 
-        if (!account.getPassword().equals(account.getPassword2())) {
-            return new AccountData.AccountResult("#237.14 Both passwords must be equal");
+        if (!a.getPassword().equals(a.getPassword2())) {
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#237.14 Both passwords must be equal");
         }
-        a.setPassword(passwordEncoder.encode(account.getPassword()));
+        a.setPassword(passwordEncoder.encode(a.getPassword()));
         accountRepository.save(a);
 
-        return new AccountData.AccountResult(a);
+        return new OperationStatusRest(Enums.OperationStatus.OK,"The password was changed successfully", null);
     }
 
 

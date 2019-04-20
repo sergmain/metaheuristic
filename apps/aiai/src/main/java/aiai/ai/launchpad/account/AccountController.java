@@ -33,6 +33,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 @SuppressWarnings("Duplicates")
 @Controller
@@ -96,24 +97,44 @@ public class AccountController {
             return "redirect:/launchpad/account/accounts";
         }
         accountResult.account.setPassword(null);
+        accountResult.account.setPassword2(null);
         model.addAttribute("account", accountResult.account);
         return "launchpad/account/account-edit";
     }
 
     @PostMapping("/account-edit-commit")
-    public String editFormCommit(Account accountModel, final RedirectAttributes redirectAttributes) {
-        AccountData.AccountResult accountResult = accountTopLevelService.editFormCommit(accountModel);
-        if (accountResult.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+    public String editFormCommit(Long id, String publicName, boolean enabled, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = accountTopLevelService.editFormCommit(id, publicName, enabled);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+        }
+        if (operationStatusRest.isInfoMessages()) {
+            redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
         }
         return "redirect:/launchpad/account/accounts";
     }
 
-    @PostMapping("/account-password-edit-commit")
-    public String passwordEditFormCommit(Model model, Account account, final RedirectAttributes redirectAttributes) {
-        AccountData.AccountResult accountResult = accountTopLevelService.passwordEditFormCommit(account);
+    @GetMapping(value = "/account-password-edit/{id}")
+    public String passwordEdit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes){
+        AccountData.AccountResult accountResult = accountTopLevelService.getAccount(id);
         if (accountResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", accountResult.errorMessages);
+            return "redirect:/launchpad/account/accounts";
+        }
+        accountResult.account.setPassword(null);
+        accountResult.account.setPassword2(null);
+        model.addAttribute("account", accountResult.account);
+        return "launchpad/account/account-password-edit";
+    }
+
+    @PostMapping("/account-password-edit-commit")
+    public String passwordEditFormCommit(Long id, String password, String password2, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = accountTopLevelService.passwordEditFormCommit(id, password, password2);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+        }
+        if (operationStatusRest.isInfoMessages()) {
+            redirectAttributes.addFlashAttribute("infoMessages", operationStatusRest.infoMessages);
         }
         return "redirect:/launchpad/account/accounts";
     }

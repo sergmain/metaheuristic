@@ -46,4 +46,14 @@ public class OperationStatusRest extends BaseDataClass {
         this.errorMessages = Collections.singletonList(errorMessage);
     }
 
+    public OperationStatusRest(Enums.OperationStatus status, String infoMessage, String errorMessage) {
+        this.status = status;
+        if (infoMessage!=null) {
+            this.infoMessages = List.of(infoMessage);
+        }
+        if (errorMessage!=null) {
+            this.errorMessages = List.of(errorMessage);
+        }
+    }
+
 }

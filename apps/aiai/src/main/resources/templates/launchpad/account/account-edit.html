@@ -7,28 +7,21 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New message</h1>
 
-        <!--/*@thymesVar id="account" type="aiai.beans.Account"*/-->
+        <!--/*@thymesVar id="account" type="aiai.ai.launchpad.beans.Account"*/-->
         <p th:text="${'Username: ' + account.username}">username</p>
 
         <form class="pure-form pure-form-stacked" th:object="${account}" method="post" action="#" th:method="POST"
               th:action="@{/launchpad/account/account-edit-commit}" accept-charset="UTF-8" id="account-form"
               name="f">
-            <input type="hidden" th:field="*{id}"/>
-            <input type="hidden" th:field="*{version}"/>
+            <input type="hidden" th:name="id" th:field="${account.id}"/>
             <fieldset>
 
-<!--
-                <label for="text">Username</label>
-                <input name="text" id="text" type="text" placeholder="text" th:field="*{username}">
-                <span class="pure-form">This is a required field.</span>
--->
-
                 <label for="enabled">Is account enabled?</label>
-                <input name="enabled" id="enabled" type="checkbox" placeholder="checkbox" th:checked="*{enabled}">
+                <input name="enabled" id="enabled" type="checkbox" placeholder="checkbox" th:checked="${account.enabled}">
                 <span class="pure-form-message">This is a required field.</span>
 
                 <label for="publicName">Public name</label>
-                <input name="publicName" id="publicName" type="text" placeholder="text" th:field="*{publicName}">
+                <input name="publicName" id="publicName" type="text" placeholder="text" th:field="${account.publicName}">
                 <span class="pure-form-message">This is a required field.</span>
 
                 <table>

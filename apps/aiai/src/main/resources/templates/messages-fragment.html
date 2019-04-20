@@ -1,6 +1,7 @@
 <div th:remove="tag" xmlns:th="http://www.thymeleaf.org">
 
-    <p th:if="${(infoMessages==null or infoMessages.isEmpty()) and (errorMessage==null or errorMessage.isEmpty())}">&nbsp;</p>
+    <p th:if="${(infoMessages!=null and !infoMessages.isEmpty()) or (errorMessage!=null and !errorMessage.isEmpty())}">&nbsp;</p>
+
     <p class="info-msg" th:if="${infoMessages!=null}" th:each="info : ${infoMessages}" th:text="${info}"></p>
     <p class="error-msg" th:if="${errorMessage!=null}" th:each="errMsg : ${errorMessage}" th:text="${errMsg}"></p>
 
