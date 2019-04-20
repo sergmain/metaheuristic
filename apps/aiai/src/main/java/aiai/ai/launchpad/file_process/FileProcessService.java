@@ -19,11 +19,8 @@ package aiai.ai.launchpad.file_process;
 
 import aiai.ai.Consts;
 import aiai.ai.Enums;
-import aiai.ai.launchpad.Process;
-import aiai.ai.launchpad.beans.Flow;
-import aiai.ai.launchpad.beans.FlowInstance;
-import aiai.ai.launchpad.beans.Snippet;
-import aiai.ai.launchpad.beans.Task;
+import aiai.ai.launchpad.beans.*;
+import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.flow.FlowUtils;
 import aiai.ai.launchpad.repositories.SnippetRepository;
@@ -31,6 +28,7 @@ import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.EnumsApi;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -108,9 +106,9 @@ public class FileProcessService {
             Flow flow, FlowInstance flowInstance, Process process,
             String outputResourceCode,
             String snippetCode, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls) {
-        if (process.type!= Enums.ProcessType.FILE_PROCESSING) {
+        if (process.type!= EnumsApi.ProcessType.FILE_PROCESSING) {
             throw new IllegalStateException("#171.01 Wrong type of process, " +
-                    "expected: "+ Enums.ProcessType.FILE_PROCESSING+", " +
+                    "expected: "+ EnumsApi.ProcessType.FILE_PROCESSING+", " +
                     "actual: " + process.type);
         }
         SnippetVersion sv = SnippetVersion.from(snippetCode);
@@ -147,7 +145,7 @@ public class FileProcessService {
 
         String taskParams = TaskParamYamlUtils.toString(yaml);
 
-        Task task = new Task();
+        TaskImpl task = new TaskImpl();
         task.setFlowInstanceId(flowInstance.getId());
         task.setOrder(process.order);
         task.setParams(taskParams);

@@ -18,11 +18,12 @@
 package aiai.ai.flow;
 
 import aiai.ai.Enums;
-import aiai.ai.launchpad.Process;
+import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.utils.holders.IntHolder;
 import aiai.ai.yaml.flow.FlowYaml;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,7 +50,7 @@ public class TestFeatures extends PreparingFlow {
         FlowYaml flowYaml = new FlowYaml();
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
@@ -61,7 +62,7 @@ public class TestFeatures extends PreparingFlow {
         }
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "dataset processing";
             p.code = "dataset-processing";
 
@@ -73,7 +74,7 @@ public class TestFeatures extends PreparingFlow {
         }
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "feature processing";
             p.code = "feature-processing";
 
@@ -86,7 +87,7 @@ public class TestFeatures extends PreparingFlow {
         }
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.EXPERIMENT;
+            p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "test-experiment-code-01";
             p.metas.addAll(

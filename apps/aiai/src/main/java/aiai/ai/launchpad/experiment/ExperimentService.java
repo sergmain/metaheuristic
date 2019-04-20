@@ -20,7 +20,7 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Monitoring;
 import aiai.ai.comm.Protocol;
-import aiai.ai.launchpad.Process;
+import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.data.TasksData;
 import aiai.ai.launchpad.experiment.task.TaskWIthType;
@@ -37,6 +37,8 @@ import aiai.ai.yaml.metrics.MetricsUtils;
 import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.launchpad.Task;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
@@ -253,7 +255,7 @@ public class ExperimentService {
         String metricKey = null;
         for (Task task : selected) {
 
-            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(task.metrics) );
+            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(task.getMetrics()) );
             if (metricValues==null) {
                 continue;
             }
@@ -358,7 +360,7 @@ public class ExperimentService {
 
         List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndFeatureId(experimentFeature.getId());
         for (Task seq : tasks) {
-            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.metrics) );
+            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.getMetrics()) );
             if (metricValues==null) {
                 continue;
             }
@@ -431,9 +433,9 @@ public class ExperimentService {
     public Enums.FlowProducingStatus produceTasks(
             boolean isPersist, Flow flow, FlowInstance flowInstance, Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls, IntHolder numberOfTasks) {
-        if (process.type!= Enums.ProcessType.EXPERIMENT) {
+        if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
             throw new IllegalStateException("Wrong type of process, " +
-                    "expected: "+ Enums.ProcessType.EXPERIMENT+", " +
+                    "expected: "+ EnumsApi.ProcessType.EXPERIMENT+", " +
                     "actual: " + process.type);
         }
 
@@ -492,13 +494,13 @@ public class ExperimentService {
                         prevTask = task;
 
                         // create empty task. we need task id for initialization
-                        task = new Task();
+                        task = new TaskImpl();
                         task.setParams("");
                         task.setFlowInstanceId(flowInstance.getId());
                         task.setOrder(process.order + (orderAdd++));
                         task.setProcessType(process.type.value);
                         if (isPersist) {
-                            taskRepository.save(task);
+                            taskRepository.save((TaskImpl)task);
                         }
                         // inc number of tasks
                         numberOfTasks.value++;

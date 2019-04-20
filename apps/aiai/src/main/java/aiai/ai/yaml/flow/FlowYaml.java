@@ -17,7 +17,7 @@
 
 package aiai.ai.yaml.flow;
 
-import aiai.ai.launchpad.Process;
+import aiai.api.v1.launchpad.Process;
 import lombok.Data;
 
 import java.util.ArrayList;

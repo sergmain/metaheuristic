@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.atlas;
 
 import aiai.ai.exceptions.BreakFromForEachException;
-import aiai.ai.launchpad.beans.Task;
+import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.apps.commons.utils.DirUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -68,7 +68,7 @@ public class ConsoleFormAtlasService {
                 stream.forEach(o -> {
                     ConsoleOutputStoredToAtlas.TaskOutput taskOutput = new ConsoleOutputStoredToAtlas.TaskOutput();
                     taskOutput.taskId = o.getId();
-                    taskOutput.console = o.snippetExecResults;
+                    taskOutput.console = o.getSnippetExecResults();
                     try {
                         String json = mapper.writeValueAsString(taskOutput);
 
@@ -93,7 +93,7 @@ public class ConsoleFormAtlasService {
         }
     }
 
-    public ConsoleOutputStoredToAtlas.TaskOutput fromJson(String json) throws IOException {
+    ConsoleOutputStoredToAtlas.TaskOutput fromJson(String json) throws IOException {
         return mapper.readValue(json, ConsoleOutputStoredToAtlas.TaskOutput.class);
     }
 }

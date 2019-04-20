@@ -20,7 +20,8 @@ package aiai.ai.launchpad.task;
 import aiai.ai.Enums;
 import aiai.ai.exceptions.ResourceProviderException;
 import aiai.ai.launchpad.beans.FlowInstance;
-import aiai.ai.launchpad.beans.Task;
+import aiai.ai.launchpad.beans.TaskImpl;
+import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
@@ -55,7 +56,7 @@ public class TaskPersistencer {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
-                    Task task = taskRepository.findById(taskId).orElse(null);
+                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task == null) {
                         log.warn("#307.01 Task with taskId {} wasn't found", taskId);
                         return null;
@@ -79,14 +80,14 @@ public class TaskPersistencer {
                     if (task == null) {
                         return Enums.UploadResourceStatus.TASK_NOT_FOUND;
                     }
-                    if (task.execState == Enums.TaskExecState.NONE.value) {
+                    if (task.getExecState() == Enums.TaskExecState.NONE.value) {
                         log.warn("#307.12 Task {} was reset, can't set new value to field resultReceived", taskId);
                         return Enums.UploadResourceStatus.TASK_WAS_RESET;
                     }
                     task.setCompleted(true);
                     task.setCompletedOn(System.currentTimeMillis());
                     task.setResultReceived(value);
-                    taskRepository.save(task);
+                    taskRepository.save((TaskImpl)task);
                     return Enums.UploadResourceStatus.OK;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.warn("#307.18 Error set resultReceived to {} try #{}, taskId: {}, error: {}", value, i, taskId, e.toString());
@@ -104,11 +105,11 @@ public class TaskPersistencer {
                     task.setAssignedOn(System.currentTimeMillis());
                     task.setStationId(stationId);
                     task.setExecState(Enums.TaskExecState.IN_PROGRESS.value);
-                    task.resultResourceScheduledOn = System.currentTimeMillis();
+                    task.setResultResourceScheduledOn(System.currentTimeMillis());
 
-                    taskRepository.save(task);
+                    taskRepository.save((TaskImpl) task);
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.21 Error assign task {}, taskId: {}, error: {}", task.toString(), task.id, e.toString());
+                    log.error("#307.21 Error assign task {}, taskId: {}, error: {}", task.toString(), task.getId(), e.toString());
                 }
             }
         }
@@ -120,19 +121,19 @@ public class TaskPersistencer {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
-                    Task task = taskRepository.findById(taskId).orElse(null);
+                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task == null) {
                         return null;
                     }
-                    task.snippetExecResults = null;
-                    task.stationId = null;
-                    task.assignedOn = null;
-                    task.isCompleted = false;
-                    task.completedOn = null;
-                    task.metrics = null;
-                    task.execState = Enums.TaskExecState.NONE.value;
-                    task.resultReceived = false;
-                    task.resultResourceScheduledOn = 0;
+                    task.setSnippetExecResults(null);
+                    task.setStationId(null);
+                    task.setAssignedOn(null);
+                    task.setCompleted(false);
+                    task.setCompletedOn(null);
+                    task.setMetrics(null);
+                    task.setExecState(Enums.TaskExecState.NONE.value);
+                    task.setResultReceived(false);
+                    task.setResultResourceScheduledOn(0);
                     taskRepository.save(task);
 
                     FlowInstance flowInstance = flowInstanceRepository.findById(task.flowInstanceId).orElse(null);
@@ -179,14 +180,14 @@ public class TaskPersistencer {
     }
 
     private Task prepareAndSaveTask(SimpleTaskExecResult result, Enums.TaskExecState state) {
-        Task task = taskRepository.findById(result.taskId).orElse(null);
+        TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
             log.warn("#307.33 Can't find Task for Id: {}", result.taskId);
             return null;
         }
         task.setExecState(state.value);
 
-        TaskParamYaml yaml = TaskParamYamlUtils.toTaskYaml(task.params);
+        TaskParamYaml yaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
         final String storageUrl = yaml.resourceStorageUrls.get(yaml.outputResourceCode);
         boolean isError = false;
         Enums.StorageType storageType = null;
@@ -215,7 +216,7 @@ public class TaskPersistencer {
 
         task.setSnippetExecResults(result.getResult());
         task.setMetrics(result.getMetrics());
-        task.resultResourceScheduledOn = System.currentTimeMillis();
+        task.setResultResourceScheduledOn(System.currentTimeMillis());
         task = taskRepository.save(task);
 
         return task;

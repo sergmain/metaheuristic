@@ -39,16 +39,6 @@ public final class Enums {
         SEND_SCHEDULED, RESOURCE_NOT_FOUND, TASK_IS_BROKEN, TASK_PARAM_FILE_NOT_FOUND, OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE
     }
 
-    public enum ProcessType {
-        FILE_PROCESSING(1), EXPERIMENT(2);
-
-        public int value;
-
-        ProcessType(int value) {
-            this.value = value;
-        }
-    }
-
     public enum ExperimentTaskType {
         UNKNOWN(0), FIT(1), PREDICT(2);
 

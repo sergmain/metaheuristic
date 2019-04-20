@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.experiment.task;
 
 import aiai.ai.Enums;
-import aiai.ai.launchpad.beans.Task;
+import aiai.api.v1.launchpad.Task;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 

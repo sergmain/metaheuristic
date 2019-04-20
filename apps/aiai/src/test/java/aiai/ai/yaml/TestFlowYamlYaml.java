@@ -17,10 +17,10 @@
 
 package aiai.ai.yaml;
 
-import aiai.ai.Enums;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
-import aiai.ai.launchpad.Process;
+import aiai.api.v1.launchpad.Process;
+import aiai.api.v1.EnumsApi;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +44,7 @@ public class TestFlowYamlYaml {
         FlowYaml flowYaml = new FlowYaml();
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
@@ -61,7 +61,7 @@ public class TestFlowYamlYaml {
         //   type: assembled-raw
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "dataset processing";
             p.code = "dataset-processing";
 
@@ -80,7 +80,7 @@ public class TestFlowYamlYaml {
         //   type: dataset-processing
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "feature processing";
             p.code = "feature-processing";
 
@@ -108,7 +108,7 @@ public class TestFlowYamlYaml {
         //   type: feature
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.EXPERIMENT;
+            p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "experiment-code-01";
 
@@ -132,7 +132,7 @@ public class TestFlowYamlYaml {
         p1.name="experiment";
         p1.collectResources = false;
 
-        p1.type = Enums.ProcessType.EXPERIMENT;
+        p1.type = EnumsApi.ProcessType.EXPERIMENT;
 
         flowYaml.processes = Collections.singletonList(p1);
 

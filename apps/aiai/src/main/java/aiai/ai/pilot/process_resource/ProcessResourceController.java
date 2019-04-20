@@ -24,7 +24,8 @@ import aiai.ai.exceptions.StoreNewFileException;
 import aiai.ai.exceptions.StoreNewFileWithRedirectException;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
-import aiai.ai.launchpad.beans.Task;
+import aiai.api.v1.launchpad.Task;
+import aiai.ai.launchpad.beans.TaskImpl;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
@@ -542,21 +543,21 @@ public class ProcessResourceController {
                 continue;
             }
             final Task task = tasks.get(0);
-            Enums.TaskExecState execState = Enums.TaskExecState.from(task.execState);
+            Enums.TaskExecState execState = Enums.TaskExecState.from(task.getExecState());
             switch (execState) {
                 case NONE:
                 case IN_PROGRESS:
-                    status += ("#990.50, "+mainDocument+", Task hasn't completed yet, status: " +Enums.TaskExecState.from(task.execState) +
+                    status += ("#990.50, "+mainDocument+", Task hasn't completed yet, status: " +Enums.TaskExecState.from(task.getExecState()) +
                             ", batchId:" + batch.id + ", flowInstanceId: " + fi.id +", " +
-                            "taskId: " + task.id + '\n');
+                            "taskId: " + task.getId() + '\n');
                     continue;
                 case ERROR:
                     SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
                     status += ("#990.52, "+mainDocument+", Task was completed with error, batchId:" + batch.id + ", flowInstanceId: " + fi.id +", " +
-                            "taskId: " + task.id + "\n" +
+                            "taskId: " + task.getId() + "\n" +
                             "isOk: " + snippetExec.exec.isOk + "\n" +
                             "exitCode: " + snippetExec.exec.exitCode + "\n" +
-                            "console:\n" + snippetExec.exec.console + "\n\n");
+                            "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>")+ "\n\n");
                     continue;
             }
 
@@ -565,7 +566,7 @@ public class ProcessResourceController {
             if (fi.getExecState()!= Enums.FlowInstanceExecState.FINISHED.code) {
                 status += ("#990.95, "+mainDocument+", Task hasn't completed yet, " +
                         "batchId:" + batch.id + ", flowInstanceId: " + fi.id +", " +
-                        "taskId: " + task.id + '\n');
+                        "taskId: " + task.getId() + '\n');
                 continue;
             }
 

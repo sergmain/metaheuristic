@@ -20,9 +20,9 @@ package aiai.ai.launchpad.atlas;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.utils.CollectionUtils;
+import aiai.api.v1.launchpad.Task;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -30,7 +30,6 @@ import lombok.ToString;
 import org.springframework.beans.BeanUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Data
 @NoArgsConstructor
@@ -155,7 +154,7 @@ public class ExperimentStoredToAtlas {
     @EqualsAndHashCode(callSuper = false)
     @JsonIgnoreProperties(value = {"version"})
     @ToString(callSuper = true)
-    public static class TaskOnShelf extends Task {
+    public static class TaskOnShelf extends TaskImpl {
         public TaskOnShelf(Task task) {
             BeanUtils.copyProperties(task, this);
         }

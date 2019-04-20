@@ -21,8 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
-import aiai.ai.launchpad.beans.Task;
-import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.launchpad.beans.TaskImpl;
 import aiai.ai.launchpad.server.ServerService;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.FeatureMethods;
@@ -98,7 +97,7 @@ public class TestTaskRequest extends FeatureMethods {
             Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(t.taskId, true);
             assertEquals(Enums.UploadResourceStatus.OK, status);
 
-            Task task = taskRepository.findById(t.taskId).orElse(null);
+            TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
             assertNotNull(task);
             assertTrue(task.isCompleted);
 

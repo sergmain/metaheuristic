@@ -20,10 +20,7 @@ package aiai.ai.launchpad.task;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
-import aiai.ai.launchpad.beans.FlowInstance;
-import aiai.ai.launchpad.beans.Snippet;
-import aiai.ai.launchpad.beans.Station;
-import aiai.ai.launchpad.beans.Task;
+import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
@@ -34,6 +31,7 @@ import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.launchpad.Task;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -74,7 +72,7 @@ public class TaskService {
             case RESOURCE_NOT_FOUND:
             case TASK_IS_BROKEN:
             case TASK_PARAM_FILE_NOT_FOUND:
-                Task task = taskRepository.findById(taskId).orElse(null);
+                TaskImpl task = taskRepository.findById(taskId).orElse(null);
                 if (task==null) {
                     log.warn("#317.05 Task obsolete and was already deleted");
                     return;
@@ -193,7 +191,7 @@ public class TaskService {
 
                 SnippetVersion version = SnippetVersion.from(taskParamYaml.snippet.getCode());
                 if (version == null) {
-                    log.warn("#317.53 Can't find snippet for code: {}, SnippetVersion: {}", taskParamYaml.snippet.getCode(), version);
+                    log.warn("#317.53 Can't find snippet for code: {}", taskParamYaml.snippet.getCode());
                     continue;
                 }
                 Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
@@ -243,9 +241,9 @@ public class TaskService {
         resultTask.setAssignedOn(System.currentTimeMillis());
         resultTask.setStationId(station.getId());
         resultTask.setExecState(Enums.TaskExecState.IN_PROGRESS.value);
-        resultTask.resultResourceScheduledOn = 0;
+        resultTask.setResultResourceScheduledOn(0);
 
-        taskRepository.save(resultTask);
+        taskRepository.save((TaskImpl)resultTask);
 
         return new TasksAndAssignToStationResult(assignedTask);
     }

@@ -15,12 +15,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.flow;
+package aiai.api.v1;
 
-import aiai.ai.Enums;
-import aiai.api.v1.launchpad.Process;
-import aiai.ai.launchpad.beans.Flow;
+public class EnumsApi {
 
-public interface ProcessValidator {
-    Enums.FlowValidateStatus validate(Flow flow, Process process, boolean isFirst);
+    public enum ProcessType {
+        FILE_PROCESSING(1), EXPERIMENT(2);
+
+        public int value;
+
+        ProcessType(int value) {
+            this.value = value;
+        }
+    }
 }

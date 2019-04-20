@@ -17,7 +17,7 @@
 
 package aiai.ai.flow;
 
-import aiai.ai.launchpad.Process;
+import aiai.api.v1.launchpad.Process;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import org.junit.Test;

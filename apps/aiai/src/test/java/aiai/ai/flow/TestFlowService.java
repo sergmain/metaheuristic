@@ -20,8 +20,8 @@ package aiai.ai.flow;
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
-import aiai.ai.launchpad.Process;
-import aiai.ai.launchpad.beans.Task;
+import aiai.api.v1.launchpad.Process;
+import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.task.TaskPersistencer;
@@ -30,6 +30,7 @@ import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
+import aiai.api.v1.EnumsApi;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -76,7 +77,7 @@ public class TestFlowService extends PreparingFlow {
     @Test
     public void testCreateTasks() {
         assertFalse(flowYaml.processes.isEmpty());
-        assertEquals(Enums.ProcessType.EXPERIMENT, flowYaml.processes.get(flowYaml.processes.size()-1).type);
+        assertEquals(EnumsApi.ProcessType.EXPERIMENT, flowYaml.processes.get(flowYaml.processes.size()-1).type);
 
         Enums.FlowValidateStatus status = flowService.validate(flow);
         assertEquals(Enums.FlowValidateStatus.OK, status);
@@ -109,7 +110,7 @@ public class TestFlowService extends PreparingFlow {
 
         int taskNumber = 0;
         for (Process process : flowYaml.processes) {
-            if (process.type== Enums.ProcessType.EXPERIMENT) {
+            if (process.type== EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }
             taskNumber += process.snippetCodes.size();

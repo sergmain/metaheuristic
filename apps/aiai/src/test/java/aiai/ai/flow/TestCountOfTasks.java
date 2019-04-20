@@ -18,7 +18,7 @@
 package aiai.ai.flow;
 
 import aiai.ai.Enums;
-import aiai.ai.launchpad.Process;
+import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.launchpad.task.TaskService;
@@ -26,6 +26,7 @@ import aiai.ai.preparing.PreparingExperiment;
 import aiai.ai.preparing.PreparingFlow;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -52,7 +53,7 @@ public class TestCountOfTasks extends PreparingFlow {
         flowYaml = new FlowYaml();
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
@@ -64,7 +65,7 @@ public class TestCountOfTasks extends PreparingFlow {
         }
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "dataset processing";
             p.code = "dataset-processing";
 
@@ -76,7 +77,7 @@ public class TestCountOfTasks extends PreparingFlow {
         }
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "feature processing";
             p.code = "feature-processing";
 
@@ -89,7 +90,7 @@ public class TestCountOfTasks extends PreparingFlow {
         }
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.EXPERIMENT;
+            p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = PreparingExperiment.TEST_EXPERIMENT_CODE_01;
 
@@ -119,7 +120,7 @@ public class TestCountOfTasks extends PreparingFlow {
         log.info("Start TestCountOfTasks.testCountNumberOfTasks()");
 
         assertFalse(flowYaml.processes.isEmpty());
-        assertEquals(Enums.ProcessType.EXPERIMENT, flowYaml.processes.get(flowYaml.processes.size()-1).type);
+        assertEquals(EnumsApi.ProcessType.EXPERIMENT, flowYaml.processes.get(flowYaml.processes.size()-1).type);
 
         Enums.FlowValidateStatus status = flowService.validate(flow);
         assertEquals(Enums.FlowValidateStatus.OK, status);
@@ -173,7 +174,7 @@ public class TestCountOfTasks extends PreparingFlow {
 
         int taskNumber = 0;
         for (Process process : flowYaml.processes) {
-            if (process.type== Enums.ProcessType.EXPERIMENT) {
+            if (process.type== EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }
             taskNumber += process.snippetCodes.size();

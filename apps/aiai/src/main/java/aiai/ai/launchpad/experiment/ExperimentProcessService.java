@@ -19,7 +19,7 @@ package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Enums;
 import aiai.ai.Monitoring;
-import aiai.ai.launchpad.Process;
+import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;

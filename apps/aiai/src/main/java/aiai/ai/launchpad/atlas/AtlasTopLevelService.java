@@ -36,6 +36,7 @@ import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.launchpad.Task;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -232,7 +233,7 @@ public class AtlasTopLevelService {
         String metricKey = null;
         for (Task task : selected) {
 
-            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(task.metrics) );
+            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(task.getMetrics()) );
             if (metricValues==null) {
                 continue;
             }
@@ -533,9 +534,9 @@ public class AtlasTopLevelService {
             List<Task> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
             List<TaskWIthType> list = new ArrayList<>();
             for (Task task : subList) {
-                ExperimentTaskFeature etf = estb.getExperimentTaskFeature(task.id);
+                ExperimentTaskFeature etf = estb.getExperimentTaskFeature(task.getId());
                 if (etf==null) {
-                    log.warn("Can't get type of task for taskId " + task.id);
+                    log.warn("Can't get type of task for taskId " + task.getId());
                 }
                 int type = etf!=null ? Enums.ExperimentTaskType.from( etf.getTaskType() ).value : Enums.ExperimentTaskType.UNKNOWN.value;
 

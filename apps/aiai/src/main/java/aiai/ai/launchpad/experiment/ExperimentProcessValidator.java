@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Enums;
-import aiai.ai.launchpad.Process;
+import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.beans.Flow;

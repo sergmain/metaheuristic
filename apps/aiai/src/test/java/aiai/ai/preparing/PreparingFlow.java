@@ -20,7 +20,7 @@ package aiai.ai.preparing;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.flow.TaskCollector;
-import aiai.ai.launchpad.Process;
+import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.beans.Snippet;
@@ -34,6 +34,7 @@ import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
+import aiai.api.v1.EnumsApi;
 import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -91,7 +92,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
         flowYaml = new FlowYaml();
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
@@ -103,7 +104,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
         }
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "dataset processing";
             p.code = "dataset-processing";
 
@@ -115,7 +116,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
         }
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.FILE_PROCESSING;
+            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "feature processing";
             p.code = "feature-processing";
 
@@ -128,7 +129,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
         }
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.EXPERIMENT;
+            p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = PreparingExperiment.TEST_EXPERIMENT_CODE_01;
 

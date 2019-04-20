@@ -17,10 +17,10 @@
 
 package aiai.ai.flow;
 
-import aiai.ai.Enums;
-import aiai.ai.launchpad.Process;
+import aiai.api.v1.launchpad.Process;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
@@ -46,7 +46,7 @@ public class TestProcessMeta {
         FlowYaml flowYaml = new FlowYaml();
         {
             Process p = new Process();
-            p.type = Enums.ProcessType.EXPERIMENT;
+            p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "test-experiment-code-01";
 

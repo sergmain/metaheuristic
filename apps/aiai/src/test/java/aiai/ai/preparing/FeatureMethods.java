@@ -21,7 +21,7 @@ import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.ExperimentFeature;
-import aiai.ai.launchpad.beans.Task;
+import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.flow.FlowService;

@@ -21,7 +21,7 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.launchpad.beans.Snippet;
-import aiai.ai.launchpad.beans.Task;
+import aiai.ai.launchpad.beans.TaskImpl;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
@@ -164,7 +164,7 @@ public class ServerController {
         if (taskId==null) {
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#442.87 taskId is null" );
         }
-        Task task = taskRepository.findById(taskId).orElse(null);
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#442.83 taskId is null" );
         }

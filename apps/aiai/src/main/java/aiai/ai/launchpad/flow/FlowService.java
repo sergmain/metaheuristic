@@ -21,11 +21,8 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.Monitoring;
-import aiai.ai.launchpad.Process;
-import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.beans.Flow;
-import aiai.ai.launchpad.beans.FlowInstance;
-import aiai.ai.launchpad.beans.Task;
+import aiai.ai.launchpad.beans.*;
+import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import aiai.ai.launchpad.atlas.AtlasService;
@@ -42,6 +39,8 @@ import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.launchpad.Task;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -328,11 +327,11 @@ public class FlowService {
                 return Enums.FlowValidateStatus.RESOURCE_CODE_CONTAINS_ILLEGAL_CHAR_ERROR;
             }
             ProcessValidator processValidator;
-            if (process.type == Enums.ProcessType.EXPERIMENT) {
+            if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
                 experimentPresent = true;
                 processValidator = experimentProcessValidator;
             }
-            else if (process.type == Enums.ProcessType.FILE_PROCESSING) {
+            else if (process.type == EnumsApi.ProcessType.FILE_PROCESSING) {
                 processValidator = fileProcessValidator;
             }
             else {
@@ -347,7 +346,7 @@ public class FlowService {
                 return Enums.FlowValidateStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
             }
         }
-        if (experimentPresent && lastProcess.type!=Enums.ProcessType.EXPERIMENT) {
+        if (experimentPresent && lastProcess.type!= EnumsApi.ProcessType.EXPERIMENT) {
             return  Enums.FlowValidateStatus.EXPERIMENT_MUST_BE_LAST_PROCESS_ERROR;
         }
         return Enums.FlowValidateStatus.OK;
@@ -583,7 +582,7 @@ public class FlowService {
             return flowInstance;
         }
         for (Task task : forChecking) {
-            if (!task.isCompleted) {
+            if (!task.isCompleted()) {
                 return flowInstance;
             }
         }

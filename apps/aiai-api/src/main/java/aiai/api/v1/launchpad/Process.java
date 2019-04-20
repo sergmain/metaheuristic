@@ -15,26 +15,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad;
+package aiai.api.v1.launchpad;
 
-import aiai.ai.Enums;
+import aiai.api.v1.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
 @ToString
-@Slf4j
 public class Process {
 
     public String name;
     public String code;
-    public Enums.ProcessType type;
+    public EnumsApi.ProcessType type;
     public boolean collectResources = false;
     public List<String> snippetCodes;
     public boolean parallelExec;

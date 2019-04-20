@@ -16,6 +16,7 @@
  */
 package aiai.ai.launchpad.beans;
 
+import aiai.api.v1.launchpad.Task;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.ToString;
@@ -27,7 +28,7 @@ import java.io.Serializable;
 @Table(name = "AIAI_LP_TASK")
 @Data
 @ToString(exclude = {"params", "metrics"} )
-public class Task implements Serializable {
+public class TaskImpl implements Serializable, Task {
     private static final long serialVersionUID = 268796211406267810L;
 
     @Id
