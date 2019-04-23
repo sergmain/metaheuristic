@@ -250,5 +250,14 @@ public class FlowTopLevelService {
         flowService.createAllTasks();
     }
 
+    public OperationStatusRest changeValidStatus(Long flowInstanceId, boolean state) {
+        FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
+        if (flowInstance == null) {
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+                    "#560.57 flowInstance wasn't found, flowInstanceId: " + flowInstanceId);
+        }
+        flowService.changeValidStatus(flowInstance, state);
+        return OperationStatusRest.OPERATION_STATUS_OK;
 
+    }
 }

@@ -112,4 +112,11 @@ public class FlowRestController {
         flowTopLevelService.createAllTasks();
     }
 
+    @GetMapping(value = "/change-valid-status/{flowInstanceId}/{status}")
+    public OperationStatusRest changeValidStatus(@PathVariable Long flowInstanceId, @PathVariable boolean status) {
+        return flowTopLevelService.changeValidStatus(flowInstanceId, status);
+    }
+
+
+
 }
