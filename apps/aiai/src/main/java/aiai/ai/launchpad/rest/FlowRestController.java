@@ -20,7 +20,6 @@ package aiai.ai.launchpad.rest;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
-import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.flow.FlowTopLevelService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -81,12 +80,18 @@ public class FlowRestController {
 
     @PostMapping("/flow-instance-add-commit")
     public FlowData.FlowInstanceResult flowInstanceAddCommit(Long flowId, String poolCode, String inputResourceParams) {
+        //noinspection UnnecessaryLocalVariable
         FlowData.FlowInstanceResult flowInstanceResult = flowTopLevelService.addFlowInstance(flowId, poolCode, inputResourceParams);
         return flowInstanceResult;
     }
 
+    @PostMapping("/flow-instance-create")
+    public FlowData.TaskProducingResult createFlowInstance(Long flowId, String inputResourceParam) {
+        return flowTopLevelService.createFlowInstance(flowId, inputResourceParam);
+    }
+
     @GetMapping(value = "/flow-instance/{flowId}/{flowInstanceId}")
-    public FlowData.FlowInstanceResult flowInstanceEdit(@PathVariable Long flowId, @PathVariable Long flowInstanceId) {
+    public FlowData.FlowInstanceResult flowInstanceEdit(@SuppressWarnings("unused") @PathVariable Long flowId, @PathVariable Long flowInstanceId) {
         return flowTopLevelService.getFlowInstanceExtended(flowInstanceId);
     }
 
@@ -96,7 +101,7 @@ public class FlowRestController {
     }
 
     @GetMapping("/flow-instance-target-exec-state/{flowId}/{state}/{id}")
-    public OperationStatusRest flowInstanceTargetExecState(@PathVariable Long flowId, @PathVariable String state, @PathVariable Long id) {
+    public OperationStatusRest flowInstanceTargetExecState(@SuppressWarnings("unused") @PathVariable Long flowId, @PathVariable String state, @PathVariable Long id) {
         return flowTopLevelService.changeFlowInstanceExecState(state, id);
     }
 

@@ -20,6 +20,7 @@ package aiai.ai.launchpad.data;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.api.v1.EnumsApi;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -35,13 +36,18 @@ public class FlowData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class TaskProducingResult extends BaseDataClass {
         public EnumsApi.FlowProducingStatus flowProducingStatus;
         public EnumsApi.FlowValidateStatus flowValidateStatus;
         public int numberOfTasks = 0;
+        public Long flowInstanceId = null;
 
-        public TaskProducingResult(List<String> errorMessages, EnumsApi.FlowValidateStatus flowValidateStatus,
-                                   EnumsApi.FlowProducingStatus flowProducingStatus) {
+        public TaskProducingResult(
+                List<String> errorMessages, EnumsApi.FlowValidateStatus flowValidateStatus,
+                EnumsApi.FlowProducingStatus flowProducingStatus,
+                Long flowInstanceId ) {
+            this.flowInstanceId = flowInstanceId;
             this.errorMessages = errorMessages;
             this.flowValidateStatus = flowValidateStatus;
             this.flowProducingStatus = flowProducingStatus;
