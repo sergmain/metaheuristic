@@ -19,6 +19,36 @@ package aiai.api.v1;
 
 public class EnumsApi {
 
+    public enum SnippetSourcing {
+        launchpad(1), system(2), git(3);
+        public int value;
+
+        SnippetSourcing(int value) {
+            this.value = value;
+        }
+
+        public static SnippetSourcing to(int value) {
+            switch (value) {
+                case 1:
+                    //noinspection
+                    return launchpad;
+                case 2:
+                    return system;
+                case 3:
+                    return git;
+                default:
+                    return launchpad;
+            }
+        }
+
+        public static String from(int value) {
+            //noinspection unused
+            SnippetSourcing state = to(value);
+            return state.toString();
+        }
+
+    }
+
     public enum ProcessType {
         FILE_PROCESSING(1), EXPERIMENT(2);
 

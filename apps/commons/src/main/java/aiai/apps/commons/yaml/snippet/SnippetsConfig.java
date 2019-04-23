@@ -72,4 +72,58 @@ public class SnippetsConfig {
 
     public List<SnippetConfig> snippets;
 
+
+/**
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class SnippetConfigStatus {
+        public boolean isOk;
+        public String error;
+    }
+
+    public static final SnippetConfigStatus SNIPPET_CONFIG_STATUS_OK = new SnippetConfigStatus(true, null);
+
+    @Data
+    @ToString
+    public static class SnippetConfig {
+        public String name;
+        public String type;
+        public String file;
+        public String params;
+        public String version;
+        public String env;
+        public EnumsApi.SnippetSourcing sourcing;
+        public boolean metrics = false;
+        public Map<Checksum.Type, String> checksums;
+
+        public SnippetConfigStatus validate() {
+            if (StringUtils.isBlank(name) || StringUtils.isBlank(type) || StringUtils.isBlank(version) || StringUtils.isBlank(env)) {
+                return new SnippetConfigStatus(false, "A field is null or empty: " + this.toString());
+            }
+            switch (sourcing) {
+                case launchpad:
+                    if (StringUtils.isBlank(file)) {
+                        return new SnippetConfigStatus(false, "sourcing is 'launchpad' but file is empty: " + this.toString());
+                    }
+                    break;
+                case system:
+                    if (StringUtils.isNoneBlank(file)) {
+                        return new SnippetConfigStatus(false, "sourcing is 'system', but file is not empty: " + this.toString());
+                    }
+                    break;
+                case git:
+                    break;
+            }
+            if (name.indexOf(':')!=-1 || version.indexOf(':')!=-1) {
+                return new SnippetConfigStatus(false, "Fields 'name' and 'version' can't contain ':'" + this.toString());
+            }
+            return SNIPPET_CONFIG_STATUS_OK;
+        }
+    }
+
+    public List<SnippetConfig> snippets;
+
+  */
+
 }

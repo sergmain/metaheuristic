@@ -169,6 +169,11 @@ public class Globals {
 
         }
         logGlobals();
+        logSystemEnvs();
+    }
+
+    private void logSystemEnvs() {
+        System.getProperties().forEach( (o, o2) -> log.info("{}: {}", o, o2));
     }
 
     private void logGlobals() {

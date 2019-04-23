@@ -105,6 +105,7 @@ public final class Enums {
             }
         }
 
+        @SuppressWarnings("unused")
         public boolean isProd() {
             return this==DATA || this==SNIPPET;
         }
@@ -144,6 +145,7 @@ public final class Enums {
                 case 6:
                     return DOESNT_EXIST;
                 case -1:
+                    //noinspection
                     return UNKNOWN;
                 case -2:
                     return ERROR;
@@ -153,11 +155,13 @@ public final class Enums {
         }
 
         public static String from(int code) {
+            //noinspection unused
             FlowInstanceExecState state = toState(code);
-            return toState(code).toString();
+            return state.toString();
         }
     }
 
+    @SuppressWarnings("unused")
     public enum FEATURE_STATUS {
         NONE(0), OK(1), ERROR(2), OBSOLETE(3);
 
