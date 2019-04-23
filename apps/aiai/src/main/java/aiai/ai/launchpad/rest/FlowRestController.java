@@ -87,7 +87,7 @@ public class FlowRestController {
 
     @GetMapping(value = "/flow-instance/{flowId}/{flowInstanceId}")
     public FlowData.FlowInstanceResult flowInstanceEdit(@PathVariable Long flowId, @PathVariable Long flowInstanceId) {
-        return flowTopLevelService.getFlowInstanceExtended(flowId, flowInstanceId);
+        return flowTopLevelService.getFlowInstanceExtended(flowInstanceId);
     }
 
     @PostMapping("/flow-instance-delete-commit")

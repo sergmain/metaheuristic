@@ -192,7 +192,7 @@ public class FlowController {
 
     @GetMapping("/flow-instance-delete/{flowId}/{flowInstanceId}")
     public String flowInstanceDelete(Model model, @PathVariable Long flowId, @PathVariable Long flowInstanceId, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowInstanceResult result = flowTopLevelService.getFlowInstanceExtended(flowId, flowInstanceId);
+        FlowData.FlowInstanceResult result = flowTopLevelService.getFlowInstanceExtended(flowInstanceId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;

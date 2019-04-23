@@ -201,7 +201,7 @@ public class FlowTopLevelService {
         return result;
     }
 
-    public FlowData.FlowInstanceResult getFlowInstanceExtended(Long flowId, Long flowInstanceId) {
+    public FlowData.FlowInstanceResult getFlowInstanceExtended(Long flowInstanceId) {
         //noinspection UnnecessaryLocalVariable
         FlowData.FlowInstanceResult result = flowService.getFlowInstanceExtended(flowInstanceId);
         return result;
