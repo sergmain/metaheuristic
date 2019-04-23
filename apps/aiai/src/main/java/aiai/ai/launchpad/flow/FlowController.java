@@ -213,7 +213,7 @@ public class FlowController {
 
     @GetMapping("/flow-instance-target-exec-state/{flowId}/{state}/{id}")
     public String flowInstanceTargetExecState(@PathVariable Long flowId, @PathVariable String state, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = flowTopLevelService.changeFlowInstanceExecState(flowId, state, id);
+        OperationStatusRest operationStatusRest = flowTopLevelService.changeFlowInstanceExecState(state, id);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
             return REDIRECT_LAUNCHPAD_FLOW_FLOWS;

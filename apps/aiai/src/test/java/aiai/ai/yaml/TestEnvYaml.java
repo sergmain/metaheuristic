@@ -23,8 +23,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 public class TestEnvYaml {
 
@@ -32,7 +31,7 @@ public class TestEnvYaml {
     public void testEnvYaml() throws IOException {
 
         EnvYaml envYaml;
-        try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/env.yaml")) {
+        try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/env/env.yaml")) {
             envYaml = EnvYamlUtils.to(is);
         }
         assertNotNull(envYaml);
@@ -49,6 +48,28 @@ public class TestEnvYaml {
         assertEquals("C:\\storage\\code-2", envYaml.getDisk().get(1).path);
 
 
+
+        String s = EnvYamlUtils.toString(envYaml);
+
+        EnvYaml envYaml1 = EnvYamlUtils.to(s);
+        assertEquals(envYaml, envYaml1);
+    }
+
+    @Test
+    public void testEnvYaml_1() throws IOException {
+
+        EnvYaml envYaml;
+        try(InputStream is = TestYamlParser.class.getResourceAsStream("/yaml/env/env-2-lines.yaml")) {
+            envYaml = EnvYamlUtils.to(is);
+        }
+        assertNotNull(envYaml);
+        assertNotNull(envYaml.getEnvs());
+        assertEquals(2, envYaml.getEnvs().size());
+        assertEquals("simple-app.jar", envYaml.getEnvs().get("simple-app"));
+        assertEquals("1st-line 2nd-line", envYaml.getEnvs().get("lines"));
+
+        assertNotNull(envYaml.getDisk());
+        assertTrue(envYaml.getDisk().isEmpty());
 
         String s = EnvYamlUtils.toString(envYaml);
 

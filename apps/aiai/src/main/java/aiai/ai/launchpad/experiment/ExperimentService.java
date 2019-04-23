@@ -471,7 +471,7 @@ public class ExperimentService {
             eventMulticaster.addApplicationListener(listener);
             FlowInstance instance = flowInstanceRepository.findById(flowInstance.getId()).orElse(null);
             if (instance==null) {
-                return EnumsApi.FlowProducingStatus.FLOW_INSTANCE_WAS_DELETED;
+                return EnumsApi.FlowProducingStatus.FLOW_INSTANCE_NOT_FOUND_ERROR;
             }
 
             for (Object[] feature : features) {
@@ -489,7 +489,7 @@ public class ExperimentService {
                     Task task = null;
                     for (ExperimentSnippet experimentSnippet : experimentSnippets) {
                         if (boolHolder.value) {
-                            return EnumsApi.FlowProducingStatus.FLOW_INSTANCE_WAS_DELETED;
+                            return EnumsApi.FlowProducingStatus.FLOW_INSTANCE_NOT_FOUND_ERROR;
                         }
                         prevTask = task;
 

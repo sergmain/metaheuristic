@@ -157,7 +157,7 @@ public class LaunchpadRequestor {
             }
             data.setCommands(cmds);
 
-            // !!! always use data.setCommand() for correct initializing stationId !!!
+            // !!! always use data.setCommand() for correct initializing of stationId !!!
 
             // we have to pull new tasks from server constantly
             try {

@@ -17,6 +17,7 @@
 
 package aiai.ai.launchpad.data;
 
+import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.api.v1.EnumsApi;
@@ -27,9 +28,26 @@ import org.springframework.data.domain.Slice;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class FlowData {
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class TaskProducingResult extends BaseDataClass {
+        public EnumsApi.FlowProducingStatus flowProducingStatus;
+        public EnumsApi.FlowValidateStatus flowValidateStatus;
+        public int numberOfTasks = 0;
+
+        public TaskProducingResult(List<String> errorMessages, EnumsApi.FlowValidateStatus flowValidateStatus,
+                                   EnumsApi.FlowProducingStatus flowProducingStatus) {
+            this.errorMessages = errorMessages;
+            this.flowValidateStatus = flowValidateStatus;
+            this.flowProducingStatus = flowProducingStatus;
+        }
+    }
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -47,6 +65,11 @@ public class FlowData {
         public FlowResult(String errorMessage, EnumsApi.FlowValidateStatus status) {
             this.status = status;
             this.errorMessages = Collections.singletonList(errorMessage);
+        }
+
+        public FlowResult(List<String> errorMessage, EnumsApi.FlowValidateStatus status) {
+            this.status = status;
+            this.errorMessages = errorMessage;
         }
 
         public FlowResult(String errorMessage) {

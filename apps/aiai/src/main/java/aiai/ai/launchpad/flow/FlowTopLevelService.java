@@ -34,6 +34,8 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Slf4j
 @Profile("launchpad")
 @Service
@@ -159,7 +161,7 @@ public class FlowTopLevelService {
             return result;
         }
 
-        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(result.flow,
+        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(result.flow.getId(),
                 StringUtils.isNotBlank(inputResourceParams) ? inputResourceParams : FlowService.asInputResourceParams(poolCode));
         if (producingResult.flowProducingStatus!= EnumsApi.FlowProducingStatus.OK) {
             result.addErrorMessage("#560.72 Error creating flowInstance: " + producingResult.flowProducingStatus);
@@ -181,10 +183,7 @@ public class FlowTopLevelService {
         }
         result.flow = flowCache.findById(flowId);
 
-        FlowService.TaskProducingResult countTasks = new FlowService.TaskProducingResult();
-        countTasks.flowValidateStatus = EnumsApi.FlowValidateStatus.OK;
-
-        flowService.produceTasks(false, countTasks, result.flow, producingResult.flowInstance);
+        FlowService.TaskProducingResult countTasks = flowService.produceTasks(false, result.flow, producingResult.flowInstance);
         if (countTasks.flowProducingStatus != EnumsApi.FlowProducingStatus.OK) {
             flowService.changeValidStatus(producingResult.flowInstance, false);
             result.addErrorMessage("#560.77 flow producing was failed, status: " + countTasks.flowProducingStatus);
@@ -204,12 +203,12 @@ public class FlowTopLevelService {
 
     public FlowData.FlowInstanceResult getFlowInstanceExtended(Long flowId, Long flowInstanceId) {
         //noinspection UnnecessaryLocalVariable
-        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
+        FlowData.FlowInstanceResult result = flowService.getFlowInstanceExtended(flowInstanceId);
         return result;
     }
 
     public OperationStatusRest deleteFlowInstanceById(Long flowId, Long flowInstanceId) {
-        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
+        FlowData.FlowInstanceResult result = flowService.getFlowInstanceExtended(flowInstanceId);
         if (CollectionUtils.isNotEmpty(result.errorMessages)) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, result.errorMessages);
         }
@@ -222,14 +221,34 @@ public class FlowTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest changeFlowInstanceExecState(Long flowId, String state, Long flowInstanceId) {
+    public OperationStatusRest changeFlowInstanceExecState(String state, Long flowInstanceId) {
         Enums.FlowInstanceExecState execState = Enums.FlowInstanceExecState.valueOf(state.toUpperCase());
         if (execState==Enums.FlowInstanceExecState.UNKNOWN) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, "#560.87 Unknown exec state, state: " + state);
         }
         //noinspection UnnecessaryLocalVariable
-        OperationStatusRest status = flowService.flowInstanceTargetExecState(flowId, flowInstanceId, execState);
+        OperationStatusRest status = flowService.flowInstanceTargetExecState(flowInstanceId, execState);
         return status;
     }
+
+    // ============= Service methods =============
+    public FlowData.TaskProducingResult produceTasksWithoutPersistence(long flowInstanceId) {
+
+        FlowData.FlowInstanceResult flowInstance = flowService.getFlowInstanceExtended(flowInstanceId);
+        if (flowInstance.isErrorMessages()) {
+            return new FlowData.TaskProducingResult(
+                    List.of("#560.10 flow wasn't found, flowInstanceId: " + flowInstanceId),
+                    EnumsApi.FlowValidateStatus.FLOW_NOT_FOUND_ERROR, null );
+
+        }
+
+        final FlowService.TaskProducingResult result = flowService.produceTasks(false, flowInstance.flow, flowInstance.flowInstance);
+        return new FlowData.TaskProducingResult(List.of("See statuses to determine what is actual status"), result.flowValidateStatus, result.flowProducingStatus);
+    }
+
+    public void createAllTasks() {
+        flowService.createAllTasks();
+    }
+
 
 }

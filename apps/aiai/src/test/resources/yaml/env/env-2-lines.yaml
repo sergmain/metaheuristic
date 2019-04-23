@@ -1,0 +1,6 @@
+disk: [
+]
+envs:
+  simple-app: simple-app.jar
+  lines: 1st-line
+    2nd-line

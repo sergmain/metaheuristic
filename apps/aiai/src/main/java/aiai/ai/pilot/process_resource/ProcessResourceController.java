@@ -53,6 +53,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
@@ -399,7 +400,7 @@ public class ProcessResourceController {
         }
 
         final String paramYaml = asInputResourceParams(mainPoolCode, attachPoolCode, attachments);
-        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow, paramYaml);
+        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow.getId(), paramYaml);
         if (producingResult.flowProducingStatus!= EnumsApi.FlowProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating flowInstance: " + producingResult.flowProducingStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -424,8 +425,7 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        FlowService.TaskProducingResult countTasks = new FlowService.TaskProducingResult();
-        flowService.produceTasks(false, countTasks, flow, producingResult.flowInstance);
+        FlowService.TaskProducingResult countTasks = flowService.produceTasks(false, flow, producingResult.flowInstance);
         if (countTasks.flowProducingStatus != EnumsApi.FlowProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.60 validation of flow was failed, status: " + countTasks.flowValidateStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -442,7 +442,7 @@ public class ProcessResourceController {
 
         // start producing new tasks
         OperationStatusRest operationStatus = flowService.flowInstanceTargetExecState(
-                flow.getId(), producingResult.flowInstance.getId(), Enums.FlowInstanceExecState.PRODUCING);
+                producingResult.flowInstance.getId(), Enums.FlowInstanceExecState.PRODUCING);
 
         if (operationStatus.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessages);
@@ -450,7 +450,7 @@ public class ProcessResourceController {
         }
         flowService.createAllTasks();
         operationStatus = flowService.flowInstanceTargetExecState(
-                flow.getId(), producingResult.flowInstance.getId(), Enums.FlowInstanceExecState.STARTED);
+                producingResult.flowInstance.getId(), Enums.FlowInstanceExecState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessages);
@@ -463,9 +463,9 @@ public class ProcessResourceController {
     @GetMapping("/process-resource-delete/{flowId}/{batchId}")
     public String processResourceDelete(Model model, @PathVariable Long flowId, @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
 
-        if (true) throw new IllegalStateException("Not implemented yet");
+        if (true) throw new NotImplementedException("Not implemented yet");
         long flowInstanceId = -1L;
-        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
+        FlowData.FlowInstanceResult result = flowService.getFlowInstanceExtended(flowInstanceId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -474,10 +474,9 @@ public class ProcessResourceController {
         return "pilot/process-resource/process-resource-delete";
     }
 
-    @SuppressWarnings("Duplicates")
     @PostMapping("/process-resource-delete-commit")
     public String processResourceDeleteCommit(Long flowId, Long flowInstanceId, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowInstanceResult result = flowService.prepareModel(flowId, flowInstanceId);
+        FlowData.FlowInstanceResult result = flowService.getFlowInstanceExtended(flowInstanceId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.isErrorMessages());
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;

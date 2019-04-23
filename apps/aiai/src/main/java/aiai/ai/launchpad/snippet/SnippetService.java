@@ -34,6 +34,7 @@ import aiai.apps.commons.yaml.snippet.SnippetsConfig;
 import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -214,7 +215,7 @@ public class SnippetService {
                 }
             }
             else {
-                throw new IllegalStateException("Not implemented yet");
+                throw new NotImplementedException("Not implemented yet");
             }
             Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
             if (snippet!=null) {

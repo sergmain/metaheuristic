@@ -20,6 +20,7 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.FeatureMethods;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,7 +61,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
                 station.getId(), false, experiment.getFlowInstanceId());
         assertNotNull(sequences1);
 
-        if (true) throw new IllegalStateException("Not implemented yet");
+        if (true) throw new NotImplementedException("Not implemented yet");
         final ExperimentFeature feature = null;
 //        final ExperimentFeature feature = sequences1.getFeature();
         assertNotNull(feature);

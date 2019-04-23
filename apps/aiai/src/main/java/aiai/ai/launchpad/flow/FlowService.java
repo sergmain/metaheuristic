@@ -119,6 +119,7 @@ public class FlowService {
         return flowInstanceRepository.save(fi);
     }
 
+    // TODO add reporting of producing of tasks
     public synchronized void createAllTasks() {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
@@ -159,10 +160,7 @@ public class FlowService {
             }}
     }
 
-    public FlowData.FlowInstanceResult prepareModel(Long flowId, Long flowInstanceId) {
-        if (flowId==null) {
-            return new FlowData.FlowInstanceResult("#560.83 flow wasn't found, flowId: " + flowId);
-        }
+    public FlowData.FlowInstanceResult getFlowInstanceExtended(Long flowInstanceId) {
         if (flowInstanceId==null) {
             return new FlowData.FlowInstanceResult("#560.85 flowInstanceId is null");
         }
@@ -170,15 +168,15 @@ public class FlowService {
         if (flowInstance == null) {
             return new FlowData.FlowInstanceResult("#560.87 flowInstance wasn't found, flowInstanceId: " + flowInstanceId);
         }
-        Flow flow = flowCache.findById(flowId);
+        Flow flow = flowCache.findById(flowInstance.getFlowId());
         if (flow == null) {
-            return new FlowData.FlowInstanceResult("#560.89 flow wasn't found, flowId: " + flowId);
+            return new FlowData.FlowInstanceResult("#560.89 flow wasn't found, flowId: " + flowInstance.getFlowId());
         }
 
         if (!flow.getId().equals(flowInstance.flowId)) {
             flowInstance.valid=false;
             flowInstanceRepository.save(flowInstance);
-            return new FlowData.FlowInstanceResult("#560.73 flowId doesn't match to flowInstance.flowId, flowId: " + flowId+", flowInstance.flowId: " + flowInstance.flowId);
+            return new FlowData.FlowInstanceResult("#560.73 flowId doesn't match to flowInstance.flowId, flowId: " + flowInstance.getFlowId()+", flowInstance.flowId: " + flowInstance.getFlowId());
         }
 
         FlowData.FlowInstanceResult result = new FlowData.FlowInstanceResult(flow, flowInstance);
@@ -205,9 +203,8 @@ public class FlowService {
         return flowValidation;
     }
 
-    public OperationStatusRest flowInstanceTargetExecState(
-            Long flowId, Long flowInstanceId, Enums.FlowInstanceExecState execState) {
-        FlowData.FlowInstanceResult result = prepareModel(flowId, flowInstanceId);
+    public OperationStatusRest flowInstanceTargetExecState(Long flowInstanceId, Enums.FlowInstanceExecState execState) {
+        FlowData.FlowInstanceResult result = getFlowInstanceExtended(flowInstanceId);
         if (result.isErrorMessages()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, result.errorMessages);
         }
@@ -279,7 +276,7 @@ public class FlowService {
         }
         Monitoring.log("##022", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        produceTasks(isPersist, result, flow, flowInstance);
+        result = produceTasks(isPersist, flow, flowInstance);
         log.info("FlowService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 
@@ -359,7 +356,7 @@ public class FlowService {
         public int numberOfTasks;
     }
 
-    public FlowService.TaskProducingResult createFlowInstance(Flow flow, String inputResourceParam) {
+    public FlowService.TaskProducingResult createFlowInstance(Long flowId, String inputResourceParam) {
         FlowService.TaskProducingResult result = new TaskProducingResult();
 
         InputResourceParam resourceParam = InputResourceParamUtils.to(inputResourceParam);
@@ -370,7 +367,7 @@ public class FlowService {
         }
 
         FlowInstance fi = new FlowInstance();
-        fi.setFlowId(flow.getId());
+        fi.setFlowId(flowId);
         fi.setCreatedOn(System.currentTimeMillis());
         fi.setExecState(Enums.FlowInstanceExecState.NONE.code);
         fi.setCompletedOn(null);
@@ -451,8 +448,10 @@ public class FlowService {
         }
     }
 
-    @SuppressWarnings("Duplicates")
-    public void produceTasks(boolean isPersist, TaskProducingResult result, Flow flow, FlowInstance fi) {
+    public TaskProducingResult produceTasks(boolean isPersist, Flow flow, FlowInstance fi) {
+
+        FlowService.TaskProducingResult result = new FlowService.TaskProducingResult();
+        result.flowValidateStatus = EnumsApi.FlowValidateStatus.OK;
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
@@ -464,7 +463,7 @@ public class FlowService {
         ResourcePools pools = new ResourcePools(initialInputResourceCodes);
         if (pools.status!= EnumsApi.FlowProducingStatus.OK) {
             result.flowProducingStatus = pools.status;
-            return;
+            return result;
         }
         if (resourceParams.preservePoolNames) {
             final Map<String, List<String>> collectedInputs = new HashMap<>();
@@ -516,7 +515,7 @@ public class FlowService {
             result.numberOfTasks += produceTaskResult.numberOfTasks;
             if (produceTaskResult.status != EnumsApi.FlowProducingStatus.OK) {
                 result.flowProducingStatus = produceTaskResult.status;
-                return;
+                return result;
             }
             if (!process.collectResources) {
                 pools.clean();
@@ -528,7 +527,7 @@ public class FlowService {
         toProduced(isPersist, result, fi);
 
         result.flowProducingStatus = EnumsApi.FlowProducingStatus.OK;
-
+        return result;
     }
 
     private void toProduced(boolean isPersist, TaskProducingResult result, FlowInstance fi) {

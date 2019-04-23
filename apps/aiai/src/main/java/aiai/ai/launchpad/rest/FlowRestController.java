@@ -20,6 +20,7 @@ package aiai.ai.launchpad.rest;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.data.FlowData;
 import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.flow.FlowTopLevelService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -38,6 +39,8 @@ public class FlowRestController {
     public FlowRestController(FlowTopLevelService flowTopLevelService) {
         this.flowTopLevelService = flowTopLevelService;
     }
+
+    // ============= Flow =============
 
     @GetMapping("/flows")
     public FlowData.FlowsResult flows(@PageableDefault(size = 5) Pageable pageable) {
@@ -94,7 +97,19 @@ public class FlowRestController {
 
     @GetMapping("/flow-instance-target-exec-state/{flowId}/{state}/{id}")
     public OperationStatusRest flowInstanceTargetExecState(@PathVariable Long flowId, @PathVariable String state, @PathVariable Long id) {
-        return flowTopLevelService.changeFlowInstanceExecState(flowId, state, id);
+        return flowTopLevelService.changeFlowInstanceExecState(state, id);
+    }
+
+    // ============= Service methods =============
+
+    @GetMapping(value = "/emulate-producing-tasks/{flowInstanceId}")
+    public FlowData.TaskProducingResult emulateProducingTasks(@PathVariable Long flowInstanceId) {
+        return flowTopLevelService.produceTasksWithoutPersistence(flowInstanceId);
+    }
+
+    @GetMapping(value = "/create-all-tasks")
+    public void createAllTasks() {
+        flowTopLevelService.createAllTasks();
     }
 
 }

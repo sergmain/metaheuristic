@@ -82,7 +82,7 @@ public class TestFlowService extends PreparingFlow {
         EnumsApi.FlowValidateStatus status = flowService.validate(flow);
         assertEquals(EnumsApi.FlowValidateStatus.OK, status);
 
-        FlowService.TaskProducingResult result = flowService.createFlowInstance(flow, InputResourceParamUtils.toString(inputResourceParam));
+        FlowService.TaskProducingResult result = flowService.createFlowInstance(flow.getId(), InputResourceParamUtils.toString(inputResourceParam));
         flowInstance = result.flowInstance;
 
         assertEquals(EnumsApi.FlowProducingStatus.OK, result.flowProducingStatus);
