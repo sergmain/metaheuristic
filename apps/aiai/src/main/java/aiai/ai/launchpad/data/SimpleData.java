@@ -17,33 +17,27 @@
 
 package aiai.ai.launchpad.data;
 
-import aiai.ai.launchpad.experiment.task.TaskWIthType;
-import aiai.api.v1.launchpad.Task;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.domain.Slice;
 
-import java.util.List;
-
-public class TasksData {
+public class SimpleData {
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class TasksResult extends BaseDataClass {
-        public Slice<TaskWIthType> items;
+    public static class LongResult extends BaseDataClass {
+        public Long value;
     }
 
-   @Data
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class ListOfTasksResult extends BaseDataClass {
-        public List<Task> items;
+    public static class IntegerResult extends BaseDataClass {
+        public Integer value;
     }
-
 
 }
