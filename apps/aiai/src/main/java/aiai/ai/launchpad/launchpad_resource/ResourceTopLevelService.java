@@ -57,6 +57,14 @@ public class ResourceTopLevelService {
 
     public OperationStatusRest createResourceFromFile(
             MultipartFile file, String resourceCode, String resourcePoolCode ) {
+        String originFilename = file.getOriginalFilename();
+        return storeFileInternal(file, resourceCode, resourcePoolCode, originFilename);
+    }
+
+    public OperationStatusRest storeFileInternal(MultipartFile file, String resourceCode, String resourcePoolCode, String originFilename) {
+        if (originFilename == null) {
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#172.01 name of uploaded file is null");
+        }
         File tempFile = globals.createTempFileForLaunchpad("temp-raw-file-");
         if (tempFile.exists()) {
             if (!tempFile.delete() ) {
@@ -73,16 +81,12 @@ public class ResourceTopLevelService {
                             tempFile.getAbsolutePath()+", error: " + e.toString());
         }
 
-        String originFilename = file.getOriginalFilename();
-        if (originFilename == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#172.01 name of uploaded file is null");
-        }
         String code = StringUtils.isNotBlank(resourceCode)
                 ? resourceCode
                 : resourcePoolCode + '-' + originFilename;
 
         try {
-            resourceService.storeInitialResource(originFilename, tempFile, code, resourcePoolCode, originFilename);
+            resourceService.storeInitialResource(tempFile, code, resourcePoolCode, originFilename);
         } catch (StoreNewFileException e) {
             String es = "#172.04 An error while saving data to file, " + e.toString();
             log.error(es, e);
@@ -131,5 +135,11 @@ public class ResourceTopLevelService {
         }
         binaryDataService.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    // ============= Service methods =============
+
+    public OperationStatusRest storeInitialResource(MultipartFile file, String resourceCode, String resourcePoolCode, String filename) {
+        return storeFileInternal(file, resourceCode, resourcePoolCode, filename);
     }
 }

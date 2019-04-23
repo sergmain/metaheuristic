@@ -386,7 +386,7 @@ public class ProcessResourceController {
                     attachments.add(code);
                 }
 
-                resourceService.storeInitialResource(originFilename, file, code, poolCode, originFilename);
+                resourceService.storeInitialResource(file, code, poolCode, originFilename);
             }
         } catch (StoreNewFileException e) {
             log.error("Error", e);

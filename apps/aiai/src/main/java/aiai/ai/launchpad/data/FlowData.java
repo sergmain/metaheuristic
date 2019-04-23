@@ -17,7 +17,6 @@
 
 package aiai.ai.launchpad.data;
 
-import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.api.v1.EnumsApi;
@@ -117,14 +116,6 @@ public class FlowData {
     public static class FlowValidation extends BaseDataClass {
         public EnumsApi.FlowValidateStatus status;
     }
-
-    /*
-            @Data
-            public static class Result {
-                public Slice<Flow> items;
-            }
-
-        */
 
     @Data
     @EqualsAndHashCode(callSuper = false)

@@ -40,7 +40,7 @@ public class ResourceService {
         this.binaryDataService = binaryDataService;
     }
 
-    public void storeInitialResource(String originFilename, File tempFile, String code, String poolCode, String filename) {
+    public void storeInitialResource(File tempFile, String code, String poolCode, String filename) {
         try {
             try (InputStream is = new FileInputStream(tempFile)) {
                 binaryDataService.save(
@@ -48,7 +48,7 @@ public class ResourceService {
             }
         } catch (IOException e) {
             log.error("Error", e);
-            throw new StoreNewFileException(tempFile.getPath(), originFilename);
+            throw new StoreNewFileException(tempFile.getPath(), filename);
         }
     }
 

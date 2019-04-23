@@ -69,4 +69,17 @@ public class ResourceRestController {
     public OperationStatusRest deleteResource(Long id) {
         return resourceTopLevelService.deleteResource(id);
     }
+
+    // ============= Service methods =============
+
+    @PostMapping(value = "/store-initial-resource", headers = ("content-type=multipart/*"), produces = "application/json", consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE)
+    public OperationStatusRest storeInitialResource(
+            @RequestPart MultipartFile file,
+            @RequestParam(name = "code") String resourceCode,
+            @RequestParam(name = "poolCode") String resourcePoolCode,
+            @RequestParam(name = "filename") String filename
+    ) {
+        return resourceTopLevelService.storeInitialResource(file, resourceCode, resourcePoolCode, filename);
+    }
+
 }
