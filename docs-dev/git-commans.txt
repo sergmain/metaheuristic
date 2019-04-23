@@ -1,0 +1,6 @@
+git rev-parse --is-inside-work-tree
+
+git checkout sha1
+
+git pull <remote> <branch>
+git pull origin master
