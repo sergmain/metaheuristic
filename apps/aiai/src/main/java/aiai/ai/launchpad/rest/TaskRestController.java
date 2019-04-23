@@ -39,6 +39,8 @@ public class TaskRestController {
         this.taskRepository = taskRepository;
     }
 
+    // ============= Service methods =============
+
     @GetMapping("/max-concrete-order/{flowInstanceId}")
     public SimpleData.IntegerResult findMaxConcreteOrder(@PathVariable Long flowInstanceId) {
         Integer max = taskRepository.findMaxConcreteOrder(flowInstanceId);
