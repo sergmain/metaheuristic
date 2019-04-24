@@ -26,6 +26,7 @@ import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -103,11 +104,11 @@ public class TaskAssetPreparer {
             boolean isAllLoaded = resultOfChecking.isAllLoaded;
 
             File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
-            if (!taskParamYaml.snippet.fileProvided) {
-                AssetFile assetFile = ResourceUtils.prepareSnippetFile(snippetDir, taskParamYaml.snippet.code, taskParamYaml.snippet.filename);
+            if (taskParamYaml.snippet.sourcing==EnumsApi.SnippetSourcing.launchpad) {
+                AssetFile assetFile = ResourceUtils.prepareSnippetFile(snippetDir, taskParamYaml.snippet.getCode(), taskParamYaml.snippet.file);
                 if (assetFile.isError || !assetFile.isContent) {
                     isAllLoaded = false;
-                    DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.code, taskParamYaml.snippet.filename, taskParamYaml.snippet.checksum, snippetDir, task.getTaskId());
+                    DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.getCode(), taskParamYaml.snippet.file, taskParamYaml.snippet.checksum, snippetDir, task.getTaskId());
                     snippetTask.launchpad = launchpad.launchpadLookup;
                     snippetTask.stationId = launchpadCode.stationId;
                     downloadSnippetActor.add(snippetTask);

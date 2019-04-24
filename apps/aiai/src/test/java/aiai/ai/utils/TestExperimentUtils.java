@@ -19,6 +19,7 @@ package aiai.ai.utils;
 
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
+import aiai.apps.commons.CommonConsts;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -51,15 +52,15 @@ public class TestExperimentUtils {
     public void testSorting() {
         ExperimentSnippet es1 = new ExperimentSnippet();
         es1.setSnippetCode("snippet-1:1");
-        es1.setType("predict");
+        es1.setType(CommonConsts.PREDICT_TYPE);
 
         ExperimentSnippet es2 = new ExperimentSnippet();
         es2.setSnippetCode("snippet-2:1");
-        es2.setType("fit");
+        es2.setType(CommonConsts.FIT_TYPE);
 
         List<ExperimentSnippet>experimentSnippets = Arrays.asList( es1, es2 );
         ExperimentUtils.sortExperimentSnippets(experimentSnippets);
-        assertEquals("fit", experimentSnippets.get(0).getType());
-        assertEquals("predict", experimentSnippets.get(1).getType());
+        assertEquals(CommonConsts.FIT_TYPE, experimentSnippets.get(0).getType());
+        assertEquals(CommonConsts.PREDICT_TYPE, experimentSnippets.get(1).getType());
     }
 }

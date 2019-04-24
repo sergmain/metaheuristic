@@ -19,19 +19,11 @@ package aiai.apps.commons.yaml.snippet;
 
 import lombok.Data;
 
-@Data
-public class SnippetVersion {
-    public String name;
-    public String version;
+import java.util.List;
 
-    public static SnippetVersion from(String s) {
-        SnippetVersion snippetVersion = new SnippetVersion();
-        final int index = s.indexOf(':');
-        if (index==-1) {
-            return null;
-        }
-        snippetVersion.name = s.substring(0, index);
-        snippetVersion.version = s.substring(index +1);
-        return snippetVersion;
-    }
+@Data
+public class SnippetConfigList {
+
+    public List<SnippetConfig> snippets;
+
 }

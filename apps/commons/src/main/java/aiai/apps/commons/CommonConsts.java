@@ -14,22 +14,11 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.yaml.task;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package aiai.apps.commons;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class SimpleSnippet {
-    public String type;
-    public String code;
-    public String filename;
-    public String checksum;
-    public String env;
-    public boolean metrics;
-    public boolean fileProvided;
-    public String params;
+public class CommonConsts {
+
+    public static final String FIT_TYPE = "fit";
+    public static final String PREDICT_TYPE = "predict";
 }

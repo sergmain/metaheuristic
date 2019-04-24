@@ -18,25 +18,22 @@ package aiai.ai.yaml.task_params_new;
 
 import aiai.ai.Consts;
 import aiai.ai.yaml.TestYamlParser;
-import aiai.ai.yaml.env.EnvYaml;
-import aiai.ai.yaml.env.EnvYamlUtils;
-import aiai.ai.yaml.task.SimpleSnippet;
+import aiai.api.v1.EnumsApi;
+import aiai.apps.commons.CommonConsts;
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
 public class TestTaskParamYaml {
-
-    private TaskParamYamlNewUtils taskParamYamlUtils = new TaskParamYamlNewUtils();
 
     @Test
     public void testSequenceYaml() {
@@ -50,7 +47,17 @@ public class TestTaskParamYaml {
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.setHyperParams(map);
-        seq.setSnippet(new SimpleSnippet("fit", "123", "file.txt", "112233", "python.exe",  false, false, " aaa bbb"));
+
+        SnippetConfig sc = new SnippetConfig();
+        sc.type = CommonConsts.FIT_TYPE;
+        sc.code = "abc:1.0";
+        sc.file = "file.txt";
+        sc.checksum = "112233";
+        sc.env = "python.exe";
+        sc.metrics = false;
+        sc.sourcing = EnumsApi.SnippetSourcing.launchpad;
+        sc.params = " aaa bbb";
+        seq.setSnippet(sc);
 
         String s = TaskParamYamlNewUtils.toString(seq);
         System.out.println(s);

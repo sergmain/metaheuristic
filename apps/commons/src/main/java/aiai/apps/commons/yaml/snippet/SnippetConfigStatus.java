@@ -14,16 +14,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.launchpad.repositories;
 
-import aiai.ai.launchpad.beans.Snippet;
-import org.springframework.context.annotation.Profile;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Repository;
+package aiai.apps.commons.yaml.snippet;
 
-@Repository
-@Profile("launchpad")
-public interface SnippetRepository extends CrudRepository<Snippet, Long> {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    Snippet findByCode(String code);
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class SnippetConfigStatus {
+    public boolean isOk;
+    public String error;
 }

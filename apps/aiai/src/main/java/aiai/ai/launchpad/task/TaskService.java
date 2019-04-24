@@ -20,10 +20,11 @@ package aiai.ai.launchpad.task;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
-import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.beans.Station;
+import aiai.ai.launchpad.beans.TaskImpl;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
-import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.utils.holders.LongHolder;
@@ -32,7 +33,6 @@ import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.launchpad.Task;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -56,7 +56,6 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final FlowInstanceRepository flowInstanceRepository;
-    private final SnippetRepository snippetRepository;
     private final StationsRepository stationsRepository;
 
     public List<Long> resourceReceivingChecker(long stationId) {
@@ -114,11 +113,10 @@ public class TaskService {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, FlowInstanceRepository flowInstanceRepository, SnippetRepository snippetRepository, StationsRepository stationsRepository) {
+    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, FlowInstanceRepository flowInstanceRepository, StationsRepository stationsRepository) {
         this.taskRepository = taskRepository;
         this.taskPersistencer = taskPersistencer;
         this.flowInstanceRepository = flowInstanceRepository;
-        this.snippetRepository = snippetRepository;
         this.stationsRepository = stationsRepository;
     }
 
@@ -187,31 +185,25 @@ public class TaskService {
         Slice<Task> tasks;
         while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), flowInstance.getId(), flowInstance.producingOrder)).hasContent()) {
             for (Task task : tasks) {
-                final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
-
-                SnippetVersion version = SnippetVersion.from(taskParamYaml.snippet.getCode());
-                if (version == null) {
-                    log.warn("#317.53 Can't find snippet for code: {}", taskParamYaml.snippet.getCode());
-                    continue;
-                }
-                Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
-                if (snippet == null) {
-                    log.warn("#317.59 Can't find snippet for code: {}, snippetVersion: {}", taskParamYaml.snippet.getCode(), version);
-                    continue;
+                final TaskParamYaml taskParamYaml;
+                try {
+                    taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
                 }
 
                 EnvYaml envYaml = EnvYamlUtils.to(station.getEnv());
-                String interpreter = envYaml.getEnvs().get(snippet.env);
+                String interpreter = envYaml.getEnvs().get(taskParamYaml.snippet.env);
                 if (interpreter==null) {
                     log.warn("#317.64 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
-                            station.getId(), task.getId(), snippet.env
+                            station.getId(), task.getId(), taskParamYaml.snippet.env
                     );
                     longHolder.value = System.currentTimeMillis();
                     continue;
                 }
 
                 if (isAcceptOnlySigned) {
-                    if (!snippet.isSigned()) {
+                    if (!taskParamYaml.snippet.info.isSigned()) {
                         log.warn("#317.69 Snippet with code {} wasn't signed", taskParamYaml.snippet.getCode());
                         continue;
                     }

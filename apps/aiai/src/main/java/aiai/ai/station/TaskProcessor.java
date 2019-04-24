@@ -28,9 +28,10 @@ import aiai.ai.station.station_resource.ResourceProvider;
 import aiai.ai.station.station_resource.ResourceProviderFactory;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station.StationTask;
-import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.EnumsApi;
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -155,18 +156,19 @@ public class TaskProcessor {
             final String params = TaskParamYamlUtils.toString(taskParamYaml);
 
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
-            SimpleSnippet snippet = taskParamYaml.getSnippet();
+            SnippetConfig snippet = taskParamYaml.getSnippet();
 
             AssetFile snippetAssetFile=null;
-            if (!snippet.fileProvided) {
+            if (snippet.sourcing== EnumsApi.SnippetSourcing.launchpad) {
                 final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
-                snippetAssetFile = ResourceUtils.prepareSnippetFile(snippetDir, snippet.code, snippet.filename);
+                snippetAssetFile = ResourceUtils.prepareSnippetFile(snippetDir, snippet.getCode(), snippet.file);
                 // is this snippet prepared?
                 if (snippetAssetFile.isError || !snippetAssetFile.isContent) {
                     log.info("Resource hasn't been prepared yet, {}", snippetAssetFile);
                     isAllLoaded = false;
                 }
             }
+
             if (!isAllLoaded) {
                 continue;
             }
@@ -188,8 +190,7 @@ public class TaskProcessor {
             try {
                 List<String> cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
 
-                // bug in IDEA with analyzing !snippet.fileProvided, so we have to add '&& snippetAssetFile!=null'
-                if (!snippet.fileProvided && snippetAssetFile!=null) {
+                if (snippet.sourcing== EnumsApi.SnippetSourcing.launchpad && snippetAssetFile!=null) {
                     cmd.add(snippetAssetFile.file.getAbsolutePath());
                 }
                 if (StringUtils.isNoneBlank(snippet.params)) {

@@ -16,9 +16,11 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.EnumsApi;
+import aiai.apps.commons.CommonConsts;
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -44,7 +46,18 @@ public class TestTaskParamYaml {
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.setHyperParams(map);
-        seq.setSnippet(new SimpleSnippet("fit", "123", "file.txt", "112233", "python.exe",  false, false, " aaa bbb"));
+        seq.setSnippet(new SnippetConfig(
+                "123:1.0",
+                CommonConsts.FIT_TYPE,
+                "file.txt",
+                "112233",
+                "python.exe",
+                EnumsApi.SnippetSourcing.launchpad,
+                true,
+                null,
+                null,
+                null
+        ));
 
         String s = TaskParamYamlUtils.toString(seq);
         System.out.println(s);

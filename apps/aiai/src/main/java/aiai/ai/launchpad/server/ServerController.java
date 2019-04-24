@@ -29,7 +29,8 @@ import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.apps.commons.utils.DirUtils;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
+import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -232,20 +233,15 @@ public class ServerController {
     }
 
     private String getSnippetChecksum(HttpServletResponse response, String snippetCode) throws IOException {
-        SnippetVersion snippetVersion = SnippetVersion.from(snippetCode);
-        if (snippetVersion==null) {
-            log.warn("#442.19 wrong format of snippet code {}", snippetCode);
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-            return null;
-        }
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+        Snippet snippet = snippetRepository.findByCode(snippetCode);
         if (snippet==null) {
             log.warn("#442.23 Snippet wasn't found for code {}", snippetCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        log.info("Send checksum for snippet {}");
-        return snippet.getChecksum();
+        SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
+        log.info("Send checksum {} for snippet {}", sc.checksum, sc.getCode());
+        return sc.checksum;
     }
 
     /**

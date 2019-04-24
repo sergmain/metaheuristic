@@ -14,16 +14,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.launchpad.repositories;
 
-import aiai.ai.launchpad.beans.Snippet;
-import org.springframework.context.annotation.Profile;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Repository;
+package aiai.apps.commons.utils;
 
-@Repository
-@Profile("launchpad")
-public interface SnippetRepository extends CrudRepository<Snippet, Long> {
+import org.junit.Test;
 
-    Snippet findByCode(String code);
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class TestStrUtils {
+
+    @Test
+    public void testMatching() {
+        assertTrue(StrUtils.isSnippetCodeOk("1234567890-abc_xyz:1.0"));
+        assertFalse(StrUtils.isSnippetCodeOk("1234567890-?#$%abc_xyz:1.0"));
+    }
 }

@@ -36,7 +36,6 @@ public class SnippetCache {
         this.snippetRepository = snippetRepository;
     }
 
-//    @CachePut(cacheNames = "snippets", key = "#result.id")
     @CacheEvict(cacheNames = "snippets", key = "#result.id")
     public Snippet save(Snippet snippet) {
         return snippetRepository.save(snippet);
@@ -47,17 +46,16 @@ public class SnippetCache {
         try {
             snippetRepository.delete(snippet);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error deleting of snippet by object, {}", e);
+            log.warn("Error deleting of snippet by object", e);
         }
     }
 
-//    @CacheEvict(cacheNames = {"snippets", "snippetsByName"}, allEntries=true)
     @CacheEvict(cacheNames = {"snippets"}, key = "#snippetId")
     public void delete(long snippetId) {
         try {
             snippetRepository.deleteById(snippetId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error deleting of snippet by id, {}", e);
+            log.warn("Error deleting of snippet by id", e);
         }
     }
 

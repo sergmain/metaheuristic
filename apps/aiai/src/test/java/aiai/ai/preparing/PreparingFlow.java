@@ -35,7 +35,8 @@ import aiai.ai.yaml.flow.FlowYaml;
 import aiai.ai.yaml.flow.FlowYamlUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
 import aiai.api.v1.EnumsApi;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
+import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -200,26 +201,25 @@ public abstract class PreparingFlow extends PreparingExperiment {
     }
 
     private Snippet createSnippet(String snippetCode) {
-        SnippetVersion sv = SnippetVersion.from(snippetCode);
-        if (sv==null) {
-            throw new IllegalStateException("wrong format of snippet code " + snippetCode);
-        }
+        SnippetConfig sc = new SnippetConfig();
+        sc.code = snippetCode;
+        sc.type = snippetCode + "-type";
+        sc.file = null;
+        sc.setEnv("env-"+snippetCode);
+        sc.sourcing = EnumsApi.SnippetSourcing.system;;
+        sc.metrics = false;
+
+        sc.info.setSigned(false);
+        sc.info.setLength(1000);
+
         Snippet s = new Snippet();
-        Snippet sn = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
+        Snippet sn = snippetRepository.findByCode(snippetCode);
         if (sn!=null) {
             snippetCache.delete(sn);
         }
-        s.setName(sv.name);
-        s.setSnippetVersion(sv.version);
-        s.setType(snippetCode + "-type");
-        s.setFilename(null);
-        s.setFileProvided(true);
-        s.setChecksum(null);
-        s.setSigned(false);
-        s.setReportMetrics(false);
-        s.setEnv("env-"+sv.name);
-        s.setParams(null);
-        s.setLength(1000);
+        s.setCode(snippetCode);
+        s.setType(sc.type);
+        s.setParams(SnippetConfigUtils.toString(sc));
 
         snippetCache.save(s);
         return s;

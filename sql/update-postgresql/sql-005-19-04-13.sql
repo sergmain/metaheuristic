@@ -2,7 +2,7 @@
 
 create table PILOT_BATCH
 (
-  ID               SERIAL PRIMARY KEYб
+  ID               SERIAL PRIMARY KEY,
     VERSION          NUMERIC(5, 0)  NOT NULL,
   FLOW_ID          NUMERIC(10, 0) NOT NULL,
   CREATED_ON       bigint         NOT NULL

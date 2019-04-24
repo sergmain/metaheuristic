@@ -28,9 +28,9 @@ import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.station.StationTask;
 import aiai.ai.yaml.station.StationTaskUtils;
-import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -280,8 +280,8 @@ public class StationTaskService {
         }
     }
 
-    void storeExecResult(String launchpadUrl, Long taskId, long startedOn, SimpleSnippet snippet, ExecProcessService.Result result, File artifactDir) {
-        log.info("storeExecResult(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, taskId, snippet.code);
+    void storeExecResult(String launchpadUrl, Long taskId, long startedOn, SnippetConfig snippet, ExecProcessService.Result result, File artifactDir) {
+        log.info("storeExecResult(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, taskId, snippet.getCode());
         StationTask taskTemp = findById(launchpadUrl, taskId);
         if (taskTemp == null) {
             log.error("#713.49 StationRestTask wasn't found for Id " + taskId);

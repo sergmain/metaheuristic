@@ -18,6 +18,7 @@ package aiai.ai.core;
 
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.experiment.ExperimentService;
+import aiai.apps.commons.CommonConsts;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -33,14 +34,14 @@ public class TestSnippetSorting {
     public void sort() {
         List<ExperimentSnippet> snippets = new ArrayList<>();
         ExperimentSnippet s1 = new ExperimentSnippet();
-        s1.type = "predict";
+        s1.type = CommonConsts.PREDICT_TYPE;
         ExperimentSnippet s2 = new ExperimentSnippet();
-        s2.type = "fit";
+        s2.type = CommonConsts.FIT_TYPE;
         Collections.addAll(snippets, s1, s2);
-        assertEquals("predict", snippets.get(0).type);
-        assertEquals("fit", snippets.get(1).type);
+        assertEquals(CommonConsts.PREDICT_TYPE, snippets.get(0).type);
+        assertEquals(CommonConsts.FIT_TYPE, snippets.get(1).type);
         ExperimentService.sortSnippetsByType(snippets);
-        assertEquals("fit", snippets.get(0).type);
-        assertEquals("predict", snippets.get(1).type);
+        assertEquals(CommonConsts.FIT_TYPE, snippets.get(0).type);
+        assertEquals(CommonConsts.PREDICT_TYPE, snippets.get(1).type);
     }
 }

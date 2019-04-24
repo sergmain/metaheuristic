@@ -19,16 +19,16 @@ package aiai.ai.launchpad.file_process;
 
 import aiai.ai.Consts;
 import aiai.ai.launchpad.beans.*;
+import aiai.apps.commons.utils.StrUtils;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.flow.FlowUtils;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
+import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -65,13 +65,8 @@ public class FileProcessService {
         result.outputResourceCodes = new ArrayList<>();
         if (process.parallelExec) {
             for (String snippetCode : process.snippetCodes) {
-                SnippetVersion sv = SnippetVersion.from(snippetCode);
-                if (sv==null) {
-                    result.status = EnumsApi.FlowProducingStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
-                    result.numberOfTasks = 0;
-                    return result;
-                }
-                String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, sv.name, process.order);
+                String resourceName = StrUtils.normalizeSnippetCode(snippetCode);
+                String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, resourceName, process.order);
                 result.outputResourceCodes.add(outputResourceCode);
                 inputStorageUrls.put(outputResourceCode,
                         StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
@@ -82,13 +77,8 @@ public class FileProcessService {
         }
         else {
             String snippetCode = process.snippetCodes.get(0);
-            SnippetVersion sv = SnippetVersion.from(snippetCode);
-            if (sv==null) {
-                result.status = EnumsApi.FlowProducingStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
-                result.numberOfTasks = 0;
-                return result;
-            }
-            String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, sv.name, process.order);
+            String resourceName = StrUtils.normalizeSnippetCode(snippetCode);
+            String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, resourceName, process.order);
             result.outputResourceCodes.add(outputResourceCode);
             inputStorageUrls.put(outputResourceCode,
                     StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
@@ -110,12 +100,6 @@ public class FileProcessService {
                     "expected: "+ EnumsApi.ProcessType.FILE_PROCESSING+", " +
                     "actual: " + process.type);
         }
-        SnippetVersion sv = SnippetVersion.from(snippetCode);
-        if (sv==null) {
-            log.error("#171.05 Wrong format of snippet's code: {}", snippetCode);
-            return;
-        }
-
         TaskParamYaml yaml = new TaskParamYaml();
         yaml.setHyperParams( Collections.emptyMap() );
         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
@@ -124,21 +108,12 @@ public class FileProcessService {
         yaml.outputResourceCode = outputResourceCode;
         yaml.resourceStorageUrls = inputStorageUrls;
 
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
+        Snippet snippet = snippetRepository.findByCode(snippetCode);
         if (snippet==null) {
             log.error("#171.07 Snippet wasn't found for code: {}", snippetCode);
             return;
         }
-        yaml.snippet = new SimpleSnippet(
-                snippet.getType(),
-                snippetCode,
-                snippet.getFilename(),
-                snippet.checksum,
-                snippet.env,
-                snippet.reportMetrics,
-                snippet.fileProvided,
-                snippet.params
-        );
+        yaml.snippet = SnippetConfigUtils.to(snippet.params);
         yaml.clean = flow.clean;
         yaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 

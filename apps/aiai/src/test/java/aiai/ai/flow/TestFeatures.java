@@ -24,6 +24,7 @@ import aiai.ai.utils.holders.IntHolder;
 import aiai.ai.yaml.flow.FlowYaml;
 import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -124,7 +125,8 @@ public class TestFeatures extends PreparingFlow {
         log.info("experimentFeatureRepository.findByExperimentId() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(features);
-        // TODO 777 - just random number. need to change value for working test
+        if (true) throw new NotImplementedException("TODO 777 - just random number. need to change value for working test");
+
         assertEquals(
                 "TODO 777 - just random number. need to change value for working test",
                 777, features.size());

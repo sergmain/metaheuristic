@@ -17,11 +17,14 @@
  */
 package aiai.apps.package_snippet;
 
+import aiai.api.v1.EnumsApi;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.SecUtils;
 import aiai.apps.commons.utils.ZipUtils;
-import aiai.apps.commons.yaml.snippet.SnippetsConfig;
-import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
+import aiai.apps.commons.yaml.snippet.SnippetConfigStatus;
+import aiai.apps.commons.yaml.snippet.SnippetConfigList;
+import aiai.apps.commons.yaml.snippet.SnippetConfigListUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
@@ -90,30 +93,29 @@ public class PackageSnippet implements CommandLineRunner {
             return;
         }
 
-        SnippetsConfig snippetsConfig = SnippetsConfigUtils.to(snippetYamlFile);
+        SnippetConfigList snippetConfigList = SnippetConfigListUtils.to(snippetYamlFile);
 
         // Verify
         boolean isError = false;
         Set<String> set = new HashSet<>();
-        for (SnippetsConfig.SnippetConfig snippet : snippetsConfig.getSnippets()) {
-            final SnippetsConfig.SnippetConfigStatus verify = snippet.validate();
+        for (SnippetConfig snippet : snippetConfigList.getSnippets()) {
+            final SnippetConfigStatus verify = snippet.validate();
             if (!verify.isOk) {
                 System.out.println(verify.error);
                 isError=true;
             }
-            if (!snippet.fileProvided) {
+            if (snippet.sourcing==EnumsApi.SnippetSourcing.launchpad) {
                 File sn = new File(snippetYamlFile.getParent(), snippet.file);
                 if (!sn.exists()) {
                     System.out.println("File " + sn.getPath() + " wasn't found");
                     isError = true;
                 }
 
-                final String o = snippet.name + ':' + snippet.version;
-                if (set.contains(o)) {
-                    System.out.println("Found duplicate snippet: " + o);
+                if (set.contains(snippet.code)) {
+                    System.out.println("Found duplicate snippet: " + snippet.code);
                     isError = true;
                 }
-                set.add(o);
+                set.add(snippet.code);
                 File f = new File(snippet.file);
                 if (!f.getPath().equals(snippet.file)) {
                     System.out.println("Relative path for snippet file isn't supported, file: " + snippet.file);
@@ -126,29 +128,29 @@ public class PackageSnippet implements CommandLineRunner {
         }
 
         // Process
-        for (SnippetsConfig.SnippetConfig snippet : snippetsConfig.getSnippets()) {
+        for (SnippetConfig snippetConfig : snippetConfigList.getSnippets()) {
             String sum;
-            if (snippet.fileProvided) {
-                sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippet.env.getBytes()));
+            if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.system) {
+                sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippetConfig.env.getBytes()));
             }
             else {
-                final File snippetFile = new File(targetDir, snippet.file);
-                FileUtils.copyFile(new File(snippet.file), snippetFile);
+                final File snippetFile = new File(targetDir, snippetConfig.file);
+                FileUtils.copyFile(new File(snippetConfig.file), snippetFile);
                 try (FileInputStream fis = new FileInputStream(snippetFile)) {
                     sum = Checksum.Type.SHA256.getChecksum(fis);
                 }
             }
-            snippet.checksums = new HashMap<>();
+            snippetConfig.checksumMap = new HashMap<>();
             if (privateKey!=null) {
                 String signature = SecUtils.getSignature(sum, privateKey);
-                snippet.checksums.put(Checksum.Type.SHA256WithSignature, sum + SecUtils.SIGNATURE_DELIMITER + signature);
+                snippetConfig.checksumMap.put(Checksum.Type.SHA256WithSignature, sum + SecUtils.SIGNATURE_DELIMITER + signature);
             }
             else {
-                snippet.checksums.put(Checksum.Type.SHA256, sum);
+                snippetConfig.checksumMap.put(Checksum.Type.SHA256, sum);
             }
         }
 
-        String yaml = SnippetsConfigUtils.toString(snippetsConfig);
+        String yaml = SnippetConfigListUtils.toString(snippetConfigList);
         final File file = new File(targetDir, SNIPPETS_YAML);
         FileUtils.writeStringToFile(file, yaml, StandardCharsets.UTF_8);
 

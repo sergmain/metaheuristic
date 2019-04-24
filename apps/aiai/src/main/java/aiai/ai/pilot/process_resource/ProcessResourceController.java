@@ -38,7 +38,7 @@ import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.pilot.beans.Batch;
 import aiai.ai.pilot.beans.BatchFlowInstance;
 import aiai.ai.utils.ControllerUtils;
-import aiai.ai.utils.StrUtils;
+import aiai.apps.commons.utils.StrUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;

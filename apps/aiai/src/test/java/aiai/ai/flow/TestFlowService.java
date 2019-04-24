@@ -31,6 +31,7 @@ import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.api.v1.EnumsApi;
+import org.apache.commons.lang3.NotImplementedException;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -132,6 +133,9 @@ public class TestFlowService extends PreparingFlow {
                 taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
 
         Protocol.AssignedTask.Task simpleTask = assignToStation.getSimpleTask();
+
+        if (true)  throw new NotImplementedException("Not yet");
+
         assertNotNull(simpleTask);
         assertNotNull(simpleTask.getTaskId());
         Task task = taskRepository.findById(simpleTask.getTaskId()). orElse(null);
@@ -154,6 +158,7 @@ public class TestFlowService extends PreparingFlow {
                 taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
 
         Protocol.AssignedTask.Task simpleTask3 = assignToStation3.getSimpleTask();
+
         assertNotNull(simpleTask3);
         assertNotNull(simpleTask3.getTaskId());
         Task task3 = taskRepository.findById(simpleTask3.getTaskId()). orElse(null);

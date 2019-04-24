@@ -28,13 +28,11 @@ import aiai.ai.launchpad.repositories.ExperimentSnippetRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.SimpleSelectOption;
+import aiai.apps.commons.CommonConsts;
 import aiai.apps.commons.utils.Checksum;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
-import aiai.apps.commons.yaml.snippet.SnippetsConfig;
-import aiai.apps.commons.yaml.snippet.SnippetsConfigUtils;
+import aiai.apps.commons.yaml.snippet.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -79,12 +77,7 @@ public class SnippetService {
         List<ExperimentSnippet> experimentSnippets = experimentSnippetRepository.findByExperimentId(experimentId);
         List<Snippet> snippets = new ArrayList<>();
         for (ExperimentSnippet experimentSnippet : experimentSnippets) {
-            SnippetVersion version = SnippetVersion.from(experimentSnippet.getSnippetCode());
-            if (version==null) {
-                log.error("#295.01 wrong format of snippet code: {}", experimentSnippet.getSnippetCode());
-                continue;
-            }
-            Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
+            Snippet snippet = snippetRepository.findByCode(experimentSnippet.getSnippetCode());
             if (snippet==null) {
                 log.error("#295.07 Can't find snippet for code: {}", experimentSnippet.getSnippetCode());
                 continue;
@@ -103,7 +96,7 @@ public class SnippetService {
             return false;
         }
         for (ExperimentSnippet snippet : experimentSnippets) {
-            if ("fit".equals(snippet.getType())) {
+            if (CommonConsts.FIT_TYPE.equals(snippet.getType())) {
                 return true;
             }
         }
@@ -115,7 +108,7 @@ public class SnippetService {
             return false;
         }
         for (ExperimentSnippet snippet : experimentSnippets) {
-            if ("predict".equals(snippet.getType())) {
+            if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
                 return true;
             }
         }
@@ -132,7 +125,7 @@ public class SnippetService {
         for (Snippet snippet : snippets) {
             boolean isExist=false;
             for (SnippetCode snippetCode : snippetCodes) {
-                if (snippet.getSnippetCode().equals(snippetCode.getSnippetCode()) ) {
+                if (snippet.getCode().equals(snippetCode.getSnippetCode()) ) {
                     isExist = true;
                     break;
                 }
@@ -141,7 +134,7 @@ public class SnippetService {
                 if (snippetFilter.filter(snippet)) {
                     continue;
                 }
-                selectOptions.add( new SimpleSelectOption(snippet.getSnippetCode(), String.format("Type: %s; Code: %s:%s", snippet.getType(), snippet.getName(), snippet.getSnippetVersion())));
+                selectOptions.add( new SimpleSelectOption(snippet.getCode(), String.format("Type: %s; Code: %s", snippet.getType(), snippet.getCode())));
             }
         }
         return selectOptions;
@@ -152,7 +145,7 @@ public class SnippetService {
         List<ExperimentSnippet> tss = getTaskSnippetsForExperiment(experiment.getId());
         for (Snippet snippet : snippets) {
             for (ExperimentSnippet experimentSnippet : tss) {
-                if (snippet.getSnippetCode().equals(experimentSnippet.getSnippetCode()) ) {
+                if (snippet.getCode().equals(experimentSnippet.getSnippetCode()) ) {
                     // it should be ok without this line but just for sure
                     experimentSnippet.type = snippet.type;
                     experimentSnippets.add(experimentSnippet);
@@ -189,91 +182,103 @@ public class SnippetService {
         }
 
         String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
-        SnippetsConfig snippetsConfig = SnippetsConfigUtils.to(cfg);
-        for (SnippetsConfig.SnippetConfig snippetConfig : snippetsConfig.snippets) {
-            SnippetsConfig.SnippetConfigStatus status = snippetConfig.validate();
+        SnippetConfigList snippetConfigList = SnippetConfigListUtils.to(cfg);
+        for (SnippetConfig snippetConfig : snippetConfigList.snippets) {
+            SnippetConfigStatus status = snippetConfig.validate();
             if (!status.isOk) {
                 log.error(status.error);
                 continue;
             }
             String sum=null;
             File file = null;
-            long length=0;
             if (globals.isSnippetChecksumRequired) {
-                if (snippetConfig.fileProvided) {
-                    sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippetConfig.env.getBytes()));
-                }
-                else {
-                    file = new File(srcDir, snippetConfig.file);
-                    if (!file.exists()) {
-                        throw new IllegalStateException("File " + snippetConfig.file + " wasn't found in " + srcDir.getAbsolutePath());
-                    }
-                    try (InputStream inputStream = new FileInputStream(file)) {
-                        sum = Checksum.Type.SHA256.getChecksum(inputStream);
-                    }
-                    length = file.length();
+                switch(snippetConfig.sourcing) {
+                    case launchpad:
+                        file = new File(srcDir, snippetConfig.file);
+                        if (!file.exists()) {
+                            throw new IllegalStateException("File " + snippetConfig.file + " wasn't found in " + srcDir.getAbsolutePath());
+                        }
+                        try (InputStream inputStream = new FileInputStream(file)) {
+                            sum = Checksum.Type.SHA256.getChecksum(inputStream);
+                        }
+                        snippetConfig.info.length = file.length();
+                        break;
+                    case system:
+                        sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippetConfig.env.getBytes()));
+                        break;
+                    case git:
+                        break;
                 }
             }
-            else {
-                throw new NotImplementedException("Not implemented yet");
-            }
-            Snippet snippet = snippetRepository.findByNameAndSnippetVersion(snippetConfig.name, snippetConfig.version);
+
+            Snippet snippet = snippetRepository.findByCode(snippetConfig.code);
+            // there is snippet with the same name:version
             if (snippet!=null) {
-                final String checksum = Checksum.fromJson(snippet.checksum).checksums.get(Checksum.Type.SHA256);
-                if (!sum.equals(checksum)) {
-                    if (globals.isReplaceSnapshot && snippetConfig.version.endsWith(Consts.SNAPSHOT_SUFFIX)) {
-                        storeSnippet(snippetConfig, sum, file, length, snippet);
+                SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
+
+                // new snippet is to replace one which is already in db
+                if (globals.isReplaceSnapshot && snippetConfig.code.endsWith(Consts.SNAPSHOT_SUFFIX)) {
+                    // there isn't any checksum for current snippet in db
+                    if (sc.checksum ==null) {
+                        storeSnippet(snippetConfig, sum, file, snippet);
                     }
                     else {
-                        log.warn("#295.14 Updating of snippets is prohibited, not a snapshot version '{}:{}'", snippet.name, snippet.snippetVersion);
+                        final String checksum = Checksum.fromJson(sc.checksum).checksums.get(Checksum.Type.SHA256);
+                        // there checksum for current snippet in db isn't equal to new checksum
+                        if (!checksum.equals(sum)) {
+                            storeSnippet(snippetConfig, sum, file, snippet);
+                        }
                     }
+                }
+                else {
+                    log.warn("#295.14 Updating of snippets is prohibited, not a snapshot version '{}'", snippet.code);
                 }
             }
             else {
                 snippet = new Snippet();
-                storeSnippet(snippetConfig, sum, file, length, snippet);
+                storeSnippet(snippetConfig, sum, file, snippet);
             }
         }
     }
 
-    private void storeSnippet(SnippetsConfig.SnippetConfig snippetConfig, String sum, File file, long length, Snippet snippet) throws IOException {
-        setChecksum(snippetConfig, sum, snippet);
-        snippet.name = snippetConfig.name;
-        snippet.snippetVersion = snippetConfig.version;
+    private void storeSnippet(SnippetConfig snippetConfig, String sum, File file, Snippet snippet) throws IOException {
+        setChecksum(snippetConfig, sum);
+        snippet.code = snippetConfig.code;
         snippet.type = snippetConfig.type;
-        snippet.filename = snippetConfig.file;
-        snippet.fileProvided = snippetConfig.fileProvided;
-        snippet.length = length;
-        snippet.env = snippetConfig.env;
-        snippet.params = snippetConfig.params;
-        snippet.reportMetrics = snippetConfig.isMetrics();
+        snippet.params = SnippetConfigUtils.toString(snippetConfig);
         snippetCache.save(snippet);
         if (file != null) {
             try (InputStream inputStream = new FileInputStream(file)) {
-                String snippetCode = snippet.getSnippetCode();
-                binaryDataService.save(inputStream, snippet.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null, null);
+                String snippetCode = snippet.getCode();
+                binaryDataService.save(inputStream, snippetConfig.info.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null, null);
             }
         }
     }
 
-    private void setChecksum(SnippetsConfig.SnippetConfig snippetConfig, String sum, Snippet snippet) {
-        if (snippetConfig.checksums != null) {
+    private void setChecksum(SnippetConfig snippetConfig, String sum) {
+        if (sum==null) {
+            snippetConfig.checksum = null;
+            snippetConfig.info.setSigned(false);
+            return;
+        }
+
+        if (snippetConfig.checksumMap != null) {
             // already defined checksum in snippets.yaml
             Checksum checksum = new Checksum();
-            checksum.checksums.putAll(snippetConfig.checksums);
-            snippet.checksum = checksum.toJson();
+            checksum.checksums.putAll(snippetConfig.checksumMap);
+            snippetConfig.checksum = checksum.toJson();
             boolean isSigned = false;
-            for (Map.Entry<Checksum.Type, String> entry : snippetConfig.checksums.entrySet()) {
+            for (Map.Entry<Checksum.Type, String> entry : snippetConfig.checksumMap.entrySet()) {
                 if (entry.getKey().isSign) {
                     isSigned = true;
                     break;
                 }
             }
-            snippet.setSigned(isSigned);
+            snippetConfig.info.setSigned(isSigned);
         } else {
             // set the new checksum
-            snippet.checksum = new Checksum(Checksum.Type.SHA256, sum).toJson();
-            snippet.setSigned(false);
+            snippetConfig.checksum = new Checksum(Checksum.Type.SHA256, sum).toJson();
+            snippetConfig.info.setSigned(false);
         }
     }
 }

@@ -66,7 +66,7 @@ public class SnippetTopLevelService {
                     "#422.50 snippet wasn't found, flowId: " + id);
         }
         snippetCache.delete(snippet.getId());
-        binaryDataService.deleteByCodeAndDataType(snippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
+        binaryDataService.deleteByCodeAndDataType(snippet.getCode(), Enums.BinaryDataType.SNIPPET);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

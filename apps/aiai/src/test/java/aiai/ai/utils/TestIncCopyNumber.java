@@ -16,6 +16,7 @@
  */
 package aiai.ai.utils;
 
+import aiai.apps.commons.utils.StrUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

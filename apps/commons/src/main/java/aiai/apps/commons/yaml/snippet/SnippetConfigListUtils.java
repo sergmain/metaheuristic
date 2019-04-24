@@ -19,39 +19,33 @@ package aiai.apps.commons.yaml.snippet;
 
 import aiai.apps.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.Tag;
-import org.yaml.snakeyaml.representer.Representer;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 @Slf4j
-public class SnippetsConfigUtils {
+public class SnippetConfigListUtils {
 
     private static Yaml yaml;
 
     static {
-        yaml = YamlUtils.init(SnippetsConfig.class);
+        yaml = YamlUtils.init(SnippetConfigList.class);
     }
 
-    public static String toString(SnippetsConfig config) {
+    public static String toString(SnippetConfigList config) {
         return YamlUtils.toString(config, yaml);
     }
 
-    public static SnippetsConfig to(String s) {
-        return (SnippetsConfig) YamlUtils.to(s, yaml);
+    public static SnippetConfigList to(String s) {
+        return (SnippetConfigList) YamlUtils.to(s, yaml);
     }
 
-    public static SnippetsConfig to(InputStream is) {
-        return (SnippetsConfig) YamlUtils.to(is, yaml);
+    public static SnippetConfigList to(InputStream is) {
+        return (SnippetConfigList) YamlUtils.to(is, yaml);
     }
 
-    public static SnippetsConfig to(File file) {
-        return (SnippetsConfig) YamlUtils.to(file, yaml);
+    public static SnippetConfigList to(File file) {
+        return (SnippetConfigList) YamlUtils.to(file, yaml);
     }
 }

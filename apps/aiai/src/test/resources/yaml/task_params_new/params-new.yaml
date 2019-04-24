@@ -17,10 +17,10 @@ outputResourceCode:
   storageUrl: launchpad://
 snippet:
   checksum: '112233'
-  code: '123'
+  code: 'abc:123'
   env: python.exe
-  fileProvided: false
-  filename: file.txt
+  sourcing: launchpad
+  file: file.txt
   metrics: false
   params: ' aaa bbb'
   type: fit

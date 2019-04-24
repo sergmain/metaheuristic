@@ -14,13 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.utils;
+package aiai.apps.commons.utils;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class StrUtils {
+
     private static final String COPY_NUMBER_PREFIX = "Copy #";
+    public static final String ALLOWED_CHARS_SNIPPET_CODE_REGEXP = "^[A-Za-z0-9.:_-]*$";
+
+
+    private static final Pattern snippetCodePattern = Pattern.compile(ALLOWED_CHARS_SNIPPET_CODE_REGEXP);
+
+    public static boolean isSnippetCodeOk(String code) {
+        Matcher m = snippetCodePattern.matcher(code);
+        return m.matches();
+    }
+
+    public static String normalizeSnippetCode(String code) {
+        return StringUtils.replaceEach(code, new String[]{":", "."}, new String[]{"-", "_"});
+    }
 
     public static String getExtension(String filename) {
         if (filename==null) {

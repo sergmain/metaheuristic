@@ -16,6 +16,7 @@
  */
 package aiai.ai.yaml.task;
 
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import lombok.Data;
 
 import java.util.HashMap;
@@ -25,7 +26,7 @@ import java.util.Map;
 @Data
 public class TaskParamYaml {
     public Map<String, List<String>> inputResourceCodes = new HashMap<>();
-    public SimpleSnippet snippet;
+    public SnippetConfig snippet;
     public Map<String, String> hyperParams;
     public String outputResourceCode;
     public Map<String, String> resourceStorageUrls = new HashMap<>();

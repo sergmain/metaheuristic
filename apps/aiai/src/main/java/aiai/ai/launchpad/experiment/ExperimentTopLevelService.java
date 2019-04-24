@@ -29,11 +29,11 @@ import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
-import aiai.ai.utils.StrUtils;
+import aiai.apps.commons.utils.StrUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.api.v1.launchpad.Task;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
+import aiai.apps.commons.CommonConsts;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -214,17 +214,17 @@ public class ExperimentTopLevelService {
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
         snippetResult.snippets = experimentSnippets;
-        final List<String> types = Arrays.asList("fit", "predict");
+        final List<String> types = Arrays.asList(CommonConsts.FIT_TYPE, CommonConsts.PREDICT_TYPE);
         snippetResult.selectOptions = snippetService.getSelectOptions(snippets,
                 snippetResult.snippets.stream().map(o -> new SnippetCode(o.getId(), o.getSnippetCode())).collect(Collectors.toList()),
                 (s) -> {
                     if (!types.contains(s.type) ) {
                         return true;
                     }
-                    if ("fit".equals(s.type) && snippetService.hasFit(experimentSnippets)) {
+                    if (CommonConsts.FIT_TYPE.equals(s.type) && snippetService.hasFit(experimentSnippets)) {
                         return true;
                     }
-                    else if ("predict".equals(s.type) && snippetService.hasPredict(experimentSnippets)) {
+                    else if (CommonConsts.PREDICT_TYPE.equals(s.type) && snippetService.hasPredict(experimentSnippets)) {
                         return true;
                     }
                     else return false;
@@ -340,7 +340,7 @@ public class ExperimentTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest snippetAddCommit(Long id, String code) {
+    public OperationStatusRest snippetAddCommit(Long id, String snippetCode) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
@@ -349,16 +349,11 @@ public class ExperimentTopLevelService {
         Long experimentId = experiment.getId();
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experimentId);
 
-        SnippetVersion version = SnippetVersion.from(code);
-        if (version==null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.57 wrong format of snippet code: "+code);
-        }
-        Snippet snippet = snippetRepository.findByNameAndSnippetVersion(version.name, version.version);
+        Snippet snippet = snippetRepository.findByCode(snippetCode);
 
         ExperimentSnippet ts = new ExperimentSnippet();
         ts.setExperimentId(experimentId);
-        ts.setSnippetCode( code );
+        ts.setSnippetCode( snippetCode );
         ts.setType( snippet.type );
 
         List<ExperimentSnippet> list = new ArrayList<>(experimentSnippets);

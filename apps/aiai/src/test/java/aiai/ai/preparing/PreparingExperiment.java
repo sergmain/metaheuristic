@@ -26,6 +26,9 @@ import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
+import aiai.apps.commons.CommonConsts;
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
+import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -39,9 +42,8 @@ import static org.junit.Assert.assertTrue;
 @Slf4j
 public abstract class PreparingExperiment {
 
-    private static final String TEST_FIT_SNIPPET = "test.fit.snippet";
-    private static final String SNIPPET_VERSION_1_0 = "1.0";
-    private static final String TEST_PREDICT_SNIPPET = "test.predict.snippet";
+    private static final String TEST_FIT_SNIPPET = "test.fit.snippet:1.0";
+    private static final String TEST_PREDICT_SNIPPET = "test.predict.snippet:1.0";
     public static final String TEST_EXPERIMENT_CODE_01 = "test-experiment-code-01";
 
     @Autowired
@@ -106,11 +108,11 @@ public abstract class PreparingExperiment {
 
             EnvYaml envYaml = new EnvYaml();
             envYaml.getEnvs().put("python-3", "C:\\Anaconda3\\envs\\python-36\\python.exe" );
-            envYaml.getEnvs().put("env-snippet-01", "python.exe" );
-            envYaml.getEnvs().put("env-snippet-02", "python.exe" );
-            envYaml.getEnvs().put("env-snippet-03", "python.exe" );
-            envYaml.getEnvs().put("env-snippet-04", "python.exe" );
-            envYaml.getEnvs().put("env-snippet-05", "python.exe" );
+            envYaml.getEnvs().put("env-snippet-01:1.1", "python.exe" );
+            envYaml.getEnvs().put("env-snippet-02:1.1", "python.exe" );
+            envYaml.getEnvs().put("env-snippet-03:1.1", "python.exe" );
+            envYaml.getEnvs().put("env-snippet-04:1.1", "python.exe" );
+            envYaml.getEnvs().put("env-snippet-05:1.1", "python.exe" );
             String env = EnvYamlUtils.toString(envYaml);
             station.setEnv(env);
 
@@ -126,20 +128,24 @@ public abstract class PreparingExperiment {
 
             // Prepare snippets
             mills = System.currentTimeMillis();
-            log.info("Start findByNameAndSnippetVersion.save()");
-            fitSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_FIT_SNIPPET, SNIPPET_VERSION_1_0);
-            log.info("findByNameAndSnippetVersion() was finished for {}", System.currentTimeMillis() - mills);
+            log.info("Start findByCode.save()");
+            fitSnippet = snippetRepository.findByCode(TEST_FIT_SNIPPET);
+            log.info("findByCode() was finished for {}", System.currentTimeMillis() - mills);
 
             byte[] bytes = "some program code".getBytes();
             if (fitSnippet == null) {
                 fitSnippet = new Snippet();
-                fitSnippet.setName(TEST_FIT_SNIPPET);
-                fitSnippet.setSnippetVersion(SNIPPET_VERSION_1_0);
-                fitSnippet.setEnv("python-3");
-                fitSnippet.setType("fit");
-                fitSnippet.setChecksum("sha2");
-                fitSnippet.length = bytes.length;
-                fitSnippet.setFilename("fit-filename.txt");
+                SnippetConfig sc = new SnippetConfig();
+                sc.code = TEST_FIT_SNIPPET;
+                sc.env = "python-3";
+                sc.type = CommonConsts.FIT_TYPE;
+                sc.file = "fit-filename.txt";
+                sc.checksum = "sha2";
+                sc.info.length = bytes.length;
+
+                fitSnippet.setCode(TEST_FIT_SNIPPET);
+                fitSnippet.setType(CommonConsts.FIT_TYPE);
+                fitSnippet.params = SnippetConfigUtils.toString(sc);
 
                 mills = System.currentTimeMillis();
                 log.info("Start snippetRepository.save() #1");
@@ -148,21 +154,25 @@ public abstract class PreparingExperiment {
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #1");
-                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, fitSnippet.getSnippetCode(), fitSnippet.getSnippetCode(),
+                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, fitSnippet.getCode(), fitSnippet.getCode(),
                         false, null, null);
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
 
-            predictSnippet = snippetRepository.findByNameAndSnippetVersion(TEST_PREDICT_SNIPPET, SNIPPET_VERSION_1_0);
+            predictSnippet = snippetRepository.findByCode(TEST_PREDICT_SNIPPET);
             if (predictSnippet == null) {
                 predictSnippet = new Snippet();
-                predictSnippet.setName(TEST_PREDICT_SNIPPET);
-                predictSnippet.setSnippetVersion(SNIPPET_VERSION_1_0);
-                predictSnippet.setEnv("python-3");
-                predictSnippet.setType("predict");
-                predictSnippet.setChecksum("sha2");
-                predictSnippet.length = bytes.length;
-                predictSnippet.setFilename("predict-filename.txt");
+                SnippetConfig sc = new SnippetConfig();
+                sc.code = TEST_PREDICT_SNIPPET;
+                sc.type = CommonConsts.PREDICT_TYPE;
+                sc.env = "python-3";
+                sc.file = "predict-filename.txt";
+                sc.info.length = bytes.length;
+                sc.checksum = "sha2";
+
+                predictSnippet.setCode(TEST_PREDICT_SNIPPET);
+                predictSnippet.setType(CommonConsts.PREDICT_TYPE);
+                predictSnippet.params = SnippetConfigUtils.toString(sc);
 
                 mills = System.currentTimeMillis();
                 log.info("Start snippetRepository.save() #2");
@@ -171,7 +181,7 @@ public abstract class PreparingExperiment {
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #2");
-                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, predictSnippet.getSnippetCode(), predictSnippet.getSnippetCode(),
+                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, predictSnippet.getCode(), predictSnippet.getCode(),
                         false, null,
                         null);
                 log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
@@ -214,13 +224,13 @@ public abstract class PreparingExperiment {
             // set snippets for experiment
             ExperimentSnippet es1 = new ExperimentSnippet();
             es1.setExperimentId(experiment.getId());
-            es1.setType("fit");
-            es1.setSnippetCode(fitSnippet.getSnippetCode());
+            es1.setType(CommonConsts.FIT_TYPE);
+            es1.setSnippetCode(fitSnippet.getCode());
 
             ExperimentSnippet es2 = new ExperimentSnippet();
             es2.setExperimentId(experiment.getId());
-            es2.setType("predict");
-            es2.setSnippetCode(predictSnippet.getSnippetCode());
+            es2.setType(CommonConsts.PREDICT_TYPE);
+            es2.setSnippetCode(predictSnippet.getCode());
 
             mills = System.currentTimeMillis();
             log.info("Start taskSnippetRepository.saveAll()");
@@ -277,7 +287,7 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
             try {
-                binaryDataService.deleteByCodeAndDataType(predictSnippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
+                binaryDataService.deleteByCodeAndDataType(predictSnippet.getCode(), Enums.BinaryDataType.SNIPPET);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -289,7 +299,7 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
             try {
-                binaryDataService.deleteByCodeAndDataType(fitSnippet.getSnippetCode(), Enums.BinaryDataType.SNIPPET);
+                binaryDataService.deleteByCodeAndDataType(fitSnippet.getCode(), Enums.BinaryDataType.SNIPPET);
             } catch (Throwable th) {
                 th.printStackTrace();
             }

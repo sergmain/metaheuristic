@@ -23,7 +23,6 @@ import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.flow.ProcessValidator;
 import aiai.ai.launchpad.repositories.SnippetRepository;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -45,12 +44,7 @@ public class FileProcessValidator implements ProcessValidator {
             return EnumsApi.FlowValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }
         for (String snippetCode : process.snippetCodes) {
-            SnippetVersion sv = SnippetVersion.from(snippetCode);
-            if (sv==null) {
-                log.error("#175.01 Wrong format of snippet code: {}, process: {}", snippetCode, process);
-                return EnumsApi.FlowValidateStatus.WRONG_FORMAT_OF_SNIPPET_CODE;
-            }
-            Snippet snippet = snippetRepository.findByNameAndSnippetVersion(sv.name, sv.version);
+            Snippet snippet = snippetRepository.findByCode(snippetCode);
             if (snippet==null) {
                 log.error("#175.07 Snippet wasn't found for code: {}, process: {}", snippetCode, process);
                 return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;

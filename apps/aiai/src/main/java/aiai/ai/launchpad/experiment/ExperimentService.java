@@ -34,13 +34,13 @@ import aiai.ai.utils.permutation.Permutation;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.task.SimpleSnippet;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
+import aiai.apps.commons.CommonConsts;
 import aiai.apps.commons.utils.Checksum;
-import aiai.apps.commons.yaml.snippet.SnippetVersion;
+import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -513,9 +513,11 @@ public class ExperimentService {
                         // TODO and see that features are correctly defined
                         yaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
-                            if ("feature".equals(entry.getKey())) {
-                                log.info("Output type is the same as flowInstance inputResourceParam:\n"+ flowInstance.inputResourceParam );
-                            }
+
+                            // TODO 2019.04.24 need to decide do we need this check or not
+                            // if ("feature".equals(entry.getKey())) {
+                            //     log.info("Output type is the same as flowInstance inputResourceParam:\n"+ flowInstance.inputResourceParam );
+                            // }
                             Process.Meta meta = process.getMetas()
                                     .stream()
                                     .filter(o -> o.value.equals(entry.getKey()))
@@ -528,12 +530,7 @@ public class ExperimentService {
                         }
                         Snippet snippet = localCache.get(experimentSnippet.getSnippetCode());
                         if (snippet == null) {
-                            final SnippetVersion snippetVersion = SnippetVersion.from(experimentSnippet.getSnippetCode());
-                            if (snippetVersion==null) {
-                                log.error("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
-                                continue;
-                            }
-                            snippet = snippetRepository.findByNameAndSnippetVersion(snippetVersion.name, snippetVersion.version);
+                            snippet = snippetRepository.findByCode(experimentSnippet.getSnippetCode());
                             if (snippet != null) {
                                 localCache.put(experimentSnippet.getSnippetCode(), snippet);
                             }
@@ -544,10 +541,10 @@ public class ExperimentService {
                         }
 
                         Enums.ExperimentTaskType type;
-                        if ("fit".equals(snippet.getType())) {
+                        if (CommonConsts.FIT_TYPE.equals(snippet.getType())) {
                             yaml.outputResourceCode = getModelFilename(task);
                             type = Enums.ExperimentTaskType.FIT;
-                        } else if ("predict".equals(snippet.getType())) {
+                        } else if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
                             if (prevTask == null) {
                                 throw new IllegalStateException("prevTask is null");
                             }
@@ -579,16 +576,7 @@ public class ExperimentService {
                             taskExperimentFeatureRepository.save(tef);
                         }
 
-                        yaml.snippet = new SimpleSnippet(
-                                experimentSnippet.getType(),
-                                experimentSnippet.getSnippetCode(),
-                                snippet.getFilename(),
-                                snippet.checksum,
-                                snippet.env,
-                                snippet.reportMetrics,
-                                snippet.fileProvided,
-                                snippet.params
-                        );
+                        yaml.snippet = SnippetConfigUtils.to(snippet.params);
                         yaml.clean = flow.clean;
 
                         String currTaskParams = TaskParamYamlUtils.toString(yaml);

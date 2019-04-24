@@ -19,6 +19,7 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.Consts;
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.yaml.hyper_params.HyperParams;
+import aiai.apps.commons.CommonConsts;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -35,7 +36,7 @@ public class ExperimentUtils {
     public static void sortExperimentSnippets(List<ExperimentSnippet> experimentSnippets) {
         experimentSnippets.sort((o1, o2) -> {
                     if (o1.getType().equals(o2.getType())) return 0;
-                    return "fit".equals(o1.getType().toLowerCase()) ? -1 : 1;
+                    return CommonConsts.FIT_TYPE.equals(o1.getType().toLowerCase()) ? -1 : 1;
                 }
         );
     }

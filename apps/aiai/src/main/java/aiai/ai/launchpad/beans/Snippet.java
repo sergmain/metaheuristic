@@ -16,6 +16,9 @@
  */
 package aiai.ai.launchpad.beans;
 
+import aiai.apps.commons.yaml.snippet.SnippetUtils;
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
+import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -34,40 +37,28 @@ public class Snippet implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "NAME")
-    public String name;
+    @Column(name = "SNIPPET_CODE")
+    public String code;
 
     @Column(name = "SNIPPET_TYPE")
     public String type;
 
-    @Column(name = "SNIPPET_VERSION")
-    public String snippetVersion;
-
-    @Column(name = "FILENAME")
-    public String filename;
-
     @Column(name = "PARAMS")
     public String params;
 
-    @Column(name = "CHECKSUM")
-    public String checksum;
+    @Transient
+    private SnippetConfig config = null;
 
-    @Column(name = "ENV")
-    public String env;
-
-    @Column(name = "IS_SIGNED")
-    public boolean isSigned;
-
-    @Column(name = "IS_REPORT_METRICS")
-    public boolean reportMetrics;
-
-    @Column(name = "CODE_LENGTH")
-    public long length;
-
-    @Column(name = "IS_FILE_PROVIDED")
-    public boolean fileProvided;
-
-    public String getSnippetCode() {
-        return ""+ name + ':' + snippetVersion;
+    public SnippetConfig getSnippetConfig() {
+        if (config==null) {
+            synchronized (this) {
+                if (config==null) {
+                    //noinspection UnnecessaryLocalVariable
+                    SnippetConfig tmp = SnippetConfigUtils.to(params);
+                    config = tmp;
+                }
+            }
+        }
+        return config;
     }
 }

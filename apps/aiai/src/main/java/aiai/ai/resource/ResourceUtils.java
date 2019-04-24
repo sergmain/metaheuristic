@@ -78,7 +78,7 @@ public class ResourceUtils {
         return assetFile;
     }
 
-    public static AssetFile prepareSnippetFile(File baseDir, String id, String resourceFilename) {
+    public static AssetFile prepareSnippetFile(File baseDir, String snippetCode, String resourceFilename) {
 
         final AssetFile assetFile = new AssetFile();
         final File trgDir = new File(baseDir, Enums.BinaryDataType.SNIPPET.toString());
@@ -87,7 +87,7 @@ public class ResourceUtils {
             log.error("#025.37 Can't create snippet dir: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
-        final String resId = id.replace(':', '_');
+        final String resId = snippetCode.replace(':', '_');
         final File resDir = new File(trgDir, resId);
         if (!resDir.exists() && !resDir.mkdirs()) {
             assetFile.isError = true;
