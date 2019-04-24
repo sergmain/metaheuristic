@@ -25,6 +25,12 @@ import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.UserPrincipal;
+import java.nio.file.attribute.UserPrincipalLookupService;
 import java.security.PublicKey;
 import java.util.Random;
 
@@ -40,6 +46,9 @@ public class Globals {
 
     @Value("${aiai.is-testing:#{false}}")
     public boolean isUnitTesting = false;
+
+    @Value("${aiai.system-owner:#{null}}")
+    public String systemOwner;
 
     // Launchpad's globals
 
@@ -149,6 +158,7 @@ public class Globals {
             stationTaskDir.mkdirs();
             stationEnvHotDeployDir = new File(stationDir, Consts.ENV_HOT_DEPLOY_DIR);
             stationEnvHotDeployDir.mkdirs();
+            checkOwnership(stationEnvHotDeployDir);
         }
 
         if (isLaunchpadEnabled && launchpadDir==null) {
@@ -170,6 +180,44 @@ public class Globals {
         }
         logGlobals();
         logSystemEnvs();
+    }
+
+    private void checkOwnership(File file) {
+        try {
+            Path path = file.toPath();
+
+            FileSystem fileSystem = path.getFileSystem();
+            UserPrincipalLookupService service = fileSystem.getUserPrincipalLookupService();
+
+            log.info("Check ownership of {}", stationEnvHotDeployDir.getPath());
+            log.info("File: " + path);
+            log.info("Exists: " + Files.exists(path));
+            log.info("-- owner before --");
+            UserPrincipal owner = Files.getOwner(path);
+            log.info("Owner: " + owner);
+
+            final String username = System.getProperty("user.name");
+            log.info("current user name from env: " + username);
+            log.info("current user name from lookup service: " + service.lookupPrincipalByName(username));
+            if (systemOwner!=null) {
+                UserPrincipal userPrincipal = service.lookupPrincipalByName(systemOwner);
+
+                log.info("-- lookup '"+systemOwner+"' --");
+                log.info("Found UserPrincipal: " + userPrincipal);
+
+                //changing owner
+                Files.setOwner(path, userPrincipal);
+
+                log.info("-- owner after --");
+                owner = Files.getOwner(path);
+                log.info("Owner: " + owner.getName());
+            }
+            else {
+                log.info("new system owner wasn't defined");
+            }
+        } catch (IOException e) {
+            log.error("An error while checking ownership of path " + file.getPath(), e);
+        }
     }
 
     private void logSystemEnvs() {
