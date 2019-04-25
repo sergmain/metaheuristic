@@ -150,6 +150,12 @@ public class TaskProcessor {
                 continue;
             }
 
+            File systemDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
+            if (systemDir == null) {
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
+                continue;
+            }
+
             // at this point all required resources have to be prepared
 
             taskParamYaml.workingPath = taskDir.getAbsolutePath();
@@ -198,7 +204,7 @@ public class TaskProcessor {
                 }
                 cmd.add( paramFile.getAbsolutePath() );
 
-                File consoleLogFile = new File(artifactDir, Consts.SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
+                File consoleLogFile = new File(systemDir, Consts.SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
                 long startedOn = System.currentTimeMillis();
 

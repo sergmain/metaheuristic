@@ -20,7 +20,13 @@ package aiai.api.v1;
 public class EnumsApi {
 
     public enum SnippetSourcing {
-        launchpad(1), system(2), git(3);
+        // snippet will be downloaded from launchpad
+        launchpad(1),
+        // snippet already has been deployed locally at station
+        station(2),
+        // snippet will be downloaded from git
+        git(3);
+
         public int value;
 
         SnippetSourcing(int value) {
@@ -33,7 +39,7 @@ public class EnumsApi {
                     //noinspection
                     return launchpad;
                 case 2:
-                    return system;
+                    return station;
                 case 3:
                     return git;
                 default:

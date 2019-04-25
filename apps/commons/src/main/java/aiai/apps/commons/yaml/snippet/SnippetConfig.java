@@ -45,6 +45,15 @@ public class SnippetConfig {
         public long length;
     }
 
+    @Data
+    public static class GitInfo {
+        public String repo;
+        // right now it'll be always as origin
+//        public String remote;
+        public String branch;
+        public String commit;
+    }
+
     /**
      * code of snippet, i.e. simple-app:1.0
      */
@@ -57,6 +66,7 @@ public class SnippetConfig {
     public String params;
     public String env;
     public EnumsApi.SnippetSourcing sourcing;
+    public GitInfo git;
     public boolean metrics = false;
     public Map<Checksum.Type, String> checksumMap;
     public SnippetInfo info = new SnippetInfo();
@@ -75,7 +85,7 @@ public class SnippetConfig {
                     return new SnippetConfigStatus(false, "sourcing is 'launchpad' but file is empty: " + this.toString());
                 }
                 break;
-            case system:
+            case station:
                 if (StringUtils.isNoneBlank(file)) {
                     return new SnippetConfigStatus(false, "sourcing is 'system', but file is not empty: " + this.toString());
                 }

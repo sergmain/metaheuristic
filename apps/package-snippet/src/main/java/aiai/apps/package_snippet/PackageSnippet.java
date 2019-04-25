@@ -130,7 +130,7 @@ public class PackageSnippet implements CommandLineRunner {
         // Process
         for (SnippetConfig snippetConfig : snippetConfigList.getSnippets()) {
             String sum;
-            if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.system) {
+            if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.station) {
                 sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippetConfig.env.getBytes()));
             }
             else {

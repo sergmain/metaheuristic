@@ -206,7 +206,7 @@ public abstract class PreparingFlow extends PreparingExperiment {
         sc.type = snippetCode + "-type";
         sc.file = null;
         sc.setEnv("env-"+snippetCode);
-        sc.sourcing = EnumsApi.SnippetSourcing.system;;
+        sc.sourcing = EnumsApi.SnippetSourcing.station;;
         sc.metrics = false;
 
         sc.info.setSigned(false);
