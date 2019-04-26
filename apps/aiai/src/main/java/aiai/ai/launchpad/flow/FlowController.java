@@ -152,14 +152,14 @@ public class FlowController {
 
     @GetMapping("/flow-instances/{id}")
     public String flowInstances(Model model, @PathVariable Long id, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
-        model.addAttribute("result", flowTopLevelService.getFlowInstances(id, pageable));
+        model.addAttribute("result", flowTopLevelService.getFlowInstancesOrderByCreatedOnDesc(id, pageable));
         return "launchpad/flow/flow-instances";
     }
 
     // for AJAX
     @PostMapping("/flow-instances-part/{id}")
     public String flowInstancesPart(Model model, @PathVariable Long id, @PageableDefault(size = 10) Pageable pageable) {
-        model.addAttribute("result", flowTopLevelService.getFlowInstances(id, pageable));
+        model.addAttribute("result", flowTopLevelService.getFlowInstancesOrderByCreatedOnDesc(id, pageable));
         return "launchpad/flow/flow-instances :: table";
     }
 

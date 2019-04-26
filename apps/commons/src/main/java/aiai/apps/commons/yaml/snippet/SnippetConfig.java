@@ -66,11 +66,11 @@ public class SnippetConfig {
     public String params;
     public String env;
     public EnumsApi.SnippetSourcing sourcing;
-    public GitInfo git;
     public boolean metrics = false;
     public Map<Checksum.Type, String> checksumMap;
     public SnippetInfo info = new SnippetInfo();
     public String checksum;
+    public GitInfo git;
 
     public SnippetConfigStatus validate() {
         if (StringUtils.isBlank(code) || StringUtils.isBlank(type) || StringUtils.isBlank(env)) {

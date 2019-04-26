@@ -56,6 +56,7 @@ public class TestTaskParamYaml {
                 true,
                 null,
                 null,
+                null,
                 null
         ));
 

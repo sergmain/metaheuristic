@@ -22,8 +22,10 @@ import aiai.ai.Globals;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.exceptions.StoreNewFileException;
 import aiai.ai.exceptions.StoreNewFileWithRedirectException;
+import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
@@ -53,7 +55,6 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
@@ -229,14 +230,15 @@ public class ProcessResourceController {
 
             String ext = StrUtils.getExtension(originFilename);
 
-            final File dataFile = new File(tempDir, "document" + ext );
+//            final File dataFile = new File(tempDir, "document" + ext );
+            final File dataFile = new File(tempDir, originFilename );
             log.debug("Start storing an uploaded document to disk");
             try(OutputStream os = new FileOutputStream(dataFile)) {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
 
-            Batch batch = new Batch(flow.id);
-            batchRepository.save(batch);
+            Batch batch = batchRepository.save(new Batch(flow.id));
+
 
             log.info("The file {} was successfully uploaded", originFilename);
 
@@ -248,7 +250,8 @@ public class ProcessResourceController {
             }
             else {
                 log.debug("Start loading file data to db");
-                loadFilesFromDir(batch, tempDir, redirectAttributes, flow);
+                loadFilesFromDirAfterZip(batch, tempDir, redirectAttributes, flow);
+//                loadFilesFromDir(batch, tempDir, redirectAttributes, flow);
             }
         }
         catch(StoreNewFileWithRedirectException e) {
@@ -256,7 +259,7 @@ public class ProcessResourceController {
         }
         catch (Throwable th) {
             log.error("Error", th);
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.73 can't load document, Error: " + th.toString());
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.73 can't load document, Error: " + th.getMessage()+", class: " + th.getClass());
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
@@ -463,7 +466,11 @@ public class ProcessResourceController {
     @GetMapping("/process-resource-delete/{flowId}/{batchId}")
     public String processResourceDelete(Model model, @PathVariable Long flowId, @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
 
-        if (true) throw new NotImplementedException("Not implemented yet");
+        if (true) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Can't delete batch, not implemented yet.");
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        }
+
         long flowInstanceId = -1L;
         FlowData.FlowInstanceResult result = flowService.getFlowInstanceExtended(flowInstanceId);
         if (result.isErrorMessages()) {
@@ -517,7 +524,15 @@ public class ProcessResourceController {
                 log.warn(msg);
                 continue;
             }
-            String mainDocument = getMainDocument(fi.getInputResourceParam());
+            String mainDocumentPoolCode = getMainDocumentPoolCode(fi.getInputResourceParam());
+            String mainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
+            if (mainDocument==null) {
+                String msg = "#990.81, "+mainDocumentPoolCode+", Can't determine actual file name of main document, " +
+                        "batchId: " + batch.id + ", flowInstanceId: " + bfi.flowInstanceId;
+                log.warn(msg);
+                status += (msg + '\n');
+                continue;
+            }
 
             Integer taskOrder = taskRepository.findMaxConcreteOrder(fi.id);
             if (taskOrder==null) {
@@ -597,6 +612,24 @@ public class ProcessResourceController {
         return new HttpEntity<>(new FileSystemResource(zipFile), getHeader(httpHeaders, zipFile.length()));
     }
 
+    private String getMainDocumentForPoolCode(String mainDocumentPoolCode) {
+        List<BinaryData> datas = binaryDataService.getByPoolCodeAndType(mainDocumentPoolCode, Enums.BinaryDataType.DATA);
+
+        if (datas==null || datas.isEmpty()) {
+            return null;
+        }
+        if (datas.size()!=1) {
+            log.error("#990.15 There are more than one main document codes for pool code {}, codes: {}", mainDocumentPoolCode, datas);
+        }
+        final BinaryData data = datas.get(0);
+        final String filename = data.getFilename();
+        if (StringUtils.isBlank(filename)) {
+            log.error("#990.15 Filename is blank for data {}", data);
+            return null;
+        }
+        return filename;
+    }
+
     private static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
         HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
         header.setContentLength(length);
@@ -607,16 +640,7 @@ public class ProcessResourceController {
         return header;
     }
 
-    private static String getResultFileName(String inputResourceParams) {
-        InputResourceParam resourceParams = InputResourceParamUtils.to(inputResourceParams);
-        List<String> codes = resourceParams.getAllPoolCodes();
-        if (codes.isEmpty()) {
-            throw new IllegalStateException("#990.92 Pool codes not found.");
-        }
-        return codes.size() == 1 ? codes.get(0) : "result-file-" + System.nanoTime();
-    }
-
-    private static String getMainDocument(String inputResourceParams) {
+    private static String getMainDocumentPoolCode(String inputResourceParams) {
         InputResourceParam resourceParams = InputResourceParamUtils.to(inputResourceParams);
         List<String> codes = resourceParams.poolCodes.get(MAIN_DOCUMENT_POOL_CODE);
         if (codes.isEmpty()) {

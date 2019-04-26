@@ -20,6 +20,7 @@ package aiai.ai.launchpad.beans;
 import aiai.ai.Enums;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -30,6 +31,7 @@ import java.sql.Timestamp;
 @Table(name = "AIAI_LP_DATA")
 @Data
 @EqualsAndHashCode(of = {"id", "version", "dataType"})
+@ToString(exclude={"data", "bytes"})
 public class BinaryData implements Serializable {
     private static final long serialVersionUID = 7768428475142175426L;
 

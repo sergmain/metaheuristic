@@ -75,7 +75,7 @@ public class FlowRestController {
 
     @GetMapping("/flow-instances/{id}")
     public FlowData.FlowInstancesResult flowInstances(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
-        return flowTopLevelService.getFlowInstances(id, pageable);
+        return flowTopLevelService.getFlowInstancesOrderByCreatedOnDesc(id, pageable);
     }
 
     @PostMapping("/flow-instance-add-commit")

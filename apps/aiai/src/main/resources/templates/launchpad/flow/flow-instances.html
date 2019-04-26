@@ -2,6 +2,28 @@
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
+    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.FlowData$FlowInstancesResult"*/-->
+    <script>
+        var table = function (html) {
+            $('#table').html(html).find('.ajax-elem').each(function () {
+                $(this).click(function () {
+                    $.post($(this).attr('href'), table);
+                    return false;
+                });
+            });
+        };
+
+        $(function () {
+            var token = $("meta[name='_csrf']").attr("content");
+            var header = $("meta[name='_csrf_header']").attr("content");
+
+            $(document).ajaxSend(function (e, xhr, options) {
+                xhr.setRequestHeader(header, token);
+            });
+            $.post('/launchpad/flow/flow-instances-part/'+ [[${result.currentFlowId}]] , table);
+        });
+
+    </script>
 
     <h1 class="widget-header">Flow instances</h1>
 
@@ -9,7 +31,6 @@
        th:href="${'/launchpad/flow/flow-instance-add/' + result.currentFlowId}">Add new flow instance</a>
     <p></p>
 
-    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.FlowData.FlowInstancesResult"*/-->
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>
@@ -53,6 +74,29 @@
                    th:if="${not i.valid}"
                    th:href="${'/launchpad/flow/flow-instance-validate/' + i.id}">Validate</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/flow/flow-instance-delete/'+i.flowId+'/' + i.id}">Delete</a></td>
+        </tr>
+        <tr>
+            <td colspan="11">
+                <div>
+                    <ul class='pagination pagination-centered'>
+                        <li class="table-nav-padding">
+                            <span th:if='${result.instances.first}' class="table-nav-button">« First</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.instances.first}'
+                               th:href="@{/launchpad/flow/flow-instances-part/{id}(id=${result.currentFlowId},page=0,size=${result.instances.pageable.pageSize})}">« First</a>
+                        </li>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.instances.hasPrevious()}' class="table-nav-button">←</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.instances.hasPrevious()}'
+                               th:href="@{/launchpad/flow/flow-instances-part/{id}(id=${result.currentFlowId},page=${result.instances.pageable.pageNumber - 1},size=${result.instances.pageable.pageSize})}" title='Go to previous page'>←</a>
+                        </li>
+                        <li class="table-nav-padding">
+                            <span th:if='${not result.instances.hasNext()}' class="table-nav-button">→</span>
+                            <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.instances.hasNext()}'
+                               th:href='@{/launchpad/flow/flow-instances-part/{id}(id=${result.currentFlowId},page=${result.instances.pageable.pageNumber + 1},size=${result.instances.pageable.pageSize})}' title='Go to next page'>→</a>
+                        </li>
+                    </ul>
+                </div>
+            </td>
         </tr>
         </tbody>
     </table>

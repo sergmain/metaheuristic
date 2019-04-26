@@ -134,8 +134,8 @@ public class FlowTopLevelService {
 
     // ============= Flow instances =============
 
-    public FlowData.FlowInstancesResult getFlowInstances(Long id, Pageable pageable) {
-        return flowService.getFlowInstancesResult(id, pageable);
+    public FlowData.FlowInstancesResult getFlowInstancesOrderByCreatedOnDesc(Long id, Pageable pageable) {
+        return flowService.getFlowInstancesOrderByCreatedOnDescResult(id, pageable);
     }
 
     public FlowData.FlowInstanceResult addFlowInstance(Long flowId, String poolCode, String inputResourceParams) {

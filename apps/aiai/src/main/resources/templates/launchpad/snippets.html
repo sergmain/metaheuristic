@@ -66,29 +66,23 @@
         };
     </script>
 
-    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.snippet.SnippetController$Result"*/-->
+    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.SnippetData$SnippetsResult"*/-->
     <table class="pure-table pure-table-bordered" id="table-ds-path-cols">
         <thead>
         <tr>
             <th>#</th>
-            <th>Name</th>
-            <th>Version</th>
+            <th>Code</th>
             <th>Type</th>
-            <th>Environment</th>
             <th>Params</th>
-            <th>Is signed?</th>
             <th colspan="1">&nbsp;</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="s : ${result.snippets}">
             <td th:text="${s.id}">#Id</td>
-            <td th:text="${s.name}">Path number</td>
-            <td th:text="${s.snippetVersion}"></td>
+            <td th:text="${s.code}">Code</td>
             <td th:text="${s.type}">Type</td>
-            <td th:text="${s.env}">Environment</td>
-            <td th:text="${s.params}">Params</td>
-            <td th:text="${s.isSigned ? 'Yes' : 'No'}">Is signed?</td>
+            <td><pre th:if="${s.params}!=null" th:text="${s.params}">Params</pre></td>
             <td><a class="pure-button pure-button-primary" href="#"
                    th:data-id="${s.id}"
                    onclick="deleteSnippet( this.getAttribute('data-id') ); return false;"

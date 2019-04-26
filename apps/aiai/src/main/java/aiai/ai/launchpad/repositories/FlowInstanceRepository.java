@@ -48,6 +48,8 @@ public interface FlowInstanceRepository extends CrudRepository<FlowInstance, Lon
 
     Slice<FlowInstance> findByFlowId(Pageable pageable, long flowId);
 
+    Slice<FlowInstance> findByFlowIdOrderByCreatedOnDesc(Pageable pageable, long flowId);
+
     List<FlowInstance> findByFlowId(long flowId);
 }
 

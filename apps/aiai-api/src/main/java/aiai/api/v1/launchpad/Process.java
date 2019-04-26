@@ -38,7 +38,7 @@ public class Process {
     public boolean parallelExec;
 
     /**
-     * Timeout before terminate a process with snippet
+     * Timeout before terminating a process with snippet
      * value in seconds
      * null or 0 mean the infinite execution
      */

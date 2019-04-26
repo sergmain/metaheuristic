@@ -129,9 +129,11 @@ public class BinaryDataService {
         return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode);
     }
 
+/*
     public List<SimpleCodeAndStorageUrl> getResourceCodes(List<String> inputResourceCode) {
         return binaryDataRepository.getCodeAndStorageUrl(inputResourceCode);
     }
+*/
 
     public void deleteByCodeAndDataType(String code, Enums.BinaryDataType binaryDataType) {
         binaryDataRepository.deleteByCodeAndDataType(code, binaryDataType.value);
@@ -141,7 +143,6 @@ public class BinaryDataService {
         binaryDataRepository.deleteByPoolCodeAndDataType(poolCode, binaryDataType.value);
     }
 
-    @SuppressWarnings("Duplicates")
     public BinaryData save(InputStream is, long size,
                            Enums.BinaryDataType binaryDataType, String code, String poolCode,
                            boolean isManual, String filename, Long flowInstanceId) {

@@ -221,10 +221,10 @@ public class FlowService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public FlowData.FlowInstancesResult getFlowInstancesResult(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
+    public FlowData.FlowInstancesResult getFlowInstancesOrderByCreatedOnDescResult(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.flowInstanceRowsLimit, pageable);
         FlowData.FlowInstancesResult result = new FlowData.FlowInstancesResult();
-        result.instances = flowInstanceRepository.findByFlowId(pageable, id);
+        result.instances = flowInstanceRepository.findByFlowIdOrderByCreatedOnDesc(pageable, id);
         result.currentFlowId = id;
 
         for (FlowInstance flowInstance : result.instances) {
