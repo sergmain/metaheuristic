@@ -52,7 +52,7 @@ public class RoundRobinForLaunchpad {
         if (url != null) {
             return url;
         }
-        throw new IllegalStateException("Can't produce next url");
+        return null;
     }
 
     public void reset() {

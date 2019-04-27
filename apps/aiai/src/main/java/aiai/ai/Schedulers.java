@@ -174,6 +174,10 @@ public class Schedulers {
             }
 
             String url = roundRobin.next();
+            if (url==null) {
+                log.info("Can't find any enabled launchpad");
+                return;
+            }
             log.info("Run launchpadRequestor.fixedDelay() for url {}", url);
             launchpadRequestorMap.get(url).fixedDelay();
         }

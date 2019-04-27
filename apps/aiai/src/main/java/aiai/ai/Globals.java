@@ -158,7 +158,9 @@ public class Globals {
             stationTaskDir.mkdirs();
             stationEnvHotDeployDir = new File(stationDir, Consts.ENV_HOT_DEPLOY_DIR);
             stationEnvHotDeployDir.mkdirs();
-            checkOwnership(stationEnvHotDeployDir);
+
+            // TODO 2019.04.26 right now the change of ownership is disabled but may be required in future
+//            checkOwnership(stationEnvHotDeployDir);
         }
 
         if (isLaunchpadEnabled && launchpadDir==null) {
