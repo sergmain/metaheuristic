@@ -19,6 +19,9 @@ package aiai.ai.station.sourcing.git;
 
 import aiai.ai.Enums;
 import aiai.ai.core.ExecProcessService;
+import aiai.ai.resource.AssetFile;
+import aiai.ai.station.env.EnvService;
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,10 +31,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @Service
@@ -43,12 +44,29 @@ public class GitSourcingService {
     public static final String GIT_PREFIX = "git";
 
     private final ExecProcessService execProcessService;
+    private final EnvService envService;
 
     public final GitStatusInfo gitStatusInfo;
 
-    public GitSourcingService(ExecProcessService execProcessService) {
+    public GitSourcingService(ExecProcessService execProcessService, EnvService envService) {
         this.execProcessService = execProcessService;
+        this.envService = envService;
         this.gitStatusInfo = getGitStatus();
+    }
+
+    @Data
+    @AllArgsConstructor
+    public static class GitExecResult {
+        public File snippetDir;
+        public ExecProcessService.Result result;
+        public boolean isError;
+        public String error;
+
+        public GitExecResult(ExecProcessService.Result result, boolean isError, String error) {
+            this.result = result;
+            this.isError = isError;
+            this.error = error;
+        }
     }
 
     @Data
@@ -66,21 +84,143 @@ public class GitSourcingService {
     }
 
     public GitStatusInfo getGitStatus() {
+        GitExecResult result = execGitCmd(GIT_VERSION_CMD, 30L);
+        if (result.isError) {
+            return new GitStatusInfo(Enums.GitStatus.error, null, "Error: " + result.error);
+        }
+
+        if (result.result.exitCode!=0) {
+            return new GitStatusInfo(
+                    Enums.GitStatus.not_found, null,
+                    "Console: " + result.result.console);
+        }
+        return new GitStatusInfo(Enums.GitStatus.installed, getGitVersion(result.result.console.toLowerCase()), null);
+    }
+
+    private GitExecResult execGitCmd(List<String> gitVersionCmd, long timeout) {
         try {
             File consoleLogFile = File.createTempFile("console-", ".log");
             consoleLogFile.deleteOnExit();
-            ExecProcessService.Result result = execProcessService.execCommand(GIT_VERSION_CMD, new File("."), consoleLogFile, 30L);
-            final String console = FileUtils.readFileToString(consoleLogFile, StandardCharsets.UTF_8);
-            if (result.exitCode!=0) {
-                return new GitStatusInfo(
-                        Enums.GitStatus.not_found, null,
-                        "Console: " + console);
-            }
-            return new GitStatusInfo(Enums.GitStatus.installed, getGitVersion(console.toLowerCase()), null);
+            ExecProcessService.Result result = execProcessService.execCommand(gitVersionCmd, new File("."), consoleLogFile, timeout);
+            return new GitExecResult(result, false, null);
         } catch (InterruptedException | IOException e) {
             log.error("Error", e);
-            return new GitStatusInfo(Enums.GitStatus.error, null, "Error: " + e.getMessage());
+            return new GitExecResult(null, true, "Error: " + e.getMessage());
         }
+    }
+
+    @SuppressWarnings("Duplicates")
+    private static AssetFile prepareSnippetDir(final File snippetRootDir, String snippetCode) {
+        final AssetFile assetFile = new AssetFile();
+        final File trgDir = new File(snippetRootDir, Enums.BinaryDataType.SNIPPET.toString());
+        if (!trgDir.exists() && !trgDir.mkdirs()) {
+            assetFile.isError = true;
+            log.error("#025.37 Can't create snippet dir: {}", trgDir.getAbsolutePath());
+            return assetFile;
+        }
+        final String resId = snippetCode.replace(':', '_');
+        final File resDir = new File(trgDir, resId);
+        if (!resDir.exists() && !resDir.mkdirs()) {
+            assetFile.isError = true;
+            log.error("#025.35 Can't create resource dir: {}", resDir.getAbsolutePath());
+            return assetFile;
+        }
+        assetFile.file = resDir;
+        return assetFile;
+    }
+
+    public GitExecResult prepareSnippet(final File snippetRootDir, SnippetConfig snippet) {
+
+        AssetFile assetFile = prepareSnippetDir(snippetRootDir, snippet.code);
+        if (assetFile.isError) {
+            return new GitExecResult(null,true, "Can't create dir for snippet " + snippet.code);
+        }
+
+        File snippetDir = assetFile.file;
+        File repoDir = new File(snippetDir, "git");
+        if (!repoDir.exists()) {
+            GitExecResult result = execClone(snippetDir, snippet);
+            if (result.isError || !result.result.isOk()) {
+                return tryToRepairRepo(snippetDir, snippet);
+            }
+        }
+        GitExecResult result = execRevParse(repoDir);
+        if (result.isError) {
+            return result;
+        }
+        if (!result.result.isOk) {
+            return new GitExecResult(null,true, result.result.console);
+        }
+        if (!"true".equals(result.result.console.strip())) {
+            result = tryToRepairRepo(repoDir, snippet);
+            if (result.isError) {
+                return result;
+            }
+            if (!result.result.isOk) {
+                return new GitExecResult(null,true, result.result.console);
+            }
+        }
+        result = execPullOrigin(repoDir, snippet);
+        if (result.isError) {
+            return result;
+        }
+        if (!result.result.isOk) {
+            return new GitExecResult(null,true, result.result.console);
+        }
+
+        result = execCheckoutRevision(repoDir, snippet);
+        if (result.isError) {
+            return result;
+        }
+        if (!result.result.isOk) {
+            return new GitExecResult(null,true, result.result.console);
+        }
+
+        return new GitExecResult(repoDir, new ExecProcessService.Result(true, 0, "" ), false, null);
+    }
+
+    private GitExecResult execCheckoutRevision(File repoDir, SnippetConfig snippet) {
+        // git checkout sha1
+        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", snippet.git.commit);
+        GitExecResult result = execGitCmd(cmd, 0L);
+        return result;
+    }
+
+    private GitExecResult execPullOrigin(File repoDir, SnippetConfig snippet) {
+        // pull origin master
+        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", snippet.git.branch);
+        GitExecResult result = execGitCmd(cmd, 0L);
+        return result;
+    }
+
+    public GitExecResult tryToRepairRepo(File snippetDir, SnippetConfig snippet) {
+        File repoDir = new File(snippetDir, "git");
+        GitExecResult result;
+        FileUtils.deleteQuietly(repoDir);
+        if (repoDir.exists()) {
+            return new GitExecResult(null,
+                    true,
+                    "Snippet "+snippet.code+", can't prepare repo dir: " + repoDir.getAbsolutePath());
+        }
+        result = execClone(snippetDir, snippet);
+        return result;
+    }
+
+    private GitExecResult execRevParse(File repoDir) {
+        // git rev-parse --is-inside-work-tree
+        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "rev-parse", "--is-inside-work-tree");
+        GitExecResult result = execGitCmd(cmd, 60L);
+        return result;
+    }
+
+    private GitExecResult execClone(File repoDir, SnippetConfig snippet) {
+        // git -C <path> clone <git-repo-url> git
+
+        String mirror = envService.getEnvYaml().mirrors.get(snippet.git.repo);
+        String gitUrl = mirror!=null ? mirror : snippet.git.repo;
+        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "clone", gitUrl, "git");
+        GitExecResult result = execGitCmd(cmd, 0L);
+        return result;
     }
 
     private static String getGitVersion(String s) {

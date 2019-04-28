@@ -17,7 +17,9 @@
 
 package aiai.ai.yaml;
 
+import aiai.ai.yaml.station_status.StationStatus;
 import aiai.apps.commons.CommonConsts;
+import aiai.apps.commons.yaml.YamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import aiai.apps.commons.yaml.snippet.SnippetConfigStatus;
 import aiai.apps.commons.yaml.snippet.SnippetConfigList;
@@ -26,15 +28,67 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+import org.yaml.snakeyaml.nodes.Tag;
+import org.yaml.snakeyaml.representer.Representer;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.Assert.*;
 
 public class TestYamlParser {
+
+    public static Yaml init(Class<?> clazz) {
+        return initWithTags(clazz, new Class[]{clazz}, null);
+    }
+
+    public static Yaml initWithTags(Class<?> clazz, Class<?>[] clazzMap, TypeDescription customTypeDescription) {
+        final DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setPrettyFlow(true);
+
+        Representer representer = new Representer();
+        if (clazzMap!=null) {
+            for (Class<?> clazzTag : clazzMap) {
+                representer.addClassTag(clazzTag, Tag.MAP);
+            }
+        }
+
+        Constructor constructor = new Constructor(clazz);
+        if (customTypeDescription!=null) {
+            constructor.addTypeDescription(customTypeDescription);
+        }
+
+        //noinspection UnnecessaryLocalVariable
+        Yaml yaml = new Yaml(constructor, representer, options);
+        return yaml;
+    }
+
+    @Test
+    public void testUrlAsKey() {
+        Map<String, String> mirror = new ConcurrentHashMap<>();
+        final String key = "http://localhost:8080";
+        final String value = "C:\\repo";
+        mirror.put(key, value);
+
+        Yaml yaml = init(Map.class);
+
+        String s = yaml.dump(mirror);
+        System.out.println("s = " + s);
+
+        Map<String, String> map = yaml.load(s);
+
+        assertFalse(map.isEmpty());
+        assertTrue(map.containsKey(key));
+        assertEquals(value, map.get(key));
+    }
 
     @Test
     public void loadYmlAsMapFromString() {

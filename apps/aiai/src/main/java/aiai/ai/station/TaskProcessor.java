@@ -24,6 +24,7 @@ import aiai.ai.core.ExecProcessService;
 import aiai.ai.resource.AssetFile;
 import aiai.ai.resource.ResourceUtils;
 import aiai.ai.station.env.EnvService;
+import aiai.ai.station.sourcing.git.GitSourcingService;
 import aiai.ai.station.station_resource.ResourceProvider;
 import aiai.ai.station.station_resource.ResourceProviderFactory;
 import aiai.ai.yaml.metadata.Metadata;
@@ -60,8 +61,9 @@ public class TaskProcessor {
     private final EnvService envService;
     private final StationService stationService;
     private final ResourceProviderFactory resourceProviderFactory;
+    private final GitSourcingService gitSourcingService;
 
-    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationTaskService stationTaskService, CurrentExecState currentExecState, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, EnvService envService, StationService stationService, ResourceProviderFactory resourceProviderFactory) {
+    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationTaskService stationTaskService, CurrentExecState currentExecState, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, EnvService envService, StationService stationService, ResourceProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
         this.globals = globals;
         this.execProcessService = execProcessService;
         this.stationTaskService = stationTaskService;
@@ -71,6 +73,7 @@ public class TaskProcessor {
         this.envService = envService;
         this.stationService = stationService;
         this.resourceProviderFactory = resourceProviderFactory;
+        this.gitSourcingService = gitSourcingService;
     }
 
     public void fixedDelay() {
@@ -165,14 +168,24 @@ public class TaskProcessor {
             SnippetConfig snippet = taskParamYaml.getSnippet();
 
             AssetFile snippetAssetFile=null;
-            if (snippet.sourcing== EnumsApi.SnippetSourcing.launchpad) {
+            if (snippet.sourcing==EnumsApi.SnippetSourcing.launchpad) {
                 final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
                 snippetAssetFile = ResourceUtils.prepareSnippetFile(snippetDir, snippet.getCode(), snippet.file);
                 // is this snippet prepared?
                 if (snippetAssetFile.isError || !snippetAssetFile.isContent) {
-                    log.info("Resource hasn't been prepared yet, {}", snippetAssetFile);
+                    log.info("Snippet {} hasn't been prepared yet, {}", snippet.code, snippetAssetFile);
                     isAllLoaded = false;
                 }
+            }
+            else if (snippet.sourcing==EnumsApi.SnippetSourcing.git) {
+                final File snippetRootDir = stationTaskService.prepareSnippetDir(launchpadCode);
+                GitSourcingService.GitExecResult result = gitSourcingService.prepareSnippet(snippetRootDir, snippet);
+                if (result.isError) {
+                    log.warn("Snippet {} has a permanent error, {}", snippet.code, result.error);
+                    break;
+                }
+                snippetAssetFile = new AssetFile();
+                snippetAssetFile.file = new File(result.snippetDir, snippet.file);
             }
 
             if (!isAllLoaded) {
@@ -196,9 +209,14 @@ public class TaskProcessor {
             try {
                 List<String> cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
 
-                if (snippet.sourcing== EnumsApi.SnippetSourcing.launchpad && snippetAssetFile!=null) {
+                if (snippet.sourcing==EnumsApi.SnippetSourcing.launchpad ||
+                        snippet.sourcing==EnumsApi.SnippetSourcing.git) {
+                    if (snippetAssetFile==null) {
+                        throw new IllegalStateException("snippetAssetFile is null");
+                    }
                     cmd.add(snippetAssetFile.file.getAbsolutePath());
                 }
+
                 if (StringUtils.isNoneBlank(snippet.params)) {
                     cmd.addAll(Arrays.stream(StringUtils.split(snippet.params)).collect(Collectors.toList()));
                 }

@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @NoArgsConstructor
 @ToString
 public class EnvYaml {
+    public final Map<String, String> mirrors = new ConcurrentHashMap<>();
     public final Map<String, String> envs = new ConcurrentHashMap<>();
     public final List<DiskStorage> disk = new ArrayList<>();
 

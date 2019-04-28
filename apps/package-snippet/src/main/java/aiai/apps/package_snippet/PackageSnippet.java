@@ -26,6 +26,7 @@ import aiai.apps.commons.yaml.snippet.SnippetConfigStatus;
 import aiai.apps.commons.yaml.snippet.SnippetConfigList;
 import aiai.apps.commons.yaml.snippet.SnippetConfigListUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -130,16 +131,21 @@ public class PackageSnippet implements CommandLineRunner {
         // Process
         for (SnippetConfig snippetConfig : snippetConfigList.getSnippets()) {
             String sum;
-            if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.station) {
+            if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.station ||
+                    snippetConfig.sourcing==EnumsApi.SnippetSourcing.git) {
                 sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippetConfig.env.getBytes()));
             }
-            else {
+            else if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.launchpad) {
                 final File snippetFile = new File(targetDir, snippetConfig.file);
                 FileUtils.copyFile(new File(snippetConfig.file), snippetFile);
                 try (FileInputStream fis = new FileInputStream(snippetFile)) {
                     sum = Checksum.Type.SHA256.getChecksum(fis);
                 }
             }
+            else {
+                throw new IllegalArgumentException();
+            }
+
             snippetConfig.checksumMap = new HashMap<>();
             if (privateKey!=null) {
                 String signature = SecUtils.getSignature(sum, privateKey);

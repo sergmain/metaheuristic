@@ -128,7 +128,7 @@ public class ExecProcessService {
         log.info("Any errors of execution? {}", (exitCode == 0 ? "No" : "Yes"));
         log.debug("'\tcmd: {}", cmd);
         log.debug("'\texecDir: {}", execDir.getAbsolutePath());
-        String console = readLastLines(500, consoleLogFile);
+        String console = readLastLines(1000, consoleLogFile);
         log.debug("'\tconsole output:\n{}", console);
 
         return new Result(exitCode==0, exitCode, console);
