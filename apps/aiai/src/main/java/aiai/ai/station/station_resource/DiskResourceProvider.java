@@ -27,7 +27,7 @@ import aiai.ai.station.StationTaskService;
 import aiai.ai.yaml.env.DiskStorage;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.metadata.Metadata;
-import aiai.ai.yaml.station.StationTask;
+import aiai.ai.yaml.station_task.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

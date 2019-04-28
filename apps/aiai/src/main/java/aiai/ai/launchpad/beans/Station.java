@@ -39,17 +39,20 @@ public class Station implements Serializable {
     @Version
     public Integer version;
 
+    @Column(name="UPDATED_ON")
+    public long updatedOn;
+
+    /**
+     * this field is initialized manually
+     */
     @Column(name = "IP")
     public String ip;
 
     @Column(name = "DESCRIPTION")
     public String description;
 
-    @Column(name = "ENV")
-    public String env;
-
-    @Column(name = "ACTIVE_TIME")
-    public String activeTime;
+    @Column(name = "STATUS")
+    public String status;
 
 }
 

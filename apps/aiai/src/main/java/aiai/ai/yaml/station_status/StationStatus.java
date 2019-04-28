@@ -14,28 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.yaml.env;
 
+package aiai.ai.yaml.station_status;
+
+import aiai.ai.station.sourcing.git.GitSourcingService;
+import aiai.ai.yaml.env.EnvYaml;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 @ToString
-public class EnvYaml {
-    public final Map<String, String> envs = new ConcurrentHashMap<>();
-    public final List<DiskStorage> disk = new ArrayList<>();
-
-    public DiskStorage findDiskStorageByCode(String code) {
-        for (DiskStorage diskStorage : disk) {
-            if (Objects.equals(diskStorage.code, code)) {
-                return diskStorage;
-            }
-        }
-        return null;
-    }
+public class StationStatus {
+    public EnvYaml env;
+    public GitSourcingService.GitStatusInfo gitStatusInfo;
+    public String schedule;
 }

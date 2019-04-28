@@ -29,9 +29,11 @@ import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.utils.holders.LongHolder;
 import aiai.ai.yaml.env.EnvYaml;
-import aiai.ai.yaml.env.EnvYamlUtils;
+import aiai.ai.yaml.station_status.StationStatus;
+import aiai.ai.yaml.station_status.StationStatusUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -192,8 +194,17 @@ public class TaskService {
                     throw new RuntimeException(e);
                 }
 
-                EnvYaml envYaml = EnvYamlUtils.to(station.getEnv());
-                String interpreter = envYaml.getEnvs().get(taskParamYaml.snippet.env);
+                StationStatus stationStatus = StationStatusUtils.to(station.status);
+                if (taskParamYaml.snippet.sourcing== EnumsApi.SnippetSourcing.git &&
+                        stationStatus.gitStatusInfo.status!= Enums.GitStatus.installed) {
+                    log.warn("#317.62 Can't assign task #{} to station #{} because this station doesn't correctly installed git, git status info: {}",
+                            station.getId(), task.getId(), stationStatus.gitStatusInfo
+                    );
+                    longHolder.value = System.currentTimeMillis();
+                    continue;
+                }
+
+                String interpreter = stationStatus.env.getEnvs().get(taskParamYaml.snippet.env);
                 if (interpreter==null) {
                     log.warn("#317.64 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
                             station.getId(), task.getId(), taskParamYaml.snippet.env

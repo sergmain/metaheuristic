@@ -24,13 +24,14 @@ import aiai.ai.exceptions.ResourceProviderException;
 import aiai.ai.resource.*;
 import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.env.EnvService;
+import aiai.ai.station.sourcing.git.GitSourcingService;
 import aiai.ai.station.station_resource.DiskResourceProvider;
 import aiai.ai.station.station_resource.ResourceProvider;
 import aiai.ai.station.station_resource.ResourceProviderFactory;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import aiai.ai.yaml.metadata.Metadata;
-import aiai.ai.yaml.station.StationTask;
+import aiai.ai.yaml.station_task.StationTask;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import lombok.Data;
@@ -58,19 +59,22 @@ public class StationService {
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
     private final EnvService envService;
     private final ResourceProviderFactory resourceProviderFactory;
+    private final GitSourcingService gitSourcingService;
 
-    public StationService(StationTaskService stationTaskService, UploadResourceActor uploadResourceActor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, EnvService envService, ResourceProviderFactory resourceProviderFactory) {
+    public StationService(StationTaskService stationTaskService, UploadResourceActor uploadResourceActor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, EnvService envService, ResourceProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
         this.stationTaskService = stationTaskService;
         this.uploadResourceActor = uploadResourceActor;
         this.metadataService = metadataService;
         this.launchpadLookupExtendedService = launchpadLookupExtendedService;
         this.envService = envService;
         this.resourceProviderFactory = resourceProviderFactory;
+        this.gitSourcingService = gitSourcingService;
     }
 
     Command produceReportStationStatus(LaunchpadSchedule schedule) {
         //noinspection UnnecessaryLocalVariable
-        Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(envService.getEnv(), schedule.asString);
+        Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(
+                envService.getEnvYaml(), schedule.asString, gitSourcingService.gitStatusInfo);
         return reportStationStatus;
     }
 

@@ -27,7 +27,7 @@ import aiai.ai.station.env.EnvService;
 import aiai.ai.station.station_resource.ResourceProvider;
 import aiai.ai.station.station_resource.ResourceProviderFactory;
 import aiai.ai.yaml.metadata.Metadata;
-import aiai.ai.yaml.station.StationTask;
+import aiai.ai.yaml.station_task.StationTask;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;

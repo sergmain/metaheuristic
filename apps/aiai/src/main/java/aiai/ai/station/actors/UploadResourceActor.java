@@ -23,7 +23,7 @@ import aiai.ai.launchpad.server.UploadResult;
 import aiai.ai.station.StationTaskService;
 import aiai.ai.station.net.HttpClientExecutor;
 import aiai.ai.station.tasks.UploadResourceTask;
-import aiai.ai.yaml.station.StationTask;
+import aiai.ai.yaml.station_task.StationTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.extern.slf4j.Slf4j;

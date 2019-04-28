@@ -27,7 +27,7 @@ import aiai.ai.station.actors.UploadResourceActor;
 import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.yaml.metadata.Metadata;
-import aiai.ai.yaml.station.StationTask;
+import aiai.ai.yaml.station_task.StationTask;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

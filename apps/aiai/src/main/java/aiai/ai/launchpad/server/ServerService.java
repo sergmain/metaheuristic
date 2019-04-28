@@ -31,6 +31,9 @@ import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.resource.AssetFile;
 import aiai.ai.resource.ResourceUtils;
+import aiai.ai.station.sourcing.git.GitSourcingService;
+import aiai.ai.yaml.station_status.StationStatus;
+import aiai.ai.yaml.station_status.StationStatusUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -139,6 +142,8 @@ public class ServerService {
             Station s = new Station();
             s.setIp(remoteAddress);
             s.setDescription("Id was reassigned from "+data.getStationId());
+            StationStatus ss = new StationStatus(null, new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "");
+            s.status = StationStatusUtils.toString(ss);
             stationsRepository.save(s);
             return new ExchangeData(new Protocol.ReAssignStationId(s.getId()));
         }

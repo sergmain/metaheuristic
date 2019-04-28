@@ -34,18 +34,16 @@
             <th>Id</th>
             <th>IP address</th>
             <th>Description</th>
-            <th>Environment</th>
-            <th>Active time</th>
+            <th>Station status info</th>
             <th colspan="2">&nbsp;</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="r : ${result.items}">
-            <td th:text="${r.id}">Sample Item</td>
-            <td th:text="${r.ip}">Sample IP address</td>
+            <td th:text="${r.id}">Station Id</td>
+            <td th:text="${r.ip}">IP address</td>
             <td th:text="${r.description}">Sample Description</td>
-            <td><pre th:if="${r.env}!=null" th:text="${r.env}">Input pool codes</pre></td>
-            <td th:text="${r.activeTime}">Active time</td>
+            <td><pre th:if="${r.status}!=null" th:text="${r.status}">Station status info</pre></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-edit/' + r.id}">Edit</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-delete/' + r.id}">Delete</a></td>
         </tr>

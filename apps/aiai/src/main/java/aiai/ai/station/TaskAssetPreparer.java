@@ -23,7 +23,7 @@ import aiai.ai.resource.ResourceUtils;
 import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.yaml.metadata.Metadata;
-import aiai.ai.yaml.station.StationTask;
+import aiai.ai.yaml.station_task.StationTask;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;

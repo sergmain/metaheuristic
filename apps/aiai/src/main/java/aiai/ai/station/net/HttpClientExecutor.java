@@ -17,11 +17,9 @@
 
 package aiai.ai.station.net;
 
-import aiai.ai.Globals;
 import org.apache.http.HttpHost;
 import org.apache.http.client.fluent.Executor;
 import org.apache.http.client.utils.URIUtils;
-import org.springframework.stereotype.Component;
 
 import java.net.URL;
 

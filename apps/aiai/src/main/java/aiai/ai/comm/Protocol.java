@@ -19,6 +19,9 @@ package aiai.ai.comm;
 
 import aiai.ai.Enums;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
+import aiai.ai.station.sourcing.git.GitSourcingService;
+import aiai.ai.yaml.env.EnvYaml;
+import aiai.ai.yaml.station_status.StationStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -183,18 +186,17 @@ public class Protocol {
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class ReportStationStatus extends Command {
-        public String env;
-        public String activeTime;
+        public StationStatus status;
 
-        public ReportStationStatus(String env, String activeTime) {
+        public ReportStationStatus(EnvYaml env, String schedule, GitSourcingService.GitStatusInfo gitStatusInfo) {
             this.setType(Type.ReportStationStatus);
-            this.env = env;
-            this.activeTime = activeTime;
+            this.status = new StationStatus(env, gitStatusInfo, schedule);
         }
 
         @Transient
+        @Deprecated(forRemoval = true)
         public boolean isOkToReport() {
-            return StringUtils.isNotBlank(env) || StringUtils.isNotBlank(activeTime);
+            return status.env!=null || StringUtils.isNotBlank(status.schedule);
         }
 
         public ReportStationStatus() {

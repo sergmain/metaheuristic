@@ -22,13 +22,15 @@ import aiai.ai.launchpad.LaunchpadService;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.station.StationServicesHolder;
+import aiai.ai.station.sourcing.git.GitSourcingService;
+import aiai.ai.yaml.station_status.StationStatus;
+import aiai.ai.yaml.station_status.StationStatusUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * User: Serg
@@ -159,9 +161,10 @@ public class CommandProcessor {
             // we throw ISE cos all checks have to be made early
             throw new IllegalStateException("Station wasn't found for stationId: " + stationId );
         }
-        if (!Objects.equals(station.getEnv(), command.getEnv()) || !Objects.equals(station.getActiveTime(), command.getActiveTime())) {
-            station.setEnv(command.env);
-            station.setActiveTime(command.activeTime);
+        final String stationStatus = StationStatusUtils.toString(command.status);
+        if (!stationStatus.equals(station.status)) {
+            station.setStatus(stationStatus);
+            station.setUpdatedOn(System.currentTimeMillis());
             launchpadService.getStationsRepository().save(station);
         }
         return Protocol.NOP_ARRAY;
@@ -217,6 +220,8 @@ public class CommandProcessor {
     @SuppressWarnings("unused")
     private Command[] getNewStationId(Protocol.RequestStationId command) {
         final Station st = new Station();
+        StationStatus ss = new StationStatus(null, new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "");
+        st.status = StationStatusUtils.toString(ss);
         launchpadService.getStationsRepository().save(st);
 
         return Protocol.asArray(new Protocol.AssignedStationId(Long.toString(st.getId())));

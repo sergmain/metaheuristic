@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.yaml.station;
+package aiai.ai.yaml.station_task;
 
 import lombok.Data;
 import lombok.ToString;

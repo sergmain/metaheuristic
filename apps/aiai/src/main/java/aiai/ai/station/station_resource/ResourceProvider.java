@@ -21,7 +21,7 @@ import aiai.ai.core.ExecProcessService;
 import aiai.ai.resource.AssetFile;
 import aiai.ai.station.LaunchpadLookupExtendedService;
 import aiai.ai.yaml.metadata.Metadata;
-import aiai.ai.yaml.station.StationTask;
+import aiai.ai.yaml.station_task.StationTask;
 
 import java.io.File;
 import java.util.List;

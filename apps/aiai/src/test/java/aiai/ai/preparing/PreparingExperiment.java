@@ -24,8 +24,11 @@ import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
+import aiai.ai.station.sourcing.git.GitSourcingService;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.env.EnvYamlUtils;
+import aiai.ai.yaml.station_status.StationStatus;
+import aiai.ai.yaml.station_status.StationStatusUtils;
 import aiai.apps.commons.CommonConsts;
 import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
@@ -113,14 +116,9 @@ public abstract class PreparingExperiment {
             envYaml.getEnvs().put("env-snippet-03:1.1", "python.exe" );
             envYaml.getEnvs().put("env-snippet-04:1.1", "python.exe" );
             envYaml.getEnvs().put("env-snippet-05:1.1", "python.exe" );
-            String env = EnvYamlUtils.toString(envYaml);
-            station.setEnv(env);
+            StationStatus ss = new StationStatus(envYaml, new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "");
+            station.setStatus(StationStatusUtils.toString(ss));
 
-/*
-            station.setEnv("envs:\n" +
-                    "  python-3: C:\\Anaconda3\\envs\\python-36\\python.exe\n" +
-                    "");
-*/
             station.setDescription("Test station. Must be deleted automatically");
             stationsRepository.save(station);
             log.info("stationsRepository.save() was finished for {}", System.currentTimeMillis() - mills);
