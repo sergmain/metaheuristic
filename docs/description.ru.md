@@ -281,11 +281,11 @@ java -jar apps/gen-passwords/target/gen-passwords.jar <master password> <rest pa
 <rest password> - пароль для доступа к rest-api
 
 результат работы поместить в соответствующие параметры:
-master password --> aiai.master-password
-master token --> aiai.master-token
+master password --> aiai.launchpad.master-password
+master token --> aiai.launchpad.master-token
 
-rest password --> aiai.rest-password
-rest token --> aiai.rest-token
+rest password --> aiai.launchpad.rest-password
+rest token --> aiai.launchpad.rest-token
 
 токены могут быть изменены по желанию,
 но не должны быть пустыми и включать в себя символ '=' (символ равно)
@@ -307,7 +307,7 @@ mvn-all.bat
 после того, как все параметры были прописаны, можно запустить стартовую площадку
 по адресу на котором она была запущена
 логин - aiai.master-username=aiai.master-token
-пароль - aiai.master-password
+пароль - aiai.launchpad.master-password
 
 т.е если
 aiai.master-username=yyy

@@ -170,7 +170,9 @@ public class Globals {
 
         if (isLaunchpadEnabled) {
             if (launchpadMasterUsername==null || launchpadMasterToken==null || launchpadMasterPassword==null) {
-                throw new IllegalArgumentException("if aiai.secure-rest-url=true, then aiai.master-username, aiai.master-token, and aiai.master-password have to be not null");
+                throw new IllegalArgumentException(
+                        "if aiai.secure-rest-url=true, then aiai.launchpad.master-username, " +
+                                "aiai.launchpad.master-token, and aiai.launchpad.master-password have to be not null");
             }
 
             launchpadTempDir = new File(launchpadDir, "temp");

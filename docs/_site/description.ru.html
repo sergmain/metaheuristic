@@ -234,7 +234,7 @@ aiai.station.active-time: 0:00-8:45, 19:00-23:59</p>
 
 <p>aiai.station.launchpad-url - url по которому находится стартовая площадка
 для aiai.station.server-rest-password необходимо испольховать тот же пароль,
-что использовался для aiai.rest-password, только в незашифрованном виде
+что использовался для aiai.launchpad.rest-password, только в незашифрованном виде
 параметр aiai.station.active-time используется для определение периода времени, когда
 станция будет выполнять вычисления. стартовое время и конечное включаются в активный период
 последним времене в сутка является 23:59
@@ -316,10 +316,10 @@ server.address=127.0.0.1</p>
 <p>java -jar apps/gen-keys/target/gen-passwords.jar <master password=""> <rest password=""></rest></master></p>
 
 <p>результат работы поместить в соответствующие параметры:
-master password –&gt; aiai.master-password
-master token –&gt; aiai.master-token</p>
+master password –&gt; aiai.launchpad.master-password
+master token –&gt; aiai.launchpad.master-token</p>
 
-<p>rest password –&gt; aiai.rest-password
+<p>rest password –&gt; aiai.launchpad.rest-password
 rest token –&gt; aiai.rest-token</p>
 
 <p>токены могут быть изменены по желанию,
@@ -345,7 +345,7 @@ mvn-all.bat</p>
 после того, как все параметры были прописаны, можно запустить стартовую площадку
 по адресу на котором она была запущена
 логин - aiai.master-username=aiai.master-token
-пароль - aiai.master-password</li>
+пароль - aiai.launchpad.master-password</li>
 </ol>
 
 <p>т.е если
