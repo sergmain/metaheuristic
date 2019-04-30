@@ -18,11 +18,9 @@
 package aiai.ai.rest;
 
 import aiai.ai.Consts;
-import aiai.ai.Globals;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.JsonUtils;
-import aiai.ai.launchpad.repositories.StationsRepository;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -65,12 +63,6 @@ public class TestRest {
         }
     }
     private MockMvc mockMvc;
-
-    @Autowired
-    private StationsRepository stationsRepository;
-
-    @Autowired
-    private Globals globals;
 
     @Autowired
     private WebApplicationContext webApplicationContext;

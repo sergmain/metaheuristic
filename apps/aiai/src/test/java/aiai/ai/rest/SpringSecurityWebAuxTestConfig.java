@@ -41,7 +41,6 @@ public class SpringSecurityWebAuxTestConfig {
 
         MyUserDetailsManager(Collection<Account> users) {
             for (Account user : users) {
-//                this.users.put(user.getUsername()+"="+user.getToken(), user);
                 this.users.put(user.getUsername(), user);
             }
         }
@@ -73,6 +72,7 @@ public class SpringSecurityWebAuxTestConfig {
 
         @Override
         public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+            //noinspection UnnecessaryLocalVariable
             Account account = users.get(username);
             return account;
         }
@@ -125,7 +125,7 @@ public class SpringSecurityWebAuxTestConfig {
             account.setEnabled(true);
             account.setPassword("123");
 
-            account.setRoles("ROLE_ACCESS_REST, ROLE_USER");
+            account.setRoles("ROLE_USER");
             accounts.add(account);
         }
 
