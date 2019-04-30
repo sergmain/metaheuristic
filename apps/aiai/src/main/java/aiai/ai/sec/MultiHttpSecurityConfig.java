@@ -19,7 +19,6 @@ package aiai.ai.sec;
 
 import aiai.ai.Globals;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -34,7 +33,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
+import java.util.List;
 
 /**
  * User: Serg
@@ -54,6 +53,18 @@ public class MultiHttpSecurityConfig {
         return new BCryptPasswordEncoder(10);
     }
 
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(List.of("authorization", "content-type", "x-auth-token"));
+        configuration.setExposedHeaders(List.of("x-auth-token"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
     @Configuration
     @Order(1)
     public class RestAuthSecurityConfig extends WebSecurityConfigurerAdapter {
@@ -69,89 +80,40 @@ public class MultiHttpSecurityConfig {
         @Override
         protected void configure(HttpSecurity http) throws Exception {
 
-            http
-                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                    .and()
-                    .antMatcher("/rest-auth/**").authorizeRequests().anyRequest()
-//                    .authenticated()
-                    .hasAuthority("ROLE_ACCESS_REST")
-                    .and()
-                    .httpBasic().realmName(REST_REALM)
-                    .and()
-                    .csrf().disable()
-                    .headers().cacheControl();
+            if (globals.isSecurityEnabled) {
 
+                http
+                        .cors()
+                        .and()
+                        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .and()
+                        .authorizeRequests()
+                        .antMatchers("/rest/login").permitAll()
+                        .and()
+                        .antMatcher("/rest/**").authorizeRequests().anyRequest().hasAuthority("ROLE_ACCESS_REST")
+                        .and()
+                        .httpBasic().realmName(REST_REALM)
+                        .and()
+                        .csrf().disable()
+                        .headers().cacheControl();
+            }
+            else {
+                http
+                        .cors()
+                        .and()
+                        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .and()
+                        .antMatcher("/rest/**").authorizeRequests().anyRequest().anonymous()
+                        .and()
+                        .csrf().disable()
+                        .headers().cacheControl();
+
+            }
             if (globals.isSslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }
         }
-    }
 
-    @Configuration
-    @Order(2)
-    public class RestAnonSecurityConfig extends WebSecurityConfigurerAdapter {
-
-        private final Globals globals;
-
-        public RestAnonSecurityConfig(Globals globals) {
-            this.globals = globals;
-        }
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-
-            http
-                    .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                    .and()
-                    .antMatcher("/rest-anon/**").authorizeRequests().anyRequest().anonymous()
-                    .and()
-                    .csrf().disable()
-                    .headers().cacheControl();
-
-            if (globals.isSslRequired) {
-                http.requiresChannel().antMatchers("/**").requiresSecure();
-            }
-        }
-    }
-
-    @Configuration
-    @Order(3)
-    public class AngularSecurityConfig extends WebSecurityConfigurerAdapter {
-
-        final CsrfTokenRepository csrfTokenRepository;
-
-        @Autowired
-        public AngularSecurityConfig(CsrfTokenRepository csrfTokenRepository) {
-            this.csrfTokenRepository = csrfTokenRepository;
-        }
-
-        @Override
-        protected void configure(HttpSecurity http) throws Exception {
-            http
-                    .cors()
-                    .and()
-//                    .csrf().csrfTokenRepository(csrfTokenRepository)
-//                    .and()
-                    .csrf().disable()
-                    .authorizeRequests()
-                    .antMatchers("/ng/login").permitAll()
-                    .and()
-                    .antMatcher("/ng/**").authorizeRequests().anyRequest().authenticated()
-                    .and()
-                    .httpBasic();
-        }
-
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-            CorsConfiguration configuration = new CorsConfiguration();
-            configuration.setAllowedOrigins(Arrays.asList("*"));
-            configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-            configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token"));
-            configuration.setExposedHeaders(Arrays.asList("x-auth-token"));
-            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-            source.registerCorsConfiguration("/**", configuration);
-            return source;
-        }
     }
 
     @Configuration
@@ -160,9 +122,6 @@ public class MultiHttpSecurityConfig {
 
         final CsrfTokenRepository csrfTokenRepository;
         private final Globals globals;
-
-        @Value("${server.address:#{null}}")
-        private String serverAddress;
 
         @Autowired
         public SpringSecurityConfig(CsrfTokenRepository csrfTokenRepository, Globals globals) {
@@ -197,10 +156,8 @@ public class MultiHttpSecurityConfig {
                     .and()
                     .logout()
                     .logoutUrl("/logout")
-                    .logoutSuccessUrl("/index")
-//                    .deleteCookies(Consts.SESSIONID_NAME)
-//                    .invalidateHttpSession(true)
-            ;
+                    .logoutSuccessUrl("/index");
+
             if (globals.isSslRequired) {
                 http.requiresChannel().antMatchers("/**").requiresSecure();
             }

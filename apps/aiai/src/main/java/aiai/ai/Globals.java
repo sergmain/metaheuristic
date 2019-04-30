@@ -52,8 +52,8 @@ public class Globals {
 
     // Launchpad's globals
 
-    @Value("${aiai.launchpad.secure-rest-url:#{true}}")
-    public boolean isSecureLaunchpadRestUrl;
+    @Value("${aiai.launchpad.is-security-enabled:#{true}}")
+    public boolean isSecurityEnabled;
 
     @Value("${aiai.launchpad.is-ssl-required:#{true}}")
     public boolean isSslRequired = true;
@@ -109,15 +109,6 @@ public class Globals {
     @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
     public boolean isReplaceSnapshot;
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.rest-password')) }")
-    public String launchpadRestPassword;
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.rest-username')) }")
-    public String launchpadRestUsername;
-
-    @Value("#{ T(aiai.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.rest-token')) }")
-    public String launchpadRestToken;
-
     // Station's globals
 
     @Value("${aiai.station.enabled:#{false}}")
@@ -141,10 +132,6 @@ public class Globals {
     public void init() {
         if (launchpadPublicKeyStr!=null) {
             launchpadPublicKey = SecUtils.getPublicKey(launchpadPublicKeyStr);
-        }
-
-        if (launchpadMasterUsername!=null && launchpadMasterUsername.equals(launchpadRestUsername)) {
-            throw new IllegalStateException("launchpadMasterUsername can't be the same as launchpadRestUsername, launchpadMasterUsername: " + launchpadMasterUsername + ", launchpadRestUsername: " + launchpadRestUsername);
         }
 
         if (stationDir==null) {
@@ -230,9 +217,9 @@ public class Globals {
 
     private void logGlobals() {
         log.info("Current globals:");
-        log.info("\tisSecureLaunchpadRestUrl: {}", isSecureLaunchpadRestUrl);
         log.info("\tthreadNumber: {}", threadNumber);
         log.info("\tisUnitTesting: {}", isUnitTesting);
+        log.info("\tisSecurityEnabled: {}", isSecurityEnabled);
         log.info("\tisSslRequired: {}", isSslRequired);
         log.info("\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
         log.info("\tlaunchpadDir: {}", launchpadDir);

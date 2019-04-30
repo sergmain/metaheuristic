@@ -66,7 +66,7 @@ public class TestRestPayload {
     @Test
     @WithUserDetails("rest")
     public void testRestPayload_asRest() throws Exception {
-        final String url = "/rest-auth/payload/resource/DATA/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
+        final String url = "/rest/v1/payload/resource/DATA/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
         //noinspection ConstantConditions
         assertTrue(url.endsWith(".bin"));
 
@@ -82,7 +82,7 @@ public class TestRestPayload {
     @Test
     @WithUserDetails("user")
     public void testRestPayload_asUser() throws Exception {
-        final String url = "/rest-auth/payload/resource/DATA/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
+        final String url = "/rest/v1/payload/resource/DATA/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
         //noinspection ConstantConditions
         assertTrue(url.endsWith(".bin"));
 
@@ -90,7 +90,7 @@ public class TestRestPayload {
                 get(url + "?stationId=15&taskId=114784&code=aaa-task-114783-ml_model.bin")
                         .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
         )
-                .andExpect(status().isForbidden());
+                .andExpect(status().isGone());
 
 
     }

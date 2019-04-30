@@ -80,8 +80,7 @@ public class LaunchpadRequestor {
         if (launchpad == null) {
             throw new IllegalStateException("#775.01 Can'r find launchpad config for url " + launchpadUrl);
         }
-        final String restUrl = launchpadUrl + (launchpad.launchpadLookup.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL);
-        serverRestUrl = restUrl + Consts.SERVER_REST_URL;
+        serverRestUrl = launchpadUrl + Consts.REST_V1_URL + Consts.SERVER_REST_URL;
 
     }
 
@@ -164,7 +163,7 @@ public class LaunchpadRequestor {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                if (launchpad.launchpadLookup.isSecureRestUrl) {
+                if (launchpad.launchpadLookup.isSecurityEnabled) {
                     String auth = launchpad.launchpadLookup.restUsername + '=' + launchpad.launchpadLookup.restToken + ':' + launchpad.launchpadLookup.restPassword;
                     byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
                     String authHeader = "Basic " + new String(encodedAuth);
@@ -189,9 +188,9 @@ public class LaunchpadRequestor {
                 Monitoring.log("##018", Enums.Monitor.MEMORY);
             } catch (HttpClientErrorException e) {
                 if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                    log.error("#775.11 Error 401 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
+                    log.error("#775.11 Error 401 accessing url {}, isSecurityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.isSecurityEnabled);
                 } else if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
-                    log.error("#775.16 Error 403 accessing url {}, isSecureRestUrl: {}", serverRestUrl, launchpad.launchpadLookup.isSecureRestUrl);
+                    log.error("#775.16 Error 403 accessing url {}, isSecurityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.isSecurityEnabled);
                 } else {
                     throw e;
                 }

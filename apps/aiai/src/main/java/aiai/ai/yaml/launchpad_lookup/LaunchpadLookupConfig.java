@@ -48,7 +48,7 @@ public class LaunchpadLookupConfig {
         public String publicKey;
         public LaunchpadLookupType lookupType;
         public AuthType authType;
-        public boolean isSecureRestUrl;
+        public boolean isSecurityEnabled;
         public String taskProcessingTime;
         public String restPassword;
         public String restUsername;

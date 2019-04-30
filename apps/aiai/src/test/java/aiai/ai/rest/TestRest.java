@@ -59,7 +59,7 @@ public class TestRest {
 
         // This isn't the test
         // see testNearMessages() below
-        @GetMapping("/rest-anon/test/message")
+        @GetMapping("/rest/test/message")
         public NewMessage getMessage() {
             return new NewMessage("42", "test msg");
         }
@@ -71,13 +71,18 @@ public class TestRest {
 
     @Autowired
     private Globals globals;
+
     @Autowired
     private WebApplicationContext webApplicationContext;
 
     // let's test the case with marshalling message to json
     @Test
+    @WithUserDetails("rest")
     public void testNearMessages() throws Exception {
-        MvcResult result = mockMvc.perform(get("/rest-anon/test/message")).andExpect(status().isOk()).andReturn();
+        MvcResult result = mockMvc
+                .perform(get("/rest/test/message"))
+                .andExpect(status().isOk())
+                .andReturn();
         String content = result.getResponse().getContentAsString();
 
         NewMessage m = new NewMessage("42", "test msg");
@@ -96,14 +101,15 @@ public class TestRest {
 
     @Test
     public void testUnauthorizedAccessToTest() throws Exception {
-        mockMvc.perform(get("/rest-auth/test"))
+        mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
     }
 
     @Test
+    @WithUserDetails("rest")
     public void testAnonymousAccessToTest() throws Exception {
-        mockMvc.perform(get("/rest-anon/test"))
+        mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
     }
@@ -111,7 +117,7 @@ public class TestRest {
     @Test
     @WithUserDetails("rest")
     public void whenTestAdminCredentials_thenOk() throws Exception {
-        MvcResult result = mockMvc.perform(get("/rest-auth/test"))
+        MvcResult result = mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
 
@@ -119,7 +125,7 @@ public class TestRest {
         Assert.assertNotNull(cookies);
         Assert.assertEquals(0, cookies.length);
 
-        mockMvc.perform(get("/rest-auth/test"))
+        mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
 
@@ -130,7 +136,7 @@ public class TestRest {
     public void testSimpleCommunicationWithServer() throws Exception {
         ExchangeData dataRequest = new ExchangeData(new Protocol.Nop());
         String jsonRequest = JsonUtils.toJson(dataRequest);
-        MvcResult result = mockMvc.perform(post("/rest-auth/srv/qwe321").contentType(Consts.APPLICATION_JSON_UTF8)
+        MvcResult result = mockMvc.perform(post("/rest/v1/srv/qwe321").contentType(Consts.APPLICATION_JSON_UTF8)
                 .content(jsonRequest))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME)).andReturn();
@@ -156,7 +162,7 @@ public class TestRest {
         dataReqest.setStationId(s.getId().toString());
         String jsonReqest = JsonUtils.toJson(dataReqest);
         MvcResult result;
-        if (globals.isSecureRestUrl) {
+        if (globals.isSecurityEnabled) {
             result = mockMvc.perform(post("/rest-anon/srv").contentType(Consts.APPLICATION_JSON_UTF8)
                     .content(jsonReqest))
                     .andExpect(status().isForbidden()).andReturn();
@@ -191,7 +197,7 @@ public class TestRest {
 /*
     @Test
     public void testEmptyStationIdWithoutSecuredRest() throws Exception {
-        if (globals.isSecureRestUrl) {
+        if (globals.isSecurityEnabled) {
             return;
         }
         ExchangeData dataReqest = new ExchangeData(new Protocol.RegisterInvite("invite-123"));
@@ -221,7 +227,7 @@ public class TestRest {
 /*
     @Test
     public void testEmptyStationId() throws Exception {
-        if (!globals.isSecureRestUrl) {
+        if (!globals.isSecurityEnabled) {
             return;
         }
         ExchangeData dataReqest = new ExchangeData(new Protocol.RegisterInvite("invite-123"));

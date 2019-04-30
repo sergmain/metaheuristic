@@ -89,8 +89,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
             log.info("Start processing the download task {}", task);
             try {
-                final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
-                final String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL + "/resource/" + Enums.BinaryDataType.DATA;
+                final String payloadRestUrl = task.launchpad.url + Consts.REST_V1_URL + Consts.PAYLOAD_REST_URL + "/resource/" + Enums.BinaryDataType.DATA;
                 final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.stationId+ '-' + task.taskId + '-' + URLEncoder.encode(task.getId(), StandardCharsets.UTF_8.toString());
 
                 final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)
@@ -114,7 +113,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 RestUtils.addHeaders(request);
 
                 Response response;
-                if (task.launchpad.isSecureRestUrl) {
+                if (task.launchpad.isSecurityEnabled) {
                     response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                 }
                 else {

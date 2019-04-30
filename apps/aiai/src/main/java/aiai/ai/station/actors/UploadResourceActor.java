@@ -102,8 +102,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
             }
             Enums.UploadResourceStatus status = null;
             try {
-                final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
-                final String uploadRestUrl  = restUrl + Consts.UPLOAD_REST_URL;
+                final String uploadRestUrl  = task.launchpad.url + Consts.REST_V1_URL + Consts.UPLOAD_REST_URL;
                 String randonPart = '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.stationId + '-' + task.taskId;
                 final String uri = uploadRestUrl + randonPart;
 
@@ -122,7 +121,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
 
                 log.info("Start uploading resource to rest-server, {}", randonPart);
                 Response response;
-                if (task.launchpad.isSecureRestUrl) {
+                if (task.launchpad.isSecurityEnabled) {
                     response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                 }
                 else {

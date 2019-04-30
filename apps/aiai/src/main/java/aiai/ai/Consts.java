@@ -38,8 +38,7 @@ public class Consts {
 
     public static final String SESSIONID_NAME = "JSESSIONID";
 
-    public static final String REST_ANON_URL = "/rest-anon";
-    public static final String REST_AUTH_URL = "/rest-auth";
+    public static final String REST_V1_URL = "/rest/v1";
 
     public static final String SERVER_REST_URL = "/srv";
     public static final String PAYLOAD_REST_URL = "/payload";

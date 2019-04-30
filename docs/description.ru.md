@@ -198,7 +198,7 @@ aiai.station.dir=./station
 формат файла:
 launchpads:
   - signatureRequired: false
-    isSecureRestUrl: true
+    isSecurityEnabled: true
     url: http://localhost:8080
     lookupType: direct
     authType: basic
@@ -214,7 +214,7 @@ launchpads:
 
 Описание параметров:
 signatureRequired: пребуется ли подпись (в настоящее время не используется)
-isSecureRestUrl: rest урл защищен логин/паролем
+isSecurityEnabled: rest урл защищен логин/паролем
 url: урл стартовой площадки / регистра,
     если lookupType==direct, то url это адрес стартовой площадки,
     если lookupType==registry, то url это адрес регистра стартовых площадок

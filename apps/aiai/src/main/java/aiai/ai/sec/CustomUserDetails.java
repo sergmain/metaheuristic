@@ -64,24 +64,6 @@ public class CustomUserDetails implements UserDetailsService {
             throw new UsernameNotFoundException("Username not found");
         }
 
-        if (StringUtils.equals(globals.launchpadRestUsername, complexUsername.getUsername()) && StringUtils.equals(globals.launchpadRestToken, complexUsername.getToken())) {
-
-            Account account = new Account();
-
-            // fake Id, I hope it won't make any collision with real accounts
-            // need to think of better solution for virtual accounts
-            account.setId( Integer.MAX_VALUE -6L );
-            account.setUsername(globals.launchpadRestUsername);
-            account.setToken(globals.launchpadRestToken);
-            account.setPassword(globals.launchpadRestPassword);
-            account.setAccountNonExpired(true);
-            account.setAccountNonLocked(true);
-            account.setCredentialsNonExpired(true);
-            account.setEnabled(true);
-            account.setRoles("ROLE_ACCESS_REST");
-            return account;
-        }
-
         if (StringUtils.equals(globals.launchpadMasterUsername, complexUsername.getUsername()) && StringUtils.equals(globals.launchpadMasterToken, complexUsername.getToken())) {
 
             Account account = new Account();
@@ -98,13 +80,6 @@ public class CustomUserDetails implements UserDetailsService {
             account.setPassword(globals.launchpadMasterPassword);
 
             account.setRoles("ROLE_ADMIN, ROLE_MANAGER, ROLE_ACCESS_REST");
-/*
-            List<GrantedAuthority> authList = new ArrayList<>();
-            authList.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-            authList.add(new SimpleGrantedAuthority("ROLE_MANAGER"));
-            account.setAuthorities(authList);
-*/
-
             return account;
         }
 

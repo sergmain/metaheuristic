@@ -97,8 +97,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 continue;
             }
 
-            final String restUrl = task.launchpad.url + (task.launchpad.isSecureRestUrl ? Consts.REST_AUTH_URL : Consts.REST_ANON_URL );
-            final String payloadRestUrl = restUrl + Consts.PAYLOAD_REST_URL;
+            final String payloadRestUrl = task.launchpad.url + Consts.REST_V1_URL + Consts.PAYLOAD_REST_URL;
 
             final String targetUrl = payloadRestUrl + "/resource/" + Enums.BinaryDataType.SNIPPET;
             final String snippetChecksumUrl = payloadRestUrl + "/snippet-checksum";
@@ -126,7 +125,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         RestUtils.addHeaders(request);
 
                         Response response;
-                        if (task.launchpad.isSecureRestUrl) {
+                        if (task.launchpad.isSecurityEnabled) {
                             response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                         } else {
                             response = request.execute();
@@ -168,7 +167,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         .socketTimeout(5000);
 
                 Response response;
-                if (task.launchpad.isSecureRestUrl) {
+                if (task.launchpad.isSecurityEnabled) {
                     response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                 }
                 else {

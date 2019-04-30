@@ -1,6 +1,6 @@
 launchpads:
   - signatureRequired: false
-    isSecureRestUrl: true
+    isSecurityEnabled: true
     url: http://localhost:8080
     lookupType: direct
     authType: basic
