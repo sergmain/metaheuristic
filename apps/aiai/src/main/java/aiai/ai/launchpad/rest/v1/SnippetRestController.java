@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.rest;
+package aiai.ai.launchpad.rest.v1;
 
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.data.SnippetData;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 @RestController
-@RequestMapping("/ng/launchpad/snippet")
+@RequestMapping("/rest/v1/launchpad/snippet")
 @Profile("launchpad")
 @CrossOrigin
 public class SnippetRestController {

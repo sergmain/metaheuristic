@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.rest;
+package aiai.ai.launchpad.rest.v1;
 
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.data.OperationStatusRest;
@@ -27,7 +27,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/ng/launchpad")
+@RequestMapping("/rest/v1/launchpad")
 @Profile("launchpad")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)

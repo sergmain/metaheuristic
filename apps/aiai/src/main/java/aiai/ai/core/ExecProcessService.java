@@ -62,8 +62,8 @@ public class ExecProcessService {
             timeout.set( TimeUnit.SECONDS.toMillis(timeoutBeforeTerminate) );
         }
         Thread timeoutThread = null;
-        log.info("timeoutBeforeTerminate: {}", timeoutBeforeTerminate );
-        log.info("timeout: {}", timeout.get() );
+        log.info("timeoutBeforeTerminate (seconds): {}, timeout (milliseconds): {}",
+                timeoutBeforeTerminate, timeout.get() );
 
         try (final FileOutputStream fos = new FileOutputStream(consoleLogFile);
                 BufferedOutputStream bos = new BufferedOutputStream(fos)) {

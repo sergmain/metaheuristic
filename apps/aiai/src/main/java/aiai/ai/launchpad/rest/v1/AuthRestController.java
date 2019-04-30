@@ -15,7 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.rest;
+package aiai.ai.launchpad.rest.v1;
 
 import aiai.ai.launchpad.beans.Account;
 import aiai.ai.launchpad.data.UserData;
@@ -30,7 +30,7 @@ import java.security.Principal;
 import java.util.Collection;
 
 @RestController
-@RequestMapping("/ng")
+@RequestMapping("/rest/v1")
 @Profile("launchpad")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
