@@ -136,7 +136,7 @@ public class LaunchpadRequestor {
                     final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
                     Monitoring.log("##012", Enums.Monitor.MEMORY);
                     if (b) {
-                        data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.isAcceptOnlySignedSnippets));
+                        data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.acceptOnlySignedSnippets));
                     }
                 }
                 if (System.currentTimeMillis() - lastRequestForMissingResources > 15_000) {
@@ -163,7 +163,7 @@ public class LaunchpadRequestor {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
-                if (launchpad.launchpadLookup.isSecurityEnabled) {
+                if (launchpad.launchpadLookup.securityEnabled) {
                     String auth = launchpad.launchpadLookup.restUsername + '=' + launchpad.launchpadLookup.restToken + ':' + launchpad.launchpadLookup.restPassword;
                     byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
                     String authHeader = "Basic " + new String(encodedAuth);
@@ -188,9 +188,9 @@ public class LaunchpadRequestor {
                 Monitoring.log("##018", Enums.Monitor.MEMORY);
             } catch (HttpClientErrorException e) {
                 if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                    log.error("#775.11 Error 401 accessing url {}, isSecurityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.isSecurityEnabled);
+                    log.error("#775.11 Error 401 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
                 } else if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
-                    log.error("#775.16 Error 403 accessing url {}, isSecurityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.isSecurityEnabled);
+                    log.error("#775.16 Error 403 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
                 } else {
                     throw e;
                 }

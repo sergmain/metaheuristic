@@ -110,7 +110,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         '-' + URLEncoder.encode(task.snippetCode, StandardCharsets.UTF_8.toString());
 
                 Checksum checksum=null;
-                if (task.launchpad.isAcceptOnlySignedSnippets) {
+                if (task.launchpad.acceptOnlySignedSnippets) {
                     try {
 
                         final Request request = Request.Post(snippetChecksumUrl + randomPartUri)
@@ -125,7 +125,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         RestUtils.addHeaders(request);
 
                         Response response;
-                        if (task.launchpad.isSecurityEnabled) {
+                        if (task.launchpad.securityEnabled) {
                             response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                         } else {
                             response = request.execute();
@@ -167,7 +167,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         .socketTimeout(5000);
 
                 Response response;
-                if (task.launchpad.isSecurityEnabled) {
+                if (task.launchpad.securityEnabled) {
                     response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                 }
                 else {
@@ -177,17 +177,17 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 response.saveContent(snippetTempFile);
 
                 boolean isOk = true;
-                if (task.launchpad.isAcceptOnlySignedSnippets) {
+                if (task.launchpad.acceptOnlySignedSnippets) {
                     CheckSumAndSignatureStatus status;
                     try (FileInputStream fis = new FileInputStream(snippetTempFile)) {
                         status = ChecksumWithSignatureService.verifyChecksumAndSignature(checksum, "Snippet "+snippetCode, fis, true, task.launchpad.createPublicKey());
                     }
                     if ( status.isSignatureOk == null){
-                        log.warn("launchpad.isAcceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", task.launchpad.isAcceptOnlySignedSnippets, snippetCode);
+                        log.warn("launchpad.acceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
                         continue;
                     }
                     if (Boolean.FALSE.equals(status.isSignatureOk)) {
-                        log.warn("launchpad.isAcceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", task.launchpad.isAcceptOnlySignedSnippets, snippetCode);
+                        log.warn("launchpad.acceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
                         continue;
                     }
                     isOk = status.isOk;

@@ -198,7 +198,7 @@ aiai.station.dir=./station
 формат файла:
 launchpads:
   - signatureRequired: false
-    isSecurityEnabled: true
+    securityEnabled: true
     url: http://localhost:8080
     lookupType: direct
     authType: basic
@@ -209,12 +209,12 @@ launchpads:
       workingDay: 0:00-23:59
       weekend: 0:00-23:59
     publicKey: MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAtS3jRjE1wlHcxiqn6fCRvTahRt6LBvhrqxzgo1FcpJ9uZvRUmf3KwszwQoL+Ypw7aM9oxmg15Q+pssKcrulS/ofDfbuusiYdny7wMlil1H11svQM3yGwMl9gjZ2FupaRwpyZkIMj1ILaDhylTudQCBoJgJ/BWyMCDn2kzh5EpV7hkhhfjZ/2/NRIcayQVmMKOikCXR8q1bb3QNQ2HiMyUsBUGzeO2DuvX4n375+SaFIDrse4eGNVbR/ImWw7TeD4wk0h5kJ2VTdgl2J7gVS7gCCMwBN9TVxPErRDxg/OtXreS8VRUd0hOZiadX12KjwI4mjhC4q+geXAq2sC1DOV8wIDAQAB
-    isAcceptOnlySignedSnippets: false
+    acceptOnlySignedSnippets: false
 
 
 Описание параметров:
 signatureRequired: пребуется ли подпись (в настоящее время не используется)
-isSecurityEnabled: rest урл защищен логин/паролем
+securityEnabled: rest урл защищен логин/паролем
 url: урл стартовой площадки / регистра,
     если lookupType==direct, то url это адрес стартовой площадки,
     если lookupType==registry, то url это адрес регистра стартовых площадок
@@ -229,7 +229,7 @@ taskProcessingTime: рассписание, когда задачи с данн�
 
     формат времени: 0:00 - 23:59 или 0:00 - 8:45, 19:00 - 23:59
 publicKey: публичный ключ для данной стартовой площадки
-isAcceptOnlySignedSnippets: принимать только подписанные снипеты
+acceptOnlySignedSnippets: принимать только подписанные снипеты
 
 
 для publicKey необходимо использовать приложение из apps/gen-keys, подробнее см "Конфигурация стартовой плащадки"

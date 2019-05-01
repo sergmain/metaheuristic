@@ -113,7 +113,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 RestUtils.addHeaders(request);
 
                 Response response;
-                if (task.launchpad.isSecurityEnabled) {
+                if (task.launchpad.securityEnabled) {
                     response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                 }
                 else {

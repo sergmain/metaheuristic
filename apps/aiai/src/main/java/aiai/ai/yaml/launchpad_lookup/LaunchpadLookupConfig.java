@@ -48,12 +48,12 @@ public class LaunchpadLookupConfig {
         public String publicKey;
         public LaunchpadLookupType lookupType;
         public AuthType authType;
-        public boolean isSecurityEnabled;
+        public boolean securityEnabled;
         public String taskProcessingTime;
         public String restPassword;
         public String restUsername;
         public String restToken;
-        public boolean isAcceptOnlySignedSnippets;
+        public boolean acceptOnlySignedSnippets;
 
         public PublicKey createPublicKey() {
             return SecUtils.getPublicKey(publicKey);

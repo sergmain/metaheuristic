@@ -121,7 +121,7 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
 
                 log.info("Start uploading resource to rest-server, {}", randonPart);
                 Response response;
-                if (task.launchpad.isSecurityEnabled) {
+                if (task.launchpad.securityEnabled) {
                     response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
                 }
                 else {
