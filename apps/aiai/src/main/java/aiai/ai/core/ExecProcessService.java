@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -102,7 +103,14 @@ public class ExecProcessService {
                         log.info("thread #" + Thread.currentThread().getId() + ", time before sleep - " + new Date());
                         Thread.sleep(timeout.longValue());
                         log.info("thread #" + Thread.currentThread().getId() + ", time before destroy - " + new Date());
-                        process.destroy();
+
+                        final List<ProcessHandle> handles = new ArrayList<>();
+                        collectHandlers(handles, process.toHandle());
+                        log.info("Processes to destroy");
+                        for (ProcessHandle handle : handles) {
+                            log.info("\t{}", handle);
+                        }
+                        destroy(handles);
                         log.info("thread #" + Thread.currentThread().getId() + ", time after destroy - " + new Date());
                     } catch (InterruptedException e) {
                         log.info("thread #" + Thread.currentThread().getId() + ", current thread was interrupted");
@@ -140,6 +148,21 @@ public class ExecProcessService {
         log.debug("'\tconsole output:\n{}", console);
 
         return new Result(exitCode==0, exitCode, console);
+    }
+
+    private void collectHandlers(List<ProcessHandle> handles, ProcessHandle handle) {
+        handle.descendants().forEach((child) -> collectHandlers(handles, child));
+        handles.add(handle);
+    }
+
+    private void destroy(List<ProcessHandle> handles) {
+        handles.parallelStream().forEach(o -> {
+            try {
+                o.destroy();
+            } catch (Throwable th) {
+                log.warn("Can't destroy process {}", o.toString());
+            }
+        });
     }
 
     private String readLastLines(int maxSize, File consoleLogFile) throws IOException {
