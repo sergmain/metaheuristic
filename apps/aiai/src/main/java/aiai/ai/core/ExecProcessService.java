@@ -49,21 +49,29 @@ public class ExecProcessService {
     }
 
     public Result execCommand(List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate) throws IOException, InterruptedException {
+        log.info("Exec info:");
+        log.info("\tcmd: {}", cmd);
+        log.info("\ttaskDir: {}", execDir.getPath());
+        log.info("\ttaskDir abs: {}", execDir.getAbsolutePath());
+        log.info("\tconsoleLogFile abs: {}", consoleLogFile.getAbsolutePath());
+        log.info("\ttimeoutBeforeTerminate (seconds): {}", timeoutBeforeTerminate);
+
+        final AtomicLong timeout = new AtomicLong(0);
+        if (timeoutBeforeTerminate!=null && timeoutBeforeTerminate!=0) {
+            timeout.set( TimeUnit.SECONDS.toMillis(timeoutBeforeTerminate) );
+        }
+        log.info("\ttimeout (milliseconds): {}", timeout.get() );
+
+
         ProcessBuilder pb = new ProcessBuilder();
         pb.command(cmd);
         pb.directory(execDir);
         pb.redirectErrorStream(true);
         final Process process = pb.start();
 
+        Thread timeoutThread = null;
         final StreamHolder streamHolder = new StreamHolder();
         int exitCode;
-        final AtomicLong timeout = new AtomicLong(0);
-        if (timeoutBeforeTerminate!=null && timeoutBeforeTerminate!=0) {
-            timeout.set( TimeUnit.SECONDS.toMillis(timeoutBeforeTerminate) );
-        }
-        Thread timeoutThread = null;
-        log.info("timeoutBeforeTerminate (seconds): {}, timeout (milliseconds): {}",
-                timeoutBeforeTerminate, timeout.get() );
 
         try (final FileOutputStream fos = new FileOutputStream(consoleLogFile);
                 BufferedOutputStream bos = new BufferedOutputStream(fos)) {
