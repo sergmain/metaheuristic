@@ -179,6 +179,7 @@ public class TaskProcessor {
             }
             else if (snippet.sourcing==EnumsApi.SnippetSourcing.git) {
                 final File snippetRootDir = stationTaskService.prepareSnippetDir(launchpadCode);
+                log.info("Root dir for snippet: " + snippetRootDir);
                 GitSourcingService.GitExecResult result = gitSourcingService.prepareSnippet(snippetRootDir, snippet);
                 if (result.isError) {
                     log.warn("Snippet {} has a permanent error, {}", snippet.code, result.error);
@@ -186,6 +187,7 @@ public class TaskProcessor {
                 }
                 snippetAssetFile = new AssetFile();
                 snippetAssetFile.file = new File(result.snippetDir, snippet.file);
+                log.info("Snippet asset file: {}, exist: {}", snippetAssetFile.file.getAbsolutePath(), snippetAssetFile.file.exists() );
             }
 
             if (!isAllLoaded) {

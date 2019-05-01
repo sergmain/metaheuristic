@@ -56,6 +56,7 @@ public class GitSourcingService {
 
     @Data
     @AllArgsConstructor
+    @ToString
     public static class GitExecResult {
         public File snippetDir;
         public ExecProcessService.Result result;
@@ -109,20 +110,21 @@ public class GitSourcingService {
         }
     }
 
-    @SuppressWarnings("Duplicates")
     private static AssetFile prepareSnippetDir(final File snippetRootDir, String snippetCode) {
         final AssetFile assetFile = new AssetFile();
         final File trgDir = new File(snippetRootDir, Enums.BinaryDataType.SNIPPET.toString());
+        log.info("Target dir: {}, exist: {}", trgDir.getAbsolutePath(), trgDir.exists() );
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
-            log.error("#025.37 Can't create snippet dir: {}", trgDir.getAbsolutePath());
+            log.error("#027.05 Can't create snippet dir: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
         final String resId = snippetCode.replace(':', '_');
         final File resDir = new File(trgDir, resId);
+        log.info("Resource dir: {}, exist: {}", resDir.getAbsolutePath(), resDir.exists() );
         if (!resDir.exists() && !resDir.mkdirs()) {
             assetFile.isError = true;
-            log.error("#025.35 Can't create resource dir: {}", resDir.getAbsolutePath());
+            log.error("#027.08 Can't create resource dir: {}", resDir.getAbsolutePath());
             return assetFile;
         }
         assetFile.file = resDir;
@@ -131,20 +133,28 @@ public class GitSourcingService {
 
     public GitExecResult prepareSnippet(final File snippetRootDir, SnippetConfig snippet) {
 
+        log.info("#027.15 Start preparing snippet dir");
         AssetFile assetFile = prepareSnippetDir(snippetRootDir, snippet.code);
+        log.info("#027.18 assetFile.isError: {}" , assetFile.isError);
         if (assetFile.isError) {
             return new GitExecResult(null,true, "Can't create dir for snippet " + snippet.code);
         }
 
         File snippetDir = assetFile.file;
         File repoDir = new File(snippetDir, "git");
+        log.info("#027.22 Target dir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists() );
+
         if (!repoDir.exists()) {
             GitExecResult result = execClone(snippetDir, snippet);
+            log.info("#027.25 Result of cloning repo: {}", result.toString());
             if (result.isError || !result.result.isOk()) {
-                return tryToRepairRepo(snippetDir, snippet);
+                result = tryToRepairRepo(snippetDir, snippet);
+                log.info("#027.28 Result of repairing of repo: {}", result.toString());
+                return result;
             }
         }
         GitExecResult result = execRevParse(repoDir);
+        log.info("#027.31 Result of execRevParse: {}", result.toString());
         if (result.isError) {
             return result;
         }
@@ -153,6 +163,7 @@ public class GitSourcingService {
         }
         if (!"true".equals(result.result.console.strip())) {
             result = tryToRepairRepo(repoDir, snippet);
+            log.info("#027.34 Result of tryToRepairRepo: {}", result.toString());
             if (result.isError) {
                 return result;
             }
@@ -161,6 +172,7 @@ public class GitSourcingService {
             }
         }
         result = execPullOrigin(repoDir, snippet);
+        log.info("#027.38 Result of execPullOrigin: {}", result.toString());
         if (result.isError) {
             return result;
         }
@@ -169,12 +181,14 @@ public class GitSourcingService {
         }
 
         result = execCheckoutRevision(repoDir, snippet);
+        log.info("#027.42 Result of execCheckoutRevision: {}", result.toString());
         if (result.isError) {
             return result;
         }
         if (!result.result.isOk) {
             return new GitExecResult(null,true, result.result.console);
         }
+        log.info("#027.50 repoDir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists());
 
         return new GitExecResult(repoDir, new ExecProcessService.Result(true, 0, "" ), false, null);
     }
@@ -182,6 +196,7 @@ public class GitSourcingService {
     private GitExecResult execCheckoutRevision(File repoDir, SnippetConfig snippet) {
         // git checkout sha1
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", snippet.git.commit);
+        log.info("exec {}", cmd);
         GitExecResult result = execGitCmd(cmd, 0L);
         return result;
     }
@@ -189,6 +204,7 @@ public class GitSourcingService {
     private GitExecResult execPullOrigin(File repoDir, SnippetConfig snippet) {
         // pull origin master
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", snippet.git.branch);
+        log.info("exec {}", cmd);
         GitExecResult result = execGitCmd(cmd, 0L);
         return result;
     }
@@ -209,6 +225,7 @@ public class GitSourcingService {
     private GitExecResult execRevParse(File repoDir) {
         // git rev-parse --is-inside-work-tree
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "rev-parse", "--is-inside-work-tree");
+        log.info("exec {}", cmd);
         GitExecResult result = execGitCmd(cmd, 60L);
         return result;
     }
@@ -219,6 +236,8 @@ public class GitSourcingService {
         String mirror = envService.getEnvYaml().mirrors.get(snippet.git.repo);
         String gitUrl = mirror!=null ? mirror : snippet.git.repo;
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "clone", gitUrl, "git");
+        log.info("exec {}", cmd);
+        //noinspection UnnecessaryLocalVariable
         GitExecResult result = execGitCmd(cmd, 0L);
         return result;
     }
