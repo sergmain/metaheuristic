@@ -28,7 +28,6 @@ import aiai.ai.launchpad.repositories.FlowInstanceRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.utils.holders.LongHolder;
-import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.station_status.StationStatus;
 import aiai.ai.yaml.station_status.StationStatusUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
@@ -204,13 +203,15 @@ public class TaskService {
                     continue;
                 }
 
-                String interpreter = stationStatus.env.getEnvs().get(taskParamYaml.snippet.env);
-                if (interpreter==null) {
-                    log.warn("#317.64 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
-                            station.getId(), task.getId(), taskParamYaml.snippet.env
-                    );
-                    longHolder.value = System.currentTimeMillis();
-                    continue;
+                if (taskParamYaml.snippet.env!=null) {
+                    String interpreter = stationStatus.env.getEnvs().get(taskParamYaml.snippet.env);
+                    if (interpreter == null) {
+                        log.warn("#317.64 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
+                                station.getId(), task.getId(), taskParamYaml.snippet.env
+                        );
+                        longHolder.value = System.currentTimeMillis();
+                        continue;
+                    }
                 }
 
                 if (isAcceptOnlySigned) {

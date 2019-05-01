@@ -204,9 +204,9 @@ public class SnippetService {
                         snippetConfig.info.length = file.length();
                         break;
                     case station:
-                        sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippetConfig.env.getBytes()));
-                        break;
                     case git:
+                        String s = "" + snippetConfig.env+", " + snippetConfig.file +" " + snippetConfig.params;
+                        sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(s.getBytes()));
                         break;
                 }
             }

@@ -73,11 +73,17 @@ public class SnippetConfig {
     public GitInfo git;
 
     public SnippetConfigStatus validate() {
-        if (StringUtils.isBlank(code) || StringUtils.isBlank(type) || StringUtils.isBlank(env)) {
+        if (StringUtils.isBlank(file) && StringUtils.isBlank(env)) {
+            return new SnippetConfigStatus(false, "Fields 'file' and 'env' can't be null or empty both.");
+        }
+        if (StringUtils.isBlank(code) || StringUtils.isBlank(type)) {
             return new SnippetConfigStatus(false, "A field is null or empty: " + this.toString());
         }
         if (!StrUtils.isSnippetCodeOk(code)) {
             return new SnippetConfigStatus(false, "Snippet code has wrong chars: "+code+", allowed only: " + StrUtils.ALLOWED_CHARS_SNIPPET_CODE_REGEXP);
+        }
+        if (sourcing==null) {
+            return new SnippetConfigStatus(false, "Field 'sourcing' is absent");
         }
         switch (sourcing) {
             case launchpad:
@@ -87,10 +93,13 @@ public class SnippetConfig {
                 break;
             case station:
                 if (StringUtils.isNoneBlank(file)) {
-                    return new SnippetConfigStatus(false, "sourcing is 'system', but file is not empty: " + this.toString());
+                    return new SnippetConfigStatus(false, "sourcing is 'station', but file is not empty: " + this.toString());
                 }
                 break;
             case git:
+                if (git==null) {
+                    return new SnippetConfigStatus(false, "sourcing is 'git', but git info is absent");
+                }
                 break;
         }
         return SNIPPET_CONFIG_STATUS_OK;

@@ -197,17 +197,26 @@ public class TaskProcessor {
             if (paramFile == null) {
                 break;
             }
-            Interpreter interpreter = new Interpreter(envService.getEnvYaml().getEnvs().get(snippet.env));
-            if (interpreter.list == null) {
-                log.warn("Can't process the task, the interpreter wasn't found for env: {}", snippet.env);
-                break;
+
+            List<String> cmd;
+            Interpreter interpreter=null;
+            if (StringUtils.isNotBlank(snippet.env)) {
+                interpreter = new Interpreter(envService.getEnvYaml().getEnvs().get(snippet.env));
+                if (interpreter.list == null) {
+                    log.warn("Can't process the task, the interpreter wasn't found for env: {}", snippet.env);
+                    break;
+                }
+                cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
+            }
+            else {
+                // snippet.file is executable file
+                cmd = new ArrayList<>();
             }
 
             log.info("All systems are checked for the task #{}, lift off", task.taskId );
 
             ExecProcessService.Result result;
             try {
-                List<String> cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
 
                 if (snippet.sourcing==EnumsApi.SnippetSourcing.launchpad ||
                         snippet.sourcing==EnumsApi.SnippetSourcing.git) {
@@ -251,7 +260,13 @@ public class TaskProcessor {
                     }
                 }
             } catch (Throwable th) {
-                log.error("Error exec process " + interpreter, th);
+                //noinspection ConstantConditions
+                log.error("Error exec process, env: " + snippet.env +", " +
+                        "interpreter: " + interpreter+", " +
+                        "file: " + snippetAssetFile!=null && snippetAssetFile.file!=null
+                        ? snippetAssetFile.file.getAbsolutePath()
+                        : snippet.file +", " +
+                        "params: ", th);
                 result = new ExecProcessService.Result(false, -1, ExceptionUtils.getStackTrace(th));
             }
             stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(), result);
