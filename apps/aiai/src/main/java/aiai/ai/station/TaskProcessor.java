@@ -173,8 +173,8 @@ public class TaskProcessor {
 
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
 
-            ExecProcessService.Result preResult = prepareAndExecSnippet(taskParamYaml.getSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
-            ExecProcessService.Result result = prepareAndExecSnippet(taskParamYaml.getPreSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
+            ExecProcessService.Result preResult = prepareAndExecSnippet(taskParamYaml.getPreSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
+            ExecProcessService.Result result = prepareAndExecSnippet(taskParamYaml.getSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
             ExecProcessService.Result postResult = prepareAndExecSnippet(taskParamYaml.getPostSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
 
             if (result == null) {

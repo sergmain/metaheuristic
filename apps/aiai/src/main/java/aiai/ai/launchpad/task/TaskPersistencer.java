@@ -76,7 +76,7 @@ public class TaskPersistencer {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
-                    Task task = taskRepository.findById(taskId).orElse(null);
+                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task == null) {
                         return Enums.UploadResourceStatus.TASK_NOT_FOUND;
                     }
@@ -87,7 +87,7 @@ public class TaskPersistencer {
                     task.setCompleted(true);
                     task.setCompletedOn(System.currentTimeMillis());
                     task.setResultReceived(value);
-                    taskRepository.save((TaskImpl)task);
+                    taskRepository.save(task);
                     return Enums.UploadResourceStatus.OK;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.warn("#307.18 Error set resultReceived to {} try #{}, taskId: {}, error: {}", value, i, taskId, e.toString());
@@ -206,7 +206,7 @@ public class TaskPersistencer {
         if (isError || state==Enums.TaskExecState.ERROR) {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
-            // TODO !!! add here statuses to tasks which are in chain after this one
+            // TODO 2019.05.02 !!! add here statuses to tasks which are in chain after this one
             // TODO we have to stop processing flow if there any error in tasks
         }
         else if (storageType== Enums.StorageType.disk) {
@@ -216,10 +216,10 @@ public class TaskPersistencer {
 
         String s = "Main snippet exec result:\n" + result.getResult();
         if (result.preResult!=null) {
-            s += "\n\nPre-snippet exec result:\n" + result.preResult;
+            s += ("\n\nPre-snippet exec result:\n" + result.preResult);
         }
         if (result.postResult!=null) {
-            s += "\n\nPost-snippet exec result:\n" + result.postResult;
+            s += ("\n\nPost-snippet exec result:\n" + result.postResult);
         }
         task.setSnippetExecResults(s);
         task.setMetrics(result.getMetrics());
