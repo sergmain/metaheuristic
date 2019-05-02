@@ -219,7 +219,12 @@ public class LaunchpadRequestor {
         }
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask task : list) {
-            command.getResults().add(new SimpleTaskExecResult(task.getTaskId(), task.getSnippetExecResult(), task.getMetrics()));
+            command.getResults().add(new SimpleTaskExecResult(task.getTaskId(),
+                    task.getSnippetExecResult(),
+                    task.getMetrics(),
+                    task.getPreSnippetExecResult(),
+                    task.getPostSnippetExecResult()
+                    ));
             stationTaskService.setReportedOn(launchpadUrl, task.taskId);
         }
         data.setCommand(command);

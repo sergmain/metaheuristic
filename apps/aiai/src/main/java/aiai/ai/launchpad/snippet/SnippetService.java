@@ -33,6 +33,7 @@ import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.yaml.snippet.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -73,18 +74,31 @@ public class SnippetService {
         return experimentSnippets;
     }
 
-    public List<Snippet> getSnippets(long experimentId){
+    public List<Snippet> getSnippets(long experimentId) {
         List<ExperimentSnippet> experimentSnippets = experimentSnippetRepository.findByExperimentId(experimentId);
         List<Snippet> snippets = new ArrayList<>();
         for (ExperimentSnippet experimentSnippet : experimentSnippets) {
             Snippet snippet = snippetRepository.findByCode(experimentSnippet.getSnippetCode());
-            if (snippet==null) {
-                log.error("#295.07 Can't find snippet for code: {}", experimentSnippet.getSnippetCode());
+            if (snippet == null) {
+                log.error("#295.03 Can't find snippet for code: {}", experimentSnippet.getSnippetCode());
                 continue;
             }
             snippets.add(snippet);
         }
         return snippets;
+    }
+
+    public SnippetConfig getSnippetConfig(String snippetCode) {
+        SnippetConfig snippetConfig = null;
+        if(StringUtils.isNotBlank(snippetCode)) {
+            Snippet postSnippet = snippetRepository.findByCode(snippetCode);
+            if (postSnippet != null) {
+                snippetConfig = SnippetConfigUtils.to(postSnippet.params);
+            } else {
+                log.warn("#295.07 Can't find snippet for code {}", snippetCode);
+            }
+        }
+        return snippetConfig;
     }
 
     public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {

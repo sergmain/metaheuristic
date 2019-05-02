@@ -97,8 +97,12 @@ public class StationTaskService {
 
                                         // fix state of task
                                         SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
+                                        SnippetExec preSnippetExec = SnippetExecUtils.to(task.getPreSnippetExecResult());
+                                        SnippetExec postSnippetExec = SnippetExecUtils.to(task.getPostSnippetExecResult());
                                         if (snippetExec!=null && !snippetExec.exec.isOk) {
-                                            markAsFinished(launchpadUrl, taskId, snippetExec.exec);
+                                            markAsFinished(launchpadUrl, taskId, snippetExec.exec,
+                                                    preSnippetExec!=null ? preSnippetExec.exec : null,
+                                                    postSnippetExec!=null ? postSnippetExec.exec : null);
                                         }
                                     }
                                     catch (IOException e) {
@@ -218,11 +222,14 @@ public class StationTaskService {
 
     public void markAsFinishedWithError(String launchpadUrl, long taskId, String es) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            markAsFinished(launchpadUrl, taskId, new ExecProcessService.Result(false, -1, es));
+            markAsFinished(launchpadUrl, taskId, new ExecProcessService.Result(false, -1, es), null, null);
         }
     }
 
-    void markAsFinished(String launchpadUrl, Long taskId, ExecProcessService.Result result) {
+    void markAsFinished(String launchpadUrl, Long taskId,
+                        ExecProcessService.Result result,
+                        ExecProcessService.Result preResult,
+                        ExecProcessService.Result postResult) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             log.info("markAsFinished({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
@@ -242,10 +249,10 @@ public class StationTaskService {
                 task.setDelivered(false);
                 task.setReported(false);
 
-                SnippetExec snippetExec = new SnippetExec();
-                snippetExec.setExec(result);
+                task.setSnippetExecResult(SnippetExecUtils.toString(new SnippetExec(result)));
+                task.setPreSnippetExecResult(SnippetExecUtils.toString(new SnippetExec(preResult)));
+                task.setPostSnippetExecResult(SnippetExecUtils.toString(new SnippetExec(postResult)));
 
-                task.setSnippetExecResult(SnippetExecUtils.toString(snippetExec));
                 save(task);
             }
         }
@@ -522,6 +529,7 @@ public class StationTaskService {
         if (taskDir.exists()) {
             return taskDir;
         }
+        //noinspection unused
         boolean status = taskDir.mkdirs();
         return taskDir;
     }
@@ -531,6 +539,7 @@ public class StationTaskService {
         if (launchpadDir.exists()) {
             return launchpadDir;
         }
+        //noinspection unused
         boolean status = launchpadDir.mkdirs();
         return launchpadDir;
     }

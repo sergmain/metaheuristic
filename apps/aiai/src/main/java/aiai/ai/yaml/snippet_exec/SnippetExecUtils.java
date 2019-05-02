@@ -33,10 +33,16 @@ public class SnippetExecUtils {
     }
 
     public static String toString(SnippetExec config) {
+        if (config==null) {
+            return null;
+        }
         return YamlUtils.toString(config, yaml);
     }
 
     public static SnippetExec to(String s) {
+        if (s==null) {
+            return null;
+        }
         return (SnippetExec) YamlUtils.to(s, yaml);
     }
 

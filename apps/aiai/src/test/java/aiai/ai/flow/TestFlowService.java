@@ -134,7 +134,7 @@ public class TestFlowService extends PreparingFlow {
 
         Protocol.AssignedTask.Task simpleTask = assignToStation.getSimpleTask();
 
-        if (true)  throw new NotImplementedException("Not yet");
+//        if (true)  throw new NotImplementedException("Not yet");
 
         assertNotNull(simpleTask);
         assertNotNull(simpleTask.getTaskId());

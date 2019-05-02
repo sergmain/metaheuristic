@@ -214,7 +214,14 @@ public class TaskPersistencer {
             task.setCompletedOn(System.currentTimeMillis());
         }
 
-        task.setSnippetExecResults(result.getResult());
+        String s = "Main snippet exec result:\n" + result.getResult();
+        if (result.preResult!=null) {
+            s += "\n\nPre-snippet exec result:\n" + result.preResult;
+        }
+        if (result.postResult!=null) {
+            s += "\n\nPost-snippet exec result:\n" + result.postResult;
+        }
+        task.setSnippetExecResults(s);
         task.setMetrics(result.getMetrics());
         task.setResultResourceScheduledOn(System.currentTimeMillis());
         task = taskRepository.save(task);

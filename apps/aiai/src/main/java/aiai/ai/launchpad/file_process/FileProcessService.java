@@ -19,16 +19,15 @@ package aiai.ai.launchpad.file_process;
 
 import aiai.ai.Consts;
 import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.apps.commons.utils.StrUtils;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.flow.FlowUtils;
-import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
-import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -45,11 +44,11 @@ import java.util.Map;
 public class FileProcessService {
 
     private final TaskRepository taskRepository;
-    private final SnippetRepository snippetRepository;
+    private final SnippetService snippetService;
 
-    public FileProcessService(TaskRepository taskRepository, SnippetRepository snippetRepository) {
+    public FileProcessService(TaskRepository taskRepository, SnippetService snippetService) {
         this.taskRepository = taskRepository;
-        this.snippetRepository = snippetRepository;
+        this.snippetService = snippetService;
     }
 
     @SuppressWarnings("Duplicates")
@@ -108,12 +107,14 @@ public class FileProcessService {
         yaml.outputResourceCode = outputResourceCode;
         yaml.resourceStorageUrls = inputStorageUrls;
 
-        Snippet snippet = snippetRepository.findByCode(snippetCode);
-        if (snippet==null) {
+        yaml.snippet = snippetService.getSnippetConfig(snippetCode);
+        if (yaml.snippet==null) {
             log.error("#171.07 Snippet wasn't found for code: {}", snippetCode);
             return;
         }
-        yaml.snippet = SnippetConfigUtils.to(snippet.params);
+        yaml.preSnippet = snippetService.getSnippetConfig(process.getPreSnippetCode());
+        yaml.postSnippet = snippetService.getSnippetConfig(process.getPostSnippetCode());
+
         yaml.clean = flow.clean;
         yaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 

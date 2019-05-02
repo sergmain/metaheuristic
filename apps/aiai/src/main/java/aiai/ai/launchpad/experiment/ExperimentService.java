@@ -40,6 +40,7 @@ import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
 import aiai.apps.commons.CommonConsts;
 import aiai.apps.commons.utils.Checksum;
+import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -171,7 +172,7 @@ public class ExperimentService {
                 log.info("\tisFound: {}, is expired: {}", isFound, isExpired);
                 Task result = taskPersistencer.resetTask(taskId);
                 if (result==null) {
-                    log.error("Resetting of task {} was failed. See log for more info.", taskId);
+                    log.error("#179.10 Resetting of task {} was failed. See log for more info.", taskId);
                 }
             }
         }
@@ -228,7 +229,7 @@ public class ExperimentService {
             }
         }
         if (paramCleared.size()!=2) {
-            throw new IllegalStateException("Wrong number of params for axes. Expected: 2, actual: " + paramCleared.size());
+            throw new IllegalStateException("#179.15 Wrong number of params for axes. Expected: 2, actual: " + paramCleared.size());
         }
         Map<String, Map<String, Integer>> map = experiment.getHyperParamsAsMap(false);
         data.x.addAll(map.get(paramCleared.get(0)).keySet());
@@ -434,7 +435,7 @@ public class ExperimentService {
             boolean isPersist, Flow flow, FlowInstance flowInstance, Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls, IntHolder numberOfTasks) {
         if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
-            throw new IllegalStateException("Wrong type of process, " +
+            throw new IllegalStateException("#179.19 Wrong type of process, " +
                     "expected: "+ EnumsApi.ProcessType.EXPERIMENT+", " +
                     "actual: " + process.type);
         }
@@ -477,7 +478,7 @@ public class ExperimentService {
             for (Object[] feature : features) {
                 ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants((String) feature[1]);
                 if (!numberOfVariants.status) {
-                    log.warn("empty list of feature, feature: {}", feature);
+                    log.warn("#179.25 empty list of feature, feature: {}", feature);
                     continue;
                 }
                 List<String> inputResourceCodes = numberOfVariants.values;
@@ -536,7 +537,7 @@ public class ExperimentService {
                             }
                         }
                         if (snippet == null) {
-                            log.warn("Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
+                            log.warn("#179.27 Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
                             continue;
                         }
 
@@ -546,18 +547,18 @@ public class ExperimentService {
                             type = Enums.ExperimentTaskType.FIT;
                         } else if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
                             if (prevTask == null) {
-                                throw new IllegalStateException("prevTask is null");
+                                throw new IllegalStateException("#179.29 prevTask is null");
                             }
                             String modelFilename = getModelFilename(prevTask);
                             yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(modelFilename);
                             yaml.outputResourceCode = "task-" + task.getId() + "-output-stub-for-predict";
                             type = Enums.ExperimentTaskType.PREDICT;
 
-                            // TODO add implementation of disk storage for models
+                            // TODO 2019.05.02 add implementation of disk storage for models
                             yaml.resourceStorageUrls.put(modelFilename, Consts.LAUNCHPAD_STORAGE_URL);
 //                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                         } else {
-                            throw new IllegalStateException("Not supported type of snippet encountered, type: " + snippet.getType());
+                            throw new IllegalStateException("#179.31 Not supported type of snippet encountered, type: " + snippet.getType());
                         }
                         yaml.resourceStorageUrls.put(yaml.outputResourceCode, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
 
@@ -577,6 +578,9 @@ public class ExperimentService {
                         }
 
                         yaml.snippet = SnippetConfigUtils.to(snippet.params);
+                        yaml.preSnippet = snippetService.getSnippetConfig(process.getPreSnippetCode());
+                        yaml.postSnippet = snippetService.getSnippetConfig(process.getPostSnippetCode());
+
                         yaml.clean = flow.clean;
 
                         String currTaskParams = TaskParamYamlUtils.toString(yaml);
@@ -606,12 +610,12 @@ public class ExperimentService {
         }
 
         if (experiment.getNumberOfTask() != totalVariants && experiment.getNumberOfTask() != 0) {
-            log.warn("! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", experiment.getNumberOfTask(), totalVariants);
+            log.warn("#179.33 ! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", experiment.getNumberOfTask(), totalVariants);
         }
         if (isPersist) {
             Experiment experimentTemp = experimentCache.findById(experiment.getId());
             if (experimentTemp == null) {
-                log.warn("Experiment for id {} doesn't exist anymore", experiment.getId());
+                log.warn("#179.36 Experiment for id {} doesn't exist anymore", experiment.getId());
                 return EnumsApi.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
             }
             experimentTemp.setNumberOfTask(totalVariants);
@@ -667,7 +671,7 @@ public class ExperimentService {
         }
         Experiment e = experimentCache.findById(experimentId);
         if (e==null) {
-            throw new IllegalStateException("Experiment wasn't found for id " + experimentId);
+            throw new IllegalStateException("#179.39 Experiment wasn't found for id " + experimentId);
         }
         e.setFeatureProduced(true);
         if (isPersist) {

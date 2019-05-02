@@ -17,11 +17,13 @@
 package aiai.ai.yaml.snippet_exec;
 
 import aiai.ai.core.ExecProcessService;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
+@AllArgsConstructor
 public class SnippetExec {
     public ExecProcessService.Result exec = new ExecProcessService.Result();
 }

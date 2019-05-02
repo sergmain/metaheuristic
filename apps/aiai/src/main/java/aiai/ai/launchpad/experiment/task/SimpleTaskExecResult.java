@@ -27,4 +27,6 @@ public class SimpleTaskExecResult {
     public long taskId;
     public String result;
     public String metrics;
+    public String preResult;
+    public String postResult;
 }

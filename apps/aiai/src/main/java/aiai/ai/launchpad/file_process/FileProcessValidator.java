@@ -24,6 +24,7 @@ import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.flow.ProcessValidator;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -47,6 +48,20 @@ public class FileProcessValidator implements ProcessValidator {
             Snippet snippet = snippetRepository.findByCode(snippetCode);
             if (snippet==null) {
                 log.error("#175.07 Snippet wasn't found for code: {}, process: {}", snippetCode, process);
+                return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+            }
+        }
+        if (StringUtils.isNotBlank(process.preSnippetCode)) {
+            Snippet snippet = snippetRepository.findByCode(process.preSnippetCode);
+            if (snippet==null) {
+                log.error("#175.09 Pre-snippet wasn't found for code: {}, process: {}", process.preSnippetCode, process);
+                return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+            }
+        }
+        if (StringUtils.isNotBlank(process.postSnippetCode)) {
+            Snippet snippet = snippetRepository.findByCode(process.postSnippetCode);
+            if (snippet==null) {
+                log.error("#175.11 Post-snippet wasn't found for code: {}, process: {}", process.postSnippetCode, process);
                 return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }

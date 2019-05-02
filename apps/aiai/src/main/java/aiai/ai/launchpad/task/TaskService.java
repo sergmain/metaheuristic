@@ -190,7 +190,7 @@ public class TaskService {
                 try {
                     taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
                 } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    throw new RuntimeException("#317.59 Error", e);
                 }
 
                 StationStatus stationStatus = StationStatusUtils.to(station.status);

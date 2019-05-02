@@ -17,17 +17,15 @@
 
 package aiai.ai.launchpad.experiment;
 
+import aiai.ai.launchpad.beans.*;
+import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Process;
-import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.beans.ExperimentSnippet;
-import aiai.ai.launchpad.beans.Flow;
-import aiai.ai.launchpad.beans.FlowInstance;
 import aiai.ai.launchpad.flow.ProcessValidator;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import aiai.ai.launchpad.repositories.FlowInstanceRepository;
-import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.snippet.SnippetService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -36,23 +34,23 @@ import java.util.List;
 
 @Service
 @Profile("launchpad")
+@Slf4j
 public class ExperimentProcessValidator implements ProcessValidator {
 
-    private final SnippetCache snippetCache;
+    private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
-    private final ExperimentCache experimentCache;
     private final ExperimentRepository experimentRepository;
     private final FlowInstanceRepository flowInstanceRepository;
 
-    public ExperimentProcessValidator(SnippetCache snippetCache, SnippetService snippetService, ExperimentCache experimentCache, ExperimentRepository experimentRepository, FlowInstanceRepository flowInstanceRepository) {
-        this.snippetCache = snippetCache;
+    public ExperimentProcessValidator(SnippetRepository snippetRepository, SnippetService snippetService, ExperimentRepository experimentRepository, FlowInstanceRepository flowInstanceRepository) {
+        this.snippetRepository = snippetRepository;
         this.snippetService = snippetService;
-        this.experimentCache = experimentCache;
         this.experimentRepository = experimentRepository;
         this.flowInstanceRepository = flowInstanceRepository;
     }
 
-    // TODO ! experiment has to be stateless and have its own instances
+    // TODO experiment has to be stateless and have its own instances
+    // TODO 2019.05.02 do we need an experiment to have its own instance still?
 
     @Override
     public EnumsApi.FlowValidateStatus validate(Flow flow, Process process, boolean isFirst) {
@@ -61,6 +59,20 @@ public class ExperimentProcessValidator implements ProcessValidator {
         }
         if (StringUtils.isBlank(process.code)) {
             return EnumsApi.FlowValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
+        }
+        if (StringUtils.isNotBlank(process.preSnippetCode)) {
+            Snippet snippet = snippetRepository.findByCode(process.preSnippetCode);
+            if (snippet==null) {
+                log.error("#177.09 Pre-snippet wasn't found for code: {}, process: {}", process.preSnippetCode, process);
+                return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+            }
+        }
+        if (StringUtils.isNotBlank(process.postSnippetCode)) {
+            Snippet snippet = snippetRepository.findByCode(process.postSnippetCode);
+            if (snippet==null) {
+                log.error("#177.11 Post-snippet wasn't found for code: {}, process: {}", process.postSnippetCode, process);
+                return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+            }
         }
         Experiment e = experimentRepository.findByCode(process.code);
         if (e==null) {
@@ -91,10 +103,13 @@ public class ExperimentProcessValidator implements ProcessValidator {
             if (m1 == null || StringUtils.isBlank(m1.getValue())) {
                 return EnumsApi.FlowValidateStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
             }
-            Process.Meta m2 = process.getMeta("assembled-raw");
-            if (m2 == null || StringUtils.isBlank(m2.getValue())) {
-                return EnumsApi.FlowValidateStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
-            }
+
+            // TODO 2019.05.02 do we need this check?
+//            Process.Meta m2 = process.getMeta("assembled-raw");
+//            if (m2 == null || StringUtils.isBlank(m2.getValue())) {
+//                return EnumsApi.FlowValidateStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
+//            }
+
             Process.Meta m3 = process.getMeta("feature");
             if (m3 == null || StringUtils.isBlank(m3.getValue())) {
                 return EnumsApi.FlowValidateStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;

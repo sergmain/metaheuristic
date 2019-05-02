@@ -35,7 +35,7 @@ public class Process {
     public EnumsApi.ProcessType type;
     public boolean collectResources = false;
     public List<String> snippetCodes;
-//    public List<String> preSnippetCodes;
+    public String preSnippetCode;
     public String postSnippetCode;
     public boolean parallelExec;
 

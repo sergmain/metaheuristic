@@ -33,6 +33,7 @@ import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
 import aiai.apps.commons.yaml.snippet.SnippetConfig;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -106,7 +107,7 @@ public class TaskProcessor {
             }
 
             if (StringUtils.isBlank(task.getParams())) {
-                log.warn("Params for task {} is blank", task.getTaskId());
+                log.warn("#100.10 Params for task {} is blank", task.getTaskId());
                 continue;
             }
             Enums.FlowInstanceExecState state = currentExecState.getState(task.launchpadUrl, task.flowInstanceId);
@@ -159,121 +160,165 @@ public class TaskProcessor {
                 continue;
             }
 
-            // at this point all required resources have to be prepared
-
             taskParamYaml.workingPath = taskDir.getAbsolutePath();
             final String params = TaskParamYamlUtils.toString(taskParamYaml);
-
-            task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
-            SnippetConfig snippet = taskParamYaml.getSnippet();
-
-            AssetFile snippetAssetFile=null;
-            if (snippet.sourcing==EnumsApi.SnippetSourcing.launchpad) {
-                final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
-                snippetAssetFile = ResourceUtils.prepareSnippetFile(snippetDir, snippet.getCode(), snippet.file);
-                // is this snippet prepared?
-                if (snippetAssetFile.isError || !snippetAssetFile.isContent) {
-                    log.info("Snippet {} hasn't been prepared yet, {}", snippet.code, snippetAssetFile);
-                    isAllLoaded = false;
-                }
-            }
-            else if (snippet.sourcing==EnumsApi.SnippetSourcing.git) {
-                final File snippetRootDir = stationTaskService.prepareSnippetDir(launchpadCode);
-                log.info("Root dir for snippet: " + snippetRootDir);
-                GitSourcingService.GitExecResult result = gitSourcingService.prepareSnippet(snippetRootDir, snippet);
-                if (result.isError) {
-                    log.warn("Snippet {} has a permanent error, {}", snippet.code, result.error);
-                    break;
-                }
-                snippetAssetFile = new AssetFile();
-                snippetAssetFile.file = new File(result.snippetDir, snippet.file);
-                log.info("Snippet asset file: {}, exist: {}", snippetAssetFile.file.getAbsolutePath(), snippetAssetFile.file.exists() );
-            }
-
-            if (!isAllLoaded) {
-                continue;
-            }
-
             // persist params.yaml file
             final File paramFile = prepareParamFile(taskDir, params);
             if (paramFile == null) {
-                break;
+                log.warn("#100.20 param file wasn't created, task dir: {}" , taskDir.getAbsolutePath());
+                continue;
             }
 
-            List<String> cmd;
-            Interpreter interpreter=null;
-            if (StringUtils.isNotBlank(snippet.env)) {
-                interpreter = new Interpreter(envService.getEnvYaml().getEnvs().get(snippet.env));
-                if (interpreter.list == null) {
-                    log.warn("Can't process the task, the interpreter wasn't found for env: {}", snippet.env);
-                    break;
-                }
-                cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
-            }
-            else {
-                // snippet.file is executable file
-                cmd = new ArrayList<>();
+            // at this point all required resources have to be prepared
+
+            task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
+
+            ExecProcessService.Result preResult = prepareAndExecSnippet(taskParamYaml.getSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
+            ExecProcessService.Result result = prepareAndExecSnippet(taskParamYaml.getPreSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
+            ExecProcessService.Result postResult = prepareAndExecSnippet(taskParamYaml.getPostSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
+
+            if (result == null) {
+                continue;
             }
 
-            log.info("All systems are checked for the task #{}, lift off", task.taskId );
-
-            ExecProcessService.Result result;
-            try {
-
-                if (snippet.sourcing==EnumsApi.SnippetSourcing.launchpad ||
-                        snippet.sourcing==EnumsApi.SnippetSourcing.git) {
-                    if (snippetAssetFile==null) {
-                        throw new IllegalStateException("snippetAssetFile is null");
-                    }
-                    cmd.add(snippetAssetFile.file.getAbsolutePath());
-                }
-
-                if (StringUtils.isNoneBlank(snippet.params)) {
-                    cmd.addAll(Arrays.stream(StringUtils.split(snippet.params)).collect(Collectors.toList()));
-                }
-                cmd.add( paramFile.getAbsolutePath() );
-
-                File consoleLogFile = new File(systemDir, Consts.SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
-
-                long startedOn = System.currentTimeMillis();
-
-                // Exec snippet
-                result = execProcessService.execCommand(cmd, taskDir, consoleLogFile, taskParamYaml.timeoutBeforeTerminate);
-
-                // Store result
-                stationTaskService.storeExecResult(task.launchpadUrl, task.getTaskId(), startedOn, snippet, result, artifactDir);
-
-                if (result.isOk()) {
-                    final String storageUrl = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
-                    if (storageUrl == null || storageUrl.isBlank()) {
-                        String es = "Result data file doesn't exist, resultDataFile: " + taskParamYaml.outputResourceAbsolutePath;
-                        log.error(es);
-                        result = new ExecProcessService.Result(false, -1, es);
-                    }
-                    else {
-                        ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
-                        ExecProcessService.Result tempResult = resourceProvider.processResultingFile(
-                                launchpad, task, launchpadCode,
-                                new File(taskParamYaml.outputResourceAbsolutePath)
-                        );
-                        if (tempResult!=null) {
-                            result = tempResult;
-                        }
-                    }
-                }
-            } catch (Throwable th) {
-                //noinspection ConstantConditions
-                log.error("Error exec process, env: " + snippet.env +", " +
-                        "interpreter: " + interpreter+", " +
-                        "file: " + snippetAssetFile!=null && snippetAssetFile.file!=null
-                        ? snippetAssetFile.file.getAbsolutePath()
-                        : snippet.file +", " +
-                        "params: ", th);
-                result = new ExecProcessService.Result(false, -1, ExceptionUtils.getStackTrace(th));
-            }
-            stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(), result);
+            stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(), result, preResult, postResult);
         }
     }
+
+    @SuppressWarnings("WeakerAccess")
+    // TODO 2019.05.02 implement unit-test for this method
+    public ExecProcessService.Result prepareAndExecSnippet(SnippetConfig snippet, StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamYaml taskParamYaml, boolean isAllLoaded, File artifactDir, File systemDir, File paramFile) {
+        if (snippet==null) {
+            return null;
+        }
+        SnippetPrepareResult snippetPrepareResult = prepareSnippet(launchpadCode, snippet);
+        if (snippetPrepareResult == null) {
+            return null;
+        }
+
+        if (!snippetPrepareResult.isLoaded || !isAllLoaded) {
+            return null;
+        }
+
+        //noinspection UnnecessaryLocalVariable
+        ExecProcessService.Result result = execSnippet(task, launchpadCode, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, paramFile, snippetPrepareResult);
+        return result;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    // TODO 2019.05.02 implement unit-test for this method
+    public ExecProcessService.Result execSnippet(StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamYaml taskParamYaml, File artifactDir, File systemDir, File paramFile, SnippetPrepareResult snippetPrepareResult) {
+        List<String> cmd;
+        Interpreter interpreter=null;
+        if (StringUtils.isNotBlank(snippetPrepareResult.snippet.env)) {
+            interpreter = new Interpreter(envService.getEnvYaml().getEnvs().get(snippetPrepareResult.snippet.env));
+            if (interpreter.list == null) {
+                log.warn("Can't process the task, the interpreter wasn't found for env: {}", snippetPrepareResult.snippet.env);
+                return null;
+            }
+            cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
+        }
+        else {
+            // snippet.file is executable file
+            cmd = new ArrayList<>();
+        }
+
+        log.info("All systems are checked for the task #{}, lift off", task.taskId );
+
+        ExecProcessService.Result result;
+        try {
+
+            if (snippetPrepareResult.snippet.sourcing== EnumsApi.SnippetSourcing.launchpad ||
+                    snippetPrepareResult.snippet.sourcing==EnumsApi.SnippetSourcing.git) {
+                if (snippetPrepareResult.snippetAssetFile==null) {
+                    throw new IllegalStateException("snippetAssetFile is null");
+                }
+                cmd.add(snippetPrepareResult.snippetAssetFile.file.getAbsolutePath());
+            }
+
+            if (StringUtils.isNoneBlank(snippetPrepareResult.snippet.params)) {
+                cmd.addAll(Arrays.stream(StringUtils.split(snippetPrepareResult.snippet.params)).collect(Collectors.toList()));
+            }
+            cmd.add( paramFile.getAbsolutePath() );
+
+            File consoleLogFile = new File(systemDir, Consts.SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
+
+            long startedOn = System.currentTimeMillis();
+
+            // Exec snippet
+            result = execProcessService.execCommand(cmd, taskDir, consoleLogFile, taskParamYaml.timeoutBeforeTerminate);
+
+            // Store result
+            stationTaskService.storeExecResult(task.launchpadUrl, task.getTaskId(), startedOn, snippetPrepareResult.snippet, result, artifactDir);
+
+            if (result.isOk()) {
+                final String storageUrl = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
+                if (storageUrl == null || storageUrl.isBlank()) {
+                    String es = "Result data file doesn't exist, resultDataFile: " + taskParamYaml.outputResourceAbsolutePath;
+                    log.error(es);
+                    result = new ExecProcessService.Result(false, -1, es);
+                }
+                else {
+                    ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
+                    ExecProcessService.Result tempResult = resourceProvider.processResultingFile(
+                            launchpad, task, launchpadCode,
+                            new File(taskParamYaml.outputResourceAbsolutePath)
+                    );
+                    if (tempResult!=null) {
+                        result = tempResult;
+                    }
+                }
+            }
+        } catch (Throwable th) {
+            //noinspection ConstantConditions
+            log.error("Error exec process, env: " + snippetPrepareResult.snippet.env +", " +
+                    "interpreter: " + interpreter+", " +
+                    "file: " + snippetPrepareResult.snippetAssetFile!=null && snippetPrepareResult.snippetAssetFile.file!=null
+                    ? snippetPrepareResult.snippetAssetFile.file.getAbsolutePath()
+                    : snippetPrepareResult.snippet.file +", " +
+                    "params: ", th);
+            result = new ExecProcessService.Result(false, -1, ExceptionUtils.getStackTrace(th));
+        }
+        return result;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    // TODO 2019.05.02 implement unit-test for this method
+    public SnippetPrepareResult prepareSnippet(Metadata.LaunchpadInfo launchpadCode, SnippetConfig snippet) {
+        SnippetPrepareResult snippetPrepareResult = new SnippetPrepareResult();
+        snippetPrepareResult.snippet = snippet;
+
+        if (snippetPrepareResult.snippet.sourcing== EnumsApi.SnippetSourcing.launchpad) {
+            final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
+            snippetPrepareResult.snippetAssetFile = ResourceUtils.prepareSnippetFile(snippetDir, snippetPrepareResult.snippet.getCode(), snippetPrepareResult.snippet.file);
+            // is this snippet prepared?
+            if (snippetPrepareResult.snippetAssetFile.isError || !snippetPrepareResult.snippetAssetFile.isContent) {
+                log.info("Snippet {} hasn't been prepared yet, {}", snippetPrepareResult.snippet.code, snippetPrepareResult.snippetAssetFile);
+                snippetPrepareResult.isLoaded = false;
+            }
+        }
+        else if (snippetPrepareResult.snippet.sourcing==EnumsApi.SnippetSourcing.git) {
+            final File snippetRootDir = stationTaskService.prepareSnippetDir(launchpadCode);
+            log.info("Root dir for snippet: " + snippetRootDir);
+            GitSourcingService.GitExecResult result = gitSourcingService.prepareSnippet(snippetRootDir, snippetPrepareResult.snippet);
+            if (result.isError) {
+                log.warn("Snippet {} has a permanent error, {}", snippetPrepareResult.snippet.code, result.error);
+                return null;
+            }
+            snippetPrepareResult.snippetAssetFile = new AssetFile();
+            snippetPrepareResult.snippetAssetFile.file = new File(result.snippetDir, snippetPrepareResult.snippet.file);
+            log.info("Snippet asset file: {}, exist: {}", snippetPrepareResult.snippetAssetFile.file.getAbsolutePath(), snippetPrepareResult.snippetAssetFile.file.exists() );
+        }
+        return snippetPrepareResult;
+    }
+
+    @Data
+    public static class SnippetPrepareResult {
+        public SnippetConfig snippet;
+        public AssetFile snippetAssetFile;
+        boolean isLoaded = true;
+    }
+
 
     private File prepareParamFile(File taskDir, String params) {
         File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
