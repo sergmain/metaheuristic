@@ -104,7 +104,7 @@ public class ExecProcessService {
                         Thread.sleep(timeout.longValue());
                         log.info("thread #" + Thread.currentThread().getId() + ", time before destroy - " + new Date());
 
-                        final List<ProcessHandle> handles = new ArrayList<>();
+                        final LinkedList<ProcessHandle> handles = new LinkedList<>();
                         collectHandlers(handles, process.toHandle());
                         log.info("Processes to destroy");
                         for (ProcessHandle handle : handles) {
@@ -150,19 +150,22 @@ public class ExecProcessService {
         return new Result(exitCode==0, exitCode, console);
     }
 
-    private void collectHandlers(List<ProcessHandle> handles, ProcessHandle handle) {
-        handle.descendants().forEach((child) -> collectHandlers(handles, child));
+    public static void collectHandlers(List<ProcessHandle> handles, ProcessHandle handle) {
+        handle.children().forEach((child) -> collectHandlers(handles, child));
         handles.add(handle);
     }
 
-    private void destroy(List<ProcessHandle> handles) {
-        handles.parallelStream().forEach(o -> {
+    public static void destroy(LinkedList<ProcessHandle> handles) {
+        ProcessHandle h;
+        while ((h=handles.pollLast())!=null) {
             try {
-                o.destroy();
+                log.info("\tstart destroying task with PID #{}, isAlive: {}", h.pid(), h.isAlive());
+                boolean status = h.destroyForcibly();
+                log.info("\t\tstatus of destroying: {}",status);
             } catch (Throwable th) {
-                log.warn("Can't destroy process {}", o.toString());
+                log.warn("Can't destroy process {}", h.toString());
             }
-        });
+        }
     }
 
     private String readLastLines(int maxSize, File consoleLogFile) throws IOException {
