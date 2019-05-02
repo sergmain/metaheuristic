@@ -122,14 +122,14 @@ public class StationService {
         final String storageUrl = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
         ResourceProvider resourceProvider = null;
         if (storageUrl == null || storageUrl.isBlank()) {
-            log.error("##747.19 storageUrl wasn't found for outputResourceCode ", taskParamYaml.outputResourceCode);
+            log.error("##747.19 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.outputResourceCode);
             return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
         }
         else {
             try {
                 resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
             } catch (ResourceProviderException e) {
-                log.error("#747.23 storageUrl wasn't found for outputResourceCode ", taskParamYaml.outputResourceCode);
+                log.error("#747.23 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.outputResourceCode);
                 return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
             }
         }
@@ -210,7 +210,7 @@ public class StationService {
             final String storageUrl = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
             if (storageUrl == null || storageUrl.isBlank()) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode " + taskParamYaml.outputResourceCode);
-                log.error("#747.39 storageUrl wasn't found for resourceCode ", taskParamYaml.outputResourceCode);
+                log.error("#747.39 storageUrl wasn't found for resourceCode {}", taskParamYaml.outputResourceCode);
                 return null;
             }
 

@@ -27,6 +27,7 @@ import java.util.Map;
 public class TaskParamYaml {
     public Map<String, List<String>> inputResourceCodes = new HashMap<>();
     public SnippetConfig snippet;
+    public SnippetConfig postSnippet;
     public Map<String, String> hyperParams;
     public String outputResourceCode;
     public Map<String, String> resourceStorageUrls = new HashMap<>();

@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
@@ -34,6 +33,11 @@ import java.util.concurrent.atomic.AtomicLong;
 @Service
 @Slf4j
 public class ExecProcessService {
+
+    private static final String TIMEOUT_MESSAGE =
+            "=============================================================\n" +
+            "After %d seconds of timeout this process was destroyed.\n" +
+            "=============================================================\n";
 
     @Data
     @AllArgsConstructor
@@ -74,6 +78,8 @@ public class ExecProcessService {
         final StreamHolder streamHolder = new StreamHolder();
         int exitCode;
 
+        final StringBuilder timeoutMessage = new StringBuilder();
+        final AtomicBoolean isTerminated = new AtomicBoolean(false);
         try (final FileOutputStream fos = new FileOutputStream(consoleLogFile);
                 BufferedOutputStream bos = new BufferedOutputStream(fos)) {
             final AtomicBoolean isRun = new AtomicBoolean(false);
@@ -111,6 +117,8 @@ public class ExecProcessService {
                             log.info("\t{}", handle);
                         }
                         destroy(handles);
+                        timeoutMessage.append(String.format(TIMEOUT_MESSAGE, timeoutBeforeTerminate));
+                        isTerminated.set(true);
                         log.info("thread #" + Thread.currentThread().getId() + ", time after destroy - " + new Date());
                     } catch (InterruptedException e) {
                         log.info("thread #" + Thread.currentThread().getId() + ", current thread was interrupted");
@@ -142,11 +150,12 @@ public class ExecProcessService {
         }
 
         log.info("Any errors of execution? {}", (exitCode == 0 ? "No" : "Yes"));
+        log.debug("'\tdestroyed with timeout: {}", isTerminated.get());
         log.debug("'\tcmd: {}", cmd);
         log.debug("'\texecDir: {}", execDir.getAbsolutePath());
-        String console = readLastLines(1000, consoleLogFile);
-        log.debug("'\tconsole output:\n{}", console);
+        String console = readLastLines(1000, consoleLogFile) + '\n' + timeoutMessage;
 
+        log.debug("'\tconsole output:\n{}", console);
         return new Result(exitCode==0, exitCode, console);
     }
 
