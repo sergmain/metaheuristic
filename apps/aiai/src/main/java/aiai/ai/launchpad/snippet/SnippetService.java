@@ -188,6 +188,7 @@ public class SnippetService {
      *
      * @param srcDir File
      */
+    // TODO 2019.05.03 status of loading of snippet has to be showed on web page
     private void loadSnippetsFromDir(File srcDir) throws IOException {
         File yamlConfigFile = new File(srcDir, "snippets.yaml");
         if (!yamlConfigFile.exists()) {

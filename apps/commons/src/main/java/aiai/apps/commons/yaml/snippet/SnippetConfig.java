@@ -92,7 +92,8 @@ public class SnippetConfig {
                 }
                 break;
             case station:
-                if (StringUtils.isNoneBlank(file)) {
+                // TODO 2019.05.03 refactor that we could use file with 'station', i.e. without creating new evn record
+                if (StringUtils.isNotBlank(file)) {
                     return new SnippetConfigStatus(false, "sourcing is 'station', but file is not empty: " + this.toString());
                 }
                 break;
