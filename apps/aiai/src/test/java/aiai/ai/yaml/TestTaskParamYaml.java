@@ -57,7 +57,8 @@ public class TestTaskParamYaml {
                 null,
                 null,
                 null,
-                null
+                null,
+                false
         ));
 
         String s = TaskParamYamlUtils.toString(seq);

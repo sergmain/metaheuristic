@@ -17,19 +17,18 @@
 
 package aiai.ai.exceptions;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.ToString;
+/**
+ * @author Serge
+ * Date: 5/3/2019
+ * Time: 1:57 PM
+ */
+public class BinaryDataSaveException  extends RuntimeException {
 
-@AllArgsConstructor
-@ToString
-public class StoreNewFileException extends RuntimeException {
-    public String srcPath;
-    public String trgPath;
+    public BinaryDataSaveException(String message) {
+        super(message);
+    }
 
-    public StoreNewFileException(String message, Throwable cause, String srcPath, String trgPath) {
+    public BinaryDataSaveException(String message, Throwable cause) {
         super(message, cause);
-        this.srcPath = srcPath;
-        this.trgPath = trgPath;
     }
 }

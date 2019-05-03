@@ -229,18 +229,33 @@ public class TaskProcessor {
         ExecProcessService.Result result;
         try {
 
-            if (snippetPrepareResult.snippet.sourcing== EnumsApi.SnippetSourcing.launchpad ||
-                    snippetPrepareResult.snippet.sourcing==EnumsApi.SnippetSourcing.git) {
-                if (snippetPrepareResult.snippetAssetFile==null) {
-                    throw new IllegalStateException("snippetAssetFile is null");
-                }
-                cmd.add(snippetPrepareResult.snippetAssetFile.file.getAbsolutePath());
+            switch (snippetPrepareResult.snippet.sourcing) {
+
+                case launchpad:
+                case git:
+                    if (snippetPrepareResult.snippetAssetFile==null) {
+                        throw new IllegalStateException("snippetAssetFile is null");
+                    }
+                    cmd.add(snippetPrepareResult.snippetAssetFile.file.getAbsolutePath());
+
+                    break;
+                case station:
+                    if (snippetPrepareResult.snippet.file!=null) {
+                        //noinspection UseBulkOperation
+                        Arrays.stream(StringUtils.split(snippetPrepareResult.snippet.file)).forEachOrdered(cmd::add);
+                    }
+                    break;
+                default:
+                    throw new IllegalStateException("Unknown sourcing: "+snippetPrepareResult.snippet.sourcing );
             }
 
-            if (StringUtils.isNoneBlank(snippetPrepareResult.snippet.params)) {
-                cmd.addAll(Arrays.stream(StringUtils.split(snippetPrepareResult.snippet.params)).collect(Collectors.toList()));
+            if (!snippetPrepareResult.snippet.skipParams) {
+                if (StringUtils.isNoneBlank(snippetPrepareResult.snippet.params)) {
+                    //noinspection UseBulkOperation
+                    Arrays.stream(StringUtils.split(snippetPrepareResult.snippet.params)).forEachOrdered(cmd::add);
+                }
+                cmd.add(paramFile.getAbsolutePath());
             }
-            cmd.add( paramFile.getAbsolutePath() );
 
             File consoleLogFile = new File(systemDir, Consts.SYSTEM_CONSOLE_OUTPUT_FILE_NAME);
 
@@ -271,13 +286,13 @@ public class TaskProcessor {
                 }
             }
         } catch (Throwable th) {
-            //noinspection ConstantConditions
-            log.error("Error exec process, env: " + snippetPrepareResult.snippet.env +", " +
-                    "interpreter: " + interpreter+", " +
-                    "file: " + snippetPrepareResult.snippetAssetFile!=null && snippetPrepareResult.snippetAssetFile.file!=null
+            log.error("Error exec process:\n" +
+                    "\tenv: " + snippetPrepareResult.snippet.env +"\n" +
+                    "\tinterpreter: " + interpreter+"\n" +
+                    "\tfile: " + (snippetPrepareResult.snippetAssetFile!=null && snippetPrepareResult.snippetAssetFile.file!=null
                     ? snippetPrepareResult.snippetAssetFile.file.getAbsolutePath()
-                    : snippetPrepareResult.snippet.file +", " +
-                    "params: ", th);
+                    : snippetPrepareResult.snippet.file) +"\n" +
+                    "\tparams", th);
             result = new ExecProcessService.Result(false, -1, ExceptionUtils.getStackTrace(th));
         }
         return result;

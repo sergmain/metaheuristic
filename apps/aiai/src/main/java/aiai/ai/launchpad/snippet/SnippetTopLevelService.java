@@ -25,8 +25,10 @@ import aiai.ai.launchpad.data.SnippetData;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
+import aiai.apps.commons.yaml.snippet.SnippetConfigStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,12 +36,17 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
 @Profile("launchpad")
 public class SnippetTopLevelService {
 
+    private static final String YAML_EXT = ".yaml";
+    private static final String ZIP_EXT = ".zip";
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
     private final SnippetService snippetService;
@@ -83,9 +90,9 @@ public class SnippetTopLevelService {
                     "#422.02 '.' wasn't found, bad filename: " + originFilename);
         }
         String ext = originFilename.substring(idx).toLowerCase();
-        if (!".zip".equals(ext)) {
+        if (!StringUtils.equalsAny(ext, ZIP_EXT, YAML_EXT)) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#422.03 only '.zip' files is supported, filename: " + originFilename);
+                    "#422.03 only '.zip' and '.yaml' files are supported, filename: " + originFilename);
         }
 
         final String location = System.getProperty("java.io.tmpdir");
@@ -96,24 +103,42 @@ public class SnippetTopLevelService {
                 return new OperationStatusRest(Enums.OperationStatus.ERROR,
                         "#422.04 can't create temporary directory in " + location);
             }
-            final File zipFile = new File(tempDir, "snippet.zip");
+            final File zipFile = new File(tempDir, "snippets" + ext);
             log.debug("Start storing an uploaded snippet to disk");
             try(OutputStream os = new FileOutputStream(zipFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
-            log.debug("Start unzipping archive");
-            ZipUtils.unzipFolder(zipFile, tempDir);
-            log.debug("Start loading snippet data to db");
-            snippetService.loadSnippetsRecursively(tempDir);
+            List<SnippetConfigStatus> statuses;
+            if (ZIP_EXT.equals(ext)) {
+                log.debug("Start unzipping archive");
+                ZipUtils.unzipFolder(zipFile, tempDir);
+                log.debug("Start loading snippet data to db");
+                statuses = new ArrayList<>();
+                snippetService.loadSnippetsRecursively(statuses, tempDir);
+            }
+            else {
+                log.debug("Start loading snippet data to db");
+                statuses = snippetService.loadSnippetsFromDir(tempDir);
+            }
+            if (isError(statuses)) {
+                return new OperationStatusRest(Enums.OperationStatus.ERROR,
+                        toErrorMessages(statuses));
+            }
         }
         catch (Exception e) {
             log.error("Error", e);
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
                     "#422.05 can't load snippets, Error: " + e.toString());
         }
-
-        log.debug("All done. Send redirect");
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    private List<String> toErrorMessages(List<SnippetConfigStatus> statuses) {
+        return statuses.stream().filter(o->!o.isOk).map(o->o.error).collect(Collectors.toList());
+    }
+
+    private boolean isError(List<SnippetConfigStatus> statuses) {
+        return statuses.stream().filter(o->!o.isOk).findFirst().orElse(null)!=null;
     }
 
 }

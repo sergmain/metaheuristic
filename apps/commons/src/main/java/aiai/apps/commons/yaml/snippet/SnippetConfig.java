@@ -71,35 +71,32 @@ public class SnippetConfig {
     public SnippetInfo info = new SnippetInfo();
     public String checksum;
     public GitInfo git;
+    public boolean skipParams = false;
 
     public SnippetConfigStatus validate() {
         if (StringUtils.isBlank(file) && StringUtils.isBlank(env)) {
-            return new SnippetConfigStatus(false, "Fields 'file' and 'env' can't be null or empty both.");
+            return new SnippetConfigStatus(false, "#401.10 Fields 'file' and 'env' can't be null or empty both.");
         }
         if (StringUtils.isBlank(code) || StringUtils.isBlank(type)) {
-            return new SnippetConfigStatus(false, "A field is null or empty: " + this.toString());
+            return new SnippetConfigStatus(false, "#401.15 A field is null or empty: " + this.toString());
         }
         if (!StrUtils.isSnippetCodeOk(code)) {
-            return new SnippetConfigStatus(false, "Snippet code has wrong chars: "+code+", allowed only: " + StrUtils.ALLOWED_CHARS_SNIPPET_CODE_REGEXP);
+            return new SnippetConfigStatus(false, "#401.20 Snippet code has wrong chars: "+code+", allowed only: " + StrUtils.ALLOWED_CHARS_SNIPPET_CODE_REGEXP);
         }
         if (sourcing==null) {
-            return new SnippetConfigStatus(false, "Field 'sourcing' is absent");
+            return new SnippetConfigStatus(false, "#401.25 Field 'sourcing' is absent");
         }
         switch (sourcing) {
             case launchpad:
                 if (StringUtils.isBlank(file)) {
-                    return new SnippetConfigStatus(false, "sourcing is 'launchpad' but file is empty: " + this.toString());
+                    return new SnippetConfigStatus(false, "#401.30 sourcing is 'launchpad' but file is empty: " + this.toString());
                 }
                 break;
             case station:
-                // TODO 2019.05.03 refactor that we could use file with 'station', i.e. without creating new evn record
-                if (StringUtils.isNotBlank(file)) {
-                    return new SnippetConfigStatus(false, "sourcing is 'station', but file is not empty: " + this.toString());
-                }
                 break;
             case git:
                 if (git==null) {
-                    return new SnippetConfigStatus(false, "sourcing is 'git', but git info is absent");
+                    return new SnippetConfigStatus(false, "#401.42 sourcing is 'git', but git info is absent");
                 }
                 break;
         }

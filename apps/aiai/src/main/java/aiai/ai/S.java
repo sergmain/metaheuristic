@@ -15,21 +15,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.exceptions;
+package aiai.ai;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.ToString;
+import java.util.Locale;
 
-@AllArgsConstructor
-@ToString
-public class StoreNewFileException extends RuntimeException {
-    public String srcPath;
-    public String trgPath;
+/**
+ * @author Serge
+ * Date: 5/3/2019
+ * Time: 1:50 PM
+ */
+public final class S {
 
-    public StoreNewFileException(String message, Throwable cause, String srcPath, String trgPath) {
-        super(message, cause);
-        this.srcPath = srcPath;
-        this.trgPath = trgPath;
+    public static String f(String format, Object... args) {
+        return String.format(format, args);
+    }
+
+    public static String f(Locale l, String format, Object... args) {
+        return String.format(l, format, args);
     }
 }

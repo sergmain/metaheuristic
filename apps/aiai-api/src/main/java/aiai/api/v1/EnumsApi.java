@@ -17,8 +17,11 @@
 
 package aiai.api.v1;
 
+import lombok.ToString;
+
 public class EnumsApi {
 
+    @ToString
     public enum SnippetSourcing {
         // snippet will be downloaded from launchpad
         launchpad(1),

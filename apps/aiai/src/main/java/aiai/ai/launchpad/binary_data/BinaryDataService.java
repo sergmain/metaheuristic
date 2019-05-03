@@ -21,6 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
+import aiai.ai.exceptions.BinaryDataSaveException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.repositories.BinaryDataRepository;
 import aiai.ai.launchpad.launchpad_resource.SimpleResource;
@@ -149,7 +150,7 @@ public class BinaryDataService {
         if (binaryDataType== Enums.BinaryDataType.SNIPPET && flowInstanceId!=null) {
             String es = "#087.01 Snippet can't be bound to flow instance";
             log.error(es);
-            throw new IllegalStateException(es);
+            throw new BinaryDataSaveException(es);
         }
         try {
             BinaryData data = binaryDataRepository.findByCode(code);
@@ -168,13 +169,13 @@ public class BinaryDataService {
                     // this is exception for the case when two resources have the same names but different pool codes
                     String es = "#087.04 Pool code is different, old: " + data.getPoolCode() + ", new: " + poolCode;
                     log.error(es);
-                    throw new IllegalStateException(es);
+                    throw new BinaryDataSaveException(es);
                 }
                 if (!Consts.LAUNCHPAD_STORAGE_URL.equals(data.getStorageUrl())) {
                     // this is exception for the case when two resources have the same names but different pool codes
                     String es = "#087.05 Storage url is different, old: " + data.getStorageUrl() + ", new: " + Consts.LAUNCHPAD_STORAGE_URL;
                     log.error(es);
-                    throw new IllegalStateException(es);
+                    throw new BinaryDataSaveException(es);
                 }
             }
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
@@ -186,12 +187,12 @@ public class BinaryDataService {
 
             return data;
         }
-        catch(IllegalStateException e) {
+        catch(BinaryDataSaveException e) {
             throw e;
         }
         catch(Throwable th) {
             log.error("#087.09 error storing data to db", th);
-            throw new RuntimeException("Error", th);
+            throw new BinaryDataSaveException("Error", th);
         }
     }
 

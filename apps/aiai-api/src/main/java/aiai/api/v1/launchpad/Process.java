@@ -37,7 +37,7 @@ public class Process {
     public List<String> snippetCodes;
     public String preSnippetCode;
     public String postSnippetCode;
-    public boolean parallelExec;
+    public boolean parallelExec = false;
 
     /**
      * Timeout before terminating a process with snippet

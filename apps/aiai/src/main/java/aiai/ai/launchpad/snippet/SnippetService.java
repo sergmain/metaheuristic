@@ -19,7 +19,6 @@ package aiai.ai.launchpad.snippet;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
-import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
@@ -40,10 +39,7 @@ import org.springframework.stereotype.Service;
 import javax.annotation.PostConstruct;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -72,20 +68,6 @@ public class SnippetService {
         List<ExperimentSnippet> experimentSnippets = experimentSnippetRepository.findByExperimentId(experimentId);
         ExperimentUtils.sortExperimentSnippets(experimentSnippets);
         return experimentSnippets;
-    }
-
-    public List<Snippet> getSnippets(long experimentId) {
-        List<ExperimentSnippet> experimentSnippets = experimentSnippetRepository.findByExperimentId(experimentId);
-        List<Snippet> snippets = new ArrayList<>();
-        for (ExperimentSnippet experimentSnippet : experimentSnippets) {
-            Snippet snippet = snippetRepository.findByCode(experimentSnippet.getSnippetCode());
-            if (snippet == null) {
-                log.error("#295.03 Can't find snippet for code: {}", experimentSnippet.getSnippetCode());
-                continue;
-            }
-            snippets.add(snippet);
-        }
-        return snippets;
     }
 
     public SnippetConfig getSnippetConfig(String snippetCode) {
@@ -154,31 +136,14 @@ public class SnippetService {
         return selectOptions;
     }
 
-    public List<ExperimentSnippet> getTaskSnippets(Iterable<Snippet> snippets, Experiment experiment) {
-        List<ExperimentSnippet> experimentSnippets = new ArrayList<>();
-        List<ExperimentSnippet> tss = getTaskSnippetsForExperiment(experiment.getId());
-        for (Snippet snippet : snippets) {
-            for (ExperimentSnippet experimentSnippet : tss) {
-                if (snippet.getCode().equals(experimentSnippet.getSnippetCode()) ) {
-                    // it should be ok without this line but just for sure
-                    experimentSnippet.type = snippet.type;
-                    experimentSnippets.add(experimentSnippet);
-                    break;
-                }
-            }
-            //noinspection unused
-            int i=0;
-        }
-        return experimentSnippets;
-    }
-
-    void loadSnippetsRecursively(File startDir) throws IOException {
+    void loadSnippetsRecursively(List<SnippetConfigStatus> statuses, File startDir) throws IOException {
         final File[] dirs = startDir.listFiles(File::isDirectory);
+
         if (dirs!=null) {
             for (File dir : dirs) {
                 log.info("Load snippets from {}", dir.getPath());
-                loadSnippetsFromDir(dir);
-                loadSnippetsRecursively(dir);
+                statuses.addAll(loadSnippetsFromDir(dir));
+                loadSnippetsRecursively(statuses, dir);
             }
         }
     }
@@ -188,72 +153,91 @@ public class SnippetService {
      *
      * @param srcDir File
      */
-    // TODO 2019.05.03 status of loading of snippet has to be showed on web page
-    private void loadSnippetsFromDir(File srcDir) throws IOException {
+    List<SnippetConfigStatus> loadSnippetsFromDir(File srcDir) throws IOException {
         File yamlConfigFile = new File(srcDir, "snippets.yaml");
         if (!yamlConfigFile.exists()) {
             log.error("#295.11 File 'snippets.yaml' wasn't found in dir {}", srcDir.getAbsolutePath());
-            return;
+            return Collections.emptyList();
         }
 
         String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
         SnippetConfigList snippetConfigList = SnippetConfigListUtils.to(cfg);
+        List<SnippetConfigStatus> statuses = new ArrayList<>();
         for (SnippetConfig snippetConfig : snippetConfigList.snippets) {
-            SnippetConfigStatus status = snippetConfig.validate();
-            if (!status.isOk) {
-                log.error(status.error);
-                continue;
-            }
-            String sum=null;
-            File file = null;
-            if (globals.isSnippetChecksumRequired) {
-                switch(snippetConfig.sourcing) {
-                    case launchpad:
-                        file = new File(srcDir, snippetConfig.file);
-                        if (!file.exists()) {
-                            throw new IllegalStateException("File " + snippetConfig.file + " wasn't found in " + srcDir.getAbsolutePath());
-                        }
-                        try (InputStream inputStream = new FileInputStream(file)) {
-                            sum = Checksum.Type.SHA256.getChecksum(inputStream);
-                        }
-                        snippetConfig.info.length = file.length();
-                        break;
-                    case station:
-                    case git:
-                        String s = "" + snippetConfig.env+", " + snippetConfig.file +" " + snippetConfig.params;
-                        sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(s.getBytes()));
-                        break;
+            SnippetConfigStatus status = null;
+            try {
+                status = snippetConfig.validate();
+                if (!status.isOk) {
+                    log.error(status.error);
+                    continue;
                 }
-            }
-
-            Snippet snippet = snippetRepository.findByCode(snippetConfig.code);
-            // there is snippet with the same name:version
-            if (snippet!=null) {
-                SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
-
-                // new snippet is to replace one which is already in db
-                if (globals.isReplaceSnapshot && snippetConfig.code.endsWith(Consts.SNAPSHOT_SUFFIX)) {
-                    // there isn't any checksum for current snippet in db
-                    if (sc.checksum ==null) {
-                        storeSnippet(snippetConfig, sum, file, snippet);
+                String sum=null;
+                File file = null;
+                if (globals.isSnippetChecksumRequired) {
+                    switch(snippetConfig.sourcing) {
+                        case launchpad:
+                            file = new File(srcDir, snippetConfig.file);
+                            if (!file.exists()) {
+                                status = new SnippetConfigStatus(false,
+                                        "#295.14 File " + snippetConfig.file + " wasn't found in dir " + srcDir.getAbsolutePath());
+                                continue;
+                            }
+                            try (InputStream inputStream = new FileInputStream(file)) {
+                                sum = Checksum.Type.SHA256.getChecksum(inputStream);
+                            }
+                            snippetConfig.info.length = file.length();
+                            break;
+                        case station:
+                        case git:
+                            String s = "" + snippetConfig.env+", " + snippetConfig.file +" " + snippetConfig.params;
+                            sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(s.getBytes()));
+                            break;
                     }
-                    else {
-                        final String checksum = Checksum.fromJson(sc.checksum).checksums.get(Checksum.Type.SHA256);
-                        // there checksum for current snippet in db isn't equal to new checksum
-                        if (!checksum.equals(sum)) {
+                }
+
+                Snippet snippet = snippetRepository.findByCode(snippetConfig.code);
+                // there is snippet with the same name:version
+                if (snippet!=null) {
+                    SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
+
+                    // new snippet is to replace one which is already in db
+                    if (globals.isReplaceSnapshot && snippetConfig.code.endsWith(Consts.SNAPSHOT_SUFFIX)) {
+                        // there isn't any checksum for current snippet in db
+                        if (sc.checksum ==null) {
                             storeSnippet(snippetConfig, sum, file, snippet);
                         }
+                        else {
+                            final String checksum = Checksum.fromJson(sc.checksum).checksums.get(Checksum.Type.SHA256);
+                            // there checksum for current snippet in db isn't equal to new checksum
+                            if (!checksum.equals(sum)) {
+                                storeSnippet(snippetConfig, sum, file, snippet);
+                            }
+                        }
+                    }
+                    else {
+                        status = new SnippetConfigStatus(false,
+                                "#295.20 Updating of snippets is prohibited, not a snapshot version, '"+snippet.code+"'");
+                        //noinspection UnnecessaryContinue
+                        continue;
                     }
                 }
                 else {
-                    log.warn("#295.14 Updating of snippets is prohibited, not a snapshot version '{}'", snippet.code);
+                    snippet = new Snippet();
+                    storeSnippet(snippetConfig, sum, file, snippet);
                 }
             }
-            else {
-                snippet = new Snippet();
-                storeSnippet(snippetConfig, sum, file, snippet);
+            catch(Throwable th) {
+                status = new SnippetConfigStatus(false,
+                        "#295.23 Error "+th.getClass().getName()+" while processing snippet '"+snippetConfig.code+"': "+th.getMessage());
+            }
+            finally {
+                statuses.add(status!=null
+                        ? status
+                        : new SnippetConfigStatus(false,
+                        "#295.30 Status of snippet "+snippetConfig.code+" is unknown, this status needs to be investigated"));
             }
         }
+        return statuses;
     }
 
     private void storeSnippet(SnippetConfig snippetConfig, String sum, File file, Snippet snippet) throws IOException {

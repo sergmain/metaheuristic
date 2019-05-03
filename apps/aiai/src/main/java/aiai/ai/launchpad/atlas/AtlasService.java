@@ -142,9 +142,6 @@ public class AtlasService {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, filed.errorMessages);
         }
         try(InputStream is = new FileInputStream(filed.dumpOfConsoleOutputs)) {
-//            public BinaryData save(InputStream is, long size,
-//            Enums.BinaryDataType binaryDataType, String code, String poolCode,
-//            boolean isManual, String filename, Long flowInstanceId) {
             //noinspection unused
             BinaryData data = binaryDataService.save(
                     is, filed.dumpOfConsoleOutputs.length(), Enums.BinaryDataType.CONSOLE,

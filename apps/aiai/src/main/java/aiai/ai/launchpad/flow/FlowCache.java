@@ -40,6 +40,9 @@ public class FlowCache {
 //    @CachePut(cacheNames = "flows", key = "#result.id")
     @CacheEvict(value = "flows", key = "#result.id")
     public Flow save(Flow flow) {
+        // TODO 2019.05.03 need to deal with such error:
+        // org.hibernate.StaleObjectStateException: Row was updated or deleted by another transaction
+        // (or unsaved-value mapping was incorrect) : [aiai.ai.launchpad.beans.Flow#349]
         return flowRepository.save(flow);
     }
 

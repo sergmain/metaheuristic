@@ -48,7 +48,7 @@ public class ResourceService {
             }
         } catch (IOException e) {
             log.error("Error", e);
-            throw new StoreNewFileException(tempFile.getPath(), filename);
+            throw new StoreNewFileException("Error while storing", e, tempFile.getPath(), filename);
         }
     }
 
