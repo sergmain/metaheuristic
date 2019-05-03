@@ -26,4 +26,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SnippetExec {
     public ExecProcessService.Result exec = new ExecProcessService.Result();
+    public ExecProcessService.Result preExec;
+    public ExecProcessService.Result postExec;
 }

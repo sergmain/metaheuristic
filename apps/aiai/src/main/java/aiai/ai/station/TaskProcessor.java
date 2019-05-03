@@ -28,6 +28,7 @@ import aiai.ai.station.sourcing.git.GitSourcingService;
 import aiai.ai.station.station_resource.ResourceProvider;
 import aiai.ai.station.station_resource.ResourceProviderFactory;
 import aiai.ai.yaml.metadata.Metadata;
+import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.station_task.StationTask;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
@@ -181,7 +182,7 @@ public class TaskProcessor {
                 continue;
             }
 
-            stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(), result, preResult, postResult);
+            stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(), new SnippetExec(result, preResult, postResult));
         }
     }
 

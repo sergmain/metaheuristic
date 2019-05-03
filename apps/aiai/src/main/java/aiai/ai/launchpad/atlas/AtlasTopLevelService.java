@@ -89,20 +89,21 @@ public class AtlasTopLevelService {
 
         Atlas atlas = atlasRepository.findById(id).orElse(null);
         if (atlas == null) {
-            return new AtlasData.ExperimentInfoExtended("#280.09 experiment wasn't found in atlas, id: " + id);
+            return new AtlasData.ExperimentInfoExtended("#280.02 experiment wasn't found in atlas, id: " + id);
         }
 
         ExperimentStoredToAtlas estb1;
         try {
             estb1 = atlasService.fromJson(atlas.experiment);
         } catch (IOException e) {
-            log.error("Error", e);
-            return new AtlasData.ExperimentInfoExtended("#280.09 Can't extract experiment from atlas, error: " + e.toString());
+            String es = "#280.05 Can't extract experiment from atlas, error: " + e.toString();
+            log.error(es, e);
+            return new AtlasData.ExperimentInfoExtended(es);
         }
 
         Experiment experiment = estb1.experiment;
         if (experiment == null) {
-            return new AtlasData.ExperimentInfoExtended("#280.09 experiment wasn't found, experimentId: " + id);
+            return new AtlasData.ExperimentInfoExtended("#280.07 experiment wasn't found, experimentId: " + id);
         }
         if (experiment.getFlowInstanceId() == null) {
             return new AtlasData.ExperimentInfoExtended("#280.12 experiment wasn't startet yet, experimentId: " + id);
@@ -140,7 +141,7 @@ public class AtlasTopLevelService {
         Atlas atlas = atlasRepository.findById(id).orElse(null);
         if (atlas == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.71 experiment wasn't found in atlas, id: " + id);
+                    "#280.19 experiment wasn't found in atlas, id: " + id);
         }
         atlasRepository.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -149,15 +150,16 @@ public class AtlasTopLevelService {
     public AtlasData.PlotData getPlotData(Long atlasId, Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
         Atlas atlas = atlasRepository.findById(atlasId).orElse(null);
         if (atlas == null) {
-            return new AtlasData.PlotData("#280.09 experiment wasn't found in atlas, id: " + atlasId);
+            return new AtlasData.PlotData("#280.22 experiment wasn't found in atlas, id: " + atlasId);
         }
 
         ExperimentStoredToAtlas estb1;
         try {
             estb1 = atlasService.fromJson(atlas.experiment);
         } catch (IOException e) {
-            log.error("Error", e);
-            return new AtlasData.PlotData("#280.09 Can't extract experiment from atlas, error: " + e.toString());
+            final String es = "#280.25 Can't extract experiment from atlas, error: " + e.toString();
+            log.error(es, e);
+            return new AtlasData.PlotData(es);
         }
 
         ExperimentFeature feature = estb1.getFeature(featureId);
@@ -206,7 +208,7 @@ public class AtlasTopLevelService {
             }
         }
         if (paramCleared.size()!=2) {
-            throw new IllegalStateException("Wrong number of params for axes. Expected: 2, actual: " + paramCleared.size());
+            throw new IllegalStateException("#280.27 Wrong number of params for axes. Expected: 2, actual: " + paramCleared.size());
         }
         Map<String, Map<String, Integer>> map = estb.getHyperParamsAsMap(false);
         data.x.addAll(map.get(paramCleared.get(0)).keySet());
@@ -324,25 +326,26 @@ public class AtlasTopLevelService {
     public AtlasData.ExperimentFeatureExtendedResult getExperimentFeatureExtended(long atlasId, Long experimentId, Long featureId) {
         Atlas atlas = atlasRepository.findById(atlasId).orElse(null);
         if (atlas == null) {
-            return new AtlasData.ExperimentFeatureExtendedResult("#280.09 experiment wasn't found in atlas, id: " + atlasId);
+            return new AtlasData.ExperimentFeatureExtendedResult("#280.31 experiment wasn't found in atlas, id: " + atlasId);
         }
 
         ExperimentStoredToAtlas estb1;
         try {
             estb1 = atlasService.fromJson(atlas.experiment);
         } catch (IOException e) {
-            log.error("Error", e);
-            return new AtlasData.ExperimentFeatureExtendedResult("#280.09 Can't extract experiment from atlas, error: " + e.toString());
+            final String es = "#280.35 Can't extract experiment from atlas, error: " + e.toString();
+            log.error(es, e);
+            return new AtlasData.ExperimentFeatureExtendedResult(es);
         }
 
         ExperimentFeature experimentFeature = estb1.getFeature(featureId);
         if (experimentFeature == null) {
-            return new AtlasData.ExperimentFeatureExtendedResult("#280.05 feature wasn't found, experimentFeatureId: " + featureId);
+            return new AtlasData.ExperimentFeatureExtendedResult("#280.37 feature wasn't found, experimentFeatureId: " + featureId);
         }
 
         AtlasData.ExperimentFeatureExtendedResult result = prepareExperimentFeatures(estb1, estb1.experiment, experimentFeature);
         if (result==null) {
-            return new AtlasData.ExperimentFeatureExtendedResult("#280.15 can't prepare experiment data");
+            return new AtlasData.ExperimentFeatureExtendedResult("#280.40 can't prepare experiment data");
         }
         return result;
     }
@@ -445,21 +448,22 @@ public class AtlasTopLevelService {
     public AtlasData.ConsoleResult getTasksConsolePart(long atlasId, long taskId) {
         Atlas atlas = atlasRepository.findById(atlasId).orElse(null);
         if (atlas == null) {
-            return new AtlasData.ConsoleResult("#280.09 experiment wasn't found in atlas, id: " + atlasId);
+            return new AtlasData.ConsoleResult("#280.42 experiment wasn't found in atlas, id: " + atlasId);
         }
 
         ExperimentStoredToAtlas estb;
         try {
             estb = atlasService.fromJson(atlas.experiment);
         } catch (IOException e) {
-            log.error("Error", e);
-            return new AtlasData.ConsoleResult("#280.09 Can't extract experiment from atlas, error: " + e.toString());
+            final String es = "#280.45 Can't extract experiment from atlas, error: " + e.toString();
+            log.error(es, e);
+            return new AtlasData.ConsoleResult(es);
         }
 
         String poolCode = AtlasService.getPoolCodeForExperiment(estb.flowInstance.id, estb.experiment.id);
         List<BinaryData> datas = binaryDataService.getByPoolCodeAndType(poolCode, Enums.BinaryDataType.CONSOLE);
         if (datas.isEmpty()) {
-            return new AtlasData.ConsoleResult("#280.27 Can't find a console output");
+            return new AtlasData.ConsoleResult("#280.47 Can't find a console output");
         }
 
         // TODO need to refactor to use InputStream
@@ -472,7 +476,7 @@ public class AtlasTopLevelService {
                 String line = it.nextLine();
                 int idx = line.indexOf(',');
                 if (idx==-1) {
-                    log.warn("wrong format of line: " + line);
+                    log.warn("280.50 wrong format of line: " + line);
                     continue;
                 }
                 if (taskIdAsStr.equals(line.substring(0, idx))) {
@@ -482,7 +486,7 @@ public class AtlasTopLevelService {
                 }
             }
         } catch (IOException e) {
-            return new AtlasData.ConsoleResult("#280.29 Can't process a console output, error: " + e.toString());
+            return new AtlasData.ConsoleResult("#280.53 Can't process a console output, error: " + e.toString());
         }
 
         AtlasData.ConsoleResult result = new AtlasData.ConsoleResult();
@@ -493,7 +497,7 @@ public class AtlasTopLevelService {
                 result.items.add(new AtlasData.ConsoleResult.SimpleConsoleOutput(execResult.exitCode, execResult.isOk, execResult.console));
             }
             else {
-                log.info("#280.10 snippetExec is null");
+                log.info("#280.55 snippetExec is null");
             }
         }
         return result;
@@ -502,15 +506,16 @@ public class AtlasTopLevelService {
     public AtlasData.ExperimentFeatureExtendedResult getFeatureProgressPart(long atlasId, Long experimentId, Long featureId, String[] params, Pageable pageable) {
         Atlas atlas = atlasRepository.findById(atlasId).orElse(null);
         if (atlas == null) {
-            return new AtlasData.ExperimentFeatureExtendedResult("#280.37 experiment wasn't found in atlas, id: " + atlasId);
+            return new AtlasData.ExperimentFeatureExtendedResult("#280.57 experiment wasn't found in atlas, id: " + atlasId);
         }
 
         ExperimentStoredToAtlas estb;
         try {
             estb = atlasService.fromJson(atlas.experiment);
         } catch (IOException e) {
-            log.error("Error", e);
-            return new AtlasData.ExperimentFeatureExtendedResult("#280.39 Can't extract experiment from atlas, error: " + e.toString());
+            final String es = "#280.60 Can't extract experiment from atlas, error: " + e.toString();
+            log.error(es, e);
+            return new AtlasData.ExperimentFeatureExtendedResult(es);
         }
 
         ExperimentFeature feature = estb.getFeature(featureId);
@@ -536,7 +541,7 @@ public class AtlasTopLevelService {
             for (Task task : subList) {
                 ExperimentTaskFeature etf = estb.getExperimentTaskFeature(task.getId());
                 if (etf==null) {
-                    log.warn("Can't get type of task for taskId " + task.getId());
+                    log.warn("280.63 Can't get type of task for taskId " + task.getId());
                 }
                 int type = etf!=null ? Enums.ExperimentTaskType.from( etf.getTaskType() ).value : Enums.ExperimentTaskType.UNKNOWN.value;
 

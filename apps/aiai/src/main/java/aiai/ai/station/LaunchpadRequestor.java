@@ -221,10 +221,7 @@ public class LaunchpadRequestor {
         for (StationTask task : list) {
             command.getResults().add(new SimpleTaskExecResult(task.getTaskId(),
                     task.getSnippetExecResult(),
-                    task.getMetrics(),
-                    task.getPreSnippetExecResult(),
-                    task.getPostSnippetExecResult()
-                    ));
+                    task.getMetrics()));
             stationTaskService.setReportedOn(launchpadUrl, task.taskId);
         }
         data.setCommand(command);

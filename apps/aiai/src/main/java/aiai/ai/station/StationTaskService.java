@@ -97,12 +97,8 @@ public class StationTaskService {
 
                                         // fix state of task
                                         SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
-                                        SnippetExec preSnippetExec = SnippetExecUtils.to(task.getPreSnippetExecResult());
-                                        SnippetExec postSnippetExec = SnippetExecUtils.to(task.getPostSnippetExecResult());
                                         if (snippetExec!=null && !snippetExec.exec.isOk) {
-                                            markAsFinished(launchpadUrl, taskId, snippetExec.exec,
-                                                    preSnippetExec!=null ? preSnippetExec.exec : null,
-                                                    postSnippetExec!=null ? postSnippetExec.exec : null);
+                                            markAsFinished(launchpadUrl, taskId, snippetExec);
                                         }
                                     }
                                     catch (IOException e) {
@@ -222,14 +218,14 @@ public class StationTaskService {
 
     public void markAsFinishedWithError(String launchpadUrl, long taskId, String es) {
         synchronized (StationSyncHolder.stationGlobalSync) {
-            markAsFinished(launchpadUrl, taskId, new ExecProcessService.Result(false, -1, es), null, null);
+            markAsFinished(launchpadUrl, taskId,
+                    new SnippetExec( new ExecProcessService.Result(false, -1, es),
+                            null, null));
         }
     }
 
-    void markAsFinished(String launchpadUrl, Long taskId,
-                        ExecProcessService.Result result,
-                        ExecProcessService.Result preResult,
-                        ExecProcessService.Result postResult) {
+    void markAsFinished(String launchpadUrl, Long taskId, SnippetExec snippetExec ) {
+
         synchronized (StationSyncHolder.stationGlobalSync) {
             log.info("markAsFinished({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
@@ -240,7 +236,7 @@ public class StationTaskService {
                     log.info("\t713.38.1 task #{} doesn't have the launchedOn as inited", taskId);
                     task.setLaunchedOn(System.currentTimeMillis());
                 }
-                if (!result.isOk) {
+                if (!snippetExec.exec.isOk) {
                     log.info("\t713.38.2 task #{} finished with an error, set completed to true", taskId);
                     // there are some problems with this task. mark it as completed
                     task.setCompleted(true);
@@ -248,10 +244,7 @@ public class StationTaskService {
                 task.setFinishedOn(System.currentTimeMillis());
                 task.setDelivered(false);
                 task.setReported(false);
-
-                task.setSnippetExecResult(SnippetExecUtils.toString(new SnippetExec(result)));
-                task.setPreSnippetExecResult(SnippetExecUtils.toString(new SnippetExec(preResult)));
-                task.setPostSnippetExecResult(SnippetExecUtils.toString(new SnippetExec(postResult)));
+                task.setSnippetExecResult(SnippetExecUtils.toString(snippetExec));
 
                 save(task);
             }

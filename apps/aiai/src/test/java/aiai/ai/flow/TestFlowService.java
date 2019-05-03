@@ -31,7 +31,6 @@ import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.api.v1.EnumsApi;
-import org.apache.commons.lang3.NotImplementedException;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -149,8 +148,7 @@ public class TestFlowService extends PreparingFlow {
         SimpleTaskExecResult r = new SimpleTaskExecResult();
         r.setTaskId(simpleTask.getTaskId());
         r.setMetrics(null);
-        r.setResult("Everything is Ok.");
-        r.setResult(getExecResult(true));
+        r.setResult(getOKExecResult());
         taskPersistencer.storeExecResult(r);
         flowService.markOrderAsProcessed();
 
@@ -194,9 +192,9 @@ public class TestFlowService extends PreparingFlow {
         int i=0;
     }
 
-    private String getExecResult(boolean isOk) {
-        SnippetExec snippetExec = new SnippetExec();
-        snippetExec.setExec( new ExecProcessService.Result(true, 0, null) );
+    private String getOKExecResult() {
+        SnippetExec snippetExec = new SnippetExec(
+                new ExecProcessService.Result(true, 0, "Everything is Ok."), null, null);
 
         return SnippetExecUtils.toString(snippetExec);
     }

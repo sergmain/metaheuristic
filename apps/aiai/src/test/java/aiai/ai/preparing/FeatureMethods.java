@@ -152,11 +152,10 @@ public abstract class FeatureMethods extends PreparingFlow {
         }
         for (Task task : tasks) {
             ExecProcessService.Result result = new ExecProcessService.Result(false, -1, "This is sample console output");
-            SnippetExec snippetExec = new SnippetExec();
-            snippetExec.setExec(result);
+            SnippetExec snippetExec = new SnippetExec(result, null, null);
             String yaml = SnippetExecUtils.toString(snippetExec);
 
-            SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS), null, null);
+            SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(sser);
         }
 
@@ -175,7 +174,7 @@ public abstract class FeatureMethods extends PreparingFlow {
             snippetExec.setExec( new ExecProcessService.Result(true, 0, "This is sample console output. fit"));
             String yaml = SnippetExecUtils.toString(snippetExec);
 
-            SimpleTaskExecResult ster = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS), null, null);
+            SimpleTaskExecResult ster = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
             results.add(ster);
         }
 

@@ -35,12 +35,6 @@ public class StationTask {
     // snippet exec result
     public String snippetExecResult;
 
-    // pre-snippet exec result
-    public String preSnippetExecResult;
-
-    // post-snippet exec result
-    public String postSnippetExecResult;
-
     // need to clean dir of task after processing this task?
     public boolean clean;
 

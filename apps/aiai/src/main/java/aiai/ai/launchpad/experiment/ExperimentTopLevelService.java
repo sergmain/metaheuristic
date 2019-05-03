@@ -113,7 +113,7 @@ public class ExperimentTopLevelService {
     public ExperimentResult getExperiment(long experimentId) {
         Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
         if (experiment == null) {
-            return new ExperimentResult("#560.01 experiment wasn't found, experimentId: " + experimentId );
+            return new ExperimentResult("#285.01 experiment wasn't found, experimentId: " + experimentId );
         }
         return new ExperimentResult(experiment);
     }
@@ -133,7 +133,7 @@ public class ExperimentTopLevelService {
                 result.items.add(new ConsoleResult.SimpleConsoleOutput(execResult.exitCode, execResult.isOk, execResult.console));
             }
             else {
-                log.info("#280.10 snippetExec is null");
+                log.info("#285.10 snippetExec is null");
             }
         }
         return result;
@@ -157,12 +157,12 @@ public class ExperimentTopLevelService {
     public ExperimentFeatureExtendedResult getExperimentFeatureExtended(Long experimentId, Long featureId) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            return new ExperimentFeatureExtendedResult("#280.01 experiment wasn't found, experimentId: " + experimentId);
+            return new ExperimentFeatureExtendedResult("#285.15 experiment wasn't found, experimentId: " + experimentId);
         }
 
         ExperimentFeature experimentFeature = experimentFeatureRepository.findById(featureId).orElse(null);
         if (experimentFeature == null) {
-            return new ExperimentFeatureExtendedResult("#280.05 feature wasn't found, experimentFeatureId: " + featureId);
+            return new ExperimentFeatureExtendedResult("#285.19 feature wasn't found, experimentFeatureId: " + featureId);
         }
 
         return experimentService.prepareExperimentFeatures(experiment, experimentFeature);
@@ -171,14 +171,14 @@ public class ExperimentTopLevelService {
     public ExperimentInfoExtendedResult getExperimentInfo(Long id) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new ExperimentInfoExtendedResult("#280.09 experiment wasn't found, experimentId: " + id);
+            return new ExperimentInfoExtendedResult("#285.22 experiment wasn't found, experimentId: " + id);
         }
         if (experiment.getFlowInstanceId() == null) {
-            return new ExperimentInfoExtendedResult("#280.12 experiment wasn't startet yet, experimentId: " + id);
+            return new ExperimentInfoExtendedResult("#285.25 experiment wasn't startet yet, experimentId: " + id);
         }
         FlowInstance flowInstance = flowInstanceRepository.findById(experiment.getFlowInstanceId()).orElse(null);
         if (flowInstance == null) {
-            return new ExperimentInfoExtendedResult("#280.16 experiment has broken ref to flowInstance, experimentId: " + id);
+            return new ExperimentInfoExtendedResult("#285.29 experiment has broken ref to flowInstance, experimentId: " + id);
         }
 
         for (ExperimentHyperParams hyperParams : experiment.getHyperParams()) {
@@ -207,7 +207,7 @@ public class ExperimentTopLevelService {
     public ExperimentsEditResult editExperiment(@PathVariable Long id) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new ExperimentsEditResult("#280.19 experiment wasn't found, experimentId: " + id);
+            return new ExperimentsEditResult("#285.33 experiment wasn't found, experimentId: " + id);
         }
         Iterable<Snippet> snippets = snippetRepository.findAll();
         ExperimentData.SnippetResult snippetResult = new ExperimentData.SnippetResult();
@@ -250,7 +250,7 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentCache.findById(simpleExperiment.id);
         if (experiment == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.23 experiment wasn't found, experimentId: " + simpleExperiment.id);
+                    "#285.37 experiment wasn't found, experimentId: " + simpleExperiment.id);
         }
         experiment.setName(simpleExperiment.getName());
         experiment.setDescription(simpleExperiment.getDescription());
@@ -264,15 +264,15 @@ public class ExperimentTopLevelService {
     private OperationStatusRest processCommit(Experiment experiment) {
         if (StringUtils.isBlank(experiment.getName())) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.27 Name of experiment is blank.");
+                    "#285.40 Name of experiment is blank.");
         }
         if (StringUtils.isBlank(experiment.getCode())) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.31 Code of experiment is blank.");
+                    "#285.41 Code of experiment is blank.");
         }
         if (StringUtils.isBlank(experiment.getDescription())) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.35 Description of experiment is blank.");
+                    "#285.42 Description of experiment is blank.");
         }
         experiment.strip();
         experimentCache.save(experiment);
@@ -283,10 +283,10 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.23 experiment wasn't found, experimentId: " + experimentId);
+                    "#285.45 experiment wasn't found, experimentId: " + experimentId);
         }
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#280.42 hyper param's key and value must not be null, key: "+key+", value: " + value );
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#285.48 hyper param's key and value must not be null, key: "+key+", value: " + value );
         }
         if (experiment.getHyperParams()==null) {
             experiment.setHyperParams(new ArrayList<>());
@@ -294,7 +294,7 @@ public class ExperimentTopLevelService {
         String keyFinal = key.trim();
         boolean isExist = experiment.getHyperParams().stream().map(ExperimentHyperParams::getKey).anyMatch(keyFinal::equals);
         if (isExist) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#280.45 hyper parameter "+key+" already exist");
+            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#285.51 hyper parameter "+key+" already exist");
         }
 
         ExperimentHyperParams m = new ExperimentHyperParams();
@@ -311,11 +311,11 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.47 experiment wasn't found, id: "+experimentId );
+                    "#285.53 experiment wasn't found, id: "+experimentId );
         }
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.51 hyper param's key and value must not be null, key: "+key+", value: " + value );
+                    "#285.55 hyper param's key and value must not be null, key: "+key+", value: " + value );
         }
         if (experiment.getHyperParams()==null) {
             experiment.setHyperParams(new ArrayList<>());
@@ -344,7 +344,7 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.54 experiment wasn't found, id: "+id );
+                    "#285.58 experiment wasn't found, id: "+id );
         }
         Long experimentId = experiment.getId();
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experimentId);
@@ -369,7 +369,7 @@ public class ExperimentTopLevelService {
         ExperimentHyperParams hyperParams = experimentHyperParamsRepository.findById(id).orElse(null);
         if (hyperParams == null || experimentId != hyperParams.getExperiment().getId()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.61 Hyper parameters misconfigured, try again.");
+                    "#285.61 Hyper parameters misconfigured, try again.");
         }
         experimentHyperParamsRepository.deleteById(id);
         experimentCache.invalidate(experimentId);
@@ -380,7 +380,7 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.63 experiment wasn't found, id: "+experimentId );
+                    "#285.63 experiment wasn't found, id: "+experimentId );
         }
         if (experiment.getHyperParams()==null) {
             experiment.setHyperParams(new ArrayList<>());
@@ -422,7 +422,7 @@ public class ExperimentTopLevelService {
         ExperimentSnippet snippet = experimentSnippetRepository.findById(id).orElse(null);
         if (snippet == null || experimentId != snippet.getExperimentId()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.66 Snippet is misconfigured. Try again" );
+                    "#285.66 Snippet is misconfigured. Try again" );
         }
         experimentSnippetRepository.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -432,7 +432,7 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.71 experiment wasn't found, experimentId: " + id);
+                    "#285.71 experiment wasn't found, experimentId: " + id);
         }
         experimentSnippetRepository.deleteByExperimentId(id);
         experimentFeatureRepository.deleteByExperimentId(id);
@@ -444,7 +444,7 @@ public class ExperimentTopLevelService {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.73 experiment wasn't found, experimentId: " + id);
+                    "#285.73 experiment wasn't found, experimentId: " + id);
         }
         final Experiment e = new Experiment();
         e.setCode(StrUtils.incCopyNumber(experiment.getCode()));
@@ -470,12 +470,12 @@ public class ExperimentTopLevelService {
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#280.75 Can't re-run task "+taskId+", task with such taskId wasn't found");
+                    "#285.75 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
         FlowInstance flowInstance = flowInstanceRepository.findById(task.getFlowInstanceId()).orElse(null);
         if (flowInstance == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#270.84 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any flowInstance");
+                    "#285.84 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any flowInstance");
         }
 
         Task t = taskPersistencer.resetTask(taskId);
