@@ -72,7 +72,7 @@ public class TaskPersistencer {
         return null;
     }
 
-    public Enums.UploadResourceStatus setResultReceived(long taskId, boolean value) {
+    public Enums.UploadResourceStatus setResultReceived(long taskId, boolean resultReceived) {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
@@ -86,11 +86,11 @@ public class TaskPersistencer {
                     }
                     task.setCompleted(true);
                     task.setCompletedOn(System.currentTimeMillis());
-                    task.setResultReceived(value);
+                    task.setResultReceived(resultReceived);
                     taskRepository.save(task);
                     return Enums.UploadResourceStatus.OK;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.warn("#307.18 Error set resultReceived to {} try #{}, taskId: {}, error: {}", value, i, taskId, e.toString());
+                    log.warn("#307.18 Error set resultReceived to {} try #{}, taskId: {}, error: {}", resultReceived, i, taskId, e.toString());
                 }
             }
         }

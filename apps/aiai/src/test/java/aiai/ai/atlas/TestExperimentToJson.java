@@ -18,11 +18,12 @@
 package aiai.ai.atlas;
 
 import aiai.ai.Enums;
-import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.atlas.AtlasService;
 import aiai.ai.launchpad.atlas.ExperimentStoredToAtlas;
 import aiai.ai.launchpad.data.ExperimentData;
 import aiai.ai.launchpad.experiment.ExperimentTopLevelService;
+import aiai.ai.launchpad.flow.FlowService;
+import aiai.ai.preparing.PreparingFlow;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -35,10 +36,12 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 
+import static org.junit.Assert.assertNotNull;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
-public class TestExperimentToJson {
+public class TestExperimentToJson extends PreparingFlow {
 
     @Autowired
     private ExperimentTopLevelService experimentTopLevelService;
@@ -53,28 +56,34 @@ public class TestExperimentToJson {
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
-    public static class StoredExperiment {
-        Experiment experiment;
+    @Override
+    public String getFlowParamsAsYaml() {
+        return getFlowParamsAsYaml_Simple();
     }
 
     @Test
     public void toJson() throws JsonProcessingException {
 
-        long experimentId = 224;
+        long experimentId = experiment.getId();
         ExperimentData.ExperimentInfoExtendedResult result =
                 experimentTopLevelService.getExperimentInfo(experimentId);
 
         String json = mapper.writeValueAsString(result);
 
         System.out.println("json =\n" + json);
-        Experiment e = null;
     }
 
     @Test
     public void toExperimentStoredToAtlasToJson() throws IOException {
 
-        // TODO rewrite this to use real experiment from aiai.ai.preparing.PreparingExperiment
-        long experimentId = 224;
+        //noinspection unused
+        FlowService.TaskProducingResult result = produceTasksForTest();
+
+        assertNotNull(experiment);
+        assertNotNull(experiment.getId());
+        assertNotNull(experiment.getFlowInstanceId());
+
+        long experimentId = experiment.getId();
 
         AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(experimentId);
         if (r.status!= Enums.StoringStatus.OK) {

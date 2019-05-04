@@ -39,6 +39,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertTrue;
 
@@ -212,7 +213,7 @@ public abstract class PreparingExperiment {
             ehp3.setValues("[7, 13]");
             ehp3.setExperiment(experiment);
 
-            experiment.setHyperParams(Arrays.asList(ehp1, ehp2, ehp3));
+            experiment.setHyperParams(List.of(ehp1, ehp2, ehp3));
 
             mills = System.currentTimeMillis();
             log.info("Start experimentRepository.save()");

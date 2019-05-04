@@ -20,6 +20,7 @@ package aiai.ai.preparing;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.flow.TaskCollector;
+import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.Flow;
 import aiai.ai.launchpad.beans.FlowInstance;
@@ -46,7 +47,8 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import java.io.ByteArrayInputStream;
 import java.util.*;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 @Slf4j
 public abstract class PreparingFlow extends PreparingExperiment {
@@ -258,6 +260,34 @@ public abstract class PreparingFlow extends PreparingExperiment {
         } catch (Throwable th) {
             log.error("error", th);
         }
+    }
+
+    public FlowService.TaskProducingResult produceTasksForTest() {
+        assertFalse(flowYaml.processes.isEmpty());
+        assertEquals(EnumsApi.ProcessType.EXPERIMENT, flowYaml.processes.get(flowYaml.processes.size()-1).type);
+
+        EnumsApi.FlowValidateStatus status = flowService.validate(flow);
+        assertEquals(EnumsApi.FlowValidateStatus.OK, status);
+
+        FlowService.TaskProducingResult result = flowService.createFlowInstance(flow.getId(), InputResourceParamUtils.toString(inputResourceParam));
+        flowInstance = result.flowInstance;
+
+        assertEquals(EnumsApi.FlowProducingStatus.OK, result.flowProducingStatus);
+        assertNotNull(flowInstance);
+        assertEquals(Enums.FlowInstanceExecState.NONE.code, flowInstance.execState);
+
+
+        EnumsApi.FlowProducingStatus producingStatus = flowService.toProducing(flowInstance);
+        assertEquals(EnumsApi.FlowProducingStatus.OK, producingStatus);
+        assertEquals(Enums.FlowInstanceExecState.PRODUCING.code, flowInstance.execState);
+
+        result = flowService.produceAllTasks(true, flow, flowInstance);
+        flowInstance = result.flowInstance;
+        assertEquals(EnumsApi.FlowProducingStatus.OK, result.flowProducingStatus);
+        assertEquals(Enums.FlowInstanceExecState.PRODUCED.code, flowInstance.execState);
+
+        experiment = experimentCache.findById(experiment.getId());
+        return result;
     }
 
     private void deleteSnippet(Snippet s) {

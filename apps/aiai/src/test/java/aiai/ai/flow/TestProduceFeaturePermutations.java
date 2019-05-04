@@ -30,8 +30,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -59,7 +57,7 @@ public class TestProduceFeaturePermutations extends PreparingExperiment {
 
     @Test
     public void testFeaturePermutation() {
-        experimentService.produceFeaturePermutations(true, experiment.getId(), Arrays.asList("aaa", "bbb", "ccc"), new IntHolder());
+        experimentService.produceFeaturePermutations(true, experiment.getId(), List.of("aaa", "bbb", "ccc"), new IntHolder());
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
         assertNotNull(features);
         assertEquals(7, features.size());

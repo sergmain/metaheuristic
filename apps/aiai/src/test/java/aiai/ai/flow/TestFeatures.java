@@ -17,23 +17,16 @@
 
 package aiai.ai.flow;
 
-import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.ExperimentFeature;
+import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.preparing.PreparingFlow;
-import aiai.ai.utils.holders.IntHolder;
-import aiai.ai.yaml.flow.FlowYaml;
-import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -47,76 +40,15 @@ public class TestFeatures extends PreparingFlow {
 
     @Override
     public String getFlowParamsAsYaml() {
-        FlowYaml flowYaml = new FlowYaml();
-        {
-            Process p = new Process();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
-            p.name = "assembly raw file";
-            p.code = "assembly-raw-file";
-
-            p.snippetCodes = Collections.singletonList("snippet-01:1.1");
-            p.collectResources = true;
-            p.outputType = "assembled-raw";
-
-            flowYaml.processes.add(p);
-        }
-        {
-            Process p = new Process();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
-            p.name = "dataset processing";
-            p.code = "dataset-processing";
-
-            p.snippetCodes = Collections.singletonList("snippet-02:1.1");
-            p.collectResources = true;
-            p.outputType = "dataset-processing";
-
-            flowYaml.processes.add(p);
-        }
-        {
-            Process p = new Process();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
-            p.name = "feature processing";
-            p.code = "feature-processing";
-
-            p.snippetCodes = Arrays.asList("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
-            p.parallelExec = true;
-            p.collectResources = true;
-            p.outputType = "feature";
-
-            flowYaml.processes.add(p);
-        }
-        {
-            Process p = new Process();
-            p.type = EnumsApi.ProcessType.EXPERIMENT;
-            p.name = "experiment";
-            p.code = "test-experiment-code-01";
-            p.metas.addAll(
-                    Arrays.asList(
-                            new Process.Meta("assembled-raw", "assembled-raw", null),
-                            new Process.Meta("dataset", "dataset-processing", null),
-                            new Process.Meta("feature", "feature", null)
-                    )
-            );
-
-            flowYaml.processes.add(p);
-        }
-
-        //noinspection UnnecessaryLocalVariable
-        String yaml = flowYamlUtils.toString(flowYaml);
-        return yaml;
+        return getFlowParamsAsYaml_Simple();
     }
 
     @Test
     public void testFeatures() {
-        EnumsApi.FlowValidateStatus status = flowService.validate(flow);
-        assertEquals(EnumsApi.FlowValidateStatus.OK, status);
-
-
-        // produce artifacts - features, sequences,...
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
-        //noinspection ArraysAsListWithZeroOrOneArgument
-        experimentService.produceFeaturePermutations(true, experiment.getId(), Arrays.asList("aaa"), new IntHolder());
+        //noinspection unused
+        FlowService.TaskProducingResult result = produceTasksForTest();
         log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();
@@ -125,26 +57,6 @@ public class TestFeatures extends PreparingFlow {
         log.info("experimentFeatureRepository.findByExperimentId() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(features);
-        if (true) throw new NotImplementedException("TODO 777 - just random number. need to change value for working test");
-
-        assertEquals(
-                "TODO 777 - just random number. need to change value for working test",
-                777, features.size());
-
-        mills = System.currentTimeMillis();
-        log.info("Start experimentService.produceTasks()");
-        // produce sequences
-        List<String> codes = Arrays.asList("aaa", "bbb", "ccc");
-        Process process = new Process();
-        process.order=1;
-        IntHolder intHolder = new IntHolder();
-        // TODO need change empty HashMaps to actual HashMaps with values
-        experimentService.produceTasks(true, flow, flowInstance, process, experiment, new HashMap<>(), new HashMap<>(), intHolder);
-        log.info("experimentService.produceTasks() was finished for {}", System.currentTimeMillis() - mills);
-
-        // some global final check
-        assertEquals(777, experimentFeatureRepository.findByExperimentId(experiment.getId()).size());
-
-
+        assertEquals(7, features.size());
     }
 }

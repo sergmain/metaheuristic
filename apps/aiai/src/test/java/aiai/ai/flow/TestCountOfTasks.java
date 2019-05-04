@@ -47,67 +47,9 @@ import static org.junit.Assert.*;
 @Slf4j
 public class TestCountOfTasks extends PreparingFlow {
 
-    @SuppressWarnings("Duplicates")
     @Override
     public String getFlowParamsAsYaml() {
-        flowYaml = new FlowYaml();
-        {
-            Process p = new Process();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
-            p.name = "assembly raw file";
-            p.code = "assembly-raw-file";
-
-            p.snippetCodes = Collections.singletonList("snippet-01:1.1");
-            p.collectResources = false;
-            p.outputType = "assembled-raw";
-
-            flowYaml.processes.add(p);
-        }
-        {
-            Process p = new Process();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
-            p.name = "dataset processing";
-            p.code = "dataset-processing";
-
-            p.snippetCodes = Collections.singletonList("snippet-02:1.1");
-            p.collectResources = true;
-            p.outputType = "dataset-processing";
-
-            flowYaml.processes.add(p);
-        }
-        {
-            Process p = new Process();
-            p.type = EnumsApi.ProcessType.FILE_PROCESSING;
-            p.name = "feature processing";
-            p.code = "feature-processing";
-
-            p.snippetCodes = Arrays.asList("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
-            p.parallelExec = true;
-            p.collectResources = false;
-            p.outputType = "feature";
-
-            flowYaml.processes.add(p);
-        }
-        {
-            Process p = new Process();
-            p.type = EnumsApi.ProcessType.EXPERIMENT;
-            p.name = "experiment";
-            p.code = PreparingExperiment.TEST_EXPERIMENT_CODE_01;
-
-            p.metas.addAll(
-                    Arrays.asList(
-                            new Process.Meta("assembled-raw", "assembled-raw", null),
-                            new Process.Meta("dataset", "dataset-processing", null),
-                            new Process.Meta("feature", "feature", null)
-                    )
-            );
-
-            flowYaml.processes.add(p);
-        }
-
-        String yaml = flowYamlUtils.toString(flowYaml);
-        System.out.println(yaml);
-        return yaml;
+        return getFlowParamsAsYaml_Simple();
     }
 
     @Autowired

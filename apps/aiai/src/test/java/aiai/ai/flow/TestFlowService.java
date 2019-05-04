@@ -17,20 +17,18 @@
 
 package aiai.ai.flow;
 
-import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
-import aiai.api.v1.launchpad.Process;
-import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.flow.FlowService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingFlow;
-import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.launchpad.Process;
+import aiai.api.v1.launchpad.Task;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -39,7 +37,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.*;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -55,8 +53,6 @@ public class TestFlowService extends PreparingFlow {
     @Autowired
     public TaskCollector taskCollector;
 
-
-    @SuppressWarnings("Duplicates")
     @Override
     public String getFlowParamsAsYaml() {
         return getFlowParamsAsYaml_Simple();
@@ -76,31 +72,7 @@ public class TestFlowService extends PreparingFlow {
 
     @Test
     public void testCreateTasks() {
-        assertFalse(flowYaml.processes.isEmpty());
-        assertEquals(EnumsApi.ProcessType.EXPERIMENT, flowYaml.processes.get(flowYaml.processes.size()-1).type);
-
-        EnumsApi.FlowValidateStatus status = flowService.validate(flow);
-        assertEquals(EnumsApi.FlowValidateStatus.OK, status);
-
-        FlowService.TaskProducingResult result = flowService.createFlowInstance(flow.getId(), InputResourceParamUtils.toString(inputResourceParam));
-        flowInstance = result.flowInstance;
-
-        assertEquals(EnumsApi.FlowProducingStatus.OK, result.flowProducingStatus);
-        assertNotNull(flowInstance);
-        assertEquals(Enums.FlowInstanceExecState.NONE.code, flowInstance.execState);
-
-
-        EnumsApi.FlowProducingStatus producingStatus = flowService.toProducing(flowInstance);
-        assertEquals(EnumsApi.FlowProducingStatus.OK, producingStatus);
-        assertEquals(Enums.FlowInstanceExecState.PRODUCING.code, flowInstance.execState);
-
-        result = flowService.produceAllTasks(true, flow, flowInstance);
-        flowInstance = result.flowInstance;
-        assertEquals(EnumsApi.FlowProducingStatus.OK, result.flowProducingStatus);
-        assertEquals(Enums.FlowInstanceExecState.PRODUCED.code, flowInstance.execState);
-
-        experiment = experimentCache.findById(experiment.getId());
-
+        FlowService.TaskProducingResult result = produceTasksForTest();
         List<Object[]> tasks = taskCollector.getTasks(flowInstance);
 
         assertNotNull(result);
@@ -150,10 +122,12 @@ public class TestFlowService extends PreparingFlow {
         r.setMetrics(null);
         r.setResult(getOKExecResult());
         taskPersistencer.storeExecResult(r);
+        taskPersistencer.setResultReceived(simpleTask.getTaskId(), true);
         flowService.markOrderAsProcessed();
 
         TaskService.TasksAndAssignToStationResult assignToStation3 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
+                taskService.getTaskAndAssignToStation(
+                        station.getId(), false, flowInstance.getId());
 
         Protocol.AssignedTask.Task simpleTask3 = assignToStation3.getSimpleTask();
 
@@ -167,6 +141,7 @@ public class TestFlowService extends PreparingFlow {
                 taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
         assertNull(assignToStation4.getSimpleTask());
 
+        taskPersistencer.setResultReceived(simpleTask3.getTaskId(), true);
         flowService.markOrderAsProcessed();
 
         TaskService.TasksAndAssignToStationResult assignToStation51 =
@@ -183,11 +158,19 @@ public class TestFlowService extends PreparingFlow {
                 taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
 
         Protocol.AssignedTask.Task simpleTask52 = assignToStation52.getSimpleTask();
-        assertNotNull(simpleTask52);
-        assertNotNull(simpleTask52.getTaskId());
-        Task task52 = taskRepository.findById(simpleTask52.getTaskId()).orElse(null);
-        assertNotNull(task52);
-        assertEquals(3, task52.getOrder());
+        assertNull(simpleTask52);
+
+        taskPersistencer.setResultReceived(simpleTask51.getTaskId(), true);
+
+        TaskService.TasksAndAssignToStationResult assignToStation53 =
+                taskService.getTaskAndAssignToStation(station.getId(), false, flowInstance.getId());
+
+        Protocol.AssignedTask.Task simpleTask53 = assignToStation53.getSimpleTask();
+        assertNotNull(simpleTask53);
+        assertNotNull(simpleTask53.getTaskId());
+        Task task53 = taskRepository.findById(simpleTask53.getTaskId()).orElse(null);
+        assertNotNull(task53);
+        assertEquals(3, task53.getOrder());
 
         int i=0;
     }
