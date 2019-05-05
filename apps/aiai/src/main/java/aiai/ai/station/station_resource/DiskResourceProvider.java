@@ -92,7 +92,7 @@ public class DiskResourceProvider implements ResourceProvider {
             log.info("The result data was already written to file {}, no need to upload to launchpad", outputResourceFile.getPath());
             stationTaskService.setResourceUploadedAndCompleted(launchpad.launchpadLookup.url, task.taskId);
         } else {
-            String es = "Result data file wasn't found, resultDataFile: " + outputResourceFile.getPath();
+            String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
             return new ExecProcessService.Result(false, -1, es);
         }
@@ -108,11 +108,11 @@ public class DiskResourceProvider implements ResourceProvider {
         EnvYaml env = envService.getEnvYaml();
         DiskStorage diskStorage = env.findDiskStorageByCode(storageUri.envCode);
         if (diskStorage==null) {
-            throw new ResourceProviderException("#015.020 The disk storage wasn't found for code: " + storageUri.envCode);
+            throw new ResourceProviderException("#015.037 The disk storage wasn't found for code: " + storageUri.envCode);
         }
         File path = new File(diskStorage.path);
         if (!path.exists()) {
-            throw new ResourceProviderException("#015.024 The path of disk storage doesn't exist: " + path.getAbsolutePath());
+            throw new ResourceProviderException("#015.042 The path of disk storage doesn't exist: " + path.getAbsolutePath());
         }
 
         return new File(path, outputResourceCode);
