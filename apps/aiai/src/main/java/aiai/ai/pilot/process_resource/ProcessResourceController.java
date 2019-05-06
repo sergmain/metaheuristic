@@ -525,14 +525,16 @@ public class ProcessResourceController {
                 continue;
             }
             String mainDocumentPoolCode = getMainDocumentPoolCode(fi.getInputResourceParam());
-            String mainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
-            if (mainDocument==null) {
+
+            final String fullMainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
+            if (fullMainDocument==null) {
                 String msg = "#990.81, "+mainDocumentPoolCode+", Can't determine actual file name of main document, " +
                         "batchId: " + batch.id + ", flowInstanceId: " + bfi.flowInstanceId;
                 log.warn(msg);
                 status += (msg + '\n');
                 continue;
             }
+            String mainDocument = StrUtils.getName(fullMainDocument) + ".xml";
 
             Integer taskOrder = taskRepository.findMaxConcreteOrder(fi.id);
             if (taskOrder==null) {
