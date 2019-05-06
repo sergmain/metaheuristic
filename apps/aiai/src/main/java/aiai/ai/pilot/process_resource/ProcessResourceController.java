@@ -148,7 +148,8 @@ public class ProcessResourceController {
     }
 
     @PostMapping("/process-resources-part")
-    public String flowInstancesPart(@ModelAttribute(name = "result") ProcessResourceResult result, @PageableDefault(size = 10) Pageable pageable) {
+    public String flowInstancesPart(@ModelAttribute(name = "result") ProcessResourceResult result,
+                                    @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
         prepareProcessResourcesResult(result, pageable);
         return "pilot/process-resource/process-resources :: table";
     }
@@ -196,7 +197,7 @@ public class ProcessResourceController {
     }
 
     @PostMapping(value = "/process-resource-upload-from-file")
-    public String uploadFile(final Model model, final MultipartFile file, Long flowId, final RedirectAttributes redirectAttributes) {
+    public String uploadFile(final MultipartFile file, Long flowId, final RedirectAttributes redirectAttributes) {
 
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
@@ -228,9 +229,6 @@ public class ProcessResourceController {
                 return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
             }
 
-            String ext = StrUtils.getExtension(originFilename);
-
-//            final File dataFile = new File(tempDir, "document" + ext );
             final File dataFile = new File(tempDir, originFilename );
             log.debug("Start storing an uploaded document to disk");
             try(OutputStream os = new FileOutputStream(dataFile)) {
@@ -517,7 +515,7 @@ public class ProcessResourceController {
         File zipDir = new File(resultDir, "zip");
 
         for (BatchFlowInstance bfi : bfis) {
-            FlowInstance fi  =flowInstanceRepository.findById(bfi.flowInstanceId).orElse(null);
+            FlowInstance fi = flowInstanceRepository.findById(bfi.flowInstanceId).orElse(null);
             if (fi==null) {
                 String msg = "#990.80 Batch #" + batch.id + " contains broken flowInstanceId - #" + bfi.flowInstanceId;
                 status += (msg + '\n');
