@@ -276,13 +276,13 @@ public class ExperimentsController {
             return "redirect:/launchpad/experiment-info/"+id;
         }
 
-        if (experiment.flowInstanceId==null) {
+        if (experiment.workbookId==null) {
             redirectAttributes.addFlashAttribute("errorMessages",
-                    "# This experiment isn't bound to FlowInstance");
+                    "# This experiment isn't bound to Workbook");
             return "redirect:/launchpad/experiment-info/"+id;
         }
 
-        OperationStatusRest status = atlasService.toAtlas(experiment.flowInstanceId, id);
+        OperationStatusRest status = atlasService.toAtlas(experiment.workbookId, id);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }

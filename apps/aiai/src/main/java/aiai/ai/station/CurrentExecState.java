@@ -28,33 +28,33 @@ import java.util.*;
 @Profile("station")
 public class CurrentExecState {
 
-    // this is a map for holding the current status of FlowInstance, Not a task
-    private final Map<String, Map<Long, Enums.FlowInstanceExecState>> flowInstanceState = new HashMap<>();
+    // this is a map for holding the current status of Workbook, Not a task
+    private final Map<String, Map<Long, Enums.WorkbookExecState>> workbookState = new HashMap<>();
 
     private Map<String, BoolHolder> isInit = new HashMap<>();
 
     public boolean isInited(String launchpadUrl) {
-        synchronized(flowInstanceState) {
+        synchronized(workbookState) {
             return isInit.computeIfAbsent(launchpadUrl, v -> new BoolHolder(false)).value;
         }
     }
 
-    void register(String launchpadUrl, List<Protocol.FlowInstanceStatus.SimpleStatus> statuses) {
-        synchronized(flowInstanceState) {
+    void register(String launchpadUrl, List<Protocol.WorkbookStatus.SimpleStatus> statuses) {
+        synchronized(workbookState) {
             isInit.computeIfAbsent(launchpadUrl, v -> new BoolHolder()).value = true;
-            // statuses==null when there isn't any flow instance
+            // statuses==null when there isn't any workbook
             if (statuses==null) {
-                flowInstanceState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).clear();
+                workbookState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).clear();
                 return;
             }
-            statuses.forEach(status -> flowInstanceState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).put(status.flowInstanceId, status.state));
-            flowInstanceState.forEach((k, v) -> {
+            statuses.forEach(status -> workbookState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).put(status.workbookId, status.state));
+            workbookState.forEach((k, v) -> {
                 if (!k.equals(launchpadUrl)) {
                     return;
                 }
                 List<Long> ids = new ArrayList<>();
                 v.forEach((key, value) -> {
-                    boolean isFound = statuses.stream().anyMatch(status -> status.flowInstanceId == key);
+                    boolean isFound = statuses.stream().anyMatch(status -> status.workbookId == key);
                     if (!isFound) {
                         ids.add(key);
                     }
@@ -64,21 +64,21 @@ public class CurrentExecState {
         }
     }
 
-    Enums.FlowInstanceExecState getState(String host, long flowInstanceId) {
-        synchronized(flowInstanceState) {
+    Enums.WorkbookExecState getState(String host, long workbookId) {
+        synchronized(workbookState) {
             if (!isInited(host)) {
-                return Enums.FlowInstanceExecState.UNKNOWN;
+                return Enums.WorkbookExecState.UNKNOWN;
             }
-            return flowInstanceState.getOrDefault(host, Collections.emptyMap()).getOrDefault(flowInstanceId, Enums.FlowInstanceExecState.DOESNT_EXIST);
+            return workbookState.getOrDefault(host, Collections.emptyMap()).getOrDefault(workbookId, Enums.WorkbookExecState.DOESNT_EXIST);
         }
     }
 
-    boolean isState(String launchpadUrl, long flowInstanceId, Enums.FlowInstanceExecState state) {
-        Enums.FlowInstanceExecState currState = getState(launchpadUrl, flowInstanceId);
+    boolean isState(String launchpadUrl, long workbookId, Enums.WorkbookExecState state) {
+        Enums.WorkbookExecState currState = getState(launchpadUrl, workbookId);
         return currState!=null && currState==state;
     }
 
-    boolean isStarted(String launchpadUrl, long flowInstanceId) {
-        return isState(launchpadUrl, flowInstanceId, Enums.FlowInstanceExecState.STARTED);
+    boolean isStarted(String launchpadUrl, long workbookId) {
+        return isState(launchpadUrl, workbookId, Enums.WorkbookExecState.STARTED);
     }
 }

@@ -46,8 +46,8 @@ public class TestCommands {
                 return new Protocol.ReportTaskProcessingResult();
             case ReportResultDelivering:
                 return new Protocol.ReportResultDelivering();
-            case FlowInstanceStatus:
-                return new Protocol.FlowInstanceStatus();
+            case WorkbookStatus:
+                return new Protocol.WorkbookStatus();
             case StationTaskStatus:
                 return new Protocol.StationTaskStatus();
             case CheckForMissingOutputResources:

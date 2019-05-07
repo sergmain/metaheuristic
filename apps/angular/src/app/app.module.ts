@@ -28,9 +28,9 @@ import {
     InfoExperimentComponent,
     ProgressExperimentComponent,
 
-    FlowsComponent,
-    AddFlowComponent,
-    EditFlowComponent,
+    PlansComponent,
+    AddPlanComponent,
+    EditPlanComponent,
 
     InstancesComponent,
     AddInstanceComponent,
@@ -71,9 +71,9 @@ import { CtColComponent } from './custom-tags/ct-col/ct-col.component';
         InfoExperimentComponent,
         ProgressExperimentComponent,
 
-        FlowsComponent,
-        AddFlowComponent,
-        EditFlowComponent,
+        PlansComponent,
+        AddPlanComponent,
+        EditPlanComponent,
 
         InstancesComponent,
         AddInstanceComponent,

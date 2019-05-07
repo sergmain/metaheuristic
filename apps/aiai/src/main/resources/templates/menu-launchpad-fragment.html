@@ -7,8 +7,8 @@
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/index.html" th:href="@{/launchpad/index}">Launchpad index</a>
         </li>
-        <li th:attr="class=${#httpServletRequest.requestURI.startsWith('/launchpad/flow/flow')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="launchpad/flow/flows.html" th:href="@{/launchpad/flow/flows}">Flows</a>
+        <li th:attr="class=${#httpServletRequest.requestURI.startsWith('/launchpad/plan/plan')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+            <a class="pure-menu-link" href="launchpad/plan/plans.html" th:href="@{/launchpad/plan/plans}">Plans</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI=='/launchpad/experiments'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/experiments.html" th:href="@{/launchpad/experiments}">Experiments</a>

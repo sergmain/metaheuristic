@@ -19,9 +19,9 @@ package aiai.ai.launchpad.file_process;
 
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Process;
-import aiai.ai.launchpad.beans.Flow;
+import aiai.ai.launchpad.beans.Plan;
 import aiai.ai.launchpad.beans.Snippet;
-import aiai.ai.launchpad.flow.ProcessValidator;
+import aiai.ai.launchpad.plan.ProcessValidator;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -40,34 +40,34 @@ public class FileProcessValidator implements ProcessValidator {
     }
 
     @Override
-    public EnumsApi.FlowValidateStatus validate(Flow flow, Process process, boolean isFirst) {
+    public EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst) {
         if (process.getSnippetCodes() == null || process.getSnippetCodes().isEmpty()) {
-            return EnumsApi.FlowValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
+            return EnumsApi.PlanValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }
         for (String snippetCode : process.snippetCodes) {
             Snippet snippet = snippetRepository.findByCode(snippetCode);
             if (snippet==null) {
                 log.error("#175.07 Snippet wasn't found for code: {}, process: {}", snippetCode, process);
-                return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+                return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }
         if (StringUtils.isNotBlank(process.preSnippetCode)) {
             Snippet snippet = snippetRepository.findByCode(process.preSnippetCode);
             if (snippet==null) {
                 log.error("#175.09 Pre-snippet wasn't found for code: {}, process: {}", process.preSnippetCode, process);
-                return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+                return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }
         if (StringUtils.isNotBlank(process.postSnippetCode)) {
             Snippet snippet = snippetRepository.findByCode(process.postSnippetCode);
             if (snippet==null) {
                 log.error("#175.11 Post-snippet wasn't found for code: {}, process: {}", process.postSnippetCode, process);
-                return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+                return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }
 
         if (!process.parallelExec && process.snippetCodes.size()>1) {
-            return EnumsApi.FlowValidateStatus.TOO_MANY_SNIPPET_CODES_ERROR;
+            return EnumsApi.PlanValidateStatus.TOO_MANY_SNIPPET_CODES_ERROR;
         }
 
         return null;

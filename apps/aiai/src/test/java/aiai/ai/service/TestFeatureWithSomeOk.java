@@ -44,13 +44,13 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         produceTasks();
         log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
-        flowInstance = flowService.toStarted(flowInstance);
+        workbook = planService.toStarted(workbook);
 
         getTaskAndAssignToStation_mustBeNewTask();
 
         // this station already got sequences, so don't provide any new
         TaskService.TasksAndAssignToStationResult sequences = taskService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getFlowInstanceId());
+                station.getId(), false, experiment.getWorkbookId());
         assertNotNull(sequences);
         // sequences is empty cos we still didn't finish those sequences
         assertNull(sequences.getSimpleTask());
@@ -58,7 +58,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         finishCurrentWithError(1);
 
         TaskService.TasksAndAssignToStationResult sequences1 = taskService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getFlowInstanceId());
+                station.getId(), false, experiment.getWorkbookId());
         assertNotNull(sequences1);
 
         // TODO 2019.05.04 this test needs to be rewritten completely

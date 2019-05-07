@@ -1,7 +1,7 @@
 hyperParams: {
   }
 inputResourceCodes:
-  flow-instance-input-type:
+  workbook-input-type:
   - input-file.txt
 outputResourceCode: output-file.txt
 snippet:

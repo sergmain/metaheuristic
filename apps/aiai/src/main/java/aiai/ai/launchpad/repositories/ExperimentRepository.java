@@ -43,7 +43,7 @@ public interface ExperimentRepository extends CrudRepository<Experiment, Long> {
     @Transactional(readOnly = true)
     Slice<Experiment> findAllByOrderByIdDesc(Pageable pageable);
 
-    Experiment findByFlowInstanceId(long flowInstanceId);
+    Experiment findByWorkbookId(long workbookId);
 
     @Override
     @Transactional(readOnly = true)

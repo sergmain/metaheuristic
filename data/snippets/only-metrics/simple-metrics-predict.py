@@ -54,7 +54,7 @@ metricValues['sum'] = randint(100, 200)
 metrics_yaml_file = os.path.join(artifact_path, 'metrics.yaml')
 
 with open(metrics_yaml_file, 'w') as outfile:
-    yaml.dump(metrics, outfile, default_flow_style=False)
+    yaml.dump(metrics, outfile, default_plan_style=False)
 
 
 K.clear_session()

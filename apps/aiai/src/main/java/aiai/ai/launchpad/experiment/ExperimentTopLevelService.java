@@ -85,10 +85,10 @@ public class ExperimentTopLevelService {
     private final ExperimentSnippetRepository experimentSnippetRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final TaskRepository taskRepository;
-    private final FlowInstanceRepository flowInstanceRepository;
+    private final WorkbookRepository workbookRepository;
     private final TaskPersistencer taskPersistencer;
 
-    public ExperimentTopLevelService(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentCache experimentCache, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, FlowInstanceRepository flowInstanceRepository, TaskPersistencer taskPersistencer) {
+    public ExperimentTopLevelService(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentCache experimentCache, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, WorkbookRepository workbookRepository, TaskPersistencer taskPersistencer) {
         this.globals = globals;
         this.snippetRepository = snippetRepository;
         this.experimentRepository = experimentRepository;
@@ -99,7 +99,7 @@ public class ExperimentTopLevelService {
         this.experimentSnippetRepository = experimentSnippetRepository;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.taskRepository = taskRepository;
-        this.flowInstanceRepository = flowInstanceRepository;
+        this.workbookRepository = workbookRepository;
         this.taskPersistencer = taskPersistencer;
     }
 
@@ -173,12 +173,12 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentInfoExtendedResult("#285.22 experiment wasn't found, experimentId: " + id);
         }
-        if (experiment.getFlowInstanceId() == null) {
+        if (experiment.getWorkbookId() == null) {
             return new ExperimentInfoExtendedResult("#285.25 experiment wasn't startet yet, experimentId: " + id);
         }
-        FlowInstance flowInstance = flowInstanceRepository.findById(experiment.getFlowInstanceId()).orElse(null);
-        if (flowInstance == null) {
-            return new ExperimentInfoExtendedResult("#285.29 experiment has broken ref to flowInstance, experimentId: " + id);
+        Workbook workbook = workbookRepository.findById(experiment.getWorkbookId()).orElse(null);
+        if (workbook == null) {
+            return new ExperimentInfoExtendedResult("#285.29 experiment has broken ref to workbook, experimentId: " + id);
         }
 
         for (ExperimentHyperParams hyperParams : experiment.getHyperParams()) {
@@ -190,14 +190,14 @@ public class ExperimentTopLevelService {
         }
 
         ExperimentInfoExtendedResult result = new ExperimentInfoExtendedResult();
-        if (experiment.getFlowInstanceId()==null) {
+        if (experiment.getWorkbookId()==null) {
             result.addInfoMessage("Launch is disabled, dataset isn't assigned");
         }
 
         ExperimentInfoResult experimentInfoResult = new ExperimentInfoResult();
         experimentInfoResult.features = experimentFeatureRepository.findByExperimentIdOrderByMaxValueDesc(experiment.getId());
-        experimentInfoResult.flowInstance = flowInstance;
-        experimentInfoResult.flowInstanceExecState = Enums.FlowInstanceExecState.toState(flowInstance.execState);
+        experimentInfoResult.workbook = workbook;
+        experimentInfoResult.workbookExecState = Enums.WorkbookExecState.toState(workbook.execState);
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;
@@ -472,10 +472,10 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
                     "#285.75 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
-        FlowInstance flowInstance = flowInstanceRepository.findById(task.getFlowInstanceId()).orElse(null);
-        if (flowInstance == null) {
+        Workbook workbook = workbookRepository.findById(task.getWorkbookId()).orElse(null);
+        if (workbook == null) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR,
-                    "#285.84 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any flowInstance");
+                    "#285.84 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
         }
 
         Task t = taskPersistencer.resetTask(taskId);

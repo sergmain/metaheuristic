@@ -1,5 +1,5 @@
 <div class="edit-experiment__body">
-    <mat-card class="flow-card" style="width:500px">
+    <mat-card class="plan-card" style="width:500px">
         <mat-card-header>
             <mat-card-title>Experiment {{experiment.name}} {{experiment.id}}</mat-card-title>
         </mat-card-header>
@@ -40,7 +40,7 @@
     <!--  -->
     <div *ngIf="snippets; then snippetsOn else snippetsOff"></div>
     <ng-template #snippetsOn>
-        <mat-card class="flow-card">
+        <mat-card class="plan-card">
             <mat-card-header>
                 <mat-card-title>Snippets</mat-card-title>
             </mat-card-header>
@@ -54,7 +54,7 @@
         </mat-card>
     </ng-template>
     <ng-template #snippetsOff>
-        <mat-card class="flow-card">
+        <mat-card class="plan-card">
             <mat-card-header>
                 <mat-card-title>Snippets</mat-card-title>
             </mat-card-header>
@@ -69,7 +69,7 @@
     <!--  -->
     <!--  -->
     <!--  -->
-    <mat-card class="flow-card">
+    <mat-card class="plan-card">
         <mat-card-header>
             <mat-card-title>Metadata</mat-card-title>
         </mat-card-header>

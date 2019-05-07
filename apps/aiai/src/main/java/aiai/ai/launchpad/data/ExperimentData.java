@@ -175,8 +175,8 @@ public class ExperimentData {
     public static class ExperimentExtendedResult {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeature> features;
-        public FlowInstance flowInstance;
-        public Enums.FlowInstanceExecState flowInstanceExecState;
+        public Workbook workbook;
+        public Enums.WorkbookExecState workbookExecState;
     }
 
     @Data
@@ -230,8 +230,8 @@ public class ExperimentData {
     public static class ExperimentInfoResult {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeature> features;
-        public FlowInstance flowInstance;
-        public Enums.FlowInstanceExecState flowInstanceExecState;
+        public Workbook workbook;
+        public Enums.WorkbookExecState workbookExecState;
     }
 
     @Data

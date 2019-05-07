@@ -17,13 +17,11 @@
 
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.station_status.StationStatus;
 import aiai.apps.commons.CommonConsts;
-import aiai.apps.commons.yaml.YamlUtils;
 import aiai.apps.commons.yaml.snippet.SnippetConfig;
-import aiai.apps.commons.yaml.snippet.SnippetConfigStatus;
 import aiai.apps.commons.yaml.snippet.SnippetConfigList;
 import aiai.apps.commons.yaml.snippet.SnippetConfigListUtils;
+import aiai.apps.commons.yaml.snippet.SnippetConfigStatus;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -35,7 +33,6 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;

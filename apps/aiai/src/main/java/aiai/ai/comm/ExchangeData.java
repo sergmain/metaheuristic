@@ -48,7 +48,7 @@ public class ExchangeData {
     private Protocol.ReportStationStatus reportStationStatus;
     private Protocol.ReportTaskProcessingResult reportTaskProcessingResult;
     private Protocol.ReportResultDelivering reportResultDelivering;
-    private Protocol.FlowInstanceStatus experimentStatus;
+    private Protocol.WorkbookStatus workbookStatus;
     private Protocol.StationTaskStatus stationTaskStatus;
     private Protocol.CheckForMissingOutputResources checkForMissingOutputResources;
     private Protocol.ResendTaskOutputResource resendTaskOutputResource;
@@ -87,8 +87,8 @@ public class ExchangeData {
                 }
                 this.reportStation = (Protocol.ReportStation) command;
                 break;
-            case FlowInstanceStatus:
-                this.experimentStatus = (Protocol.FlowInstanceStatus) command;
+            case WorkbookStatus:
+                this.workbookStatus = (Protocol.WorkbookStatus) command;
                 break;
             case StationTaskStatus:
                 this.stationTaskStatus = (Protocol.StationTaskStatus) command;
@@ -171,7 +171,7 @@ public class ExchangeData {
     public List<Command> getCommands(boolean isExcludeNop) {
         return asListOfNonNull(isExcludeNop, nop, reportStation, requestStationId,
                 assignedStationId, reAssignedStationId, requestTask, assignedTask, reportStationStatus,
-                reportTaskProcessingResult, reportResultDelivering, experimentStatus, stationTaskStatus,
+                reportTaskProcessingResult, reportResultDelivering, workbookStatus, stationTaskStatus,
                 checkForMissingOutputResources, resendTaskOutputResource, resendTaskOutputResourceResult);
     }
 

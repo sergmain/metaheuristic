@@ -76,9 +76,9 @@ public class ExperimentStoredToAtlas {
     @EqualsAndHashCode(callSuper = false)
     @JsonIgnoreProperties(value = {"version", "clean"})
     @ToString(callSuper = true)
-    public static class FlowOnShelf extends Flow {
-        public FlowOnShelf(Flow flow) {
-            BeanUtils.copyProperties(flow, this);
+    public static class PlanOnShelf extends Plan {
+        public PlanOnShelf(Plan plan) {
+            BeanUtils.copyProperties(plan, this);
         }
     }
 
@@ -87,9 +87,9 @@ public class ExperimentStoredToAtlas {
     @EqualsAndHashCode(callSuper = false)
     @JsonIgnoreProperties(value = {"version"})
     @ToString(callSuper = true)
-    public static class FlowInstanceOnShelf extends FlowInstance {
-        public FlowInstanceOnShelf(FlowInstance flowInstance) {
-            BeanUtils.copyProperties(flowInstance, this);
+    public static class WorkbookOnShelf extends Workbook {
+        public WorkbookOnShelf(Workbook workbook) {
+            BeanUtils.copyProperties(workbook, this);
         }
     }
 
@@ -160,8 +160,8 @@ public class ExperimentStoredToAtlas {
         }
     }
 
-    public FlowOnShelf flow;
-    public FlowInstanceOnShelf flowInstance;
+    public PlanOnShelf plan;
+    public WorkbookOnShelf workbook;
     public ExperimentOnShelf experiment;
     public List<ExperimentFeatureOnShelf> features = new ArrayList<>();
     public List<ExperimentHyperParamsOnShelf> hyperParams = new ArrayList<>();
@@ -170,13 +170,13 @@ public class ExperimentStoredToAtlas {
     public List<TaskOnShelf> tasks = new ArrayList<>();
 
     public ExperimentStoredToAtlas(
-            Flow flow, FlowInstance flowInstance, Experiment experiment,
+            Plan plan, Workbook workbook, Experiment experiment,
             List<ExperimentFeature> features, List<ExperimentHyperParams> hyperParams,
             List<ExperimentSnippet> snippets, List<ExperimentTaskFeature> taskFeatures,
             List<Task> tasks) {
 
-        this.flow = new FlowOnShelf(flow);
-        this.flowInstance = new FlowInstanceOnShelf(flowInstance);
+        this.plan = new PlanOnShelf(plan);
+        this.workbook = new WorkbookOnShelf(workbook);
         this.experiment = new ExperimentOnShelf(experiment);
 
         if (CollectionUtils.isNotEmpty(features)) {

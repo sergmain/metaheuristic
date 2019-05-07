@@ -113,8 +113,8 @@ public final class Enums {
         }
     }
 
-    public enum FlowInstanceExecState {
-        NONE(0),            // just created flow instance
+    public enum WorkbookExecState {
+        NONE(0),            // just created workbook
         PRODUCING(1),       // producing was just started
         PRODUCED(2),        // producing was finished
         STARTED(3),         // started
@@ -126,11 +126,11 @@ public final class Enums {
 
         public int code;
 
-        FlowInstanceExecState(int code) {
+        WorkbookExecState(int code) {
             this.code = code;
         }
 
-        public static FlowInstanceExecState toState(int code) {
+        public static WorkbookExecState toState(int code) {
             switch (code) {
                 case 0:
                     return NONE;
@@ -158,7 +158,7 @@ public final class Enums {
 
         public static String from(int code) {
             //noinspection unused
-            FlowInstanceExecState state = toState(code);
+            WorkbookExecState state = toState(code);
             return state.toString();
         }
     }

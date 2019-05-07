@@ -41,16 +41,16 @@ public class TaskRestController {
 
     // ============= Service methods =============
 
-    @GetMapping("/max-concrete-order/{flowInstanceId}")
-    public SimpleData.IntegerResult findMaxConcreteOrder(@PathVariable Long flowInstanceId) {
-        Integer max = taskRepository.findMaxConcreteOrder(flowInstanceId);
+    @GetMapping("/max-concrete-order/{workbookId}")
+    public SimpleData.IntegerResult findMaxConcreteOrder(@PathVariable Long workbookId) {
+        Integer max = taskRepository.findMaxConcreteOrder(workbookId);
         return new SimpleData.IntegerResult(max);
     }
 
-    @GetMapping("/any-with-concrete-order/{flowInstanceId}/{taskOrder}")
+    @GetMapping("/any-with-concrete-order/{workbookId}/{taskOrder}")
     public TasksData.ListOfTasksResult findAnyWithConcreteOrder(
-            @PathVariable long flowInstanceId, @PathVariable int taskOrder) {
-        List<Task> tasks = taskRepository.findAnyWithConcreteOrder(flowInstanceId, taskOrder);
+            @PathVariable long workbookId, @PathVariable int taskOrder) {
+        List<Task> tasks = taskRepository.findAnyWithConcreteOrder(workbookId, taskOrder);
         return new TasksData.ListOfTasksResult(tasks);
     }
 }

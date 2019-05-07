@@ -53,7 +53,7 @@ public class Experiment implements Serializable {
     private Integer version;
 
     @Column(name = "FLOW_INSTANCE_ID")
-    public Long flowInstanceId;
+    public Long workbookId;
 
     @Column(name = "NAME")
     private String name;

@@ -1,11 +1,11 @@
 <div class="body">
     <div class="body-header">
-        <h1>Flows</h1>
+        <h1>Plans</h1>
         <mat-form-field>
             <input matInput (keyup)="applyFilter($event.target.value)">
         </mat-form-field>
     </div>
-    <mat-card class="flow-card">
+    <mat-card class="plan-card">
         <table mat-table [dataSource]="dataSource" class="mat-table">
             <ng-container matColumnDef="name">
                 <th mat-header-cell *matHeaderCellDef>Name</th>
@@ -57,7 +57,7 @@
     <div class="body-footer">
         <div></div>
         <div>
-            <button mat-flat-button color="primary" routerLink="/launchpad/flows/add">Add</button>
+            <button mat-flat-button color="primary" routerLink="/launchpad/plans/add">Add</button>
         </div>
     </div>
 </div>

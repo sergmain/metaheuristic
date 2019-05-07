@@ -181,7 +181,7 @@ p img, .emoji { display: inline; margin: 0; padding: 0; vertical-align: middle; 
 /* Code blocks */
 code, pre { font-family: Monaco, "Bitstream Vera Sans Mono", "Lucida Console", Terminal, monospace; color: #000; font-size: 14px; }
 
-pre { padding: 4px 12px; background: #FDFEFB; border-radius: 4px; border: 1px solid #D7D8C8; overflow: auto; overflow-y: hidden; margin-bottom: 32px; }
+pre { padding: 4px 12px; background: #FDFEFB; border-radius: 4px; border: 1px solid #D7D8C8; overplan: auto; overplan-y: hidden; margin-bottom: 32px; }
 
 /* Tables */
 table { width: 100%; }

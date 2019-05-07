@@ -24,7 +24,7 @@ import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.data.TasksData;
 import aiai.ai.launchpad.experiment.task.TaskWIthType;
-import aiai.ai.launchpad.flow.FlowInstanceService;
+import aiai.ai.launchpad.plan.WorkbookService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
@@ -81,10 +81,10 @@ public class ExperimentService {
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
     private final ExperimentTaskFeatureRepository experimentTaskFeatureRepository;
-    private final FlowInstanceRepository flowInstanceRepository;
+    private final WorkbookRepository workbookRepository;
 
     @Autowired
-    public ExperimentService(ApplicationEventMulticaster eventMulticaster, MetricsMaxValueCollector metricsMaxValueCollector, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetService snippetService, FlowInstanceRepository flowInstanceRepository, ExperimentRepository experimentRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter, SnippetRepository snippetRepository) {
+    public ExperimentService(ApplicationEventMulticaster eventMulticaster, MetricsMaxValueCollector metricsMaxValueCollector, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetService snippetService, WorkbookRepository workbookRepository, ExperimentRepository experimentRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter, SnippetRepository snippetRepository) {
         this.eventMulticaster = eventMulticaster;
         this.metricsMaxValueCollector = metricsMaxValueCollector;
         this.experimentCache = experimentCache;
@@ -96,7 +96,7 @@ public class ExperimentService {
         this.experimentRepository = experimentRepository;
         this.experimentTaskFeatureRepository = experimentTaskFeatureRepository;
         this.paramsSetter = paramsSetter;
-        this.flowInstanceRepository = flowInstanceRepository;
+        this.workbookRepository = workbookRepository;
         this.snippetRepository = snippetRepository;
     }
 
@@ -135,8 +135,8 @@ public class ExperimentService {
         return data;
     }
 
-    public void updateMaxValueForExperimentFeatures(Long flowInstanceId) {
-        Experiment e = experimentRepository.findByFlowInstanceId(flowInstanceId);
+    public void updateMaxValueForExperimentFeatures(Long workbookId) {
+        Experiment e = experimentRepository.findByWorkbookId(workbookId);
         if (e==null) {
             return;
         }
@@ -412,9 +412,9 @@ public class ExperimentService {
         return experimentHyperParams.stream().collect(Collectors.toMap(ExperimentHyperParams::getKey, ExperimentHyperParams::getValues, (a, b) -> b, HashMap::new));
     }
 
-    public void resetExperiment(long flowInstanceId) {
+    public void resetExperiment(long workbookId) {
 
-        Experiment e = experimentRepository.findByFlowInstanceId(flowInstanceId);
+        Experiment e = experimentRepository.findByWorkbookId(workbookId);
         if (e==null) {
             return;
         }
@@ -422,7 +422,7 @@ public class ExperimentService {
 
         e = experimentCache.findById(e.getId());
 
-        e.setFlowInstanceId(null);
+        e.setWorkbookId(null);
         e.setAllTaskProduced(false);
         e.setFeatureProduced(false);
         e.setAllTaskProduced(false);
@@ -431,8 +431,8 @@ public class ExperimentService {
         e = experimentCache.save(e);
     }
 
-    public EnumsApi.FlowProducingStatus produceTasks(
-            boolean isPersist, Flow flow, FlowInstance flowInstance, Process process,
+    public EnumsApi.PlanProducingStatus produceTasks(
+            boolean isPersist, Plan plan, Workbook workbook, Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls, IntHolder numberOfTasks) {
         if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
             throw new IllegalStateException("#179.19 Wrong type of process, " +
@@ -449,7 +449,7 @@ public class ExperimentService {
         final List<Object[]> features = experimentFeatureRepository.getAsExperimentFeatureSimpleByExperimentId(experiment.getId());
         final Map<String, Snippet> localCache = new HashMap<>();
         final IntHolder size = new IntHolder();
-        final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, flowInstance, experiment, size);
+        final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, workbook, experiment, size);
 
         // there is 2 because we have 2 types of snippets - fit and predict
         // feature has real value only when isPersist==true
@@ -460,19 +460,19 @@ public class ExperimentService {
         log.debug("total size of tasks' params is {} bytes", size.value);
         final BoolHolder boolHolder = new BoolHolder();
         final Consumer<Long> longConsumer = o -> {
-            if (flowInstance.getId().equals(o)) {
+            if (workbook.getId().equals(o)) {
                 boolHolder.value = true;
             }
         };
-        final FlowInstanceService.FlowInstanceDeletionListener listener =
-                new FlowInstanceService.FlowInstanceDeletionListener(flowInstance.getId(), longConsumer);
+        final WorkbookService.WorkbookDeletionListener listener =
+                new WorkbookService.WorkbookDeletionListener(workbook.getId(), longConsumer);
 
         int processed = 0;
         try {
             eventMulticaster.addApplicationListener(listener);
-            FlowInstance instance = flowInstanceRepository.findById(flowInstance.getId()).orElse(null);
+            Workbook instance = workbookRepository.findById(workbook.getId()).orElse(null);
             if (instance==null) {
-                return EnumsApi.FlowProducingStatus.FLOW_INSTANCE_NOT_FOUND_ERROR;
+                return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
             }
 
             for (Object[] feature : features) {
@@ -490,14 +490,14 @@ public class ExperimentService {
                     Task task = null;
                     for (ExperimentSnippet experimentSnippet : experimentSnippets) {
                         if (boolHolder.value) {
-                            return EnumsApi.FlowProducingStatus.FLOW_INSTANCE_NOT_FOUND_ERROR;
+                            return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
                         }
                         prevTask = task;
 
                         // create empty task. we need task id for initialization
                         task = new TaskImpl();
                         task.setParams("");
-                        task.setFlowInstanceId(flowInstance.getId());
+                        task.setWorkbookId(workbook.getId());
                         task.setOrder(process.order + (orderAdd++));
                         task.setProcessType(process.type.value);
                         if (isPersist) {
@@ -510,14 +510,14 @@ public class ExperimentService {
                         yaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
 
                         yaml.setHyperParams(hyperParams.toSortedMap());
-                        // TODO need to implement an unit-test for a flow without metas in experiment
+                        // TODO need to implement an unit-test for a plan without metas in experiment
                         // TODO and see that features are correctly defined
                         yaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
 
                             // TODO 2019.04.24 need to decide do we need this check or not
                             // if ("feature".equals(entry.getKey())) {
-                            //     log.info("Output type is the same as flowInstance inputResourceParam:\n"+ flowInstance.inputResourceParam );
+                            //     log.info("Output type is the same as workbook inputResourceParam:\n"+ workbook.inputResourceParam );
                             // }
                             Process.Meta meta = process.getMetas()
                                     .stream()
@@ -569,7 +569,7 @@ public class ExperimentService {
                         });
 
                         ExperimentTaskFeature tef = new ExperimentTaskFeature();
-                        tef.setFlowInstanceId(flowInstance.getId());
+                        tef.setWorkbookId(workbook.getId());
                         tef.setTaskId(task.getId());
                         tef.setFeatureId((Long) feature[0]);
                         tef.setTaskType(type.value);
@@ -581,7 +581,7 @@ public class ExperimentService {
                         yaml.preSnippet = snippetService.getSnippetConfig(process.getPreSnippetCode());
                         yaml.postSnippet = snippetService.getSnippetConfig(process.getPostSnippetCode());
 
-                        yaml.clean = flow.clean;
+                        yaml.clean = plan.clean;
 
                         String currTaskParams = TaskParamYamlUtils.toString(yaml);
 
@@ -597,7 +597,7 @@ public class ExperimentService {
                         if (isPersist) {
                             task = taskPersistencer.setParams(task.getId(), currTaskParams);
                             if (task == null) {
-                                return EnumsApi.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
+                                return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
                         }
                     }
@@ -616,14 +616,14 @@ public class ExperimentService {
             Experiment experimentTemp = experimentCache.findById(experiment.getId());
             if (experimentTemp == null) {
                 log.warn("#179.36 Experiment for id {} doesn't exist anymore", experiment.getId());
-                return EnumsApi.FlowProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
+                return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
             }
             experimentTemp.setNumberOfTask(totalVariants);
             experimentTemp.setAllTaskProduced(true);
             //noinspection UnusedAssignment
             experimentTemp = experimentCache.save(experimentTemp);
         }
-        return EnumsApi.FlowProducingStatus.OK;
+        return EnumsApi.PlanProducingStatus.OK;
     }
 
     private String getModelFilename(Task task) {

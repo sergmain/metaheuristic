@@ -21,9 +21,9 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Process;
-import aiai.ai.launchpad.flow.ProcessValidator;
+import aiai.ai.launchpad.plan.ProcessValidator;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
-import aiai.ai.launchpad.repositories.FlowInstanceRepository;
+import aiai.ai.launchpad.repositories.WorkbookRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -40,79 +40,79 @@ public class ExperimentProcessValidator implements ProcessValidator {
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
-    private final FlowInstanceRepository flowInstanceRepository;
+    private final WorkbookRepository workbookRepository;
 
-    public ExperimentProcessValidator(SnippetRepository snippetRepository, SnippetService snippetService, ExperimentRepository experimentRepository, FlowInstanceRepository flowInstanceRepository) {
+    public ExperimentProcessValidator(SnippetRepository snippetRepository, SnippetService snippetService, ExperimentRepository experimentRepository, WorkbookRepository workbookRepository) {
         this.snippetRepository = snippetRepository;
         this.snippetService = snippetService;
         this.experimentRepository = experimentRepository;
-        this.flowInstanceRepository = flowInstanceRepository;
+        this.workbookRepository = workbookRepository;
     }
 
     // TODO experiment has to be stateless and have its own instances
     // TODO 2019.05.02 do we need an experiment to have its own instance still?
 
     @Override
-    public EnumsApi.FlowValidateStatus validate(Flow flow, Process process, boolean isFirst) {
+    public EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst) {
         if (process.snippetCodes!=null && process.snippetCodes.size() > 0) {
-            return EnumsApi.FlowValidateStatus.SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR;
+            return EnumsApi.PlanValidateStatus.SNIPPET_ALREADY_PROVIDED_BY_EXPERIMENT_ERROR;
         }
         if (StringUtils.isBlank(process.code)) {
-            return EnumsApi.FlowValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
+            return EnumsApi.PlanValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }
         if (StringUtils.isNotBlank(process.preSnippetCode)) {
             Snippet snippet = snippetRepository.findByCode(process.preSnippetCode);
             if (snippet==null) {
                 log.error("#177.09 Pre-snippet wasn't found for code: {}, process: {}", process.preSnippetCode, process);
-                return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+                return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }
         if (StringUtils.isNotBlank(process.postSnippetCode)) {
             Snippet snippet = snippetRepository.findByCode(process.postSnippetCode);
             if (snippet==null) {
                 log.error("#177.11 Post-snippet wasn't found for code: {}, process: {}", process.postSnippetCode, process);
-                return EnumsApi.FlowValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+                return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }
         Experiment e = experimentRepository.findByCode(process.code);
         if (e==null) {
-            return EnumsApi.FlowValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
+            return EnumsApi.PlanValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
         }
-        if (e.getFlowInstanceId()!=null) {
-            FlowInstance flowInstance = flowInstanceRepository.findById(e.getFlowInstanceId()).orElse(null);
-            if (flowInstance != null) {
-                if (!flow.getId().equals(flowInstance.getFlowId())) {
-                    return EnumsApi.FlowValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;
+        if (e.getWorkbookId()!=null) {
+            Workbook workbook = workbookRepository.findById(e.getWorkbookId()).orElse(null);
+            if (workbook != null) {
+                if (!plan.getId().equals(workbook.getPlanId())) {
+                    return EnumsApi.PlanValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR;
                 }
             }
             else {
-                return EnumsApi.FlowValidateStatus.FLOW_INSTANCE_DOESNT_EXIST_ERROR;
+                return EnumsApi.PlanValidateStatus.WORKBOOK_DOESNT_EXIST_ERROR;
             }
         }
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(e.getId());
         if (experimentSnippets==null || experimentSnippets.size()<2) {
-            return EnumsApi.FlowValidateStatus.EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR;
+            return EnumsApi.PlanValidateStatus.EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR;
         }
 
         if (!isFirst) {
             if (process.metas == null || process.metas.isEmpty()) {
-                return EnumsApi.FlowValidateStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
+                return EnumsApi.PlanValidateStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
             }
 
             Process.Meta m1 = process.getMeta("dataset");
             if (m1 == null || StringUtils.isBlank(m1.getValue())) {
-                return EnumsApi.FlowValidateStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
+                return EnumsApi.PlanValidateStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
             }
 
             // TODO 2019.05.02 do we need this check?
 //            Process.Meta m2 = process.getMeta("assembled-raw");
 //            if (m2 == null || StringUtils.isBlank(m2.getValue())) {
-//                return EnumsApi.FlowValidateStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
+//                return EnumsApi.PlanValidateStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
 //            }
 
             Process.Meta m3 = process.getMeta("feature");
             if (m3 == null || StringUtils.isBlank(m3.getValue())) {
-                return EnumsApi.FlowValidateStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
+                return EnumsApi.PlanValidateStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
             }
         }
         return null;

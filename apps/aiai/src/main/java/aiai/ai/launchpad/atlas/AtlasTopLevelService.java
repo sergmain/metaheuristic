@@ -105,12 +105,12 @@ public class AtlasTopLevelService {
         if (experiment == null) {
             return new AtlasData.ExperimentInfoExtended("#280.07 experiment wasn't found, experimentId: " + id);
         }
-        if (experiment.getFlowInstanceId() == null) {
+        if (experiment.getWorkbookId() == null) {
             return new AtlasData.ExperimentInfoExtended("#280.12 experiment wasn't startet yet, experimentId: " + id);
         }
-        FlowInstance flowInstance = estb1.flowInstance;
-        if (flowInstance == null) {
-            return new AtlasData.ExperimentInfoExtended("#280.16 experiment has broken ref to flowInstance, experimentId: " + id);
+        Workbook workbook = estb1.workbook;
+        if (workbook == null) {
+            return new AtlasData.ExperimentInfoExtended("#280.16 experiment has broken ref to workbook, experimentId: " + id);
         }
 
         for (ExperimentHyperParams hyperParams : estb1.getHyperParams()) {
@@ -122,15 +122,15 @@ public class AtlasTopLevelService {
         }
 
         AtlasData.ExperimentInfoExtended result = new AtlasData.ExperimentInfoExtended();
-        if (experiment.getFlowInstanceId() == null) {
+        if (experiment.getWorkbookId() == null) {
             result.addInfoMessage("Launch is disabled, dataset isn't assigned");
         }
         result.atlas = atlas;
 
         AtlasData.ExperimentInfo experimentInfoResult = new AtlasData.ExperimentInfo();
         experimentInfoResult.features = estb1.features;
-        experimentInfoResult.flowInstance = flowInstance;
-        experimentInfoResult.flowInstanceExecState = Enums.FlowInstanceExecState.toState(flowInstance.execState);
+        experimentInfoResult.workbook = workbook;
+        experimentInfoResult.workbookExecState = Enums.WorkbookExecState.toState(workbook.execState);
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;
@@ -460,7 +460,7 @@ public class AtlasTopLevelService {
             return new AtlasData.ConsoleResult(es);
         }
 
-        String poolCode = AtlasService.getPoolCodeForExperiment(estb.flowInstance.id, estb.experiment.id);
+        String poolCode = AtlasService.getPoolCodeForExperiment(estb.workbook.id, estb.experiment.id);
         List<BinaryData> datas = binaryDataService.getByPoolCodeAndType(poolCode, Enums.BinaryDataType.CONSOLE);
         if (datas.isEmpty()) {
             return new AtlasData.ConsoleResult("#280.47 Can't find a console output");

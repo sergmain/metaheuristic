@@ -25,7 +25,7 @@ import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
-import aiai.ai.launchpad.flow.FlowService;
+import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.task.TaskService;
@@ -42,7 +42,7 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 @Slf4j
-public abstract class FeatureMethods extends PreparingFlow {
+public abstract class FeatureMethods extends PreparingPlan {
 
     @Autowired
     protected Globals globals;
@@ -74,53 +74,53 @@ public abstract class FeatureMethods extends PreparingFlow {
     public boolean isCorrectInit = true;
 
     @Override
-    public String getFlowParamsAsYaml() {
-        return getFlowParamsAsYaml_Simple();
+    public String getPlanParamsAsYaml() {
+        return getPlanParamsAsYaml_Simple();
     }
 
     public void toStarted() {
-        flowInstance = flowService.toStarted(flowInstance);
+        workbook = planService.toStarted(workbook);
     }
 
     protected void produceTasks() {
-        EnumsApi.FlowValidateStatus status = flowService.validate(flow);
-        assertEquals(EnumsApi.FlowValidateStatus.OK, status);
+        EnumsApi.PlanValidateStatus status = planService.validate(plan);
+        assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        FlowService.TaskProducingResult result = flowService.createFlowInstance(flow.getId(), InputResourceParamUtils.toString(inputResourceParam));
-        flowInstance = result.flowInstance;
-        assertEquals(EnumsApi.FlowProducingStatus.OK, result.flowProducingStatus);
-        assertNotNull(flowInstance);
-        assertEquals(Enums.FlowInstanceExecState.NONE.code, flowInstance.execState);
+        PlanService.TaskProducingResult result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
+        workbook = result.workbook;
+        assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
+        assertNotNull(workbook);
+        assertEquals(Enums.WorkbookExecState.NONE.code, workbook.execState);
 
 
-        EnumsApi.FlowProducingStatus producingStatus = flowService.toProducing(flowInstance);
-        assertEquals(EnumsApi.FlowProducingStatus.OK, producingStatus);
-        assertEquals(Enums.FlowInstanceExecState.PRODUCING.code, flowInstance.execState);
+        EnumsApi.PlanProducingStatus producingStatus = planService.toProducing(workbook);
+        assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
+        assertEquals(Enums.WorkbookExecState.PRODUCING.code, workbook.execState);
 
-        List<Object[]> tasks01 = taskCollector.getTasks(result.flowInstance);
+        List<Object[]> tasks01 = taskCollector.getTasks(result.workbook);
         assertTrue(tasks01.isEmpty());
 
         long mills;
 
-        List<Object[]> tasks02 = taskCollector.getTasks(result.flowInstance);
+        List<Object[]> tasks02 = taskCollector.getTasks(result.workbook);
         assertTrue(tasks02.isEmpty());
 
         mills = System.currentTimeMillis();
-        result = flowService.produceAllTasks(true, flow, flowInstance);
+        result = planService.produceAllTasks(true, plan, workbook);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        flowInstance = result.flowInstance;
-        assertEquals(EnumsApi.FlowProducingStatus.OK, result.flowProducingStatus);
-        assertEquals(Enums.FlowInstanceExecState.PRODUCED.code, flowInstance.execState);
+        workbook = result.workbook;
+        assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
+        assertEquals(Enums.WorkbookExecState.PRODUCED.code, workbook.execState);
 
         experiment = experimentCache.findById(experiment.getId());
-        assertNotNull(experiment.getFlowInstanceId());
+        assertNotNull(experiment.getWorkbookId());
     }
 
     protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
         assertEquals(sequences1Feature.experimentId, experiment.getId());
         TaskService.TasksAndAssignToStationResult sequences2 = taskService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getFlowInstanceId());
+                station.getId(), false, experiment.getWorkbookId());
         assertNotNull(sequences2);
         assertNotNull(sequences2.getSimpleTask());
 
@@ -135,7 +135,7 @@ public abstract class FeatureMethods extends PreparingFlow {
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
         TaskService.TasksAndAssignToStationResult sequences = taskService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getFlowInstanceId());
+                station.getId(), false, experiment.getWorkbookId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 
         assertNotNull(sequences);

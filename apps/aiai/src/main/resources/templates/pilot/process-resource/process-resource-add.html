@@ -6,14 +6,14 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Upload file for processing</h1>
 
-        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.FlowData.FlowsResultRest"*/-->
+        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.PlanData.PlansResultRest"*/-->
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
               th:action="@{/pilot/process-resource/process-resource-upload-from-file}"
         >
             <fieldset>
 
-                <label for="flowId">List of flows</label>
-                <select  id="flowId" class="pure-input-medium" th:name="flowId">
+                <label for="planId">List of plans</label>
+                <select  id="planId" class="pure-input-medium" th:name="planId">
                     <option th:each="o : ${result.items}" th:value="${o.id}" th:text="${o.code} "></option>
                 </select>
                 <span class="pure-form-message">This is a required field.</span>

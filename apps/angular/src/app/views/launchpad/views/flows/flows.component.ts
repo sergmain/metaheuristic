@@ -1,17 +1,17 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Flow, FlowsService } from '@app/services/flows/flows.service';
+import { Plan, PlansService } from '@app/services/plans/plans.service';
 import { MatPaginator, MatTableDataSource } from '@angular/material';
 
 @Component({
-    selector: 'flows-view',
-    templateUrl: './flows.component.html',
-    styleUrls: ['./flows.component.scss']
+    selector: 'plans-view',
+    templateUrl: './plans.component.html',
+    styleUrls: ['./plans.component.scss']
 })
 
-export class FlowsComponent implements OnInit {
-    dataSource = new MatTableDataSource < Flow > ([]);
-    columnsToDisplay = ['id', 'codeOfFlow', 'createdOn', 'isValid', 'isLocked', 'bts'];
-    constructor(private flowsService: FlowsService) {}
+export class PlansComponent implements OnInit {
+    dataSource = new MatTableDataSource < Plan > ([]);
+    columnsToDisplay = ['id', 'codeOfPlan', 'createdOn', 'isValid', 'isLocked', 'bts'];
+    constructor(private plansService: PlansService) {}
 
     @ViewChild(MatPaginator) paginator: MatPaginator;
 
@@ -20,7 +20,7 @@ export class FlowsComponent implements OnInit {
     }
 
     ngOnInit() {
-        this.dataSource = new MatTableDataSource < Flow > (this.flowsService.getFlows());
+        this.dataSource = new MatTableDataSource < Plan > (this.plansService.getPlans());
         this.dataSource.paginator = this.paginator;
     }
 }

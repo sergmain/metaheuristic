@@ -19,11 +19,11 @@ package aiai.ai.launchpad.task;
 
 import aiai.ai.Enums;
 import aiai.ai.exceptions.ResourceProviderException;
-import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.beans.Workbook;
 import aiai.ai.launchpad.beans.TaskImpl;
 import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
-import aiai.ai.launchpad.repositories.FlowInstanceRepository;
+import aiai.ai.launchpad.repositories.WorkbookRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.resource.ResourceUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
@@ -43,13 +43,13 @@ public class TaskPersistencer {
 
     private static final int NUMBER_OF_TRY = 2;
     private final TaskRepository taskRepository;
-    private final FlowInstanceRepository flowInstanceRepository;
+    private final WorkbookRepository workbookRepository;
 
     private final Object syncObj = new Object();
 
-    public TaskPersistencer(TaskRepository taskRepository, FlowInstanceRepository flowInstanceRepository) {
+    public TaskPersistencer(TaskRepository taskRepository, WorkbookRepository workbookRepository) {
         this.taskRepository = taskRepository;
-        this.flowInstanceRepository = flowInstanceRepository;
+        this.workbookRepository = workbookRepository;
     }
 
     public Task setParams(long taskId, String taskParams) {
@@ -136,17 +136,17 @@ public class TaskPersistencer {
                     task.setResultResourceScheduledOn(0);
                     taskRepository.save(task);
 
-                    FlowInstance flowInstance = flowInstanceRepository.findById(task.flowInstanceId).orElse(null);
-                    if (flowInstance != null) {
-                        if (task.order < flowInstance.producingOrder ||
-                                Enums.FlowInstanceExecState.toState(flowInstance.getExecState()) == Enums.FlowInstanceExecState.FINISHED) {
-                            flowInstance.producingOrder = task.order;
-                            flowInstance.execState = Enums.FlowInstanceExecState.STARTED.code;
-                            flowInstanceRepository.save(flowInstance);
+                    Workbook workbook = workbookRepository.findById(task.workbookId).orElse(null);
+                    if (workbook != null) {
+                        if (task.order < workbook.producingOrder ||
+                                Enums.WorkbookExecState.toState(workbook.getExecState()) == Enums.WorkbookExecState.FINISHED) {
+                            workbook.producingOrder = task.order;
+                            workbook.execState = Enums.WorkbookExecState.STARTED.code;
+                            workbookRepository.save(workbook);
                         }
                     }
                     else {
-                        log.warn("#307.24 FlowInstance #{} wasn't found", task.flowInstanceId);
+                        log.warn("#307.24 Workbook #{} wasn't found", task.workbookId);
                     }
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
@@ -207,7 +207,7 @@ public class TaskPersistencer {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
             // TODO 2019.05.02 !!! add here statuses to tasks which are in chain after this one
-            // TODO we have to stop processing flow if there any error in tasks
+            // TODO we have to stop processing plan if there any error in tasks
         }
         else if (storageType== Enums.StorageType.disk) {
             task.setCompleted(true);

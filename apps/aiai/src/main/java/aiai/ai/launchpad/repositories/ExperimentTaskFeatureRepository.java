@@ -30,9 +30,9 @@ import java.util.List;
 public interface ExperimentTaskFeatureRepository extends CrudRepository<ExperimentTaskFeature, Long> {
 
     @Transactional
-    void deleteByFlowInstanceId(long flowInstanceId);
+    void deleteByWorkbookId(long workbookId);
 
     ExperimentTaskFeature findByTaskId(Long taskId);
 
-    List<ExperimentTaskFeature> findByFlowInstanceId(long flowInstanceID);
+    List<ExperimentTaskFeature> findByWorkbookId(long workbookID);
 }

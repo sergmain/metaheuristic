@@ -63,7 +63,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         noNewTask();
 
-        flowService.markOrderAsProcessed();
+        planService.markOrderAsProcessed();
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToStation_mustBeNewTask()");
@@ -82,11 +82,11 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
     public void noNewTask() {
         TaskService.TasksAndAssignToStationResult task;
-        task = taskService.getTaskAndAssignToStation(station.getId(), false, experiment.getFlowInstanceId());
+        task = taskService.getTaskAndAssignToStation(station.getId(), false, experiment.getWorkbookId());
         assertNotNull(task);
         assertNull(task.getSimpleTask());
 
-        task = taskService.getTaskAndAssignToStation(station.getId() + 1, false, experiment.getFlowInstanceId());
+        task = taskService.getTaskAndAssignToStation(station.getId() + 1, false, experiment.getWorkbookId());
         assertNotNull(task);
         assertNull(task.getSimpleTask());
     }

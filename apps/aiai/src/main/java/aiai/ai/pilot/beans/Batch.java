@@ -37,14 +37,14 @@ public class Batch implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "FLOW_ID")
-    public Long flowId;
+    @Column(name = "PLAN_ID")
+    public Long planId;
 
     @Column(name="CREATED_ON")
     private long createdOn;
 
-    public Batch(Long flowId) {
-        this.flowId = flowId;
+    public Batch(Long planId) {
+        this.planId = planId;
         this.createdOn = System.currentTimeMillis();
     }
 }

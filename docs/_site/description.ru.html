@@ -62,12 +62,12 @@
 Выбор стартовой площадки у которой необходимо запросить новое задание на выполнение осучествляется
 на основе Round-robin алгоритма.</p>
 
-<p>1.2 Flow (поток)
+<p>1.2 Plan (поток)
 Поток - это описатель содержащий описания процессов, котрые будут выполняться для перобразования
 данных из начальной формы в конечную. Поток, как описатель, не содержит состояния
 выполнения процесса преобразования данных.</p>
 
-<p>1.3 FlowInstance (реализация потока)
+<p>1.3 Workbook (реализация потока)
 Реализация потока - это сущьность, которая включает в себя инфрмацию о выполнении преобразования данных.</p>
 
 <p>1.4 Resource (ресурс)
@@ -357,15 +357,15 @@ aiai.master-token=xxx</p>
 <p>если все запустилось успешно, то можно перейти к созданию сущеностей</p>
 
 <ol>
-  <li>Flow (поток)
+  <li>Plan (поток)
 создать простейший поток, состоящий из одного процесса.
-Создать поток можно перейдя по адресу /launchpad/flow/flow-add</li>
+Создать поток можно перейдя по адресу /launchpad/plan/plan-add</li>
 </ol>
 
 <p>значения полей:
-Code of flow –&gt;  simple-flow</p>
+Code of plan –&gt;  simple-plan</p>
 
-<p>Parameters of flow –&gt;</p>
+<p>Parameters of plan –&gt;</p>
 
 <p>processes:</p>
 <ul>
@@ -483,9 +483,9 @@ Resource code - simple-resource
 Resource pool code - simple-resource-pool</p>
 
 <ol>
-  <li>Создание реализации потока (Flow instance)
+  <li>Создание реализации потока (Workbook)
 перейти по адресу
-http://localhost:8080/launchpad/flow/flows</li>
+http://localhost:8080/launchpad/plan/plans</li>
 </ol>
 
 <p>и выбрать поток, который мы ранее создали</p>
@@ -493,15 +493,15 @@ http://localhost:8080/launchpad/flow/flows</li>
 <p>и затем нажать кнопку ‘Instances’</p>
 
 <p>Создать новую реализацию потока:
-Input pool code for this flow - simple-resource-pool</p>
+Input pool code for this plan - simple-resource-pool</p>
 
-<p>List of flows - simple-flow</p>
+<p>List of plans - simple-plan</p>
 
 <ol>
   <li>запуск реализации потока</li>
 </ol>
 
-<p>после успешного создания реализации потока (Flow Instance) запустить генерацию задач
+<p>после успешного создания реализации потока (Plan Instance) запустить генерацию задач
 нажав кнопку “Produce”</p>
 
 <p>дождаться когда статус будет изменен с PRODUCING на PRODUCED

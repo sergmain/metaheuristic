@@ -77,7 +77,7 @@ public class Consts {
     public static final String PARAMS_YAML = "params.yaml";
     public static final String TASK_YAML = "task.yaml";
 
-    public static final String FLOW_INSTANCE_INPUT_TYPE = "flow-instance-input-type";
+    public static final String WORKBOOK_INPUT_TYPE = "workbook-input-type";
     public static final String ML_MODEL_BIN = "ml_model.bin";
     public static final String LOCALHOST_IP = "127.0.0.1";
 

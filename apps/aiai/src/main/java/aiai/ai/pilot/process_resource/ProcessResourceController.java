@@ -23,22 +23,21 @@ import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.exceptions.StoreNewFileException;
 import aiai.ai.exceptions.StoreNewFileWithRedirectException;
 import aiai.ai.launchpad.beans.BinaryData;
-import aiai.ai.launchpad.beans.Flow;
-import aiai.ai.launchpad.beans.FlowInstance;
-import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
+import aiai.ai.launchpad.beans.Plan;
+import aiai.ai.launchpad.beans.Workbook;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.data.FlowData;
+import aiai.ai.launchpad.data.PlanData;
 import aiai.ai.launchpad.data.OperationStatusRest;
-import aiai.ai.launchpad.flow.FlowCache;
-import aiai.ai.launchpad.flow.FlowService;
+import aiai.ai.launchpad.plan.PlanCache;
+import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.launchpad_resource.ResourceService;
-import aiai.ai.launchpad.repositories.FlowInstanceRepository;
-import aiai.ai.launchpad.repositories.FlowRepository;
+import aiai.ai.launchpad.repositories.WorkbookRepository;
+import aiai.ai.launchpad.repositories.PlanRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.pilot.beans.Batch;
-import aiai.ai.pilot.beans.BatchFlowInstance;
+import aiai.ai.pilot.beans.BatchWorkbook;
 import aiai.ai.utils.ControllerUtils;
 import aiai.apps.commons.utils.StrUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
@@ -100,7 +99,7 @@ public class ProcessResourceController {
     @AllArgsConstructor
     public static class ProcessResourceItem {
         public Batch batch;
-        public Flow flow;
+        public Plan plan;
         public String execStateStr;
         public boolean finished;
     }
@@ -111,36 +110,36 @@ public class ProcessResourceController {
     }
 
     @Data
-    public static class FlowListResult {
-        public Iterable<Flow> items;
+    public static class PlanListResult {
+        public Iterable<Plan> items;
     }
 
     private final Globals globals;
-    private final FlowInstanceRepository flowInstanceRepository;
-    private final FlowRepository flowRepository;
-    private final FlowCache flowCache;
-    private final FlowService flowService;
+    private final WorkbookRepository workbookRepository;
+    private final PlanRepository planRepository;
+    private final PlanCache planCache;
+    private final PlanService planService;
     private final ResourceService resourceService;
     private final TaskRepository taskRepository;
     private final BatchRepository batchRepository;
-    private final BatchFlowInstanceRepository batchFlowInstanceRepository;
+    private final BatchWorkbookRepository batchWorkbookRepository;
     private final BinaryDataService binaryDataService;
 
-    public ProcessResourceController(Globals globals, FlowInstanceRepository flowInstanceRepository, FlowRepository flowRepository, FlowCache flowCache, FlowService flowService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchFlowInstanceRepository batchFlowInstanceRepository, BinaryDataService binaryDataService) {
+    public ProcessResourceController(Globals globals, WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService) {
         this.globals = globals;
-        this.flowInstanceRepository = flowInstanceRepository;
-        this.flowRepository = flowRepository;
-        this.flowCache = flowCache;
-        this.flowService = flowService;
+        this.workbookRepository = workbookRepository;
+        this.planRepository = planRepository;
+        this.planCache = planCache;
+        this.planService = planService;
         this.resourceService = resourceService;
         this.taskRepository = taskRepository;
         this.batchRepository = batchRepository;
-        this.batchFlowInstanceRepository = batchFlowInstanceRepository;
+        this.batchWorkbookRepository = batchWorkbookRepository;
         this.binaryDataService = binaryDataService;
     }
 
     @GetMapping("/process-resources")
-    public String flows(@ModelAttribute(name = "result") ProcessResourceResult result, @PageableDefault(size = 5) Pageable pageable,
+    public String plans(@ModelAttribute(name = "result") ProcessResourceResult result, @PageableDefault(size = 5) Pageable pageable,
                         @ModelAttribute("errorMessage") final String errorMessage,
                         @ModelAttribute("infoMessages") final String infoMessages ) {
         prepareProcessResourcesResult(result, pageable);
@@ -148,7 +147,7 @@ public class ProcessResourceController {
     }
 
     @PostMapping("/process-resources-part")
-    public String flowInstancesPart(@ModelAttribute(name = "result") ProcessResourceResult result,
+    public String workbooksPart(@ModelAttribute(name = "result") ProcessResourceResult result,
                                     @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
         prepareProcessResourcesResult(result, pageable);
         return "pilot/process-resource/process-resources :: table";
@@ -161,28 +160,28 @@ public class ProcessResourceController {
         List<ProcessResourceItem> items = new ArrayList<>();
         long total = batches.getTotalElements();
         for (Batch batch : batches) {
-            Flow flow = flowCache.findById(batch.getFlowId());
-            if (flow==null) {
-                log.warn("#990.01 Found batch with wrong flowId. flowId: {}", batch.getFlowId());
+            Plan plan = planCache.findById(batch.getPlanId());
+            if (plan==null) {
+                log.warn("#990.01 Found batch with wrong planId. planId: {}", batch.getPlanId());
                 total--;
                 continue;
             }
-            List<BatchFlowInstance> bfis = batchFlowInstanceRepository.findAllByBatchId(batch.id);
+            List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batch.id);
             boolean isFinished = true;
-            for (BatchFlowInstance bfi : bfis) {
-                FlowInstance fi  =flowInstanceRepository.findById(bfi.flowInstanceId).orElse(null);
+            for (BatchWorkbook bfi : bfis) {
+                Workbook fi  =workbookRepository.findById(bfi.workbookId).orElse(null);
                 if (fi==null) {
-                    String msg = "#990.03 Batch #" + batch.id + " contains broken flowInstanceId - #" + bfi.flowInstanceId;
+                    String msg = "#990.03 Batch #" + batch.id + " contains broken workbookId - #" + bfi.workbookId;
                     log.warn(msg);
                     continue;
                 }
-                if (fi.execState != Enums.FlowInstanceExecState.ERROR.code &&
-                        fi.execState != Enums.FlowInstanceExecState.FINISHED.code) {
+                if (fi.execState != Enums.WorkbookExecState.ERROR.code &&
+                        fi.execState != Enums.WorkbookExecState.FINISHED.code) {
                     isFinished = false;
                 }
             }
             String execStateStr = isFinished ? "FINISHED" : "IN PROGRESS";
-            items.add( new ProcessResourceItem(batch, flow, execStateStr, isFinished));
+            items.add( new ProcessResourceItem(batch, plan, execStateStr, isFinished));
         }
         result.items = new PageImpl<>(items, pageable, total);
 
@@ -191,13 +190,13 @@ public class ProcessResourceController {
     }
 
     @GetMapping(value = "/process-resource-add")
-    public String flowInstanceAdd(@ModelAttribute("result") FlowListResult result) {
-        result.items = flowRepository.findAll();
+    public String workbookAdd(@ModelAttribute("result") PlanListResult result) {
+        result.items = planRepository.findAll();
         return "pilot/process-resource/process-resource-add";
     }
 
     @PostMapping(value = "/process-resource-upload-from-file")
-    public String uploadFile(final MultipartFile file, Long flowId, final RedirectAttributes redirectAttributes) {
+    public String uploadFile(final MultipartFile file, Long planId, final RedirectAttributes redirectAttributes) {
 
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
@@ -209,16 +208,16 @@ public class ProcessResourceController {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.20 only '.xml' and .zip files are supported, filename: " + originFilename);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        Flow flow = flowCache.findById(flowId);
-        if (flow == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.31 flow wasn't found, flowId: " + flowId);
+        Plan plan = planCache.findById(planId);
+        if (plan == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.31 plan wasn't found, planId: " + planId);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        // validate the flow
-        FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
-        if (flowValidation.status != EnumsApi.FlowValidateStatus.OK ) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.37 validation of flow was failed, status: " + flowValidation.status);
+        // validate the plan
+        PlanData.PlanValidation planValidation = planService.validateInternal(plan);
+        if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.37 validation of plan was failed, status: " + planValidation.status);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
@@ -235,7 +234,7 @@ public class ProcessResourceController {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
 
-            Batch batch = batchRepository.save(new Batch(flow.id));
+            Batch batch = batchRepository.save(new Batch(plan.id));
 
 
             log.info("The file {} was successfully uploaded", originFilename);
@@ -244,12 +243,12 @@ public class ProcessResourceController {
                 log.debug("Start unzipping archive");
                 ZipUtils.unzipFolder(dataFile, tempDir);
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(batch, tempDir, redirectAttributes, flow);
+                loadFilesFromDirAfterZip(batch, tempDir, redirectAttributes, plan);
             }
             else {
                 log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(batch, tempDir, redirectAttributes, flow);
-//                loadFilesFromDir(batch, tempDir, redirectAttributes, flow);
+                loadFilesFromDirAfterZip(batch, tempDir, redirectAttributes, plan);
+//                loadFilesFromDir(batch, tempDir, redirectAttributes, plan);
             }
         }
         catch(StoreNewFileWithRedirectException e) {
@@ -264,7 +263,7 @@ public class ProcessResourceController {
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
     }
 
-    private void loadFilesFromDir(Batch batch, File srcDir, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
+    private void loadFilesFromDir(Batch batch, File srcDir, RedirectAttributes redirectAttributes, Plan plan) throws IOException {
         Files.list(srcDir.toPath())
                 .filter( o -> {
                     File f = o.toFile();
@@ -272,14 +271,14 @@ public class ProcessResourceController {
                 })
                 .forEach(dataFile -> {
                     File file = dataFile.toFile();
-                    String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, flow, Collections.singletonList(file), file);
+                    String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, plan, Collections.singletonList(file), file);
                     if (redirectUrl1 != null) {
                         throw new StoreNewFileWithRedirectException(redirectUrl1);
                     }
                 });
     }
 
-    private void loadFilesFromDirAfterZip(Batch batch, File srcDir, RedirectAttributes redirectAttributes, Flow flow) throws IOException {
+    private void loadFilesFromDirAfterZip(Batch batch, File srcDir, RedirectAttributes redirectAttributes, Plan plan) throws IOException {
 
         Files.list(srcDir.toPath())
                 .filter( o -> {
@@ -296,7 +295,7 @@ public class ProcessResourceController {
                                     .filter(o -> o.toFile().isFile())
                                     .forEach(f -> files.add(f.toFile()));
 
-                            String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, flow, files, mainDocFile);
+                            String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, plan, files, mainDocFile);
                             if (redirectUrl1 != null) {
                                 throw new StoreNewFileWithRedirectException(redirectUrl1);
                             }
@@ -311,7 +310,7 @@ public class ProcessResourceController {
                         }
                     }
                     else {
-                        String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, flow, Collections.singletonList(file), file);
+                        String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, plan, Collections.singletonList(file), file);
                         if (redirectUrl1 != null) {
                             throw new StoreNewFileWithRedirectException(redirectUrl1);
                         }
@@ -361,11 +360,11 @@ public class ProcessResourceController {
         return yaml;
     }
 
-    public String createAndProcessTask(Batch batch, RedirectAttributes redirectAttributes, Flow flow, List<File> dataFile, File mainDocFile) {
+    public String createAndProcessTask(Batch batch, RedirectAttributes redirectAttributes, Plan plan, List<File> dataFile, File mainDocFile) {
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
-        String mainPoolCode = String.format("%d-%s-%d", flow.id, MAIN_DOCUMENT_POOL_CODE, nanoTime);
-        String attachPoolCode = String.format("%d-%s-%d", flow.id, ATTACHMENTS_POOL_CODE, nanoTime);
+        String mainPoolCode = String.format("%d-%s-%d", plan.id, MAIN_DOCUMENT_POOL_CODE, nanoTime);
+        String attachPoolCode = String.format("%d-%s-%d", plan.id, ATTACHMENTS_POOL_CODE, nanoTime);
         boolean isMainDocPresent = false;
         try {
             for (File file : dataFile) {
@@ -401,57 +400,57 @@ public class ProcessResourceController {
         }
 
         final String paramYaml = asInputResourceParams(mainPoolCode, attachPoolCode, attachments);
-        FlowService.TaskProducingResult producingResult = flowService.createFlowInstance(flow.getId(), paramYaml);
-        if (producingResult.flowProducingStatus!= EnumsApi.FlowProducingStatus.OK) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating flowInstance: " + producingResult.flowProducingStatus);
+        PlanService.TaskProducingResult producingResult = planService.createWorkbook(plan.getId(), paramYaml);
+        if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating workbook: " + producingResult.planProducingStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        BatchFlowInstance bfi = new BatchFlowInstance();
+        BatchWorkbook bfi = new BatchWorkbook();
         bfi.batchId=batch.id;
-        bfi.flowInstanceId=producingResult.flowInstance.id;
-        batchFlowInstanceRepository.save(bfi);
+        bfi.workbookId=producingResult.workbook.id;
+        batchWorkbookRepository.save(bfi);
 
         // ugly work-around on StaleObjectStateException
-        Long flowId = flow.getId();
-        flow = flowCache.findById(flowId);
-        if (flow == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.49 flow wasn't found, flowId: " + flowId);
+        Long planId = plan.getId();
+        plan = planCache.findById(planId);
+        if (plan == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.49 plan wasn't found, planId: " + planId);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        // validate the flow + the flow instance
-        FlowData.FlowValidation flowValidation = flowService.validateInternal(flow);
-        if (flowValidation.status != EnumsApi.FlowValidateStatus.OK ) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.55 validation of flow was failed, status: " + flowValidation.status);
+        // validate the plan + the workbook
+        PlanData.PlanValidation planValidation = planService.validateInternal(plan);
+        if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.55 validation of plan was failed, status: " + planValidation.status);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        FlowService.TaskProducingResult countTasks = flowService.produceTasks(false, flow, producingResult.flowInstance);
-        if (countTasks.flowProducingStatus != EnumsApi.FlowProducingStatus.OK) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.60 validation of flow was failed, status: " + countTasks.flowValidateStatus);
+        PlanService.TaskProducingResult countTasks = planService.produceTasks(false, plan, producingResult.workbook);
+        if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.60 validation of plan was failed, status: " + countTasks.planValidateStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        if (globals.maxTasksPerFlow < countTasks.numberOfTasks) {
-            flowService.changeValidStatus(producingResult.flowInstance, false);
+        if (globals.maxTasksPerPlan < countTasks.numberOfTasks) {
+            planService.changeValidStatus(producingResult.workbook, false);
             redirectAttributes.addFlashAttribute("errorMessage",
-                    "#990.67 number of tasks for this flow instance exceeded the allowed maximum number. Flow instance was created but its status is 'not valid'. " +
-                            "Allowed maximum number of tasks: " + globals.maxTasksPerFlow+", tasks in this flow instance:  " + countTasks.numberOfTasks);
+                    "#990.67 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
+                            "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + countTasks.numberOfTasks);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        flowService.changeValidStatus(producingResult.flowInstance, true);
+        planService.changeValidStatus(producingResult.workbook, true);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = flowService.flowInstanceTargetExecState(
-                producingResult.flowInstance.getId(), Enums.FlowInstanceExecState.PRODUCING);
+        OperationStatusRest operationStatus = planService.workbookTargetExecState(
+                producingResult.workbook.getId(), Enums.WorkbookExecState.PRODUCING);
 
         if (operationStatus.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        flowService.createAllTasks();
-        operationStatus = flowService.flowInstanceTargetExecState(
-                producingResult.flowInstance.getId(), Enums.FlowInstanceExecState.STARTED);
+        planService.createAllTasks();
+        operationStatus = planService.workbookTargetExecState(
+                producingResult.workbook.getId(), Enums.WorkbookExecState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessages);
@@ -461,16 +460,16 @@ public class ProcessResourceController {
     }
 
     @SuppressWarnings("Duplicates")
-    @GetMapping("/process-resource-delete/{flowId}/{batchId}")
-    public String processResourceDelete(Model model, @PathVariable Long flowId, @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
+    @GetMapping("/process-resource-delete/{planId}/{batchId}")
+    public String processResourceDelete(Model model, @PathVariable Long planId, @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
 
         if (true) {
             redirectAttributes.addFlashAttribute("errorMessage", "Can't delete batch, not implemented yet.");
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        long flowInstanceId = -1L;
-        FlowData.FlowInstanceResult result = flowService.getFlowInstanceExtended(flowInstanceId);
+        long workbookId = -1L;
+        PlanData.WorkbookResult result = planService.getWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -480,20 +479,20 @@ public class ProcessResourceController {
     }
 
     @PostMapping("/process-resource-delete-commit")
-    public String processResourceDeleteCommit(Long flowId, Long flowInstanceId, final RedirectAttributes redirectAttributes) {
-        FlowData.FlowInstanceResult result = flowService.getFlowInstanceExtended(flowInstanceId);
+    public String processResourceDeleteCommit(Long planId, Long workbookId, final RedirectAttributes redirectAttributes) {
+        PlanData.WorkbookResult result = planService.getWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.isErrorMessages());
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        FlowInstance fi = flowInstanceRepository.findById(flowInstanceId).orElse(null);
+        Workbook fi = workbookRepository.findById(workbookId).orElse(null);
         if (fi==null) {
             redirectAttributes.addFlashAttribute("errorMessage",
-                    "#990.77 FlowInstance wasn't found, batchId: " + flowInstanceId );
+                    "#990.77 Workbook wasn't found, batchId: " + workbookId );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        flowService.deleteFlowInstance(flowInstanceId, fi.flowId);
+        planService.deleteWorkbook(workbookId, fi.planId);
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
     }
 
@@ -509,15 +508,15 @@ public class ProcessResourceController {
             return null;
         }
 
-        List<BatchFlowInstance> bfis = batchFlowInstanceRepository.findAllByBatchId(batch.id);
+        List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batch.id);
         String status = "";
         File resultDir = DirUtils.createTempDir("prepare-doc-processing-result-");
         File zipDir = new File(resultDir, "zip");
 
-        for (BatchFlowInstance bfi : bfis) {
-            FlowInstance fi = flowInstanceRepository.findById(bfi.flowInstanceId).orElse(null);
+        for (BatchWorkbook bfi : bfis) {
+            Workbook fi = workbookRepository.findById(bfi.workbookId).orElse(null);
             if (fi==null) {
-                String msg = "#990.80 Batch #" + batch.id + " contains broken flowInstanceId - #" + bfi.flowInstanceId;
+                String msg = "#990.80 Batch #" + batch.id + " contains broken workbookId - #" + bfi.workbookId;
                 status += (msg + '\n');
                 log.warn(msg);
                 continue;
@@ -527,7 +526,7 @@ public class ProcessResourceController {
             final String fullMainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
             if (fullMainDocument==null) {
                 String msg = "#990.81, "+mainDocumentPoolCode+", Can't determine actual file name of main document, " +
-                        "batchId: " + batch.id + ", flowInstanceId: " + bfi.flowInstanceId;
+                        "batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
                 log.warn(msg);
                 status += (msg + '\n');
                 continue;
@@ -537,7 +536,7 @@ public class ProcessResourceController {
             Integer taskOrder = taskRepository.findMaxConcreteOrder(fi.id);
             if (taskOrder==null) {
                 String msg = "#990.82, "+mainDocument+", Can't get taskOrder, " +
-                        "batchId: " + batch.id + ", flowInstanceId: " + bfi.flowInstanceId;
+                        "batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
                 log.warn(msg);
                 status += (msg + '\n');
                 continue;
@@ -551,7 +550,7 @@ public class ProcessResourceController {
             }
             if (tasks.size()>1) {
                 String msg = "#990.90, "+mainDocument+", Can't download file because there are more than one task, " +
-                        "batchId: "+batch.id+", flowInstanceId: " + fi.id;
+                        "batchId: "+batch.id+", workbookId: " + fi.id;
                 log.info(msg);
                 status += (msg + '\n');
                 continue;
@@ -562,12 +561,12 @@ public class ProcessResourceController {
                 case NONE:
                 case IN_PROGRESS:
                     status += ("#990.50, "+mainDocument+", Task hasn't completed yet, status: " +Enums.TaskExecState.from(task.getExecState()) +
-                            ", batchId:" + batch.id + ", flowInstanceId: " + fi.id +", " +
+                            ", batchId:" + batch.id + ", workbookId: " + fi.id +", " +
                             "taskId: " + task.getId() + '\n');
                     continue;
                 case ERROR:
                     SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
-                    status += ("#990.52, "+mainDocument+", Task was completed with error, batchId:" + batch.id + ", flowInstanceId: " + fi.id +", " +
+                    status += ("#990.52, "+mainDocument+", Task was completed with error, batchId:" + batch.id + ", workbookId: " + fi.id +", " +
                             "taskId: " + task.getId() + "\n" +
                             "isOk: " + snippetExec.exec.isOk + "\n" +
                             "exitCode: " + snippetExec.exec.exitCode + "\n" +
@@ -577,9 +576,9 @@ public class ProcessResourceController {
 
             final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
-            if (fi.getExecState()!= Enums.FlowInstanceExecState.FINISHED.code) {
+            if (fi.getExecState()!= Enums.WorkbookExecState.FINISHED.code) {
                 status += ("#990.95, "+mainDocument+", Task hasn't completed yet, " +
-                        "batchId:" + batch.id + ", flowInstanceId: " + fi.id +", " +
+                        "batchId:" + batch.id + ", workbookId: " + fi.id +", " +
                         "taskId: " + task.getId() + '\n');
                 continue;
             }
@@ -596,7 +595,7 @@ public class ProcessResourceController {
                 continue;
             }
 
-            String msg = "#990.08 status - Ok, doc: "+mainDocFile.getName()+", batchId: " + batch.id + ", flowInstanceId: " + bfi.flowInstanceId;
+            String msg = "#990.08 status - Ok, doc: "+mainDocFile.getName()+", batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
             status += (msg + '\n');
 
         }

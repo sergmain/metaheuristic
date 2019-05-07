@@ -111,14 +111,14 @@ public class TaskProcessor {
                 log.warn("#100.10 Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            Enums.FlowInstanceExecState state = currentExecState.getState(task.launchpadUrl, task.flowInstanceId);
-            if (state==Enums.FlowInstanceExecState.UNKNOWN) {
-                log.info("The state for FlowInstance #{}, host {} is unknown, skip it", task.flowInstanceId, task.launchpadUrl);
+            Enums.WorkbookExecState state = currentExecState.getState(task.launchpadUrl, task.workbookId);
+            if (state==Enums.WorkbookExecState.UNKNOWN) {
+                log.info("The state for Workbook #{}, host {} is unknown, skip it", task.workbookId, task.launchpadUrl);
                 continue;
             }
 
-            if (state!=Enums.FlowInstanceExecState.STARTED) {
-                log.info("The state for FlowInstance #{}, host: {}, is {}, skip it", task.flowInstanceId, task.launchpadUrl, state);
+            if (state!=Enums.WorkbookExecState.STARTED) {
+                log.info("The state for Workbook #{}, host: {}, is {}, skip it", task.workbookId, task.launchpadUrl, state);
                 continue;
             }
 
@@ -356,7 +356,7 @@ public class TaskProcessor {
         return paramFile;
     }
 
-    public void processFlowInstanceStatus(String launchpadUrl, List<Protocol.FlowInstanceStatus.SimpleStatus> statuses) {
+    public void processWorkbookStatus(String launchpadUrl, List<Protocol.WorkbookStatus.SimpleStatus> statuses) {
         currentExecState.register(launchpadUrl, statuses);
     }
 }

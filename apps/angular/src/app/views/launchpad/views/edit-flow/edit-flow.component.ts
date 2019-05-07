@@ -1,28 +1,28 @@
 import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common'
-import { Flow, Instance, FlowsService } from '@app/services/flows/flows.service';
+import { Plan, Instance, PlansService } from '@app/services/plans/plans.service';
 import { ActivatedRoute } from '@angular/router'
 
 @Component({
-    selector: 'edit-flow',
-    templateUrl: './edit-flow.component.html',
-    styleUrls: ['./edit-flow.component.scss']
+    selector: 'edit-plan',
+    templateUrl: './edit-plan.component.html',
+    styleUrls: ['./edit-plan.component.scss']
 })
 
-export class EditFlowComponent implements OnInit {
+export class EditPlanComponent implements OnInit {
 
     id
-    flow: Flow = new Flow({})
+    plan: Plan = new Plan({})
 
     constructor(
         private location: Location,
         private route: ActivatedRoute,
-        private flowsService: FlowsService
+        private plansService: PlansService
     ) {}
 
     ngOnInit() {
-        this.id = this.route.snapshot.paramMap.get('flowId');
-        this.flow = this.flowsService.getFlow(this.id)
+        this.id = this.route.snapshot.paramMap.get('planId');
+        this.plan = this.plansService.getPlan(this.id)
     }
 
     cancel() {
@@ -30,7 +30,7 @@ export class EditFlowComponent implements OnInit {
     }
 
     save() {
-        this.flow = this.flowsService.getFlow(this.id)
+        this.plan = this.plansService.getPlan(this.id)
     }
 
     validate() {

@@ -26,7 +26,7 @@ import aiai.ai.launchpad.data.AtlasData;
 import aiai.ai.launchpad.data.BaseDataClass;
 import aiai.ai.launchpad.data.OperationStatusRest;
 import aiai.ai.launchpad.experiment.ExperimentCache;
-import aiai.ai.launchpad.flow.FlowCache;
+import aiai.ai.launchpad.plan.PlanCache;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.utils.ControllerUtils;
 import aiai.api.v1.launchpad.Task;
@@ -64,8 +64,8 @@ public class AtlasService {
 
     private final Globals globals;
     private final BinaryDataService binaryDataService;
-    private final FlowCache flowCache;
-    private final FlowInstanceRepository flowInstanceRepository;
+    private final PlanCache planCache;
+    private final WorkbookRepository workbookRepository;
     private final ExperimentCache experimentCache;
     private final ExperimentFeatureRepository experimentFeatureRepository;
     private final ExperimentSnippetRepository experimentSnippetRepository;
@@ -89,10 +89,10 @@ public class AtlasService {
     }
 
     @Autowired
-    public AtlasService(Globals globals, FlowCache flowCache, FlowInstanceRepository flowInstanceRepository, ExperimentCache experimentCache, ExperimentFeatureRepository experimentFeatureRepository, BinaryDataService binaryDataService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, TaskRepository taskRepository, ConsoleFormAtlasService consoleFormAtlasService, AtlasRepository atlasRepository) {
+    public AtlasService(Globals globals, PlanCache planCache, WorkbookRepository workbookRepository, ExperimentCache experimentCache, ExperimentFeatureRepository experimentFeatureRepository, BinaryDataService binaryDataService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, TaskRepository taskRepository, ConsoleFormAtlasService consoleFormAtlasService, AtlasRepository atlasRepository) {
         this.globals = globals;
-        this.flowCache = flowCache;
-        this.flowInstanceRepository = flowInstanceRepository;
+        this.planCache = planCache;
+        this.workbookRepository = workbookRepository;
         this.experimentCache = experimentCache;
         this.experimentFeatureRepository = experimentFeatureRepository;
         this.binaryDataService = binaryDataService;
@@ -110,16 +110,16 @@ public class AtlasService {
         return result;
     }
 
-    public OperationStatusRest toAtlas(long flowInstanceId, long experimentId) {
+    public OperationStatusRest toAtlas(long workbookId, long experimentId) {
         StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(experimentId);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, stored.errorMessages);
         }
-        if (flowInstanceId!=stored.experimentStoredToAtlas.flowInstance.id) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment can't be stored, flowInstanceId is different");
+        if (workbookId!=stored.experimentStoredToAtlas.workbook.id) {
+            return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment can't be stored, workbookId is different");
         }
-        String poolCode = getPoolCodeForExperiment(flowInstanceId, experimentId);
-        List<SimpleCodeAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), flowInstanceId);
+        String poolCode = getPoolCodeForExperiment(workbookId, experimentId);
+        List<SimpleCodeAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), workbookId);
         if (!codes.isEmpty()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment already stored");
         }
@@ -137,7 +137,7 @@ public class AtlasService {
         atlasRepository.save(b);
 
         ConsoleOutputStoredToAtlas filed = toConsoleOutputStoredToAtlas(
-                stored.experimentStoredToAtlas.flowInstance.id);
+                stored.experimentStoredToAtlas.workbook.id);
         if (filed.isErrorMessages()) {
             return new OperationStatusRest(Enums.OperationStatus.ERROR, filed.errorMessages);
         }
@@ -160,8 +160,8 @@ public class AtlasService {
     }
 
     @SuppressWarnings("WeakerAccess")
-    public static String getPoolCodeForExperiment(long flowInstanceId, long experimentId) {
-        return String.format("stored-experiment-%d-%d",flowInstanceId, experimentId);
+    public static String getPoolCodeForExperiment(long workbookId, long experimentId) {
+        return String.format("stored-experiment-%d-%d",workbookId, experimentId);
     }
 
     public StoredToAtlasWithStatus toExperimentStoredToAtlas(long experimentId) {
@@ -171,25 +171,25 @@ public class AtlasService {
             return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.02 can't find experiment for id: " + experimentId);
         }
-        FlowInstance flowInstance = flowInstanceRepository.findById(experiment.flowInstanceId).orElse(null);
-        if (flowInstance==null) {
+        Workbook workbook = workbookRepository.findById(experiment.workbookId).orElse(null);
+        if (workbook==null) {
             return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
-                    "#604.05 can't find flowInstance for this experiment");
+                    "#604.05 can't find workbook for this experiment");
         }
-        Flow flow = flowCache.findById(flowInstance.flowId);
-        if (flow==null) {
+        Plan plan = planCache.findById(workbook.planId);
+        if (plan==null) {
             return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
-                    "#604.10 can't find flow for this experiment");
+                    "#604.10 can't find plan for this experiment");
         }
         StoredToAtlasWithStatus result = new StoredToAtlasWithStatus();
 
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experimentId);
         List<ExperimentSnippet> snippets = experimentSnippetRepository.findByExperimentId(experimentId);
-        List<ExperimentTaskFeature> taskFeatures = experimentTaskFeatureRepository.findByFlowInstanceId(flowInstance.id);
-        List<Task> tasks = taskRepository.findAllByFlowInstanceId(flowInstance.id);
+        List<ExperimentTaskFeature> taskFeatures = experimentTaskFeatureRepository.findByWorkbookId(workbook.id);
+        List<Task> tasks = taskRepository.findAllByWorkbookId(workbook.id);
 
         result.experimentStoredToAtlas = new ExperimentStoredToAtlas(
-                flow, flowInstance, experiment,
+                plan, workbook, experiment,
                 features, experiment.hyperParams, snippets, taskFeatures, tasks
         );
         result.status = Enums.StoringStatus.OK;
@@ -210,9 +210,9 @@ public class AtlasService {
     }
 
     @SuppressWarnings("WeakerAccess")
-    public ConsoleOutputStoredToAtlas toConsoleOutputStoredToAtlas(long flowInstanceId) {
+    public ConsoleOutputStoredToAtlas toConsoleOutputStoredToAtlas(long workbookId) {
         //noinspection UnnecessaryLocalVariable
-        ConsoleOutputStoredToAtlas result = consoleFormAtlasService.collectConsoleOutputs(flowInstanceId);
+        ConsoleOutputStoredToAtlas result = consoleFormAtlasService.collectConsoleOutputs(workbookId);
         return result;
     }
 }

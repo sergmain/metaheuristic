@@ -26,7 +26,7 @@
 
     </script>
 
-    <h1 class="widget-header">Flows instances</h1>
+    <h1 class="widget-header">Plans instances</h1>
 
     <a class="pure-button pure-button-primary" href="process-resource-add.html" th:href="@{/pilot/process-resource/process-resource-add}">Upload files and start processing</a>
     <p></p>
@@ -36,7 +36,7 @@
         <tr th:align="center">
             <th>#</th>
             <th>Created on</th>
-            <th>Flow code</th>
+            <th>Plan code</th>
             <th>Exec state</th>
             <th colspan="2">&nbsp;</th>
         </tr>
@@ -47,10 +47,10 @@
         <tr th:each="r : ${result.items}">
             <td th:text="${r.batch.id}">#Id</td>
             <td th:text="${#dates.format(r.batch.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
-            <td th:text="${r.flow.code}">Flow code</td>
+            <td th:text="${r.plan.code}">Plan code</td>
             <td th:text="${r.execStateStr}">Exec state as string</td>
             <td><a class="pure-button pure-button-primary"
-                   th:href="${'/pilot/process-resource/process-resource-delete/' + r.flow.id + '/' + r.batch.id}">Delete</a></td>
+                   th:href="${'/pilot/process-resource/process-resource-delete/' + r.plan.id + '/' + r.batch.id}">Delete</a></td>
 
             <td><a class="pure-button pure-button-primary"
                    target="_blank"

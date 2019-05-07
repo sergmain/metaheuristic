@@ -5,7 +5,7 @@
             <input matInput (keyup)="applyFilter($event.target.value)">
         </mat-form-field>
     </div>
-    <mat-card class="flow-card">
+    <mat-card class="plan-card">
         <table mat-table [dataSource]="dataSource" class="mat-table">
             <ng-container matColumnDef="isValid">
                 <th mat-header-cell *matHeaderCellDef>Is Valid?</th>

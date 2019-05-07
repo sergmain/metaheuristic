@@ -114,16 +114,16 @@ public class BinaryDataService {
         }
     }
 
-    public void deleteByFlowInstanceId(long flowInstanceId) {
-        binaryDataRepository.deleteByFlowInstanceId(flowInstanceId);
+    public void deleteByWorkbookId(long workbookId) {
+        binaryDataRepository.deleteByWorkbookId(workbookId);
     }
 
     public void deleteAllByType(Enums.BinaryDataType binaryDataType) {
         binaryDataRepository.deleteAllByDataType(binaryDataType.value);
     }
 
-    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode, long flowInstanceId) {
-        return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode, flowInstanceId);
+    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode, long workbookId) {
+        return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode, workbookId);
     }
 
     public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode) {
@@ -146,9 +146,9 @@ public class BinaryDataService {
 
     public BinaryData save(InputStream is, long size,
                            Enums.BinaryDataType binaryDataType, String code, String poolCode,
-                           boolean isManual, String filename, Long flowInstanceId) {
-        if (binaryDataType== Enums.BinaryDataType.SNIPPET && flowInstanceId!=null) {
-            String es = "#087.01 Snippet can't be bound to flow instance";
+                           boolean isManual, String filename, Long workbookId) {
+        if (binaryDataType== Enums.BinaryDataType.SNIPPET && workbookId!=null) {
+            String es = "#087.01 Snippet can't be bound to workbook";
             log.error(es);
             throw new BinaryDataSaveException(es);
         }
@@ -162,7 +162,7 @@ public class BinaryDataService {
                 data.setPoolCode(poolCode);
                 data.setManual(isManual);
                 data.setFilename(filename);
-                data.setFlowInstanceId(flowInstanceId);
+                data.setWorkbookId(workbookId);
                 data.setStorageUrl(Consts.LAUNCHPAD_STORAGE_URL);
             } else {
                 if (!poolCode.equals(data.getPoolCode())) {
@@ -230,7 +230,7 @@ public class BinaryDataService {
             data.setPoolCode(poolCode);
             data.setManual(true);
             data.setFilename(null);
-            data.setFlowInstanceId(null);
+            data.setWorkbookId(null);
             data.setStorageUrl(storageUrl);
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setData(null);

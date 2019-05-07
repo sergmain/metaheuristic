@@ -22,11 +22,11 @@ import aiai.ai.Monitoring;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.beans.Flow;
-import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.beans.Plan;
+import aiai.ai.launchpad.beans.Workbook;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
-import aiai.ai.launchpad.flow.FlowService;
+import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import aiai.ai.utils.CollectionUtils;
 import aiai.ai.utils.holders.IntHolder;
@@ -59,9 +59,9 @@ public class ExperimentProcessService {
         this.binaryDataService = binaryDataService;
     }
 
-    public FlowService.ProduceTaskResult produceTasks(
-            boolean isPersist, Flow flow, FlowInstance flowInstance,
-            Process process, FlowService.ResourcePools pools) {
+    public PlanService.ProduceTaskResult produceTasks(
+            boolean isPersist, Plan plan, Workbook workbook,
+            Process process, PlanService.ResourcePools pools) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
         Map<String, String> inputStorageUrls = pools.inputStorageUrls;
@@ -70,13 +70,13 @@ public class ExperimentProcessService {
 
         // real copy of experiment
         e = experimentCache.findById(e.getId());
-        FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
+        PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
         if (e==null) {
-            result.status = EnumsApi.FlowProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
+            result.status = EnumsApi.PlanProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
             return result;
         }
 
-        e.setFlowInstanceId(flowInstance.getId());
+        e.setWorkbookId(workbook.getId());
         if (isPersist) {
             e = experimentCache.save(e);
         }
@@ -85,17 +85,17 @@ public class ExperimentProcessService {
 
         List<String> features;
         if (meta==null) {
-            InputResourceParam resourceParams = InputResourceParamUtils.to(flowInstance.inputResourceParam);
+            InputResourceParam resourceParams = InputResourceParamUtils.to(workbook.inputResourceParam);
             List<String> list = resourceParams.getPoolCodes().get(FEATURE_POOL_CODE_TYPE);
             if (CollectionUtils.isEmpty(list)) {
-                result.status = EnumsApi.FlowProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
+                result.status = EnumsApi.PlanProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
                 return result;
             }
             features = new ArrayList<>();
             for (String poolCode : list) {
                 List<String> newResources = collectedInputs.get(poolCode);
                 if (newResources==null) {
-                    result.status = EnumsApi.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                    result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
                 features.addAll(newResources);
@@ -104,12 +104,12 @@ public class ExperimentProcessService {
         else {
             if (!collectedInputs.containsKey(meta.getValue())) {
                 List<SimpleCodeAndStorageUrl> initialInputResourceCodes = binaryDataService.getResourceCodesInPool(
-                        Collections.singletonList(meta.getValue()), flowInstance.getId()
+                        Collections.singletonList(meta.getValue()), workbook.getId()
                 );
 
-                FlowService.ResourcePools metaPools = new FlowService.ResourcePools(initialInputResourceCodes);
-                if (metaPools.status != EnumsApi.FlowProducingStatus.OK) {
-                    result.status = EnumsApi.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                PlanService.ResourcePools metaPools = new PlanService.ResourcePools(initialInputResourceCodes);
+                if (metaPools.status != EnumsApi.PlanProducingStatus.OK) {
+                    result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
                 pools.merge(metaPools);
@@ -117,7 +117,7 @@ public class ExperimentProcessService {
 
             features = collectedInputs.get(meta.getValue());
             if (features==null) {
-                result.status = EnumsApi.FlowProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
+                result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                 return result;
             }
         }
@@ -130,12 +130,12 @@ public class ExperimentProcessService {
 
         Monitoring.log("##051", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        EnumsApi.FlowProducingStatus status = experimentService.produceTasks(
-                isPersist, flow, flowInstance, process, e, collectedInputs, inputStorageUrls, intHolder);
+        EnumsApi.PlanProducingStatus status = experimentService.produceTasks(
+                isPersist, plan, workbook, process, e, collectedInputs, inputStorageUrls, intHolder);
 
         log.info("experimentService.produceTasks() was done for " + (System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##071", Enums.Monitor.MEMORY);
-        if (status!= EnumsApi.FlowProducingStatus.OK) {
+        if (status!= EnumsApi.PlanProducingStatus.OK) {
             log.error("Tasks weren't produced successfully.");
         }
 

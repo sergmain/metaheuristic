@@ -145,7 +145,7 @@ public class ServerController {
                         taskParamYaml.outputResourceCode,
                         false,
                         null,
-                        task.flowInstanceId);
+                        task.workbookId);
             }
         }
         catch (Throwable th) {

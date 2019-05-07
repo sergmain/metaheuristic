@@ -271,8 +271,8 @@ public class StationTaskService {
             }
             List<StationTask> tasks = findAllByCompletedIsFalse(launchpadUrl);
             for (StationTask task : tasks) {
-                // we don't need new task because flowInstance for this task is active
-                if (currentExecState.isStarted(task.launchpadUrl, task.flowInstanceId)) {
+                // we don't need new task because workbook for this task is active
+                if (currentExecState.isStarted(task.launchpadUrl, task.workbookId)) {
                     return false;
                 }
             }
@@ -362,7 +362,7 @@ public class StationTaskService {
         return status;
     }
 
-    public void createTask(String launchpadUrl, long taskId, Long flowInstanceId, String params) {
+    public void createTask(String launchpadUrl, long taskId, Long workbookId, String params) {
         if (launchpadUrl==null) {
             throw new IllegalStateException("#713.55 launchpadUrl is null");
         }
@@ -372,7 +372,7 @@ public class StationTaskService {
             StationTask task = mapForLaunchpadUrl.computeIfAbsent(taskId, k -> new StationTask());
 
             task.taskId = taskId;
-            task.flowInstanceId = flowInstanceId;
+            task.workbookId = workbookId;
             task.params = params;
             task.metrics = null;
             task.snippetExecResult = null;

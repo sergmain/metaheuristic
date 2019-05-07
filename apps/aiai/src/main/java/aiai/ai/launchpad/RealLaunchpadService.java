@@ -18,7 +18,7 @@
 package aiai.ai.launchpad;
 
 import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.launchpad.flow.FlowService;
+import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.launchpad.task.TaskService;
 import lombok.Getter;
@@ -32,14 +32,14 @@ public class RealLaunchpadService implements LaunchpadService{
     private final StationsRepository stationsRepository;
     private final ExperimentService experimentService;
     private final TaskService taskService;
-    private final FlowService flowService;
+    private final PlanService planService;
     private final ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad;
 
-    public RealLaunchpadService(StationsRepository stationsRepository, ExperimentService experimentService, TaskService taskService, FlowService flowService, ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad) {
+    public RealLaunchpadService(StationsRepository stationsRepository, ExperimentService experimentService, TaskService taskService, PlanService planService, ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad) {
         this.stationsRepository = stationsRepository;
         this.experimentService = experimentService;
         this.taskService = taskService;
-        this.flowService = flowService;
+        this.planService = planService;
         this.artifactCleanerAtLaunchpad = artifactCleanerAtLaunchpad;
     }
 }

@@ -97,7 +97,7 @@ public class StationService {
         }
         synchronized (StationSyncHolder.stationGlobalSync) {
             for (Protocol.AssignedTask.Task task : tasks) {
-                stationTaskService.createTask(launchpadUrl, task.taskId, task.flowInstanceId, task.params);
+                stationTaskService.createTask(launchpadUrl, task.taskId, task.workbookId, task.params);
             }
         }
     }

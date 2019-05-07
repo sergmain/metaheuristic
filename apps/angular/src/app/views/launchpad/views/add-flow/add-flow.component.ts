@@ -2,11 +2,11 @@ import { Component, OnInit } from '@angular/core';
 import { Location } from '@angular/common'
 
 @Component({
-  selector: 'add-flow',
-  templateUrl: './add-flow.component.html',
-  styleUrls: ['./add-flow.component.scss']
+  selector: 'add-plan',
+  templateUrl: './add-plan.component.html',
+  styleUrls: ['./add-plan.component.scss']
 })
-export class AddFlowComponent implements OnInit {
+export class AddPlanComponent implements OnInit {
 
   ngOnInit() {}
 

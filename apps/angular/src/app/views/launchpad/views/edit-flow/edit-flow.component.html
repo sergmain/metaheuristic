@@ -1,9 +1,9 @@
-<mat-card class="flow-card">
-    <h3>Flow {{id}}</h3>
+<mat-card class="plan-card">
+    <h3>Plan {{id}}</h3>
     <mat-card-content>
         <mat-form-field appearance="outline">
             <mat-label>Code</mat-label>
-            <input matInput name="code" [(ngModel)]="flow.codeOfFlow" value="">
+            <input matInput name="code" [(ngModel)]="plan.codeOfPlan" value="">
             <mat-hint>Hint</mat-hint>
             <!--             
             <mat-error *ngIf="emailFormControl.hasError('email') && !emailFormControl.hasError('required')">
@@ -18,7 +18,7 @@
         <br />
         <mat-form-field appearance="outline">
             <mat-label>Parameters</mat-label>
-            <textarea matInput name="parameters" [(ngModel)]="flow.parameters" value="" cdkTextareaAutosize cdkAutosizeMinRows="3"></textarea>
+            <textarea matInput name="parameters" [(ngModel)]="plan.parameters" value="" cdkTextareaAutosize cdkAutosizeMinRows="3"></textarea>
             <mat-hint>Hint</mat-hint>
             <!--             
             <mat-error *ngIf="emailFormControl.hasError('email') && !emailFormControl.hasError('required')">

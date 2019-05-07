@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { Flow, Instance, FlowsService } from '@app/services/flows/flows.service';
+import { Plan, Instance, PlansService } from '@app/services/plans/plans.service';
 import { MatPaginator, MatTableDataSource } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
 
@@ -15,18 +15,18 @@ export class InstancesComponent implements OnInit {
     id: string = ''
     columnsToDisplay = [
         "id",
-        "flowCode",
+        "planCode",
         "inputPoolCodes",
         "createdOn",
-        "isFlowValid",
-        "isFlowInstanceValid",
+        "isPlanValid",
+        "isWorkbookValid",
         "execState",
         "completedOn"
     ]
 
     constructor(
         private route: ActivatedRoute,
-        private flowService: FlowsService
+        private planService: PlansService
     ) {}
 
     @ViewChild(MatPaginator) paginator: MatPaginator;
@@ -38,11 +38,11 @@ export class InstancesComponent implements OnInit {
     ngOnInit() {
         this.getInstances()
         this.dataSource.paginator = this.paginator
-        this.id = this.route.snapshot.paramMap.get('flowId');
+        this.id = this.route.snapshot.paramMap.get('planId');
     }
     getInstances() {
-        const id = this.route.snapshot.paramMap.get('flowId');
-        this.dataSource = new MatTableDataSource < Instance > (this.flowService.getInstancesByFlowId(id))
-        console.log(this.flowService.getInstancesByFlowId(id))
+        const id = this.route.snapshot.paramMap.get('planId');
+        this.dataSource = new MatTableDataSource < Instance > (this.planService.getInstancesByPlanId(id))
+        console.log(this.planService.getInstancesByPlanId(id))
     }
 }

@@ -49,7 +49,7 @@ body {
 .pure-skin-mine .pure-button {
     font-size: 100%;
     *font-size: 90%; /*IE 6/7 - To reduce IE's oversized button text*/
-    *overflow: visible; /*IE 6/7 - Because of IE's overly large left/right padding on buttons */
+    *overplan: visible; /*IE 6/7 - Because of IE's overly large left/right padding on buttons */
     padding: 0.5em 1.5em 0.5em;
     color: #171717; /* rgba not supported (IE 8) */
     /* color: rgba(0, 0, 0, 0.80); rgba supported */
@@ -202,7 +202,7 @@ Forms Core
 .pure-skin-mine .pure-form input[type="submit"] {
     -webkit-appearance: button; /* 2 */
     cursor: pointer; /* 3 */
-    *overflow: visible;  /* 4 */
+    *overplan: visible;  /* 4 */
 }
 
 /*
@@ -268,7 +268,7 @@ Forms Core
  */
 
 .pure-skin-mine .pure-form textarea {
-    overflow: auto; /* 1 */
+    overplan: auto; /* 1 */
     vertical-align: top; /* 2 */
 }
 /* ===============  forms-responsive.css =================*/
@@ -615,7 +615,7 @@ Forms Core
     border-width: 0 0 0 1px;
     font-size: inherit;
     margin: 0;
-    overflow: visible; /*to make ths where the title is really long work*/
+    overplan: visible; /*to make ths where the title is really long work*/
     padding: 0.3em 0.6em; /* cell padding */
 }
 
@@ -755,7 +755,7 @@ striping:
     height: 1px;
     font-size: 0;
     margin: 7px 2px;
-    overflow: hidden;
+    overplan: hidden;
 }
 
 .pure-skin-mine .pure-menu-hidden {

@@ -86,7 +86,7 @@ public abstract class PreparingExperiment {
     public Station station = null;
     public String stationIdAsStr;
 
-    public FlowInstance flowInstance = null;
+    public Workbook workbook = null;
     public Experiment experiment = null;
     public boolean isCorrectInit = true;
 
@@ -265,9 +265,9 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
         }
-        if (flowInstance!=null) {
+        if (workbook!=null) {
             try {
-                taskRepository.deleteByFlowInstanceId(flowInstance.getId());
+                taskRepository.deleteByWorkbookId(workbook.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

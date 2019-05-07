@@ -22,8 +22,8 @@ import aiai.ai.launchpad.atlas.AtlasService;
 import aiai.ai.launchpad.atlas.ExperimentStoredToAtlas;
 import aiai.ai.launchpad.data.ExperimentData;
 import aiai.ai.launchpad.experiment.ExperimentTopLevelService;
-import aiai.ai.launchpad.flow.FlowService;
-import aiai.ai.preparing.PreparingFlow;
+import aiai.ai.launchpad.plan.PlanService;
+import aiai.ai.preparing.PreparingPlan;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -41,7 +41,7 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
-public class TestExperimentToJson extends PreparingFlow {
+public class TestExperimentToJson extends PreparingPlan {
 
     @Autowired
     private ExperimentTopLevelService experimentTopLevelService;
@@ -57,8 +57,8 @@ public class TestExperimentToJson extends PreparingFlow {
     }
 
     @Override
-    public String getFlowParamsAsYaml() {
-        return getFlowParamsAsYaml_Simple();
+    public String getPlanParamsAsYaml() {
+        return getPlanParamsAsYaml_Simple();
     }
 
     @Test
@@ -77,11 +77,11 @@ public class TestExperimentToJson extends PreparingFlow {
     public void toExperimentStoredToAtlasToJson() throws IOException {
 
         //noinspection unused
-        FlowService.TaskProducingResult result = produceTasksForTest();
+        PlanService.TaskProducingResult result = produceTasksForTest();
 
         assertNotNull(experiment);
         assertNotNull(experiment.getId());
-        assertNotNull(experiment.getFlowInstanceId());
+        assertNotNull(experiment.getWorkbookId());
 
         long experimentId = experiment.getId();
 

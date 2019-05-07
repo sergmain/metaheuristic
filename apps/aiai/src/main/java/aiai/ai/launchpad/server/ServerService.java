@@ -24,10 +24,10 @@ import aiai.ai.comm.CommandProcessor;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
-import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.beans.Workbook;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.repositories.FlowInstanceRepository;
+import aiai.ai.launchpad.repositories.WorkbookRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.resource.AssetFile;
 import aiai.ai.resource.ResourceUtils;
@@ -111,16 +111,16 @@ public class ServerService {
     @Service
     @Profile("launchpad")
     public static class CommandSetter {
-        private final FlowInstanceRepository flowInstanceRepository;
+        private final WorkbookRepository workbookRepository;
 
-        public CommandSetter(FlowInstanceRepository flowInstanceRepository) {
-            this.flowInstanceRepository = flowInstanceRepository;
+        public CommandSetter(WorkbookRepository workbookRepository) {
+            this.workbookRepository = workbookRepository;
         }
 
         @Transactional(readOnly = true)
         public void setCommandInTransaction(ExchangeData resultData) {
-            try (Stream<FlowInstance> stream = flowInstanceRepository.findAllAsStream() ) {
-                resultData.setCommand(new Protocol.FlowInstanceStatus(
+            try (Stream<Workbook> stream = workbookRepository.findAllAsStream() ) {
+                resultData.setCommand(new Protocol.WorkbookStatus(
                         stream.map(ServerService::to).collect(Collectors.toList())));
             }
         }
@@ -162,8 +162,8 @@ public class ServerService {
         return resultData.getCommands().isEmpty() ? EXCHANGE_DATA_NOP : resultData;
     }
 
-    private static Protocol.FlowInstanceStatus.SimpleStatus to(FlowInstance flowInstance) {
-        return new Protocol.FlowInstanceStatus.SimpleStatus(flowInstance.getId(), Enums.FlowInstanceExecState.toState(flowInstance.getExecState()));
+    private static Protocol.WorkbookStatus.SimpleStatus to(Workbook workbook) {
+        return new Protocol.WorkbookStatus.SimpleStatus(workbook.getId(), Enums.WorkbookExecState.toState(workbook.getExecState()));
     }
 
 }

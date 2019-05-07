@@ -82,8 +82,8 @@ public class Globals {
     @Value("#{ T(aiai.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.launchpad.dir' )) }")
     public File launchpadDir;
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.max-tasks-per-flow'), 1, 10000, 2000) }")
-    public int maxTasksPerFlow;
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.max-tasks-per-plan'), 1, 10000, 2000) }")
+    public int maxTasksPerPlan;
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.resource-table-rows-limit'), 5, 100, 20) }")
     public int resourceRowsLimit;
@@ -94,11 +94,11 @@ public class Globals {
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.atlas-experiment-table-rows-limit'), 5, 100, 20) }")
     public int atlasExperimentRowsLimit;
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.flow-table-rows-limit'), 5, 50, 10) }")
-    public int flowRowsLimit;
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.plan-table-rows-limit'), 5, 50, 10) }")
+    public int planRowsLimit;
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.flow-instance-table-rows-limit'), 5, 50, 20) }")
-    public int flowInstanceRowsLimit;
+    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.workbook-table-rows-limit'), 5, 50, 20) }")
+    public int workbookRowsLimit;
 
     @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.station-table-rows-limit'), 5, 30, 10) }")
     public int stationRowsLimit;
@@ -225,8 +225,8 @@ public class Globals {
         log.info("\tlaunchpadDir: {}", launchpadDir);
         log.info("\tresourceRowsLimit: {}", resourceRowsLimit);
         log.info("\texperimentRowsLimit: {}", experimentRowsLimit);
-        log.info("\tflowRowsLimit: {}", flowRowsLimit);
-        log.info("\tflowInstanceRowsLimit: {}", flowInstanceRowsLimit);
+        log.info("\tplanRowsLimit: {}", planRowsLimit);
+        log.info("\tworkbookRowsLimit: {}", workbookRowsLimit);
         log.info("\tstationRowsLimit: {}", stationRowsLimit);
         log.info("\taccountRowsLimit: {}", accountRowsLimit);
         log.info("\tisReplaceSnapshot: {}", isReplaceSnapshot);

@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import javax.persistence.Column;
 import java.io.Serializable;
 
 @Data
@@ -30,5 +31,7 @@ public class TaskSimple implements Serializable {
     private static final long serialVersionUID = 8143805222407343487L;
 
     public long id;
-    public long flowInstanceId;
+
+    @Column(name = "FLOW_INSTANCE_ID")
+    public long workbookId;
 }

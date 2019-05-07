@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.beans.Workbook;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.utils.holders.IntHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -42,12 +42,12 @@ public class ParamsSetter {
     }
 
     @Transactional
-    public Set<String> getParamsInTransaction(boolean isPersist, FlowInstance flowInstance, Experiment experiment, IntHolder size) {
+    public Set<String> getParamsInTransaction(boolean isPersist, Workbook workbook, Experiment experiment, IntHolder size) {
         Set<String> taskParams;
         taskParams = new LinkedHashSet<>();
 
         size.value = 0;
-        try (Stream<Object[]> stream = taskRepository.findByFlowInstanceId(flowInstance.getId()) ) {
+        try (Stream<Object[]> stream = taskRepository.findByWorkbookId(workbook.getId()) ) {
             stream
                     .forEach(o -> {
                         if (taskParams.contains((String) o[1])) {

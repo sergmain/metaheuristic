@@ -1,0 +1,75 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+     layout:decorate="~{layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <p th:text="${'Plan code: ' + result.plan.code}"></p>
+        <p>&nbsp;</p>
+
+
+        <h1 class="widget-header">New workbook with single input</h1>
+
+        <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.PlanData$PlanResult"*/-->
+        <form class="pure-form pure-form-stacked" action="#" th:method="POST" th:action="@{/launchpad/plan/workbook-add-commit}" accept-charset="UTF-8" id="workbook-add-form" name="f">
+            <input type="hidden" name="planId" th:value="${result.plan.id}"/>
+            <fieldset>
+
+                <label for="code">Input pool code for this plan</label>
+                <input name="code" id="code" type="text" placeholder="Input pool code for this plan" th:name="poolCode">
+                <span class="pure-form-message">This is a required field.</span>
+
+                <p>&nbsp;</p>
+                <table>
+                    <tr>
+                        <td>
+                            <button type="submit" class="pure-button pure-button-primary">Create</button>
+                        </td>
+                        <td>
+                            &nbsp;
+                        </td>
+                        <td>
+                            <a class="pure-button pure-button-primary" href="workbooks.html" th:href="${'/launchpad/plan/workbooks/' + result.plan.id}">Cancel</a>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+
+        <h1 class="widget-header">New workbook with multiply inputs</h1>
+        <form class="pure-form pure-form-stacked" action="#" th:method="POST" th:action="@{/launchpad/plan/workbook-add-commit}" accept-charset="UTF-8" id="workbook-multiply-add-form" name="f">
+            <input type="hidden" name="planId" th:value="${result.plan.id}"/>
+            <fieldset>
+
+                <p th:text="Example"></p>
+                <pre style="width:50%">
+poolCodes:
+  dataset-files:
+    - dataset-001-pool-code
+  vocabulary:
+    - vocabulary-001-pool-code</pre>
+
+
+                <label for="inputResourceParams">Input resources of workbook</label>
+                <textarea name="inputResourceParams" id="inputResourceParams" placeholder="Input resources of workbook" cols="70" rows="15"
+                          maxlength="10000"></textarea>
+                <span class="pure-form-message"></span>
+
+                <p>&nbsp;</p>
+                <table>
+                    <tr>
+                        <td>
+                            <button type="submit" class="pure-button pure-button-primary">Create</button>
+                        </td>
+                    </tr>
+                </table>
+            </fieldset>
+        </form>
+
+        <h1 class="widget-header">&nbsp;</h1>
+
+        <a class="pure-button pure-button-primary" href="workbooks.html" th:href="${'/launchpad/plan/workbooks/' + result.plan.id}">Cancel</a>
+
+
+    </div>
+</div>

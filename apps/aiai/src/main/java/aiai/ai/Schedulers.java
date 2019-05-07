@@ -51,7 +51,7 @@ public class Schedulers {
 
         // Launchpad schedulers
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-flow-instance'), 5, 40, 5)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-workbook'), 5, 40, 5)*1000 }")
         public void markOrderAsProcessed() {
             if (globals.isUnitTesting) {
                 return;
@@ -59,8 +59,8 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke FlowService.markOrderAsProcessed()");
-            launchpadService.getFlowService().markOrderAsProcessed();
+            log.info("Invoke PlanService.markOrderAsProcessed()");
+            launchpadService.getPlanService().markOrderAsProcessed();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.create-all-tasks'), 5, 40, 5)*1000 }")
@@ -71,8 +71,8 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke FlowService.producingFlowInstances()");
-            launchpadService.getFlowService().createAllTasks();
+            log.info("Invoke PlanService.producingWorkbooks()");
+            launchpadService.getPlanService().createAllTasks();
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.artifact-cleaner'), 30, 300, 30)*1000 }")
@@ -83,7 +83,7 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke FlowService.producingFlowInstances()");
+            log.info("Invoke PlanService.producingWorkbooks()");
             launchpadService.getArtifactCleanerAtLaunchpad().fixedDelay();
         }
 

@@ -13,9 +13,9 @@ import {
     EditAccountComponent,
     EditPassAccountComponent,
 
-    FlowsComponent,
-    AddFlowComponent,
-    EditFlowComponent,
+    PlansComponent,
+    AddPlanComponent,
+    EditPlanComponent,
 
     InstancesComponent,
     AddInstanceComponent,
@@ -61,12 +61,12 @@ let routes: Routes = [
     },
 
     launchpadRoute({ path: 'launchpad', body: LaunchpadComponent }),
-    launchpadRoute({ path: 'launchpad/flows', body: FlowsComponent }),
-    launchpadRoute({ path: 'launchpad/flows/add', body: AddFlowComponent }),
-    launchpadRoute({ path: 'launchpad/flows/:flowId/edit', body: EditFlowComponent }),
-    launchpadRoute({ path: 'launchpad/flows/:flowId/instances', body: InstancesComponent }),
-    launchpadRoute({ path: 'launchpad/flows/:flowId/instances/:instanceId/add', body: LaunchpadComponent }),
-    launchpadRoute({ path: 'launchpad/flows/:flowId/instances/:instanceId/edit', body: LaunchpadComponent }),
+    launchpadRoute({ path: 'launchpad/plans', body: PlansComponent }),
+    launchpadRoute({ path: 'launchpad/plans/add', body: AddPlanComponent }),
+    launchpadRoute({ path: 'launchpad/plans/:planId/edit', body: EditPlanComponent }),
+    launchpadRoute({ path: 'launchpad/plans/:planId/instances', body: InstancesComponent }),
+    launchpadRoute({ path: 'launchpad/plans/:planId/instances/:instanceId/add', body: LaunchpadComponent }),
+    launchpadRoute({ path: 'launchpad/plans/:planId/instances/:instanceId/edit', body: LaunchpadComponent }),
 
     launchpadRoute({ path: 'launchpad/experiments', body: ExperimentsComponent }),
     launchpadRoute({ path: 'launchpad/experiments/add', body: AddExperimentComponent }),

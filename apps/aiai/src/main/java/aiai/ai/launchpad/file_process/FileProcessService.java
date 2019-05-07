@@ -22,8 +22,8 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.apps.commons.utils.StrUtils;
 import aiai.api.v1.launchpad.Process;
-import aiai.ai.launchpad.flow.FlowService;
-import aiai.ai.launchpad.flow.FlowUtils;
+import aiai.ai.launchpad.plan.PlanService;
+import aiai.ai.launchpad.plan.PlanUtils;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
@@ -52,46 +52,46 @@ public class FileProcessService {
     }
 
     @SuppressWarnings("Duplicates")
-    public FlowService.ProduceTaskResult produceTasks(
-            boolean isPersist, Flow flow, FlowInstance flowInstance,
-            Process process, FlowService.ResourcePools pools) {
+    public PlanService.ProduceTaskResult produceTasks(
+            boolean isPersist, Plan plan, Workbook workbook,
+            Process process, PlanService.ResourcePools pools) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
         Map<String, String> inputStorageUrls = pools.inputStorageUrls;
 
-        FlowService.ProduceTaskResult result = new FlowService.ProduceTaskResult();
+        PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
 
         result.outputResourceCodes = new ArrayList<>();
         if (process.parallelExec) {
             for (String snippetCode : process.snippetCodes) {
                 String resourceName = StrUtils.normalizeSnippetCode(snippetCode);
-                String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, resourceName, process.order);
+                String outputResourceCode = PlanUtils.getResourceCode(plan.getId(), workbook.getId(), process.code, resourceName, process.order);
                 result.outputResourceCodes.add(outputResourceCode);
                 inputStorageUrls.put(outputResourceCode,
                         StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                 if (isPersist) {
-                    createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
+                    createTaskInternal(plan, workbook, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
                 }
             }
         }
         else {
             String snippetCode = process.snippetCodes.get(0);
             String resourceName = StrUtils.normalizeSnippetCode(snippetCode);
-            String outputResourceCode = FlowUtils.getResourceCode(flow.getId(), flowInstance.getId(), process.code, resourceName, process.order);
+            String outputResourceCode = PlanUtils.getResourceCode(plan.getId(), workbook.getId(), process.code, resourceName, process.order);
             result.outputResourceCodes.add(outputResourceCode);
             inputStorageUrls.put(outputResourceCode,
                     StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
             if (isPersist) {
-                createTaskInternal(flow, flowInstance, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
+                createTaskInternal(plan, workbook, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
             }
         }
-        result.status = EnumsApi.FlowProducingStatus.OK;
+        result.status = EnumsApi.PlanProducingStatus.OK;
         result.numberOfTasks = result.outputResourceCodes.size();
         return result;
     }
 
     private void createTaskInternal(
-            Flow flow, FlowInstance flowInstance, Process process,
+            Plan plan, Workbook workbook, Process process,
             String outputResourceCode,
             String snippetCode, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls) {
         if (process.type!= EnumsApi.ProcessType.FILE_PROCESSING) {
@@ -115,13 +115,13 @@ public class FileProcessService {
         yaml.preSnippet = snippetService.getSnippetConfig(process.getPreSnippetCode());
         yaml.postSnippet = snippetService.getSnippetConfig(process.getPostSnippetCode());
 
-        yaml.clean = flow.clean;
+        yaml.clean = plan.clean;
         yaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
         String taskParams = TaskParamYamlUtils.toString(yaml);
 
         TaskImpl task = new TaskImpl();
-        task.setFlowInstanceId(flowInstance.getId());
+        task.setWorkbookId(workbook.getId());
         task.setOrder(process.order);
         task.setParams(taskParams);
         task.setProcessType(process.type.value);

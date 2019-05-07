@@ -1,6 +1,6 @@
 @import '~mixins.scss';
 
-@include flowCardLayout();
+@include planCardLayout();
 @include tablePageLayout();
 
 .edit-experiment__body {

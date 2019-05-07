@@ -18,7 +18,7 @@
 package aiai.ai.launchpad;
 
 import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.launchpad.flow.FlowService;
+import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.launchpad.task.TaskService;
 import org.springframework.context.annotation.Profile;
@@ -43,7 +43,7 @@ public class NullLaunchpadService implements LaunchpadService {
     }
 
     @Override
-    public FlowService getFlowService() {
+    public PlanService getPlanService() {
         return null;
     }
 

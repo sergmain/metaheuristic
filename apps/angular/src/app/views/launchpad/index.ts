@@ -12,9 +12,9 @@ export * from './views/edit-experiment/edit-experiment.component';
 export * from './views/info-experiment/info-experiment.component';
 export * from './views/progress-experiment/progress-experiment.component';
 // 
-export * from './views/flows/flows.component';
-export * from './views/add-flow/add-flow.component';
-export * from './views/edit-flow/edit-flow.component';
+export * from './views/plans/plans.component';
+export * from './views/add-plan/add-plan.component';
+export * from './views/edit-plan/edit-plan.component';
 // 
 export * from './views/instances/instances.component';
 export * from './views/add-instance/add-instance.component';

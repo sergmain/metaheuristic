@@ -56,13 +56,13 @@ public class BinaryData implements Serializable {
     private int dataType;
 
     /**
-     * This field is initialized only for data resources which were produced while processing flow instance.
-     * The data resource which is using as input resources must not have flowInstanceId.
-     * Also this fiels is used as refId for deleting any resources which were produced
-     * while flow instance was processed.
+     * This field is initialized only for data resources which were produced while processing workbook.
+     * The data resource which is using as input resources must not have workbookId.
+     * Also this field is used as refId for deleting any resources which were produced
+     * while workbook was processed.
      */
     @Column(name = "FLOW_INSTANCE_ID")
-    private Long flowInstanceId;
+    private Long workbookId;
 
     @Column(name = "UPLOAD_TS")
     private Timestamp uploadTs;

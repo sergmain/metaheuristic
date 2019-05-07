@@ -17,7 +17,7 @@
 package aiai.ai.launchpad;
 
 import aiai.ai.Globals;
-import aiai.ai.launchpad.repositories.FlowInstanceRepository;
+import aiai.ai.launchpad.repositories.WorkbookRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.utils.holders.BoolHolder;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,7 @@ public class ArtifactCleanerAtLaunchpad {
 
     private final Globals globals;
     private final CleanerTasks cleanerTasks;
-    private final FlowInstanceRepository flowInstanceRepository;
+    private final WorkbookRepository workbookRepository;
 
     @Service
     @Profile("launchpad")
@@ -64,9 +64,9 @@ public class ArtifactCleanerAtLaunchpad {
         }
     }
 
-    public ArtifactCleanerAtLaunchpad(Globals globals, FlowInstanceRepository flowInstanceRepository, TaskRepository taskRepository, CleanerTasks cleanerTasks) {
+    public ArtifactCleanerAtLaunchpad(Globals globals, WorkbookRepository workbookRepository, TaskRepository taskRepository, CleanerTasks cleanerTasks) {
         this.globals = globals;
-        this.flowInstanceRepository = flowInstanceRepository;
+        this.workbookRepository = workbookRepository;
         this.cleanerTasks = cleanerTasks;
     }
 
@@ -77,7 +77,7 @@ public class ArtifactCleanerAtLaunchpad {
         }
 
         Set<Long> ids = new HashSet<>();
-        flowInstanceRepository.findAll().forEach( o -> ids.add(o.getId()));
+        workbookRepository.findAll().forEach( o -> ids.add(o.getId()));
 
         int page = 0;
         final BoolHolder isFound = new BoolHolder();

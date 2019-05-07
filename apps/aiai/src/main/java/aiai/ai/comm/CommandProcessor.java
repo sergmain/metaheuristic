@@ -85,9 +85,9 @@ public class CommandProcessor {
             case ReportResultDelivering:
                 // processing on station side
                 return processReportResultDelivering((Protocol.ReportResultDelivering) command);
-            case FlowInstanceStatus:
+            case WorkbookStatus:
                 // processing on station side
-                return processFlowInstanceStatus((Protocol.FlowInstanceStatus) command);
+                return processWorkbookStatus((Protocol.WorkbookStatus) command);
             case StationTaskStatus:
                 // processing on launchpad side
                 return processStationTaskStatus((Protocol.StationTaskStatus) command);
@@ -127,11 +127,11 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
-    private Command[] processFlowInstanceStatus(Protocol.FlowInstanceStatus command) {
+    private Command[] processWorkbookStatus(Protocol.WorkbookStatus command) {
         if (command.launchpadUrl==null) {
             throw new IllegalStateException("command.launchpadUrl is null");
         }
-        stationServicesHolder.getTaskProcessor().processFlowInstanceStatus(command.launchpadUrl, command.statuses);
+        stationServicesHolder.getTaskProcessor().processWorkbookStatus(command.launchpadUrl, command.statuses);
         return Protocol.NOP_ARRAY;
     }
 

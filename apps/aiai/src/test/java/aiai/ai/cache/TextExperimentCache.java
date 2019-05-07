@@ -44,12 +44,12 @@ public class TextExperimentCache extends PreparingExperiment {
         assertNotNull(e1);
         assertNotNull(e2);
 
-        assertNull(e1.getFlowInstanceId());
-        assertNull(e2.getFlowInstanceId());
+        assertNull(e1.getWorkbookId());
+        assertNull(e2.getWorkbookId());
 
-        assertEquals(e1.getFlowInstanceId(), e2.getFlowInstanceId());
+        assertEquals(e1.getWorkbookId(), e2.getWorkbookId());
 
-        e2.setFlowInstanceId(1L);
+        e2.setWorkbookId(1L);
         e2 = experimentCache.save(e2);
 
         e1 = experimentCache.findById(experiment.getId());
@@ -58,12 +58,12 @@ public class TextExperimentCache extends PreparingExperiment {
         assertNotNull(e1);
         assertNotNull(e2);
 
-        assertNotNull(e1.getFlowInstanceId());
-        assertNotNull(e2.getFlowInstanceId());
+        assertNotNull(e1.getWorkbookId());
+        assertNotNull(e2.getWorkbookId());
 
-        assertEquals(e1.getFlowInstanceId(), e2.getFlowInstanceId());
+        assertEquals(e1.getWorkbookId(), e2.getWorkbookId());
 
-        e2.setFlowInstanceId(null);
+        e2.setWorkbookId(null);
         e2 = experimentCache.save(e2);
 
         e1 = experimentCache.findById(experiment.getId());
@@ -72,10 +72,10 @@ public class TextExperimentCache extends PreparingExperiment {
         assertNotNull(e1);
         assertNotNull(e2);
 
-        assertNull(e1.getFlowInstanceId());
-        assertNull(e2.getFlowInstanceId());
+        assertNull(e1.getWorkbookId());
+        assertNull(e2.getWorkbookId());
 
-        assertEquals(e1.getFlowInstanceId(), e2.getFlowInstanceId());
+        assertEquals(e1.getWorkbookId(), e2.getWorkbookId());
 
     }
 }

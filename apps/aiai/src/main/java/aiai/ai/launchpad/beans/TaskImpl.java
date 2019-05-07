@@ -67,7 +67,7 @@ public class TaskImpl implements Serializable, Task {
     public int order;
 
     @Column(name = "FLOW_INSTANCE_ID")
-    public long flowInstanceId;
+    public long workbookId;
 
     @Column(name = "EXEC_STATE")
     public int execState;

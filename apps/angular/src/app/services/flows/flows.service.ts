@@ -2,28 +2,28 @@ import { Injectable } from '@angular/core';
 
 export class Instance {
     id: string;
-    flowCode: string;
+    planCode: string;
     inputPoolCodes: string;
     createdOn: string;
-    isFlowValid: string;
-    isFlowInstanceValid: string;
+    isPlanValid: string;
+    isWorkbookValid: string;
     execState: string;
     completedOn: string;
     constructor(p: any) {
         this.id = 'id' + p.id || 'id' + rand(111111, 999999);
-        this.flowCode = p.flowCode || 'flowCode-' + rand(1, 9999);
+        this.planCode = p.planCode || 'planCode-' + rand(1, 9999);
         this.inputPoolCodes = p.inputPoolCodes || 'inputPoolCodes-' + rand(1, 9999);
         this.createdOn = p.createdOn || rand(1, 31) + '.' + rand(1, 12) + '.2018';
-        this.isFlowValid = p.isFlowValid || ['Yes', 'No'][rand(0, 2)];
-        this.isFlowInstanceValid = p.isFlowInstanceValid || ['Yes', 'No'][rand(0, 2)];
+        this.isPlanValid = p.isPlanValid || ['Yes', 'No'][rand(0, 2)];
+        this.isWorkbookValid = p.isWorkbookValid || ['Yes', 'No'][rand(0, 2)];
         this.execState = p.execState || 'execState-' + rand(1, 9999);
         this.completedOn = p.completedOn || rand(1, 31) + '.' + rand(1, 12) + '.2018';
     }
 }
 
-export class Flow {
+export class Plan {
     id: string;
-    codeOfFlow: string;
+    codeOfPlan: string;
     createdOn: string;
     isValid: string;
     isLocked: string;
@@ -31,7 +31,7 @@ export class Flow {
     instances: Instance[];
     constructor(p: any) {
         this.id = 'id' + p.id || 'id' + rand(111111, 999999);
-        this.codeOfFlow = p.codeOfFlow || 'codeOfFlow-' + rand(1, 9999);
+        this.codeOfPlan = p.codeOfPlan || 'codeOfPlan-' + rand(1, 9999);
         this.createdOn = p.createdOn || rand(1, 31) + '.' + rand(1, 12) + '.2018';
         this.isValid = p.isValid || ['Yes', 'No'][rand(0, 2)];
         this.isLocked = p.isLocked || ['Yes', 'No'][rand(0, 2)];
@@ -53,34 +53,34 @@ function initParameters() {
 `
 }
 
-function initFlows(): Flow[] {
-    return Array.from(Array(99)).map((el, i) => new Flow({ id: i + 1 }))
+function initPlans(): Plan[] {
+    return Array.from(Array(99)).map((el, i) => new Plan({ id: i + 1 }))
 }
 
 @Injectable({
     providedIn: 'root'
 })
 
-export class FlowsService {
-    private data: Flow[] = initFlows();
+export class PlansService {
+    private data: Plan[] = initPlans();
 
     constructor() {}
 
-    getFlows(): Flow[] {
+    getPlans(): Plan[] {
         return this.data
     }
 
-    getInstancesByFlowId(id: string): Instance[] {
+    getInstancesByPlanId(id: string): Instance[] {
         return [].concat(this.data.find(el => el.id === id).instances)
     }
 
-    getFlow(id: string): Flow {
+    getPlan(id: string): Plan {
         return Object.assign({}, this.data.find(el => el.id === id))
     }
 
-    updateFlow(id, newFlow) {}
+    updatePlan(id, newPlan) {}
 
-    deleteFlow(id) {}
+    deletePlan(id) {}
 
-    getInstance(flowId: string, instanceId: string) {}
+    getInstance(planId: string, instanceId: string) {}
 }

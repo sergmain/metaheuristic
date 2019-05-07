@@ -42,8 +42,8 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
 
     @Query(value="select new aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
             "b.code, b.poolCode, b.storageUrl ) " +
-            "from BinaryData b where b.poolCode in :poolCodes and b.flowInstanceId=:flowInstanceId")
-    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes, long flowInstanceId);
+            "from BinaryData b where b.poolCode in :poolCodes and b.workbookId=:workbookId")
+    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes, long workbookId);
 
     @Query(value="select new aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
             "b.code, b.poolCode, b.storageUrl ) " +
@@ -71,7 +71,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     void deleteByCodeAndDataType(String code, int dataType);
 
     @Transactional
-    void deleteByFlowInstanceId(long flowInstanceId);
+    void deleteByWorkbookId(long workbookId);
 
     @Transactional
     void deleteByPoolCodeAndDataType(String poolCode, int dataType);

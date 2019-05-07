@@ -103,7 +103,7 @@ img {
 }
 
 svg:not(:root) {
-    overflow: hidden
+    overplan: hidden
 }
 
 figure {
@@ -116,7 +116,7 @@ hr {
 }
 
 pre, textarea {
-    overflow: auto
+    overplan: auto
 }
 
 code, kbd, pre, samp {
@@ -135,7 +135,7 @@ button, input, optgroup, select, textarea {
 }
 
 button {
-    overflow: visible
+    overplan: visible
 }
 
 button, select {
@@ -210,9 +210,9 @@ legend {
     display: -webkit-flex;
     display: -ms-flexbox;
     display: flex;
-    -webkit-flex-flow: row wrap;
-    -ms-flex-flow: row wrap;
-    flex-flow: row wrap;
+    -webkit-flex-plan: row wrap;
+    -ms-flex-plan: row wrap;
+    flex-plan: row wrap;
     -webkit-align-content: flex-start;
     -ms-flex-line-pack: start;
     align-content: flex-start
@@ -756,8 +756,8 @@ legend {
 }
 
 .pure-menu-scrollable {
-    overflow-y: scroll;
-    overflow-x: hidden
+    overplan-y: scroll;
+    overplan-x: hidden
 }
 
 .pure-menu-scrollable .pure-menu-list {
@@ -770,10 +770,10 @@ legend {
 
 .pure-menu-horizontal.pure-menu-scrollable {
     white-space: nowrap;
-    overflow-y: hidden;
-    overflow-x: auto;
-    -ms-overflow-style: none;
-    -webkit-overflow-scrolling: touch;
+    overplan-y: hidden;
+    overplan-x: auto;
+    -ms-overplan-style: none;
+    -webkit-overplan-scrolling: touch;
     padding: .5em 0
 }
 
@@ -848,7 +848,7 @@ legend {
     border-width: 0 0 0 1px;
     font-size: inherit;
     margin: 0;
-    overflow: visible;
+    overplan: visible;
     padding: .5em 1em
 }
 

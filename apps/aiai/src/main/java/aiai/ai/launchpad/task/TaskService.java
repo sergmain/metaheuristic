@@ -20,11 +20,11 @@ package aiai.ai.launchpad.task;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
-import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.beans.Workbook;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.beans.TaskImpl;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
-import aiai.ai.launchpad.repositories.FlowInstanceRepository;
+import aiai.ai.launchpad.repositories.WorkbookRepository;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.utils.holders.LongHolder;
@@ -56,7 +56,7 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final FlowInstanceRepository flowInstanceRepository;
+    private final WorkbookRepository workbookRepository;
     private final StationsRepository stationsRepository;
 
     public List<Long> resourceReceivingChecker(long stationId) {
@@ -67,7 +67,7 @@ public class TaskService {
     public void processResendTaskOutputResourceResult(String stationId, Enums.ResendTaskOutputResourceStatus status, long taskId) {
         switch(status) {
             case SEND_SCHEDULED:
-                log.info("#317.01 Station #{} scheduled the output resource of task #{} for sending. This is normal operation of flow", stationId, taskId);
+                log.info("#317.01 Station #{} scheduled the output resource of task #{} for sending. This is normal operation of plan", stationId, taskId);
                 break;
             case RESOURCE_NOT_FOUND:
             case TASK_IS_BROKEN:
@@ -77,9 +77,9 @@ public class TaskService {
                     log.warn("#317.05 Task obsolete and was already deleted");
                     return;
                 }
-                FlowInstance flowInstance = flowInstanceRepository.findById(task.flowInstanceId).orElse(null);
-                if (flowInstance==null) {
-                    log.warn("#317.11 FlowInstance for this task was already deleted");
+                Workbook workbook = workbookRepository.findById(task.workbookId).orElse(null);
+                if (workbook==null) {
+                    log.warn("#317.11 Workbook for this task was already deleted");
                     return;
                 }
 
@@ -90,15 +90,15 @@ public class TaskService {
                     break;
                 }
 
-                if (task.order<flowInstance.producingOrder) {
-                    flowInstance.setProducingOrder(task.order);
-                    flowInstanceRepository.save(flowInstance);
+                if (task.order<workbook.producingOrder) {
+                    workbook.setProducingOrder(task.order);
+                    workbookRepository.save(workbook);
                 }
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
                 Enums.UploadResourceStatus uploadResourceStatus = taskPersistencer.setResultReceived(taskId, true);
                 if (uploadResourceStatus==Enums.UploadResourceStatus.OK) {
-                    log.info("#317.28 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of flow", taskId);
+                    log.info("#317.28 the output resource of task #{} is stored on external storage which was defined by disk://. This is normal operation of plan", taskId);
                 }
                 else {
                     log.info("#317.30 can't update isCompleted field for task #{}", taskId);
@@ -114,10 +114,10 @@ public class TaskService {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, FlowInstanceRepository flowInstanceRepository, StationsRepository stationsRepository) {
+    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, WorkbookRepository workbookRepository, StationsRepository stationsRepository) {
         this.taskRepository = taskRepository;
         this.taskPersistencer = taskPersistencer;
-        this.flowInstanceRepository = flowInstanceRepository;
+        this.workbookRepository = workbookRepository;
         this.stationsRepository = stationsRepository;
     }
 
@@ -130,7 +130,7 @@ public class TaskService {
         return ids;
     }
 
-    public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long flowInstanceId) {
+    public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long workbookId) {
 
         List<Long> anyTaskId = taskRepository.findAnyActiveForStationId(Consts.PAGE_REQUEST_1_REC, stationId);
         if (!anyTaskId.isEmpty()) {
@@ -139,22 +139,22 @@ public class TaskService {
             return EMPTY_RESULT;
         }
 
-        List<FlowInstance> flowInstances;
-        if (flowInstanceId==null) {
-            flowInstances = flowInstanceRepository.findByExecStateOrderByCreatedOnAsc(
-                    Enums.FlowInstanceExecState.STARTED.code);
+        List<Workbook> workbooks;
+        if (workbookId==null) {
+            workbooks = workbookRepository.findByExecStateOrderByCreatedOnAsc(
+                    Enums.WorkbookExecState.STARTED.code);
         }
         else {
-            FlowInstance flowInstance = flowInstanceRepository.findById(flowInstanceId).orElse(null);
-            if (flowInstance==null) {
-                log.warn("#317.39 Flow instance wasn't found for id: {}", flowInstanceId);
+            Workbook workbook = workbookRepository.findById(workbookId).orElse(null);
+            if (workbook==null) {
+                log.warn("#317.39 Workbook wasn't found for id: {}", workbookId);
                 return EMPTY_RESULT;
             }
-            if (flowInstance.execState!=Enums.FlowInstanceExecState.STARTED.code) {
-                log.warn("#317.42 Flow instance wasn't started. Current exec state: {}", Enums.FlowInstanceExecState.toState(flowInstance.execState));
+            if (workbook.execState!=Enums.WorkbookExecState.STARTED.code) {
+                log.warn("#317.42 Workbook wasn't started. Current exec state: {}", Enums.WorkbookExecState.toState(workbook.execState));
                 return EMPTY_RESULT;
             }
-            flowInstances = Collections.singletonList(flowInstance);
+            workbooks = Collections.singletonList(workbook);
         }
 
         Station station = stationsRepository.findById(stationId).orElse(null);
@@ -163,8 +163,8 @@ public class TaskService {
             return EMPTY_RESULT;
         }
 
-        for (FlowInstance flowInstance : flowInstances) {
-            TasksAndAssignToStationResult result = findUnassignedTaskAndAssign(flowInstance, station, isAcceptOnlySigned);
+        for (Workbook workbook : workbooks) {
+            TasksAndAssignToStationResult result = findUnassignedTaskAndAssign(workbook, station, isAcceptOnlySigned);
             if (!result.equals(EMPTY_RESULT)) {
                 return result;
             }
@@ -174,7 +174,7 @@ public class TaskService {
 
     private final Map<Long, LongHolder> bannedSince = new HashMap<>();
 
-    private TasksAndAssignToStationResult findUnassignedTaskAndAssign(FlowInstance flowInstance, Station station, boolean isAcceptOnlySigned) {
+    private TasksAndAssignToStationResult findUnassignedTaskAndAssign(Workbook workbook, Station station, boolean isAcceptOnlySigned) {
 
         LongHolder longHolder = bannedSince.computeIfAbsent(station.getId(), o -> new LongHolder(0));
         if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
@@ -184,7 +184,7 @@ public class TaskService {
         int page = 0;
         Task resultTask = null;
         Slice<Task> tasks;
-        while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), flowInstance.getId(), flowInstance.producingOrder)).hasContent()) {
+        while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), workbook.getId(), workbook.producingOrder)).hasContent()) {
             for (Task task : tasks) {
                 final TaskParamYaml taskParamYaml;
                 try {
@@ -239,7 +239,7 @@ public class TaskService {
 
         Protocol.AssignedTask.Task assignedTask = new Protocol.AssignedTask.Task();
         assignedTask.setTaskId(resultTask.getId());
-        assignedTask.setFlowInstanceId(flowInstance.getId());
+        assignedTask.setWorkbookId(workbook.getId());
         assignedTask.setParams(resultTask.getParams());
 
         resultTask.setAssignedOn(System.currentTimeMillis());

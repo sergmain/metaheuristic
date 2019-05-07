@@ -43,13 +43,13 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Transactional(readOnly = true)
     Slice<Task> findAll(Pageable pageable);
 
-    List<Task> findAllByFlowInstanceId(long flowInstanceId);
+    List<Task> findAllByWorkbookId(long workbookId);
 
     @Transactional
-    @Query(value="select t from TaskImpl t where t.flowInstanceId=:flowInstanceId")
-    Stream<Task> findAllByFlowInstanceIdAsStream(long flowInstanceId);
+    @Query(value="select t from TaskImpl t where t.workbookId=:workbookId")
+    Stream<Task> findAllByWorkbookIdAsStream(long workbookId);
 
-    @Query(value="select t.id, t.flowInstanceId from TaskImpl t")
+    @Query(value="select t.id, t.workbookId from TaskImpl t")
     Stream<Object[]> findAllAsTaskSimple(Pageable pageable);
 
     @Transactional(readOnly = true)
@@ -61,32 +61,32 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
 
     @Transactional
-    void deleteByFlowInstanceId(long flowInstanceId);
+    void deleteByWorkbookId(long workbookId);
 
     @Transactional
-    @Query(value="select t.id, t.params from TaskImpl t where t.flowInstanceId=:flowInstanceId")
-    Stream<Object[]> findByFlowInstanceId(long flowInstanceId);
+    @Query(value="select t.id, t.params from TaskImpl t where t.workbookId=:workbookId")
+    Stream<Object[]> findByWorkbookId(long workbookId);
 
-    @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
-    Slice<Task> findForAssigning(Pageable pageable, long flowInstanceId, int taskOrder);
+    @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId and t.order =:taskOrder")
+    Slice<Task> findForAssigning(Pageable pageable, long workbookId, int taskOrder);
 
-    @Query("SELECT max(t.order) as max_order FROM TaskImpl t where t.flowInstanceId=:flowInstanceId")
-    Integer findMaxConcreteOrder(long flowInstanceId);
+    @Query("SELECT max(t.order) as max_order FROM TaskImpl t where t.workbookId=:workbookId")
+    Integer findMaxConcreteOrder(long workbookId);
 
-    @Query("SELECT t FROM TaskImpl t where t.stationId is not null and t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
-    List<Task> findWithConcreteOrder(long flowInstanceId, int taskOrder);
+    @Query("SELECT t FROM TaskImpl t where t.stationId is not null and t.workbookId=:workbookId and t.order =:taskOrder")
+    List<Task> findWithConcreteOrder(long workbookId, int taskOrder);
 
-    @Query("SELECT t FROM TaskImpl t where t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
-    List<Task> findAnyWithConcreteOrder(long flowInstanceId, int taskOrder);
+    @Query("SELECT t FROM TaskImpl t where t.workbookId=:workbookId and t.order =:taskOrder")
+    List<Task> findAnyWithConcreteOrder(long workbookId, int taskOrder);
 
-    @Query("SELECT t.id FROM TaskImpl t where t.stationId is null and t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
-    List<Long> findAnyNotAssignedWithConcreteOrder(Pageable limit, long flowInstanceId, int taskOrder);
+    @Query("SELECT t.id FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId and t.order =:taskOrder")
+    List<Long> findAnyNotAssignedWithConcreteOrder(Pageable limit, long workbookId, int taskOrder);
 
     @Query("SELECT t.id FROM TaskImpl t where t.stationId=:stationId and t.isCompleted=false")
     List<Long> findAnyActiveForStationId(Pageable limit, long stationId);
 
-    @Query("SELECT count(t) FROM TaskImpl t where t.flowInstanceId=:flowInstanceId and t.order =:taskOrder")
-    Long countWithConcreteOrder(long flowInstanceId, int taskOrder);
+    @Query("SELECT count(t) FROM TaskImpl t where t.workbookId=:workbookId and t.order =:taskOrder")
+    Long countWithConcreteOrder(long workbookId, int taskOrder);
 
     @Query("SELECT t FROM TaskImpl t where t.stationId=:stationId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - result_resource_scheduled_on > 15000) ")

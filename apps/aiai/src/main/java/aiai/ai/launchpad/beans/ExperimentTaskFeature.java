@@ -37,7 +37,7 @@ public class ExperimentTaskFeature implements Serializable {
     private Integer version;
 
     @Column(name = "FLOW_INSTANCE_ID")
-    public Long flowInstanceId;
+    public Long workbookId;
 
     @Column(name = "TASK_ID")
     public Long taskId;

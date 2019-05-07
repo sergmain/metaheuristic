@@ -24,7 +24,7 @@ import lombok.ToString;
 public class StationTask {
     public long taskId;
 
-    public long flowInstanceId;
+    public long workbookId;
 
     // params of this task
     public String params;

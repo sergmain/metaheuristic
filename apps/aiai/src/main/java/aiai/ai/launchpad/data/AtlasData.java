@@ -23,7 +23,7 @@ import aiai.ai.launchpad.atlas.ExperimentStoredToAtlas;
 import aiai.ai.launchpad.beans.Atlas;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentFeature;
-import aiai.ai.launchpad.beans.FlowInstance;
+import aiai.ai.launchpad.beans.Workbook;
 import aiai.ai.utils.SimpleSelectOption;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -58,8 +58,8 @@ public class AtlasData {
     public static class ExperimentInfo {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentStoredToAtlas.ExperimentFeatureOnShelf > features;
-        public FlowInstance flowInstance;
-        public Enums.FlowInstanceExecState flowInstanceExecState;
+        public Workbook workbook;
+        public Enums.WorkbookExecState workbookExecState;
     }
 
     @Data

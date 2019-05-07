@@ -38,7 +38,7 @@ public interface Task {
 
     int getOrder();
 
-    long getFlowInstanceId();
+    long getWorkbookId();
 
     int getExecState();
 
@@ -68,7 +68,7 @@ public interface Task {
 
     void setOrder(int order);
 
-    void setFlowInstanceId(long flowInstanceId);
+    void setWorkbookId(long workbookId);
 
     void setExecState(int execState);
 
