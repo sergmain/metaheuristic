@@ -25,7 +25,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_LP_TASK")
+@Table(name = "AIAI_TASK")
 @Data
 @ToString(exclude = {"params", "metrics"} )
 public class TaskImpl implements Serializable, Task {
@@ -66,7 +66,7 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "TASK_ORDER")
     public int order;
 
-    @Column(name = "FLOW_INSTANCE_ID")
+    @Column(name = "WORKBOOK_ID")
     public long workbookId;
 
     @Column(name = "EXEC_STATE")

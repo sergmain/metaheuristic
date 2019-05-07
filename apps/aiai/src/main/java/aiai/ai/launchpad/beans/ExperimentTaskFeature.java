@@ -23,7 +23,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_LP_EXPERIMENT_TASK_FEATURE")
+@Table(name = "AIAI_EXPERIMENT_TASK_FEATURE")
 @Data
 @ToString
 public class ExperimentTaskFeature implements Serializable {
@@ -36,7 +36,7 @@ public class ExperimentTaskFeature implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "FLOW_INSTANCE_ID")
+    @Column(name = "WORKBOOK_ID")
     public Long workbookId;
 
     @Column(name = "TASK_ID")

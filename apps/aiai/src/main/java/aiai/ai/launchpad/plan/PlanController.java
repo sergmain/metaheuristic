@@ -41,7 +41,7 @@ import java.util.Collections;
 @Profile("launchpad")
 public class PlanController {
 
-    private static final String REDIRECT_LAUNCHPAD_PLAN_FLOWS = "redirect:/launchpad/plan/plans";
+    private static final String REDIRECT_LAUNCHPAD_PLAN_PLANS = "redirect:/launchpad/plan/plans";
 
     private final PlanTopLevelService planTopLevelService;
 
@@ -78,7 +78,7 @@ public class PlanController {
         PlanData.PlanResult planResultRest = planTopLevelService.getPlan(id);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_FLOWS;
+            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         model.addAttribute("plan", planResultRest.plan);
         return "launchpad/plan/plan-edit";
@@ -90,7 +90,7 @@ public class PlanController {
         PlanData.PlanResult planResultRest = planTopLevelService.validatePlan(id);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_FLOWS;
+            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
 
         model.addAttribute("plan", planResultRest.plan);
@@ -110,7 +110,7 @@ public class PlanController {
         if (planResultRest.status== EnumsApi.PlanValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
-        return REDIRECT_LAUNCHPAD_PLAN_FLOWS;
+        return REDIRECT_LAUNCHPAD_PLAN_PLANS;
     }
 
     @PostMapping("/plan-edit-commit")
@@ -133,7 +133,7 @@ public class PlanController {
         PlanData.PlanResult planResultRest = planTopLevelService.getPlan(id);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_FLOWS;
+            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         model.addAttribute("plan", planResultRest.plan);
         return "launchpad/plan/plan-delete";
@@ -145,7 +145,7 @@ public class PlanController {
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#560.40 plan wasn't found, id: "+id) );
         }
-        return REDIRECT_LAUNCHPAD_PLAN_FLOWS;
+        return REDIRECT_LAUNCHPAD_PLAN_PLANS;
     }
 
     // ============= Workbooks =============
@@ -169,7 +169,7 @@ public class PlanController {
         PlanData.PlanResult planResultRest = planTopLevelService.getPlan(id);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_FLOWS;
+            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         result.plan = planResultRest.plan;
         return "launchpad/plan/workbook-add";
@@ -181,7 +181,7 @@ public class PlanController {
         result.plan = workbookResultRest.plan;
         if (result.plan == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#560.60 plan wasn't found, planId: " + planId);
-            return REDIRECT_LAUNCHPAD_PLAN_FLOWS;
+            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
 
         if (workbookResultRest.isErrorMessages()) {
@@ -195,7 +195,7 @@ public class PlanController {
         PlanData.WorkbookResult result = planTopLevelService.getWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_FLOWS;
+            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         model.addAttribute("result", result);
         return "launchpad/plan/workbook-delete";
@@ -206,7 +206,7 @@ public class PlanController {
         OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(planId, workbookId);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_FLOWS;
+            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         return "redirect:/launchpad/plan/workbooks/"+ planId;
     }
@@ -216,7 +216,7 @@ public class PlanController {
         OperationStatusRest operationStatusRest = planTopLevelService.changeWorkbookExecState(state, id);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_FLOWS;
+            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         return "redirect:/launchpad/plan/workbooks/" + planId;
     }

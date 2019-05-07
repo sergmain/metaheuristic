@@ -24,7 +24,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_LP_EXPERIMENT_SNIPPET")
+@Table(name = "AIAI_EXPERIMENT_SNIPPET")
 @Data
 @ToString
 @NoArgsConstructor

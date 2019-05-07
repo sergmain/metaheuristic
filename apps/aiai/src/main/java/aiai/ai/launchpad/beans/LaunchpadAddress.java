@@ -23,7 +23,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_LP_LAUNCHPAD_ADDRESS")
+@Table(name = "AIAI_LAUNCHPAD_ADDRESS")
 @Data
 public class LaunchpadAddress implements Serializable {
 

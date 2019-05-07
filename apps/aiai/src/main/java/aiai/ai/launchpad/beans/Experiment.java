@@ -38,7 +38,7 @@ import java.util.Map;
  * Time: 15:38
  */
 @Entity
-@Table(name = "AIAI_LP_EXPERIMENT")
+@Table(name = "AIAI_EXPERIMENT")
 @Data
 @EqualsAndHashCode(exclude = {"hyperParams"})
 @ToString(exclude = {"hyperParams"})
@@ -52,7 +52,7 @@ public class Experiment implements Serializable {
     @Version
     private Integer version;
 
-    @Column(name = "FLOW_INSTANCE_ID")
+    @Column(name = "WORKBOOK_ID")
     public Long workbookId;
 
     @Column(name = "NAME")

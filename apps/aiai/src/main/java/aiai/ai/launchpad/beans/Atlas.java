@@ -23,7 +23,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_LP_ATLAS")
+@Table(name = "AIAI_ATLAS")
 @Data
 public class Atlas implements Serializable {
     private static final long serialVersionUID = -1225513309547283331L;

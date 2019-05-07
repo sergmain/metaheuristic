@@ -28,7 +28,7 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "AIAI_LP_DATA")
+@Table(name = "AIAI_DATA")
 @Data
 @EqualsAndHashCode(of = {"id", "version", "dataType"})
 @ToString(exclude={"data", "bytes"})
@@ -61,7 +61,7 @@ public class BinaryData implements Serializable {
      * Also this field is used as refId for deleting any resources which were produced
      * while workbook was processed.
      */
-    @Column(name = "FLOW_INSTANCE_ID")
+    @Column(name = "WORKBOOK_ID")
     private Long workbookId;
 
     @Column(name = "UPLOAD_TS")

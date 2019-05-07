@@ -32,6 +32,6 @@ public class TaskSimple implements Serializable {
 
     public long id;
 
-    @Column(name = "FLOW_INSTANCE_ID")
+    @Column(name = "WORKBOOK_ID")
     public long workbookId;
 }
