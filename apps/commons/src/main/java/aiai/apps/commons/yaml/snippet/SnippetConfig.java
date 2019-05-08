@@ -18,6 +18,7 @@
 package aiai.apps.commons.yaml.snippet;
 
 import aiai.api.v1.EnumsApi;
+import aiai.apps.commons.sourcing.GitInfo;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.StrUtils;
 import lombok.AllArgsConstructor;
@@ -43,15 +44,6 @@ public class SnippetConfig {
          * snippet's binary length
          */
         public long length;
-    }
-
-    @Data
-    public static class GitInfo {
-        public String repo;
-        // right now it'll be always as origin
-//        public String remote;
-        public String branch;
-        public String commit;
     }
 
     /**

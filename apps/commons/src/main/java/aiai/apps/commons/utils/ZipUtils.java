@@ -17,6 +17,8 @@
  */
 package aiai.apps.commons.utils;
 
+import aiai.apps.commons.exceptions.UnzipArchiveException;
+import aiai.apps.commons.exceptions.ZipArchiveException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -32,17 +34,11 @@ import java.util.Enumeration;
  * Author of 1st version is:
  * @author Robin Spark
  * circa 13.07.12
- *
+ * @author Serge
+ * circa 01.01.15
  */
 @Slf4j
 public class ZipUtils {
-    /*
-     * @param directoryPath The path of the directory where the archive will be created. eg. c:/temp
-     * @param zipFile The full path of the archive to create. eg. c:/temp/archive.zip
-     */
-    public static void createZip(String directoryPath, String zipPath) throws IOException {
-        createZip(new File(directoryPath), new File(zipPath));
-    }
 
     /**
      * Creates a zip file at the specified path with the contents of the specified directory.
@@ -50,14 +46,19 @@ public class ZipUtils {
      *
      * @param directory The path of the directory where the archive will be created. eg. c:/temp
      * @param zipFile zip file
-     * @throws IOException If anything goes wrong
+     * @throws ZipArchiveException If anything goes wrong
      */
-    public static void createZip(File directory, File zipFile) throws IOException {
+    public static void createZip(File directory, File zipFile)  {
 
-        try (FileOutputStream fOut = new FileOutputStream(zipFile);
-             BufferedOutputStream bOut = new BufferedOutputStream(fOut);
-             ZipArchiveOutputStream tOut = new ZipArchiveOutputStream(bOut) ) {
-            addFileToZip(tOut, directory, "");
+        try {
+            try (FileOutputStream fOut = new FileOutputStream(zipFile);
+                 BufferedOutputStream bOut = new BufferedOutputStream(fOut);
+                 ZipArchiveOutputStream tOut = new ZipArchiveOutputStream(bOut) ) {
+                addFileToZip(tOut, directory, "");
+            }
+        } catch (Throwable th) {
+            log.error("Zipping error", th);
+            throw new ZipArchiveException("Zip failed", th);
         }
     }
 
@@ -69,7 +70,6 @@ public class ZipUtils {
      * @param f The filesystem path of the file/directory being added
      * @param base The base prefix to for the name of the zip file entry
      *
-     * @throws IOException If anything goes wrong
      */
     private static void addFileToZip(ZipArchiveOutputStream zOut, File f, String base) throws IOException {
         String entryName = base + f.getName();
@@ -91,25 +91,6 @@ public class ZipUtils {
                     addFileToZip(zOut, child.getAbsoluteFile(), entryName + "/");
                 }
             }
-        }
-    }
-
-    /**
-     * Extract zip file at the specified destination path.
-     * NB:archive must consist of a single root folder containing everything else
-     *
-     * @param archivePath path to zip file
-     * @param destinationPath path to extract zip file to. Created if it doesn't exist.
-     */
-    public static void extractZip(String archivePath, String destinationPath) {
-        File archiveFile = new File(archivePath);
-        File unzipDestFolder;
-        try {
-            unzipDestFolder = new File(destinationPath);
-            unzipFolder(archiveFile, unzipDestFolder);
-        }
-        catch (Exception e) {
-            e.printStackTrace();
         }
     }
 
@@ -169,8 +150,9 @@ public class ZipUtils {
                 }
             }
         }
-        catch (IOException e) {
-            throw new RuntimeException("Unzip failed:", e);
+        catch (Throwable th) {
+            log.error("Unzipping error", th);
+            throw new UnzipArchiveException("Unzip failed", th);
         }
     }
 }

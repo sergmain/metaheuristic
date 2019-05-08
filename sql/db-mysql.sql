@@ -60,7 +60,7 @@ CREATE TABLE AIAI_DATA (
   IS_VALID    tinyint(1) not null default 0,
   IS_MANUAL   tinyint(1) not null default 0,
   FILENAME    VARCHAR(150),
-  STORAGE_URL     varchar(250) not null
+  PARAMS      MEDIUMTEXT not null
 );
 
 CREATE INDEX AIAI_DATA_POOL_CODE_ID_IDX

@@ -39,6 +39,7 @@ import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.pilot.beans.Batch;
 import aiai.ai.pilot.beans.BatchWorkbook;
 import aiai.ai.utils.ControllerUtils;
+import aiai.apps.commons.exceptions.UnzipArchiveException;
 import aiai.apps.commons.utils.StrUtils;
 import aiai.ai.yaml.input_resource_param.InputResourceParam;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
@@ -204,7 +205,7 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         originFilename = originFilename.toLowerCase();
-        if (!StringUtils.endsWithAny(originFilename, ".xml", ".zip", ".doc", ".docx")) {
+        if (!StringUtils.endsWithAny(originFilename, ".xml", ".zip", ".doc", ".docx", ".rtf")) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.20 only '.xml' and .zip files are supported, filename: " + originFilename);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
@@ -248,11 +249,16 @@ public class ProcessResourceController {
             else {
                 log.debug("Start loading file data to db");
                 loadFilesFromDirAfterZip(batch, tempDir, redirectAttributes, plan);
-//                loadFilesFromDir(batch, tempDir, redirectAttributes, plan);
             }
         }
         catch(StoreNewFileWithRedirectException e) {
             return e.redirect;
+        }
+        catch(UnzipArchiveException e) {
+            log.error("Error", e);
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "#990.65 can't unzip an archive. Error: " + e.getMessage()+", class: " + e.getClass());
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         catch (Throwable th) {
             log.error("Error", th);
@@ -261,21 +267,6 @@ public class ProcessResourceController {
         }
 
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
-    }
-
-    private void loadFilesFromDir(Batch batch, File srcDir, RedirectAttributes redirectAttributes, Plan plan) throws IOException {
-        Files.list(srcDir.toPath())
-                .filter( o -> {
-                    File f = o.toFile();
-                    return f.isFile() && !EXCLUDE_EXT.contains(StrUtils.getExtension(f.getName()));
-                })
-                .forEach(dataFile -> {
-                    File file = dataFile.toFile();
-                    String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, plan, Collections.singletonList(file), file);
-                    if (redirectUrl1 != null) {
-                        throw new StoreNewFileWithRedirectException(redirectUrl1);
-                    }
-                });
     }
 
     private void loadFilesFromDirAfterZip(Batch batch, File srcDir, RedirectAttributes redirectAttributes, Plan plan) throws IOException {

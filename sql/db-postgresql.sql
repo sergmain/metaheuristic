@@ -60,8 +60,7 @@ CREATE TABLE AIAI_DATA (
   IS_VALID    BOOLEAN not null default false,
   IS_MANUAL   BOOLEAN not null default false,
   FILENAME    VARCHAR(150),
-  STORAGE_URL varchar(250) not null
-
+  PARAMS      TEXT not null
 );
 
 CREATE INDEX AIAI_DATA_POOL_CODE_ID_IDX

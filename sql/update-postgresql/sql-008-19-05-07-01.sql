@@ -28,7 +28,7 @@ alter table aiai_experiment rename column flow_instance_id to workbook_id;
 
 alter table aiai_data rename column flow_instance_id to WORKBOOK_ID;
 
-alter table aiai_experiment_task_feature rename column flow_instance_id to workbook_id;
+alter table aiai_experiment_task_feature rename column FLOW_INSTANCE_ID to workbook_id;
 
 alter table aiai_task rename column flow_instance_id to workbook_id;
 

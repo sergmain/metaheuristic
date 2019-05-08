@@ -22,6 +22,43 @@ import lombok.ToString;
 public class EnumsApi {
 
     @ToString
+    public enum DataSourcing {
+        // data will be downloaded from launchpad
+        launchpad(1),
+        // snippet already has been deployed locally at station
+        disk(2),
+        // snippet will be downloaded from git
+        git(3);
+
+        public int value;
+
+        DataSourcing(int value) {
+            this.value = value;
+        }
+
+        @SuppressWarnings("Duplicates")
+        public static DataSourcing to(int value) {
+            switch (value) {
+                case 1:
+                    //noinspection
+                    return launchpad;
+                case 2:
+                    return disk;
+                case 3:
+                    return git;
+                default:
+                    return launchpad;
+            }
+        }
+
+        public static String from(int value) {
+            //noinspection unused
+            DataSourcing state = to(value);
+            return state.toString();
+        }
+    }
+
+    @ToString
     public enum SnippetSourcing {
         // snippet will be downloaded from launchpad
         launchpad(1),
@@ -36,6 +73,7 @@ public class EnumsApi {
             this.value = value;
         }
 
+        @SuppressWarnings("Duplicates")
         public static SnippetSourcing to(int value) {
             switch (value) {
                 case 1:
