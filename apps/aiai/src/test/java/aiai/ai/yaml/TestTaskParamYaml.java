@@ -55,7 +55,7 @@ public class TestTaskParamYaml {
                 EnumsApi.SnippetSourcing.launchpad,
                 true,
                 null,
-                null,
+                new SnippetConfig.SnippetInfo(),
                 null,
                 null,
                 false

@@ -18,7 +18,7 @@
 package aiai.apps.commons.yaml.snippet;
 
 import aiai.api.v1.EnumsApi;
-import aiai.apps.commons.sourcing.GitInfo;
+import aiai.api.v1.sourcing.GitInfo;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.StrUtils;
 import lombok.AllArgsConstructor;

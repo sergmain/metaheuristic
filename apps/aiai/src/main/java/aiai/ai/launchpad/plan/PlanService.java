@@ -22,6 +22,7 @@ import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.Monitoring;
 import aiai.ai.launchpad.beans.*;
+import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
@@ -310,8 +311,13 @@ public class PlanService {
         List<Process> processes = fl.getProcesses();
         for (int i = 0; i < processes.size(); i++) {
             Process process = processes.get(i);
-            if (i+1<processes.size() && StringUtils.isBlank(process.getOutputType())) {
-                return EnumsApi.PlanValidateStatus.OUTPUT_TYPE_EMPTY_ERROR;
+            if (i + 1 < processes.size()) {
+                if (process.outputParams == null) {
+                    return EnumsApi.PlanValidateStatus.PROCESS_PARAMS_EMPTY_ERROR;
+                }
+                if (StringUtils.isBlank(process.outputParams.storageType)) {
+                    return EnumsApi.PlanValidateStatus.OUTPUT_TYPE_EMPTY_ERROR;
+                }
             }
             lastProcess = process;
             if (StringUtils.containsWhitespace(process.code) || StringUtils.contains(process.code, ',') ){
@@ -409,7 +415,7 @@ public class PlanService {
     @NoArgsConstructor
     public static class ResourcePools {
         public final Map<String, List<String>> collectedInputs = new HashMap<>();
-        public Map<String, String> inputStorageUrls=null;
+        public Map<String, DataStorageParams> inputStorageUrls=null;
         public EnumsApi.PlanProducingStatus status = EnumsApi.PlanProducingStatus.OK;
 
         public ResourcePools(List<SimpleCodeAndStorageUrl> initialInputResourceCodes) {
@@ -423,9 +429,10 @@ public class PlanService {
                 collectedInputs.computeIfAbsent(o.poolCode, p -> new ArrayList<>()).add(o.code);
             });
 
+            //noinspection Convert2MethodRef
             inputStorageUrls = initialInputResourceCodes
                     .stream()
-                    .collect(Collectors.toMap(o -> o.code, o -> o.storageUrl));
+                    .collect(Collectors.toMap(o -> o.code, o -> o.getParams()));
 
         }
 
@@ -521,7 +528,7 @@ public class PlanService {
                 pools.clean();
             }
             Monitoring.log("##030", Enums.Monitor.MEMORY);
-            pools.add(process.outputType, produceTaskResult.outputResourceCodes);
+            pools.add(process.outputParams.storageType, produceTaskResult.outputResourceCodes);
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }
         toProduced(isPersist, result, fi);

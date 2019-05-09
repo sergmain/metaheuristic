@@ -113,38 +113,4 @@ public class ResourceUtils {
         return assetFile;
     }
 
-    public static Enums.StorageType getStorageType(String storageUrl) {
-        Enums.StorageType storageType;
-        int idx = StringUtils.indexOf(storageUrl, Consts.PROTOCOL_DELIMITER);
-        if (idx==-1) {
-            throw new ResourceProviderException("#025.15 Bad format of storageUrl: " + storageUrl);
-        }
-        storageType = Enums.StorageType.valueOf( storageUrl.substring(0, idx) );
-        return storageType;
-    }
-
-    @Data
-    @AllArgsConstructor
-    public static class DiskStorageUri {
-        public String envCode;
-        public String resourceCode;
-    }
-
-    public static DiskStorageUri parseStorageUrl(String storageUrl) {
-        if (!storageUrl.startsWith(Consts.DISK_STORAGE_URL)) {
-            throw new ResourceProviderException("#025.01 Wrong storageUrl format: " + storageUrl);
-        }
-        String uri = storageUrl.substring(Consts.DISK_STORAGE_URL.length());
-        int idx = uri.indexOf('/');
-        if (idx!=-1) {
-            if (uri.indexOf('/') != uri.lastIndexOf('/')) {
-                throw new ResourceProviderException("#025.05 Wrong storageUrl format: " + storageUrl);
-            }
-            return new DiskStorageUri(uri.substring(0, uri.indexOf('/')), uri.substring(uri.indexOf('/') + 1));
-        }
-        else {
-            return new DiskStorageUri(uri, null);
-        }
-    }
-
 }

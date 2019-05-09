@@ -21,6 +21,8 @@ import aiai.ai.Enums;
 import aiai.ai.exceptions.ResourceProviderException;
 import aiai.ai.launchpad.beans.Workbook;
 import aiai.ai.launchpad.beans.TaskImpl;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.WorkbookRepository;
@@ -187,31 +189,20 @@ public class TaskPersistencer {
         }
         task.setExecState(state.value);
 
-        TaskParamYaml yaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
-        final String storageUrl = yaml.resourceStorageUrls.get(yaml.outputResourceCode);
-        boolean isError = false;
-        Enums.StorageType storageType = null;
-        if (storageUrl == null || storageUrl.isBlank()) {
-            log.error("#307.42 storageUrl wasn't found for outputResourceCode {}", yaml.outputResourceCode);
-            isError = true;
-        }
-        else {
-            try {
-                storageType = ResourceUtils.getStorageType(storageUrl);
-            } catch (ResourceProviderException e) {
-                isError = true;
-                log.error("#307.53 storageUrl wasn't found for outputResourceCode {}", yaml.outputResourceCode);
-            }
-        }
-        if (isError || state==Enums.TaskExecState.ERROR) {
+        if (state==Enums.TaskExecState.ERROR) {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
             // TODO 2019.05.02 !!! add here statuses to tasks which are in chain after this one
-            // TODO we have to stop processing plan if there any error in tasks
+            // TODO we have to stop processing workbook if there is error in tasks
         }
-        else if (storageType== Enums.StorageType.disk) {
-            task.setCompleted(true);
-            task.setCompletedOn(System.currentTimeMillis());
+        else {
+            TaskParamYaml yaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            final DataStorageParams dataStorageParams = yaml.resourceStorageUrls.get(yaml.outputResourceCode);
+
+            if (dataStorageParams.sourcing == EnumsApi.DataSourcing.disk) {
+                task.setCompleted(true);
+                task.setCompletedOn(System.currentTimeMillis());
+            }
         }
 
         task.setSnippetExecResults(result.getResult());

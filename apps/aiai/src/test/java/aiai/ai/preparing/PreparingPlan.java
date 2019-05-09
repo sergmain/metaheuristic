@@ -21,6 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.plan.TaskCollector;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
+import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.Plan;
 import aiai.ai.launchpad.beans.Workbook;
@@ -101,7 +102,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
             p.snippetCodes = Collections.singletonList("snippet-01:1.1");
             p.collectResources = false;
-            p.outputType = "assembled-raw-output";
+            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
+            p.outputParams.storageType = "assembled-raw-output";
 
             planYaml.processes.add(p);
         }
@@ -113,7 +115,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
             p.snippetCodes = Collections.singletonList("snippet-02:1.1");
             p.collectResources = true;
-            p.outputType = "dataset-processing-output";
+            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
+            p.outputParams.storageType = "dataset-processing-output";
 
             planYaml.processes.add(p);
         }
@@ -126,7 +129,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.snippetCodes = Arrays.asList("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
             p.parallelExec = true;
             p.collectResources = true;
-            p.outputType = "feature-output";
+            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
+            p.outputParams.storageType = "feature-output";
 
             planYaml.processes.add(p);
         }
@@ -135,7 +139,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = PreparingExperiment.TEST_EXPERIMENT_CODE_01;
-
+            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.metas.addAll(
                     Arrays.asList(
                             new Process.Meta("assembled-raw", "assembled-raw-output", null),
@@ -208,7 +212,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         sc.type = snippetCode + "-type";
         sc.file = null;
         sc.setEnv("env-"+snippetCode);
-        sc.sourcing = EnumsApi.SnippetSourcing.station;;
+        sc.sourcing = EnumsApi.SnippetSourcing.station;
         sc.metrics = false;
 
         sc.info.setSigned(false);

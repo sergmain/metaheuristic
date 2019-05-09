@@ -15,20 +15,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.apps.commons.sourcing;
+package aiai.api.v1.sourcing;
 
 import lombok.Data;
 
 /**
  * @author Serge
  * Date: 5/8/2019
- * Time: 12:05 AM
+ * Time: 12:06 AM
  */
 @Data
-public class GitInfo {
-    public String repo;
-    // right now it'll be always as origin
-//        public String remote;
-    public String branch;
-    public String commit;
+public class DiskInfo {
+    public String code;
+    public String env;
+
+    public String path;
 }

@@ -17,6 +17,9 @@
 
 package aiai.ai;
 
+import aiai.ai.yaml.data_storage.DataStorageParamsUtils;
+import aiai.api.v1.data_storage.DataStorageParams;
+import aiai.api.v1.EnumsApi;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 
@@ -32,9 +35,6 @@ public class Consts {
     public static final String PROTOCOL_DELIMITER = "://";
     public static final String HTTP = "http://";
     public static final String HTTPS = "https://";
-
-    public static final String LAUNCHPAD_STORAGE_URL = "launchpad://";
-    public static final String DISK_STORAGE_URL = "disk://";
 
     public static final String SESSIONID_NAME = "JSESSIONID";
 
@@ -84,4 +84,8 @@ public class Consts {
 
     public static final String MODEL_ATTR_ERROR_MESSAGE = "errorMessage";
     public static final String MODEL_ATTR_INFO_MESSAGES = "infoMessages";
+
+    public static final DataStorageParams SOURCING_LAUNCHPAD_PARAMS = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
+    public static final String SOURCING_LAUNCHPAD_PARAMS_STR = DataStorageParamsUtils.toString(SOURCING_LAUNCHPAD_PARAMS);
+
 }

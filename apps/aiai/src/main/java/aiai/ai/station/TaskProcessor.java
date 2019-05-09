@@ -33,6 +33,7 @@ import aiai.ai.yaml.station_task.StationTask;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -268,23 +269,16 @@ public class TaskProcessor {
             stationTaskService.storeExecResult(task.launchpadUrl, task.getTaskId(), startedOn, snippetPrepareResult.snippet, result, artifactDir);
 
             if (result.isOk()) {
-                final String storageUrl = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
-                if (storageUrl == null || storageUrl.isBlank()) {
-                    String es = "Result data file doesn't exist, resultDataFile: " + taskParamYaml.outputResourceAbsolutePath;
-                    log.error(es);
-                    result = new ExecProcessService.Result(false, -1, es);
+                final DataStorageParams params = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
+                ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
+                ExecProcessService.Result tempResult = resourceProvider.processResultingFile(
+                        launchpad, task, launchpadCode,
+                        new File(taskParamYaml.outputResourceAbsolutePath)
+                );
+                if (tempResult!=null) {
+                    result = tempResult;
                 }
-                else {
-                    ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
-                    ExecProcessService.Result tempResult = resourceProvider.processResultingFile(
-                            launchpad, task, launchpadCode,
-                            new File(taskParamYaml.outputResourceAbsolutePath)
-                    );
-                    if (tempResult!=null) {
-                        result = tempResult;
-                    }
-                }
-            }
+        }
         } catch (Throwable th) {
             log.error("Error exec process:\n" +
                     "\tenv: " + snippetPrepareResult.snippet.env +"\n" +

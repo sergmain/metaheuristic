@@ -17,6 +17,8 @@
 
 package aiai.ai.launchpad.binary_data;
 
+import aiai.api.v1.data_storage.DataStorageParams;
+import aiai.ai.yaml.data_storage.DataStorageParamsUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,4 +30,8 @@ public class SimpleCodeAndStorageUrl {
     public String code;
     public String poolCode;
     public String storageUrl;
+
+    public DataStorageParams getParams() {
+        return DataStorageParamsUtils.to(storageUrl);
+    }
 }

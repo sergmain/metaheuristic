@@ -25,6 +25,9 @@ import aiai.ai.exceptions.BinaryDataSaveException;
 import aiai.ai.launchpad.beans.BinaryData;
 import aiai.ai.launchpad.repositories.BinaryDataRepository;
 import aiai.ai.launchpad.launchpad_resource.SimpleResource;
+import aiai.ai.yaml.data_storage.DataStorageParamsUtils;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data_storage.DataStorageParams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -38,7 +41,6 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import javax.transaction.Transactional;
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.sql.Blob;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -68,7 +70,7 @@ public class BinaryDataService {
         return getBinaryData(id, true);
     }
 
-    private BinaryData getBinaryData(long id, boolean isInitBytes) {
+    private BinaryData getBinaryData(long id, @SuppressWarnings("SameParameterValue") boolean isInitBytes) {
         try {
             BinaryData data = binaryDataRepository.findById(id).orElse(null);
             if (data==null) {
@@ -163,7 +165,7 @@ public class BinaryDataService {
                 data.setManual(isManual);
                 data.setFilename(filename);
                 data.setWorkbookId(workbookId);
-                data.setStorageUrl(Consts.LAUNCHPAD_STORAGE_URL);
+                data.setParams(Consts.SOURCING_LAUNCHPAD_PARAMS_STR);
             } else {
                 if (!poolCode.equals(data.getPoolCode())) {
                     // this is exception for the case when two resources have the same names but different pool codes
@@ -171,9 +173,10 @@ public class BinaryDataService {
                     log.error(es);
                     throw new BinaryDataSaveException(es);
                 }
-                if (!Consts.LAUNCHPAD_STORAGE_URL.equals(data.getStorageUrl())) {
+                DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
+                if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.launchpad) {
                     // this is exception for the case when two resources have the same names but different pool codes
-                    String es = "#087.05 Storage url is different, old: " + data.getStorageUrl() + ", new: " + Consts.LAUNCHPAD_STORAGE_URL;
+                    String es = "#087.05 Sourcing must be launchpad, value in db: " + data.getParams();
                     log.error(es);
                     throw new BinaryDataSaveException(es);
                 }
@@ -196,6 +199,7 @@ public class BinaryDataService {
         }
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public BinaryData saveWithSpecificStorageUrl(String resourceCode, String poolCode, String storageUrl) {
 
         try {
@@ -231,7 +235,7 @@ public class BinaryDataService {
             data.setManual(true);
             data.setFilename(null);
             data.setWorkbookId(null);
-            data.setStorageUrl(storageUrl);
+            data.setParams(storageUrl);
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setData(null);
 

@@ -18,6 +18,7 @@
 package aiai.api.v1.launchpad;
 
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data_storage.DataStorageParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -46,11 +47,8 @@ public class Process {
      */
     public Long timeoutBeforeTerminate;
 
-    @Deprecated
-    public String inputType;
     public String inputResourceCode;
-    public String outputType;
-    public String outputStorageUrl;
+    public DataStorageParams outputParams;
     public String outputResourceCode;
     public List<Meta> metas = new ArrayList<>();
     public int order;

@@ -16,9 +16,6 @@
  */
 package aiai.ai.launchpad.beans;
 
-import aiai.apps.commons.yaml.snippet.SnippetUtils;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
-import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -45,20 +42,4 @@ public class Snippet implements Serializable {
 
     @Column(name = "PARAMS")
     public String params;
-
-    @Transient
-    private SnippetConfig config = null;
-
-    public SnippetConfig getSnippetConfig() {
-        if (config==null) {
-            synchronized (this) {
-                if (config==null) {
-                    //noinspection UnnecessaryLocalVariable
-                    SnippetConfig tmp = SnippetConfigUtils.to(params);
-                    config = tmp;
-                }
-            }
-        }
-        return config;
-    }
 }

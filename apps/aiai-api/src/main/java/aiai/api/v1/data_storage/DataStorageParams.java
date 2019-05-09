@@ -15,24 +15,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.resource;
+package aiai.api.v1.data_storage;
 
-import org.junit.Test;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.sourcing.DiskInfo;
+import aiai.api.v1.sourcing.GitInfo;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+/**
+ * @author Serge
+ * Date: 5/7/2019
+ * Time: 9:32 PM
+ */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class DataStorageParams {
 
-public class TestParseStorageUrl {
+    public EnumsApi.DataSourcing sourcing;
 
-    @Test
-    public void testParse() {
+    public GitInfo git;
 
-        ResourceUtils.DiskStorageUri storageUri = ResourceUtils.parseStorageUrl("disk://aaaa/*");
-        assertEquals("aaaa", storageUri.envCode);
-        assertEquals("*", storageUri.resourceCode);
+    public DiskInfo disk;
 
-        storageUri = ResourceUtils.parseStorageUrl("disk://bbb");
-        assertEquals("bbb", storageUri.envCode);
-        assertNull(storageUri.resourceCode);
+    public String storageType;
+
+    public DataStorageParams(EnumsApi.DataSourcing sourcing) {
+        this.sourcing = sourcing;
     }
 }

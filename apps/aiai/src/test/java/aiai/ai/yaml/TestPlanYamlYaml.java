@@ -19,6 +19,7 @@ package aiai.ai.yaml;
 
 import aiai.ai.yaml.plan.PlanYaml;
 import aiai.ai.yaml.plan.PlanYamlUtils;
+import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.launchpad.Process;
 import aiai.api.v1.EnumsApi;
 import org.junit.Test;
@@ -50,7 +51,8 @@ public class TestPlanYamlYaml {
 
             p.snippetCodes = Collections.singletonList("snippet-01:1.1");
             p.collectResources = true;
-            p.outputType = "assembled-raw";
+            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
+            p.outputParams.storageType = "assembled-raw";
 
             planYaml.processes.add(p);
         }
@@ -67,7 +69,8 @@ public class TestPlanYamlYaml {
 
             p.snippetCodes = Collections.singletonList("snippet-02:1.1");
             p.collectResources = true;
-            p.outputType = "dataset-processing";
+            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
+            p.outputParams.storageType = "dataset-processing";
 
             planYaml.processes.add(p);
         }
@@ -87,7 +90,8 @@ public class TestPlanYamlYaml {
             p.snippetCodes = Arrays.asList("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
             p.parallelExec = true;
             p.collectResources = true;
-            p.outputType = "feature";
+            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
+            p.outputParams.storageType = "feature";
 
             planYaml.processes.add(p);
         }
@@ -111,6 +115,7 @@ public class TestPlanYamlYaml {
             p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "experiment-code-01";
+            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
 
             planYaml.processes.add(p);
         }

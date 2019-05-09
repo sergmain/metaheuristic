@@ -24,7 +24,7 @@ public class TaskParamYamlUtils {
     private static Yaml yaml;
 
     static {
-        yaml = YamlUtils.init(TaskParamYaml.class);;
+        yaml = YamlUtils.init(TaskParamYaml.class);
     }
 
     // TODO 2018.09.12. so, snakeYaml isn't thread-safe or it was a side-effect?

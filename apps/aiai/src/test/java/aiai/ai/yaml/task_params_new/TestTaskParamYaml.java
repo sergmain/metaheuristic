@@ -36,13 +36,13 @@ import static org.junit.Assert.*;
 public class TestTaskParamYaml {
 
     @Test
-    public void testSequenceYaml() {
+    public void testTaskParamYaml() {
         TaskParamNewYaml seq = new TaskParamNewYaml();
 
-        seq.inputResourceCodes.put("type1", Collections.singletonList(new TaskResource("1", Consts.LAUNCHPAD_STORAGE_URL)));
-        seq.inputResourceCodes.put("type2", Collections.singletonList(new TaskResource("2", Consts.LAUNCHPAD_STORAGE_URL)));
-        seq.inputResourceCodes.put("type3", Collections.singletonList(new TaskResource("3", Consts.LAUNCHPAD_STORAGE_URL)));
-        seq.outputResourceCode= new TaskResource("4", Consts.LAUNCHPAD_STORAGE_URL);
+        seq.inputResourceCodes.put("type1", Collections.singletonList(new TaskResource("1", Consts.SOURCING_LAUNCHPAD_PARAMS_STR)));
+        seq.inputResourceCodes.put("type2", Collections.singletonList(new TaskResource("2", Consts.SOURCING_LAUNCHPAD_PARAMS_STR)));
+        seq.inputResourceCodes.put("type3", Collections.singletonList(new TaskResource("3", Consts.SOURCING_LAUNCHPAD_PARAMS_STR)));
+        seq.outputResourceCode= new TaskResource("4", Consts.SOURCING_LAUNCHPAD_PARAMS_STR);
         Map<String, String> map = new LinkedHashMap<>();
         map.put("key1", "#1");
         map.put("key2", "#1");
@@ -79,12 +79,12 @@ public class TestTaskParamYaml {
         assertEquals(3, yaml.inputResourceCodes.size());
 
         List<TaskResource> trs;
-        TaskResource tr;
         trs = yaml.inputResourceCodes.get("type1");
         assertEquals(1, trs.size());
         //noinspection ConstantConditions
         assertFalse(trs.get(0) instanceof TaskResource);
 /*
+        TaskResource tr;
         tr = trs.get(0);
         assertEquals("1", tr.resource);
         assertEquals(Consts.LAUNCHPAD_STORAGE_URL, tr.storageUrl);

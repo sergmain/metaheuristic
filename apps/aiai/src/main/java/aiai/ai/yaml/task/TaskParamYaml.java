@@ -16,6 +16,7 @@
  */
 package aiai.ai.yaml.task;
 
+import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import lombok.Data;
 
@@ -31,7 +32,7 @@ public class TaskParamYaml {
     public SnippetConfig postSnippet;
     public Map<String, String> hyperParams;
     public String outputResourceCode;
-    public Map<String, String> resourceStorageUrls = new HashMap<>();
+    public Map<String, DataStorageParams> resourceStorageUrls = new HashMap<>();
     public boolean clean = false;
 
     /**

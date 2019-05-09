@@ -34,6 +34,7 @@ import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station_task.StationTask;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.data_storage.DataStorageParams;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -119,19 +120,13 @@ public class StationService {
             return Enums.ResendTaskOutputResourceStatus.TASK_PARAM_FILE_NOT_FOUND;
         }
         final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(params);
-        final String storageUrl = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
-        ResourceProvider resourceProvider = null;
-        if (storageUrl == null || storageUrl.isBlank()) {
-            log.error("##747.19 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.outputResourceCode);
+        final DataStorageParams dataStorageParams = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
+        ResourceProvider resourceProvider;
+        try {
+            resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
+        } catch (ResourceProviderException e) {
+            log.error("#747.23 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.outputResourceCode);
             return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
-        }
-        else {
-            try {
-                resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
-            } catch (ResourceProviderException e) {
-                log.error("#747.23 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.outputResourceCode);
-                return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
-            }
         }
         if (resourceProvider instanceof DiskResourceProvider) {
             return Enums.ResendTaskOutputResourceStatus.OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE;
@@ -166,15 +161,9 @@ public class StationService {
         try {
             taskParamYaml.inputResourceCodes.forEach((key, value) -> {
                 for (String resourceCode : value) {
-                    final String storageUrl = taskParamYaml.resourceStorageUrls.get(resourceCode);
-                    if (storageUrl == null || storageUrl.isBlank()) {
-                        stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode " + resourceCode);
-                        log.error("#747.34 storageUrl wasn't found for resourceCode {}", resourceCode);
-                        result.isError = true;
-                        break;
-                    }
-                    ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
-                    List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, storageUrl);
+                    final DataStorageParams params = taskParamYaml.resourceStorageUrls.get(resourceCode);
+                    ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
+                    List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, params);
                     result.assetFiles.computeIfAbsent(key, o -> new ArrayList<>()).addAll(assetFiles);
                     for (AssetFile assetFile : assetFiles) {
                         // is this resource prepared?
@@ -207,21 +196,17 @@ public class StationService {
 
     public File getOutputResourceFile(StationTask task, TaskParamYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
         try {
-            final String storageUrl = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
-            if (storageUrl == null || storageUrl.isBlank()) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Can't find storageUrl for resourceCode " + taskParamYaml.outputResourceCode);
-                log.error("#747.39 storageUrl wasn't found for resourceCode {}", taskParamYaml.outputResourceCode);
-                return null;
-            }
+            final DataStorageParams dataStorageParams = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
 
-            ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(storageUrl);
+            ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
             //noinspection UnnecessaryLocalVariable
             File outputResourceFile = resourceProvider.getOutputResourceFile(
-                    taskDir, launchpad, task, taskParamYaml.outputResourceCode, storageUrl);
+                    taskDir, launchpad, task, taskParamYaml.outputResourceCode, dataStorageParams);
             return outputResourceFile;
         } catch (ResourceProviderException e) {
-            log.error("#747.42 Error", e);
-            stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
+            final String msg = "#747.42 Error: " + e.toString();
+            log.error(msg, e);
+            stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, msg);
             return null;
         }
     }

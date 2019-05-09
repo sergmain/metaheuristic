@@ -86,10 +86,7 @@ public class BinaryData implements Serializable {
     @Transient
     public byte[] bytes;
 
-    @Column(name = "STORAGE_URL")
-    public String storageUrl;
+    @Column(name = "PARAMS")
+    public String params;
 
-    public String getDataTypeAsStr() {
-        return Enums.BinaryDataType.from(dataType).toString();
-    }
 }

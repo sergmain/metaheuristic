@@ -20,6 +20,7 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Monitoring;
 import aiai.ai.comm.Protocol;
+import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.data.TasksData;
@@ -40,7 +41,6 @@ import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
 import aiai.apps.commons.CommonConsts;
 import aiai.apps.commons.utils.Checksum;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -433,7 +433,8 @@ public class ExperimentService {
 
     public EnumsApi.PlanProducingStatus produceTasks(
             boolean isPersist, Plan plan, Workbook workbook, Process process,
-            Experiment experiment, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls, IntHolder numberOfTasks) {
+            Experiment experiment, Map<String, List<String>> collectedInputs,
+            Map<String, DataStorageParams> inputStorageUrls, IntHolder numberOfTasks) {
         if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
             throw new IllegalStateException("#179.19 Wrong type of process, " +
                     "expected: "+ EnumsApi.ProcessType.EXPERIMENT+", " +
@@ -555,12 +556,12 @@ public class ExperimentService {
                             type = Enums.ExperimentTaskType.PREDICT;
 
                             // TODO 2019.05.02 add implementation of disk storage for models
-                            yaml.resourceStorageUrls.put(modelFilename, Consts.LAUNCHPAD_STORAGE_URL);
+                            yaml.resourceStorageUrls.put(modelFilename, Consts.SOURCING_LAUNCHPAD_PARAMS);
 //                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                         } else {
                             throw new IllegalStateException("#179.31 Not supported type of snippet encountered, type: " + snippet.getType());
                         }
-                        yaml.resourceStorageUrls.put(yaml.outputResourceCode, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
+                        yaml.resourceStorageUrls.put(yaml.outputResourceCode, process.outputParams);
 
                         yaml.inputResourceCodes.forEach((key, value) -> {
                             HashSet<String> set = new HashSet<>(value);

@@ -19,6 +19,7 @@ package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Enums;
 import aiai.ai.Monitoring;
+import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.Experiment;
@@ -64,7 +65,7 @@ public class ExperimentProcessService {
             Process process, PlanService.ResourcePools pools) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
-        Map<String, String> inputStorageUrls = pools.inputStorageUrls;
+        Map<String, DataStorageParams> inputStorageUrls = pools.inputStorageUrls;
 
         Experiment e = experimentRepository.findByCode(process.code);
 

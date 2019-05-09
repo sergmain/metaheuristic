@@ -17,8 +17,10 @@
 
 package aiai.ai.plan;
 
+import aiai.ai.Consts;
 import aiai.ai.launchpad.plan.PlanService;
-import org.junit.Assert;
+import aiai.api.v1.data_storage.DataStorageParams;
+import aiai.ai.yaml.data_storage.DataStorageParamsUtils;
 import org.junit.Test;
 
 import java.util.*;
@@ -27,19 +29,21 @@ import static org.junit.Assert.*;
 
 public class TestResourcePools {
 
+    private static final DataStorageParams SOURCING_DISK_PARAMS = DataStorageParamsUtils.to("sourcing: disk");
+
     @Test
     public void testResourcePools() {
         PlanService.ResourcePools p = new PlanService.ResourcePools();
         new ArrayList<>();
         p.collectedInputs.put("aaa", new ArrayList<>(List.of("a1", "a2", "a3")));
         p.inputStorageUrls = new HashMap<>();
-        p.inputStorageUrls.put("aaa", "zzz");
+        p.inputStorageUrls.put("aaa", Consts.SOURCING_LAUNCHPAD_PARAMS);
 
         PlanService.ResourcePools p1 = new PlanService.ResourcePools();
         p1.collectedInputs.put("aaa", new ArrayList<>(List.of("a4")));
         p1.collectedInputs.put("bbb", new ArrayList<>(List.of("b1", "b2", "b3")));
         p1.inputStorageUrls = new HashMap<>();
-        p1.inputStorageUrls.put("bbb", "yyy");
+        p1.inputStorageUrls.put("bbb", SOURCING_DISK_PARAMS);
 
         p.merge(p1);
 
@@ -56,7 +60,10 @@ public class TestResourcePools {
         assertTrue(p.collectedInputs.get("bbb").contains("b3"));
 
         assertEquals(2, p.inputStorageUrls.keySet().size());
-        assertEquals("zzz", p.inputStorageUrls.get("aaa"));
-        assertEquals("yyy", p.inputStorageUrls.get("bbb"));
+        DataStorageParams params = p.inputStorageUrls.get("aaa");
+        assertEquals(Consts.SOURCING_LAUNCHPAD_PARAMS.sourcing, params.sourcing);
+
+        params = p.inputStorageUrls.get("bbb");
+        assertEquals(SOURCING_DISK_PARAMS.sourcing, params.sourcing);
     }
 }

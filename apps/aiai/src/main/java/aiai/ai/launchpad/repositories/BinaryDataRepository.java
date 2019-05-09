@@ -41,17 +41,17 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     List<BinaryData> findAllByDataType(int dataType);
 
     @Query(value="select new aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
-            "b.code, b.poolCode, b.storageUrl ) " +
+            "b.code, b.poolCode, b.params ) " +
             "from BinaryData b where b.poolCode in :poolCodes and b.workbookId=:workbookId")
     List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes, long workbookId);
 
     @Query(value="select new aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
-            "b.code, b.poolCode, b.storageUrl ) " +
+            "b.code, b.poolCode, b.params ) " +
             "from BinaryData b where b.poolCode in :poolCodes")
     List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes);
 
     @Query(value="select new aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
-            "b.code, b.poolCode, b.storageUrl ) " +
+            "b.code, b.poolCode, b.params ) " +
             "from BinaryData b where b.code in :codes ")
     List<SimpleCodeAndStorageUrl> getCodeAndStorageUrl(List<String> codes);
 
@@ -78,7 +78,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
 
     @Query(value="select new aiai.ai.launchpad.launchpad_resource.SimpleResource(" +
             "b.id, b.version, b.code, b.poolCode, b.dataType, b.uploadTs, b.checksum, b.valid, b.manual, b.filename, " +
-            "b.storageUrl ) " +
+            "b.params ) " +
             "from BinaryData b where b.manual=true ")
     Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);
 

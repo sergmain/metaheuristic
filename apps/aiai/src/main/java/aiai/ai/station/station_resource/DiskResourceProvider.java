@@ -28,6 +28,9 @@ import aiai.ai.yaml.env.DiskStorage;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station_task.StationTask;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data_storage.DataStorageParams;
+import aiai.api.v1.sourcing.DiskInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -53,12 +56,17 @@ public class DiskResourceProvider implements ResourceProvider {
     public List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            String resourceCode, String storageUrl) {
-        ResourceUtils.DiskStorageUri storageUri = ResourceUtils.parseStorageUrl(storageUrl);
+            String resourceCode, DataStorageParams dataStorageParams) {
+
+        if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.disk) {
+            throw new ResourceProviderException("#015.018 Wrong type of sourcing of data storage" + dataStorageParams.sourcing);
+        }
+        DiskInfo diskInfo = dataStorageParams.disk;
+
         EnvYaml env = envService.getEnvYaml();
-        DiskStorage diskStorage = env.findDiskStorageByCode(storageUri.envCode);
+        DiskStorage diskStorage = env.findDiskStorageByCode(diskInfo.env);
         if (diskStorage==null) {
-            throw new ResourceProviderException("#015.020 The disk storage wasn't found for code: " + storageUri.envCode);
+            throw new ResourceProviderException("#015.020 The disk storage wasn't found for code: " + diskInfo.env);
         }
         File path = new File(diskStorage.path);
         if (!path.exists()) {
@@ -66,9 +74,10 @@ public class DiskResourceProvider implements ResourceProvider {
         }
 
         AssetFile assetFile;
-        if (storageUri.resourceCode.endsWith("*")) {
+        if (diskInfo.code.equals("*")) {
             assetFile = new AssetFile();
-            assetFile.setFile( new File(path, storageUri.resourceCode) );
+            // TODO 2019.05.08 is this correct to declare file with '*' ?
+            assetFile.setFile( new File(path, "*") );
             assetFile.setProvided(true);
             assetFile.setContent(true);
             assetFile.setError(false);
@@ -76,7 +85,7 @@ public class DiskResourceProvider implements ResourceProvider {
             assetFile.setFileLength(0);
         }
         else {
-            assetFile = ResourceUtils.prepareAssetFile(path, null, storageUri.resourceCode);
+            assetFile = ResourceUtils.prepareAssetFile(path, null, diskInfo.code);
         }
 
         return Collections.singletonList(assetFile);
@@ -101,14 +110,12 @@ public class DiskResourceProvider implements ResourceProvider {
     @Override
     public File getOutputResourceFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, String outputResourceCode, String storageUrl) {
-
-        ResourceUtils.DiskStorageUri storageUri = ResourceUtils.parseStorageUrl(storageUrl);
+            StationTask task, String outputResourceCode, DataStorageParams dataStorageParams) {
 
         EnvYaml env = envService.getEnvYaml();
-        DiskStorage diskStorage = env.findDiskStorageByCode(storageUri.envCode);
+        DiskStorage diskStorage = env.findDiskStorageByCode(dataStorageParams.disk.env);
         if (diskStorage==null) {
-            throw new ResourceProviderException("#015.037 The disk storage wasn't found for code: " + storageUri.envCode);
+            throw new ResourceProviderException("#015.037 The disk storage wasn't found for code: " + dataStorageParams.disk.env);
         }
         File path = new File(diskStorage.path);
         if (!path.exists()) {

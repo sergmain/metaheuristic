@@ -22,12 +22,13 @@ import aiai.ai.resource.AssetFile;
 import aiai.ai.station.LaunchpadLookupExtendedService;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station_task.StationTask;
+import aiai.api.v1.data_storage.DataStorageParams;
 
 import java.io.File;
 import java.util.List;
 
 public interface ResourceProvider {
-    List<AssetFile> prepareForDownloadingDataFile(File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, StationTask task, Metadata.LaunchpadInfo launchpadCode, String resourceCode, String storageUrl);
+    List<AssetFile> prepareForDownloadingDataFile(File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, StationTask task, Metadata.LaunchpadInfo launchpadCode, String resourceCode, DataStorageParams dataStorageParams);
 
     ExecProcessService.Result processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
@@ -39,5 +40,5 @@ public interface ResourceProvider {
             File taskDir,
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task,
-            String outputResourceCode, String storageUrl);
+            String outputResourceCode, DataStorageParams dataStorageParams);
 }

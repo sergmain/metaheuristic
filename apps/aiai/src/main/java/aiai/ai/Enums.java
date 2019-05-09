@@ -24,7 +24,7 @@ public final class Enums {
 
     public enum OperationStatus {OK, ERROR}
 
-    public enum StorageType {launchpad, disk, hadoop, ftp }
+//    public enum StorageType {launchpad, disk, hadoop, ftp }
 
     public enum UploadResourceStatus {
         OK,

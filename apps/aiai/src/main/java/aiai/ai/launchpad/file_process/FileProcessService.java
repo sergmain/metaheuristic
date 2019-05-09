@@ -17,19 +17,20 @@
 
 package aiai.ai.launchpad.file_process;
 
-import aiai.ai.Consts;
-import aiai.ai.launchpad.beans.*;
-import aiai.ai.launchpad.snippet.SnippetService;
-import aiai.apps.commons.utils.StrUtils;
-import aiai.api.v1.launchpad.Process;
+import aiai.ai.launchpad.beans.Plan;
+import aiai.ai.launchpad.beans.TaskImpl;
+import aiai.ai.launchpad.beans.Workbook;
 import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.plan.PlanUtils;
 import aiai.ai.launchpad.repositories.TaskRepository;
+import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data_storage.DataStorageParams;
+import aiai.api.v1.launchpad.Process;
+import aiai.apps.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -57,7 +58,7 @@ public class FileProcessService {
             Process process, PlanService.ResourcePools pools) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
-        Map<String, String> inputStorageUrls = pools.inputStorageUrls;
+        Map<String, DataStorageParams> inputStorageUrls = pools.inputStorageUrls;
 
         PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
 
@@ -67,8 +68,7 @@ public class FileProcessService {
                 String resourceName = StrUtils.normalizeSnippetCode(snippetCode);
                 String outputResourceCode = PlanUtils.getResourceCode(plan.getId(), workbook.getId(), process.code, resourceName, process.order);
                 result.outputResourceCodes.add(outputResourceCode);
-                inputStorageUrls.put(outputResourceCode,
-                        StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
+                inputStorageUrls.put(outputResourceCode, process.outputParams);
                 if (isPersist) {
                     createTaskInternal(plan, workbook, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
                 }
@@ -79,8 +79,7 @@ public class FileProcessService {
             String resourceName = StrUtils.normalizeSnippetCode(snippetCode);
             String outputResourceCode = PlanUtils.getResourceCode(plan.getId(), workbook.getId(), process.code, resourceName, process.order);
             result.outputResourceCodes.add(outputResourceCode);
-            inputStorageUrls.put(outputResourceCode,
-                    StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
+            inputStorageUrls.put(outputResourceCode, process.outputParams);
             if (isPersist) {
                 createTaskInternal(plan, workbook, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
             }
@@ -93,7 +92,7 @@ public class FileProcessService {
     private void createTaskInternal(
             Plan plan, Workbook workbook, Process process,
             String outputResourceCode,
-            String snippetCode, Map<String, List<String>> collectedInputs, Map<String, String> inputStorageUrls) {
+            String snippetCode, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls) {
         if (process.type!= EnumsApi.ProcessType.FILE_PROCESSING) {
             throw new IllegalStateException("#171.01 Wrong type of process, " +
                     "expected: "+ EnumsApi.ProcessType.FILE_PROCESSING+", " +

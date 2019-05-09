@@ -28,6 +28,7 @@ import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station_task.StationTask;
+import aiai.api.v1.data_storage.DataStorageParams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -53,7 +54,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     public List<AssetFile> prepareForDownloadingDataFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            String resourceCode, String storageUrl) {
+            String resourceCode, DataStorageParams dataStorageParams) {
 
         DownloadResourceTask resourceTask = new DownloadResourceTask(resourceCode, task.getTaskId(), taskDir);
         resourceTask.launchpad = launchpad.launchpadLookup;
@@ -86,7 +87,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     @Override
     public File getOutputResourceFile(
             File taskDir, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
-            StationTask task, String outputResourceCode, String storageUrl) {
+            StationTask task, String outputResourceCode, DataStorageParams dataStorageParams) {
 
         //noinspection UnnecessaryLocalVariable
         File resultDataFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + outputResourceCode);
