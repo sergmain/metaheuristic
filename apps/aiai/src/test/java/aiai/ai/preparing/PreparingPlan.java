@@ -18,7 +18,6 @@
 package aiai.ai.preparing;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.PlanImpl;
 import aiai.ai.plan.TaskCollector;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
@@ -279,17 +278,17 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);
-        assertEquals(Enums.WorkbookExecState.NONE.code, workbook.getExecState());
+        assertEquals(EnumsApi.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
         EnumsApi.PlanProducingStatus producingStatus = planService.toProducing(workbook);
         assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
-        assertEquals(Enums.WorkbookExecState.PRODUCING.code, workbook.getExecState());
+        assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
         result = planService.produceAllTasks(true, plan, workbook);
         workbook = result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
-        assertEquals(Enums.WorkbookExecState.PRODUCED.code, workbook.getExecState());
+        assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, workbook.getExecState());
 
         experiment = experimentCache.findById(experiment.getId());
         return result;

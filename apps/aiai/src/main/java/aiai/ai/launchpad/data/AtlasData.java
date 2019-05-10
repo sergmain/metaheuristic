@@ -17,12 +17,12 @@
 
 package aiai.ai.launchpad.data;
 
-import aiai.ai.Enums;
 import aiai.ai.launchpad.atlas.AtlasSimple;
 import aiai.ai.launchpad.atlas.ExperimentStoredToAtlas;
 import aiai.ai.launchpad.beans.Atlas;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentFeature;
+import aiai.api.v1.EnumsApi;
 import aiai.api.v1.data.BaseDataClass;
 import aiai.api.v1.data.TasksData;
 import aiai.api.v1.launchpad.Workbook;
@@ -61,7 +61,7 @@ public class AtlasData {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentStoredToAtlas.ExperimentFeatureOnShelf > features;
         public Workbook workbook;
-        public Enums.WorkbookExecState workbookExecState;
+        public EnumsApi.WorkbookExecState workbookExecState;
     }
 
     @Data

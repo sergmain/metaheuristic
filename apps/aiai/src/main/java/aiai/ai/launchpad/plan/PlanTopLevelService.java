@@ -237,8 +237,8 @@ public class PlanTopLevelService {
     }
 
     public OperationStatusRest changeWorkbookExecState(String state, Long workbookId) {
-        Enums.WorkbookExecState execState = Enums.WorkbookExecState.valueOf(state.toUpperCase());
-        if (execState==Enums.WorkbookExecState.UNKNOWN) {
+        EnumsApi.WorkbookExecState execState = EnumsApi.WorkbookExecState.valueOf(state.toUpperCase());
+        if (execState== EnumsApi.WorkbookExecState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.87 Unknown exec state, state: " + state);
         }
         //noinspection UnnecessaryLocalVariable

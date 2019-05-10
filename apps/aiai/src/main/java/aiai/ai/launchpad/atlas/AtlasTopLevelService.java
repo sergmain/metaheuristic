@@ -18,7 +18,6 @@
 package aiai.ai.launchpad.atlas;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
@@ -133,7 +132,7 @@ public class AtlasTopLevelService {
         AtlasData.ExperimentInfo experimentInfoResult = new AtlasData.ExperimentInfo();
         experimentInfoResult.features = estb1.features;
         experimentInfoResult.workbook = workbook;
-        experimentInfoResult.workbookExecState = Enums.WorkbookExecState.toState(workbook.getExecState());
+        experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.getExecState());
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;

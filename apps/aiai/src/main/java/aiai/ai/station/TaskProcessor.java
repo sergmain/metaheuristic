@@ -17,7 +17,6 @@
 package aiai.ai.station;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
 import aiai.ai.core.ExecProcessService;
@@ -112,13 +111,13 @@ public class TaskProcessor {
                 log.warn("#100.10 Params for task {} is blank", task.getTaskId());
                 continue;
             }
-            Enums.WorkbookExecState state = currentExecState.getState(task.launchpadUrl, task.workbookId);
-            if (state==Enums.WorkbookExecState.UNKNOWN) {
+            EnumsApi.WorkbookExecState state = currentExecState.getState(task.launchpadUrl, task.workbookId);
+            if (state== EnumsApi.WorkbookExecState.UNKNOWN) {
                 log.info("The state for Workbook #{}, host {} is unknown, skip it", task.workbookId, task.launchpadUrl);
                 continue;
             }
 
-            if (state!=Enums.WorkbookExecState.STARTED) {
+            if (state!= EnumsApi.WorkbookExecState.STARTED) {
                 log.info("The state for Workbook #{}, host: {}, is {}, skip it", task.workbookId, task.launchpadUrl, state);
                 continue;
             }

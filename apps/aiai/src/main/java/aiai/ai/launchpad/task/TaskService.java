@@ -61,7 +61,7 @@ public class TaskService {
     private final StationsRepository stationsRepository;
 
     public List<Long> resourceReceivingChecker(long stationId) {
-        List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), Enums.TaskExecState.OK.value);
+        List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
         return tasks.stream().map(Task::getId).collect(Collectors.toList());
     }
 
@@ -143,7 +143,7 @@ public class TaskService {
         List<Workbook> workbooks;
         if (workbookId==null) {
             workbooks = workbookRepository.findByExecStateOrderByCreatedOnAsc(
-                    Enums.WorkbookExecState.STARTED.code);
+                    EnumsApi.WorkbookExecState.STARTED.code);
         }
         else {
             Workbook workbook = workbookRepository.findById(workbookId).orElse(null);
@@ -151,8 +151,8 @@ public class TaskService {
                 log.warn("#317.39 Workbook wasn't found for id: {}", workbookId);
                 return EMPTY_RESULT;
             }
-            if (workbook.getExecState()!=Enums.WorkbookExecState.STARTED.code) {
-                log.warn("#317.42 Workbook wasn't started. Current exec state: {}", Enums.WorkbookExecState.toState(workbook.getExecState()));
+            if (workbook.getExecState()!= EnumsApi.WorkbookExecState.STARTED.code) {
+                log.warn("#317.42 Workbook wasn't started. Current exec state: {}", EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
                 return EMPTY_RESULT;
             }
             workbooks = Collections.singletonList(workbook);
@@ -245,7 +245,7 @@ public class TaskService {
 
         resultTask.setAssignedOn(System.currentTimeMillis());
         resultTask.setStationId(station.getId());
-        resultTask.setExecState(Enums.TaskExecState.IN_PROGRESS.value);
+        resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         resultTask.setResultResourceScheduledOn(0);
 
         taskRepository.save((TaskImpl)resultTask);

@@ -164,7 +164,7 @@ public class ServerService {
     }
 
     private static Protocol.WorkbookStatus.SimpleStatus to(Workbook workbook) {
-        return new Protocol.WorkbookStatus.SimpleStatus(workbook.getId(), Enums.WorkbookExecState.toState(workbook.getExecState()));
+        return new Protocol.WorkbookStatus.SimpleStatus(workbook.getId(), EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
     }
 
 }

@@ -16,7 +16,6 @@
  */
 package aiai.ai.station;
 
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.resource.AssetFile;
 import aiai.ai.resource.ResourceUtils;
@@ -82,7 +81,7 @@ public class TaskAssetPreparer {
             }
             Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 
-            if (Enums.WorkbookExecState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.workbookId)) {
+            if (EnumsApi.WorkbookExecState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.workbookId)) {
                 stationTaskService.delete(task.launchpadUrl, task.taskId);
                 log.info("Deleted orphan task {}", task);
                 continue;

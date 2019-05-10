@@ -17,11 +17,11 @@
 package aiai.ai.station;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.utils.holders.BoolHolder;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station_task.StationTask;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
@@ -64,7 +64,7 @@ public class ArtifactCleanerAtStation {
             List<StationTask> all = stationTaskService.findAll(launchpadUrl);
 //            log.debug("Number tasks for deleting obsolete: {} ", all.size());
             for (StationTask task : all) {
-                if (currentExecState.isState(launchpadUrl, task.workbookId, Enums.WorkbookExecState.DOESNT_EXIST)) {
+                if (currentExecState.isState(launchpadUrl, task.workbookId, EnumsApi.WorkbookExecState.DOESNT_EXIST)) {
                     log.info("Delete obsolete task, id {}, url {}", task.getTaskId(), launchpadUrl);
                     stationTaskService.delete(launchpadUrl, task.getTaskId());
                     continue;

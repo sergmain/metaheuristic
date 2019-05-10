@@ -82,7 +82,7 @@ public class TaskPersistencer {
                     if (task == null) {
                         return Enums.UploadResourceStatus.TASK_NOT_FOUND;
                     }
-                    if (task.getExecState() == Enums.TaskExecState.NONE.value) {
+                    if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
                         log.warn("#307.12 Task {} was reset, can't set new value to field resultReceived", taskId);
                         return Enums.UploadResourceStatus.TASK_WAS_RESET;
                     }
@@ -106,7 +106,7 @@ public class TaskPersistencer {
                 try {
                     task.setAssignedOn(System.currentTimeMillis());
                     task.setStationId(stationId);
-                    task.setExecState(Enums.TaskExecState.IN_PROGRESS.value);
+                    task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
                     task.setResultResourceScheduledOn(System.currentTimeMillis());
 
                     taskRepository.save((TaskImpl) task);
@@ -133,7 +133,7 @@ public class TaskPersistencer {
                     task.setCompleted(false);
                     task.setCompletedOn(null);
                     task.setMetrics(null);
-                    task.setExecState(Enums.TaskExecState.NONE.value);
+                    task.setExecState(EnumsApi.TaskExecState.NONE.value);
                     task.setResultReceived(false);
                     task.setResultResourceScheduledOn(0);
                     taskRepository.save(task);
@@ -141,9 +141,9 @@ public class TaskPersistencer {
                     Workbook workbook = workbookRepository.findById(task.workbookId).orElse(null);
                     if (workbook != null) {
                         if (task.order < workbook.getProducingOrder() ||
-                                Enums.WorkbookExecState.toState(workbook.getExecState()) == Enums.WorkbookExecState.FINISHED) {
+                                EnumsApi.WorkbookExecState.toState(workbook.getExecState()) == EnumsApi.WorkbookExecState.FINISHED) {
                             workbook.setProducingOrder( task.order );
-                            workbook.setExecState( Enums.WorkbookExecState.STARTED.code );
+                            workbook.setExecState( EnumsApi.WorkbookExecState.STARTED.code );
                             save(workbook);
                         }
                     }
@@ -180,7 +180,7 @@ public class TaskPersistencer {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
                     //noinspection UnnecessaryLocalVariable
-                    Task t = prepareAndSaveTask(result, snippetExec.exec.isOk ? Enums.TaskExecState.OK : Enums.TaskExecState.ERROR);
+                    Task t = prepareAndSaveTask(result, snippetExec.exec.isOk ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR);
                     return t;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.error("#307.29 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
@@ -190,7 +190,7 @@ public class TaskPersistencer {
         return null;
     }
 
-    private Task prepareAndSaveTask(SimpleTaskExecResult result, Enums.TaskExecState state) {
+    private Task prepareAndSaveTask(SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
             log.warn("#307.33 Can't find Task for Id: {}", result.taskId);
@@ -198,7 +198,7 @@ public class TaskPersistencer {
         }
         task.setExecState(state.value);
 
-        if (state==Enums.TaskExecState.ERROR) {
+        if (state== EnumsApi.TaskExecState.ERROR) {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
             // TODO 2019.05.02 !!! add here statuses to tasks which are in chain after this one

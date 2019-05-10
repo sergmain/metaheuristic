@@ -17,14 +17,11 @@
 
 package aiai.ai.plan;
 
-import aiai.ai.Enums;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.launchpad.task.TaskService;
-import aiai.ai.preparing.PreparingExperiment;
 import aiai.ai.preparing.PreparingPlan;
-import aiai.ai.yaml.plan.PlanYaml;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
@@ -35,8 +32,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -71,12 +66,12 @@ public class TestCountOfTasks extends PreparingPlan {
         workbook = result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);
-        assertEquals(Enums.WorkbookExecState.NONE.code, workbook.getExecState());
+        assertEquals(EnumsApi.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
         EnumsApi.PlanProducingStatus producingStatus = planService.toProducing(workbook);
         assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
-        assertEquals(Enums.WorkbookExecState.PRODUCING.code, workbook.getExecState());
+        assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
         List<Object[]> tasks01 = taskCollector.getTasks(result.workbook);
         assertTrue(tasks01.isEmpty());
@@ -97,7 +92,7 @@ public class TestCountOfTasks extends PreparingPlan {
 
         workbook = result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
-        assertEquals(Enums.WorkbookExecState.PRODUCED.code, workbook.getExecState());
+        assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, workbook.getExecState());
 
         experiment = experimentCache.findById(experiment.getId());
 

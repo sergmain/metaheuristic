@@ -115,11 +115,11 @@ public class PlanService {
         }
         PlanImpl plan = planCache.findById(fi.getPlanId());
         if (plan==null) {
-            workbook.setExecState(Enums.WorkbookExecState.ERROR.code);
+            workbook.setExecState(EnumsApi.WorkbookExecState.ERROR.code);
             workbookRepository.save(fi);
             return null;
         }
-        fi.setExecState(Enums.WorkbookExecState.STARTED.code);
+        fi.setExecState(EnumsApi.WorkbookExecState.STARTED.code);
         return workbookRepository.save(fi);
     }
 
@@ -128,7 +128,7 @@ public class PlanService {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
         List<WorkbookImpl> workbooks = workbookRepository.findByExecState(
-                Enums.WorkbookExecState.PRODUCING.code);
+                EnumsApi.WorkbookExecState.PRODUCING.code);
         Monitoring.log("##020", Enums.Monitor.MEMORY);
         if (!workbooks.isEmpty()) {
             log.info("Start producing tasks");
@@ -136,7 +136,7 @@ public class PlanService {
         for (WorkbookImpl workbook : workbooks) {
             PlanImpl plan = planCache.findById(workbook.getPlanId());
             if (plan==null) {
-                workbook.setExecState(Enums.WorkbookExecState.ERROR.code);
+                workbook.setExecState(EnumsApi.WorkbookExecState.ERROR.code);
                 workbookRepository.save(workbook);
                 continue;
             }
@@ -207,7 +207,7 @@ public class PlanService {
         return planValidation;
     }
 
-    public OperationStatusRest workbookTargetExecState(Long workbookId, Enums.WorkbookExecState execState) {
+    public OperationStatusRest workbookTargetExecState(Long workbookId, EnumsApi.WorkbookExecState execState) {
         PlanData.WorkbookResult result = getWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
@@ -285,7 +285,7 @@ public class PlanService {
 
     public TaskProducingResult produceAllTasks(boolean isPersist, PlanImpl plan, Workbook workbook ) {
         TaskProducingResult result = new TaskProducingResult();
-        if (isPersist && workbook.getExecState()!=Enums.WorkbookExecState.PRODUCING.code) {
+        if (isPersist && workbook.getExecState()!= EnumsApi.WorkbookExecState.PRODUCING.code) {
             result.planValidateStatus = EnumsApi.PlanValidateStatus.ALREADY_PRODUCED_ERROR;
             return result;
         }
@@ -397,7 +397,7 @@ public class PlanService {
         Workbook fi = new WorkbookImpl();
         fi.setPlanId(planId);
         fi.setCreatedOn(System.currentTimeMillis());
-        fi.setExecState(Enums.WorkbookExecState.NONE.code);
+        fi.setExecState(EnumsApi.WorkbookExecState.NONE.code);
         fi.setCompletedOn(null);
         fi.setInputResourceParam(inputResourceParam);
         fi.setProducingOrder(Consts.TASK_ORDER_START_VALUE);
@@ -418,17 +418,17 @@ public class PlanService {
         if (fi==null) {
             return;
         }
-        fi.setExecState(Enums.WorkbookExecState.STOPPED.code);
+        fi.setExecState(EnumsApi.WorkbookExecState.STOPPED.code);
         save(fi);
     }
 
-    public void changeValidStatus(Workbook fi, boolean status) {
-        fi.setValid(status);
-        save(fi);
+    public void changeValidStatus(Workbook workbook, boolean status) {
+        workbook.setValid(status);
+        save(workbook);
     }
 
     public EnumsApi.PlanProducingStatus toProducing(Workbook fi) {
-        fi.setExecState(Enums.WorkbookExecState.PRODUCING.code);
+        fi.setExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
         save(fi);
         return EnumsApi.PlanProducingStatus.OK;
     }
@@ -570,12 +570,12 @@ public class PlanService {
             log.error(es);
             throw new IllegalStateException(es);
         }
-        result.workbook.setExecState(Enums.WorkbookExecState.PRODUCED.code);
+        result.workbook.setExecState(EnumsApi.WorkbookExecState.PRODUCED.code);
         save(result.workbook);
     }
 
     public void markOrderAsProcessed() {
-        List<WorkbookImpl> workbooks = workbookRepository.findByExecState(Enums.WorkbookExecState.STARTED.code);
+        List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
         for (Workbook workbook : workbooks) {
             markOrderAsProcessed(workbook);
         }
@@ -596,7 +596,7 @@ public class PlanService {
                 log.info("Workbook #{} was finished", workbook.getId());
                 experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
                 workbook.setCompletedOn(System.currentTimeMillis());
-                workbook.setExecState(Enums.WorkbookExecState.FINISHED.code);
+                workbook.setExecState(EnumsApi.WorkbookExecState.FINISHED.code);
                 Workbook instance = save(workbook);
 
                 Experiment e = experimentRepository.findByWorkbookId(instance.getId());

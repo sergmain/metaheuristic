@@ -17,9 +17,9 @@
 
 package aiai.ai.launchpad.data;
 
-import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.utils.SimpleSelectOption;
+import aiai.api.v1.EnumsApi;
 import aiai.api.v1.data.BaseDataClass;
 import aiai.api.v1.data.TasksData;
 import aiai.api.v1.launchpad.Workbook;
@@ -176,7 +176,7 @@ public class ExperimentData {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeature> features;
         public Workbook workbook;
-        public Enums.WorkbookExecState workbookExecState;
+        public EnumsApi.WorkbookExecState workbookExecState;
     }
 
     @Data
@@ -231,7 +231,7 @@ public class ExperimentData {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
         public List<ExperimentFeature> features;
         public Workbook workbook;
-        public Enums.WorkbookExecState workbookExecState;
+        public EnumsApi.WorkbookExecState workbookExecState;
     }
 
     @Data

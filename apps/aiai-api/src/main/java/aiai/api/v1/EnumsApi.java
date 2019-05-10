@@ -209,4 +209,77 @@ public class EnumsApi {
             }
         }
     }
+
+    public enum WorkbookExecState {
+        NONE(0),            // just created workbook
+        PRODUCING(1),       // producing was just started
+        PRODUCED(2),        // producing was finished
+        STARTED(3),         // started
+        STOPPED(4),         // stopped
+        FINISHED(5),        // finished
+        DOESNT_EXIST(6),    // doesn't exist. this state is needed at station side to reconcile list of experiments
+        UNKNOWN(-1),        // unknown state
+        ERROR(-2);          // some error in configuration
+
+        public int code;
+
+        WorkbookExecState(int code) {
+            this.code = code;
+        }
+
+        public static WorkbookExecState toState(int code) {
+            switch (code) {
+                case 0:
+                    return NONE;
+                case 1:
+                    return PRODUCING;
+                case 2:
+                    return PRODUCED;
+                case 3:
+                    return STARTED;
+                case 4:
+                    return STOPPED;
+                case 5:
+                    return FINISHED;
+                case 6:
+                    return DOESNT_EXIST;
+                case -1:
+                    //noinspection
+                    return UNKNOWN;
+                case -2:
+                    return ERROR;
+                default:
+                    return UNKNOWN;
+            }
+        }
+
+        public static String from(int code) {
+            //noinspection unused
+            WorkbookExecState state = toState(code);
+            return state.toString();
+        }
+    }
+
+    public enum TaskExecState { NONE(0), IN_PROGRESS(1), ERROR(2), OK(3);
+
+        public final int value;
+        TaskExecState(int value) {
+            this.value = value;
+        }
+
+        public static TaskExecState from(int type) {
+            switch(type) {
+                case 0:
+                    return NONE;
+                case 1:
+                    return IN_PROGRESS;
+                case 2:
+                    return ERROR;
+                case 3:
+                    return OK;
+                default:
+                    throw new IllegalStateException("Unknown type : " + type);
+            }
+        }
+    }
 }

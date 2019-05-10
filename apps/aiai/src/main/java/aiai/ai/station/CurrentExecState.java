@@ -16,9 +16,9 @@
  */
 package aiai.ai.station;
 
-import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
 import aiai.ai.utils.holders.BoolHolder;
+import aiai.api.v1.EnumsApi;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
@@ -29,7 +29,7 @@ import java.util.*;
 public class CurrentExecState {
 
     // this is a map for holding the current status of Workbook, Not a task
-    private final Map<String, Map<Long, Enums.WorkbookExecState>> workbookState = new HashMap<>();
+    private final Map<String, Map<Long, EnumsApi.WorkbookExecState>> workbookState = new HashMap<>();
 
     private Map<String, BoolHolder> isInit = new HashMap<>();
 
@@ -64,21 +64,21 @@ public class CurrentExecState {
         }
     }
 
-    Enums.WorkbookExecState getState(String host, long workbookId) {
+    EnumsApi.WorkbookExecState getState(String host, long workbookId) {
         synchronized(workbookState) {
             if (!isInited(host)) {
-                return Enums.WorkbookExecState.UNKNOWN;
+                return EnumsApi.WorkbookExecState.UNKNOWN;
             }
-            return workbookState.getOrDefault(host, Collections.emptyMap()).getOrDefault(workbookId, Enums.WorkbookExecState.DOESNT_EXIST);
+            return workbookState.getOrDefault(host, Collections.emptyMap()).getOrDefault(workbookId, EnumsApi.WorkbookExecState.DOESNT_EXIST);
         }
     }
 
-    boolean isState(String launchpadUrl, long workbookId, Enums.WorkbookExecState state) {
-        Enums.WorkbookExecState currState = getState(launchpadUrl, workbookId);
+    boolean isState(String launchpadUrl, long workbookId, EnumsApi.WorkbookExecState state) {
+        EnumsApi.WorkbookExecState currState = getState(launchpadUrl, workbookId);
         return currState!=null && currState==state;
     }
 
     boolean isStarted(String launchpadUrl, long workbookId) {
-        return isState(launchpadUrl, workbookId, Enums.WorkbookExecState.STARTED);
+        return isState(launchpadUrl, workbookId, EnumsApi.WorkbookExecState.STARTED);
     }
 }

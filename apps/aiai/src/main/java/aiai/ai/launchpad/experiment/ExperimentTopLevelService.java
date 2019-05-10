@@ -17,7 +17,6 @@
 
 package aiai.ai.launchpad.experiment;
 
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
@@ -199,7 +198,7 @@ public class ExperimentTopLevelService {
         ExperimentInfoResult experimentInfoResult = new ExperimentInfoResult();
         experimentInfoResult.features = experimentFeatureRepository.findByExperimentIdOrderByMaxValueDesc(experiment.getId());
         experimentInfoResult.workbook = workbook;
-        experimentInfoResult.workbookExecState = Enums.WorkbookExecState.toState(workbook.getExecState());
+        experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.getExecState());
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;
