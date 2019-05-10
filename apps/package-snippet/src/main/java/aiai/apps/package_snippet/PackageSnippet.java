@@ -18,15 +18,14 @@
 package aiai.apps.package_snippet;
 
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.SnippetApiData;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.SecUtils;
 import aiai.apps.commons.utils.ZipUtils;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
-import aiai.apps.commons.yaml.snippet.SnippetConfigStatus;
 import aiai.apps.commons.yaml.snippet.SnippetConfigList;
 import aiai.apps.commons.yaml.snippet.SnippetConfigListUtils;
+import aiai.apps.commons.yaml.snippet.SnippetUtils;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -99,8 +98,8 @@ public class PackageSnippet implements CommandLineRunner {
         // Verify
         boolean isError = false;
         Set<String> set = new HashSet<>();
-        for (SnippetConfig snippet : snippetConfigList.getSnippets()) {
-            final SnippetConfigStatus verify = snippet.validate();
+        for (SnippetApiData.SnippetConfig snippet : snippetConfigList.getSnippets()) {
+            final SnippetApiData.SnippetConfigStatus verify = SnippetUtils.validate(snippet);
             if (!verify.isOk) {
                 System.out.println(verify.error);
                 isError=true;
@@ -129,17 +128,17 @@ public class PackageSnippet implements CommandLineRunner {
         }
 
         // Process
-        for (SnippetConfig snippetConfig : snippetConfigList.getSnippets()) {
+        for (SnippetApiData.SnippetConfig snippetConfig : snippetConfigList.getSnippets()) {
             String sum;
             if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.station ||
                     snippetConfig.sourcing==EnumsApi.SnippetSourcing.git) {
-                sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(snippetConfig.env.getBytes()));
+                sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(snippetConfig.env.getBytes()));
             }
             else if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.launchpad) {
                 final File snippetFile = new File(targetDir, snippetConfig.file);
                 FileUtils.copyFile(new File(snippetConfig.file), snippetFile);
                 try (FileInputStream fis = new FileInputStream(snippetFile)) {
-                    sum = Checksum.Type.SHA256.getChecksum(fis);
+                    sum = Checksum.getChecksum(EnumsApi.Type.SHA256, fis);
                 }
             }
             else {
@@ -149,10 +148,10 @@ public class PackageSnippet implements CommandLineRunner {
             snippetConfig.checksumMap = new HashMap<>();
             if (privateKey!=null) {
                 String signature = SecUtils.getSignature(sum, privateKey);
-                snippetConfig.checksumMap.put(Checksum.Type.SHA256WithSignature, sum + SecUtils.SIGNATURE_DELIMITER + signature);
+                snippetConfig.checksumMap.put(EnumsApi.Type.SHA256WithSignature, sum + SecUtils.SIGNATURE_DELIMITER + signature);
             }
             else {
-                snippetConfig.checksumMap.put(Checksum.Type.SHA256, sum);
+                snippetConfig.checksumMap.put(EnumsApi.Type.SHA256, sum);
             }
         }
 

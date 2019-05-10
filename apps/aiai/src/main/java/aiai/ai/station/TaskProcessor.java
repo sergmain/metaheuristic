@@ -27,13 +27,12 @@ import aiai.ai.station.sourcing.git.GitSourcingService;
 import aiai.ai.station.station_resource.ResourceProvider;
 import aiai.ai.station.station_resource.ResourceProviderFactory;
 import aiai.ai.yaml.metadata.Metadata;
-import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.station_task.StationTask;
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.SnippetApiData;
+import aiai.api.v1.data.TaskApiData;
 import aiai.api.v1.data_storage.DataStorageParams;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -124,7 +123,7 @@ public class TaskProcessor {
 
             File taskDir = stationTaskService.prepareTaskDir(task.launchpadUrl, task.taskId);
 
-            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
             StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadCode, taskParamYaml, launchpad, taskDir);
             if (resultOfChecking.isError) {
@@ -174,21 +173,21 @@ public class TaskProcessor {
 
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
 
-            ExecProcessService.Result preResult = prepareAndExecSnippet(taskParamYaml.getPreSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
-            ExecProcessService.Result result = prepareAndExecSnippet(taskParamYaml.getSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
-            ExecProcessService.Result postResult = prepareAndExecSnippet(taskParamYaml.getPostSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
+            SnippetApiData.SnippetExecResult preSnippetExecResult = prepareAndExecSnippet(taskParamYaml.getPreSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
+            SnippetApiData.SnippetExecResult snippetExecResult = prepareAndExecSnippet(taskParamYaml.getSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
+            SnippetApiData.SnippetExecResult postSnippetExecResult = prepareAndExecSnippet(taskParamYaml.getPostSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
 
-            if (result == null) {
+            if (snippetExecResult == null) {
                 continue;
             }
 
-            stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(), new SnippetExec(result, preResult, postResult));
+            stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(), new SnippetApiData.SnippetExec(snippetExecResult, preSnippetExecResult, postSnippetExecResult));
         }
     }
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public ExecProcessService.Result prepareAndExecSnippet(SnippetConfig snippet, StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamYaml taskParamYaml, boolean isAllLoaded, File artifactDir, File systemDir, File paramFile) {
+    public SnippetApiData.SnippetExecResult prepareAndExecSnippet(SnippetApiData.SnippetConfig snippet, StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskApiData.TaskParamYaml taskParamYaml, boolean isAllLoaded, File artifactDir, File systemDir, File paramFile) {
         if (snippet==null) {
             return null;
         }
@@ -202,13 +201,13 @@ public class TaskProcessor {
         }
 
         //noinspection UnnecessaryLocalVariable
-        ExecProcessService.Result result = execSnippet(task, launchpadCode, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, paramFile, snippetPrepareResult);
-        return result;
+        SnippetApiData.SnippetExecResult snippetExecResult = execSnippet(task, launchpadCode, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, paramFile, snippetPrepareResult);
+        return snippetExecResult;
     }
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public ExecProcessService.Result execSnippet(StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamYaml taskParamYaml, File artifactDir, File systemDir, File paramFile, SnippetPrepareResult snippetPrepareResult) {
+    public SnippetApiData.SnippetExecResult execSnippet(StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskApiData.TaskParamYaml taskParamYaml, File artifactDir, File systemDir, File paramFile, SnippetPrepareResult snippetPrepareResult) {
         List<String> cmd;
         Interpreter interpreter=null;
         if (StringUtils.isNotBlank(snippetPrepareResult.snippet.env)) {
@@ -226,7 +225,7 @@ public class TaskProcessor {
 
         log.info("All systems are checked for the task #{}, lift off", task.taskId );
 
-        ExecProcessService.Result result;
+        SnippetApiData.SnippetExecResult snippetExecResult;
         try {
 
             switch (snippetPrepareResult.snippet.sourcing) {
@@ -262,20 +261,20 @@ public class TaskProcessor {
             long startedOn = System.currentTimeMillis();
 
             // Exec snippet
-            result = execProcessService.execCommand(cmd, taskDir, consoleLogFile, taskParamYaml.timeoutBeforeTerminate);
+            snippetExecResult = execProcessService.execCommand(cmd, taskDir, consoleLogFile, taskParamYaml.timeoutBeforeTerminate);
 
             // Store result
-            stationTaskService.storeExecResult(task.launchpadUrl, task.getTaskId(), startedOn, snippetPrepareResult.snippet, result, artifactDir);
+            stationTaskService.storeExecResult(task.launchpadUrl, task.getTaskId(), startedOn, snippetPrepareResult.snippet, snippetExecResult, artifactDir);
 
-            if (result.isOk()) {
+            if (snippetExecResult.isOk()) {
                 final DataStorageParams params = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
                 ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
-                ExecProcessService.Result tempResult = resourceProvider.processResultingFile(
+                SnippetApiData.SnippetExecResult tempSnippetExecResult = resourceProvider.processResultingFile(
                         launchpad, task, launchpadCode,
                         new File(taskParamYaml.outputResourceAbsolutePath)
                 );
-                if (tempResult!=null) {
-                    result = tempResult;
+                if (tempSnippetExecResult !=null) {
+                    snippetExecResult = tempSnippetExecResult;
                 }
         }
         } catch (Throwable th) {
@@ -286,14 +285,14 @@ public class TaskProcessor {
                     ? snippetPrepareResult.snippetAssetFile.file.getAbsolutePath()
                     : snippetPrepareResult.snippet.file) +"\n" +
                     "\tparams", th);
-            result = new ExecProcessService.Result(false, -1, ExceptionUtils.getStackTrace(th));
+            snippetExecResult = new SnippetApiData.SnippetExecResult(false, -1, ExceptionUtils.getStackTrace(th));
         }
-        return result;
+        return snippetExecResult;
     }
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public SnippetPrepareResult prepareSnippet(Metadata.LaunchpadInfo launchpadCode, SnippetConfig snippet) {
+    public SnippetPrepareResult prepareSnippet(Metadata.LaunchpadInfo launchpadCode, SnippetApiData.SnippetConfig snippet) {
         SnippetPrepareResult snippetPrepareResult = new SnippetPrepareResult();
         snippetPrepareResult.snippet = snippet;
 
@@ -323,7 +322,7 @@ public class TaskProcessor {
 
     @Data
     public static class SnippetPrepareResult {
-        public SnippetConfig snippet;
+        public SnippetApiData.SnippetConfig snippet;
         public AssetFile snippetAssetFile;
         boolean isLoaded = true;
     }

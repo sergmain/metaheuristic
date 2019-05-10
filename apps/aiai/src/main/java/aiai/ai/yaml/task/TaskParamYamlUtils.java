@@ -16,6 +16,7 @@
  */
 package aiai.ai.yaml.task;
 
+import aiai.api.v1.data.TaskApiData;
 import aiai.apps.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -24,19 +25,19 @@ public class TaskParamYamlUtils {
     private static Yaml yaml;
 
     static {
-        yaml = YamlUtils.init(TaskParamYaml.class);
+        yaml = YamlUtils.init(TaskApiData.TaskParamYaml.class);
     }
 
     // TODO 2018.09.12. so, snakeYaml isn't thread-safe or it was a side-effect?
     private static final Object syncObj = new Object();
 
-    public static String toString(TaskParamYaml taskParamYaml) {
+    public static String toString(TaskApiData.TaskParamYaml taskParamYaml) {
         synchronized (syncObj) {
             return yaml.dump(taskParamYaml);
         }
     }
 
-    public static TaskParamYaml toTaskYaml(String s) {
+    public static TaskApiData.TaskParamYaml toTaskYaml(String s) {
         synchronized (syncObj) {
             return yaml.load(s);
         }

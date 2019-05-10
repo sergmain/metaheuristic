@@ -19,7 +19,7 @@ package aiai.ai.launchpad.rest.v1;
 
 import aiai.api.v1.launchpad.Plan;
 import aiai.ai.launchpad.beans.PlanImpl;
-import aiai.api.v1.data.PlanData;
+import aiai.api.v1.data.PlanApiData;
 import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.plan.PlanTopLevelService;
 import org.springframework.context.annotation.Profile;
@@ -43,27 +43,27 @@ public class PlanRestController {
     // ============= Plan =============
 
     @GetMapping("/plans")
-    public PlanData.PlansResult plans(@PageableDefault(size = 5) Pageable pageable) {
+    public PlanApiData.PlansResult plans(@PageableDefault(size = 5) Pageable pageable) {
         return planTopLevelService.getPlans(pageable);
     }
 
     @GetMapping(value = "/plan/{id}")
-    public PlanData.PlanResult edit(@PathVariable Long id) {
+    public PlanApiData.PlanResult edit(@PathVariable Long id) {
         return planTopLevelService.getPlan(id);
     }
 
     @GetMapping(value = "/plan-validate/{id}")
-    public PlanData.PlanResult validate(@PathVariable Long id) {
+    public PlanApiData.PlanResult validate(@PathVariable Long id) {
         return planTopLevelService.validatePlan(id);
     }
 
     @PostMapping("/plan-add-commit")
-    public PlanData.PlanResult addFormCommit(@RequestBody PlanImpl plan) {
+    public PlanApiData.PlanResult addFormCommit(@RequestBody PlanImpl plan) {
         return planTopLevelService.addPlan(plan);
     }
 
     @PostMapping("/plan-edit-commit")
-    public PlanData.PlanResult editFormCommit(@RequestBody Plan plan) {
+    public PlanApiData.PlanResult editFormCommit(@RequestBody Plan plan) {
         return planTopLevelService.updatePlan(plan);
     }
 
@@ -75,24 +75,24 @@ public class PlanRestController {
     // ============= Workbooks =============
 
     @GetMapping("/workbooks/{id}")
-    public PlanData.WorkbooksResult workbooks(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
+    public PlanApiData.WorkbooksResult workbooks(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
         return planTopLevelService.getWorkbooksOrderByCreatedOnDesc(id, pageable);
     }
 
     @PostMapping("/workbook-add-commit")
-    public PlanData.WorkbookResult workbookAddCommit(Long planId, String poolCode, String inputResourceParams) {
+    public PlanApiData.WorkbookResult workbookAddCommit(Long planId, String poolCode, String inputResourceParams) {
         //noinspection UnnecessaryLocalVariable
-        PlanData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams);
+        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams);
         return workbookResult;
     }
 
     @PostMapping("/workbook-create")
-    public PlanData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam) {
+    public PlanApiData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam) {
         return planTopLevelService.createWorkbook(planId, inputResourceParam);
     }
 
     @GetMapping(value = "/workbook/{planId}/{workbookId}")
-    public PlanData.WorkbookResult workbookEdit(@SuppressWarnings("unused") @PathVariable Long planId, @PathVariable Long workbookId) {
+    public PlanApiData.WorkbookResult workbookEdit(@SuppressWarnings("unused") @PathVariable Long planId, @PathVariable Long workbookId) {
         return planTopLevelService.getWorkbookExtended(workbookId);
     }
 
@@ -109,7 +109,7 @@ public class PlanRestController {
     // ============= Service methods =============
 
     @GetMapping(value = "/emulate-producing-tasks/{workbookId}")
-    public PlanData.TaskProducingResult emulateProducingTasks(@PathVariable Long workbookId) {
+    public PlanApiData.TaskProducingResult emulateProducingTasks(@PathVariable Long workbookId) {
         return planTopLevelService.produceTasksWithoutPersistence(workbookId);
     }
 

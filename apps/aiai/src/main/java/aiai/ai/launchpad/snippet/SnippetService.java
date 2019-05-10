@@ -27,6 +27,7 @@ import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.SimpleSelectOption;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.SnippetApiData;
 import aiai.apps.commons.CommonConsts;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.yaml.snippet.*;
@@ -70,8 +71,8 @@ public class SnippetService {
         return experimentSnippets;
     }
 
-    public SnippetConfig getSnippetConfig(String snippetCode) {
-        SnippetConfig snippetConfig = null;
+    public SnippetApiData.SnippetConfig getSnippetConfig(String snippetCode) {
+        SnippetApiData.SnippetConfig snippetConfig = null;
         if(StringUtils.isNotBlank(snippetCode)) {
             Snippet postSnippet = snippetRepository.findByCode(snippetCode);
             if (postSnippet != null) {
@@ -136,7 +137,7 @@ public class SnippetService {
         return selectOptions;
     }
 
-    void loadSnippetsRecursively(List<SnippetConfigStatus> statuses, File startDir) throws IOException {
+    void loadSnippetsRecursively(List<SnippetApiData.SnippetConfigStatus> statuses, File startDir) throws IOException {
         final File[] dirs = startDir.listFiles(File::isDirectory);
 
         if (dirs!=null) {
@@ -153,7 +154,7 @@ public class SnippetService {
      *
      * @param srcDir File
      */
-    List<SnippetConfigStatus> loadSnippetsFromDir(File srcDir) throws IOException {
+    List<SnippetApiData.SnippetConfigStatus> loadSnippetsFromDir(File srcDir) throws IOException {
         File yamlConfigFile = new File(srcDir, "snippets.yaml");
         if (!yamlConfigFile.exists()) {
             log.error("#295.11 File 'snippets.yaml' wasn't found in dir {}", srcDir.getAbsolutePath());
@@ -162,11 +163,11 @@ public class SnippetService {
 
         String cfg = FileUtils.readFileToString(yamlConfigFile, StandardCharsets.UTF_8);
         SnippetConfigList snippetConfigList = SnippetConfigListUtils.to(cfg);
-        List<SnippetConfigStatus> statuses = new ArrayList<>();
-        for (SnippetConfig snippetConfig : snippetConfigList.snippets) {
-            SnippetConfigStatus status = null;
+        List<SnippetApiData.SnippetConfigStatus> statuses = new ArrayList<>();
+        for (SnippetApiData.SnippetConfig snippetConfig : snippetConfigList.snippets) {
+            SnippetApiData.SnippetConfigStatus status = null;
             try {
-                status = snippetConfig.validate();
+                status = SnippetUtils.validate(snippetConfig);
                 if (!status.isOk) {
                     log.error(status.error);
                     continue;
@@ -178,19 +179,19 @@ public class SnippetService {
                         case launchpad:
                             file = new File(srcDir, snippetConfig.file);
                             if (!file.exists()) {
-                                status = new SnippetConfigStatus(false,
+                                status = new SnippetApiData.SnippetConfigStatus(false,
                                         "#295.14 File " + snippetConfig.file + " wasn't found in dir " + srcDir.getAbsolutePath());
                                 continue;
                             }
                             try (InputStream inputStream = new FileInputStream(file)) {
-                                sum = Checksum.Type.SHA256.getChecksum(inputStream);
+                                sum = Checksum.getChecksum(EnumsApi.Type.SHA256, inputStream);
                             }
                             snippetConfig.info.length = file.length();
                             break;
                         case station:
                         case git:
                             String s = "" + snippetConfig.env+", " + snippetConfig.file +" " + snippetConfig.params;
-                            sum = Checksum.Type.SHA256.getChecksum(new ByteArrayInputStream(s.getBytes()));
+                            sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(s.getBytes()));
                             break;
                     }
                 }
@@ -198,7 +199,7 @@ public class SnippetService {
                 Snippet snippet = snippetRepository.findByCode(snippetConfig.code);
                 // there is snippet with the same name:version
                 if (snippet!=null) {
-                    SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
+                    SnippetApiData.SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
 
                     // new snippet is to replace one which is already in db
                     if (globals.isReplaceSnapshot && snippetConfig.code.endsWith(Consts.SNAPSHOT_SUFFIX)) {
@@ -207,7 +208,7 @@ public class SnippetService {
                             storeSnippet(snippetConfig, sum, file, snippet);
                         }
                         else {
-                            final String checksum = Checksum.fromJson(sc.checksum).checksums.get(Checksum.Type.SHA256);
+                            final String checksum = Checksum.fromJson(sc.checksum).checksums.get(EnumsApi.Type.SHA256);
                             // there checksum for current snippet in db isn't equal to new checksum
                             if (!checksum.equals(sum)) {
                                 storeSnippet(snippetConfig, sum, file, snippet);
@@ -215,7 +216,7 @@ public class SnippetService {
                         }
                     }
                     else {
-                        status = new SnippetConfigStatus(false,
+                        status = new SnippetApiData.SnippetConfigStatus(false,
                                 "#295.20 Updating of snippets is prohibited, not a snapshot version, '"+snippet.code+"'");
                         //noinspection UnnecessaryContinue
                         continue;
@@ -227,20 +228,20 @@ public class SnippetService {
                 }
             }
             catch(Throwable th) {
-                status = new SnippetConfigStatus(false,
+                status = new SnippetApiData.SnippetConfigStatus(false,
                         "#295.23 Error "+th.getClass().getName()+" while processing snippet '"+snippetConfig.code+"': "+th.getMessage());
             }
             finally {
                 statuses.add(status!=null
                         ? status
-                        : new SnippetConfigStatus(false,
+                        : new SnippetApiData.SnippetConfigStatus(false,
                         "#295.30 Status of snippet "+snippetConfig.code+" is unknown, this status needs to be investigated"));
             }
         }
         return statuses;
     }
 
-    private void storeSnippet(SnippetConfig snippetConfig, String sum, File file, Snippet snippet) throws IOException {
+    private void storeSnippet(SnippetApiData.SnippetConfig snippetConfig, String sum, File file, Snippet snippet) throws IOException {
         setChecksum(snippetConfig, sum);
         snippet.code = snippetConfig.code;
         snippet.type = snippetConfig.type;
@@ -254,7 +255,7 @@ public class SnippetService {
         }
     }
 
-    private void setChecksum(SnippetConfig snippetConfig, String sum) {
+    private void setChecksum(SnippetApiData.SnippetConfig snippetConfig, String sum) {
         if (sum==null) {
             snippetConfig.checksum = null;
             snippetConfig.info.setSigned(false);
@@ -267,7 +268,7 @@ public class SnippetService {
             checksum.checksums.putAll(snippetConfig.checksumMap);
             snippetConfig.checksum = checksum.toJson();
             boolean isSigned = false;
-            for (Map.Entry<Checksum.Type, String> entry : snippetConfig.checksumMap.entrySet()) {
+            for (Map.Entry<EnumsApi.Type, String> entry : snippetConfig.checksumMap.entrySet()) {
                 if (entry.getKey().isSign) {
                     isSigned = true;
                     break;
@@ -276,7 +277,7 @@ public class SnippetService {
             snippetConfig.info.setSigned(isSigned);
         } else {
             // set the new checksum
-            snippetConfig.checksum = new Checksum(Checksum.Type.SHA256, sum).toJson();
+            snippetConfig.checksum = new Checksum(EnumsApi.Type.SHA256, sum).toJson();
             snippetConfig.info.setSigned(false);
         }
     }

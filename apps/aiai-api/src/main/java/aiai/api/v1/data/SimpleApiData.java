@@ -14,18 +14,30 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.yaml.snippet_exec;
 
-import aiai.ai.core.ExecProcessService;
+package aiai.api.v1.data;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class SnippetExec {
-    public ExecProcessService.Result exec = new ExecProcessService.Result();
-    public ExecProcessService.Result preExec;
-    public ExecProcessService.Result postExec;
+public class SimpleApiData {
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class LongResult extends BaseDataClass {
+        public Long value;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class IntegerResult extends BaseDataClass {
+        public Integer value;
+    }
+
 }

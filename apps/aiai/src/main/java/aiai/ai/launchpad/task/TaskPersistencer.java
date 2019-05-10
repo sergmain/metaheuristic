@@ -23,11 +23,11 @@ import aiai.ai.launchpad.beans.WorkbookImpl;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.repositories.WorkbookRepository;
-import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.SnippetApiData;
+import aiai.api.v1.data.TaskApiData;
 import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.launchpad.Task;
 import aiai.api.v1.launchpad.Workbook;
@@ -171,7 +171,7 @@ public class TaskPersistencer {
     @SuppressWarnings("UnusedReturnValue")
     public Task storeExecResult(SimpleTaskExecResult result) {
         synchronized (syncObj) {
-            SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
+            SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
             if (!snippetExec.exec.isOk) {
                 log.info("#307.27 Task #{} finished with error, console: {}",
                         result.taskId,
@@ -205,7 +205,7 @@ public class TaskPersistencer {
             // TODO we have to stop processing workbook if there is error in tasks
         }
         else {
-            TaskParamYaml yaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            TaskApiData.TaskParamYaml yaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
             final DataStorageParams dataStorageParams = yaml.resourceStorageUrls.get(yaml.outputResourceCode);
 
             if (dataStorageParams.sourcing == EnumsApi.DataSourcing.disk) {

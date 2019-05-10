@@ -17,6 +17,7 @@
  */
 package aiai.apps.commons.utils;
 
+import aiai.api.v1.EnumsApi;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -24,7 +25,6 @@ import org.apache.commons.codec.Charsets;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -40,44 +40,29 @@ public class Checksum {
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 
-    public enum Type {
-        MD5(false), SHA256(false), SHA256WithSignature(true);
+    public static String getChecksum(EnumsApi.Type type, String data) throws IOException {
+        return getChecksum(type, IOUtils.toInputStream(data, Charsets.UTF_8));
+    }
 
-        public boolean isSign;
-
-        Type(boolean isSign) {
-            this.isSign = isSign;
-        }
-
-        public String getChecksum(String data) throws IOException {
-            return getChecksum( IOUtils.toInputStream(data, Charsets.UTF_8));
-        }
-
-        @Deprecated
-        public String getChecksum(byte[] data) throws IOException {
-            return getChecksum( new ByteArrayInputStream(data));
-        }
-
-        public String getChecksum(InputStream inputStream) throws IOException {
-            switch (this) {
-                case MD5:
-                    return DigestUtils.md5Hex(inputStream);
-                case SHA256:
-                    return DigestUtils.sha256Hex(inputStream);
-                case SHA256WithSignature:
-                    throw new IllegalStateException("Shouldn't be created here. Use external methods");
-                default:
-                    throw new IllegalStateException("Checksum for " + this +"  isn't supported yet");
-            }
+    public static String getChecksum(EnumsApi.Type type, InputStream inputStream) throws IOException {
+        switch (type) {
+            case MD5:
+                return DigestUtils.md5Hex(inputStream);
+            case SHA256:
+                return DigestUtils.sha256Hex(inputStream);
+            case SHA256WithSignature:
+                throw new IllegalStateException("Shouldn't be created here. Use external methods");
+            default:
+                throw new IllegalStateException("Checksum for " + type +"  isn't supported yet");
         }
     }
 
-    public Map<Type, String> checksums = new HashMap<>();
+    public Map<EnumsApi.Type, String> checksums = new HashMap<>();
 
     public Checksum() {
     }
 
-    public Checksum(Type type, String checksum) {
+    public Checksum(EnumsApi.Type type, String checksum) {
         this.checksums.put(type, checksum);
     }
 

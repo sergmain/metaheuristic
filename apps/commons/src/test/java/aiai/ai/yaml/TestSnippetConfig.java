@@ -17,9 +17,9 @@
  */
 package aiai.ai.yaml;
 
+import aiai.api.v1.data.SnippetApiData;
 import aiai.apps.commons.CommonConsts;
 import aiai.apps.commons.utils.Checksum;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import aiai.apps.commons.yaml.snippet.SnippetConfigList;
 import aiai.apps.commons.yaml.snippet.SnippetConfigListUtils;
 import org.junit.Test;
@@ -33,7 +33,7 @@ public class TestSnippetConfig {
         SnippetConfigList scs = new SnippetConfigList();
         scs.snippets = new ArrayList<>();
 
-        SnippetConfig config = new SnippetConfig();
+        SnippetApiData.SnippetConfig config = new SnippetApiData.SnippetConfig();
         config.code = "aiai.fit.default.snippet:1.0";
         config.type = CommonConsts.FIT_TYPE;
         config.file = "fit-model.py";

@@ -17,11 +17,11 @@
 
 package aiai.ai.yaml;
 
+import aiai.api.v1.data.SnippetApiData;
 import aiai.apps.commons.CommonConsts;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import aiai.apps.commons.yaml.snippet.SnippetConfigList;
 import aiai.apps.commons.yaml.snippet.SnippetConfigListUtils;
-import aiai.apps.commons.yaml.snippet.SnippetConfigStatus;
+import aiai.apps.commons.yaml.snippet.SnippetUtils;
 import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
@@ -113,8 +113,8 @@ public class TestYamlParser {
             assertNotNull(config);
             assertNotNull(config.getSnippets());
             assertEquals(1, config.getSnippets().size());
-            SnippetConfig snippet = config.getSnippets().get(0);
-            SnippetConfigStatus status = snippet.validate();
+            SnippetApiData.SnippetConfig snippet = config.getSnippets().get(0);
+            SnippetApiData.SnippetConfigStatus status = SnippetUtils.validate(snippet);
             assertFalse(status.isOk);
         }
     }
@@ -130,7 +130,7 @@ public class TestYamlParser {
             assertNotNull(config.snippets);
             assertEquals(3, config.snippets.size());
 
-            SnippetConfig sc;
+            SnippetApiData.SnippetConfig sc;
             sc = config.snippets.get(0);
             assertEquals("aiai.fit.default.snippet:1.0-SNAPSHOT", sc.code);
             assertEquals(CommonConsts.FIT_TYPE, sc.type);

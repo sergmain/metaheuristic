@@ -17,15 +17,14 @@
 
 package aiai.ai.launchpad.file_process;
 
-import aiai.ai.launchpad.beans.PlanImpl;
 import aiai.ai.launchpad.beans.TaskImpl;
+import aiai.api.v1.data.TaskApiData;
 import aiai.api.v1.launchpad.Plan;
 import aiai.api.v1.launchpad.Workbook;
 import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.plan.PlanUtils;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.data_storage.DataStorageParams;
@@ -99,7 +98,7 @@ public class FileProcessService {
                     "expected: "+ EnumsApi.ProcessType.FILE_PROCESSING+", " +
                     "actual: " + process.type);
         }
-        TaskParamYaml yaml = new TaskParamYaml();
+        TaskApiData.TaskParamYaml yaml = new TaskApiData.TaskParamYaml();
         yaml.setHyperParams( Collections.emptyMap() );
         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
             yaml.inputResourceCodes.put(entry.getKey(), entry.getValue());

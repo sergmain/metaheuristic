@@ -21,6 +21,7 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
 import aiai.ai.launchpad.beans.WorkbookImpl;
+import aiai.api.v1.data.TaskApiData;
 import aiai.api.v1.launchpad.Workbook;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.beans.TaskImpl;
@@ -31,7 +32,6 @@ import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.utils.holders.LongHolder;
 import aiai.ai.yaml.station_status.StationStatus;
 import aiai.ai.yaml.station_status.StationStatusUtils;
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
@@ -187,7 +187,7 @@ public class TaskService {
         Slice<Task> tasks;
         while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), workbook.getId(), workbook.getProducingOrder())).hasContent()) {
             for (Task task : tasks) {
-                final TaskParamYaml taskParamYaml;
+                final TaskApiData.TaskParamYaml taskParamYaml;
                 try {
                     taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
                 } catch (Exception e) {

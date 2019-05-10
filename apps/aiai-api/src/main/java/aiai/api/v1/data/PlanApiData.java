@@ -18,6 +18,8 @@
 package aiai.api.v1.data;
 
 import aiai.api.v1.launchpad.Plan;
+import aiai.api.v1.launchpad.Process;
+import aiai.api.v1.launchpad.Task;
 import aiai.api.v1.launchpad.Workbook;
 import aiai.api.v1.EnumsApi;
 import lombok.AllArgsConstructor;
@@ -26,12 +28,9 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Slice;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-public class PlanData {
+public class PlanApiData {
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -51,6 +50,27 @@ public class PlanData {
             this.errorMessages = errorMessages;
             this.planValidateStatus = planValidateStatus;
             this.planProducingStatus = planProducingStatus;
+        }
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TaskProducingResultComplex {
+        public EnumsApi.PlanValidateStatus planValidateStatus = EnumsApi.PlanValidateStatus.NOT_VALIDATED_YET_ERROR;
+        public EnumsApi.PlanProducingStatus planProducingStatus = EnumsApi.PlanProducingStatus.NOT_PRODUCING_YET_ERROR;
+        public List<Task> tasks = new ArrayList<>();
+        public PlanYaml planYaml;
+        public Workbook workbook;
+        public int numberOfTasks;
+
+        public EnumsApi.TaskProducingStatus getStatus() {
+            if (planValidateStatus != EnumsApi.PlanValidateStatus.OK) {
+                return EnumsApi.TaskProducingStatus.VERIFY_ERROR;
+            }
+            if (planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
+                return EnumsApi.TaskProducingStatus.PRODUCING_ERROR;
+            }
+            return EnumsApi.TaskProducingStatus.OK;
         }
     }
 
@@ -130,4 +150,11 @@ public class PlanData {
         public Plan plan;
         public long currentPlanId;
     }
+
+    @Data
+    public static class PlanYaml {
+        public List<Process> processes = new ArrayList<>();
+        public boolean clean = false;
+    }
+
 }

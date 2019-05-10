@@ -41,9 +41,6 @@ public class SnippetData {
         public List<SimpleSelectOption> selectOptions = new ArrayList<>();
         public List<ExperimentSnippet> snippets = new ArrayList<>();
 
-        public void sortSnippetsByOrder() {
-//            snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
-        }
     }
 
 }

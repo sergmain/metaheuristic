@@ -17,8 +17,8 @@
 
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.plan.PlanYaml;
 import aiai.ai.yaml.plan.PlanYamlUtils;
+import aiai.api.v1.data.PlanApiData;
 import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.launchpad.Process;
 import aiai.api.v1.EnumsApi;
@@ -42,7 +42,7 @@ public class TestPlanYamlYaml {
 
     @Test
     public void testYaml() {
-        PlanYaml planYaml = new PlanYaml();
+        PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();
         {
             Process p = new Process();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
@@ -123,7 +123,7 @@ public class TestPlanYamlYaml {
         String yaml = planYamlUtils.toString(planYaml);
         System.out.println(yaml);
 
-        PlanYaml f1 = planYamlUtils.toPlanYaml(yaml);
+        PlanApiData.PlanYaml f1 = planYamlUtils.toPlanYaml(yaml);
         assertNotNull(f1);
         assertNotNull(f1.processes);
         assertFalse(f1.processes.isEmpty());
@@ -131,7 +131,7 @@ public class TestPlanYamlYaml {
 
     @Test
     public void testYaml_2() {
-        PlanYaml planYaml = new PlanYaml();
+        PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();
 
         Process p1 = new Process();
         p1.name="experiment";

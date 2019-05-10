@@ -16,12 +16,12 @@
  */
 package aiai.ai.utils.checksum;
 
+import aiai.api.v1.EnumsApi;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Base64;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -43,9 +43,9 @@ public class ChecksumWithSignatureService {
         CheckSumAndSignatureStatus status = new CheckSumAndSignatureStatus();
         status.isOk = true;
         status.isSignatureOk = null;
-        for (Map.Entry<Checksum.Type, String> entry : checksum.checksums.entrySet()) {
+        for (Map.Entry<EnumsApi.Type, String> entry : checksum.checksums.entrySet()) {
             String sum, entrySum;
-            if (entry.getKey()==Checksum.Type.SHA256WithSignature) {
+            if (entry.getKey()== EnumsApi.Type.SHA256WithSignature) {
                 ChecksumWithSignature checksumWithSignature = parse(entry.getValue());
                 entrySum = checksumWithSignature.checksum;
 
@@ -56,10 +56,10 @@ public class ChecksumWithSignatureService {
                     }
                     log.info("{}, signature is Ok", infoPrefix);
                 }
-                sum = Checksum.Type.SHA256.getChecksum(fis);
+                sum = Checksum.getChecksum(EnumsApi.Type.SHA256, fis);
             }
             else {
-                sum = entry.getKey().getChecksum(fis);
+                sum = Checksum.getChecksum(entry.getKey(), fis);
                 entrySum = entry.getValue();
             }
             if (sum.equals(entrySum)) {

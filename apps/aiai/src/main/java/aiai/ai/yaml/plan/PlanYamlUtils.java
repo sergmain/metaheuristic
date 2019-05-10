@@ -17,6 +17,7 @@
 package aiai.ai.yaml.plan;
 
 import aiai.ai.Consts;
+import aiai.api.v1.data.PlanApiData;
 import aiai.api.v1.launchpad.Process;
 import aiai.apps.commons.yaml.YamlUtils;
 import org.springframework.stereotype.Service;
@@ -31,18 +32,18 @@ public class PlanYamlUtils {
     private static final Object syncObj = new Object();
 
     public PlanYamlUtils() {
-        yamlPlanYaml = YamlUtils.init(PlanYaml.class);
+        yamlPlanYaml = YamlUtils.init(PlanApiData.PlanYaml.class);
     }
 
-    public String toString(PlanYaml planYaml) {
+    public String toString(PlanApiData.PlanYaml planYaml) {
         synchronized (syncObj) {
             return yamlPlanYaml.dump(planYaml);
         }
     }
 
-    public PlanYaml toPlanYaml(String s) {
+    public PlanApiData.PlanYaml toPlanYaml(String s) {
         synchronized (syncObj) {
-            final PlanYaml p = yamlPlanYaml.load(s);
+            final PlanApiData.PlanYaml p = yamlPlanYaml.load(s);
             for (Process process : p.processes) {
                 if (process.outputParams==null) {
                     process.outputParams = Consts.SOURCING_LAUNCHPAD_PARAMS;

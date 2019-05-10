@@ -21,7 +21,7 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.utils.SimpleSelectOption;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.data.BaseDataClass;
-import aiai.api.v1.data.TasksData;
+import aiai.api.v1.data.TaskApiData;
 import aiai.api.v1.launchpad.Workbook;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -116,7 +116,7 @@ public class ExperimentData {
     public static class ExperimentFeatureExtendedResult extends BaseDataClass {
         public MetricsResult metricsResult;
         public HyperParamResult hyperParamResult;
-        public TasksData.TasksResult tasksResult;
+        public TaskApiData.TasksResult tasksResult;
         public Experiment experiment;
         public ExperimentFeature  experimentFeature;
         public ExperimentData.ConsoleResult consoleResult;
@@ -183,7 +183,7 @@ public class ExperimentData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ExperimentFeatureProgress extends BaseDataClass {
-        public TasksData.TasksResult tasksResult;
+        public TaskApiData.TasksResult tasksResult;
         public Experiment experiment;
         public ExperimentFeature experimentFeature;
         public ExperimentExtendedResult experimentResult;

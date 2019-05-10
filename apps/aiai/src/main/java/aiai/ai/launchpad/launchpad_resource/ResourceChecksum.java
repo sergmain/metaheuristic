@@ -17,6 +17,7 @@
 
 package aiai.ai.launchpad.launchpad_resource;
 
+import aiai.api.v1.EnumsApi;
 import aiai.apps.commons.utils.Checksum;
 
 import java.io.File;
@@ -44,7 +45,7 @@ public class ResourceChecksum {
             }
 */
             try (InputStream inputStream = new FileInputStream(file)) {
-                checksum.checksums.put(Checksum.Type.SHA256, Checksum.Type.SHA256.getChecksum(inputStream));
+                checksum.checksums.put(EnumsApi.Type.SHA256, Checksum.getChecksum(EnumsApi.Type.SHA256, inputStream));
             }
             //noinspection UnnecessaryLocalVariable
             String jsonAsString = checksum.toJson();

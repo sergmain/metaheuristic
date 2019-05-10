@@ -50,8 +50,6 @@ public final class Enums {
         }
     }
 
-    public enum TaskProducingStatus { OK, VERIFY_ERROR, PRODUCING_ERROR }
-
     public enum FeatureExecStatus {
         unknown(0, "Unknown"), ok(1, "Ok"), error(2, "All are errors"), empty(3, "No tasks");
 

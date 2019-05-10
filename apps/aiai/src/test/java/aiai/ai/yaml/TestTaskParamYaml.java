@@ -16,11 +16,11 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.SnippetApiData;
+import aiai.api.v1.data.TaskApiData;
 import aiai.apps.commons.CommonConsts;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -37,7 +37,7 @@ public class TestTaskParamYaml {
 
     @Test
     public void testSequenceYaml() {
-        TaskParamYaml seq = new TaskParamYaml();
+        TaskApiData.TaskParamYaml seq = new TaskApiData.TaskParamYaml();
 
         seq.inputResourceCodes.put("type1", Collections.singletonList("1"));
         seq.inputResourceCodes.put("type2", Collections.singletonList("2"));
@@ -46,7 +46,7 @@ public class TestTaskParamYaml {
         map.put("key1", "#1");
         map.put("key2", "#1");
         seq.setHyperParams(map);
-        seq.setSnippet(new SnippetConfig(
+        seq.setSnippet(new SnippetApiData.SnippetConfig(
                 "123:1.0",
                 CommonConsts.FIT_TYPE,
                 "file.txt",
@@ -55,7 +55,7 @@ public class TestTaskParamYaml {
                 EnumsApi.SnippetSourcing.launchpad,
                 true,
                 null,
-                new SnippetConfig.SnippetInfo(),
+                new SnippetApiData.SnippetConfig.SnippetInfo(),
                 null,
                 null,
                 false
@@ -64,7 +64,7 @@ public class TestTaskParamYaml {
         String s = TaskParamYamlUtils.toString(seq);
         System.out.println(s);
 
-        TaskParamYaml seq1 = TaskParamYamlUtils.toTaskYaml(s);
+        TaskApiData.TaskParamYaml seq1 = TaskParamYamlUtils.toTaskYaml(s);
         Assert.assertEquals(seq, seq1);
     }
 }

@@ -19,7 +19,6 @@ package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Enums;
 import aiai.ai.Monitoring;
-import aiai.ai.launchpad.beans.PlanImpl;
 import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Plan;
@@ -32,7 +31,7 @@ import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import aiai.ai.utils.CollectionUtils;
 import aiai.ai.utils.holders.IntHolder;
-import aiai.ai.yaml.input_resource_param.InputResourceParam;
+import aiai.api.v1.data.InputResourceParam;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;

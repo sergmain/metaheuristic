@@ -21,19 +21,14 @@ import aiai.ai.Globals;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
 import aiai.ai.exceptions.StoreNewFileException;
 import aiai.ai.exceptions.StoreNewFileWithRedirectException;
-import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.pilot.beans.Batch;
 import aiai.ai.pilot.beans.BatchWorkbook;
 import aiai.ai.utils.ControllerUtils;
-import aiai.ai.yaml.input_resource_param.InputResourceParam;
+import aiai.api.v1.data.*;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
-import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
-import aiai.api.v1.data.OperationStatusRest;
-import aiai.api.v1.data.PlanData;
 import aiai.api.v1.launchpad.BinaryData;
 import aiai.api.v1.launchpad.Plan;
 import aiai.api.v1.launchpad.Task;
@@ -194,7 +189,7 @@ public class ProcessResourceController {
         }
 
         // validate the plan
-        PlanData.PlanValidation planValidation = planProcessResourceService.planServiceValidateInternal(plan);
+        PlanApiData.PlanValidation planValidation = planProcessResourceService.planServiceValidateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.37 validation of plan was failed, status: " + planValidation.status);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -369,7 +364,7 @@ public class ProcessResourceController {
         }
 
         final String paramYaml = asInputResourceParams(mainPoolCode, attachPoolCode, attachments);
-        PlanService.TaskProducingResult producingResult = planProcessResourceService.planServiceCreateWorkbook(plan.getId(), paramYaml);
+        PlanApiData.TaskProducingResultComplex producingResult = planProcessResourceService.planServiceCreateWorkbook(plan.getId(), paramYaml);
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating workbook: " + producingResult.planProducingStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -388,13 +383,13 @@ public class ProcessResourceController {
         }
 
         // validate the plan + the workbook
-        PlanData.PlanValidation planValidation = planProcessResourceService.planServiceValidateInternal(plan);
+        PlanApiData.PlanValidation planValidation = planProcessResourceService.planServiceValidateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.55 validation of plan was failed, status: " + planValidation.status);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        PlanService.TaskProducingResult countTasks = planProcessResourceService.planServiceProduceTasks(false, plan, producingResult.workbook);
+        PlanApiData.TaskProducingResultComplex countTasks = planProcessResourceService.planServiceProduceTasks(false, plan, producingResult.workbook);
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.60 validation of plan was failed, status: " + countTasks.planValidateStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -438,7 +433,7 @@ public class ProcessResourceController {
         }
 
         long workbookId = -1L;
-        PlanData.WorkbookResult result = planProcessResourceService.planServiceGetWorkbookExtended(workbookId);
+        PlanApiData.WorkbookResult result = planProcessResourceService.planServiceGetWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -449,7 +444,7 @@ public class ProcessResourceController {
 
     @PostMapping("/process-resource-delete-commit")
     public String processResourceDeleteCommit(Long planId, Long workbookId, final RedirectAttributes redirectAttributes) {
-        PlanData.WorkbookResult result = planProcessResourceService.planServiceGetWorkbookExtended(workbookId);
+        PlanApiData.WorkbookResult result = planProcessResourceService.planServiceGetWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.isErrorMessages());
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -534,7 +529,7 @@ public class ProcessResourceController {
                             "taskId: " + task.getId() + '\n');
                     continue;
                 case ERROR:
-                    SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
+                    SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
                     status += ("#990.52, "+mainDocument+", Task was completed with error, batchId:" + batch.id + ", workbookId: " + fi.getId() +", " +
                             "taskId: " + task.getId() + "\n" +
                             "isOk: " + snippetExec.exec.isOk + "\n" +
@@ -543,7 +538,7 @@ public class ProcessResourceController {
                     continue;
             }
 
-            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
             if (fi.getExecState()!= EnumsApi.WorkbookExecState.FINISHED.code) {
                 status += ("#990.95, "+mainDocument+", Task hasn't completed yet, " +

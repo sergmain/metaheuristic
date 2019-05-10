@@ -17,6 +17,7 @@
  */
 package aiai.apps.commons.yaml.snippet;
 
+import aiai.api.v1.data.SnippetApiData;
 import lombok.Data;
 
 import java.util.List;
@@ -24,6 +25,6 @@ import java.util.List;
 @Data
 public class SnippetConfigList {
 
-    public List<SnippetConfig> snippets;
+    public List<SnippetApiData.SnippetConfig> snippets;
 
 }

@@ -16,9 +16,7 @@
  */
 package aiai.ai.core;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import aiai.api.v1.data.SnippetApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -39,21 +37,12 @@ public class ExecProcessService {
             "After %d seconds of timeout this process was destroyed.\n" +
             "=============================================================\n";
 
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Result {
-        public boolean isOk;
-        public int exitCode;
-        public String console;
-    }
-
 
     public static class StreamHolder {
         public InputStream is;
     }
 
-    public Result execCommand(List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate) throws IOException, InterruptedException {
+    public SnippetApiData.SnippetExecResult execCommand(List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate) throws IOException, InterruptedException {
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
         log.info("\ttaskDir: {}", execDir.getPath());
@@ -156,7 +145,7 @@ public class ExecProcessService {
         String console = readLastLines(1000, consoleLogFile) + '\n' + timeoutMessage;
 
         log.debug("'\tconsole output:\n{}", console);
-        return new Result(exitCode==0, exitCode, console);
+        return new SnippetApiData.SnippetExecResult(exitCode==0, exitCode, console);
     }
 
     public static void collectHandlers(List<ProcessHandle> handles, ProcessHandle handle) {

@@ -29,9 +29,9 @@ import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.station_status.StationStatus;
 import aiai.ai.yaml.station_status.StationStatusUtils;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.SnippetApiData;
 import aiai.api.v1.launchpad.Workbook;
 import aiai.apps.commons.CommonConsts;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -135,7 +135,7 @@ public abstract class PreparingExperiment {
             byte[] bytes = "some program code".getBytes();
             if (fitSnippet == null) {
                 fitSnippet = new Snippet();
-                SnippetConfig sc = new SnippetConfig();
+                SnippetApiData.SnippetConfig sc = new SnippetApiData.SnippetConfig();
                 sc.code = TEST_FIT_SNIPPET;
                 sc.env = "python-3";
                 sc.type = CommonConsts.FIT_TYPE;
@@ -162,7 +162,7 @@ public abstract class PreparingExperiment {
             predictSnippet = snippetRepository.findByCode(TEST_PREDICT_SNIPPET);
             if (predictSnippet == null) {
                 predictSnippet = new Snippet();
-                SnippetConfig sc = new SnippetConfig();
+                SnippetApiData.SnippetConfig sc = new SnippetApiData.SnippetConfig();
                 sc.code = TEST_PREDICT_SNIPPET;
                 sc.type = CommonConsts.PREDICT_TYPE;
                 sc.env = "python-3";

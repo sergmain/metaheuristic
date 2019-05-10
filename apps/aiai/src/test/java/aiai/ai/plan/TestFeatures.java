@@ -18,8 +18,8 @@
 package aiai.ai.plan;
 
 import aiai.ai.launchpad.beans.ExperimentFeature;
-import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.preparing.PreparingPlan;
+import aiai.api.v1.data.PlanApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -48,7 +48,7 @@ public class TestFeatures extends PreparingPlan {
         long mills = System.currentTimeMillis();
         log.info("Start experimentService.produceFeaturePermutations()");
         //noinspection unused
-        PlanService.TaskProducingResult result = produceTasksForTest();
+        PlanApiData.TaskProducingResultComplex result = produceTasksForTest();
         log.info("experimentService.produceFeaturePermutations() was finished for {}", System.currentTimeMillis() - mills);
 
         mills = System.currentTimeMillis();

@@ -18,7 +18,6 @@
 package aiai.ai.station.station_resource;
 
 import aiai.ai.Consts;
-import aiai.ai.core.ExecProcessService;
 import aiai.ai.resource.AssetFile;
 import aiai.ai.resource.ResourceUtils;
 import aiai.ai.station.LaunchpadLookupExtendedService;
@@ -28,6 +27,7 @@ import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station_task.StationTask;
+import aiai.api.v1.data.SnippetApiData;
 import aiai.api.v1.data_storage.DataStorageParams;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -66,7 +66,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     }
 
     @Override
-    public ExecProcessService.Result processResultingFile(
+    public SnippetApiData.SnippetExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             File outputResourceFile) {
@@ -79,7 +79,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
         } else {
             String es = "Result data file doesn't exist, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
-            return new ExecProcessService.Result(false, -1, es);
+            return new SnippetApiData.SnippetExecResult(false, -1, es);
         }
         return null;
     }

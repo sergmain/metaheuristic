@@ -18,22 +18,20 @@
 package aiai.ai.launchpad.atlas;
 
 import aiai.ai.Consts;
-import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.data.AtlasData;
 import aiai.ai.launchpad.data.ExperimentData;
 import aiai.api.v1.data.OperationStatusRest;
+import aiai.api.v1.data.SnippetApiData;
 import aiai.api.v1.data.TaskWIthType;
-import aiai.api.v1.data.TasksData;
+import aiai.api.v1.data.TaskApiData;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.launchpad.repositories.AtlasRepository;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.BinaryData;
@@ -249,7 +247,7 @@ public class AtlasTopLevelService {
                 }
             }
 
-            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
             int idxX = mapX.get(taskParamYaml.hyperParams.get(paramCleared.get(0)));
             int idxY = mapY.get(taskParamYaml.hyperParams.get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
@@ -273,7 +271,7 @@ public class AtlasTopLevelService {
 
         List<Task> selected = new ArrayList<>();
         for (Task task : tasks) {
-            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
             boolean[] isOk = new boolean[taskParamYaml.hyperParams.size()];
             int idx = 0;
             for (Map.Entry<String, String> entry : taskParamYaml.hyperParams.entrySet()) {
@@ -356,7 +354,7 @@ public class AtlasTopLevelService {
             ExperimentStoredToAtlas estb,
             Experiment experiment, final ExperimentFeature experimentFeature) {
 
-        TasksData.TasksResult tasksResult = new TasksData.TasksResult();
+        TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
 
         final Map<Long, Integer> taskToTaskType = estb.taskFeatures
                 .stream()
@@ -493,10 +491,10 @@ public class AtlasTopLevelService {
 
         AtlasData.ConsoleResult result = new AtlasData.ConsoleResult();
         if (taskOutput!=null) {
-            SnippetExec snippetExec = SnippetExecUtils.to(taskOutput.console);
+            SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(taskOutput.console);
             if (snippetExec!=null) {
-                final ExecProcessService.Result execResult = snippetExec.getExec();
-                result.items.add(new AtlasData.ConsoleResult.SimpleConsoleOutput(execResult.exitCode, execResult.isOk, execResult.console));
+                final SnippetApiData.SnippetExecResult execSnippetExecResult = snippetExec.getExec();
+                result.items.add(new AtlasData.ConsoleResult.SimpleConsoleOutput(execSnippetExecResult.exitCode, execSnippetExecResult.isOk, execSnippetExecResult.console));
             }
             else {
                 log.info("#280.55 snippetExec is null");
@@ -522,7 +520,7 @@ public class AtlasTopLevelService {
 
         ExperimentFeature feature = estb.getFeature(featureId);
 
-        TasksData.TasksResult tasksResult = new TasksData.TasksResult();
+        TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
         tasksResult.items = findTasks(estb, atlasId, ControllerUtils.fixPageSize(10, pageable), estb.experiment, feature, params);
 
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();

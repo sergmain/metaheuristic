@@ -22,8 +22,8 @@ import aiai.ai.launchpad.atlas.AtlasService;
 import aiai.ai.launchpad.atlas.ExperimentStoredToAtlas;
 import aiai.ai.launchpad.data.ExperimentData;
 import aiai.ai.launchpad.experiment.ExperimentTopLevelService;
-import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.preparing.PreparingPlan;
+import aiai.api.v1.data.PlanApiData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -77,7 +77,7 @@ public class TestExperimentToJson extends PreparingPlan {
     public void toExperimentStoredToAtlasToJson() throws IOException {
 
         //noinspection unused
-        PlanService.TaskProducingResult result = produceTasksForTest();
+        PlanApiData.TaskProducingResultComplex result = produceTasksForTest();
 
         assertNotNull(experiment);
         assertNotNull(experiment.getId());

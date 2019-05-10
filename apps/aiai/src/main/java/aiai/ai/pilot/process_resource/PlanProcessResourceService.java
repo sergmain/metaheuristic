@@ -17,12 +17,11 @@
 
 package aiai.ai.pilot.process_resource;
 
-import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.pilot.beans.Batch;
 import aiai.ai.pilot.beans.BatchWorkbook;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.data.OperationStatusRest;
-import aiai.api.v1.data.PlanData;
+import aiai.api.v1.data.PlanApiData;
 import aiai.api.v1.launchpad.BinaryData;
 import aiai.api.v1.launchpad.Plan;
 import aiai.api.v1.launchpad.Task;
@@ -49,17 +48,17 @@ public interface PlanProcessResourceService {
 
     Iterable<Plan> planRepositoryFindAllAsPlan();
 
-    PlanData.PlanValidation planServiceValidateInternal(Plan plan);
+    PlanApiData.PlanValidation planServiceValidateInternal(Plan plan);
 
     Batch batchRepositorySave(Batch batch);
 
     void resourceServiceStoreInitialResource(File tempFile, String code, String poolCode, String originFilename);
 
-    PlanService.TaskProducingResult planServiceCreateWorkbook(long planId, String paramYaml);
+    PlanApiData.TaskProducingResultComplex planServiceCreateWorkbook(long planId, String paramYaml);
 
     void batchWorkbookRepositorySave(BatchWorkbook batchWorkbook);
 
-    PlanService.TaskProducingResult planServiceProduceTasks(boolean isPersist, Plan plan, Workbook workbook);
+    PlanApiData.TaskProducingResultComplex planServiceProduceTasks(boolean isPersist, Plan plan, Workbook workbook);
 
     void planServiceChangeValidStatus(Workbook workbook, boolean status);
 
@@ -67,7 +66,7 @@ public interface PlanProcessResourceService {
 
     void planServiceCreateAllTasks();
 
-    PlanData.WorkbookResult planServiceGetWorkbookExtended(Long workbookId);
+    PlanApiData.WorkbookResult planServiceGetWorkbookExtended(Long workbookId);
 
     void planServiceDeleteWorkbook(Long workbookId, Long planId);
 

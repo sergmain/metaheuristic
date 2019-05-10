@@ -16,6 +16,7 @@
  */
 package aiai.apps.commons.yaml.snippet;
 
+import aiai.api.v1.data.SnippetApiData;
 import aiai.apps.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;
@@ -29,22 +30,22 @@ public class SnippetConfigUtils {
     private static Yaml yaml;
 
     static {
-        yaml = YamlUtils.init(SnippetConfig.class);
+        yaml = YamlUtils.init(SnippetApiData.SnippetConfig.class);
     }
 
-    public static String toString(SnippetConfig config) {
+    public static String toString(SnippetApiData.SnippetConfig config) {
         return YamlUtils.toString(config, yaml);
     }
 
-    public static SnippetConfig to(String s) {
-        return (SnippetConfig) YamlUtils.to(s, yaml);
+    public static SnippetApiData.SnippetConfig to(String s) {
+        return (SnippetApiData.SnippetConfig) YamlUtils.to(s, yaml);
     }
 
-    public static SnippetConfig to(InputStream is) {
-        return (SnippetConfig) YamlUtils.to(is, yaml);
+    public static SnippetApiData.SnippetConfig to(InputStream is) {
+        return (SnippetApiData.SnippetConfig) YamlUtils.to(is, yaml);
     }
 
-    public static SnippetConfig to(File file) {
-        return (SnippetConfig) YamlUtils.to(file, yaml);
+    public static SnippetApiData.SnippetConfig to(File file) {
+        return (SnippetApiData.SnippetConfig) YamlUtils.to(file, yaml);
     }
 }

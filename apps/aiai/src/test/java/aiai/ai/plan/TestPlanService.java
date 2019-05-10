@@ -18,15 +18,14 @@
 package aiai.ai.plan;
 
 import aiai.ai.comm.Protocol;
-import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
-import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingPlan;
-import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.PlanApiData;
+import aiai.api.v1.data.SnippetApiData;
 import aiai.api.v1.launchpad.Process;
 import aiai.api.v1.launchpad.Task;
 import org.junit.After;
@@ -72,7 +71,7 @@ public class TestPlanService extends PreparingPlan {
 
     @Test
     public void testCreateTasks() {
-        PlanService.TaskProducingResult result = produceTasksForTest();
+        PlanApiData.TaskProducingResultComplex result = produceTasksForTest();
         List<Object[]> tasks = taskCollector.getTasks(workbook);
 
         assertNotNull(result);
@@ -176,8 +175,8 @@ public class TestPlanService extends PreparingPlan {
     }
 
     private String getOKExecResult() {
-        SnippetExec snippetExec = new SnippetExec(
-                new ExecProcessService.Result(true, 0, "Everything is Ok."), null, null);
+        SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec(
+                new SnippetApiData.SnippetExecResult(true, 0, "Everything is Ok."), null, null);
 
         return SnippetExecUtils.toString(snippetExec);
     }

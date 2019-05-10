@@ -18,11 +18,11 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Globals;
-import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.data.ExperimentData;
 import aiai.api.v1.data.OperationStatusRest;
-import aiai.api.v1.data.TasksData;
+import aiai.api.v1.data.SnippetApiData;
+import aiai.api.v1.data.TaskApiData;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
@@ -31,7 +31,6 @@ import aiai.ai.utils.ControllerUtils;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Workbook;
 import aiai.apps.commons.utils.StrUtils;
-import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.api.v1.launchpad.Task;
 import aiai.apps.commons.CommonConsts;
@@ -128,10 +127,10 @@ public class ExperimentTopLevelService {
         ConsoleResult result = new ConsoleResult ();
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task!=null) {
-            SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
+            SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
             if (snippetExec!=null) {
-                final ExecProcessService.Result execResult = snippetExec.getExec();
-                result.items.add(new ConsoleResult.SimpleConsoleOutput(execResult.exitCode, execResult.isOk, execResult.console));
+                final SnippetApiData.SnippetExecResult execSnippetExecResult = snippetExec.getExec();
+                result.items.add(new ConsoleResult.SimpleConsoleOutput(execSnippetExecResult.exitCode, execSnippetExecResult.isOk, execSnippetExecResult.console));
             }
             else {
                 log.info("#285.10 snippetExec is null");
@@ -144,7 +143,7 @@ public class ExperimentTopLevelService {
         Experiment experiment= experimentCache.findById(experimentId);
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
 
-        TasksData.TasksResult tasksResult = new TasksData.TasksResult();
+        TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
         tasksResult.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
         ExperimentFeatureExtendedResult result = new ExperimentFeatureExtendedResult();

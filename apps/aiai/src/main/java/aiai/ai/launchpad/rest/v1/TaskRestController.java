@@ -17,8 +17,8 @@
 
 package aiai.ai.launchpad.rest.v1;
 
-import aiai.api.v1.data.SimpleData;
-import aiai.api.v1.data.TasksData;
+import aiai.api.v1.data.SimpleApiData;
+import aiai.api.v1.data.TaskApiData;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.api.v1.launchpad.Task;
 import org.springframework.context.annotation.Profile;
@@ -42,15 +42,15 @@ public class TaskRestController {
     // ============= Service methods =============
 
     @GetMapping("/max-concrete-order/{workbookId}")
-    public SimpleData.IntegerResult findMaxConcreteOrder(@PathVariable Long workbookId) {
+    public SimpleApiData.IntegerResult findMaxConcreteOrder(@PathVariable Long workbookId) {
         Integer max = taskRepository.findMaxConcreteOrder(workbookId);
-        return new SimpleData.IntegerResult(max);
+        return new SimpleApiData.IntegerResult(max);
     }
 
     @GetMapping("/any-with-concrete-order/{workbookId}/{taskOrder}")
-    public TasksData.ListOfTasksResult findAnyWithConcreteOrder(
+    public TaskApiData.ListOfTasksResult findAnyWithConcreteOrder(
             @PathVariable long workbookId, @PathVariable int taskOrder) {
         List<Task> tasks = taskRepository.findAnyWithConcreteOrder(workbookId, taskOrder);
-        return new TasksData.ListOfTasksResult(tasks);
+        return new TaskApiData.ListOfTasksResult(tasks);
     }
 }

@@ -19,18 +19,16 @@ package aiai.ai.station;
 import aiai.ai.Consts;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
-import aiai.ai.core.ExecProcessService;
 import aiai.ai.utils.DigitUtils;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.metrics.Metrics;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.station_task.StationTask;
 import aiai.ai.yaml.station_task.StationTaskUtils;
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
+import aiai.api.v1.data.SnippetApiData;
+import aiai.api.v1.data.TaskApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -96,7 +94,7 @@ public class StationTaskService {
                                         getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
 
                                         // fix state of task
-                                        SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
+                                        SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
                                         if (snippetExec!=null && !snippetExec.exec.isOk) {
                                             markAsFinished(launchpadUrl, taskId, snippetExec);
                                         }
@@ -219,12 +217,12 @@ public class StationTaskService {
     public void markAsFinishedWithError(String launchpadUrl, long taskId, String es) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             markAsFinished(launchpadUrl, taskId,
-                    new SnippetExec( new ExecProcessService.Result(false, -1, es),
+                    new SnippetApiData.SnippetExec( new SnippetApiData.SnippetExecResult(false, -1, es),
                             null, null));
         }
     }
 
-    void markAsFinished(String launchpadUrl, Long taskId, SnippetExec snippetExec ) {
+    void markAsFinished(String launchpadUrl, Long taskId, SnippetApiData.SnippetExec snippetExec ) {
 
         synchronized (StationSyncHolder.stationGlobalSync) {
             log.info("markAsFinished({}, {})", launchpadUrl, taskId);
@@ -280,7 +278,7 @@ public class StationTaskService {
         }
     }
 
-    void storeExecResult(String launchpadUrl, Long taskId, long startedOn, SnippetConfig snippet, ExecProcessService.Result result, File artifactDir) {
+    void storeExecResult(String launchpadUrl, Long taskId, long startedOn, SnippetApiData.SnippetConfig snippet, SnippetApiData.SnippetExecResult snippetExecResult, File artifactDir) {
         log.info("storeExecResult(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, taskId, snippet.getCode());
         StationTask taskTemp = findById(launchpadUrl, taskId);
         if (taskTemp == null) {
@@ -307,11 +305,11 @@ public class StationTaskService {
                 }
                 taskTemp.setMetrics(MetricsUtils.toString(metrics));
             }
-            SnippetExec snippetExec = SnippetExecUtils.to(taskTemp.getSnippetExecResult());
+            SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(taskTemp.getSnippetExecResult());
             if (snippetExec==null) {
-                snippetExec = new SnippetExec();
+                snippetExec = new SnippetApiData.SnippetExec();
             }
-            snippetExec.setExec(result);
+            snippetExec.setExec(snippetExecResult);
             String yaml = SnippetExecUtils.toString(snippetExec);
             taskTemp.setSnippetExecResult(yaml);
             taskTemp.setLaunchedOn(startedOn);
@@ -376,7 +374,7 @@ public class StationTaskService {
             task.params = params;
             task.metrics = null;
             task.snippetExecResult = null;
-            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(params);
+            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(params);
             task.clean = taskParamYaml.clean;
             task.launchpadUrl = launchpadUrl;
             task.createdOn = System.currentTimeMillis();

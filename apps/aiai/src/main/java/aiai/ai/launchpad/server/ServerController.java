@@ -26,11 +26,11 @@ import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.task.TaskPersistencer;
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.SnippetApiData;
+import aiai.api.v1.data.TaskApiData;
 import aiai.apps.commons.utils.DirUtils;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
@@ -126,7 +126,7 @@ public class ServerController {
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#442.83 taskId is null" );
         }
 
-        final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+        final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
         try {
             File tempDir = DirUtils.createTempDir("upload-resource-");
@@ -178,7 +178,7 @@ public class ServerController {
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }
-        SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
+        SnippetApiData.SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
         log.info("Send checksum {} for snippet {}", sc.checksum, sc.getCode());
         return sc.checksum;
     }

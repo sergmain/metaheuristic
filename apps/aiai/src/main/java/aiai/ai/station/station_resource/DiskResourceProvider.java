@@ -17,7 +17,6 @@
 
 package aiai.ai.station.station_resource;
 
-import aiai.ai.core.ExecProcessService;
 import aiai.ai.exceptions.ResourceProviderException;
 import aiai.ai.resource.AssetFile;
 import aiai.ai.resource.ResourceUtils;
@@ -29,6 +28,7 @@ import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station_task.StationTask;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.SnippetApiData;
 import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.sourcing.DiskInfo;
 import lombok.extern.slf4j.Slf4j;
@@ -92,7 +92,7 @@ public class DiskResourceProvider implements ResourceProvider {
     }
 
     @Override
-    public ExecProcessService.Result processResultingFile(
+    public SnippetApiData.SnippetExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             File outputResourceFile
@@ -103,7 +103,7 @@ public class DiskResourceProvider implements ResourceProvider {
         } else {
             String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
-            return new ExecProcessService.Result(false, -1, es);
+            return new SnippetApiData.SnippetExecResult(false, -1, es);
         }
         return null;    }
 

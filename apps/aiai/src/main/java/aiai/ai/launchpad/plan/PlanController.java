@@ -19,7 +19,7 @@ package aiai.ai.launchpad.plan;
 
 import aiai.api.v1.launchpad.Plan;
 import aiai.ai.launchpad.beans.PlanImpl;
-import aiai.api.v1.data.PlanData;
+import aiai.api.v1.data.PlanApiData;
 import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.utils.ControllerUtils;
 import aiai.api.v1.EnumsApi;
@@ -54,7 +54,7 @@ public class PlanController {
     public String plans(Model model, @PageableDefault(size = 5) Pageable pageable,
                         @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                         @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
-        PlanData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable);
+        PlanApiData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable);
         ControllerUtils.addMessagesToModel(model, plansResultRest);
         model.addAttribute("result", plansResultRest);
         return "launchpad/plan/plans";
@@ -63,7 +63,7 @@ public class PlanController {
     // for AJAX
     @PostMapping("/plans-part")
     public String plansPart(Model model, @PageableDefault(size = 10) Pageable pageable) {
-        PlanData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable);
+        PlanApiData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable);
         model.addAttribute("result", plansResultRest);
         return "launchpad/plan/plans :: table";
     }
@@ -76,7 +76,7 @@ public class PlanController {
     @SuppressWarnings("Duplicates")
     @GetMapping(value = "/plan-edit/{id}")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        PlanData.PlanResult planResultRest = planTopLevelService.getPlan(id);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
@@ -88,7 +88,7 @@ public class PlanController {
     @SuppressWarnings("Duplicates")
     @GetMapping(value = "/plan-validate/{id}")
     public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        PlanData.PlanResult planResultRest = planTopLevelService.validatePlan(id);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.validatePlan(id);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
@@ -102,7 +102,7 @@ public class PlanController {
 
     @PostMapping("/plan-add-commit")
     public String addFormCommit(Model model, PlanImpl plan, final RedirectAttributes redirectAttributes) {
-        PlanData.PlanResult planResultRest = planTopLevelService.addPlan(plan);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.addPlan(plan);
         if (planResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", planResultRest.errorMessages);
             return "launchpad/plan/plan-add";
@@ -116,7 +116,7 @@ public class PlanController {
 
     @PostMapping("/plan-edit-commit")
     public String editFormCommit(Model model, Plan planModel, final RedirectAttributes redirectAttributes) {
-        PlanData.PlanResult planResultRest = planTopLevelService.updatePlan(planModel);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.updatePlan(planModel);
         if (planResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", planResultRest.errorMessages);
             return "redirect:/launchpad/plan/plan-edit/"+planResultRest.plan.getId();
@@ -131,7 +131,7 @@ public class PlanController {
     @SuppressWarnings("Duplicates")
     @GetMapping("/plan-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        PlanData.PlanResult planResultRest = planTopLevelService.getPlan(id);
+        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
@@ -166,8 +166,8 @@ public class PlanController {
 
     @SuppressWarnings("Duplicates")
     @GetMapping(value = "/workbook-add/{id}")
-    public String workbookAdd(@ModelAttribute("result") PlanData.PlanResult result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        PlanData.PlanResult planResultRest = planTopLevelService.getPlan(id);
+    public String workbookAdd(@ModelAttribute("result") PlanApiData.PlanResult result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
@@ -177,8 +177,8 @@ public class PlanController {
     }
 
     @PostMapping("/workbook-add-commit")
-    public String workbookAddCommit(@ModelAttribute("result") PlanData.PlanResult result, Long planId, String poolCode, String inputResourceParams, final RedirectAttributes redirectAttributes) {
-        PlanData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams);
+    public String workbookAddCommit(@ModelAttribute("result") PlanApiData.PlanResult result, Long planId, String poolCode, String inputResourceParams, final RedirectAttributes redirectAttributes) {
+        PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams);
         result.plan = workbookResultRest.plan;
         if (result.plan == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#560.60 plan wasn't found, planId: " + planId);
@@ -193,7 +193,7 @@ public class PlanController {
 
     @GetMapping("/workbook-delete/{planId}/{workbookId}")
     public String workbookDelete(Model model, @PathVariable Long planId, @PathVariable Long workbookId, final RedirectAttributes redirectAttributes) {
-        PlanData.WorkbookResult result = planTopLevelService.getWorkbookExtended(workbookId);
+        PlanApiData.WorkbookResult result = planTopLevelService.getWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;

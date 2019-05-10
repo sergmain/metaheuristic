@@ -282,4 +282,17 @@ public class EnumsApi {
             }
         }
     }
+
+    public enum TaskProducingStatus { OK, VERIFY_ERROR, PRODUCING_ERROR }
+
+    public enum Type {
+        MD5(false), SHA256(false), SHA256WithSignature(true);
+
+        public boolean isSign;
+
+        Type(boolean isSign) {
+            this.isSign = isSign;
+        }
+
+    }
 }

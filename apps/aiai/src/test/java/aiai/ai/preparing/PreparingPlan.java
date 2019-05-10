@@ -21,6 +21,8 @@ import aiai.ai.Consts;
 import aiai.ai.launchpad.beans.PlanImpl;
 import aiai.ai.plan.TaskCollector;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
+import aiai.api.v1.data.PlanApiData;
+import aiai.api.v1.data.SnippetApiData;
 import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.launchpad.Process;
 import aiai.api.v1.launchpad.Plan;
@@ -33,11 +35,9 @@ import aiai.ai.launchpad.repositories.WorkbookRepository;
 import aiai.ai.launchpad.repositories.PlanRepository;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.task.TaskPersistencer;
-import aiai.ai.yaml.plan.PlanYaml;
 import aiai.ai.yaml.plan.PlanYamlUtils;
-import aiai.ai.yaml.input_resource_param.InputResourceParam;
+import aiai.api.v1.data.InputResourceParam;
 import aiai.api.v1.EnumsApi;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -79,7 +79,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public TaskPersistencer taskPersistencer;
 
     public PlanImpl plan = null;
-    public PlanYaml planYaml = null;
+    public PlanApiData.PlanYaml planYaml = null;
     public Snippet s1 = null;
     public Snippet s2 = null;
     public Snippet s3 = null;
@@ -93,7 +93,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public abstract String getPlanParamsAsYaml();
 
     public String getPlanParamsAsYaml_Simple() {
-        planYaml = new PlanYaml();
+        planYaml = new PlanApiData.PlanYaml();
         {
             Process p = new Process();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
@@ -207,7 +207,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     }
 
     private Snippet createSnippet(String snippetCode) {
-        SnippetConfig sc = new SnippetConfig();
+        SnippetApiData.SnippetConfig sc = new SnippetApiData.SnippetConfig();
         sc.code = snippetCode;
         sc.type = snippetCode + "-type";
         sc.file = null;
@@ -266,14 +266,14 @@ public abstract class PreparingPlan extends PreparingExperiment {
         }
     }
 
-    public PlanService.TaskProducingResult produceTasksForTest() {
+    public PlanApiData.TaskProducingResultComplex produceTasksForTest() {
         assertFalse(planYaml.processes.isEmpty());
         assertEquals(EnumsApi.ProcessType.EXPERIMENT, planYaml.processes.get(planYaml.processes.size()-1).type);
 
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        PlanService.TaskProducingResult result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
+        PlanApiData.TaskProducingResultComplex result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
         workbook = result.workbook;
 
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);

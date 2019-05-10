@@ -17,8 +17,8 @@
 
 package aiai.ai.plan;
 
+import aiai.api.v1.data.PlanApiData;
 import aiai.api.v1.launchpad.Process;
-import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingPlan;
@@ -62,7 +62,7 @@ public class TestCountOfTasks extends PreparingPlan {
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        PlanService.TaskProducingResult result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
+        PlanApiData.TaskProducingResultComplex result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
         workbook = result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);

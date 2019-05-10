@@ -16,9 +16,8 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.core.ExecProcessService;
-import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
+import aiai.api.v1.data.SnippetApiData;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,11 +31,11 @@ public class TestSnippetExec {
 
     @Test
     public void testMarshaling() {
-        SnippetExec output = new SnippetExec();
-        output.exec = new ExecProcessService.Result(true, 0, "output#1");
+        SnippetApiData.SnippetExec output = new SnippetApiData.SnippetExec();
+        output.exec = new SnippetApiData.SnippetExecResult(true, 0, "output#1");
 
         String yaml = SnippetExecUtils.toString(output);
-        SnippetExec output1 = SnippetExecUtils.to(yaml);
+        SnippetApiData.SnippetExec output1 = SnippetExecUtils.to(yaml);
         Assert.assertEquals(output, output1);
     }
 

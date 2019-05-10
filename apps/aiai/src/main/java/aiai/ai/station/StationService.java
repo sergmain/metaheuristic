@@ -32,8 +32,8 @@ import aiai.ai.station.tasks.UploadResourceTask;
 import aiai.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station_task.StationTask;
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.data.TaskApiData;
 import aiai.api.v1.data_storage.DataStorageParams;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -119,7 +119,7 @@ public class StationService {
             log.error("#747.13 Error reading param file "+ paramFile.getPath(), e);
             return Enums.ResendTaskOutputResourceStatus.TASK_PARAM_FILE_NOT_FOUND;
         }
-        final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(params);
+        final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(params);
         final DataStorageParams dataStorageParams = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
         ResourceProvider resourceProvider;
         try {
@@ -156,7 +156,7 @@ public class StationService {
         public Map<String, List<AssetFile>> assetFiles = new HashMap<>();
     }
 
-    public StationService.ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.LaunchpadInfo launchpadCode, TaskParamYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
+    public StationService.ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.LaunchpadInfo launchpadCode, TaskApiData.TaskParamYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
         StationService.ResultOfChecking result = new StationService.ResultOfChecking();
         try {
             taskParamYaml.inputResourceCodes.forEach((key, value) -> {
@@ -194,7 +194,7 @@ public class StationService {
         return result;
     }
 
-    public File getOutputResourceFile(StationTask task, TaskParamYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
+    public File getOutputResourceFile(StationTask task, TaskApiData.TaskParamYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
         try {
             final DataStorageParams dataStorageParams = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
 

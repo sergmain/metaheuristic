@@ -25,7 +25,7 @@ import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.launchpad.Plan;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
-import aiai.api.v1.data.TasksData;
+import aiai.api.v1.data.TaskApiData;
 import aiai.ai.launchpad.plan.WorkbookService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
@@ -36,7 +36,6 @@ import aiai.ai.utils.permutation.Permutation;
 import aiai.ai.yaml.hyper_params.HyperParams;
 import aiai.ai.yaml.metrics.MetricValues;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
@@ -270,7 +269,7 @@ public class ExperimentService {
                 }
             }
 
-            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
             int idxX = mapX.get(taskParamYaml.hyperParams.get(paramCleared.get(0)));
             int idxY = mapY.get(taskParamYaml.hyperParams.get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
@@ -297,7 +296,7 @@ public class ExperimentService {
 
         List<Task> selected = new ArrayList<>();
         for (Task task : list) {
-            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
             boolean[] isOk = new boolean[taskParamYaml.hyperParams.size()];
             int idx = 0;
             for (Map.Entry<String, String> entry : taskParamYaml.hyperParams.entrySet()) {
@@ -341,7 +340,7 @@ public class ExperimentService {
     }
 
     public ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
-        TasksData.TasksResult tasksResult = new TasksData.TasksResult();
+        TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
 
         tasksResult.items = taskRepository.findPredictTasks(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
 
@@ -509,7 +508,7 @@ public class ExperimentService {
                         // inc number of tasks
                         numberOfTasks.value++;
 
-                        TaskParamYaml yaml = new TaskParamYaml();
+                        TaskApiData.TaskParamYaml yaml = new TaskApiData.TaskParamYaml();
                         yaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
 
                         yaml.setHyperParams(hyperParams.toSortedMap());
@@ -646,7 +645,7 @@ public class ExperimentService {
                         final String listAsStr = String.valueOf(data);
                         final String checksumMD5;
                         try {
-                            checksumMD5 = Checksum.Type.MD5.getChecksum(listAsStr);
+                            checksumMD5 = Checksum.getChecksum(EnumsApi.Type.MD5, listAsStr);
                         } catch (IOException e) {
                             String es = "Error while calculating MD5 for string " + listAsStr;
                             log.error(es, e);

@@ -24,7 +24,7 @@ import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.data.BaseDataClass;
-import aiai.api.v1.data.TasksData;
+import aiai.api.v1.data.TaskApiData;
 import aiai.api.v1.launchpad.Workbook;
 import aiai.ai.utils.SimpleSelectOption;
 import lombok.AllArgsConstructor;
@@ -155,7 +155,7 @@ public class AtlasData {
     public static class ExperimentFeatureExtendedResult extends BaseDataClass {
         public MetricsResult metricsResult;
         public HyperParamResult hyperParamResult;
-        public TasksData.TasksResult tasksResult;
+        public TaskApiData.TasksResult tasksResult;
         public Experiment experiment;
         public ExperimentFeature  experimentFeature;
         public ConsoleResult consoleResult;

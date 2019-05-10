@@ -23,9 +23,9 @@ import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.data.SnippetData;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.SnippetApiData;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
-import aiai.apps.commons.yaml.snippet.SnippetConfigStatus;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -108,7 +108,7 @@ public class SnippetTopLevelService {
             try(OutputStream os = new FileOutputStream(zipFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
-            List<SnippetConfigStatus> statuses;
+            List<SnippetApiData.SnippetConfigStatus> statuses;
             if (ZIP_EXT.equals(ext)) {
                 log.debug("Start unzipping archive");
                 ZipUtils.unzipFolder(zipFile, tempDir);
@@ -133,11 +133,11 @@ public class SnippetTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private List<String> toErrorMessages(List<SnippetConfigStatus> statuses) {
+    private List<String> toErrorMessages(List<SnippetApiData.SnippetConfigStatus> statuses) {
         return statuses.stream().filter(o->!o.isOk).map(o->o.error).collect(Collectors.toList());
     }
 
-    private boolean isError(List<SnippetConfigStatus> statuses) {
+    private boolean isError(List<SnippetApiData.SnippetConfigStatus> statuses) {
         return statuses.stream().filter(o->!o.isOk).findFirst().orElse(null)!=null;
     }
 

@@ -19,8 +19,8 @@ package aiai.ai.yaml.task_params_new;
 import aiai.ai.Consts;
 import aiai.ai.yaml.TestYamlParser;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.SnippetApiData;
 import aiai.apps.commons.CommonConsts;
-import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -48,7 +48,7 @@ public class TestTaskParamYaml {
         map.put("key2", "#1");
         seq.setHyperParams(map);
 
-        SnippetConfig sc = new SnippetConfig();
+        SnippetApiData.SnippetConfig sc = new SnippetApiData.SnippetConfig();
         sc.type = CommonConsts.FIT_TYPE;
         sc.code = "abc:1.0";
         sc.file = "file.txt";

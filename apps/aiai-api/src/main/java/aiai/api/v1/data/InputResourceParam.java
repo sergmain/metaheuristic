@@ -17,32 +17,21 @@
 
 package aiai.api.v1.data;
 
-import aiai.api.v1.launchpad.Task;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.springframework.data.domain.Slice;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-public class TasksData {
+@Data
+public class InputResourceParam {
+    public Map<String, List<String>> poolCodes;
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    public static class TasksResult extends BaseDataClass {
-        public Slice<TaskWIthType> items;
+    public boolean preservePoolNames;
+
+    public List<String> getAllPoolCodes() {
+        List<String> codes = new ArrayList<>();
+        poolCodes.values().forEach(codes::addAll);
+        return codes;
     }
-
-   @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    public static class ListOfTasksResult extends BaseDataClass {
-        public List<Task> items;
-    }
-
-
 }

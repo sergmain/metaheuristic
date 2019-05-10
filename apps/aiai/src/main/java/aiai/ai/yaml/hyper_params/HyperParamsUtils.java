@@ -16,7 +16,6 @@
  */
 package aiai.ai.yaml.hyper_params;
 
-import aiai.ai.yaml.task.TaskParamYaml;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;

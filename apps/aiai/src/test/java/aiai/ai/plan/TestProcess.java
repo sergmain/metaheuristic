@@ -17,8 +17,8 @@
 
 package aiai.ai.plan;
 
+import aiai.api.v1.data.PlanApiData;
 import aiai.api.v1.launchpad.Process;
-import aiai.ai.yaml.plan.PlanYaml;
 import aiai.ai.yaml.plan.PlanYamlUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,12 +51,12 @@ public class TestProcess {
                         new Process.Meta("feature", "feature", null)
                 )
         );
-        PlanYaml planYaml = new PlanYaml();
+        PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();
         planYaml.processes.add(p);
 
         String s = planYamlUtils.toString(planYaml);
 
-        PlanYaml planYaml1 = planYamlUtils.toPlanYaml(s);
+        PlanApiData.PlanYaml planYaml1 = planYamlUtils.toPlanYaml(s);
 
         Process p1 = planYaml1.getProcesses().get(0);
 

@@ -16,6 +16,7 @@
  */
 package aiai.ai.yaml.input_resource_param;
 
+import aiai.api.v1.data.InputResourceParam;
 import aiai.apps.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;

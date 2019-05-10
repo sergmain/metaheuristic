@@ -18,8 +18,8 @@
 package aiai.ai.plan;
 
 import aiai.ai.Consts;
+import aiai.api.v1.data.PlanApiData;
 import aiai.api.v1.launchpad.Process;
-import aiai.ai.yaml.plan.PlanYaml;
 import aiai.ai.yaml.plan.PlanYamlUtils;
 import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
@@ -44,7 +44,7 @@ public class TestProcessMeta {
 
     @Test
     public void testProcessMeta() {
-        PlanYaml planYaml = new PlanYaml();
+        PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();
         {
             Process p = new Process();
             p.type = EnumsApi.ProcessType.EXPERIMENT;
@@ -66,7 +66,7 @@ public class TestProcessMeta {
 
         System.out.println(s);
 
-        PlanYaml yaml1 = planYamlUtils.toPlanYaml(s);
+        PlanApiData.PlanYaml yaml1 = planYamlUtils.toPlanYaml(s);
 
         Assert.assertEquals(planYaml, yaml1);
 

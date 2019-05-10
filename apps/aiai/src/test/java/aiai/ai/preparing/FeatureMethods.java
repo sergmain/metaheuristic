@@ -19,19 +19,18 @@ package aiai.ai.preparing;
 import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.comm.Protocol;
-import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.PlanApiData;
+import aiai.api.v1.data.SnippetApiData;
 import aiai.api.v1.launchpad.Task;
 import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
-import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.ai.yaml.metrics.MetricsUtils;
-import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -86,7 +85,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        PlanService.TaskProducingResult result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
+        PlanApiData.TaskProducingResultComplex result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
         workbook = result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);
@@ -151,8 +150,8 @@ public abstract class FeatureMethods extends PreparingPlan {
             assertEquals(expectedSeqs, tasks.size());
         }
         for (Task task : tasks) {
-            ExecProcessService.Result result = new ExecProcessService.Result(false, -1, "This is sample console output");
-            SnippetExec snippetExec = new SnippetExec(result, null, null);
+            SnippetApiData.SnippetExecResult snippetExecResult = new SnippetApiData.SnippetExecResult(false, -1, "This is sample console output");
+            SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec(snippetExecResult, null, null);
             String yaml = SnippetExecUtils.toString(snippetExec);
 
             SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
@@ -170,8 +169,8 @@ public abstract class FeatureMethods extends PreparingPlan {
             assertEquals(expectedTasks, tasks.size());
         }
         for (Task task : tasks) {
-            SnippetExec snippetExec = new SnippetExec();
-            snippetExec.setExec( new ExecProcessService.Result(true, 0, "This is sample console output. fit"));
+            SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec();
+            snippetExec.setExec( new SnippetApiData.SnippetExecResult(true, 0, "This is sample console output. fit"));
             String yaml = SnippetExecUtils.toString(snippetExec);
 
             SimpleTaskExecResult ster = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));

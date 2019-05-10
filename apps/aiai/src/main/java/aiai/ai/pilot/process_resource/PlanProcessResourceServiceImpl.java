@@ -28,7 +28,7 @@ import aiai.ai.pilot.beans.Batch;
 import aiai.ai.pilot.beans.BatchWorkbook;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.data.OperationStatusRest;
-import aiai.api.v1.data.PlanData;
+import aiai.api.v1.data.PlanApiData;
 import aiai.api.v1.launchpad.BinaryData;
 import aiai.api.v1.launchpad.Plan;
 import aiai.api.v1.launchpad.Task;
@@ -98,7 +98,7 @@ public class PlanProcessResourceServiceImpl implements PlanProcessResourceServic
     }
 
     @Override
-    public PlanData.PlanValidation planServiceValidateInternal(Plan plan) {
+    public PlanApiData.PlanValidation planServiceValidateInternal(Plan plan) {
         return planService.validateInternal(plan);
     }
 
@@ -113,7 +113,7 @@ public class PlanProcessResourceServiceImpl implements PlanProcessResourceServic
     }
 
     @Override
-    public PlanService.TaskProducingResult planServiceCreateWorkbook(long planId, String paramYaml) {
+    public PlanApiData.TaskProducingResultComplex planServiceCreateWorkbook(long planId, String paramYaml) {
         return planService.createWorkbook(planId, paramYaml);
     }
 
@@ -123,7 +123,7 @@ public class PlanProcessResourceServiceImpl implements PlanProcessResourceServic
     }
 
     @Override
-    public PlanService.TaskProducingResult planServiceProduceTasks(boolean isPersist, Plan plan, Workbook workbook) {
+    public PlanApiData.TaskProducingResultComplex planServiceProduceTasks(boolean isPersist, Plan plan, Workbook workbook) {
         return planService.produceTasks(isPersist, plan, workbook);
     }
 
@@ -143,7 +143,7 @@ public class PlanProcessResourceServiceImpl implements PlanProcessResourceServic
     }
 
     @Override
-    public PlanData.WorkbookResult planServiceGetWorkbookExtended(Long workbookId) {
+    public PlanApiData.WorkbookResult planServiceGetWorkbookExtended(Long workbookId) {
         return planService.getWorkbookExtended(workbookId);
     }
 

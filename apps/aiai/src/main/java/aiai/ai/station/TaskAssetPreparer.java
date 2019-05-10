@@ -23,9 +23,9 @@ import aiai.ai.station.actors.DownloadSnippetActor;
 import aiai.ai.station.tasks.DownloadSnippetTask;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station_task.StationTask;
-import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data.TaskApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -86,7 +86,7 @@ public class TaskAssetPreparer {
                 log.info("Deleted orphan task {}", task);
                 continue;
             }
-            final TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
             if (taskParamYaml.inputResourceCodes.isEmpty()) {
                 log.warn("taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;
