@@ -20,7 +20,8 @@ package aiai.ai.launchpad.task;
 import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.comm.Protocol;
-import aiai.ai.launchpad.beans.Workbook;
+import aiai.ai.launchpad.beans.WorkbookImpl;
+import aiai.api.v1.launchpad.Workbook;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.beans.TaskImpl;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
@@ -77,7 +78,7 @@ public class TaskService {
                     log.warn("#317.05 Task obsolete and was already deleted");
                     return;
                 }
-                Workbook workbook = workbookRepository.findById(task.workbookId).orElse(null);
+                WorkbookImpl workbook = workbookRepository.findById(task.workbookId).orElse(null);
                 if (workbook==null) {
                     log.warn("#317.11 Workbook for this task was already deleted");
                     return;
@@ -90,7 +91,7 @@ public class TaskService {
                     break;
                 }
 
-                if (task.order<workbook.producingOrder) {
+                if (task.order<workbook.getProducingOrder()) {
                     workbook.setProducingOrder(task.order);
                     workbookRepository.save(workbook);
                 }
@@ -150,8 +151,8 @@ public class TaskService {
                 log.warn("#317.39 Workbook wasn't found for id: {}", workbookId);
                 return EMPTY_RESULT;
             }
-            if (workbook.execState!=Enums.WorkbookExecState.STARTED.code) {
-                log.warn("#317.42 Workbook wasn't started. Current exec state: {}", Enums.WorkbookExecState.toState(workbook.execState));
+            if (workbook.getExecState()!=Enums.WorkbookExecState.STARTED.code) {
+                log.warn("#317.42 Workbook wasn't started. Current exec state: {}", Enums.WorkbookExecState.toState(workbook.getExecState()));
                 return EMPTY_RESULT;
             }
             workbooks = Collections.singletonList(workbook);
@@ -184,7 +185,7 @@ public class TaskService {
         int page = 0;
         Task resultTask = null;
         Slice<Task> tasks;
-        while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), workbook.getId(), workbook.producingOrder)).hasContent()) {
+        while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), workbook.getId(), workbook.getProducingOrder())).hasContent()) {
             for (Task task : tasks) {
                 final TaskParamYaml taskParamYaml;
                 try {

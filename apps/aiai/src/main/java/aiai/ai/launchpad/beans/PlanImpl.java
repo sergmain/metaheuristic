@@ -14,13 +14,43 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package aiai.ai.launchpad.beans;
 
-package aiai.ai.launchpad.plan;
-
-import aiai.api.v1.EnumsApi;
-import aiai.api.v1.launchpad.Process;
 import aiai.api.v1.launchpad.Plan;
+import lombok.Data;
 
-public interface ProcessValidator {
-    EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst);
+import javax.persistence.*;
+import java.io.Serializable;
+
+@Entity
+@Table(name = "AIAI_PLAN")
+@Data
+public class PlanImpl implements Serializable, Plan {
+    private static final long serialVersionUID = 6764501814772365639L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long id;
+
+    @Version
+    private Integer version;
+
+    @Column(name = "CODE")
+    public String code;
+
+    @Column(name="CREATED_ON")
+    public long createdOn;
+
+    @Column(name = "PARAMS")
+    public String params;
+
+    @Column(name = "IS_LOCKED")
+    public boolean locked;
+
+    @Column(name = "IS_VALID")
+    public boolean valid;
+
+    @Transient
+    public boolean clean;
+
 }

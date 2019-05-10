@@ -17,9 +17,10 @@
 
 package aiai.ai.repo;
 
-import aiai.ai.Enums;
-import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.launchpad.beans.BinaryDataImpl;
+import aiai.api.v1.launchpad.BinaryData;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
+import aiai.api.v1.EnumsApi;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,12 +48,12 @@ public class TestBinaryDataRepository {
 
         ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
 
-        BinaryData d1 = binaryDataService.save(inputStream, bytes.length, Enums.BinaryDataType.TEST, "test-01", "test-01",
+        BinaryData d1 = binaryDataService.save(inputStream, bytes.length, EnumsApi.BinaryDataType.TEST, "test-01", "test-01",
                 true, "test-file.bin", null);
 
         Timestamp ts = d1.getUploadTs();
 
-        BinaryData d2 = binaryDataService.getBinaryData(d1.getId());
+        BinaryDataImpl d2 = binaryDataService.getBinaryData(d1.getId());
         assertNotNull(d2);
         assertEquals(d1, d2);
         assertArrayEquals(bytes, d2.bytes);
@@ -69,7 +70,7 @@ public class TestBinaryDataRepository {
         assertNotEquals(ts, d2.getUploadTs());
         assertArrayEquals(bytes, d2.bytes);
 
-        binaryDataService.deleteAllByType(Enums.BinaryDataType.TEST);
+        binaryDataService.deleteAllByType(EnumsApi.BinaryDataType.TEST);
 
     }
 

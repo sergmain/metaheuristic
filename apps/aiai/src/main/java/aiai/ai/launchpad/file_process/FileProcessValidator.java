@@ -19,7 +19,7 @@ package aiai.ai.launchpad.file_process;
 
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Process;
-import aiai.ai.launchpad.beans.Plan;
+import aiai.api.v1.launchpad.Plan;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.plan.ProcessValidator;
 import aiai.ai.launchpad.repositories.SnippetRepository;

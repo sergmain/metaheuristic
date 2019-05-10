@@ -17,7 +17,8 @@
 
 package aiai.ai.launchpad.plan;
 
-import aiai.ai.launchpad.beans.Plan;
+import aiai.api.v1.launchpad.Plan;
+import aiai.ai.launchpad.beans.PlanImpl;
 import aiai.ai.launchpad.repositories.PlanRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -39,7 +40,7 @@ public class PlanCache {
 
 //    @CachePut(cacheNames = "plans", key = "#result.id")
     @CacheEvict(value = "plans", key = "#result.id")
-    public Plan save(Plan plan) {
+    public PlanImpl save(PlanImpl plan) {
         // TODO 2019.05.03 need to deal with such error:
         // org.hibernate.StaleObjectStateException: Row was updated or deleted by another transaction
         // (or unsaved-value mapping was incorrect) : [aiai.ai.launchpad.beans.Plan#349]
@@ -47,7 +48,7 @@ public class PlanCache {
     }
 
     @Cacheable(cacheNames = "plans", unless="#result==null")
-    public Plan findById(long id) {
+    public PlanImpl findById(long id) {
         return planRepository.findById(id).orElse(null);
     }
 
@@ -55,7 +56,7 @@ public class PlanCache {
     @CacheEvict(cacheNames = {"plans"}, key = "#plan.id")
     public void delete(Plan plan) {
         try {
-            planRepository.delete(plan);
+            planRepository.deleteById(plan.getId());
         } catch (ObjectOptimisticLockingFailureException e) {
             log.warn("Error", e);
         }

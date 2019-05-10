@@ -17,7 +17,8 @@
 
 package aiai.ai.launchpad.repositories;
 
-import aiai.ai.launchpad.beans.Plan;
+import aiai.ai.launchpad.beans.PlanImpl;
+import aiai.api.v1.launchpad.Plan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -27,7 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @Profile("launchpad")
-public interface PlanRepository extends CrudRepository<Plan, Long> {
+public interface PlanRepository extends CrudRepository<PlanImpl, Long> {
 
     @Transactional(readOnly = true)
     Slice<Plan> findAll(Pageable pageable);
@@ -35,7 +36,7 @@ public interface PlanRepository extends CrudRepository<Plan, Long> {
     @Transactional(readOnly = true)
     Slice<Plan> findAllByOrderByIdDesc(Pageable pageable);
 
-    Plan findByCode(String code);
+    PlanImpl findByCode(String code);
 }
 
 

@@ -16,17 +16,17 @@
  */
 package aiai.ai.yaml.task;
 
-import aiai.ai.Enums;
+import aiai.api.v1.EnumsApi;
 import lombok.Data;
 
 @Data
 public class SimpleResourceInfo {
     public String id;
-    public Enums.BinaryDataType binaryDataType;
+    public EnumsApi.BinaryDataType binaryDataType;
     // it's initialized at station side
     public String path;
 
-    public static SimpleResourceInfo of(Enums.BinaryDataType binaryDataType, String id) {
+    public static SimpleResourceInfo of(EnumsApi.BinaryDataType binaryDataType, String id) {
         SimpleResourceInfo sf = new SimpleResourceInfo();
         sf.id = id;
         sf.binaryDataType = binaryDataType;

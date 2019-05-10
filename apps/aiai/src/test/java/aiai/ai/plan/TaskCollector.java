@@ -17,7 +17,7 @@
 
 package aiai.ai.plan;
 
-import aiai.ai.launchpad.beans.Workbook;
+import aiai.api.v1.launchpad.Workbook;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

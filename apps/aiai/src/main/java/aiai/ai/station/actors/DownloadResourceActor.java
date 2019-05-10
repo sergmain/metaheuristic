@@ -17,7 +17,6 @@
 package aiai.ai.station.actors;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.resource.AssetFile;
 import aiai.ai.station.StationTaskService;
@@ -26,6 +25,7 @@ import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.resource.ResourceUtils;
 import aiai.ai.utils.RestUtils;
 import aiai.ai.yaml.station_task.StationTask;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;
@@ -89,7 +89,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
             log.info("Start processing the download task {}", task);
             try {
-                final String payloadRestUrl = task.launchpad.url + Consts.REST_V1_URL + Consts.PAYLOAD_REST_URL + "/resource/" + Enums.BinaryDataType.DATA;
+                final String payloadRestUrl = task.launchpad.url + Consts.REST_V1_URL + Consts.PAYLOAD_REST_URL + "/resource/" + EnumsApi.BinaryDataType.DATA;
                 final String uri = payloadRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + task.stationId+ '-' + task.taskId + '-' + URLEncoder.encode(task.getId(), StandardCharsets.UTF_8.toString());
 
                 final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)

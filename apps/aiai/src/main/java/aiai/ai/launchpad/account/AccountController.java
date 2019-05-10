@@ -20,7 +20,7 @@ package aiai.ai.launchpad.account;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Account;
 import aiai.ai.launchpad.data.AccountData;
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.repositories.AccountRepository;
 import aiai.ai.utils.ControllerUtils;
 import org.springframework.context.annotation.Profile;
@@ -33,7 +33,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
-import java.util.Optional;
 
 @SuppressWarnings("Duplicates")
 @Controller

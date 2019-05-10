@@ -16,12 +16,12 @@
  */
 package aiai.ai.launchpad.launchpad_resource;
 
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.exceptions.StoreNewFileException;
-import aiai.ai.launchpad.beans.BinaryData;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.launchpad.BinaryData;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.data.ResourceData;
 import aiai.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -63,12 +63,12 @@ public class ResourceTopLevelService {
 
     public OperationStatusRest storeFileInternal(MultipartFile file, String resourceCode, String resourcePoolCode, String originFilename) {
         if (originFilename == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#172.01 name of uploaded file is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.01 name of uploaded file is null");
         }
         File tempFile = globals.createTempFileForLaunchpad("temp-raw-file-");
         if (tempFile.exists()) {
             if (!tempFile.delete() ) {
-                return new OperationStatusRest(Enums.OperationStatus.ERROR,
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#173.36 can't delete dir " + tempFile.getAbsolutePath());
             }
         }
@@ -76,7 +76,7 @@ public class ResourceTopLevelService {
             FileUtils.copyInputStreamToFile(file.getInputStream(), tempFile);
         } catch (IOException e) {
             log.error("Error while storing data to temp file", e);
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#173.06 can't persist uploaded file as " +
                             tempFile.getAbsolutePath()+", error: " + e.toString());
         }
@@ -90,7 +90,7 @@ public class ResourceTopLevelService {
         } catch (StoreNewFileException e) {
             String es = "#172.04 An error while saving data to file, " + e.toString();
             log.error(es, e);
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -100,13 +100,13 @@ public class ResourceTopLevelService {
         if (StringUtils.contains(storageUrl, ' ')) {
             String es = "#172.05 storage url can't contain 'space' char: " + storageUrl;
             log.error(es);
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
 
         if (!StringUtils.startsWith(storageUrl, "disk://")) {
             String es = "#172.06 wrong format of storage url: " + storageUrl;
             log.error(es);
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
 
         String code = StringUtils.replaceEach(storageUrl, new String[] {"://", "/", "*", "?"}, new String[] {"-", "-", "-", "-"} );
@@ -115,7 +115,7 @@ public class ResourceTopLevelService {
         } catch (StoreNewFileException e) {
             String es = "#172.08 An error while saving data to file, " + e.toString();
             log.error(es, e);
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -131,7 +131,7 @@ public class ResourceTopLevelService {
     public OperationStatusRest deleteResource(Long id) {
         final BinaryData data = binaryDataService.findById(id).orElse(null);
         if (data==null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#172.20 Resource wasn't found for id: " + id);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.20 Resource wasn't found for id: " + id);
         }
         binaryDataService.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;

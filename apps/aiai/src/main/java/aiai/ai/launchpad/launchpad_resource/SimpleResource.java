@@ -17,7 +17,7 @@
 
 package aiai.ai.launchpad.launchpad_resource;
 
-import aiai.ai.Enums;
+import aiai.api.v1.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -39,6 +39,6 @@ public class SimpleResource {
     public String storageUrl;
 
     public String getDataTypeAsStr() {
-        return Enums.BinaryDataType.from(dataType).toString();
+        return EnumsApi.BinaryDataType.from(dataType).toString();
     }
 }

@@ -17,7 +17,6 @@
 package aiai.ai.station.actors;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.resource.AssetFile;
 import aiai.ai.station.MetadataService;
@@ -29,6 +28,7 @@ import aiai.ai.utils.RestUtils;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import aiai.ai.yaml.metadata.Metadata;
+import aiai.api.v1.EnumsApi;
 import aiai.apps.commons.utils.Checksum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
@@ -99,7 +99,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
             final String payloadRestUrl = task.launchpad.url + Consts.REST_V1_URL + Consts.PAYLOAD_REST_URL;
 
-            final String targetUrl = payloadRestUrl + "/resource/" + Enums.BinaryDataType.SNIPPET;
+            final String targetUrl = payloadRestUrl + "/resource/" + EnumsApi.BinaryDataType.SNIPPET;
             final String snippetChecksumUrl = payloadRestUrl + "/snippet-checksum";
 
 

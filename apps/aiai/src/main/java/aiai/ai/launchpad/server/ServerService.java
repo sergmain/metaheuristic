@@ -24,7 +24,7 @@ import aiai.ai.comm.CommandProcessor;
 import aiai.ai.comm.ExchangeData;
 import aiai.ai.comm.Protocol;
 import aiai.ai.exceptions.BinaryDataNotFoundException;
-import aiai.ai.launchpad.beans.Workbook;
+import aiai.api.v1.launchpad.Workbook;
 import aiai.ai.launchpad.beans.Station;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.repositories.WorkbookRepository;
@@ -34,6 +34,7 @@ import aiai.ai.resource.ResourceUtils;
 import aiai.ai.station.sourcing.git.GitSourcingService;
 import aiai.ai.yaml.station_status.StationStatus;
 import aiai.ai.yaml.station_status.StationStatusUtils;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -62,14 +63,14 @@ public class ServerService {
     private final CommandSetter commandSetter;
 
     public HttpEntity<AbstractResource> deliverResource(String typeAsStr, String code) {
-        Enums.BinaryDataType binaryDataType = Enums.BinaryDataType.valueOf(typeAsStr.toUpperCase());
+        EnumsApi.BinaryDataType binaryDataType = EnumsApi.BinaryDataType.valueOf(typeAsStr.toUpperCase());
         return deliverResource(binaryDataType, code);
     }
 
-    public HttpEntity<AbstractResource> deliverResource(Enums.BinaryDataType binaryDataType, String code) {
+    public HttpEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code) {
         return deliverResource(binaryDataType, code, null);
     }
-    public HttpEntity<AbstractResource> deliverResource(Enums.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders) {
+    public HttpEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders) {
         AssetFile assetFile;
         switch(binaryDataType) {
             case SNIPPET:

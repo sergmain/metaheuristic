@@ -71,12 +71,12 @@ public class TestCountOfTasks extends PreparingPlan {
         workbook = result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);
-        assertEquals(Enums.WorkbookExecState.NONE.code, workbook.execState);
+        assertEquals(Enums.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
         EnumsApi.PlanProducingStatus producingStatus = planService.toProducing(workbook);
         assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
-        assertEquals(Enums.WorkbookExecState.PRODUCING.code, workbook.execState);
+        assertEquals(Enums.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
         List<Object[]> tasks01 = taskCollector.getTasks(result.workbook);
         assertTrue(tasks01.isEmpty());
@@ -97,7 +97,7 @@ public class TestCountOfTasks extends PreparingPlan {
 
         workbook = result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
-        assertEquals(Enums.WorkbookExecState.PRODUCED.code, workbook.execState);
+        assertEquals(Enums.WorkbookExecState.PRODUCED.code, workbook.getExecState());
 
         experiment = experimentCache.findById(experiment.getId());
 

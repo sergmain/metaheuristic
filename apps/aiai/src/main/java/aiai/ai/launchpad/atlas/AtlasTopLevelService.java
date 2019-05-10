@@ -24,10 +24,10 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.data.AtlasData;
 import aiai.ai.launchpad.data.ExperimentData;
-import aiai.ai.launchpad.data.OperationStatusRest;
-import aiai.ai.launchpad.data.TasksData;
+import aiai.api.v1.data.OperationStatusRest;
+import aiai.api.v1.data.TaskWIthType;
+import aiai.api.v1.data.TasksData;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
-import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import aiai.ai.launchpad.repositories.AtlasRepository;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.yaml.metrics.MetricValues;
@@ -36,7 +36,10 @@ import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.launchpad.BinaryData;
 import aiai.api.v1.launchpad.Task;
+import aiai.api.v1.launchpad.Workbook;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -130,7 +133,7 @@ public class AtlasTopLevelService {
         AtlasData.ExperimentInfo experimentInfoResult = new AtlasData.ExperimentInfo();
         experimentInfoResult.features = estb1.features;
         experimentInfoResult.workbook = workbook;
-        experimentInfoResult.workbookExecState = Enums.WorkbookExecState.toState(workbook.execState);
+        experimentInfoResult.workbookExecState = Enums.WorkbookExecState.toState(workbook.getExecState());
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;
@@ -140,7 +143,7 @@ public class AtlasTopLevelService {
     public OperationStatusRest experimentDeleteCommit(Long id) {
         Atlas atlas = atlasRepository.findById(id).orElse(null);
         if (atlas == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#280.19 experiment wasn't found in atlas, id: " + id);
         }
         atlasRepository.deleteById(id);
@@ -461,13 +464,13 @@ public class AtlasTopLevelService {
         }
 
         String poolCode = AtlasService.getPoolCodeForExperiment(estb.workbook.id, estb.experiment.id);
-        List<BinaryData> datas = binaryDataService.getByPoolCodeAndType(poolCode, Enums.BinaryDataType.CONSOLE);
+        List<BinaryData> datas = binaryDataService.getByPoolCodeAndType(poolCode, EnumsApi.BinaryDataType.CONSOLE);
         if (datas.isEmpty()) {
             return new AtlasData.ConsoleResult("#280.47 Can't find a console output");
         }
 
         // TODO need to refactor to use InputStream
-        byte[] bytes = binaryDataService.getDataAsBytes(datas.get(0).id);
+        byte[] bytes = binaryDataService.getDataAsBytes(datas.get(0).getId());
         ConsoleOutputStoredToAtlas.TaskOutput taskOutput = null;
         try(InputStream is = new ByteArrayInputStream(bytes)) {
             LineIterator it = IOUtils.lineIterator(is, StandardCharsets.UTF_8);
@@ -543,7 +546,7 @@ public class AtlasTopLevelService {
                 if (etf==null) {
                     log.warn("280.63 Can't get type of task for taskId " + task.getId());
                 }
-                int type = etf!=null ? Enums.ExperimentTaskType.from( etf.getTaskType() ).value : Enums.ExperimentTaskType.UNKNOWN.value;
+                int type = etf!=null ? EnumsApi.ExperimentTaskType.from( etf.getTaskType() ).value : EnumsApi.ExperimentTaskType.UNKNOWN.value;
 
                 list.add(new TaskWIthType(task, type));
             }

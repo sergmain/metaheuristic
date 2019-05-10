@@ -26,9 +26,10 @@ import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetCache;
 import aiai.ai.station.sourcing.git.GitSourcingService;
 import aiai.ai.yaml.env.EnvYaml;
-import aiai.ai.yaml.env.EnvYamlUtils;
 import aiai.ai.yaml.station_status.StationStatus;
 import aiai.ai.yaml.station_status.StationStatusUtils;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.launchpad.Workbook;
 import aiai.apps.commons.CommonConsts;
 import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
@@ -153,7 +154,7 @@ public abstract class PreparingExperiment {
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #1");
-                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, fitSnippet.getCode(), fitSnippet.getCode(),
+                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, EnumsApi.BinaryDataType.SNIPPET, fitSnippet.getCode(), fitSnippet.getCode(),
                         false, null, null);
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
@@ -180,7 +181,7 @@ public abstract class PreparingExperiment {
 
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #2");
-                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, Enums.BinaryDataType.SNIPPET, predictSnippet.getCode(), predictSnippet.getCode(),
+                binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, EnumsApi.BinaryDataType.SNIPPET, predictSnippet.getCode(), predictSnippet.getCode(),
                         false, null,
                         null);
                 log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
@@ -286,7 +287,7 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
             try {
-                binaryDataService.deleteByCodeAndDataType(predictSnippet.getCode(), Enums.BinaryDataType.SNIPPET);
+                binaryDataService.deleteByCodeAndDataType(predictSnippet.getCode(), EnumsApi.BinaryDataType.SNIPPET);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -298,7 +299,7 @@ public abstract class PreparingExperiment {
                 throwable.printStackTrace();
             }
             try {
-                binaryDataService.deleteByCodeAndDataType(fitSnippet.getCode(), Enums.BinaryDataType.SNIPPET);
+                binaryDataService.deleteByCodeAndDataType(fitSnippet.getCode(), EnumsApi.BinaryDataType.SNIPPET);
             } catch (Throwable th) {
                 th.printStackTrace();
             }

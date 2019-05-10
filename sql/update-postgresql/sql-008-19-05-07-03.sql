@@ -1,0 +1,1 @@
+alter table pilot_batch_flow_instance rename to pilot_batch_workbook;

@@ -22,13 +22,15 @@ import aiai.ai.Globals;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.data.ExperimentData;
-import aiai.ai.launchpad.data.OperationStatusRest;
-import aiai.ai.launchpad.data.TasksData;
+import aiai.api.v1.data.OperationStatusRest;
+import aiai.api.v1.data.TasksData;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.ControllerUtils;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.launchpad.Workbook;
 import aiai.apps.commons.utils.StrUtils;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -197,7 +199,7 @@ public class ExperimentTopLevelService {
         ExperimentInfoResult experimentInfoResult = new ExperimentInfoResult();
         experimentInfoResult.features = experimentFeatureRepository.findByExperimentIdOrderByMaxValueDesc(experiment.getId());
         experimentInfoResult.workbook = workbook;
-        experimentInfoResult.workbookExecState = Enums.WorkbookExecState.toState(workbook.execState);
+        experimentInfoResult.workbookExecState = Enums.WorkbookExecState.toState(workbook.getExecState());
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;
@@ -249,7 +251,7 @@ public class ExperimentTopLevelService {
     public OperationStatusRest editExperimentCommit(ExperimentData.SimpleExperiment simpleExperiment) {
         Experiment experiment = experimentCache.findById(simpleExperiment.id);
         if (experiment == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.37 experiment wasn't found, experimentId: " + simpleExperiment.id);
         }
         experiment.setName(simpleExperiment.getName());
@@ -263,15 +265,15 @@ public class ExperimentTopLevelService {
 
     private OperationStatusRest processCommit(Experiment experiment) {
         if (StringUtils.isBlank(experiment.getName())) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.40 Name of experiment is blank.");
         }
         if (StringUtils.isBlank(experiment.getCode())) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.41 Code of experiment is blank.");
         }
         if (StringUtils.isBlank(experiment.getDescription())) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.42 Description of experiment is blank.");
         }
         experiment.strip();
@@ -282,11 +284,11 @@ public class ExperimentTopLevelService {
     public OperationStatusRest metadataAddCommit(Long experimentId, String key, String value) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.45 experiment wasn't found, experimentId: " + experimentId);
         }
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#285.48 hyper param's key and value must not be null, key: "+key+", value: " + value );
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.48 hyper param's key and value must not be null, key: "+key+", value: " + value );
         }
         if (experiment.getHyperParams()==null) {
             experiment.setHyperParams(new ArrayList<>());
@@ -294,7 +296,7 @@ public class ExperimentTopLevelService {
         String keyFinal = key.trim();
         boolean isExist = experiment.getHyperParams().stream().map(ExperimentHyperParams::getKey).anyMatch(keyFinal::equals);
         if (isExist) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#285.51 hyper parameter "+key+" already exist");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.51 hyper parameter "+key+" already exist");
         }
 
         ExperimentHyperParams m = new ExperimentHyperParams();
@@ -310,11 +312,11 @@ public class ExperimentTopLevelService {
     public OperationStatusRest metadataEditCommit(Long experimentId, String key, String value) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.53 experiment wasn't found, id: "+experimentId );
         }
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.55 hyper param's key and value must not be null, key: "+key+", value: " + value );
         }
         if (experiment.getHyperParams()==null) {
@@ -343,7 +345,7 @@ public class ExperimentTopLevelService {
     public OperationStatusRest snippetAddCommit(Long id, String snippetCode) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.58 experiment wasn't found, id: "+id );
         }
         Long experimentId = experiment.getId();
@@ -368,7 +370,7 @@ public class ExperimentTopLevelService {
     public OperationStatusRest metadataDeleteCommit(long experimentId, Long id) {
         ExperimentHyperParams hyperParams = experimentHyperParamsRepository.findById(id).orElse(null);
         if (hyperParams == null || experimentId != hyperParams.getExperiment().getId()) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.61 Hyper parameters misconfigured, try again.");
         }
         experimentHyperParamsRepository.deleteById(id);
@@ -379,7 +381,7 @@ public class ExperimentTopLevelService {
     public OperationStatusRest metadataDefaultAddCommit(long experimentId) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.63 experiment wasn't found, id: "+experimentId );
         }
         if (experiment.getHyperParams()==null) {
@@ -421,7 +423,7 @@ public class ExperimentTopLevelService {
     public OperationStatusRest snippetDeleteCommit(long experimentId, Long id) {
         ExperimentSnippet snippet = experimentSnippetRepository.findById(id).orElse(null);
         if (snippet == null || experimentId != snippet.getExperimentId()) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.66 Snippet is misconfigured. Try again" );
         }
         experimentSnippetRepository.deleteById(id);
@@ -431,7 +433,7 @@ public class ExperimentTopLevelService {
     public OperationStatusRest experimentDeleteCommit(Long id) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.71 experiment wasn't found, experimentId: " + id);
         }
         experimentSnippetRepository.deleteByExperimentId(id);
@@ -443,7 +445,7 @@ public class ExperimentTopLevelService {
     public OperationStatusRest experimentCloneCommit(Long id) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.73 experiment wasn't found, experimentId: " + id);
         }
         final Experiment e = new Experiment();
@@ -469,18 +471,18 @@ public class ExperimentTopLevelService {
     public OperationStatusRest rerunTask(long taskId) {
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.75 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
         Workbook workbook = workbookRepository.findById(task.getWorkbookId()).orElse(null);
         if (workbook == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.84 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
         }
 
         Task t = taskPersistencer.resetTask(taskId);
         return t!=null
                 ? OperationStatusRest.OPERATION_STATUS_OK
-                : new OperationStatusRest(Enums.OperationStatus.ERROR, "Can't re-run task #"+taskId+", see log for more information");
+                : new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Can't re-run task #"+taskId+", see log for more information");
     }
 }

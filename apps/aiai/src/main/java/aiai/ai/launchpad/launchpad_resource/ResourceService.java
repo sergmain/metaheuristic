@@ -17,9 +17,9 @@
 
 package aiai.ai.launchpad.launchpad_resource;
 
-import aiai.ai.Enums;
 import aiai.ai.exceptions.StoreNewFileException;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -44,7 +44,7 @@ public class ResourceService {
         try {
             try (InputStream is = new FileInputStream(tempFile)) {
                 binaryDataService.save(
-                        is, tempFile.length(), Enums.BinaryDataType.DATA, code, poolCode, true, filename, null);
+                        is, tempFile.length(), EnumsApi.BinaryDataType.DATA, code, poolCode, true, filename, null);
             }
         } catch (IOException e) {
             log.error("Error", e);

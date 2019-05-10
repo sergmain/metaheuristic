@@ -15,13 +15,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.data;
+package aiai.api.v1.data;
 
-import aiai.ai.utils.CollectionUtils;
 import lombok.Data;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Collection;
 import java.util.List;
 
 @Data
@@ -44,10 +43,14 @@ public class BaseDataClass {
     }
 
     public boolean isErrorMessages() {
-        return CollectionUtils.isNotEmpty(errorMessages);
+        return isNotEmpty(errorMessages);
     }
 
     public boolean isInfoMessages() {
-        return CollectionUtils.isNotEmpty(infoMessages);
+        return isNotEmpty(infoMessages);
+    }
+
+    private static boolean isNotEmpty(Collection<?> collection) {
+        return collection!=null && !collection.isEmpty();
     }
 }

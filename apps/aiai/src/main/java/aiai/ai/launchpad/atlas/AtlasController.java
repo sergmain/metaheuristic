@@ -18,8 +18,7 @@
 package aiai.ai.launchpad.atlas;
 
 import aiai.ai.launchpad.data.AtlasData;
-import aiai.ai.launchpad.data.ExperimentData;
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;

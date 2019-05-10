@@ -17,7 +17,8 @@
 
 package aiai.ai.launchpad.data;
 
-import aiai.ai.launchpad.beans.BinaryData;
+import aiai.api.v1.data.BaseDataClass;
+import aiai.api.v1.launchpad.BinaryData;
 import aiai.ai.launchpad.launchpad_resource.SimpleResource;
 import lombok.AllArgsConstructor;
 import lombok.Data;

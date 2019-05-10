@@ -17,9 +17,9 @@
 
 package aiai.ai.snippet;
 
-import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.snippet.SnippetService;
+import aiai.api.v1.EnumsApi;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -33,12 +33,12 @@ public class TestSnippet {
     public void testSnippetSorting() {
 
         List<ExperimentSnippet> snippets = new ArrayList<>();
-        snippets.add(new ExperimentSnippet("aaa", Enums.ExperimentTaskType.PREDICT.toString(), 1L));
-        snippets.add(new ExperimentSnippet("bbb", Enums.ExperimentTaskType.FIT.toString(), 2L));
+        snippets.add(new ExperimentSnippet("aaa", EnumsApi.ExperimentTaskType.PREDICT.toString(), 1L));
+        snippets.add(new ExperimentSnippet("bbb", EnumsApi.ExperimentTaskType.FIT.toString(), 2L));
         SnippetService.sortSnippetsByType(snippets);
 
-        assertEquals(Enums.ExperimentTaskType.FIT, Enums.ExperimentTaskType.valueOf(snippets.get(0).getType()));
-        assertEquals(Enums.ExperimentTaskType.PREDICT, Enums.ExperimentTaskType.valueOf(snippets.get(1).getType()));
+        assertEquals(EnumsApi.ExperimentTaskType.FIT, EnumsApi.ExperimentTaskType.valueOf(snippets.get(0).getType()));
+        assertEquals(EnumsApi.ExperimentTaskType.PREDICT, EnumsApi.ExperimentTaskType.valueOf(snippets.get(1).getType()));
 
     }
 }

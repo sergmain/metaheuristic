@@ -15,29 +15,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.data;
+package aiai.api.v1.data;
 
+import aiai.api.v1.launchpad.Task;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Slice;
 
-public class SimpleData {
+import java.util.List;
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    public static class LongResult extends BaseDataClass {
-        public Long value;
-    }
+public class TasksData {
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
-    public static class IntegerResult extends BaseDataClass {
-        public Integer value;
+    public static class TasksResult extends BaseDataClass {
+        public Slice<TaskWIthType> items;
     }
+
+   @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class ListOfTasksResult extends BaseDataClass {
+        public List<Task> items;
+    }
+
 
 }

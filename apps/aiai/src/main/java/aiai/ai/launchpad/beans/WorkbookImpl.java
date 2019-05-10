@@ -16,6 +16,7 @@
  */
 package aiai.ai.launchpad.beans;
 
+import aiai.api.v1.launchpad.Workbook;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -24,7 +25,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "AIAI_WORKBOOK")
 @Data
-public class Workbook implements Serializable {
+public class WorkbookImpl implements Serializable, Workbook {
     private static final long serialVersionUID = -8687758209537096490L;
 
     @Id

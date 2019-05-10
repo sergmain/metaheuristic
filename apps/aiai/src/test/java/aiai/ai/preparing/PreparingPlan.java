@@ -19,12 +19,13 @@ package aiai.ai.preparing;
 
 import aiai.ai.Consts;
 import aiai.ai.Enums;
+import aiai.ai.launchpad.beans.PlanImpl;
 import aiai.ai.plan.TaskCollector;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.launchpad.Process;
-import aiai.ai.launchpad.beans.Plan;
-import aiai.ai.launchpad.beans.Workbook;
+import aiai.api.v1.launchpad.Plan;
+import aiai.api.v1.launchpad.Workbook;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.plan.PlanCache;
@@ -78,7 +79,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     @Autowired
     public TaskPersistencer taskPersistencer;
 
-    public Plan plan = null;
+    public PlanImpl plan = null;
     public PlanYaml planYaml = null;
     public Snippet s1 = null;
     public Snippet s2 = null;
@@ -172,7 +173,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         s4 = createSnippet("snippet-04:1.1");
         s5 = createSnippet("snippet-05:1.1");
 
-        plan = new Plan();
+        plan = new PlanImpl();
         plan.setCode("test-plan-code");
 
         String params = getPlanParamsAsYaml();
@@ -189,15 +190,15 @@ public abstract class PreparingPlan extends PreparingExperiment {
         byte[] bytes = "A resource for input pool".getBytes();
 
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE,
+                EnumsApi.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE,
                 true, "file-01.txt",
                 null);
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+2, INPUT_POOL_CODE,
+                EnumsApi.BinaryDataType.DATA,INPUT_RESOURCE_CODE+2, INPUT_POOL_CODE,
                 true, "file-02.txt",
                 null);
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
-                Enums.BinaryDataType.DATA,INPUT_RESOURCE_CODE+3, INPUT_POOL_CODE,
+                EnumsApi.BinaryDataType.DATA,INPUT_RESOURCE_CODE+3, INPUT_POOL_CODE,
                 true, "file-03.txt",
                 null);
 
@@ -260,7 +261,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             }
         }
         try {
-            binaryDataService.deleteByPoolCodeAndDataType(INPUT_POOL_CODE, Enums.BinaryDataType.DATA);
+            binaryDataService.deleteByPoolCodeAndDataType(INPUT_POOL_CODE, EnumsApi.BinaryDataType.DATA);
         } catch (Throwable th) {
             log.error("error", th);
         }
@@ -278,17 +279,17 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);
-        assertEquals(Enums.WorkbookExecState.NONE.code, workbook.execState);
+        assertEquals(Enums.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
         EnumsApi.PlanProducingStatus producingStatus = planService.toProducing(workbook);
         assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
-        assertEquals(Enums.WorkbookExecState.PRODUCING.code, workbook.execState);
+        assertEquals(Enums.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
         result = planService.produceAllTasks(true, plan, workbook);
         workbook = result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
-        assertEquals(Enums.WorkbookExecState.PRODUCED.code, workbook.execState);
+        assertEquals(Enums.WorkbookExecState.PRODUCED.code, workbook.getExecState());
 
         experiment = experimentCache.findById(experiment.getId());
         return result;

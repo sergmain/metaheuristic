@@ -17,8 +17,8 @@
 
 package aiai.ai.launchpad.rest.v1;
 
-import aiai.ai.launchpad.data.SimpleData;
-import aiai.ai.launchpad.data.TasksData;
+import aiai.api.v1.data.SimpleData;
+import aiai.api.v1.data.TasksData;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.api.v1.launchpad.Task;
 import org.springframework.context.annotation.Profile;

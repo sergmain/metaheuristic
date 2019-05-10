@@ -20,11 +20,12 @@ import aiai.ai.Consts;
 import aiai.ai.Enums;
 import aiai.ai.Monitoring;
 import aiai.ai.comm.Protocol;
+import aiai.api.v1.data.TaskWIthType;
 import aiai.api.v1.data_storage.DataStorageParams;
+import aiai.api.v1.launchpad.Plan;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.*;
-import aiai.ai.launchpad.data.TasksData;
-import aiai.ai.launchpad.experiment.task.TaskWIthType;
+import aiai.api.v1.data.TasksData;
 import aiai.ai.launchpad.plan.WorkbookService;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.launchpad.snippet.SnippetService;
@@ -39,6 +40,7 @@ import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
+import aiai.api.v1.launchpad.Workbook;
 import aiai.apps.commons.CommonConsts;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
@@ -195,7 +197,7 @@ public class ExperimentService {
                 slice = new PageImpl<>(list, pageable, selected.size());
                 for (TaskWIthType taskWIthType : slice) {
                     ExperimentTaskFeature etf = experimentTaskFeatureRepository.findByTaskId(taskWIthType.task.getId());
-                    taskWIthType.type = Enums.ExperimentTaskType.from( etf.getTaskType() ).value;
+                    taskWIthType.type = EnumsApi.ExperimentTaskType.from( etf.getTaskType() ).value;
                 }
             }
             return slice;
@@ -542,10 +544,10 @@ public class ExperimentService {
                             continue;
                         }
 
-                        Enums.ExperimentTaskType type;
+                        EnumsApi.ExperimentTaskType type;
                         if (CommonConsts.FIT_TYPE.equals(snippet.getType())) {
                             yaml.outputResourceCode = getModelFilename(task);
-                            type = Enums.ExperimentTaskType.FIT;
+                            type = EnumsApi.ExperimentTaskType.FIT;
                         } else if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
                             if (prevTask == null) {
                                 throw new IllegalStateException("#179.29 prevTask is null");
@@ -553,7 +555,7 @@ public class ExperimentService {
                             String modelFilename = getModelFilename(prevTask);
                             yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(modelFilename);
                             yaml.outputResourceCode = "task-" + task.getId() + "-output-stub-for-predict";
-                            type = Enums.ExperimentTaskType.PREDICT;
+                            type = EnumsApi.ExperimentTaskType.PREDICT;
 
                             // TODO 2019.05.02 add implementation of disk storage for models
                             yaml.resourceStorageUrls.put(modelFilename, Consts.SOURCING_LAUNCHPAD_PARAMS);
@@ -582,7 +584,7 @@ public class ExperimentService {
                         yaml.preSnippet = snippetService.getSnippetConfig(process.getPreSnippetCode());
                         yaml.postSnippet = snippetService.getSnippetConfig(process.getPostSnippetCode());
 
-                        yaml.clean = plan.clean;
+                        yaml.clean = plan.isClean();
 
                         String currTaskParams = TaskParamYamlUtils.toString(yaml);
 

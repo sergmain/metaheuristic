@@ -17,6 +17,7 @@
 
 package aiai.ai.plan;
 
+import aiai.ai.Consts;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.yaml.plan.PlanYaml;
 import aiai.ai.yaml.plan.PlanYamlUtils;
@@ -49,6 +50,7 @@ public class TestProcessMeta {
             p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "test-experiment-code-01";
+            p.outputParams = Consts.SOURCING_LAUNCHPAD_PARAMS;
 
             p.metas.addAll(
                     Arrays.asList(

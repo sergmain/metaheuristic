@@ -17,9 +17,10 @@
 
 package aiai.ai.launchpad.file_process;
 
-import aiai.ai.launchpad.beans.Plan;
+import aiai.ai.launchpad.beans.PlanImpl;
 import aiai.ai.launchpad.beans.TaskImpl;
-import aiai.ai.launchpad.beans.Workbook;
+import aiai.api.v1.launchpad.Plan;
+import aiai.api.v1.launchpad.Workbook;
 import aiai.ai.launchpad.plan.PlanService;
 import aiai.ai.launchpad.plan.PlanUtils;
 import aiai.ai.launchpad.repositories.TaskRepository;
@@ -114,7 +115,7 @@ public class FileProcessService {
         yaml.preSnippet = snippetService.getSnippetConfig(process.getPreSnippetCode());
         yaml.postSnippet = snippetService.getSnippetConfig(process.getPostSnippetCode());
 
-        yaml.clean = plan.clean;
+        yaml.clean = plan.isClean();
         yaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
         String taskParams = TaskParamYamlUtils.toString(yaml);

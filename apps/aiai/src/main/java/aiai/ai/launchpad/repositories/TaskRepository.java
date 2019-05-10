@@ -18,8 +18,8 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.TaskImpl;
+import aiai.api.v1.data.TaskWIthType;
 import aiai.api.v1.launchpad.Task;
-import aiai.ai.launchpad.experiment.task.TaskWIthType;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -100,8 +100,9 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Task> findByIsCompletedIsTrueAndFeatureId(long featureId);
 
 
+    // !!! class must not be inner class
     @Transactional(readOnly = true)
-    @Query("SELECT new aiai.ai.launchpad.experiment.task.TaskWIthType(t, tef.taskType) FROM TaskImpl t, ExperimentTaskFeature tef " +
+    @Query("SELECT new aiai.api.v1.data.TaskWIthType(t, tef.taskType) FROM TaskImpl t, ExperimentTaskFeature tef " +
             "where t.id=tef.taskId and tef.featureId=:featureId order by t.id asc ")
     Slice<TaskWIthType> findPredictTasks(Pageable pageable, long featureId);
 

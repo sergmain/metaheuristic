@@ -17,10 +17,7 @@
 package aiai.ai.resource;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
-import aiai.ai.exceptions.ResourceProviderException;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -37,7 +34,7 @@ public class ResourceUtils {
      * @return AssetFile
      */
     public static AssetFile prepareDataFile(File rootDir, String id, String resourceFilename) {
-        return prepareAssetFile(rootDir, id, resourceFilename, Enums.BinaryDataType.DATA.toString());
+        return prepareAssetFile(rootDir, id, resourceFilename, EnumsApi.BinaryDataType.DATA.toString());
     }
 
     public static AssetFile prepareArtifactFile(File rootDir, String id, String resourceFilename) {
@@ -82,7 +79,7 @@ public class ResourceUtils {
     public static AssetFile prepareSnippetFile(File baseDir, String snippetCode, String resourceFilename) {
 
         final AssetFile assetFile = new AssetFile();
-        final File trgDir = new File(baseDir, Enums.BinaryDataType.SNIPPET.toString());
+        final File trgDir = new File(baseDir, EnumsApi.BinaryDataType.SNIPPET.toString());
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
             log.error("#025.37 Can't create snippet dir: {}", trgDir.getAbsolutePath());

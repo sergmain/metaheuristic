@@ -17,13 +17,13 @@
 
 package aiai.ai.launchpad.account;
 
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Account;
 import aiai.ai.launchpad.data.AccountData;
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.repositories.AccountRepository;
 import aiai.ai.utils.ControllerUtils;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -57,20 +57,20 @@ public class AccountTopLevelService {
 
     public OperationStatusRest addAccount(Account account) {
         if (StringUtils.isBlank(account.getUsername()) || StringUtils.isBlank(account.getPassword()) || StringUtils.isBlank(account.getPassword2()) || StringUtils.isBlank(account.getPublicName())) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.01 Username, password, and public name must be not null");
         }
         if (account.getUsername().indexOf('=')!=-1 ) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.04 Username can't contain '='");
         }
         if (!account.getPassword().equals(account.getPassword2())) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#237.07 Both passwords must be equal");
         }
 
         if (accountRepository.findByUsername(account.getUsername())!=null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     String.format("#237.09 Username '%s' was already used", account.getUsername()));
         }
 
@@ -99,32 +99,32 @@ public class AccountTopLevelService {
     public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled) {
         Account account = accountRepository.findById(accountId).orElse(null);
         if (account == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,"#565.01 account wasn't found, accountId: " + accountId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#565.01 account wasn't found, accountId: " + accountId);
         }
         account.setEnabled(enabled);
         account.setPublicName(publicName);
         accountRepository.save(account);
-        return new OperationStatusRest(Enums.OperationStatus.OK,"The data of account was changed successfully", null);
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", null);
     }
 
     public OperationStatusRest passwordEditFormCommit(Long accountId, String password, String password2) {
         Account a = accountRepository.findById(accountId).orElse(null);
         if (a == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#565.01 account wasn't found, accountId: " + accountId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#565.01 account wasn't found, accountId: " + accountId);
         }
         a.setPassword(password);
         a.setPassword2(password2);
         if (StringUtils.isBlank(a.getPassword()) || StringUtils.isBlank(a.getPassword2())) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#237.11 Both passwords must be not null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.11 Both passwords must be not null");
         }
 
         if (!a.getPassword().equals(a.getPassword2())) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#237.14 Both passwords must be equal");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.14 Both passwords must be equal");
         }
         a.setPassword(passwordEncoder.encode(a.getPassword()));
         accountRepository.save(a);
 
-        return new OperationStatusRest(Enums.OperationStatus.OK,"The password was changed successfully", null);
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", null);
     }
 
 

@@ -17,7 +17,8 @@
 
 package aiai.ai.launchpad.repositories;
 
-import aiai.ai.launchpad.beans.BinaryData;
+import aiai.ai.launchpad.beans.BinaryDataImpl;
+import aiai.api.v1.launchpad.BinaryData;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import aiai.ai.launchpad.launchpad_resource.SimpleResource;
 import org.springframework.context.annotation.Profile;
@@ -37,29 +38,29 @@ import java.util.List;
  */
 @Repository
 @Profile("launchpad")
-public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
+public interface BinaryDataRepository extends CrudRepository<BinaryDataImpl, Long> {
     List<BinaryData> findAllByDataType(int dataType);
 
     @Query(value="select new aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
             "b.code, b.poolCode, b.params ) " +
-            "from BinaryData b where b.poolCode in :poolCodes and b.workbookId=:workbookId")
+            "from BinaryDataImpl b where b.poolCode in :poolCodes and b.workbookId=:workbookId")
     List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes, long workbookId);
 
     @Query(value="select new aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
             "b.code, b.poolCode, b.params ) " +
-            "from BinaryData b where b.poolCode in :poolCodes")
+            "from BinaryDataImpl b where b.poolCode in :poolCodes")
     List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes);
 
     @Query(value="select new aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
             "b.code, b.poolCode, b.params ) " +
-            "from BinaryData b where b.code in :codes ")
+            "from BinaryDataImpl b where b.code in :codes ")
     List<SimpleCodeAndStorageUrl> getCodeAndStorageUrl(List<String> codes);
 
-    List<BinaryData> findAllByPoolCode(String poolCode);
+    List<BinaryDataImpl> findAllByPoolCode(String poolCode);
 
     List<BinaryData> findAllByPoolCodeAndDataType(String poolCode, int dataType);
 
-    BinaryData findByCode(String code);
+    BinaryDataImpl findByCode(String code);
 
     @Transactional(readOnly = true)
     Slice<BinaryData> findAll(Pageable pageable);
@@ -79,7 +80,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryData, Long> {
     @Query(value="select new aiai.ai.launchpad.launchpad_resource.SimpleResource(" +
             "b.id, b.version, b.code, b.poolCode, b.dataType, b.uploadTs, b.checksum, b.valid, b.manual, b.filename, " +
             "b.params ) " +
-            "from BinaryData b where b.manual=true ")
+            "from BinaryDataImpl b where b.manual=true ")
     Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);
 
 }

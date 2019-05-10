@@ -18,6 +18,7 @@
 package aiai.ai.launchpad.data;
 
 import aiai.ai.launchpad.beans.Account;
+import aiai.api.v1.data.BaseDataClass;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

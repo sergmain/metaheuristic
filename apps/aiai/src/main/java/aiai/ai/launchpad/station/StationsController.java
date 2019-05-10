@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.station;
 
 import aiai.ai.launchpad.beans.Station;
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.data.StationData;
 import aiai.ai.utils.ControllerUtils;
 import org.springframework.context.annotation.Profile;

@@ -17,7 +17,6 @@
 package aiai.ai.launchpad.snippet;
 
 import aiai.ai.Consts;
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.beans.Snippet;
@@ -27,6 +26,7 @@ import aiai.ai.launchpad.repositories.ExperimentSnippetRepository;
 import aiai.ai.launchpad.repositories.SnippetRepository;
 import aiai.ai.snippet.SnippetCode;
 import aiai.ai.utils.SimpleSelectOption;
+import aiai.api.v1.EnumsApi;
 import aiai.apps.commons.CommonConsts;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.yaml.snippet.*;
@@ -249,7 +249,7 @@ public class SnippetService {
         if (file != null) {
             try (InputStream inputStream = new FileInputStream(file)) {
                 String snippetCode = snippet.getCode();
-                binaryDataService.save(inputStream, snippetConfig.info.length, Enums.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null, null);
+                binaryDataService.save(inputStream, snippetConfig.info.length, EnumsApi.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null, null);
             }
         }
     }

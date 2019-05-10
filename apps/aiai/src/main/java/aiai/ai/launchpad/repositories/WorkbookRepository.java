@@ -17,7 +17,8 @@
 
 package aiai.ai.launchpad.repositories;
 
-import aiai.ai.launchpad.beans.Workbook;
+import aiai.ai.launchpad.beans.WorkbookImpl;
+import aiai.api.v1.launchpad.Workbook;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -32,10 +33,10 @@ import java.util.stream.Stream;
 @Repository
 @Profile("launchpad")
 @Transactional
-public interface WorkbookRepository extends CrudRepository<Workbook, Long> {
+public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select f from Workbook f")
+    @Query(value="select f from WorkbookImpl f")
     Stream<Workbook> findAllAsStream();
 
     @Transactional(readOnly = true)
@@ -44,7 +45,7 @@ public interface WorkbookRepository extends CrudRepository<Workbook, Long> {
 
     List<Workbook> findByExecStateOrderByCreatedOnAsc(int execSate);
 
-    List<Workbook> findByExecState(int execState);
+    List<WorkbookImpl> findByExecState(int execState);
 
     Slice<Workbook> findByPlanId(Pageable pageable, long planId);
 

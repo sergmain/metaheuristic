@@ -14,42 +14,44 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.launchpad.beans;
 
-import lombok.Data;
+package aiai.api.v1.launchpad;
 
-import javax.persistence.*;
-import java.io.Serializable;
+/**
+ * @author Serge
+ * Date: 5/9/2019
+ * Time: 3:27 PM
+ */
+public interface Plan {
+    Long getId();
 
-@Entity
-@Table(name = "AIAI_PLAN")
-@Data
-public class Plan implements Serializable {
-    private static final long serialVersionUID = 6764501814772365639L;
+    Integer getVersion();
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    public Long id;
+    String getCode();
 
-    @Version
-    private Integer version;
+    long getCreatedOn();
 
-    @Column(name = "CODE")
-    public String code;
+    String getParams();
 
-    @Column(name="CREATED_ON")
-    public long createdOn;
+    boolean isLocked();
 
-    @Column(name = "PARAMS")
-    public String params;
+    boolean isValid();
 
-    @Column(name = "IS_LOCKED")
-    public boolean locked;
+    boolean isClean();
 
-    @Column(name = "IS_VALID")
-    public boolean valid;
+    void setId(Long id);
 
-    @Transient
-    public boolean clean;
+    void setVersion(Integer version);
 
+    void setCode(String code);
+
+    void setCreatedOn(long createdOn);
+
+    void setParams(String params);
+
+    void setLocked(boolean locked);
+
+    void setValid(boolean valid);
+
+    void setClean(boolean clean);
 }

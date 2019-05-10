@@ -23,6 +23,7 @@ import aiai.ai.Globals;
 import aiai.ai.Monitoring;
 import aiai.ai.launchpad.beans.*;
 import aiai.api.v1.data_storage.DataStorageParams;
+import aiai.api.v1.launchpad.Plan;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
@@ -33,8 +34,8 @@ import aiai.ai.launchpad.experiment.ExperimentService;
 import aiai.ai.launchpad.file_process.FileProcessService;
 import aiai.ai.launchpad.file_process.FileProcessValidator;
 import aiai.ai.launchpad.repositories.*;
-import aiai.ai.launchpad.data.PlanData;
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.data.PlanData;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.utils.ControllerUtils;
 import aiai.ai.yaml.plan.PlanYaml;
 import aiai.ai.yaml.plan.PlanYamlUtils;
@@ -42,9 +43,11 @@ import aiai.ai.yaml.input_resource_param.InputResourceParam;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
+import aiai.api.v1.launchpad.Workbook;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -104,13 +107,13 @@ public class PlanService {
     // TODO need to check all numbers of errors. Must be as #701.xx
 
     public Workbook toStarted(Workbook workbook) {
-        Workbook fi = workbookRepository.findById(workbook.getId()).orElse(null);
+        WorkbookImpl fi = workbookRepository.findById(workbook.getId()).orElse(null);
         if (fi==null) {
             String es = "#701.01 Can't change exec state to PRODUCED for workbook #" + workbook.getId();
             log.error(es);
             throw new IllegalStateException(es);
         }
-        Plan plan = planCache.findById(fi.getPlanId());
+        PlanImpl plan = planCache.findById(fi.getPlanId());
         if (plan==null) {
             workbook.setExecState(Enums.WorkbookExecState.ERROR.code);
             workbookRepository.save(fi);
@@ -124,14 +127,14 @@ public class PlanService {
     public synchronized void createAllTasks() {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
-        List<Workbook> workbooks = workbookRepository.findByExecState(
+        List<WorkbookImpl> workbooks = workbookRepository.findByExecState(
                 Enums.WorkbookExecState.PRODUCING.code);
         Monitoring.log("##020", Enums.Monitor.MEMORY);
         if (!workbooks.isEmpty()) {
             log.info("Start producing tasks");
         }
-        for (Workbook workbook : workbooks) {
-            Plan plan = planCache.findById(workbook.getPlanId());
+        for (WorkbookImpl workbook : workbooks) {
+            PlanImpl plan = planCache.findById(workbook.getPlanId());
             if (plan==null) {
                 workbook.setExecState(Enums.WorkbookExecState.ERROR.code);
                 workbookRepository.save(workbook);
@@ -154,10 +157,10 @@ public class PlanService {
         binaryDataService.deleteByWorkbookId(workbookId);
         List<Workbook> instances = workbookRepository.findByPlanId(planId);
         if (instances.isEmpty()) {
-            Plan plan = planRepository.findById(planId).orElse(null);
+            PlanImpl plan = planRepository.findById(planId).orElse(null);
             if (plan!=null) {
                 plan.locked = false;
-                planCache.save(plan);
+                save(plan);
             }}
     }
 
@@ -165,17 +168,17 @@ public class PlanService {
         if (workbookId==null) {
             return new PlanData.WorkbookResult("#560.85 workbookId is null");
         }
-        final Workbook workbook = workbookRepository.findById(workbookId).orElse(null);
+        final WorkbookImpl workbook = workbookRepository.findById(workbookId).orElse(null);
         if (workbook == null) {
             return new PlanData.WorkbookResult("#560.87 workbook wasn't found, workbookId: " + workbookId);
         }
-        Plan plan = planCache.findById(workbook.getPlanId());
+        PlanImpl plan = planCache.findById(workbook.getPlanId());
         if (plan == null) {
             return new PlanData.WorkbookResult("#560.89 plan wasn't found, planId: " + workbook.getPlanId());
         }
 
-        if (!plan.getId().equals(workbook.planId)) {
-            workbook.valid=false;
+        if (!plan.getId().equals(workbook.getPlanId())) {
+            workbook.setValid(false);
             workbookRepository.save(workbook);
             return new PlanData.WorkbookResult("#560.73 planId doesn't match to workbook.planId, planId: " + workbook.getPlanId()+", workbook.planId: " + workbook.getPlanId());
         }
@@ -192,14 +195,14 @@ public class PlanService {
             planValidation.addErrorMessage("#560.34 Error while parsing yaml config, " + e.toString());
             planValidation.status = EnumsApi.PlanValidateStatus.YAML_PARSING_ERROR;
         }
-        plan.valid = planValidation.status == EnumsApi.PlanValidateStatus.OK;
-        planCache.save(plan);
-        if (plan.valid) {
+        plan.setValid( planValidation.status == EnumsApi.PlanValidateStatus.OK );
+        save(plan);
+        if (plan.isValid()) {
             planValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
         else {
             log.error("Validation error: {}", planValidation.status);
-            planValidation.addErrorMessage("#561.01 Validation error: : " + planValidation.status);
+            planValidation.addErrorMessage("#561.01 Validation error: " + planValidation.status);
         }
         return planValidation;
     }
@@ -207,19 +210,39 @@ public class PlanService {
     public OperationStatusRest workbookTargetExecState(Long workbookId, Enums.WorkbookExecState execState) {
         PlanData.WorkbookResult result = getWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, result.errorMessages);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
         }
 
-        if (result.plan==null || result.workbook==null) {
+        final Workbook workbook = result.workbook;
+        final Plan plan = result.plan;
+        if (plan ==null || workbook ==null) {
             throw new IllegalStateException("Error: (result.plan==null || result.workbook==null)");
         }
 
-        result.workbook.setExecState(execState.code);
-        workbookRepository.save(result.workbook);
+        workbook.setExecState(execState.code);
+        save(workbook);
 
-        result.plan.locked = true;
-        planCache.save(result.plan);
+        plan.setLocked(true);
+        save(plan);
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public PlanImpl save(Plan plan) {
+        if (plan instanceof PlanImpl) {
+            return planCache.save((PlanImpl)plan);
+        }
+        else {
+            throw new NotImplementedException("Need to implement");
+        }
+    }
+
+    public Workbook save(Workbook workbook) {
+        if (workbook instanceof WorkbookImpl) {
+            return workbookRepository.save((WorkbookImpl)workbook);
+        }
+        else {
+            throw new NotImplementedException("Need to implement");
+        }
     }
 
     public PlanData.WorkbooksResult getWorkbooksOrderByCreatedOnDescResult(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
@@ -260,7 +283,7 @@ public class PlanService {
         }
     }
 
-    public TaskProducingResult produceAllTasks(boolean isPersist, Plan plan, Workbook workbook ) {
+    public TaskProducingResult produceAllTasks(boolean isPersist, PlanImpl plan, Workbook workbook ) {
         TaskProducingResult result = new TaskProducingResult();
         if (isPersist && workbook.getExecState()!=Enums.WorkbookExecState.PRODUCING.code) {
             result.planValidateStatus = EnumsApi.PlanValidateStatus.ALREADY_PRODUCED_ERROR;
@@ -288,27 +311,26 @@ public class PlanService {
         if (plan==null) {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
-        if (StringUtils.isBlank(plan.code)) {
+        if (StringUtils.isBlank(plan.getCode())) {
             return EnumsApi.PlanValidateStatus.PLAN_CODE_EMPTY_ERROR;
         }
-        if (StringUtils.isBlank(plan.params)) {
+        if (StringUtils.isBlank(plan.getParams())) {
             return EnumsApi.PlanValidateStatus.PLAN_PARAMS_EMPTY_ERROR;
         }
-        PlanYaml planYaml = planYamlUtils.toPlanYaml(plan.params);
+        PlanYaml planYaml = planYamlUtils.toPlanYaml(plan.getParams());
         if (planYaml.getProcesses().isEmpty()) {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
 /*
+        // TODO 2019-05-09 decide to delete or don't this check
         if (StringUtils.isBlank(planYaml.getProcesses().get(0).inputType)) {
             return Enums.PlanValidateStatus.INPUT_TYPE_EMPTY_ERROR;
         }
 */
 
-        PlanYaml fl = planYamlUtils.toPlanYaml(plan.getParams());
-
         Process lastProcess = null;
         boolean experimentPresent = false;
-        List<Process> processes = fl.getProcesses();
+        List<Process> processes = planYaml.getProcesses();
         for (int i = 0; i < processes.size(); i++) {
             Process process = processes.get(i);
             if (i + 1 < processes.size()) {
@@ -372,7 +394,7 @@ public class PlanService {
             return result;
         }
 
-        Workbook fi = new Workbook();
+        Workbook fi = new WorkbookImpl();
         fi.setPlanId(planId);
         fi.setCreatedOn(System.currentTimeMillis());
         fi.setExecState(Enums.WorkbookExecState.NONE.code);
@@ -381,7 +403,7 @@ public class PlanService {
         fi.setProducingOrder(Consts.TASK_ORDER_START_VALUE);
         fi.setValid(true);
 
-        workbookRepository.save(fi);
+        save(fi);
         result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
         result.workbook = fi;
 
@@ -397,17 +419,17 @@ public class PlanService {
             return;
         }
         fi.setExecState(Enums.WorkbookExecState.STOPPED.code);
-        workbookRepository.save(fi);
+        save(fi);
     }
 
     public void changeValidStatus(Workbook fi, boolean status) {
         fi.setValid(status);
-        workbookRepository.save(fi);
+        save(fi);
     }
 
     public EnumsApi.PlanProducingStatus toProducing(Workbook fi) {
         fi.setExecState(Enums.WorkbookExecState.PRODUCING.code);
-        workbookRepository.save(fi);
+        save(fi);
         return EnumsApi.PlanProducingStatus.OK;
     }
 
@@ -462,7 +484,7 @@ public class PlanService {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
-        InputResourceParam resourceParams = InputResourceParamUtils.to(fi.inputResourceParam);
+        InputResourceParam resourceParams = InputResourceParamUtils.to(fi.getInputResourceParam());
         List<SimpleCodeAndStorageUrl> initialInputResourceCodes;
         initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllPoolCodes());
         log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
@@ -496,9 +518,9 @@ public class PlanService {
         Monitoring.log("##025", Enums.Monitor.MEMORY);
 
         result.workbook = fi;
-
         result.planYaml = planYamlUtils.toPlanYaml(plan.getParams());
-        plan.clean = result.planYaml.clean;
+
+        plan.setClean( result.planYaml.clean );
         int idx = Consts.TASK_ORDER_START_VALUE;
         result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
         for (Process process : result.planYaml.getProcesses()) {
@@ -549,11 +571,11 @@ public class PlanService {
             throw new IllegalStateException(es);
         }
         result.workbook.setExecState(Enums.WorkbookExecState.PRODUCED.code);
-        workbookRepository.save(result.workbook);
+        save(result.workbook);
     }
 
     public void markOrderAsProcessed() {
-        List<Workbook> workbooks = workbookRepository.findByExecState(Enums.WorkbookExecState.STARTED.code);
+        List<WorkbookImpl> workbooks = workbookRepository.findByExecState(Enums.WorkbookExecState.STARTED.code);
         for (Workbook workbook : workbooks) {
             markOrderAsProcessed(workbook);
         }
@@ -575,14 +597,14 @@ public class PlanService {
                 experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
                 workbook.setCompletedOn(System.currentTimeMillis());
                 workbook.setExecState(Enums.WorkbookExecState.FINISHED.code);
-                Workbook instance = workbookRepository.save(workbook);
+                Workbook instance = save(workbook);
 
-                Experiment e = experimentRepository.findByWorkbookId(instance.id);
+                Experiment e = experimentRepository.findByWorkbookId(instance.getId());
                 if (e==null) {
-                    log.info("#701.23 Can't store an experiment to atlas, the workbook "+instance.id+" doesn't contain an experiment" );
+                    log.info("#701.23 Can't store an experiment to atlas, the workbook "+instance.getId()+" doesn't contain an experiment" );
                     return instance;
                 }
-                atlasService.toAtlas(instance.id, e.getId());
+                atlasService.toAtlas(instance.getId(), e.getId());
                 return instance;
             }
             return workbook;
@@ -593,7 +615,7 @@ public class PlanService {
             }
         }
         workbook.setProducingOrder(workbook.getProducingOrder()+1);
-        return workbookRepository.save(workbook);
+        return save(workbook);
     }
 
     public static String asInputResourceParams(String poolCode) {

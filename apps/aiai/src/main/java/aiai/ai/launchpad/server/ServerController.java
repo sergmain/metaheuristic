@@ -28,6 +28,7 @@ import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.EnumsApi;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;
@@ -140,7 +141,7 @@ public class ServerController {
             }
             try (InputStream is = new FileInputStream(resFile)) {
                 binaryDataService.save(
-                        is, resFile.length(), Enums.BinaryDataType.DATA,
+                        is, resFile.length(), EnumsApi.BinaryDataType.DATA,
                         taskParamYaml.outputResourceCode,
                         taskParamYaml.outputResourceCode,
                         false,

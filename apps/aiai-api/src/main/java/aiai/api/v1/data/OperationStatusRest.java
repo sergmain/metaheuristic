@@ -14,9 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package aiai.ai.launchpad.data;
+package aiai.api.v1.data;
 
-import aiai.ai.Enums;
+import aiai.api.v1.EnumsApi;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -29,24 +29,24 @@ import java.util.List;
 @NoArgsConstructor
 public class OperationStatusRest extends BaseDataClass {
 
-    public static final OperationStatusRest OPERATION_STATUS_OK = new OperationStatusRest(Enums.OperationStatus.OK);
-    public Enums.OperationStatus status;
+    public static final OperationStatusRest OPERATION_STATUS_OK = new OperationStatusRest(EnumsApi.OperationStatus.OK);
+    public EnumsApi.OperationStatus status;
 
-    public OperationStatusRest(Enums.OperationStatus status) {
+    public OperationStatusRest(EnumsApi.OperationStatus status) {
         this.status = status;
     }
 
-    public OperationStatusRest(Enums.OperationStatus status, List<String> errorMessages) {
+    public OperationStatusRest(EnumsApi.OperationStatus status, List<String> errorMessages) {
         this.status = status;
         this.errorMessages = errorMessages;
     }
 
-    public OperationStatusRest(Enums.OperationStatus status, String errorMessage) {
+    public OperationStatusRest(EnumsApi.OperationStatus status, String errorMessage) {
         this.status = status;
         this.errorMessages = Collections.singletonList(errorMessage);
     }
 
-    public OperationStatusRest(Enums.OperationStatus status, String infoMessage, String errorMessage) {
+    public OperationStatusRest(EnumsApi.OperationStatus status, String infoMessage, String errorMessage) {
         this.status = status;
         if (infoMessage!=null) {
             this.infoMessages = List.of(infoMessage);

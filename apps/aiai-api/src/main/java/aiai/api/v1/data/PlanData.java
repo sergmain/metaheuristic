@@ -15,10 +15,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.data;
+package aiai.api.v1.data;
 
-import aiai.ai.launchpad.beans.Plan;
-import aiai.ai.launchpad.beans.Workbook;
+import aiai.api.v1.launchpad.Plan;
+import aiai.api.v1.launchpad.Workbook;
 import aiai.api.v1.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -17,9 +17,10 @@
 
 package aiai.ai.launchpad.plan;
 
-import aiai.ai.launchpad.beans.Plan;
-import aiai.ai.launchpad.data.PlanData;
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.launchpad.Plan;
+import aiai.ai.launchpad.beans.PlanImpl;
+import aiai.api.v1.data.PlanData;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.utils.ControllerUtils;
 import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
@@ -100,7 +101,7 @@ public class PlanController {
     }
 
     @PostMapping("/plan-add-commit")
-    public String addFormCommit(Model model, Plan plan, final RedirectAttributes redirectAttributes) {
+    public String addFormCommit(Model model, PlanImpl plan, final RedirectAttributes redirectAttributes) {
         PlanData.PlanResult planResultRest = planTopLevelService.addPlan(plan);
         if (planResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", planResultRest.errorMessages);

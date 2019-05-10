@@ -158,4 +158,55 @@ public class EnumsApi {
         WRONG_FORMAT_OF_SNIPPET_CODE,
         ERROR,
     }
+
+    public enum BinaryDataType { UNKNOWN(0), DATA(1), SNIPPET(2), TEST(3), CONSOLE(4);
+
+        public int value;
+        BinaryDataType(int value) {
+            this.value = value;
+        }
+
+        public static BinaryDataType from(int type) {
+            switch(type) {
+                case 1:
+                    return DATA;
+                case 2:
+                    return SNIPPET;
+                case 3:
+                    return TEST;
+                case 4:
+                    return CONSOLE;
+                default:
+                    return UNKNOWN;
+            }
+        }
+
+        @SuppressWarnings("unused")
+        public boolean isProd() {
+            return this==DATA || this==SNIPPET;
+        }
+    }
+
+    public enum OperationStatus {OK, ERROR}
+
+    public enum ExperimentTaskType {
+        UNKNOWN(0), FIT(1), PREDICT(2);
+
+        public int value;
+
+        ExperimentTaskType(int value) {
+            this.value = value;
+        }
+
+        public static ExperimentTaskType from(int type) {
+            switch(type) {
+                case 1:
+                    return FIT;
+                case 2:
+                    return PREDICT;
+                default:
+                    return UNKNOWN;
+            }
+        }
+    }
 }

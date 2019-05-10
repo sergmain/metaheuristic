@@ -23,13 +23,17 @@ import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import aiai.ai.launchpad.data.AtlasData;
-import aiai.ai.launchpad.data.BaseDataClass;
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.data.BaseDataClass;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.experiment.ExperimentCache;
 import aiai.ai.launchpad.plan.PlanCache;
 import aiai.ai.launchpad.repositories.*;
 import aiai.ai.utils.ControllerUtils;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.launchpad.BinaryData;
+import aiai.api.v1.launchpad.Plan;
 import aiai.api.v1.launchpad.Task;
+import aiai.api.v1.launchpad.Workbook;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -113,21 +117,21 @@ public class AtlasService {
     public OperationStatusRest toAtlas(long workbookId, long experimentId) {
         StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(experimentId);
         if (stored.isErrorMessages()) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, stored.errorMessages);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.errorMessages);
         }
         if (workbookId!=stored.experimentStoredToAtlas.workbook.id) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment can't be stored, workbookId is different");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment can't be stored, workbookId is different");
         }
         String poolCode = getPoolCodeForExperiment(workbookId, experimentId);
         List<SimpleCodeAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), workbookId);
         if (!codes.isEmpty()) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "Experiment already stored");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment already stored");
         }
         Atlas b = new Atlas();
         try {
             b.experiment = toJson(stored.experimentStoredToAtlas);
         } catch (JsonProcessingException e) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "General error while storing experiment, " + e.toString());
         }
         b.name = stored.experimentStoredToAtlas.experiment.getName();
@@ -139,20 +143,20 @@ public class AtlasService {
         ConsoleOutputStoredToAtlas filed = toConsoleOutputStoredToAtlas(
                 stored.experimentStoredToAtlas.workbook.id);
         if (filed.isErrorMessages()) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, filed.errorMessages);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, filed.errorMessages);
         }
         try(InputStream is = new FileInputStream(filed.dumpOfConsoleOutputs)) {
             //noinspection unused
             BinaryData data = binaryDataService.save(
-                    is, filed.dumpOfConsoleOutputs.length(), Enums.BinaryDataType.CONSOLE,
+                    is, filed.dumpOfConsoleOutputs.length(), EnumsApi.BinaryDataType.CONSOLE,
                     poolCode, poolCode, false, null, null);
 
         } catch (FileNotFoundException e) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "A problem with stored console outputs, try to run again");
         } catch (RuntimeException | IOException e) {
             log.error("Error", e);
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "Error storing console outputs to db, " + e.toString());
         }
 
@@ -176,7 +180,7 @@ public class AtlasService {
             return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.05 can't find workbook for this experiment");
         }
-        Plan plan = planCache.findById(workbook.planId);
+        Plan plan = planCache.findById(workbook.getPlanId());
         if (plan==null) {
             return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.10 can't find plan for this experiment");
@@ -185,8 +189,8 @@ public class AtlasService {
 
         List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experimentId);
         List<ExperimentSnippet> snippets = experimentSnippetRepository.findByExperimentId(experimentId);
-        List<ExperimentTaskFeature> taskFeatures = experimentTaskFeatureRepository.findByWorkbookId(workbook.id);
-        List<Task> tasks = taskRepository.findAllByWorkbookId(workbook.id);
+        List<ExperimentTaskFeature> taskFeatures = experimentTaskFeatureRepository.findByWorkbookId(workbook.getId());
+        List<Task> tasks = taskRepository.findAllByWorkbookId(workbook.getId());
 
         result.experimentStoredToAtlas = new ExperimentStoredToAtlas(
                 plan, workbook, experiment,

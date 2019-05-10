@@ -18,21 +18,21 @@
 package aiai.ai.launchpad.task;
 
 import aiai.ai.Enums;
-import aiai.ai.exceptions.ResourceProviderException;
-import aiai.ai.launchpad.beans.Workbook;
 import aiai.ai.launchpad.beans.TaskImpl;
-import aiai.api.v1.EnumsApi;
-import aiai.api.v1.data_storage.DataStorageParams;
-import aiai.api.v1.launchpad.Task;
+import aiai.ai.launchpad.beans.WorkbookImpl;
 import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
-import aiai.ai.launchpad.repositories.WorkbookRepository;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.ai.resource.ResourceUtils;
+import aiai.ai.launchpad.repositories.WorkbookRepository;
 import aiai.ai.yaml.snippet_exec.SnippetExec;
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
 import aiai.ai.yaml.task.TaskParamYaml;
 import aiai.ai.yaml.task.TaskParamYamlUtils;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.data_storage.DataStorageParams;
+import aiai.api.v1.launchpad.Task;
+import aiai.api.v1.launchpad.Workbook;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -140,11 +140,11 @@ public class TaskPersistencer {
 
                     Workbook workbook = workbookRepository.findById(task.workbookId).orElse(null);
                     if (workbook != null) {
-                        if (task.order < workbook.producingOrder ||
+                        if (task.order < workbook.getProducingOrder() ||
                                 Enums.WorkbookExecState.toState(workbook.getExecState()) == Enums.WorkbookExecState.FINISHED) {
-                            workbook.producingOrder = task.order;
-                            workbook.execState = Enums.WorkbookExecState.STARTED.code;
-                            workbookRepository.save(workbook);
+                            workbook.setProducingOrder( task.order );
+                            workbook.setExecState( Enums.WorkbookExecState.STARTED.code );
+                            save(workbook);
                         }
                     }
                     else {
@@ -157,6 +157,15 @@ public class TaskPersistencer {
             }
         }
         return null;
+    }
+
+    public Workbook save(Workbook workbook) {
+        if (workbook instanceof WorkbookImpl) {
+            return workbookRepository.save((WorkbookImpl)workbook);
+        }
+        else {
+            throw new NotImplementedException("Need to implement");
+        }
     }
 
     @SuppressWarnings("UnusedReturnValue")

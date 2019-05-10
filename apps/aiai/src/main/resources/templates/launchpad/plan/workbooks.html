@@ -2,7 +2,7 @@
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
 >
-    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.PlanData$WorkbooksResult"*/-->
+    <!--/*@thymesVar id="result" type="aiai.api.v1.data.PlanData$WorkbooksResult"*/-->
     <script>
         var table = function (html) {
             $('#table').html(html).find('.ajax-elem').each(function () {

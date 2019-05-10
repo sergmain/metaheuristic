@@ -17,9 +17,10 @@
 
 package aiai.ai.launchpad.rest.v1;
 
-import aiai.ai.launchpad.beans.Plan;
-import aiai.ai.launchpad.data.PlanData;
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.launchpad.Plan;
+import aiai.ai.launchpad.beans.PlanImpl;
+import aiai.api.v1.data.PlanData;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.plan.PlanTopLevelService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -57,7 +58,7 @@ public class PlanRestController {
     }
 
     @PostMapping("/plan-add-commit")
-    public PlanData.PlanResult addFormCommit(@RequestBody Plan plan) {
+    public PlanData.PlanResult addFormCommit(@RequestBody PlanImpl plan) {
         return planTopLevelService.addPlan(plan);
     }
 

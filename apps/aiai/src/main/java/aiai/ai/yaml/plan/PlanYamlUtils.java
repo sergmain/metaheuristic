@@ -16,6 +16,8 @@
  */
 package aiai.ai.yaml.plan;
 
+import aiai.ai.Consts;
+import aiai.api.v1.launchpad.Process;
 import aiai.apps.commons.yaml.YamlUtils;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
@@ -40,7 +42,13 @@ public class PlanYamlUtils {
 
     public PlanYaml toPlanYaml(String s) {
         synchronized (syncObj) {
-            return yamlPlanYaml.load(s);
+            final PlanYaml p = yamlPlanYaml.load(s);
+            for (Process process : p.processes) {
+                if (process.outputParams==null) {
+                    process.outputParams = Consts.SOURCING_LAUNCHPAD_PARAMS;
+                }
+            }
+            return p;
         }
     }
 }

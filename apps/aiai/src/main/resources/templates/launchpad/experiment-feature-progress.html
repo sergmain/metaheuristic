@@ -4,7 +4,7 @@
      th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
      sec:authorize="isAuthenticated()"
 >
-    <!--/*@thymesVar id="result" type="aiai.ai.launchpad.data.TasksData$TasksResult"*/-->
+    <!--/*@thymesVar id="result" type="aiai.api.v1.data.TasksData$TasksResult"*/-->
     <!--/*@thymesVar id="experiment" type="aiai.ai.launchpad.beans.Experiment"*/-->
     <!--/*@thymesVar id="feature" type="aiai.ai.launchpad.beans.ExperimentFeature"*/-->
     <!--/*@thymesVar id="consoleResult" type="aiai.ai.launchpad.data.ExperimentData$ConsoleResult"*/-->

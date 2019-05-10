@@ -17,12 +17,12 @@
 
 package aiai.ai.launchpad.snippet;
 
-import aiai.ai.Enums;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.data.SnippetData;
 import aiai.ai.launchpad.repositories.SnippetRepository;
+import aiai.api.v1.EnumsApi;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
 import aiai.apps.commons.yaml.snippet.SnippetConfigStatus;
@@ -69,11 +69,11 @@ public class SnippetTopLevelService {
         log.info("Start deleting snippet with id: {}", id );
         final Snippet snippet = snippetCache.findById(id);
         if (snippet == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.50 snippet wasn't found, planId: " + id);
         }
         snippetCache.delete(snippet.getId());
-        binaryDataService.deleteByCodeAndDataType(snippet.getCode(), Enums.BinaryDataType.SNIPPET);
+        binaryDataService.deleteByCodeAndDataType(snippet.getCode(), EnumsApi.BinaryDataType.SNIPPET);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -81,17 +81,17 @@ public class SnippetTopLevelService {
 
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.01 name of uploaded file is null");
         }
         int idx;
         if ((idx = originFilename.lastIndexOf('.')) == -1) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.02 '.' wasn't found, bad filename: " + originFilename);
         }
         String ext = originFilename.substring(idx).toLowerCase();
         if (!StringUtils.equalsAny(ext, ZIP_EXT, YAML_EXT)) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.03 only '.zip' and '.yaml' files are supported, filename: " + originFilename);
         }
 
@@ -100,7 +100,7 @@ public class SnippetTopLevelService {
         try {
             File tempDir = DirUtils.createTempDir("snippet-upload-");
             if (tempDir==null || tempDir.isFile()) {
-                return new OperationStatusRest(Enums.OperationStatus.ERROR,
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         "#422.04 can't create temporary directory in " + location);
             }
             final File zipFile = new File(tempDir, "snippets" + ext);
@@ -121,13 +121,13 @@ public class SnippetTopLevelService {
                 statuses = snippetService.loadSnippetsFromDir(tempDir);
             }
             if (isError(statuses)) {
-                return new OperationStatusRest(Enums.OperationStatus.ERROR,
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                         toErrorMessages(statuses));
             }
         }
         catch (Exception e) {
             log.error("Error", e);
-            return new OperationStatusRest(Enums.OperationStatus.ERROR,
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.05 can't load snippets, Error: " + e.toString());
         }
         return OperationStatusRest.OPERATION_STATUS_OK;

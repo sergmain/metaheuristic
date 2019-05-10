@@ -17,13 +17,13 @@
 
 package aiai.ai.launchpad.station;
 
-import aiai.ai.Enums;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Station;
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.data.StationData;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.utils.ControllerUtils;
+import aiai.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -70,7 +70,7 @@ public class StationTopLevelService {
     public OperationStatusRest deleteStationById(Long id) {
         Station station = repository.findById(id).orElse(null);
         if (station == null) {
-            return new OperationStatusRest(Enums.OperationStatus.ERROR, "#807.15 Station wasn't found, stationId: " + id);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.15 Station wasn't found, stationId: " + id);
         }
         repository.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;

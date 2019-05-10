@@ -21,6 +21,7 @@ import aiai.ai.Enums;
 import aiai.ai.core.ExecProcessService;
 import aiai.ai.resource.AssetFile;
 import aiai.ai.station.env.EnvService;
+import aiai.api.v1.EnumsApi;
 import aiai.apps.commons.yaml.snippet.SnippetConfig;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -112,7 +113,7 @@ public class GitSourcingService {
 
     private static AssetFile prepareSnippetDir(final File snippetRootDir, String snippetCode) {
         final AssetFile assetFile = new AssetFile();
-        final File trgDir = new File(snippetRootDir, Enums.BinaryDataType.SNIPPET.toString());
+        final File trgDir = new File(snippetRootDir, EnumsApi.BinaryDataType.SNIPPET.toString());
         log.info("Target dir: {}, exist: {}", trgDir.getAbsolutePath(), trgDir.exists() );
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;

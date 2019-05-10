@@ -20,7 +20,9 @@ package aiai.ai.launchpad.atlas;
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.experiment.ExperimentUtils;
 import aiai.ai.utils.CollectionUtils;
+import aiai.api.v1.launchpad.Plan;
 import aiai.api.v1.launchpad.Task;
+import aiai.api.v1.launchpad.Workbook;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
@@ -76,7 +78,7 @@ public class ExperimentStoredToAtlas {
     @EqualsAndHashCode(callSuper = false)
     @JsonIgnoreProperties(value = {"version", "clean"})
     @ToString(callSuper = true)
-    public static class PlanOnShelf extends Plan {
+    public static class PlanOnShelf extends PlanImpl {
         public PlanOnShelf(Plan plan) {
             BeanUtils.copyProperties(plan, this);
         }
@@ -87,7 +89,7 @@ public class ExperimentStoredToAtlas {
     @EqualsAndHashCode(callSuper = false)
     @JsonIgnoreProperties(value = {"version"})
     @ToString(callSuper = true)
-    public static class WorkbookOnShelf extends Workbook {
+    public static class WorkbookOnShelf extends WorkbookImpl {
         public WorkbookOnShelf(Workbook workbook) {
             BeanUtils.copyProperties(workbook, this);
         }

@@ -101,9 +101,9 @@ public class TestTaskRequest extends FeatureMethods {
             assertNotNull(task);
             assertTrue(task.isCompleted);
 
-            int order = workbook.producingOrder;
+            int order = workbook.getProducingOrder();
             workbook = planService.markOrderAsProcessed(workbook);
-            assertEquals(order + 1, workbook.producingOrder);
+            assertEquals(order + 1, workbook.getProducingOrder());
         }
 
         ExchangeData data = new ExchangeData();

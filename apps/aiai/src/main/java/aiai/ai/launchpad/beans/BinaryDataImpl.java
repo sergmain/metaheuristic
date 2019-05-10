@@ -17,7 +17,8 @@
 
 package aiai.ai.launchpad.beans;
 
-import aiai.ai.Enums;
+import aiai.api.v1.EnumsApi;
+import aiai.api.v1.launchpad.BinaryData;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -32,10 +33,11 @@ import java.sql.Timestamp;
 @Data
 @EqualsAndHashCode(of = {"id", "version", "dataType"})
 @ToString(exclude={"data", "bytes"})
-public class BinaryData implements Serializable {
+public class BinaryDataImpl implements Serializable, BinaryData {
     private static final long serialVersionUID = 7768428475142175426L;
 
-    public void setType(Enums.BinaryDataType binaryDataType) {
+    @Override
+    public void setType(EnumsApi.BinaryDataType binaryDataType) {
         this.dataType = binaryDataType.value;
     }
 

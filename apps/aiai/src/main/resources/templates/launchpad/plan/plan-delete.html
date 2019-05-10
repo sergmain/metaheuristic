@@ -6,7 +6,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Station</h1>
 
-        <!--/*@thymesVar id="plan" type="aiai.ai.launchpad.beans.Plan"*/-->
+        <!--/*@thymesVar id="plan" type="aiai.ai.launchpad.beans.PlanImpl"*/-->
         <form class="pure-form pure-form-stacked" th:object="${plan}">
             <fieldset>
                 <label for="code">Code of plan</label>

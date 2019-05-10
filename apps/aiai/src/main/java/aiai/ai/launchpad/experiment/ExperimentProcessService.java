@@ -19,12 +19,13 @@ package aiai.ai.launchpad.experiment;
 
 import aiai.ai.Enums;
 import aiai.ai.Monitoring;
+import aiai.ai.launchpad.beans.PlanImpl;
 import aiai.api.v1.data_storage.DataStorageParams;
 import aiai.api.v1.EnumsApi;
+import aiai.api.v1.launchpad.Plan;
 import aiai.api.v1.launchpad.Process;
 import aiai.ai.launchpad.beans.Experiment;
-import aiai.ai.launchpad.beans.Plan;
-import aiai.ai.launchpad.beans.Workbook;
+import aiai.api.v1.launchpad.Workbook;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import aiai.ai.launchpad.plan.PlanService;
@@ -86,7 +87,7 @@ public class ExperimentProcessService {
 
         List<String> features;
         if (meta==null) {
-            InputResourceParam resourceParams = InputResourceParamUtils.to(workbook.inputResourceParam);
+            InputResourceParam resourceParams = InputResourceParamUtils.to(workbook.getInputResourceParam());
             List<String> list = resourceParams.getPoolCodes().get(FEATURE_POOL_CODE_TYPE);
             if (CollectionUtils.isEmpty(list)) {
                 result.status = EnumsApi.PlanProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;

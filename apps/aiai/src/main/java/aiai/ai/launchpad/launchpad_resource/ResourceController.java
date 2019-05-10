@@ -17,7 +17,7 @@
 
 package aiai.ai.launchpad.launchpad_resource;
 
-import aiai.ai.launchpad.data.OperationStatusRest;
+import aiai.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.data.ResourceData;
 import aiai.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;

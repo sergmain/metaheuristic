@@ -22,9 +22,7 @@ public final class Enums {
 
     public enum StoringStatus {OK, CANT_BE_STORED}
 
-    public enum OperationStatus {OK, ERROR}
-
-//    public enum StorageType {launchpad, disk, hadoop, ftp }
+    //    public enum StorageType {launchpad, disk, hadoop, ftp }
 
     public enum UploadResourceStatus {
         OK,
@@ -39,27 +37,6 @@ public final class Enums {
 
     public enum ResendTaskOutputResourceStatus {
         SEND_SCHEDULED, RESOURCE_NOT_FOUND, TASK_IS_BROKEN, TASK_PARAM_FILE_NOT_FOUND, OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE
-    }
-
-    public enum ExperimentTaskType {
-        UNKNOWN(0), FIT(1), PREDICT(2);
-
-        public int value;
-
-        ExperimentTaskType(int value) {
-            this.value = value;
-        }
-
-        public static ExperimentTaskType from(int type) {
-            switch(type) {
-                case 1:
-                    return FIT;
-                case 2:
-                    return PREDICT;
-                default:
-                    return UNKNOWN;
-            }
-        }
     }
 
     public enum TaskExecState { NONE(0), IN_PROGRESS(1), ERROR(2), OK(3);
@@ -82,34 +59,6 @@ public final class Enums {
                 default:
                     throw new IllegalStateException("Unknown type : " + type);
             }
-        }
-    }
-
-    public enum BinaryDataType { UNKNOWN(0), DATA(1), SNIPPET(2), TEST(3), CONSOLE(4);
-
-        public int value;
-        BinaryDataType(int value) {
-            this.value = value;
-        }
-
-        public static BinaryDataType from(int type) {
-            switch(type) {
-                case 1:
-                    return DATA;
-                case 2:
-                    return SNIPPET;
-                case 3:
-                    return TEST;
-                case 4:
-                    return CONSOLE;
-                default:
-                    return UNKNOWN;
-            }
-        }
-
-        @SuppressWarnings("unused")
-        public boolean isProd() {
-            return this==DATA || this==SNIPPET;
         }
     }
 

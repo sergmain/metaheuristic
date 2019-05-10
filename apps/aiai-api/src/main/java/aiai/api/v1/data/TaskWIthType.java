@@ -15,13 +15,18 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.ai.launchpad.experiment.task;
+package aiai.api.v1.data;
 
-import aiai.ai.Enums;
+import aiai.api.v1.EnumsApi;
 import aiai.api.v1.launchpad.Task;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * @author Serge
+ * Date: 5/9/2019
+ * Time: 4:57 PM
+ */
 @Data
 @NoArgsConstructor
 public class TaskWIthType {
@@ -34,7 +39,7 @@ public class TaskWIthType {
     }
 
     public String typeAsString() {
-        return Enums.ExperimentTaskType.from(type).toString();
+        return EnumsApi.ExperimentTaskType.from(type).toString();
     }
 
 }
