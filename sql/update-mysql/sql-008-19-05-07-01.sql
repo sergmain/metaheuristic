@@ -36,6 +36,8 @@ alter table aiai_workbook change FLOW_ID PLAN_ID decimal not null;
 
 alter table pilot_batch change FLOW_ID PLAN_ID decimal not null;
 
+rename table pilot_batch_flow_instance to pilot_batch_workbook;
+
 alter table pilot_batch_workbook change FLOW_INSTANCE_ID WORKBOOK_ID decimal not null;
 
 

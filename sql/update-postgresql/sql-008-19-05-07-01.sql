@@ -36,6 +36,8 @@ alter table aiai_workbook rename column PLAN_ID to plan_id;
 
 alter table pilot_batch rename column flow_id to plan_id;
 
+alter table pilot_batch_flow_instance rename to pilot_batch_workbook;
+
 alter table pilot_batch_workbook rename column flow_instance_id to workbook_id;
 
 -- ======================

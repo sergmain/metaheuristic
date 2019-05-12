@@ -34,6 +34,7 @@ import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
@@ -41,6 +42,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -104,17 +106,13 @@ public class StationTaskService {
                                         log.error(es, e);
                                         throw new RuntimeException(es, e);
                                     }
+                                    catch (YAMLException e) {
+                                        String es = "#713.03 yaml Error";
+                                        deleteDirWithBrokenTask(s);
+                                    }
                                 }
                                 else {
-                                    String path = s.toFile().getPath();
-                                    log.info("Delete not valid dir of task {}", path);
-                                    try {
-                                        FileUtils.deleteDirectory(s.toFile());
-                                        // IDK is that bug or side-effect. so delete one more time
-                                        FileUtils.deleteDirectory(s.toFile());
-                                    } catch (IOException e) {
-                                        log.warn("#713.06 Error while deleting dir " + path, e);
-                                    }
+                                    deleteDirWithBrokenTask(s);
                                 }
                             });
                         }
@@ -138,6 +136,18 @@ public class StationTaskService {
         }
         //noinspection unused
         int i=0;
+    }
+
+    public void deleteDirWithBrokenTask(Path s) {
+        String path = s.toFile().getPath();
+        log.info("Delete not valid dir of task {}", path);
+        try {
+            FileUtils.deleteDirectory(s.toFile());
+            // IDK is that bug or side-effect. so delete one more time
+            FileUtils.deleteDirectory(s.toFile());
+        } catch (IOException e) {
+            log.warn("#713.06 Error while deleting dir " + path, e);
+        }
     }
 
     public void setReportedOn(String launchpadUrl, long taskId) {

@@ -231,6 +231,15 @@ public class GitSourcingService {
         return result;
     }
 
+    // TODO 2019-05-11 add this before checkout for new changes
+    private GitExecResult execResetHardHead(File repoDir) {
+        // git reset --hard HEAD
+        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "reset", "--hard", "HEAD");
+        log.info("exec {}", cmd);
+        GitExecResult result = execGitCmd(cmd, 60L);
+        return result;
+    }
+
     private GitExecResult execClone(File repoDir, SnippetApiData.SnippetConfig snippet) {
         // git -C <path> clone <git-repo-url> git
 

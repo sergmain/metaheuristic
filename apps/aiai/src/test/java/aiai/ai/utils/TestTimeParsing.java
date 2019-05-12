@@ -163,6 +163,10 @@ public class TestTimeParsing {
         DateTimeFormatter fmt1 = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss");
         LocalDateTime time = LocalDateTime.parse("14/01/2019 23:59:29", fmt1);
         assertTrue(schedule.isActive(time));
+
+        DateTimeFormatter fmt2 = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
+        time = LocalDateTime.parse("2019-05-10 23:59:19", fmt2);
+        assertTrue(schedule.isActive(time));
     }
 
     @Test

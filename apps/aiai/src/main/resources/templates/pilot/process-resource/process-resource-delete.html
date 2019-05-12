@@ -17,7 +17,7 @@
         <pre style="width:50%" th:text="${result.workbook.inputResourceParam}"></pre>
 
         <p>Exec state:</p>
-        <pre style="width:50%" th:text="${T(aiai.ai.Enums.WorkbookExecState).from(result.workbook.execState)}"></pre>
+        <pre style="width:50%" th:text="${T(aiai.api.v1.EnumsApi.WorkbookExecState).from(result.workbook.execState)}"></pre>
 
         <table>
             <tr>

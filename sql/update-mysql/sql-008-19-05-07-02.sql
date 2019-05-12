@@ -43,7 +43,7 @@ alter table aiai_plan
 
 alter table aiai_data change STORAGE_URL PARAMS MEDIUMTEXT not null;
 
-delete from aiai_data where PARAMS not like 'launchpad%'
+delete from aiai_data where PARAMS not like 'launchpad%';
 
 # noinspection SqlWithoutWhere
 update aiai_data
