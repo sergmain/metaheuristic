@@ -34,7 +34,7 @@ public class ExecProcessService {
 
     private static final String TIMEOUT_MESSAGE =
             "=============================================================\n" +
-            "After %d seconds of timeout this process was destroyed.\n" +
+            "After %d seconds of timeout this process has been destroyed.\n" +
             "=============================================================\n";
 
 

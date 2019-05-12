@@ -499,7 +499,7 @@ public class ProcessResourceController {
 
             Integer taskOrder = planProcessResourceService.taskRepositoryFindMaxConcreteOrder(fi.getId());
             if (taskOrder==null) {
-                String msg = "#990.82, "+mainDocument+", Can't get taskOrder, " +
+                String msg = "#990.82, "+mainDocument+", Tasks weren't created correctly for this batch, need to re-upload documents, " +
                         "batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
                 log.warn(msg);
                 status += (msg + '\n');
