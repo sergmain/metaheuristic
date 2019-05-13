@@ -16,6 +16,8 @@
  */
 package aiai.ai.yaml.metadata;
 
+import ai.metaheuristic.ai.yaml.metadata.Metadata;
+import ai.metaheuristic.ai.yaml.metadata.MetadataUtils;
 import org.junit.Test;
 
 import java.io.IOException;

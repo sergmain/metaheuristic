@@ -17,7 +17,8 @@
 
 package aiai.ai.station.actors;
 
-import aiai.ai.station.tasks.DownloadResourceTask;
+import ai.metaheuristic.ai.station.actors.AbstractTaskQueue;
+import ai.metaheuristic.ai.station.tasks.DownloadResourceTask;
 import org.junit.Test;
 
 import java.io.File;

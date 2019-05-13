@@ -16,8 +16,8 @@
  */
 package aiai.ai.core;
 
-import aiai.ai.launchpad.beans.ExperimentSnippet;
-import aiai.ai.launchpad.experiment.ExperimentService;
+import ai.metaheuristic.ai.launchpad.beans.ExperimentSnippet;
+import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import aiai.apps.commons.CommonConsts;
 import org.junit.Test;
 

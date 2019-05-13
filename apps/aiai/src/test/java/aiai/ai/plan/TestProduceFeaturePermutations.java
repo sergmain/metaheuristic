@@ -17,11 +17,11 @@
 
 package aiai.ai.plan;
 
-import aiai.ai.launchpad.beans.ExperimentFeature;
-import aiai.ai.launchpad.experiment.ExperimentService;
-import aiai.ai.launchpad.repositories.ExperimentFeatureRepository;
+import ai.metaheuristic.ai.launchpad.beans.ExperimentFeature;
+import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
+import ai.metaheuristic.ai.launchpad.repositories.ExperimentFeatureRepository;
 import aiai.ai.preparing.PreparingExperiment;
-import aiai.ai.utils.holders.IntHolder;
+import ai.metaheuristic.ai.utils.holders.IntHolder;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -17,8 +17,8 @@
 
 package aiai.ai.utils;
 
-import aiai.ai.Consts;
-import aiai.ai.station.StationTaskService;
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.station.StationTaskService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 

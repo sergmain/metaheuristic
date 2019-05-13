@@ -16,7 +16,7 @@
  */
 package aiai.ai.utils;
 
-import aiai.ai.utils.permutation.Permutation;
+import ai.metaheuristic.ai.utils.permutation.Permutation;
 import org.junit.Assert;
 import org.junit.Test;
 

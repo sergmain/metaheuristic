@@ -17,7 +17,7 @@
 
 package aiai.ai.profiles;
 
-import aiai.ai.Globals;
+import ai.metaheuristic.ai.Globals;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

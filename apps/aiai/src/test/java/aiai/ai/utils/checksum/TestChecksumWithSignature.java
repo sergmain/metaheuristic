@@ -16,8 +16,9 @@
  */
 package aiai.ai.utils.checksum;
 
-import aiai.ai.Globals;
+import ai.metaheuristic.ai.Globals;
 import aiai.apps.commons.utils.SecUtils;
+import ai.metaheuristic.ai.utils.checksum.ChecksumWithSignatureService;
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;

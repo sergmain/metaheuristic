@@ -6,7 +6,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New launchpad address</h1>
 
-        <!--/*@thymesVar id="address" type="aiai.ai.launchpad.beans.LaunchpadAddress"*/-->
+        <!--/*@thymesVar id="address" type="ai.metaheuristic.ai.launchpad.beans.LaunchpadAddress"*/-->
         <form class="pure-form pure-form-stacked" th:object="${address}" method="post" action="#" th:method="POST" th:action="@{/registry/address/address-add-commit}" accept-charset="UTF-8" id="address-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <input type="hidden" th:field="*{version}"/>

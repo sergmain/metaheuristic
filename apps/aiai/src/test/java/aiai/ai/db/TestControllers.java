@@ -17,8 +17,8 @@
 
 package aiai.ai.db;
 
-import aiai.ai.launchpad.beans.LogData;
-import aiai.ai.launchpad.repositories.LogDataRepository;
+import ai.metaheuristic.ai.launchpad.beans.LogData;
+import ai.metaheuristic.ai.launchpad.repositories.LogDataRepository;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;

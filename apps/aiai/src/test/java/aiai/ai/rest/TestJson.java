@@ -17,10 +17,10 @@
 
 package aiai.ai.rest;
 
-import aiai.ai.comm.Command;
-import aiai.ai.comm.ExchangeData;
-import aiai.ai.comm.Protocol;
-import aiai.ai.core.JsonUtils;
+import ai.metaheuristic.ai.comm.Command;
+import ai.metaheuristic.ai.comm.ExchangeData;
+import ai.metaheuristic.ai.comm.Protocol;
+import ai.metaheuristic.ai.core.JsonUtils;
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.junit.Assert;
 import org.junit.Rule;

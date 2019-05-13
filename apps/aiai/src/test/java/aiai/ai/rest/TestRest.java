@@ -17,10 +17,10 @@
 
 package aiai.ai.rest;
 
-import aiai.ai.Consts;
-import aiai.ai.comm.ExchangeData;
-import aiai.ai.comm.Protocol;
-import aiai.ai.core.JsonUtils;
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.comm.ExchangeData;
+import ai.metaheuristic.ai.comm.Protocol;
+import ai.metaheuristic.ai.core.JsonUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

@@ -16,10 +16,10 @@
  */
 package aiai.ai.utils;
 
-import aiai.ai.yaml.launchpad_lookup.ExtendedTimePeriod;
-import aiai.ai.yaml.launchpad_lookup.ExtendedTimePeriodUtils;
-import aiai.ai.yaml.launchpad_lookup.LaunchpadSchedule;
-import aiai.ai.yaml.launchpad_lookup.TimePeriods;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.ExtendedTimePeriod;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.ExtendedTimePeriodUtils;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.TimePeriods;
 import aiai.apps.commons.yaml.YamlUtils;
 import lombok.Data;
 import org.joda.time.LocalDateTime;

@@ -17,7 +17,7 @@
 
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.plan.PlanYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Process;

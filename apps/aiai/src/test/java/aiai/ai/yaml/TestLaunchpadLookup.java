@@ -17,8 +17,8 @@
 
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
-import aiai.ai.yaml.launchpad_lookup.LaunchpadLookupConfigUtils;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfigUtils;
 import org.junit.Test;
 
 import java.io.IOException;

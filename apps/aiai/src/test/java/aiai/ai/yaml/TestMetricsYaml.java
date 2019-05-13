@@ -16,9 +16,9 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.metrics.MetricValues;
-import aiai.ai.yaml.metrics.Metrics;
-import aiai.ai.yaml.metrics.MetricsUtils;
+import ai.metaheuristic.ai.yaml.metrics.MetricValues;
+import ai.metaheuristic.ai.yaml.metrics.Metrics;
+import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import org.junit.Test;
 
 import java.math.BigDecimal;

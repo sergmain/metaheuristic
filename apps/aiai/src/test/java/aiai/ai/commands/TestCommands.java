@@ -16,9 +16,9 @@
  */
 package aiai.ai.commands;
 
-import aiai.ai.comm.Command;
-import aiai.ai.comm.ExchangeData;
-import aiai.ai.comm.Protocol;
+import ai.metaheuristic.ai.comm.Command;
+import ai.metaheuristic.ai.comm.ExchangeData;
+import ai.metaheuristic.ai.comm.Protocol;
 import org.junit.Assert;
 import org.junit.Test;
 

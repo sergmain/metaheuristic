@@ -17,25 +17,25 @@
 
 package aiai.ai.preparing;
 
-import aiai.ai.Consts;
-import aiai.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import aiai.ai.plan.TaskCollector;
-import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Process;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
-import aiai.ai.launchpad.beans.Snippet;
-import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.ai.launchpad.plan.PlanCache;
-import aiai.ai.launchpad.plan.PlanService;
-import aiai.ai.launchpad.repositories.WorkbookRepository;
-import aiai.ai.launchpad.repositories.PlanRepository;
-import aiai.ai.launchpad.snippet.SnippetCache;
-import aiai.ai.launchpad.task.TaskPersistencer;
-import aiai.ai.yaml.plan.PlanYamlUtils;
+import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
+import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
+import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import ai.metaheuristic.api.v1.data.InputResourceParam;
 import ai.metaheuristic.api.v1.EnumsApi;
 import aiai.apps.commons.yaml.snippet.SnippetConfigUtils;

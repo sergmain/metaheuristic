@@ -18,7 +18,7 @@
 package aiai.ai.yaml;
 
 import ai.metaheuristic.api.v1.data.InputResourceParam;
-import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import org.junit.Test;
 
 import java.io.IOException;

@@ -17,7 +17,7 @@
 
 package aiai.ai.station;
 
-import aiai.ai.core.ExecProcessService;
+import ai.metaheuristic.ai.core.ExecProcessService;
 import aiai.apps.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;

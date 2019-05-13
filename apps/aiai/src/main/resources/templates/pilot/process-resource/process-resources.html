@@ -43,7 +43,7 @@
         </thead>
 
         <tbody>
-        <!--/*@thymesVar id="result" type="aiai.ai.pilot.process_resource.ProcessResourceController$ProcessResourceResult"*/-->
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.pilot.process_resource.ProcessResourceController$ProcessResourceResult"*/-->
         <tr th:each="r : ${result.items}">
             <td th:text="${r.batch.id}">#Id</td>
             <td th:text="${#dates.format(r.batch.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>

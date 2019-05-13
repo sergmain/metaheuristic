@@ -17,7 +17,7 @@
 
 package aiai.ai.system;
 
-import aiai.ai.core.ExecProcessService;
+import ai.metaheuristic.ai.core.ExecProcessService;
 import com.mysql.cj.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;

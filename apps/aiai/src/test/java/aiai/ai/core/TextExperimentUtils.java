@@ -16,9 +16,9 @@
  */
 package aiai.ai.core;
 
-import aiai.ai.launchpad.experiment.ExperimentUtils;
-import aiai.ai.yaml.hyper_params.HyperParams;
-import aiai.ai.yaml.hyper_params.HyperParamsUtils;
+import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
+import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
+import ai.metaheuristic.ai.yaml.hyper_params.HyperParamsUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.junit.Assert;

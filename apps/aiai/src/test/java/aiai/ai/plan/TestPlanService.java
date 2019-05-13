@@ -17,12 +17,12 @@
 
 package aiai.ai.plan;
 
-import aiai.ai.comm.Protocol;
-import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
-import aiai.ai.launchpad.task.TaskPersistencer;
-import aiai.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.comm.Protocol;
+import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
+import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
+import ai.metaheuristic.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingPlan;
-import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
+import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.data.SnippetApiData;

@@ -17,6 +17,7 @@
 
 package aiai.ai.utils;
 
+import ai.metaheuristic.ai.utils.DigitUtils;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

@@ -16,7 +16,7 @@
  */
 package aiai.ai.yaml.task_params_new;
 
-import aiai.ai.Consts;
+import ai.metaheuristic.ai.Consts;
 import aiai.ai.yaml.TestYamlParser;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.SnippetApiData;

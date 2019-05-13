@@ -53,9 +53,9 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New experiment</h1>
 
-        <!--/*@thymesVar id="hyperParams" type="aiai.ai.launchpad.data.ExperimentData$HyperParamsResult"*/-->
-        <!--/*@thymesVar id="simpleExperiment" type="aiai.ai.launchpad.data.ExperimentData$SimpleExperiment"*/-->
-        <!--/*@thymesVar id="snippetResult" type="aiai.ai.launchpad.data.ExperimentData$SnippetResult"*/-->
+        <!--/*@thymesVar id="hyperParams" type="ai.metaheuristic.ai.launchpad.data.ExperimentData$HyperParamsResult"*/-->
+        <!--/*@thymesVar id="simpleExperiment" type="ai.metaheuristic.ai.launchpad.data.ExperimentData$SimpleExperiment"*/-->
+        <!--/*@thymesVar id="snippetResult" type="ai.metaheuristic.ai.launchpad.data.ExperimentData$SnippetResult"*/-->
         <form class="pure-form pure-form-stacked" th:object="${simpleExperiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment-edit-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <fieldset>

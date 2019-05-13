@@ -16,7 +16,7 @@
  */
 package aiai.ai.core;
 
-import aiai.ai.utils.EnvProperty;
+import ai.metaheuristic.ai.utils.EnvProperty;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -32,7 +32,7 @@ import java.io.File;
 @SpringBootTest
 public class TestEnvProperty {
 
-    @Value("#{ T(aiai.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-dataset-task.timeout'), 1, 10, 5) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.download-dataset-task.timeout'), 1, 10, 5) }")
     private int envProperty;
 
     @Value("#{ T(aiai.ai.core.TestEnvProperty).getFile(environment.getProperty('aiai.station.download-dataset-task.timeout'), \"aaa.xml\" )}")

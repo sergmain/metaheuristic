@@ -17,7 +17,7 @@
 
 package aiai.ai.cache;
 
-import aiai.ai.launchpad.beans.Experiment;
+import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import aiai.ai.preparing.PreparingExperiment;
 import org.junit.Test;
 import org.junit.runner.RunWith;

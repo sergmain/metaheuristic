@@ -16,8 +16,8 @@
  */
 package aiai.ai.service;
 
-import aiai.ai.comm.Protocol;
-import aiai.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.comm.Protocol;
+import ai.metaheuristic.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.FeatureMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;

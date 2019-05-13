@@ -17,11 +17,11 @@
 
 package aiai.ai.atlas;
 
-import aiai.ai.Enums;
-import aiai.ai.launchpad.atlas.AtlasService;
-import aiai.ai.launchpad.atlas.ExperimentStoredToAtlas;
-import aiai.ai.launchpad.data.ExperimentData;
-import aiai.ai.launchpad.experiment.ExperimentTopLevelService;
+import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
+import ai.metaheuristic.ai.launchpad.atlas.ExperimentStoredToAtlas;
+import ai.metaheuristic.ai.launchpad.data.ExperimentData;
+import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
 import aiai.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import com.fasterxml.jackson.core.JsonProcessingException;

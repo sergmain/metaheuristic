@@ -17,10 +17,10 @@
 
 package aiai.ai.plan;
 
-import aiai.ai.Consts;
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.launchpad.Process;
-import aiai.ai.yaml.plan.PlanYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;

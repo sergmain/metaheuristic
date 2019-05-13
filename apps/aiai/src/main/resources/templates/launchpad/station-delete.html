@@ -6,7 +6,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Station</h1>
 
-        <!--/*@thymesVar id="station" type="aiai.ai.launchpad.beans.Station"*/-->
+        <!--/*@thymesVar id="station" type="ai.metaheuristic.ai.launchpad.beans.Station"*/-->
         <!--<form class="pure-form pure-form-stacked" th:object="${station}" method="post" action="#" th:method="POST" th:action="@{/launchpad/station-form-commit}" accept-charset="UTF-8" id="station-form" name="f">-->
         <form class="form-horizontal" th:object="${station}">
             <div class="form-group">

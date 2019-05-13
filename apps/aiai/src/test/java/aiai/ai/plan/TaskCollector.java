@@ -18,7 +18,7 @@
 package aiai.ai.plan;
 
 import ai.metaheuristic.api.v1.launchpad.Workbook;
-import aiai.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

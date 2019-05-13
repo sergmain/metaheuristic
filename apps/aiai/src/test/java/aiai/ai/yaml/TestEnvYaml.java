@@ -16,8 +16,8 @@
  */
 package aiai.ai.yaml;
 
-import aiai.ai.yaml.env.EnvYaml;
-import aiai.ai.yaml.env.EnvYamlUtils;
+import ai.metaheuristic.ai.yaml.env.EnvYaml;
+import ai.metaheuristic.ai.yaml.env.EnvYamlUtils;
 import org.junit.Test;
 
 import java.io.IOException;

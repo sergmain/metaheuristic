@@ -6,7 +6,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">New account</h1>
 
-        <!--/*@thymesVar id="account" type="aiai.ai.launchpad.beans.Account"*/-->
+        <!--/*@thymesVar id="account" type="ai.metaheuristic.ai.launchpad.beans.Account"*/-->
         <form class="pure-form pure-form-stacked" th:object="${account}" method="post" action="#" th:method="POST" th:action="@{/launchpad/account/account-add-commit}" accept-charset="UTF-8" id="account-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <input type="hidden" th:field="*{version}"/>
