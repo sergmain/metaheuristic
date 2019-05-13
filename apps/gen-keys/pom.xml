@@ -70,7 +70,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>aiai.apps.simple_snippet.GenerateKeys</mainClass>
+                    <mainClass>ai.ai.ai.ai.ai.metaheuristic.apps.simple_snippet.GenerateKeys</mainClass>
                 </configuration>
             </plugin>
         </plugins>

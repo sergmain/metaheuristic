@@ -73,7 +73,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>aiai.apps.simple_snippet.SimpleApp</mainClass>
+                    <mainClass>ai.metaheuristic.apps.simple_snippet.SimpleApp</mainClass>
                 </configuration>
             </plugin>
         </plugins>

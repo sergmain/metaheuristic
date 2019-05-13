@@ -1,27 +1,25 @@
 /*
- AiAi, Copyright (C) 2017 - 2018, Serge Maslyukov
-
- This program is free software: you can redistribute it and/or modify
- it under the terms of the GNU General Public License as published by
- the Free Software Foundation, either version 3 of the License, or
- (at your option) any later version.
-
- This program is distributed in the hope that it will be useful,
- but WITHOUT ANY WARRANTY; without even the implied warranty of
- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- GNU General Public License for more details.
-
- You should have received a copy of the GNU General Public License
- along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
+ * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, version 3 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package aiai.ai.yaml;
 
 import ai.metaheuristic.api.v1.data.SnippetApiData;
-import aiai.apps.commons.CommonConsts;
-import aiai.apps.commons.utils.Checksum;
-import aiai.apps.commons.yaml.snippet.SnippetConfigList;
-import aiai.apps.commons.yaml.snippet.SnippetConfigListUtils;
+import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
 import org.junit.Test;
 
 import java.util.ArrayList;

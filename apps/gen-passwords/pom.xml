@@ -74,7 +74,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>aiai.apps.gen_passwords.GeneratePasswords</mainClass>
+                    <mainClass>ai.ai.ai.ai.metaheuristic.apps.gen_passwords.GeneratePasswords</mainClass>
                 </configuration>
             </plugin>
         </plugins>

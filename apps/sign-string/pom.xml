@@ -77,7 +77,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>aiai.apps.sign_string.SignString</mainClass>
+                    <mainClass>ai.ai.metaheuristic.apps.sign_string.SignString</mainClass>
                 </configuration>
             </plugin>
         </plugins>
