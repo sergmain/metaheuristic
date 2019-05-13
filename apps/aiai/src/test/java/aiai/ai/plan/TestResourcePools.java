@@ -19,7 +19,7 @@ package aiai.ai.plan;
 
 import aiai.ai.Consts;
 import aiai.ai.launchpad.plan.PlanService;
-import aiai.api.v1.data_storage.DataStorageParams;
+import metaheuristic.api.v1.data_storage.DataStorageParams;
 import aiai.ai.yaml.data_storage.DataStorageParamsUtils;
 import org.junit.Test;
 

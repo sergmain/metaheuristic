@@ -17,7 +17,7 @@
 
 package aiai.ai.launchpad.plan;
 
-import aiai.api.v1.launchpad.Plan;
+import metaheuristic.api.v1.launchpad.Plan;
 import aiai.ai.launchpad.beans.PlanImpl;
 import aiai.ai.launchpad.repositories.PlanRepository;
 import lombok.extern.slf4j.Slf4j;

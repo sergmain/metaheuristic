@@ -1,10 +1,9 @@
 /*
- * AiAi, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * the Free Software Foundation, either version 3 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,20 +14,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.api.v1.sourcing;
+package metaheuristic.api.v1.sourcing;
 
 import lombok.Data;
 
 /**
  * @author Serge
  * Date: 5/8/2019
- * Time: 12:05 AM
+ * Time: 12:06 AM
  */
 @Data
-public class GitInfo {
-    public String repo;
-    // right now it'll be always as origin
-//        public String remote;
-    public String branch;
-    public String commit;
+public class DiskInfo {
+    public String code;
+    public String env;
+
+    public String path;
 }

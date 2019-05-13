@@ -16,7 +16,7 @@
  */
 package aiai.ai.launchpad.beans;
 
-import aiai.api.v1.launchpad.Plan;
+import metaheuristic.api.v1.launchpad.Plan;
 import lombok.Data;
 
 import javax.persistence.*;

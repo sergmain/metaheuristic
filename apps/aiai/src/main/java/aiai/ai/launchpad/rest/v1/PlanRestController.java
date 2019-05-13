@@ -17,10 +17,10 @@
 
 package aiai.ai.launchpad.rest.v1;
 
-import aiai.api.v1.launchpad.Plan;
+import metaheuristic.api.v1.launchpad.Plan;
 import aiai.ai.launchpad.beans.PlanImpl;
-import aiai.api.v1.data.PlanApiData;
-import aiai.api.v1.data.OperationStatusRest;
+import metaheuristic.api.v1.data.PlanApiData;
+import metaheuristic.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.plan.PlanTopLevelService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;

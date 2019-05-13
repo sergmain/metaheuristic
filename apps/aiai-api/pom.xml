@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  ~ AiAi, Copyright (C) 2017-2019  Serge Maslyukov
+  ~ Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
   ~
   ~ This program is free software: you can redistribute it and/or modify
   ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation, either version 3 of the License, or
-  ~ (at your option) any later version.
+  ~ the Free Software Foundation, either version 3 of the License.
   ~
   ~ This program is distributed in the hope that it will be useful,
   ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -20,13 +19,13 @@
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
-	<groupId>aiai</groupId>
+	<groupId>ai.metaheuristic</groupId>
 	<artifactId>api</artifactId>
 	<version>1.0-SNAPSHOT</version>
 	<packaging>jar</packaging>
 
-	<name>aiai API</name>
-	<description>AiAi platform API</description>
+	<name>metaheuristic API</name>
+	<description>metaheuristic platform API</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -55,7 +54,7 @@
 	</dependencies>
 
 	<build>
-        <finalName>aiai-api</finalName>
+        <finalName>metaheuristic-api-${version}</finalName>
 		<plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

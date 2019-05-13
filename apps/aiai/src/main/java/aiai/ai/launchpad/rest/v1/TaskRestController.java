@@ -17,10 +17,10 @@
 
 package aiai.ai.launchpad.rest.v1;
 
-import aiai.api.v1.data.SimpleApiData;
-import aiai.api.v1.data.TaskApiData;
+import metaheuristic.api.v1.data.SimpleApiData;
+import metaheuristic.api.v1.data.TaskApiData;
 import aiai.ai.launchpad.repositories.TaskRepository;
-import aiai.api.v1.launchpad.Task;
+import metaheuristic.api.v1.launchpad.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 

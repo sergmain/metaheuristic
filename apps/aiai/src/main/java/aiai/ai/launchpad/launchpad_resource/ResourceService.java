@@ -19,7 +19,7 @@ package aiai.ai.launchpad.launchpad_resource;
 
 import aiai.ai.exceptions.StoreNewFileException;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import aiai.api.v1.EnumsApi;
+import metaheuristic.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

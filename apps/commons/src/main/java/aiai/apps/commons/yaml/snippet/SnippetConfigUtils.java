@@ -16,7 +16,7 @@
  */
 package aiai.apps.commons.yaml.snippet;
 
-import aiai.api.v1.data.SnippetApiData;
+import metaheuristic.api.v1.data.SnippetApiData;
 import aiai.apps.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;

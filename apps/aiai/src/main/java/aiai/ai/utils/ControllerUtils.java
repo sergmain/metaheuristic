@@ -17,7 +17,7 @@
 package aiai.ai.utils;
 
 import aiai.ai.Consts;
-import aiai.api.v1.data.BaseDataClass;
+import metaheuristic.api.v1.data.BaseDataClass;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.ui.Model;

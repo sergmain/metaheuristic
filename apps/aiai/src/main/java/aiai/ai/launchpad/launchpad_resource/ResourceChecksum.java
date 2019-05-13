@@ -17,7 +17,7 @@
 
 package aiai.ai.launchpad.launchpad_resource;
 
-import aiai.api.v1.EnumsApi;
+import metaheuristic.api.v1.EnumsApi;
 import aiai.apps.commons.utils.Checksum;
 
 import java.io.File;

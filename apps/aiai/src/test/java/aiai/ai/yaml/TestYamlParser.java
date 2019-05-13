@@ -17,7 +17,7 @@
 
 package aiai.ai.yaml;
 
-import aiai.api.v1.data.SnippetApiData;
+import metaheuristic.api.v1.data.SnippetApiData;
 import aiai.apps.commons.CommonConsts;
 import aiai.apps.commons.yaml.snippet.SnippetConfigList;
 import aiai.apps.commons.yaml.snippet.SnippetConfigListUtils;

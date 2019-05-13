@@ -16,7 +16,7 @@
  */
 package aiai.ai.launchpad.beans;
 
-import aiai.api.v1.launchpad.Task;
+import metaheuristic.api.v1.launchpad.Task;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.ToString;

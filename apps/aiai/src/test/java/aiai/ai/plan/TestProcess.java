@@ -17,8 +17,8 @@
 
 package aiai.ai.plan;
 
-import aiai.api.v1.data.PlanApiData;
-import aiai.api.v1.launchpad.Process;
+import metaheuristic.api.v1.data.PlanApiData;
+import metaheuristic.api.v1.launchpad.Process;
 import aiai.ai.yaml.plan.PlanYamlUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;

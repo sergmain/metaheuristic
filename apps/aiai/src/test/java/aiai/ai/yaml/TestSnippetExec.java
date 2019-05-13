@@ -17,7 +17,7 @@
 package aiai.ai.yaml;
 
 import aiai.ai.yaml.snippet_exec.SnippetExecUtils;
-import aiai.api.v1.data.SnippetApiData;
+import metaheuristic.api.v1.data.SnippetApiData;
 import org.junit.Assert;
 import org.junit.Test;
 

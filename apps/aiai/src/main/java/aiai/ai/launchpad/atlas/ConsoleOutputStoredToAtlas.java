@@ -17,7 +17,7 @@
 
 package aiai.ai.launchpad.atlas;
 
-import aiai.api.v1.data.BaseDataClass;
+import metaheuristic.api.v1.data.BaseDataClass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

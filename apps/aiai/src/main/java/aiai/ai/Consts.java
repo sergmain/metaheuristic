@@ -18,8 +18,8 @@
 package aiai.ai;
 
 import aiai.ai.yaml.data_storage.DataStorageParamsUtils;
-import aiai.api.v1.data_storage.DataStorageParams;
-import aiai.api.v1.EnumsApi;
+import metaheuristic.api.v1.data_storage.DataStorageParams;
+import metaheuristic.api.v1.EnumsApi;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 

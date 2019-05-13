@@ -17,7 +17,7 @@
 
 package aiai.ai.yaml;
 
-import aiai.api.v1.data.InputResourceParam;
+import metaheuristic.api.v1.data.InputResourceParam;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
 import org.junit.Test;
 

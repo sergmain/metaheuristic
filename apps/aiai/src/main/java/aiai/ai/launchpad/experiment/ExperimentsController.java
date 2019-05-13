@@ -20,7 +20,7 @@ package aiai.ai.launchpad.experiment;
 import aiai.ai.launchpad.atlas.AtlasService;
 import aiai.ai.launchpad.beans.Experiment;
 import aiai.ai.launchpad.data.ExperimentData;
-import aiai.api.v1.data.OperationStatusRest;
+import metaheuristic.api.v1.data.OperationStatusRest;
 import aiai.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;

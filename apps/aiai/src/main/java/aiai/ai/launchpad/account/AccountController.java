@@ -20,7 +20,7 @@ package aiai.ai.launchpad.account;
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Account;
 import aiai.ai.launchpad.data.AccountData;
-import aiai.api.v1.data.OperationStatusRest;
+import metaheuristic.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.repositories.AccountRepository;
 import aiai.ai.utils.ControllerUtils;
 import org.springframework.context.annotation.Profile;

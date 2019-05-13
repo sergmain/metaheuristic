@@ -17,9 +17,9 @@
 
 package aiai.ai.launchpad.plan;
 
-import aiai.api.v1.EnumsApi;
-import aiai.api.v1.launchpad.Process;
-import aiai.api.v1.launchpad.Plan;
+import metaheuristic.api.v1.EnumsApi;
+import metaheuristic.api.v1.launchpad.Process;
+import metaheuristic.api.v1.launchpad.Plan;
 
 public interface ProcessValidator {
     EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst);

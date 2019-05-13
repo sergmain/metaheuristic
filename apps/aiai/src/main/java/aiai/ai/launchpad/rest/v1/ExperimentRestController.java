@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.rest.v1;
 
 import aiai.ai.launchpad.beans.Experiment;
-import aiai.api.v1.data.OperationStatusRest;
+import metaheuristic.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.experiment.ExperimentTopLevelService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;

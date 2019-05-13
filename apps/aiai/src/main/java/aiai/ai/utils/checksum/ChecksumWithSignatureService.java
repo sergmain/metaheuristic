@@ -16,7 +16,7 @@
  */
 package aiai.ai.utils.checksum;
 
-import aiai.api.v1.EnumsApi;
+import metaheuristic.api.v1.EnumsApi;
 import aiai.apps.commons.utils.Checksum;
 import aiai.apps.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;

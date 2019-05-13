@@ -20,7 +20,7 @@ package aiai.ai.launchpad.data;
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.utils.SimpleSelectOption;
-import aiai.api.v1.data.BaseDataClass;
+import metaheuristic.api.v1.data.BaseDataClass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 

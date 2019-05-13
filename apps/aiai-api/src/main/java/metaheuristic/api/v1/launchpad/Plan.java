@@ -1,10 +1,9 @@
 /*
- * AiAi, Copyright (C) 2017-2019  Serge Maslyukov
+ * Metaheuristic, Copyright (C) 2017-2019  Serge Maslyukov
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * the Free Software Foundation, either version 3 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -15,47 +14,43 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package aiai.api.v1.launchpad;
+package metaheuristic.api.v1.launchpad;
 
 /**
  * @author Serge
  * Date: 5/9/2019
- * Time: 3:33 PM
+ * Time: 3:27 PM
  */
-public interface Workbook {
+public interface Plan {
     Long getId();
 
     Integer getVersion();
 
-    Long getPlanId();
+    String getCode();
 
     long getCreatedOn();
 
-    Long getCompletedOn();
+    String getParams();
 
-    String getInputResourceParam();
-
-    int getProducingOrder();
+    boolean isLocked();
 
     boolean isValid();
 
-    int getExecState();
+    boolean isClean();
 
     void setId(Long id);
 
     void setVersion(Integer version);
 
-    void setPlanId(Long planId);
+    void setCode(String code);
 
     void setCreatedOn(long createdOn);
 
-    void setCompletedOn(Long completedOn);
+    void setParams(String params);
 
-    void setInputResourceParam(String inputResourceParam);
-
-    void setProducingOrder(int producingOrder);
+    void setLocked(boolean locked);
 
     void setValid(boolean valid);
 
-    void setExecState(int execState);
+    void setClean(boolean clean);
 }

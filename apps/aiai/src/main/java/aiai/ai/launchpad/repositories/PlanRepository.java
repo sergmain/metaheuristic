@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.PlanImpl;
-import aiai.api.v1.launchpad.Plan;
+import metaheuristic.api.v1.launchpad.Plan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;

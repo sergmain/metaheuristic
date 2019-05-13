@@ -19,7 +19,7 @@ package aiai.ai.snippet;
 
 import aiai.ai.launchpad.beans.ExperimentSnippet;
 import aiai.ai.launchpad.snippet.SnippetService;
-import aiai.api.v1.EnumsApi;
+import metaheuristic.api.v1.EnumsApi;
 import org.junit.Test;
 
 import java.util.ArrayList;

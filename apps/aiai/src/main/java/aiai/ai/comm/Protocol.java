@@ -22,7 +22,7 @@ import aiai.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import aiai.ai.station.sourcing.git.GitSourcingService;
 import aiai.ai.yaml.env.EnvYaml;
 import aiai.ai.yaml.station_status.StationStatus;
-import aiai.api.v1.EnumsApi;
+import metaheuristic.api.v1.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
