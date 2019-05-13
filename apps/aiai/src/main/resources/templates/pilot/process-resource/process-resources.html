@@ -52,9 +52,10 @@
             <td><a class="pure-button pure-button-primary"
                    th:href="${'/pilot/process-resource/process-resource-delete/' + r.plan.id + '/' + r.batch.id}">Delete</a></td>
 
-            <td><a class="pure-button pure-button-primary"
+            <td>
+                <!-- th:disabled="${!r.finished}"-->
+                <a class="pure-button pure-button-primary"
                    target="_blank"
-                   th:disabled="${!r.finished}"
                    th:href="${'/pilot/process-resource/process-resource-download-result/' + r.batch.id + '/result.zip'}">Download result</a></td>
         </tr>
         <tr>
