@@ -373,12 +373,6 @@ public class AtlasTopLevelService {
                 taskWIthTypes.size()>10
         );
 
-//        SELECT new aiai.ai.launchpad.experiment.task.TaskWIthType(t, tef.taskType)
-//        FROM Task t, ExperimentTaskFeature tef
-//        WHERE t.id=tef.taskId and tef.featureId=:featureId order by t.id asc
-//        tasksResult.items = taskRepository.findPredictTasks(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
-
-
         AtlasData.HyperParamResult hyperParamResult = new AtlasData.HyperParamResult();
         for (ExperimentHyperParams hyperParam : estb.getHyperParams()) {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());

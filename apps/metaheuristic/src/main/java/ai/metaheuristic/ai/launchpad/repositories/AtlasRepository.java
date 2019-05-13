@@ -32,7 +32,7 @@ import org.springframework.transaction.annotation.Transactional;
 public interface AtlasRepository extends JpaRepository<Atlas, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select new aiai.ai.launchpad.atlas.AtlasSimple(" +
+    @Query(value="select new ai.metaheuristic.ai.launchpad.atlas.AtlasSimple(" +
             "b.id, b.experiment, b.name, b.description, b.createdOn ) from Atlas b order by b.id desc")
     Slice<AtlasSimple> findAllAsSimple(Pageable pageable);
 

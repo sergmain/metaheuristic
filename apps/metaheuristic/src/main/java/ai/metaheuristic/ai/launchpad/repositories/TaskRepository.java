@@ -101,7 +101,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
     // !!! class must not be inner class
     @Transactional(readOnly = true)
-    @Query("SELECT new aiai.api.v1.data.TaskWIthType(t, tef.taskType) FROM TaskImpl t, ExperimentTaskFeature tef " +
+    @Query("SELECT new ai.metaheuristic.api.v1.data.TaskWIthType(t, tef.taskType) FROM TaskImpl t, ExperimentTaskFeature tef " +
             "where t.id=tef.taskId and tef.featureId=:featureId order by t.id asc ")
     Slice<TaskWIthType> findPredictTasks(Pageable pageable, long featureId);
 
