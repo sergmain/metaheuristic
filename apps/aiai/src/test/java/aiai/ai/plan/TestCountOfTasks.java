@@ -17,13 +17,13 @@
 
 package aiai.ai.plan;
 
-import metaheuristic.api.v1.data.PlanApiData;
-import metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.launchpad.Process;
 import aiai.ai.launchpad.task.TaskPersistencer;
 import aiai.ai.launchpad.task.TaskService;
 import aiai.ai.preparing.PreparingPlan;
 import aiai.ai.yaml.input_resource_param.InputResourceParamUtils;
-import metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;

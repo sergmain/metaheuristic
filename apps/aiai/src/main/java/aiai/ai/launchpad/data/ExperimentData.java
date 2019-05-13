@@ -19,10 +19,10 @@ package aiai.ai.launchpad.data;
 
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.utils.SimpleSelectOption;
-import metaheuristic.api.v1.EnumsApi;
-import metaheuristic.api.v1.data.BaseDataClass;
-import metaheuristic.api.v1.data.TaskApiData;
-import metaheuristic.api.v1.launchpad.Workbook;
+import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.BaseDataClass;
+import ai.metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.api.v1.launchpad.Workbook;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

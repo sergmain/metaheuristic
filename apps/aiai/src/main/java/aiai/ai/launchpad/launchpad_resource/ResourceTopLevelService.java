@@ -18,10 +18,10 @@ package aiai.ai.launchpad.launchpad_resource;
 
 import aiai.ai.Globals;
 import aiai.ai.exceptions.StoreNewFileException;
-import metaheuristic.api.v1.EnumsApi;
-import metaheuristic.api.v1.launchpad.BinaryData;
+import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.launchpad.BinaryData;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.data.ResourceData;
 import aiai.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;

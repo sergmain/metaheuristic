@@ -18,8 +18,8 @@ package aiai.ai.yaml.task_params_new;
 
 import aiai.ai.Consts;
 import aiai.ai.yaml.TestYamlParser;
-import metaheuristic.api.v1.EnumsApi;
-import metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.SnippetApiData;
 import aiai.apps.commons.CommonConsts;
 import org.junit.Assert;
 import org.junit.Test;

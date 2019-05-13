@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.WorkbookImpl;
-import metaheuristic.api.v1.launchpad.Workbook;
+import ai.metaheuristic.api.v1.launchpad.Workbook;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;

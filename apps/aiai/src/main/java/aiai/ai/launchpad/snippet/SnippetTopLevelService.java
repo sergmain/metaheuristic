@@ -19,11 +19,11 @@ package aiai.ai.launchpad.snippet;
 
 import aiai.ai.launchpad.beans.Snippet;
 import aiai.ai.launchpad.binary_data.BinaryDataService;
-import metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.data.SnippetData;
 import aiai.ai.launchpad.repositories.SnippetRepository;
-import metaheuristic.api.v1.EnumsApi;
-import metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.SnippetApiData;
 import aiai.apps.commons.utils.DirUtils;
 import aiai.apps.commons.utils.ZipUtils;
 import lombok.extern.slf4j.Slf4j;

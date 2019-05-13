@@ -17,7 +17,7 @@
  */
 package aiai.apps.commons.utils;
 
-import metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.EnumsApi;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

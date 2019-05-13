@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.experiment;
 
 import aiai.ai.launchpad.beans.Experiment;
-import metaheuristic.api.v1.launchpad.Workbook;
+import ai.metaheuristic.api.v1.launchpad.Workbook;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.ai.utils.holders.IntHolder;
 import lombok.extern.slf4j.Slf4j;

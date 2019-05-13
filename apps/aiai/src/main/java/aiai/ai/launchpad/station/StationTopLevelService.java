@@ -19,11 +19,11 @@ package aiai.ai.launchpad.station;
 
 import aiai.ai.Globals;
 import aiai.ai.launchpad.beans.Station;
-import metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.data.StationData;
 import aiai.ai.launchpad.repositories.StationsRepository;
 import aiai.ai.utils.ControllerUtils;
-import metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;

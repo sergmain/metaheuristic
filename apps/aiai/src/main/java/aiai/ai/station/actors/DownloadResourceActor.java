@@ -25,7 +25,7 @@ import aiai.ai.station.tasks.DownloadResourceTask;
 import aiai.ai.resource.ResourceUtils;
 import aiai.ai.utils.RestUtils;
 import aiai.ai.yaml.station_task.StationTask;
-import metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;
 import org.apache.http.client.fluent.Request;

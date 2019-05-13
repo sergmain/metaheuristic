@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.repositories;
 
 import aiai.ai.launchpad.beans.BinaryDataImpl;
-import metaheuristic.api.v1.launchpad.BinaryData;
+import ai.metaheuristic.api.v1.launchpad.BinaryData;
 import aiai.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import aiai.ai.launchpad.launchpad_resource.SimpleResource;
 import org.springframework.context.annotation.Profile;

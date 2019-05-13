@@ -20,7 +20,7 @@ package aiai.ai.launchpad.rest.v1;
 import aiai.ai.launchpad.account.AccountTopLevelService;
 import aiai.ai.launchpad.beans.Account;
 import aiai.ai.launchpad.data.AccountData;
-import metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;

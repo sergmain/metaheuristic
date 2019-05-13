@@ -17,8 +17,8 @@
 package aiai.ai.yaml.plan;
 
 import aiai.ai.Consts;
-import metaheuristic.api.v1.data.PlanApiData;
-import metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.launchpad.Process;
 import aiai.apps.commons.yaml.YamlUtils;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;

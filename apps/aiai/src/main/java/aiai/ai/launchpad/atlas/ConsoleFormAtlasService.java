@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.atlas;
 
 import aiai.ai.exceptions.BreakFromForEachException;
-import metaheuristic.api.v1.launchpad.Task;
+import ai.metaheuristic.api.v1.launchpad.Task;
 import aiai.ai.launchpad.repositories.TaskRepository;
 import aiai.apps.commons.utils.DirUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;

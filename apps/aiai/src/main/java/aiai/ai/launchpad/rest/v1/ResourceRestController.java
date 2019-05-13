@@ -17,7 +17,7 @@
 
 package aiai.ai.launchpad.rest.v1;
 
-import metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.data.ResourceData;
 import aiai.ai.launchpad.launchpad_resource.ResourceTopLevelService;
 import org.springframework.context.annotation.Profile;

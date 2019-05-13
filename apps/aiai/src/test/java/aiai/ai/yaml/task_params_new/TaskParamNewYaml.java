@@ -16,7 +16,7 @@
  */
 package aiai.ai.yaml.task_params_new;
 
-import metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.v1.data.SnippetApiData;
 import lombok.Data;
 
 import java.util.LinkedHashMap;

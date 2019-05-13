@@ -16,7 +16,7 @@
  */
 package aiai.ai.yaml.task;
 
-import metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.api.v1.data.TaskApiData;
 import aiai.apps.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.Yaml;
 

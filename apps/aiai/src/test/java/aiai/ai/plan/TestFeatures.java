@@ -19,7 +19,7 @@ package aiai.ai.plan;
 
 import aiai.ai.launchpad.beans.ExperimentFeature;
 import aiai.ai.preparing.PreparingPlan;
-import metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data.PlanApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;

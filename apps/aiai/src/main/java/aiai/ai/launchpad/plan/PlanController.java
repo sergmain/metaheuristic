@@ -17,12 +17,12 @@
 
 package aiai.ai.launchpad.plan;
 
-import metaheuristic.api.v1.launchpad.Plan;
+import ai.metaheuristic.api.v1.launchpad.Plan;
 import aiai.ai.launchpad.beans.PlanImpl;
-import metaheuristic.api.v1.data.PlanApiData;
-import metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import aiai.ai.utils.ControllerUtils;
-import metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;

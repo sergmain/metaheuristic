@@ -19,14 +19,14 @@ package aiai.ai.launchpad.experiment;
 
 import aiai.ai.launchpad.beans.*;
 import aiai.ai.launchpad.repositories.SnippetRepository;
-import metaheuristic.api.v1.EnumsApi;
-import metaheuristic.api.v1.launchpad.Plan;
-import metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.launchpad.Plan;
+import ai.metaheuristic.api.v1.launchpad.Process;
 import aiai.ai.launchpad.plan.ProcessValidator;
 import aiai.ai.launchpad.repositories.ExperimentRepository;
 import aiai.ai.launchpad.repositories.WorkbookRepository;
 import aiai.ai.launchpad.snippet.SnippetService;
-import metaheuristic.api.v1.launchpad.Workbook;
+import ai.metaheuristic.api.v1.launchpad.Workbook;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;

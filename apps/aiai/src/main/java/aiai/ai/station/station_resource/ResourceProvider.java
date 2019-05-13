@@ -21,8 +21,8 @@ import aiai.ai.resource.AssetFile;
 import aiai.ai.station.LaunchpadLookupExtendedService;
 import aiai.ai.yaml.metadata.Metadata;
 import aiai.ai.yaml.station_task.StationTask;
-import metaheuristic.api.v1.data.SnippetApiData;
-import metaheuristic.api.v1.data_storage.DataStorageParams;
+import ai.metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 
 import java.io.File;
 import java.util.List;

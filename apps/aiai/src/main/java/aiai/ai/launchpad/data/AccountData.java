@@ -18,7 +18,7 @@
 package aiai.ai.launchpad.data;
 
 import aiai.ai.launchpad.beans.Account;
-import metaheuristic.api.v1.data.BaseDataClass;
+import ai.metaheuristic.api.v1.data.BaseDataClass;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

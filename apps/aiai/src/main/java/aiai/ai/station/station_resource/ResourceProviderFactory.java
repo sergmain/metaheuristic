@@ -18,7 +18,7 @@
 package aiai.ai.station.station_resource;
 
 import aiai.ai.exceptions.ResourceProviderException;
-import metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.EnumsApi;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 

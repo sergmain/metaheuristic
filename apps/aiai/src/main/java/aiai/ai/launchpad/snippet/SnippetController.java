@@ -16,7 +16,7 @@
  */
 package aiai.ai.launchpad.snippet;
 
-import metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import aiai.ai.launchpad.data.SnippetData;
 import aiai.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;

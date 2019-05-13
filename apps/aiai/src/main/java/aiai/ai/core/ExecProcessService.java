@@ -16,7 +16,7 @@
  */
 package aiai.ai.core;
 
-import metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.v1.data.SnippetApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

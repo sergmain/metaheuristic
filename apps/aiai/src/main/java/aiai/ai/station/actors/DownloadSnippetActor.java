@@ -28,7 +28,7 @@ import aiai.ai.utils.RestUtils;
 import aiai.ai.utils.checksum.CheckSumAndSignatureStatus;
 import aiai.ai.utils.checksum.ChecksumWithSignatureService;
 import aiai.ai.yaml.metadata.Metadata;
-import metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.EnumsApi;
 import aiai.apps.commons.utils.Checksum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.client.HttpResponseException;

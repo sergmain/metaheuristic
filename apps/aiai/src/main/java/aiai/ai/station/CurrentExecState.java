@@ -18,7 +18,7 @@ package aiai.ai.station;
 
 import aiai.ai.comm.Protocol;
 import aiai.ai.utils.holders.BoolHolder;
-import metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.EnumsApi;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 

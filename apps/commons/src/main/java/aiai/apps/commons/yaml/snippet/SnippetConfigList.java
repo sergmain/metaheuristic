@@ -17,7 +17,7 @@
  */
 package aiai.apps.commons.yaml.snippet;
 
-import metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.v1.data.SnippetApiData;
 import lombok.Data;
 
 import java.util.List;
