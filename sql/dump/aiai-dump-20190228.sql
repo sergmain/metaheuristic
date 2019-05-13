@@ -19,7 +19,7 @@
 -- Table structure for table `aiai_account`
 --
 
-DROP TABLE IF EXISTS `aiai_account`;
+DROP TABLE IF EXISTS MH_account;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
  SET character_set_client = utf8mb4 ;
 CREATE TABLE `aiai_account` (
@@ -46,9 +46,9 @@ CREATE TABLE `aiai_account` (
 -- Dumping data for table `aiai_account`
 --
 
-LOCK TABLES `aiai_account` WRITE;
-/*!40000 ALTER TABLE `aiai_account` DISABLE KEYS */;
-/*!40000 ALTER TABLE `aiai_account` ENABLE KEYS */;
+LOCK TABLES MH_account WRITE;
+/*!40000 ALTER TABLE MH_account DISABLE KEYS */;
+/*!40000 ALTER TABLE MH_account ENABLE KEYS */;
 UNLOCK TABLES;
 
 --

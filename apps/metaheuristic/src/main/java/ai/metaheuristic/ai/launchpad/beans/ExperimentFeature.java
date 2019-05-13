@@ -21,7 +21,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_EXPERIMENT_FEATURE")
+@Table(name = "MH_EXPERIMENT_FEATURE")
 @Data
 public class ExperimentFeature implements Serializable {
     private static final long serialVersionUID = -7943373261306370650L;

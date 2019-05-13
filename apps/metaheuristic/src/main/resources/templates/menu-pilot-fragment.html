@@ -1,6 +1,6 @@
 <div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      sec:authorize="isAuthenticated()"
-     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
     <a class="pure-menu-heading">Pilot</a>
     <ul>

@@ -24,7 +24,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_TASK")
+@Table(name = "MH_TASK")
 @Data
 @ToString(exclude = {"params", "metrics"} )
 public class TaskImpl implements Serializable, Task {

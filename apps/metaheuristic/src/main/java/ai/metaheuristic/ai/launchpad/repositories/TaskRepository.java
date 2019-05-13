@@ -109,7 +109,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(nativeQuery = true, value = "select z.* "+
             "from ( "+
             "           SELECT count(*) count, t.TASK_ORDER "+
-            "           FROM aiai_task t\n"+
+            "           FROM MH_TASK t\n"+
             "           where t.WORKBOOK_ID =:workbookId "+
             "           group by t.TASK_ORDER "+
             "     ) z "+

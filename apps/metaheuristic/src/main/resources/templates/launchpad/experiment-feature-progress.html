@@ -1,7 +1,7 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      layout:decorate="~{layout-launchpad}"
-     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
      sec:authorize="isAuthenticated()"
 >
     <!--/*@thymesVar id="result" type="ai.metaheuristic.api.v1.data.TaskApiData$TasksResult"*/-->

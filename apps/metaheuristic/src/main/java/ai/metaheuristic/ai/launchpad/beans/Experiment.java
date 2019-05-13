@@ -37,7 +37,7 @@ import java.util.Map;
  * Time: 15:38
  */
 @Entity
-@Table(name = "AIAI_EXPERIMENT")
+@Table(name = "MH_EXPERIMENT")
 @Data
 @EqualsAndHashCode(exclude = {"hyperParams"})
 @ToString(exclude = {"hyperParams"})

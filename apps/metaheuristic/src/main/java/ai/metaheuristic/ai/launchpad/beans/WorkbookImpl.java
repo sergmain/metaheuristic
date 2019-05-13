@@ -22,7 +22,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_WORKBOOK")
+@Table(name = "MH_WORKBOOK")
 @Data
 public class WorkbookImpl implements Serializable, Workbook {
     private static final long serialVersionUID = -8687758209537096490L;

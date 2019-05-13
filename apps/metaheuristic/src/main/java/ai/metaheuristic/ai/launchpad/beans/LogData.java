@@ -24,7 +24,7 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "AIAI_LOG_DATA")
+@Table(name = "MH_LOG_DATA")
 @Data
 @EqualsAndHashCode(of = {"id", "version"})
 public class LogData implements Serializable {

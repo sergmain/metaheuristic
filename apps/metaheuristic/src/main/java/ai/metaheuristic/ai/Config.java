@@ -123,7 +123,7 @@ public class Config {
             }
             return builder
                     .dataSource(dataSource)
-                    .packages("aiai.ai.launchpad.beans")
+                    .packages("ai.metaheuristic.ai.launchpad.beans")
                     .persistenceUnit("launchpad")
                     .build();
         }
@@ -141,7 +141,7 @@ public class Config {
     @Configuration
     @EnableTransactionManagement
     @EnableJpaRepositories(entityManagerFactoryRef = "stationEntityManagerFactory", transactionManagerRef = "stationTransactionManager",
-            basePackages = { "aiai.ai.station.repositories" })
+            basePackages = { "ai.metaheuristic.ai.station.repositories" })
     public class StationDbConfig {
 
         private final Environment env;
@@ -172,7 +172,7 @@ public class Config {
             }
             return builder
                     .dataSource(dataSource)
-                    .packages("aiai.ai.station.beans")
+                    .packages("ai.metaheuristic.ai.station.beans")
                     .persistenceUnit("station")
                     .build();
         }

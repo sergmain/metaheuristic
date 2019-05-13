@@ -22,7 +22,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_EXPERIMENT_TASK_FEATURE")
+@Table(name = "MH_EXPERIMENT_TASK_FEATURE")
 @Data
 @ToString
 public class ExperimentTaskFeature implements Serializable {

@@ -33,7 +33,7 @@ import java.util.StringTokenizer;
  * Time: 23:19
  */
 @Entity
-@Table(name = "AIAI_ACCOUNT")
+@Table(name = "MH_ACCOUNT")
 @Data
 @EqualsAndHashCode(of = {"username", "password", "token"})
 public class Account implements UserDetails {

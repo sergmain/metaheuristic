@@ -25,7 +25,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_EXPERIMENT_HYPER_PARAMS")
+@Table(name = "MH_EXPERIMENT_HYPER_PARAMS")
 @Data
 @EqualsAndHashCode(exclude = {"experiment", "variants"})
 @ToString(exclude = {"experiment"})

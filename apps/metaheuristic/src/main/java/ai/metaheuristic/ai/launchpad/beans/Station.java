@@ -26,7 +26,7 @@ import java.io.Serializable;
  * Time: 15:56
  */
 @Entity
-@Table(name = "AIAI_STATION")
+@Table(name = "MH_STATION")
 @Data
 public class Station implements Serializable {
     private static final long serialVersionUID = -6094247705164836600L;

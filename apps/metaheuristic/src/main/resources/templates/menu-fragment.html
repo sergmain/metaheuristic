@@ -7,10 +7,10 @@
         <li th:attr="class=${#httpServletRequest.requestURI=='/about'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="about.html" th:href="@{/about}">About</a>
         </li>
-        <li th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+        <li th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/index.html" th:href="@{/launchpad/index}">Launchpad</a>
         </li>
-        <li th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/pilot/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+        <li th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/pilot/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="pilot/index.html" th:href="@{/pilot/index}">Pilot</a>
         </li>
         <li sec:authorize="isAnonymous()" th:attr="class=${#httpServletRequest.requestURI=='/login'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">

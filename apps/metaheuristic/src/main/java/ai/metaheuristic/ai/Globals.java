@@ -40,80 +40,80 @@ public class Globals {
 
     // Globals' globals
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.thread-number'), 1, 8, 3) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.thread-number'), 1, 8, 3) }")
     public int threadNumber;
 
-    @Value("${aiai.is-testing:#{false}}")
+    @Value("${mh.is-testing:#{false}}")
     public boolean isUnitTesting = false;
 
-    @Value("${aiai.system-owner:#{null}}")
+    @Value("${mh.system-owner:#{null}}")
     public String systemOwner;
 
     // Launchpad's globals
 
-    @Value("${aiai.launchpad.is-security-enabled:#{true}}")
+    @Value("${mh.launchpad.is-security-enabled:#{true}}")
     public boolean isSecurityEnabled;
 
-    @Value("${aiai.launchpad.is-ssl-required:#{true}}")
+    @Value("${mh.launchpad.is-ssl-required:#{true}}")
     public boolean isSslRequired = true;
 
-    @Value("${aiai.launchpad.snippet-checksum-required:#{true}}")
+    @Value("${mh.launchpad.snippet-checksum-required:#{true}}")
     public boolean isSnippetChecksumRequired = true;
 
-    @Value("${aiai.launchpad.snippet-signature-required:#{true}}")
+    @Value("${mh.launchpad.snippet-signature-required:#{true}}")
     public boolean isSnippetSignatureRequired = true;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.master-username')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('mh.launchpad.master-username')) }")
     public String launchpadMasterUsername;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.master-token')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('mh.launchpad.master-token')) }")
     public String launchpadMasterToken;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.master-password')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('mh.launchpad.master-password')) }")
     public String launchpadMasterPassword;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('aiai.launchpad.public-key')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('mh.launchpad.public-key')) }")
     public String launchpadPublicKeyStr;
 
-    @Value("${aiai.launchpad.enabled:#{false}}")
+    @Value("${mh.launchpad.enabled:#{false}}")
     public boolean isLaunchpadEnabled = true;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.launchpad.dir' )) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.launchpad.dir' )) }")
     public File launchpadDir;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.max-tasks-per-plan'), 1, 10000, 2000) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.max-tasks-per-plan'), 1, 10000, 2000) }")
     public int maxTasksPerPlan;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.resource-table-rows-limit'), 5, 100, 20) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.resource-table-rows-limit'), 5, 100, 20) }")
     public int resourceRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.experiment-table-rows-limit'), 5, 30, 10) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.experiment-table-rows-limit'), 5, 30, 10) }")
     public int experimentRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.atlas-experiment-table-rows-limit'), 5, 100, 20) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.atlas-experiment-table-rows-limit'), 5, 100, 20) }")
     public int atlasExperimentRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.plan-table-rows-limit'), 5, 50, 10) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.plan-table-rows-limit'), 5, 50, 10) }")
     public int planRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.workbook-table-rows-limit'), 5, 50, 20) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.workbook-table-rows-limit'), 5, 50, 20) }")
     public int workbookRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.station-table-rows-limit'), 5, 30, 10) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.station-table-rows-limit'), 5, 30, 10) }")
     public int stationRowsLimit;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.account-table-rows-limit'), 5, 100, 20) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.account-table-rows-limit'), 5, 100, 20) }")
     public int accountRowsLimit;
 
-    @Value("${aiai.launchpad.is-replace-snapshot:#{true}}")
+    @Value("${mh.launchpad.is-replace-snapshot:#{true}}")
     public boolean isReplaceSnapshot;
 
     // Station's globals
 
-    @Value("${aiai.station.enabled:#{false}}")
+    @Value("${mh.station.enabled:#{false}}")
     public boolean isStationEnabled = true;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('aiai.station.dir' )) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.dir' )) }")
     public File stationDir;
 
 
@@ -157,8 +157,8 @@ public class Globals {
         if (isLaunchpadEnabled) {
             if (launchpadMasterUsername==null || launchpadMasterToken==null || launchpadMasterPassword==null) {
                 throw new IllegalArgumentException(
-                        "if aiai.secure-rest-url=true, then aiai.launchpad.master-username, " +
-                                "aiai.launchpad.master-token, and aiai.launchpad.master-password have to be not null");
+                        "if mh.secure-rest-url=true, then mh.launchpad.master-username, " +
+                                "mh.launchpad.master-token, and mh.launchpad.master-password have to be not null");
             }
 
             launchpadTempDir = new File(launchpadDir, "temp");

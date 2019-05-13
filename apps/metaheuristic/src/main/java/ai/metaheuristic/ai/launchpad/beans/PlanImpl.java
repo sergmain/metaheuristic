@@ -22,7 +22,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "AIAI_PLAN")
+@Table(name = "MH_PLAN")
 @Data
 public class PlanImpl implements Serializable, Plan {
     private static final long serialVersionUID = 6764501814772365639L;

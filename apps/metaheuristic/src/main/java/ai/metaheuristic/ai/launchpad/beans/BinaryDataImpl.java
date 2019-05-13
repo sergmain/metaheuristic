@@ -28,7 +28,7 @@ import java.sql.Blob;
 import java.sql.Timestamp;
 
 @Entity
-@Table(name = "AIAI_DATA")
+@Table(name = "MH_DATA")
 @Data
 @EqualsAndHashCode(of = {"id", "version", "dataType"})
 @ToString(exclude={"data", "bytes"})

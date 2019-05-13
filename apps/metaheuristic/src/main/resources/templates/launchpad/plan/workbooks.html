@@ -1,6 +1,6 @@
 <div xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org" layout:fragment="content"
      layout:decorate="~{layout-launchpad}"
-     th:if="${#bools.isTrue(@environment.getProperty('aiai.launchpad.enabled'))}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
     <!--/*@thymesVar id="result" type="ai.metaheuristic.api.v1.data.PlanApiData$WorkbooksResult"*/-->
     <script>

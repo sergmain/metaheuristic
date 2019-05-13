@@ -25,7 +25,7 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>aiai</groupId>
+    <groupId>ai.metaheuristic</groupId>
     <artifactId>gen-passwords</artifactId>
     <version>1.0-SNAPSHOT</version>
     <dependencies>
@@ -72,7 +72,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>ai.ai.ai.ai.ai.metaheuristic.apps.gen_passwords.GeneratePasswords</mainClass>
+                    <mainClass>ai.metaheuristic.apps.gen_passwords.GeneratePasswords</mainClass>
                 </configuration>
             </plugin>
         </plugins>

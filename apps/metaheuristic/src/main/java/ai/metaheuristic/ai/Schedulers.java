@@ -163,7 +163,7 @@ public class Schedulers {
             envService.monitorHotDeployDir();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.request-launchpad'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('ai.metaheuristic.station.timeout.request-launchpad'), 3, 20, 10)*1000 }")
         public void launchRequester() {
             if (globals.isUnitTesting) {
                 return;
@@ -181,7 +181,7 @@ public class Schedulers {
             launchpadRequestorMap.get(url).fixedDelay();
         }
 
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.station.timeout.task-assigner'), 3, 20, 5)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('ai.metaheuristic.station.timeout.task-assigner'), 3, 20, 5)*1000 }")
         public void taskAssigner() {
             if (globals.isUnitTesting) {
                 return;
