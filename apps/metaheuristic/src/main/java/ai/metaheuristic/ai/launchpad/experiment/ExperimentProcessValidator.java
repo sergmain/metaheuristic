@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.experiment;
 
-import aiai.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.ExperimentSnippet;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;

@@ -27,7 +27,7 @@
 
     <modules>
         <module>apps/metaheuristic-api</module>
-        <module>apps/aiai</module>
+        <module>apps/metaheuristic</module>
         <module>apps/commons</module>
         <module>apps/package-snippet</module>
         <module>apps/gen-keys</module>
