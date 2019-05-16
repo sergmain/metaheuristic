@@ -108,6 +108,9 @@ public class Globals {
     @Value("${mh.launchpad.is-replace-snapshot:#{true}}")
     public boolean isReplaceSnapshot;
 
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('mh.launchpad.default-result-file-extension')) }")
+    public String defaultResultFileExtension;
+
     // Station's globals
 
     @Value("${mh.station.enabled:#{false}}")

@@ -533,7 +533,12 @@ public class ProcessResourceController {
             Meta meta = planYaml.getMeta(Consts.RESULT_FILE_EXTENSION);
 
             String mainDocument = StrUtils.getName(fullMainDocument) +
-                    (meta!=null && StringUtils.isNotBlank(meta.getValue()) ? meta.getValue() : ".xml");
+                    (meta!=null && StringUtils.isNotBlank(meta.getValue())
+                            ? meta.getValue()
+                            :
+                            ( StringUtils.isNotBlank(globals.defaultResultFileExtension)
+                                    ? globals.defaultResultFileExtension
+                                    : ".bin"));
 
             Integer taskOrder = taskRepository.findMaxConcreteOrder(wb.getId());
             if (taskOrder==null) {
