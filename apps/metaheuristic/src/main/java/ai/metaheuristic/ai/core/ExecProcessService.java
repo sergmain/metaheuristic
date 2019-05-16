@@ -32,9 +32,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ExecProcessService {
 
     private static final String TIMEOUT_MESSAGE =
-            "==============================================================\n" +
+            "===============================================================\n" +
             "After %d seconds of timeout this process has been destroyed.\n" +
-            "==============================================================\n";
+            "===============================================================\n";
 
 
     public static class StreamHolder {

@@ -16,14 +16,23 @@
 
 package ai.metaheuristic.ai.pilot.process_resource;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
+import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.pilot.beans.Batch;
 import ai.metaheuristic.ai.pilot.beans.BatchWorkbook;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
@@ -82,6 +91,17 @@ public class ProcessResourceController {
 
     private static final String CONFIG_FILE = "config.yaml";
 
+    private final WorkbookRepository workbookRepository;
+    private final PlanRepository planRepository;
+    private final PlanCache planCache;
+    private final PlanService planService;
+    private final ResourceService resourceService;
+    private final TaskRepository taskRepository;
+    private final BatchRepository batchRepository;
+    private final BatchWorkbookRepository batchWorkbookRepository;
+    private final BinaryDataService binaryDataService;
+    private final PlanYamlUtils planYamlUtils;
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -102,12 +122,19 @@ public class ProcessResourceController {
         public Iterable<Plan> items;
     }
 
-    public final PlanProcessResourceService planProcessResourceService;
-
     private final Globals globals;
 
-    public ProcessResourceController(PlanProcessResourceService planProcessResourceService, Globals globals) {
-        this.planProcessResourceService = planProcessResourceService;
+    public ProcessResourceController(WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, PlanYamlUtils planYamlUtils, Globals globals) {
+        this.workbookRepository = workbookRepository;
+        this.planRepository = planRepository;
+        this.planCache = planCache;
+        this.planService = planService;
+        this.resourceService = resourceService;
+        this.taskRepository = taskRepository;
+        this.batchRepository = batchRepository;
+        this.batchWorkbookRepository = batchWorkbookRepository;
+        this.binaryDataService = binaryDataService;
+        this.planYamlUtils = planYamlUtils;
         this.globals = globals;
     }
 
@@ -128,21 +155,21 @@ public class ProcessResourceController {
 
     private void prepareProcessResourcesResult(ProcessResourceResult result, Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(100, pageable);
-        Page<Batch> batches = planProcessResourceService.batchRepositoryFindAllByOrderByCreatedOnDesc(pageable);
+        Page<Batch> batches = batchRepository.findAllByOrderByCreatedOnDesc(pageable);
 
         List<ProcessResourceItem> items = new ArrayList<>();
         long total = batches.getTotalElements();
         for (Batch batch : batches) {
-            Plan plan = planProcessResourceService.planCacheFindById(batch.getPlanId());
+            Plan plan = planCache.findById(batch.getPlanId());
             if (plan==null) {
                 log.warn("#990.01 Found batch with wrong planId. planId: {}", batch.getPlanId());
                 total--;
                 continue;
             }
-            List<BatchWorkbook> bfis = planProcessResourceService.batchWorkbookRepositoryFindAllByBatchId(batch.id);
+            List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batch.id);
             boolean isFinished = true;
             for (BatchWorkbook bfi : bfis) {
-                Workbook fi = planProcessResourceService.workbookRepositoryFindById(bfi.workbookId);
+                Workbook fi = workbookRepository.findById(bfi.workbookId).orElse(null);
                 if (fi==null) {
                     String msg = "#990.03 Batch #" + batch.id + " contains broken workbookId - #" + bfi.workbookId;
                     log.warn(msg);
@@ -164,7 +191,7 @@ public class ProcessResourceController {
 
     @GetMapping(value = "/process-resource-add")
     public String workbookAdd(@ModelAttribute("result") PlanListResult result) {
-        result.items = planProcessResourceService.planRepositoryFindAllAsPlan();
+        result.items = planRepository.findAllAsPlan();
         return "pilot/process-resource/process-resource-add";
     }
 
@@ -177,37 +204,39 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         originFilename = originFilename.toLowerCase();
+/*
         if (!StringUtils.endsWithAny(originFilename, ".xml", ".zip", ".doc", ".docx", ".rtf")) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.20 only '.xml' and .zip files are supported, filename: " + originFilename);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        Plan plan = planProcessResourceService.planCacheFindById(planId);
+*/
+        Plan plan = planCache.findById(planId);
         if (plan == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.31 plan wasn't found, planId: " + planId);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
         // validate the plan
-        PlanApiData.PlanValidation planValidation = planProcessResourceService.planServiceValidateInternal(plan);
+        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.37 validation of plan was failed, status: " + planValidation.status);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
         try {
-            File tempDir = DirUtils.createTempDir("document-upload-");
+            File tempDir = DirUtils.createTempDir("batch-file-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "#990.24 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
                 return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
             }
 
             final File dataFile = new File(tempDir, originFilename );
-            log.debug("Start storing an uploaded document to disk");
+            log.debug("Start storing an uploaded file to disk");
             try(OutputStream os = new FileOutputStream(dataFile)) {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
 
-            Batch batch = planProcessResourceService.batchRepositorySave(new Batch(plan.getId()));
+            Batch batch = batchRepository.save(new Batch(plan.getId()));
 
 
             log.info("The file {} was successfully uploaded", originFilename);
@@ -234,7 +263,7 @@ public class ProcessResourceController {
         }
         catch (Throwable th) {
             log.error("Error", th);
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.73 can't load document, Error: " + th.getMessage()+", class: " + th.getClass());
+            redirectAttributes.addFlashAttribute("errorMessage", "#990.73 can't load file, error: " + th.getMessage()+", class: " + th.getClass());
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
@@ -349,7 +378,7 @@ public class ProcessResourceController {
                     attachments.add(code);
                 }
 
-                planProcessResourceService.resourceServiceStoreInitialResource(file, code, poolCode, originFilename);
+                resourceService.storeInitialResource(file, code, poolCode, originFilename);
             }
         } catch (StoreNewFileException e) {
             log.error("Error", e);
@@ -363,7 +392,7 @@ public class ProcessResourceController {
         }
 
         final String paramYaml = asInputResourceParams(mainPoolCode, attachPoolCode, attachments);
-        PlanApiData.TaskProducingResultComplex producingResult = planProcessResourceService.planServiceCreateWorkbook(plan.getId(), paramYaml);
+        PlanApiData.TaskProducingResultComplex producingResult = planService.createWorkbook(plan.getId(), paramYaml);
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating workbook: " + producingResult.planProducingStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -371,49 +400,47 @@ public class ProcessResourceController {
         BatchWorkbook bfi = new BatchWorkbook();
         bfi.batchId=batch.id;
         bfi.workbookId=producingResult.workbook.getId();
-        planProcessResourceService.batchWorkbookRepositorySave(bfi);
+        batchWorkbookRepository.save(bfi);
 
         // ugly work-around on StaleObjectStateException
         Long planId = plan.getId();
-        plan = planProcessResourceService.planCacheFindById(planId);
+        plan = planCache.findById(planId);
         if (plan == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.49 plan wasn't found, planId: " + planId);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
         // validate the plan + the workbook
-        PlanApiData.PlanValidation planValidation = planProcessResourceService.planServiceValidateInternal(plan);
+        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.55 validation of plan was failed, status: " + planValidation.status);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        PlanApiData.TaskProducingResultComplex countTasks = planProcessResourceService.planServiceProduceTasks(false, plan, producingResult.workbook);
+        PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook);
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.60 validation of plan was failed, status: " + countTasks.planValidateStatus);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
         if (globals.maxTasksPerPlan < countTasks.numberOfTasks) {
-            planProcessResourceService.planServiceChangeValidStatus(producingResult.workbook, false);
+            planService.changeValidStatus(producingResult.workbook, false);
             redirectAttributes.addFlashAttribute("errorMessage",
                     "#990.67 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                             "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + countTasks.numberOfTasks);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        planProcessResourceService.planServiceChangeValidStatus(producingResult.workbook, true);
+        planService.changeValidStatus(producingResult.workbook, true);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = planProcessResourceService.planServiceWorkbookTargetExecState(
-                producingResult.workbook.getId(), EnumsApi.WorkbookExecState.PRODUCING);
+        OperationStatusRest operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.PRODUCING);
 
         if (operationStatus.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        planProcessResourceService.planServiceCreateAllTasks();
-        operationStatus = planProcessResourceService.planServiceWorkbookTargetExecState(
-                producingResult.workbook.getId(), EnumsApi.WorkbookExecState.STARTED);
+        planService.createAllTasks();
+        operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessages);
@@ -432,7 +459,7 @@ public class ProcessResourceController {
         }
 
         long workbookId = -1L;
-        PlanApiData.WorkbookResult result = planProcessResourceService.planServiceGetWorkbookExtended(workbookId);
+        PlanApiData.WorkbookResult result = planService.getWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -443,19 +470,19 @@ public class ProcessResourceController {
 
     @PostMapping("/process-resource-delete-commit")
     public String processResourceDeleteCommit(Long planId, Long workbookId, final RedirectAttributes redirectAttributes) {
-        PlanApiData.WorkbookResult result = planProcessResourceService.planServiceGetWorkbookExtended(workbookId);
+        PlanApiData.WorkbookResult result = planService.getWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.isErrorMessages());
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        Workbook wb = planProcessResourceService.workbookRepositoryFindById(workbookId);
+        Workbook wb = workbookRepository.findById(workbookId).orElse(null);
         if (wb==null) {
             redirectAttributes.addFlashAttribute("errorMessage",
                     "#990.77 Workbook wasn't found, batchId: " + workbookId );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        planProcessResourceService.planServiceDeleteWorkbook(workbookId, wb.getPlanId());
+        planService.deleteWorkbook(workbookId, wb.getPlanId());
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
     }
 
@@ -463,57 +490,69 @@ public class ProcessResourceController {
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletResponse response, @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName/*, final RedirectAttributes redirectAttributes*/) throws IOException {
-        log.info("#990.82 Start downloadProcessingResult(), batchId: {}", batchId);
-        Batch batch = planProcessResourceService.batchRepositoryFindById(batchId);
+        log.info("#990.105 Start downloadProcessingResult(), batchId: {}", batchId);
+        Batch batch = batchRepository.findById(batchId).orElse(null);
         if (batch==null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            log.info("#990.84 Batch wasn't found, batchId: {}", batchId);
+            log.info("#990.109 Batch wasn't found, batchId: {}", batchId);
             return null;
         }
 
-        List<BatchWorkbook> bfis = planProcessResourceService.batchWorkbookRepositoryFindAllByBatchId(batch.id);
+        List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batch.id);
         String status = "";
-        File resultDir = DirUtils.createTempDir("prepare-doc-processing-result-");
+        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
         File zipDir = new File(resultDir, "zip");
 
         for (BatchWorkbook bfi : bfis) {
-            Workbook fi = planProcessResourceService.workbookRepositoryFindById(bfi.workbookId);
-            if (fi==null) {
-                String msg = "#990.80 Batch #" + batch.id + " contains broken workbookId - #" + bfi.workbookId;
+            Workbook wb = workbookRepository.findById(bfi.workbookId).orElse(null);
+            if (wb==null) {
+                String msg = "#990.114 Batch #" + batch.id + " contains broken workbookId - #" + bfi.workbookId;
                 status += (msg + '\n');
                 log.warn(msg);
                 continue;
             }
-            String mainDocumentPoolCode = getMainDocumentPoolCode(fi.getInputResourceParam());
+            Plan plan = planCache.findById(wb.getPlanId());
+            if (plan==null) {
+                String msg = "#990.119 Batch #" + batch.id + " contains broken planId - #" + plan.getId();
+                status += (msg + '\n');
+                log.warn(msg);
+                continue;
+            }
+
+            String mainDocumentPoolCode = getMainDocumentPoolCode(wb.getInputResourceParam());
 
             final String fullMainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
             if (fullMainDocument==null) {
-                String msg = "#990.81, "+mainDocumentPoolCode+", Can't determine actual file name of main document, " +
+                String msg = "#990.123, "+mainDocumentPoolCode+", Can't determine actual file name of main document, " +
                         "batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
                 log.warn(msg);
                 status += (msg + '\n');
                 continue;
             }
-            String mainDocument = StrUtils.getName(fullMainDocument) + ".xml";
+            PlanApiData.PlanYaml planYaml = planYamlUtils.toPlanYaml(plan.getParams());
+            Meta meta = planYaml.getMeta(Consts.RESULT_FILE_EXTENSION);
 
-            Integer taskOrder = planProcessResourceService.taskRepositoryFindMaxConcreteOrder(fi.getId());
+            String mainDocument = StrUtils.getName(fullMainDocument) +
+                    (meta!=null && StringUtils.isNotBlank(meta.getValue()) ? meta.getValue() : ".xml");
+
+            Integer taskOrder = taskRepository.findMaxConcreteOrder(wb.getId());
             if (taskOrder==null) {
-                String msg = "#990.82, "+mainDocument+", Tasks weren't created correctly for this batch, need to re-upload documents, " +
+                String msg = "#990.128, "+mainDocument+", Tasks weren't created correctly for this batch, need to re-upload documents, " +
                         "batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
                 log.warn(msg);
                 status += (msg + '\n');
                 continue;
             }
-            List<Task> tasks = planProcessResourceService.taskRepositoryFindAnyWithConcreteOrder(fi.getId(), taskOrder);
+            List<Task> tasks = taskRepository.findAnyWithConcreteOrder(wb.getId(), taskOrder);
             if (tasks.isEmpty()) {
-                String msg = "#990.88, "+mainDocument+", Can't find any task for batchId: " + batchId;
+                String msg = "#990.133, "+mainDocument+", Can't find any task for batchId: " + batchId;
                 log.info(msg);
                 status += (msg + '\n');
                 continue;
             }
             if (tasks.size()>1) {
-                String msg = "#990.90, "+mainDocument+", Can't download file because there are more than one task, " +
-                        "batchId: "+batch.id+", workbookId: " + fi.getId();
+                String msg = "#990.137, "+mainDocument+", Can't download file because there are more than one task, " +
+                        "batchId: "+batch.id+", workbookId: " + wb.getId();
                 log.info(msg);
                 status += (msg + '\n');
                 continue;
@@ -523,13 +562,13 @@ public class ProcessResourceController {
             switch (execState) {
                 case NONE:
                 case IN_PROGRESS:
-                    status += ("#990.50, "+mainDocument+", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                            ", batchId:" + batch.id + ", workbookId: " + fi.getId() +", " +
+                    status += ("#990.142, "+mainDocument+", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                            ", batchId:" + batch.id + ", workbookId: " + wb.getId() +", " +
                             "taskId: " + task.getId() + '\n');
                     continue;
                 case ERROR:
                     SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
-                    status += ("#990.52, "+mainDocument+", Task was completed with error, batchId:" + batch.id + ", workbookId: " + fi.getId() +", " +
+                    status += ("#990.149, "+mainDocument+", Task was completed with error, batchId:" + batch.id + ", workbookId: " + wb.getId() +", " +
                             "taskId: " + task.getId() + "\n" +
                             "isOk: " + snippetExec.exec.isOk + "\n" +
                             "exitCode: " + snippetExec.exec.exitCode + "\n" +
@@ -539,9 +578,9 @@ public class ProcessResourceController {
 
             final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
-            if (fi.getExecState()!= EnumsApi.WorkbookExecState.FINISHED.code) {
-                status += ("#990.95, "+mainDocument+", Task hasn't completed yet, " +
-                        "batchId:" + batch.id + ", workbookId: " + fi.getId() +", " +
+            if (wb.getExecState()!= EnumsApi.WorkbookExecState.FINISHED.code) {
+                status += ("#990.155, "+mainDocument+", Task hasn't completed yet, " +
+                        "batchId:" + batch.id + ", workbookId: " + wb.getId() +", " +
                         "taskId: " + task.getId() + '\n');
                 continue;
             }
@@ -549,16 +588,16 @@ public class ProcessResourceController {
             File mainDocFile = new File(zipDir, mainDocument);
 
             try {
-                planProcessResourceService.binaryDataServiceStoreToFile(taskParamYaml.outputResourceCode, mainDocFile);
+                binaryDataService.storeToFile(taskParamYaml.outputResourceCode, mainDocFile);
             } catch (BinaryDataNotFoundException e) {
-                String msg = "#990.06 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.outputResourceCode +
+                String msg = "#990.161 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.outputResourceCode +
                         ", file: " + mainDocFile.getPath();
                 log.error(msg);
                 status += (msg + '\n');
                 continue;
             }
 
-            String msg = "#990.08 status - Ok, doc: "+mainDocFile.getName()+", batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
+            String msg = "#990.167 status - Ok, doc: "+mainDocFile.getName()+", batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
             status += (msg + '\n');
 
         }
@@ -575,7 +614,7 @@ public class ProcessResourceController {
     }
 
     private String getMainDocumentForPoolCode(String mainDocumentPoolCode) {
-        List<BinaryData> datas = planProcessResourceService.binaryDataServiceGetByPoolCodeAndType(mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
+        List<BinaryData> datas = binaryDataService.getByPoolCodeAndType(mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
 
         if (datas==null || datas.isEmpty()) {
             return null;

@@ -128,7 +128,8 @@ public class LaunchpadRequestor {
 
             if (stationId != null) {
                 // always report about current active sequences, if we have actual stationId
-                data.setCommand(stationTaskService.produceStationTaskStatus(launchpadUrl));
+                final Protocol.StationTaskStatus stationTaskStatus = stationTaskService.produceStationTaskStatus(launchpadUrl);
+                data.setCommand(stationTaskStatus);
                 data.setCommand(stationService.produceReportStationStatus(launchpad.schedule));
                 if (currentExecState.isInited(launchpadUrl)) {
                     Monitoring.log("##011", Enums.Monitor.MEMORY);
@@ -218,6 +219,9 @@ public class LaunchpadRequestor {
         }
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask task : list) {
+            if (task.isDelivered()) {
+                continue;
+            }
             command.getResults().add(new SimpleTaskExecResult(task.getTaskId(),
                     task.getSnippetExecResult(),
                     task.getMetrics()));

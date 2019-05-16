@@ -16,31 +16,20 @@
 
 package ai.metaheuristic.api.v1.data;
 
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.launchpad.Task;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
  * @author Serge
- * Date: 5/9/2019
- * Time: 4:57 PM
- *
- * !!! Must be top level class (not inner) because it's using in SqlQuery in Repository
+ * Date: 5/15/2019
+ * Time: 7:12 PM
  */
 @Data
+@AllArgsConstructor
 @NoArgsConstructor
-public class TaskWIthType {
-    public Task task;
-    public int type;
-
-    public TaskWIthType(Task task, int type) {
-        this.task = task;
-        this.type = type;
-    }
-
-    public String typeAsString() {
-        return EnumsApi.ExperimentTaskType.from(type).toString();
-    }
-
+public class Meta {
+    public String key;
+    public String value;
+    public String ext;
 }

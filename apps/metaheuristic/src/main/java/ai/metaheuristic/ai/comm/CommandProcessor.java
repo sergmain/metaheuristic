@@ -122,7 +122,7 @@ public class CommandProcessor {
     }
 
     private Command[] processStationTaskStatus(Protocol.StationTaskStatus command) {
-        launchpadService.getExperimentService().reconcileStationTasks(command.stationId, command.statuses!=null ? command.statuses : new ArrayList<>());
+        launchpadService.getTaskService().reconcileStationTasks(command.stationId, command.statuses!=null ? command.statuses : new ArrayList<>());
         return Protocol.NOP_ARRAY;
     }
 

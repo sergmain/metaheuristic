@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
+import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.launchpad.Plan;
@@ -81,7 +82,7 @@ public class ExperimentProcessService {
             e = experimentCache.save(e);
         }
 
-        Process.Meta meta = process.getMeta(FEATURE_POOL_CODE_TYPE);
+        Meta meta = process.getMeta(FEATURE_POOL_CODE_TYPE);
 
         List<String> features;
         if (meta==null) {

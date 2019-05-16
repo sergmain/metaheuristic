@@ -154,6 +154,19 @@ public class PlanApiData {
     public static class PlanYaml {
         public List<Process> processes = new ArrayList<>();
         public boolean clean = false;
+        public List<Meta> metas;
+
+        public Meta getMeta(String key) {
+            if (metas==null) {
+                return null;
+            }
+            for (Meta meta : metas) {
+                if (meta.key.equals(key)) {
+                    return meta;
+                }
+            }
+            return null;
+        }
     }
 
 }

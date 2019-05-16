@@ -86,6 +86,9 @@ public class TaskProcessor {
 
         List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
+//            if (task.isDelivered()) {
+//                continue;
+//            }
             log.info("Start processing task {}", task);
             final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 

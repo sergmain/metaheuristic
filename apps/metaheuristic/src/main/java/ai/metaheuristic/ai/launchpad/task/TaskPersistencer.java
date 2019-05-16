@@ -189,6 +189,28 @@ public class TaskPersistencer {
         return null;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
+    public void finishTask(Long taskId) {
+        synchronized (syncObj) {
+            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            if (task==null) {
+                log.warn("#307.33 Can't find Task for Id: {}", taskId);
+                return;
+            }
+            // fake station Id
+            task.setStationId(-1L);
+            task.setExecState(EnumsApi.TaskExecState.BROKEN.value);
+            task.setCompleted(true);
+            task.setCompletedOn(System.currentTimeMillis());
+
+            task.setSnippetExecResults("Task is broken, cant' process it");
+            task.setResultReceived(true);
+
+            //noinspection UnusedAssignment
+            task = taskRepository.save(task);
+        }
+    }
+
     private Task prepareAndSaveTask(SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {

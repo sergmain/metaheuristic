@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.plan.TaskCollector;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
@@ -141,9 +142,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.metas.addAll(
                     Arrays.asList(
-                            new Process.Meta("assembled-raw", "assembled-raw-output", null),
-                            new Process.Meta("dataset", "dataset-processing-output", null),
-                            new Process.Meta("feature", "feature-output", null)
+                            new Meta("assembled-raw", "assembled-raw-output", null),
+                            new Meta("dataset", "dataset-processing-output", null),
+                            new Meta("feature", "feature-output", null)
                     )
             );
 

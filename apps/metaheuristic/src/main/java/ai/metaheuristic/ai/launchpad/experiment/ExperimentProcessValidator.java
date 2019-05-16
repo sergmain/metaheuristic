@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.launchpad.beans.ExperimentSnippet;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Process;
 import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
@@ -102,7 +103,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
                 return EnumsApi.PlanValidateStatus.EXPERIMENT_META_NOT_FOUND_ERROR;
             }
 
-            Process.Meta m1 = process.getMeta("dataset");
+            Meta m1 = process.getMeta("dataset");
             if (m1 == null || StringUtils.isBlank(m1.getValue())) {
                 return EnumsApi.PlanValidateStatus.EXPERIMENT_META_DATASET_NOT_FOUND_ERROR;
             }
@@ -113,7 +114,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
 //                return EnumsApi.PlanValidateStatus.EXPERIMENT_META_ASSEMBLED_RAW_NOT_FOUND_ERROR;
 //            }
 
-            Process.Meta m3 = process.getMeta("feature");
+            Meta m3 = process.getMeta("feature");
             if (m3 == null || StringUtils.isBlank(m3.getValue())) {
                 return EnumsApi.PlanValidateStatus.EXPERIMENT_META_FEATURE_NOT_FOUND_ERROR;
             }

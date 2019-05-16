@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.plan;
 
+import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.launchpad.Process;
 import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
@@ -45,9 +46,9 @@ public class TestProcess {
 
         p.metas.addAll(
                 Arrays.asList(
-                        new Process.Meta("assembled-raw", "assembled-raw", null),
-                        new Process.Meta("dataset", "dataset-processing", null),
-                        new Process.Meta("feature", "feature", null)
+                        new Meta("assembled-raw", "assembled-raw", null),
+                        new Meta("dataset", "dataset-processing", null),
+                        new Meta("feature", "feature", null)
                 )
         );
         PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();

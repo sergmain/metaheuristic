@@ -1,0 +1,11 @@
+processes:
+  - code: fileless-document
+    collectResources: false
+    name: Fileless flow for documents
+    snippetCodes:
+      - fileless-snippet:1.0
+    type: FILE_PROCESSING
+    parallelExec: false
+metas:
+  - key: result-file-extension
+    value: .bin

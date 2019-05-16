@@ -259,7 +259,7 @@ public class EnumsApi {
         }
     }
 
-    public enum TaskExecState { NONE(0), IN_PROGRESS(1), ERROR(2), OK(3);
+    public enum TaskExecState { NONE(0), IN_PROGRESS(1), ERROR(2), OK(3), BROKEN(4);
 
         public final int value;
         TaskExecState(int value) {
@@ -276,6 +276,8 @@ public class EnumsApi {
                     return ERROR;
                 case 3:
                     return OK;
+                case 4:
+                    return BROKEN;
                 default:
                     throw new IllegalStateException("Unknown type : " + type);
             }

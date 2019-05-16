@@ -17,10 +17,9 @@
 package ai.metaheuristic.api.v1.launchpad;
 
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.util.ArrayList;
@@ -51,15 +50,6 @@ public class Process {
     public String outputResourceCode;
     public List<Meta> metas = new ArrayList<>();
     public int order;
-
-    @Data
-    @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Meta {
-        public String key;
-        public String value;
-        public String ext;
-    }
 
     public Meta getMeta(String key) {
         if (metas==null) {
