@@ -26,7 +26,7 @@ import java.lang.management.ManagementFactory;
 
 @SpringBootApplication
 @Slf4j
-public class AiApplication {
+public class MetaheuristicApplication {
 
     // https://grokonez.com/java-integration/create-windows-service-spring-boot-application-procrun
 
@@ -39,7 +39,7 @@ public class AiApplication {
         if (applicationContext != null && "stop".equals(mode)) {
             System.exit(SpringApplication.exit(applicationContext, (ExitCodeGenerator) () -> 0));
         } else {
-            SpringApplication app = new SpringApplication(AiApplication.class);
+            SpringApplication app = new SpringApplication(MetaheuristicApplication.class);
             applicationContext = app.run(args!=null ? args : new String[0]);
             log.debug("PID: {}, Application started context: {}", ManagementFactory.getRuntimeMXBean().getName(), applicationContext);
         }

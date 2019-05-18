@@ -110,11 +110,11 @@ public class ZipUtils {
 
         log.debug("Start unzipping archive file");
         log.debug("'\tzip archive file: {}", archiveFile.getAbsolutePath());
-        log.debug("'\t\tis exist: {}", archiveFile.exists());
+        log.debug("'\t\texists: {}", archiveFile.exists());
         log.debug("'\t\tis writable: {}", archiveFile.canWrite());
         log.debug("'\t\tis readable: {}", archiveFile.canRead());
         log.debug("'\ttarget dir: {}", zipDestinationFolder.getAbsolutePath());
-        log.debug("'\t\tis exist: {}", zipDestinationFolder.exists());
+        log.debug("'\t\texists: {}", zipDestinationFolder.exists());
         log.debug("'\t\tis writable: {}", zipDestinationFolder.canWrite());
         try (MyZipFile zipFile = new MyZipFile(archiveFile)) {
 

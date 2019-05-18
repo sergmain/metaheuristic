@@ -418,7 +418,7 @@ public class StationTaskService {
 
     public static boolean deleteOrRenameTaskDir(File systemDir, File taskYamlFile) throws IOException {
         if (systemDir.exists()) {
-            log.warn("#713.57 task's directory is exist, {}", systemDir.getPath());
+            log.warn("#713.57 task's directory already exists, {}", systemDir.getPath());
             if (taskYamlFile.exists()) {
                 File temp = new File(taskYamlFile.getParentFile(), Consts.TASK_YAML+".temp" );
                 FileUtils.moveFile(taskYamlFile, temp);

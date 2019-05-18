@@ -26,3 +26,6 @@ rename table aiai_task to MH_task;
 
 rename table aiai_workbook to MH_workbook;
 
+rename table aiai_launchpad_address to mh_launchpad_address;
+
+

@@ -338,7 +338,7 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
-					<mainClass>ai.metaheuristic.ai.AiApplication</mainClass>
+					<mainClass>ai.metaheuristic.ai.MetaheuristicApplication</mainClass>
 				</configuration>
 			</plugin>
 			<plugin>
