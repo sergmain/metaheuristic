@@ -32,4 +32,5 @@ public class StationStatus {
     public GitSourcingService.GitStatusInfo gitStatusInfo;
     public String schedule;
     public String sessionId;
+    public long sessionCreatedOn;
 }

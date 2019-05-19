@@ -59,6 +59,9 @@ public class ExchangeData {
     @JsonProperty(value = "station_id")
     private String stationId;
 
+//    @JsonProperty(value = "session_id")
+    private String sessionId;
+
     @JsonIgnore
     public String launchpadUrl;
 
@@ -71,6 +74,12 @@ public class ExchangeData {
 
     public ExchangeData(Command command) {
         setCommand(command);
+    }
+
+    @JsonIgnore
+    public void initReqeustToLaunchpad(String stationId, String launchpadUrl) {
+        this.stationId = stationId;
+        this.launchpadUrl = launchpadUrl;
     }
 
     @JsonIgnore

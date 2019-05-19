@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * User: Serg
@@ -53,13 +54,18 @@ public class CommandProcessor {
             case Nop:
                 break;
             case ReportStation:
+                //noinspection
                 break;
             case RequestStationId:
+                // processing on launchpad side
                 return getNewStationId((Protocol.RequestStationId) command);
             case AssignedStationId:
+                // processing on station side
                 return storeStationId((Protocol.AssignedStationId) command);
             case ReAssignStationId:
+                // processing on station side
                 return reAssignStationId((Protocol.ReAssignStationId) command);
+
             case RequestTask:
                 // processing on launchpad side
                 return processRequestTask((Protocol.RequestTask) command);
@@ -204,25 +210,33 @@ public class CommandProcessor {
         }
     }
 
+    // processing on station side
     private Command[] storeStationId(Protocol.AssignedStationId command) {
         log.info("storeStationId() new station Id: {}", command.getAssignedStationId());
-        stationServicesHolder.getMetadataService().setStationId(command.launchpadUrl, command.getAssignedStationId());
+        stationServicesHolder.getMetadataService().setStationIdAndSessionId(
+                command.launchpadUrl, command.getAssignedStationId(), command.getAssignedSessionId());
         return Protocol.NOP_ARRAY;
     }
 
+    // processing on station side
     private Command[] reAssignStationId(Protocol.ReAssignStationId command) {
         log.info("reAssignStationId() station Id: {}", command.getReAssignedStationId());
-        stationServicesHolder.getMetadataService().setStationId(command.launchpadUrl, command.getReAssignedStationId());
+        stationServicesHolder.getMetadataService().setStationIdAndSessionId(
+                command.launchpadUrl, command.getReAssignedStationId(), command.sessionId);
         return Protocol.NOP_ARRAY;
     }
 
     private Command[] getNewStationId(@SuppressWarnings("unused") Protocol.RequestStationId command) {
         final Station st = new Station();
-        StationStatus ss = new StationStatus(null, new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "", null);
+        // TODO 2019.05.19 need to decide do we need better solution or it's ok
+        String sessionId = UUID.randomUUID().toString()+'-'+UUID.randomUUID().toString();
+        StationStatus ss = new StationStatus(null,
+                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "", sessionId, System.currentTimeMillis());
         st.status = StationStatusUtils.toString(ss);
         launchpadService.getStationsRepository().save(st);
 
-        return Protocol.asArray(new Protocol.AssignedStationId(Long.toString(st.getId())));
+        // TODO 2019.05.19 why we send stationId as a String?
+        return Protocol.asArray(new Protocol.AssignedStationId(Long.toString(st.getId()), sessionId));
     }
 
     public ExchangeData processExchangeData(ExchangeData data) {

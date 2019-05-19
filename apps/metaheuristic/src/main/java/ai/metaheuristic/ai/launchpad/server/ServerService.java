@@ -45,6 +45,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -54,6 +56,8 @@ import java.util.stream.Stream;
 public class ServerService {
 
     private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
+
+    public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
 
     private final Globals globals;
     private final BinaryDataService binaryDataService;
@@ -138,14 +142,29 @@ public class ServerService {
         if (StringUtils.isBlank(data.getStationId())) {
             return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
         }
-        if (stationsRepository.findById(Long.parseLong(data.getStationId())).orElse(null)==null) {
-            Station s = new Station();
-            s.setIp(remoteAddress);
-            s.setDescription("Id was reassigned from "+data.getStationId());
-            StationStatus ss = new StationStatus(null, new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "", null);
-            s.status = StationStatusUtils.toString(ss);
-            stationsRepository.save(s);
-            return new ExchangeData(new Protocol.ReAssignStationId(s.getId()));
+        if (StringUtils.isBlank(data.getSessionId())) {
+            return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
+        }
+        final Station station = stationsRepository.findById(Long.parseLong(data.getStationId())).orElse(null);
+        if (station==null) {
+            return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
+        }
+        StationStatus ss = StationStatusUtils.to(station.status);
+        if (!ss.sessionId.equals(data.getSessionId())) {
+            if ((System.currentTimeMillis() - ss.sessionCreatedOn)>SESSION_TTL) {
+                // the same station but with expired sessionId
+                ss.sessionId = UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
+                ss.sessionCreatedOn = System.currentTimeMillis();
+                station.status = StationStatusUtils.toString(ss);
+                stationsRepository.save(station);
+                // the same stationId but new sessionId
+                return new ExchangeData(new Protocol.ReAssignStationId(station.getId(), ss.sessionId));
+            }
+            else {
+                // different stations with the same stationId
+                // there is other active station with valid sessionId
+                return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
+            }
         }
 
         ExchangeData resultData = new ExchangeData();
@@ -160,6 +179,21 @@ public class ServerService {
         }
 
         return resultData.getCommands().isEmpty() ? EXCHANGE_DATA_NOP : resultData;
+    }
+
+    public ExchangeData reassignStationId(String remoteAddress, String description) {
+        Station s = new Station();
+        s.setIp(remoteAddress);
+        s.setDescription(description);
+
+        String sessionId = UUID.randomUUID().toString()+'-'+UUID.randomUUID().toString();
+        StationStatus ss = new StationStatus(null,
+                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
+                sessionId, System.currentTimeMillis());
+
+        s.status = StationStatusUtils.toString(ss);
+        stationsRepository.save(s);
+        return new ExchangeData(new Protocol.ReAssignStationId(s.getId(), sessionId));
     }
 
     private static Protocol.WorkbookStatus.SimpleStatus to(Workbook workbook) {

@@ -40,7 +40,7 @@ import java.util.List;
 public class Protocol {
 
     public static final Protocol.Nop NOP = new Nop();
-    public static final Command[] NOP_ARRAY = new Nop[]{NOP};
+    static final Command[] NOP_ARRAY = new Nop[]{NOP};
 
     /**
      * stub command, which is actually doing nothing
@@ -172,10 +172,12 @@ public class Protocol {
     @EqualsAndHashCode(callSuper = false)
     public static class AssignedStationId extends Command {
         public String assignedStationId;
+        public String assignedSessionId;
 
-        public AssignedStationId(String assignedStationId) {
+        public AssignedStationId(String assignedStationId, String assignedSessionId) {
             this.setType(Type.AssignedStationId);
             this.assignedStationId = assignedStationId;
+            this.assignedSessionId = assignedSessionId;
         }
 
         public AssignedStationId() {
@@ -190,7 +192,7 @@ public class Protocol {
 
         public ReportStationStatus(EnvYaml env, String schedule, GitSourcingService.GitStatusInfo gitStatusInfo, String sessionId) {
             this.setType(Type.ReportStationStatus);
-            this.status = new StationStatus(env, gitStatusInfo, schedule, sessionId);
+            this.status = new StationStatus(env, gitStatusInfo, schedule, sessionId, System.currentTimeMillis());
         }
 
         @Transient
@@ -208,14 +210,16 @@ public class Protocol {
     @EqualsAndHashCode(callSuper = false)
     public static class ReAssignStationId extends Command {
         String reAssignedStationId;
+        String sessionId;
 
-        public ReAssignStationId(Long stationId) {
-            this(Long.toString(stationId));
+        public ReAssignStationId(Long stationId, String sessionId) {
+            this(Long.toString(stationId), sessionId);
         }
 
-        public ReAssignStationId(String reAssignedStationId) {
+        public ReAssignStationId(String reAssignedStationId, String sessionId) {
             this.setType(Type.ReAssignStationId);
             this.reAssignedStationId = reAssignedStationId;
+            this.sessionId = sessionId;
         }
 
         public ReAssignStationId() {

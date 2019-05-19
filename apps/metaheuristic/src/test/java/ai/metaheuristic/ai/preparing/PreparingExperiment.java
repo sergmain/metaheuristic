@@ -40,6 +40,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.io.ByteArrayInputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.assertTrue;
 
@@ -117,7 +118,9 @@ public abstract class PreparingExperiment {
             envYaml.getEnvs().put("env-snippet-03:1.1", "python.exe" );
             envYaml.getEnvs().put("env-snippet-04:1.1", "python.exe" );
             envYaml.getEnvs().put("env-snippet-05:1.1", "python.exe" );
-            StationStatus ss = new StationStatus(envYaml, new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "", null);
+            StationStatus ss = new StationStatus(envYaml,
+                    new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
+                    ""+ UUID.randomUUID().toString(), System.currentTimeMillis());
             station.setStatus(StationStatusUtils.toString(ss));
 
             station.setDescription("Test station. Must be deleted automatically");

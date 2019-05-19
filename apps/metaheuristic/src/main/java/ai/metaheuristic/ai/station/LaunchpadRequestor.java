@@ -121,10 +121,11 @@ public class LaunchpadRequestor {
             Monitoring.log("##010", Enums.Monitor.MEMORY);
             ExchangeData data = new ExchangeData();
             final String stationId = metadataService.getStationId(launchpadUrl);
+            final String sessionId = metadataService.getSessionId(launchpadUrl);
             if (stationId == null) {
                 data.setCommand(new Protocol.RequestStationId());
             }
-            data.setStationId(stationId);
+            data.initReqeustToLaunchpad(stationId, sessionId);
 
             if (stationId != null) {
                 // always report about current active sequences, if we have actual stationId
