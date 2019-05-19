@@ -68,32 +68,37 @@ public class MetadataService {
     }
 
     public String findHostByCode(String code) {
-        for (Map.Entry<String, Metadata.LaunchpadInfo> entry : metadata.launchpad.entrySet()) {
-            if (code.equals(entry.getValue().code)) {
-                return entry.getKey();
+        synchronized (syncObj) {
+            for (Map.Entry<String, Metadata.LaunchpadInfo> entry : metadata.launchpad.entrySet()) {
+                if (code.equals(entry.getValue().code)) {
+                    return entry.getKey();
+                }
             }
+            return null;
         }
-        return null;
-    }
-
-    public Metadata.LaunchpadInfo launchpadUrlAsCode(String launchpadUrl) {
-        Metadata.LaunchpadInfo launchpadInfo = metadata.launchpad.computeIfAbsent(launchpadUrl, v -> asCode(launchpadUrl));
-        // fix for wrong metadata.yaml data
-        if (launchpadInfo.code==null) {
-            launchpadInfo.code = asCode(launchpadUrl).code;
-        }
-        return launchpadInfo;
     }
 
     private static final Object syncObj = new Object();
 
-    public String getStationId(String launchpadUrl) {
+    public Metadata.LaunchpadInfo launchpadUrlAsCode(String launchpadUrl) {
         synchronized (syncObj) {
-            return metadata.launchpad.computeIfAbsent(launchpadUrl, m->new Metadata.LaunchpadInfo()).stationId;
+            Metadata.LaunchpadInfo launchpadInfo = getLaunchpadInfo(launchpadUrl);
+            // fix for wrong metadata.yaml data
+            if (launchpadInfo.code == null) {
+                launchpadInfo.code = asCode(launchpadUrl).code;
+                updateMetadataFile();
+            }
+            return launchpadInfo;
         }
     }
 
-    public void setStationId(String launchpadUrl, String stationId) {
+    public String getStationId(final String launchpadUrl) {
+        synchronized (syncObj) {
+            return getLaunchpadInfo(launchpadUrl).stationId;
+        }
+    }
+
+    public void setStationId(final String launchpadUrl, String stationId) {
         if (StringUtils.isBlank(launchpadUrl)) {
             throw new IllegalStateException("launchpadUrl is null");
         }
@@ -101,9 +106,32 @@ public class MetadataService {
             throw new IllegalStateException("StationId is null");
         }
         synchronized (syncObj) {
-            metadata.launchpad.computeIfAbsent(launchpadUrl, m->new Metadata.LaunchpadInfo()).stationId = stationId;
+            getLaunchpadInfo(launchpadUrl).stationId = stationId;
             updateMetadataFile();
         }
+    }
+
+    public String getSessionId(final String launchpadUrl) {
+        synchronized (syncObj) {
+            return getLaunchpadInfo(launchpadUrl).sessionId;
+        }
+    }
+
+    public void setSessionId(final String launchpadUrl, String sessionId) {
+        if (StringUtils.isBlank(launchpadUrl)) {
+            throw new IllegalStateException("launchpadUrl is null");
+        }
+        if (StringUtils.isBlank(sessionId)) {
+            throw new IllegalStateException("sessionId is null");
+        }
+        synchronized (syncObj) {
+            getLaunchpadInfo(launchpadUrl).stationId = sessionId;
+            updateMetadataFile();
+        }
+    }
+
+    private Metadata.LaunchpadInfo getLaunchpadInfo(String launchpadUrl) {
+        return metadata.launchpad.computeIfAbsent(launchpadUrl, m -> asCode(launchpadUrl));
     }
 
     private void updateMetadataFile() {

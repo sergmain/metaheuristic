@@ -188,9 +188,9 @@ public class Protocol {
     public static class ReportStationStatus extends Command {
         public StationStatus status;
 
-        public ReportStationStatus(EnvYaml env, String schedule, GitSourcingService.GitStatusInfo gitStatusInfo) {
+        public ReportStationStatus(EnvYaml env, String schedule, GitSourcingService.GitStatusInfo gitStatusInfo, String sessionId) {
             this.setType(Type.ReportStationStatus);
-            this.status = new StationStatus(env, gitStatusInfo, schedule);
+            this.status = new StationStatus(env, gitStatusInfo, schedule, sessionId);
         }
 
         @Transient

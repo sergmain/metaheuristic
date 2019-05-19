@@ -31,4 +31,5 @@ public class StationStatus {
     public EnvYaml env;
     public GitSourcingService.GitStatusInfo gitStatusInfo;
     public String schedule;
+    public String sessionId;
 }

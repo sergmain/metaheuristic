@@ -33,6 +33,7 @@ public class Metadata {
         public String value;
         public String code;
         public String stationId;
+        public String sessionId;
     }
 
     public LinkedHashMap<String, String> metadata = new LinkedHashMap<>();

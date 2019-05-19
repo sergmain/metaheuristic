@@ -48,7 +48,7 @@ public abstract class PreparingExperiment {
 
     private static final String TEST_FIT_SNIPPET = "test.fit.snippet:1.0";
     private static final String TEST_PREDICT_SNIPPET = "test.predict.snippet:1.0";
-    public static final String TEST_EXPERIMENT_CODE_01 = "test-experiment-code-01";
+    static final String TEST_EXPERIMENT_CODE_01 = "test-experiment-code-01";
 
     @Autowired
     protected Globals globals;
@@ -117,7 +117,7 @@ public abstract class PreparingExperiment {
             envYaml.getEnvs().put("env-snippet-03:1.1", "python.exe" );
             envYaml.getEnvs().put("env-snippet-04:1.1", "python.exe" );
             envYaml.getEnvs().put("env-snippet-05:1.1", "python.exe" );
-            StationStatus ss = new StationStatus(envYaml, new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "");
+            StationStatus ss = new StationStatus(envYaml, new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "", null);
             station.setStatus(StationStatusUtils.toString(ss));
 
             station.setDescription("Test station. Must be deleted automatically");

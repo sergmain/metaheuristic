@@ -25,8 +25,8 @@
 
     <modules>
         <module>apps/metaheuristic-api</module>
-        <module>apps/metaheuristic</module>
         <module>apps/commons</module>
+        <module>apps/metaheuristic</module>
         <module>apps/package-snippet</module>
         <module>apps/gen-keys</module>
         <module>apps/gen-passwords</module>

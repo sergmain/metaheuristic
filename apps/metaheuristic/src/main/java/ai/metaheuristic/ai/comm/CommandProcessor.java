@@ -162,7 +162,7 @@ public class CommandProcessor {
         }
         final String stationStatus = StationStatusUtils.toString(command.status);
         if (!stationStatus.equals(station.status)) {
-            station.setStatus(stationStatus);
+            station.status = stationStatus;
             station.setUpdatedOn(System.currentTimeMillis());
             launchpadService.getStationsRepository().save(station);
         }
@@ -216,10 +216,9 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
-    @SuppressWarnings("unused")
-    private Command[] getNewStationId(Protocol.RequestStationId command) {
+    private Command[] getNewStationId(@SuppressWarnings("unused") Protocol.RequestStationId command) {
         final Station st = new Station();
-        StationStatus ss = new StationStatus(null, new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "");
+        StationStatus ss = new StationStatus(null, new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "", null);
         st.status = StationStatusUtils.toString(ss);
         launchpadService.getStationsRepository().save(st);
 

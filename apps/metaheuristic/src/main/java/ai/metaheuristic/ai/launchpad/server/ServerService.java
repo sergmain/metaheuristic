@@ -142,7 +142,7 @@ public class ServerService {
             Station s = new Station();
             s.setIp(remoteAddress);
             s.setDescription("Id was reassigned from "+data.getStationId());
-            StationStatus ss = new StationStatus(null, new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "");
+            StationStatus ss = new StationStatus(null, new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "", null);
             s.status = StationStatusUtils.toString(ss);
             stationsRepository.save(s);
             return new ExchangeData(new Protocol.ReAssignStationId(s.getId()));

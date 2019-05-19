@@ -130,7 +130,7 @@ public class LaunchpadRequestor {
                 // always report about current active sequences, if we have actual stationId
                 final Protocol.StationTaskStatus stationTaskStatus = stationTaskService.produceStationTaskStatus(launchpadUrl);
                 data.setCommand(stationTaskStatus);
-                data.setCommand(stationService.produceReportStationStatus(launchpad.schedule));
+                data.setCommand(stationService.produceReportStationStatus(launchpadUrl, launchpad.schedule));
                 if (currentExecState.isInited(launchpadUrl)) {
                     Monitoring.log("##011", Enums.Monitor.MEMORY);
                     final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);

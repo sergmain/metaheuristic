@@ -72,10 +72,11 @@ public class StationService {
         this.gitSourcingService = gitSourcingService;
     }
 
-    Command produceReportStationStatus(LaunchpadSchedule schedule) {
+    Command produceReportStationStatus(String launchpadUrl, LaunchpadSchedule schedule) {
         //noinspection UnnecessaryLocalVariable
         Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(
-                envService.getEnvYaml(), schedule.asString, gitSourcingService.gitStatusInfo);
+                envService.getEnvYaml(), schedule.asString, gitSourcingService.gitStatusInfo,
+                metadataService.getSessionId(launchpadUrl));
         return reportStationStatus;
     }
 
