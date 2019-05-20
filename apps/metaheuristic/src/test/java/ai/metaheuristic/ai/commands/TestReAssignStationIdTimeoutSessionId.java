@@ -20,6 +20,8 @@ import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
+import ai.metaheuristic.ai.yaml.station_status.StationStatus;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -41,7 +43,7 @@ import static org.junit.Assert.*;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("launchpad")
-public class TestReAssignStationIdTimeoutedSessionId {
+public class TestReAssignStationIdTimeoutSessionId {
 
     @Autowired
     public ServerService serverService;
@@ -51,26 +53,10 @@ public class TestReAssignStationIdTimeoutedSessionId {
 
     private Long stationIdBefore;
     private String sessionIdBefore;
-
-    private Long stationIdAfter;
-    private String sessionIdAfter;
-
-    private Long unknownStationId;
+    private long sessionCreatedOn;
 
     @Before
     public void before() {
-
-        for (int i = 0; i < 100; i++) {
-            final long id = -1L - i;
-            Station s = stationsRepository.findById(id).orElse(null);
-            if (s==null) {
-                unknownStationId = id;
-                break;
-            }
-        }
-        if (unknownStationId==null) {
-            throw new IllegalStateException("Can't find id which isn't belong to any station");
-        }
 
         ExchangeData d = serverService.processRequest(new ExchangeData(), "127.0.0.1");
 
@@ -84,8 +70,25 @@ public class TestReAssignStationIdTimeoutedSessionId {
 
         assertTrue(sessionIdBefore.length()>5);
 
-        System.out.println("stationIdBefore: " + sessionIdBefore);
+        System.out.println("stationIdBefore: " + stationIdBefore);
         System.out.println("sessionIdBefore: " + sessionIdBefore);
+
+        Long stationId = Long.valueOf(stationIdBefore);
+        Station s = stationsRepository.findById(stationId).orElse(null);
+        assertNotNull(s);
+
+        StationStatus ss = StationStatusUtils.to(s.status);
+        assertNotEquals(0L, ss.sessionCreatedOn);
+        assertEquals(sessionIdBefore, ss.sessionId);
+
+        ss.sessionCreatedOn -= (ServerService.SESSION_TTL + 100000);
+        sessionCreatedOn = ss.sessionCreatedOn;
+        s.status = StationStatusUtils.toString(ss);
+
+        Station s1 = stationsRepository.save(s);
+
+        StationStatus ss1 = StationStatusUtils.to(s1.status);
+        assertEquals(ss.sessionCreatedOn, ss1.sessionCreatedOn);
     }
 
     @After
@@ -101,12 +104,12 @@ public class TestReAssignStationIdTimeoutedSessionId {
     }
 
     @Test
-    public void testReAssignStationIdUnknownStationId() {
+    public void testReAssignStationIdTimeoutSessionId() {
 
-        // in this scenario we test that station has got a new re-assigned stationId
+        // in this scenario we test that a station has got a refreshed sessionId
 
         final ExchangeData data = new ExchangeData();
-        data.initRequestToLaunchpad(unknownStationId.toString(), sessionIdBefore.substring(0, 4));
+        data.initRequestToLaunchpad(stationIdBefore.toString(), sessionIdBefore);
 
         ExchangeData d = serverService.processRequest(data, "127.0.0.1");
 
@@ -115,12 +118,17 @@ public class TestReAssignStationIdTimeoutedSessionId {
         assertNotNull(d.getReAssignedStationId().getReAssignedStationId());
         assertNotNull(d.getReAssignedStationId().getSessionId());
 
-        Long stationId = Long.valueOf(d.getReAssignedStationId().getReAssignedStationId());
-
-        assertNotEquals(unknownStationId, stationId);
+        final Long stationId = Long.valueOf(d.getReAssignedStationId().getReAssignedStationId());
+        assertEquals(stationIdBefore, stationId);
+        assertEquals(sessionIdBefore, d.getReAssignedStationId().getSessionId());
 
         Station s = stationsRepository.findById(stationId).orElse(null);
 
         assertNotNull(s);
+        StationStatus ss = StationStatusUtils.to(s.status);
+        assertNotEquals(0L, ss.sessionCreatedOn);
+        assertNotEquals(sessionCreatedOn, ss.sessionCreatedOn);
+        assertEquals(sessionIdBefore, ss.sessionId);
+        assertTrue(ss.sessionCreatedOn > sessionCreatedOn);
     }
 }

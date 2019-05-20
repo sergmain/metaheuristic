@@ -104,6 +104,7 @@ public class TestRequestStationId {
         final ExchangeData data = new ExchangeData();
 
         // value of stationId doesn't matter here
+        // matter only sessionId which is null
         data.initRequestToLaunchpad("123445", null);
 
         ExchangeData d = serverService.processRequest(data, "127.0.0.1");

@@ -70,7 +70,7 @@ public class TestReAssignStationId {
 
         assertTrue(sessionIdBefore.length()>5);
 
-        System.out.println("stationIdBefore: " + sessionIdBefore);
+        System.out.println("stationIdBefore: " + stationIdBefore);
         System.out.println("sessionIdBefore: " + sessionIdBefore);
     }
 

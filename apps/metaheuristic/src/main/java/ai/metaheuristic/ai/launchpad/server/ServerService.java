@@ -158,6 +158,7 @@ public class ServerService {
         return resultData.getCommands().isEmpty() ? EXCHANGE_DATA_NOP : resultData;
     }
 
+    @SuppressWarnings("Duplicates")
     private ExchangeData checkStationId(ExchangeData data, String remoteAddress) {
         if (StringUtils.isBlank(data.getStationId())) {
             return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
@@ -172,7 +173,9 @@ public class ServerService {
         StationStatus ss = StationStatusUtils.to(station.status);
         if (!ss.sessionId.equals(data.getSessionId())) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
-                // the same station but with expired sessionId
+                // the same station but with different and expired sessionId
+                // so we can continue to use this stationId with new sessionId
+                // we won't use station's sessionIf to be sure that sessionId has valid format
                 ss.sessionId = UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
                 ss.sessionCreatedOn = System.currentTimeMillis();
                 station.status = StationStatusUtils.toString(ss);
@@ -185,7 +188,20 @@ public class ServerService {
                 return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
             }
         }
-        return null;
+        else {
+            if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
+                // the same station, with the same sessionId
+                // so we need just to refresh sessionId
+                ss.sessionCreatedOn = System.currentTimeMillis();
+                station.status = StationStatusUtils.toString(ss);
+                stationsRepository.save(station);
+                // the same stationId but new sessionId
+                return new ExchangeData(new Protocol.ReAssignStationId(station.getId(), ss.sessionId));
+            } else {
+                // the same stationId, the same sessionId, session isn't expired
+                return null;
+            }
+        }
     }
 
     public ExchangeData reassignStationId(String remoteAddress, String description) {
