@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,12 +51,27 @@ public class TestRequestStationId {
 
     private Long stationId;
 
+    private Long stationIdForEmptySession;
+
+    @Before
+    public void before() {
+
+    }
+
     @After
     public void afterPreparingExperiment() {
         log.info("Start after()");
         if (stationId!=null) {
             try {
                 stationsRepository.deleteById(stationId);
+            } catch (Throwable th) {
+                th.printStackTrace();
+            }
+        }
+
+        if (stationIdForEmptySession!=null) {
+            try {
+                stationsRepository.deleteById(stationIdForEmptySession);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -79,6 +95,30 @@ public class TestRequestStationId {
         stationId = Long.valueOf(d.getAssignedStationId().getAssignedStationId());
 
         Station s = stationsRepository.findById(stationId).orElse(null);
+
+        assertNotNull(s);
+    }
+
+    @Test
+    public void testEmptySessionId() {
+        final ExchangeData data = new ExchangeData();
+
+        // value of stationId doesn't matter here
+        data.initRequestToLaunchpad("123445", null);
+
+        ExchangeData d = serverService.processRequest(data, "127.0.0.1");
+
+        assertNotNull(d);
+        assertNotNull(d.getAssignedStationId());
+        assertNotNull(d.getAssignedStationId().getAssignedStationId());
+        assertNotNull(d.getAssignedStationId().getAssignedSessionId());
+
+        System.out.println("stationId: " + d.getAssignedStationId().getAssignedStationId());
+        System.out.println("sessionId: " + d.getAssignedStationId().getAssignedSessionId());
+
+        stationIdForEmptySession = Long.valueOf(d.getAssignedStationId().getAssignedStationId());
+
+        Station s = stationsRepository.findById(stationIdForEmptySession).orElse(null);
 
         assertNotNull(s);
     }

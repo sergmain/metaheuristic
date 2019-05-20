@@ -139,32 +139,9 @@ public class ServerService {
     }
 
     public ExchangeData processRequest(ExchangeData data, String remoteAddress) {
-        if (StringUtils.isBlank(data.getStationId())) {
-            return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
-        }
-        if (StringUtils.isBlank(data.getSessionId())) {
-            return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
-        }
-        final Station station = stationsRepository.findById(Long.parseLong(data.getStationId())).orElse(null);
-        if (station==null) {
-            return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
-        }
-        StationStatus ss = StationStatusUtils.to(station.status);
-        if (!ss.sessionId.equals(data.getSessionId())) {
-            if ((System.currentTimeMillis() - ss.sessionCreatedOn)>SESSION_TTL) {
-                // the same station but with expired sessionId
-                ss.sessionId = UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
-                ss.sessionCreatedOn = System.currentTimeMillis();
-                station.status = StationStatusUtils.toString(ss);
-                stationsRepository.save(station);
-                // the same stationId but new sessionId
-                return new ExchangeData(new Protocol.ReAssignStationId(station.getId(), ss.sessionId));
-            }
-            else {
-                // different stations with the same stationId
-                // there is other active station with valid sessionId
-                return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
-            }
+        ExchangeData exchangeData = checkStationId(data, remoteAddress);
+        if (exchangeData!=null) {
+            return exchangeData;
         }
 
         ExchangeData resultData = new ExchangeData();
@@ -179,6 +156,36 @@ public class ServerService {
         }
 
         return resultData.getCommands().isEmpty() ? EXCHANGE_DATA_NOP : resultData;
+    }
+
+    private ExchangeData checkStationId(ExchangeData data, String remoteAddress) {
+        if (StringUtils.isBlank(data.getStationId())) {
+            return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
+        }
+        if (StringUtils.isBlank(data.getSessionId())) {
+            return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
+        }
+        final Station station = stationsRepository.findById(Long.parseLong(data.getStationId())).orElse(null);
+        if (station == null) {
+            return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
+        }
+        StationStatus ss = StationStatusUtils.to(station.status);
+        if (!ss.sessionId.equals(data.getSessionId())) {
+            if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
+                // the same station but with expired sessionId
+                ss.sessionId = UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
+                ss.sessionCreatedOn = System.currentTimeMillis();
+                station.status = StationStatusUtils.toString(ss);
+                stationsRepository.save(station);
+                // the same stationId but new sessionId
+                return new ExchangeData(new Protocol.ReAssignStationId(station.getId(), ss.sessionId));
+            } else {
+                // different stations with the same stationId
+                // there is other active station with valid sessionId
+                return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
+            }
+        }
+        return null;
     }
 
     public ExchangeData reassignStationId(String remoteAddress, String description) {

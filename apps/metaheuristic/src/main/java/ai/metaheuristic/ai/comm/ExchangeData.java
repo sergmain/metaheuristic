@@ -77,9 +77,9 @@ public class ExchangeData {
     }
 
     @JsonIgnore
-    public void initReqeustToLaunchpad(String stationId, String launchpadUrl) {
+    public void initRequestToLaunchpad(String stationId, String sessionId) {
         this.stationId = stationId;
-        this.launchpadUrl = launchpadUrl;
+        this.sessionId = sessionId;
     }
 
     @JsonIgnore

@@ -30,8 +30,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Serge
@@ -42,7 +41,7 @@ import static org.junit.Assert.assertTrue;
 @SpringBootTest
 @Slf4j
 @ActiveProfiles("launchpad")
-public class TestReAssignStationId {
+public class TestReAssignStationIdTimeoutedSessionId {
 
     @Autowired
     public ServerService serverService;
@@ -56,8 +55,23 @@ public class TestReAssignStationId {
     private Long stationIdAfter;
     private String sessionIdAfter;
 
+    private Long unknownStationId;
+
     @Before
     public void before() {
+
+        for (int i = 0; i < 100; i++) {
+            final long id = -1L - i;
+            Station s = stationsRepository.findById(id).orElse(null);
+            if (s==null) {
+                unknownStationId = id;
+                break;
+            }
+        }
+        if (unknownStationId==null) {
+            throw new IllegalStateException("Can't find id which isn't belong to any station");
+        }
+
         ExchangeData d = serverService.processRequest(new ExchangeData(), "127.0.0.1");
 
         assertNotNull(d);
@@ -87,12 +101,12 @@ public class TestReAssignStationId {
     }
 
     @Test
-    public void testRequestStationId() {
+    public void testReAssignStationIdUnknownStationId() {
 
         // in this scenario we test that station has got a new re-assigned stationId
 
         final ExchangeData data = new ExchangeData();
-        data.initRequestToLaunchpad(stationIdBefore.toString(), sessionIdBefore.substring(0, 4));
+        data.initRequestToLaunchpad(unknownStationId.toString(), sessionIdBefore.substring(0, 4));
 
         ExchangeData d = serverService.processRequest(data, "127.0.0.1");
 
@@ -102,6 +116,8 @@ public class TestReAssignStationId {
         assertNotNull(d.getReAssignedStationId().getSessionId());
 
         Long stationId = Long.valueOf(d.getReAssignedStationId().getReAssignedStationId());
+
+        assertNotEquals(unknownStationId, stationId);
 
         Station s = stationsRepository.findById(stationId).orElse(null);
 

@@ -125,7 +125,7 @@ public class LaunchpadRequestor {
             if (stationId == null) {
                 data.setCommand(new Protocol.RequestStationId());
             }
-            data.initReqeustToLaunchpad(stationId, sessionId);
+            data.initRequestToLaunchpad(stationId, sessionId);
 
             if (stationId != null) {
                 // always report about current active sequences, if we have actual stationId
