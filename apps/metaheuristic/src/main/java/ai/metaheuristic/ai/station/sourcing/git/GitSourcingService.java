@@ -171,6 +171,25 @@ public class GitSourcingService {
                 return new GitExecResult(null,true, result.snippetExecResult.console);
             }
         }
+
+        result = execResetHardHead(repoDir);
+        log.info("#027.35 Result of execResetHardHead: {}", result.toString());
+        if (result.isError) {
+            return result;
+        }
+        if (!result.snippetExecResult.isOk) {
+            return new GitExecResult(null,true, result.snippetExecResult.console);
+        }
+
+        result = execCleanDF(repoDir);
+        log.info("#027.36 Result of execCleanDF: {}", result.toString());
+        if (result.isError) {
+            return result;
+        }
+        if (!result.snippetExecResult.isOk) {
+            return new GitExecResult(null,true, result.snippetExecResult.console);
+        }
+
         result = execPullOrigin(repoDir, snippet);
         log.info("#027.38 Result of execPullOrigin: {}", result.toString());
         if (result.isError) {
@@ -197,6 +216,7 @@ public class GitSourcingService {
         // git checkout sha1
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", snippet.git.commit);
         log.info("exec {}", cmd);
+        //noinspection UnnecessaryLocalVariable
         GitExecResult result = execGitCmd(cmd, 0L);
         return result;
     }
@@ -205,6 +225,7 @@ public class GitSourcingService {
         // pull origin master
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", snippet.git.branch);
         log.info("exec {}", cmd);
+        //noinspection UnnecessaryLocalVariable
         GitExecResult result = execGitCmd(cmd, 0L);
         return result;
     }
@@ -222,10 +243,20 @@ public class GitSourcingService {
         return result;
     }
 
+    private GitExecResult execCleanDF(File repoDir) {
+        // git clean -df
+        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "clean", "-df");
+        log.info("exec {}", cmd);
+        //noinspection UnnecessaryLocalVariable
+        GitExecResult result = execGitCmd(cmd, 120L);
+        return result;
+    }
+
     private GitExecResult execRevParse(File repoDir) {
         // git rev-parse --is-inside-work-tree
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "rev-parse", "--is-inside-work-tree");
         log.info("exec {}", cmd);
+        //noinspection UnnecessaryLocalVariable
         GitExecResult result = execGitCmd(cmd, 60L);
         return result;
     }
@@ -235,7 +266,8 @@ public class GitSourcingService {
         // git reset --hard HEAD
         List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "reset", "--hard", "HEAD");
         log.info("exec {}", cmd);
-        GitExecResult result = execGitCmd(cmd, 60L);
+        //noinspection UnnecessaryLocalVariable
+        GitExecResult result = execGitCmd(cmd, 120L);
         return result;
     }
 
