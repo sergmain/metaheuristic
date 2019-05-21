@@ -4,42 +4,32 @@
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">Delete workbook</h1>
+        <h1 class="widget-header" th:text="${'Status of execution of batch #' + batchId}"></h1>
 
-        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.v1.data.PlanApiData.WorkbookResult"*/-->
-        <p>Code of plan:</p>
-        <pre style="width:50%" th:text="${result.plan.code}"></pre>
-
-        <p>Parameters of plan:</p>
-        <pre style="width:50%" th:text="${result.plan.params}"></pre>
-
-        <p>Input resource pool code:</p>
-        <pre style="width:50%" th:text="${result.workbook.inputResourceParam}"></pre>
-
-        <p>Exec state:</p>
-        <pre style="width:50%" th:text="${T(ai.metaheuristic.api.v1.EnumsApi.WorkbookExecState).from(result.workbook.execState)}"></pre>
+        <p>Status:</p>
+        <pre style="width:100%" th:text="${console}"></pre>
 
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:method="post" th:action="@{/pilot/process-resource/process-resource-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#"
+                          th:method="post" th:action="@{/pilot/process-resource/process-resource-delete-commit}"
                           accept-charset="UTF-8"
                           id="workbook-delete-commit"
                           name="f">
-                        <input type="hidden" th:name="planId" th:value="${result.plan.id}"/>
-                        <input type="hidden" th:name="workbookId" th:value="${result.workbook.id}"/>
-                        <fieldset>
+                        <input type="hidden" th:name="batchId" th:value="${batchId}"/>
                             <button type="submit" class="pure-button pure-button-primary">Delete</button>
-                        </fieldset>
                     </form>
                 </td>
                 <td>
                     &nbsp;
                 </td>
                 <td>
-                    <a class="pure-button pure-button-primary" href="process-resources.html" th:href="${'/pilot/process-resource/process-resources'}">Cancel</a>
+                    <a class="pure-button pure-button-primary" href="process-resources.html" th:href="${'/pilot/process-resource/process-resources'}">To list of batches</a>
                 </td>
             </tr>
         </table>
+
+
     </div>
 </div>

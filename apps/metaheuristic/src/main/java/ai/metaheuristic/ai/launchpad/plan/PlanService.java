@@ -161,7 +161,8 @@ public class PlanService {
             if (plan!=null) {
                 plan.locked = false;
                 save(plan);
-            }}
+            }
+        }
     }
 
     public PlanApiData.WorkbookResult getWorkbookExtended(Long workbookId) {

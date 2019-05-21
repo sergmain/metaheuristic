@@ -352,7 +352,7 @@ public class ProcessResourceController {
         return yaml;
     }
 
-    public String createAndProcessTask(Batch batch, RedirectAttributes redirectAttributes, Plan plan, List<File> dataFile, File mainDocFile) {
+    private String createAndProcessTask(Batch batch, RedirectAttributes redirectAttributes, Plan plan, List<File> dataFile, File mainDocFile) {
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
         String mainPoolCode = String.format("%d-%s-%d", plan.getId(), MAIN_DOCUMENT_POOL_CODE, nanoTime);
@@ -449,50 +449,67 @@ public class ProcessResourceController {
         return null;
     }
 
-    @SuppressWarnings("Duplicates")
-    @GetMapping("/process-resource-delete/{planId}/{batchId}")
-    public String processResourceDelete(Model model, @PathVariable Long planId, @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
+    @GetMapping("/process-resource-delete/{batchId}")
+    public String processResourceDelete(Model model, @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
 
-        if (true) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Can't delete batch, not implemented yet.");
+        Batch batch = batchRepository.findById(batchId).orElse(null);
+        if (batch == null) {
+            final String es = "#990.109 Batch wasn't found, batchId: " + batchId;
+            log.info(es);
+            redirectAttributes.addAttribute("errorMessage",es );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        long workbookId = -1L;
-        PlanApiData.WorkbookResult result = planService.getWorkbookExtended(workbookId);
-        if (result.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
+        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
+        File zipDir = new File(resultDir, "zip");
+        String status = prepareData(batchId, batch, zipDir, false);
+        if (status==null) {
+            final String es = "#990.120 Status can't be prepared, batchId: " + batchId;
+            log.info(es);
+            redirectAttributes.addAttribute("errorMessage",es );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        model.addAttribute("result", result);
+
+        model.addAttribute("batchId", batchId);
+        model.addAttribute("console", status);
         return "pilot/process-resource/process-resource-delete";
     }
 
     @PostMapping("/process-resource-delete-commit")
-    public String processResourceDeleteCommit(Long planId, Long workbookId, final RedirectAttributes redirectAttributes) {
-        PlanApiData.WorkbookResult result = planService.getWorkbookExtended(workbookId);
-        if (result.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", result.isErrorMessages());
+    public String processResourceDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes) {
+
+        Batch batch = batchRepository.findById(batchId).orElse(null);
+        if (batch == null) {
+            final String es = "#990.209 Batch wasn't found, batchId: " + batchId;
+            log.info(es);
+            redirectAttributes.addAttribute("errorMessage",es );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        Workbook wb = workbookRepository.findById(workbookId).orElse(null);
-        if (wb==null) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "#990.77 Workbook wasn't found, batchId: " + workbookId );
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batch.id);
+        for (BatchWorkbook bfi : bfis) {
+            Workbook wb = workbookRepository.findById(bfi.workbookId).orElse(null);
+            if (wb == null) {
+                continue;
+            }
+            planService.deleteWorkbook(wb.getId(), wb.getPlanId());
         }
-        planService.deleteWorkbook(workbookId, wb.getPlanId());
+        batchWorkbookRepository.deleteByBatchId(batch.id);
+        batchRepository.deleteById(batch.id);
+
+        redirectAttributes.addAttribute("infoMessages", "Batch #"+batch.id+" was deleted successfully.");
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
     }
 
     @GetMapping(value= "/process-resource-status/{batchId}" )
     public String getProcessingResourceStatus(
-            Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes) throws IOException {
+            Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes) {
 
         Batch batch = batchRepository.findById(batchId).orElse(null);
         if (batch == null) {
-            log.info("#990.109 Batch wasn't found, batchId: {}", batchId);
+            final String es = "#990.209 Batch wasn't found, batchId: " + batchId;
+            log.info(es);
+            redirectAttributes.addAttribute("errorMessage",es );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
@@ -500,6 +517,9 @@ public class ProcessResourceController {
         File zipDir = new File(resultDir, "zip");
         String status = prepareData(batchId, batch, zipDir, true);
         if (status==null) {
+            final String es = "#990.220 Status can't be prepared, batchId: " + batchId;
+            log.info(es);
+            redirectAttributes.addAttribute("errorMessage",es );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
@@ -540,7 +560,8 @@ public class ProcessResourceController {
         return new HttpEntity<>(new FileSystemResource(zipFile), getHeader(httpHeaders, zipFile.length()));
     }
 
-    public String prepareData(Long batchId, Batch batch, File zipDir, boolean fullConsole)  {
+    @SuppressWarnings("StringConcatenationInLoop")
+    private String prepareData(Long batchId, Batch batch, File zipDir, boolean fullConsole)  {
         String status = "";
         log.info("#990.105 Start downloadProcessingResult(), batchId: {}", batchId);
 
@@ -556,7 +577,7 @@ public class ProcessResourceController {
             }
             Plan plan = planCache.findById(wb.getPlanId());
             if (plan == null) {
-                String msg = "#990.119 Batch #" + batch.id + " contains broken planId - #" + plan.getId();
+                String msg = "#990.119 Batch #" + batch.id + " contains broken planId - #" + wb.getPlanId();
                 status += (msg + '\n');
                 log.warn(msg);
                 continue;

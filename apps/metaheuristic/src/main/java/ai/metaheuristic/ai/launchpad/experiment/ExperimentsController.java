@@ -270,13 +270,13 @@ public class ExperimentsController {
 
         Experiment experiment = experimentCache.findById(id);
         if (experiment==null) {
-            redirectAttributes.addFlashAttribute("errorMessages",
+            redirectAttributes.addFlashAttribute("errorMessage",
                     "# can't find experiment for id: " + id);
             return "redirect:/launchpad/experiment-info/"+id;
         }
 
         if (experiment.workbookId==null) {
-            redirectAttributes.addFlashAttribute("errorMessages",
+            redirectAttributes.addFlashAttribute("errorMessage",
                     "# This experiment isn't bound to Workbook");
             return "redirect:/launchpad/experiment-info/"+id;
         }

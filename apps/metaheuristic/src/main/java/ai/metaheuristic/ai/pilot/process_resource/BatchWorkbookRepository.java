@@ -30,4 +30,6 @@ import java.util.List;
 public interface BatchWorkbookRepository extends JpaRepository<BatchWorkbook, Long> {
 
     List<BatchWorkbook> findAllByBatchId(long batchId);
+
+    void deleteByBatchId(Long batchId);
 }
