@@ -163,25 +163,22 @@ public class ServerService {
         if (StringUtils.isBlank(data.getStationId())) {
             return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
         }
-        if (StringUtils.isBlank(data.getSessionId())) {
-            return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
-        }
         final Station station = stationsRepository.findById(Long.parseLong(data.getStationId())).orElse(null);
         if (station == null) {
             return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
         }
         StationStatus ss = StationStatusUtils.to(station.status);
+        if (StringUtils.isBlank(data.getSessionId())) {
+            // the same station but with different and expired sessionId
+            // so we can continue to use this stationId with new sessionId
+            return assignNewSessionId(station, ss);
+        }
         if (!ss.sessionId.equals(data.getSessionId())) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
                 // the same station but with different and expired sessionId
                 // so we can continue to use this stationId with new sessionId
                 // we won't use station's sessionIf to be sure that sessionId has valid format
-                ss.sessionId = UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
-                ss.sessionCreatedOn = System.currentTimeMillis();
-                station.status = StationStatusUtils.toString(ss);
-                stationsRepository.save(station);
-                // the same stationId but new sessionId
-                return new ExchangeData(new Protocol.ReAssignStationId(station.getId(), ss.sessionId));
+                return assignNewSessionId(station, ss);
             } else {
                 // different stations with the same stationId
                 // there is other active station with valid sessionId
@@ -202,6 +199,15 @@ public class ServerService {
                 return null;
             }
         }
+    }
+
+    private ExchangeData assignNewSessionId(Station station, StationStatus ss) {
+        ss.sessionId = UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
+        ss.sessionCreatedOn = System.currentTimeMillis();
+        station.status = StationStatusUtils.toString(ss);
+        stationsRepository.save(station);
+        // the same stationId but new sessionId
+        return new ExchangeData(new Protocol.ReAssignStationId(station.getId(), ss.sessionId));
     }
 
     public ExchangeData reassignStationId(String remoteAddress, String description) {

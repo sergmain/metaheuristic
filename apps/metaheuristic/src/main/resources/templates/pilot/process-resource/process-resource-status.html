@@ -1,0 +1,16 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
+     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+     layout:decorate="~{layout-pilot}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+>
+    <div sec:authorize="isAuthenticated()">
+        <h1 class="widget-header">Delete workbook</h1>
+
+        <p>Status:</p>
+        <pre style="width:100%" th:text="${console}"></pre>
+
+        <p>&nbsp;</p>
+        <a class="pure-button pure-button-primary" href="process-resources.html" th:href="${'/pilot/process-resource/process-resources'}">To list of batches</a>
+
+    </div>
+</div>

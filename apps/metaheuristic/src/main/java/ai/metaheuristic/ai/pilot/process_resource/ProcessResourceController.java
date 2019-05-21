@@ -486,33 +486,76 @@ public class ProcessResourceController {
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
     }
 
+    @GetMapping(value= "/process-resource-status/{batchId}" )
+    public String getProcessingResourceStatus(
+            Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes) throws IOException {
+
+        Batch batch = batchRepository.findById(batchId).orElse(null);
+        if (batch == null) {
+            log.info("#990.109 Batch wasn't found, batchId: {}", batchId);
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        }
+
+        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
+        File zipDir = new File(resultDir, "zip");
+        String status = prepareData(batchId, batch, zipDir, true);
+        if (status==null) {
+            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        }
+
+        model.addAttribute("batchId", batchId);
+        model.addAttribute("console", status);
+        return "pilot/process-resource/process-resource-status";
+    }
+
     @GetMapping(value= "/process-resource-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletResponse response, @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName/*, final RedirectAttributes redirectAttributes*/) throws IOException {
-        log.info("#990.105 Start downloadProcessingResult(), batchId: {}", batchId);
+
+        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
+        File zipDir = new File(resultDir, "zip");
+
         Batch batch = batchRepository.findById(batchId).orElse(null);
-        if (batch==null) {
+        if (batch == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             log.info("#990.109 Batch wasn't found, batchId: {}", batchId);
             return null;
         }
 
-        List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batch.id);
+        String status = prepareData(batchId, batch, zipDir, false);
+        if (status==null) {
+            return null;
+        }
+
+        File statusFile = new File(zipDir, "status.txt");
+        FileUtils.write(statusFile, status, StandardCharsets.UTF_8);
+        File zipFile = new File(resultDir, RESULT_ZIP);
+        ZipUtils.createZip(zipDir, zipFile);
+
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        httpHeaders.setContentDispositionFormData("attachment", RESULT_ZIP);
+        return new HttpEntity<>(new FileSystemResource(zipFile), getHeader(httpHeaders, zipFile.length()));
+    }
+
+    public String prepareData(Long batchId, Batch batch, File zipDir, boolean fullConsole)  {
         String status = "";
-        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
-        File zipDir = new File(resultDir, "zip");
+        log.info("#990.105 Start downloadProcessingResult(), batchId: {}", batchId);
+
+        List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batch.id);
 
         for (BatchWorkbook bfi : bfis) {
             Workbook wb = workbookRepository.findById(bfi.workbookId).orElse(null);
-            if (wb==null) {
+            if (wb == null) {
                 String msg = "#990.114 Batch #" + batch.id + " contains broken workbookId - #" + bfi.workbookId;
                 status += (msg + '\n');
                 log.warn(msg);
                 continue;
             }
             Plan plan = planCache.findById(wb.getPlanId());
-            if (plan==null) {
+            if (plan == null) {
                 String msg = "#990.119 Batch #" + batch.id + " contains broken planId - #" + plan.getId();
                 status += (msg + '\n');
                 log.warn(msg);
@@ -522,8 +565,8 @@ public class ProcessResourceController {
             String mainDocumentPoolCode = getMainDocumentPoolCode(wb.getInputResourceParam());
 
             final String fullMainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
-            if (fullMainDocument==null) {
-                String msg = "#990.123, "+mainDocumentPoolCode+", Can't determine actual file name of main document, " +
+            if (fullMainDocument == null) {
+                String msg = "#990.123, " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
                         "batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
                 log.warn(msg);
                 status += (msg + '\n');
@@ -533,16 +576,16 @@ public class ProcessResourceController {
             Meta meta = planYaml.getMeta(Consts.RESULT_FILE_EXTENSION);
 
             String mainDocument = StrUtils.getName(fullMainDocument) +
-                    (meta!=null && StringUtils.isNotBlank(meta.getValue())
+                    (meta != null && StringUtils.isNotBlank(meta.getValue())
                             ? meta.getValue()
                             :
-                            ( StringUtils.isNotBlank(globals.defaultResultFileExtension)
+                            (StringUtils.isNotBlank(globals.defaultResultFileExtension)
                                     ? globals.defaultResultFileExtension
                                     : ".bin"));
 
             Integer taskOrder = taskRepository.findMaxConcreteOrder(wb.getId());
-            if (taskOrder==null) {
-                String msg = "#990.128, "+mainDocument+", Tasks weren't created correctly for this batch, need to re-upload documents, " +
+            if (taskOrder == null) {
+                String msg = "#990.128, " + mainDocument + ", Tasks weren't created correctly for this batch, need to re-upload documents, " +
                         "batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
                 log.warn(msg);
                 status += (msg + '\n');
@@ -550,42 +593,51 @@ public class ProcessResourceController {
             }
             List<Task> tasks = taskRepository.findAnyWithConcreteOrder(wb.getId(), taskOrder);
             if (tasks.isEmpty()) {
-                String msg = "#990.133, "+mainDocument+", Can't find any task for batchId: " + batchId;
+                String msg = "#990.133, " + mainDocument + ", Can't find any task for batchId: " + batchId;
                 log.info(msg);
                 status += (msg + '\n');
                 continue;
             }
-            if (tasks.size()>1) {
-                String msg = "#990.137, "+mainDocument+", Can't download file because there are more than one task, " +
-                        "batchId: "+batch.id+", workbookId: " + wb.getId();
+            if (tasks.size() > 1) {
+                String msg = "#990.137, " + mainDocument + ", Can't download file because there are more than one task, " +
+                        "batchId: " + batch.id + ", workbookId: " + wb.getId();
                 log.info(msg);
                 status += (msg + '\n');
                 continue;
             }
             final Task task = tasks.get(0);
             EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
+            SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
             switch (execState) {
                 case NONE:
                 case IN_PROGRESS:
-                    status += ("#990.142, "+mainDocument+", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                            ", batchId:" + batch.id + ", workbookId: " + wb.getId() +", " +
+                    status += ("#990.142, " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                            ", batchId:" + batch.id + ", workbookId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + '\n');
                     continue;
                 case ERROR:
-                    SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
-                    status += ("#990.149, "+mainDocument+", Task was completed with error, batchId:" + batch.id + ", workbookId: " + wb.getId() +", " +
+                    status += ("#990.149, " + mainDocument + ", Task was completed with error, batchId:" + batch.id + ", workbookId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + "\n" +
                             "isOk: " + snippetExec.exec.isOk + "\n" +
                             "exitCode: " + snippetExec.exec.exitCode + "\n" +
-                            "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>")+ "\n\n");
+                            "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
                     continue;
+                case OK:
+                    if (fullConsole) {
+                        status += ("#990.151, " + mainDocument + ", Task completed without any error, batchId:" + batch.id + ", workbookId: " + wb.getId() + ", " +
+                                "taskId: " + task.getId() + "\n" +
+                                "isOk: " + snippetExec.exec.isOk + "\n" +
+                                "exitCode: " + snippetExec.exec.exitCode + "\n" +
+                                "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
+                    }
+                    break;
             }
 
             final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
 
-            if (wb.getExecState()!= EnumsApi.WorkbookExecState.FINISHED.code) {
-                status += ("#990.155, "+mainDocument+", Task hasn't completed yet, " +
-                        "batchId:" + batch.id + ", workbookId: " + wb.getId() +", " +
+            if (wb.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
+                status += ("#990.155, " + mainDocument + ", Task hasn't completed yet, " +
+                        "batchId:" + batch.id + ", workbookId: " + wb.getId() + ", " +
                         "taskId: " + task.getId() + '\n');
                 continue;
             }
@@ -602,20 +654,14 @@ public class ProcessResourceController {
                 continue;
             }
 
-            String msg = "#990.167 status - Ok, doc: "+mainDocFile.getName()+", batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
-            status += (msg + '\n');
+            if (!fullConsole) {
+                String msg = "#990.167 status - Ok, doc: " + mainDocFile.getName() + ", batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
+                status += (msg + '\n');
+            }
 
         }
-        File statusFile = new File(zipDir, "status.txt");
-        FileUtils.write(statusFile, status, StandardCharsets.UTF_8);
-        File zipFile = new File(resultDir, RESULT_ZIP);
-        ZipUtils.createZip(zipDir, zipFile);
 
-
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        httpHeaders.setContentDispositionFormData("attachment", RESULT_ZIP);
-        return new HttpEntity<>(new FileSystemResource(zipFile), getHeader(httpHeaders, zipFile.length()));
+        return status;
     }
 
     private String getMainDocumentForPoolCode(String mainDocumentPoolCode) {
