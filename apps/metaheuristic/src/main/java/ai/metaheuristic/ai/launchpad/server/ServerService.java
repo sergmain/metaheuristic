@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.server;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Command;
@@ -167,7 +168,15 @@ public class ServerService {
         if (station == null) {
             return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
         }
-        StationStatus ss = StationStatusUtils.to(station.status);
+        StationStatus ss;
+        try {
+            ss = StationStatusUtils.to(station.status);
+        } catch (Throwable e) {
+            log.error("Error parsing current status of station:\n{}", station.status);
+            log.error("Error ", e);
+            // skip any command from this station
+            return new ExchangeData(Protocol.NOP);
+        }
         if (StringUtils.isBlank(data.getSessionId())) {
             // the same station but with different and expired sessionId
             // so we can continue to use this stationId with new sessionId
