@@ -1,14 +1,13 @@
-<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
-     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     layout:decorate="~{layout-pilot}"
-     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+<div layout:fragment="content" layout:decorate="~{layout-pilot}"
+     xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
 >
-    <div sec:authorize="isAuthenticated()">
+    <div>
         <h1 class="widget-header" th:text="${'Status of execution of batch #' + batchId}"></h1>
 
         <p>Status:</p>
         <pre style="width:100%" th:text="${console}"></pre>
 
+        <p>&nbsp;</p>
         <table>
             <tr>
                 <td>
