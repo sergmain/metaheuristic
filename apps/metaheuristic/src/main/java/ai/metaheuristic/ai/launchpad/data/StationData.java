@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.api.v1.data.BaseDataClass;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -28,7 +29,16 @@ public class StationData {
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class StationsResult extends BaseDataClass {
-        public Slice<Station> items;
+        public Slice<StationStatus> items;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class StationStatus {
+        public Station station;
+        public boolean active;
+        public long lastSeen;
     }
 
     @Data

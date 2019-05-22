@@ -20,9 +20,13 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * Use AtomicBoolean
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Deprecated
 public class BoolHolder {
     public boolean value;
 }

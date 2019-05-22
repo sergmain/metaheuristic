@@ -4,6 +4,10 @@
 >
 
     <script>
+        'use strict';
+
+        let /*boolean*/ isShowStatus = false;
+
         var table = function (html) {
             $('#table').html(html).find('.ajax-elem').each(function () {
                 $(this).click(function () {
@@ -23,32 +27,64 @@
             $.post('/launchpad/stations-part', table);
         });
 
+
+        function switchStatus() {
+            $('#table').find('#station-status').each(function () {
+                let $2 = $(this);
+                printLogMain('$(this).id: ' + $2.attr('id'));
+                printLogMain('$(this).content: ' + $2.content);
+
+                if (isShowStatus) {
+                    $(this).hide();
+                    isShowStatus = false;
+                }
+                else {
+                    $(this).show();
+                    isShowStatus = true;
+                }
+
+            });
+
+            return false;
+        }
+
     </script>
 
     <h1 class="widget-header">Stations</h1>
 
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.StationData.StationsResult"*/-->
+    <div class="pure-controls">
+        <label for="show-status" class="pure-checkbox">
+            <input id="show-status" type="checkbox" onclick="switchStatus();"/>
+            Show current status of station
+        </label>
+    </div>
+
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.StationData$StationsResult"*/-->
     <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
         <thead>
         <tr>
             <th>Id</th>
             <th>IP address</th>
             <th>Description</th>
-            <th>Station status info</th>
+            <th>Status of station</th>
+            <th>Is active</th>
+            <th>Last seen</th>
             <th colspan="2">&nbsp;</th>
         </tr>
         </thead>
         <tbody>
         <tr th:each="r : ${result.items}">
-            <td th:text="${r.id}">Station Id</td>
-            <td th:text="${r.ip}">IP address</td>
-            <td th:text="${r.description}">Sample Description</td>
-            <td><pre th:if="${r.status}!=null" th:text="${r.status}">Station status info</pre></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-edit/' + r.id}">Edit</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-delete/' + r.id}">Delete</a></td>
+            <td th:text="${r.station.id}">Station Id</td>
+            <td th:text="${r.station.ip}">IP address</td>
+            <td th:text="${r.station.description}">Sample Description</td>
+            <td><pre style="display: none;" id="station-status" th:if="${r.station.status}!=null" th:text="${r.station.status}">Status of station </pre></td>
+            <td th:text="${r.active ? 'Yes' : 'No'}">Is active</td>
+            <td th:text="${#dates.format(r.lastSeen, 'dd-MMM-yy HH:mm')}">Last seen</td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-edit/' + r.station.id}">Edit</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-delete/' + r.station.id}">Delete</a></td>
         </tr>
         <tr>
-            <td colspan="7">
+            <td colspan="8">
                 <div>
                     <ul class='pagination pagination-centered'>
                         <li class="table-nav-padding">

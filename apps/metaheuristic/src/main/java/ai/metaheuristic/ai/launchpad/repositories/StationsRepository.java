@@ -37,5 +37,8 @@ public interface StationsRepository extends CrudRepository<Station, Long> {
     @Transactional(readOnly = true)
     Slice<Station> findAll(Pageable pageable);
 
+    @Transactional(readOnly = true)
+    Slice<Station> findAllByOrderByUpdatedOnDescId(Pageable pageable);
+
     Station findByIp(String Ip);
 }

@@ -26,7 +26,13 @@ import ai.metaheuristic.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+import org.springframework.data.domain.SliceImpl;
 import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Profile("launchpad")
@@ -36,6 +42,8 @@ public class StationTopLevelService {
     private final Globals globals;
     private final StationsRepository repository;
 
+    public static final long STATION_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
+
     public StationTopLevelService(Globals globals, StationsRepository repository) {
         this.globals = globals;
         this.repository = repository;
@@ -44,7 +52,13 @@ public class StationTopLevelService {
     public StationData.StationsResult getStations(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.stationRowsLimit, pageable);
         StationData.StationsResult result = new StationData.StationsResult();
-        result.items = repository.findAll(pageable);
+        Slice<Station> items = repository.findAllByOrderByUpdatedOnDescId(pageable);
+        List<StationData.StationStatus> ss = new ArrayList<>(pageable.getPageSize()+1);
+        for (Station item : items) {
+            ss.add(new StationData.StationStatus(
+                    item, System.currentTimeMillis() - item.updatedOn < STATION_TIMEOUT, item.updatedOn));
+        }
+        result.items =  new SliceImpl<>(ss, pageable, items.hasNext());
         return result;
     }
 

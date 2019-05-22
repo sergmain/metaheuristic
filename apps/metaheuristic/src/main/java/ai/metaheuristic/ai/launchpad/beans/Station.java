@@ -38,6 +38,9 @@ public class Station implements Serializable {
     @Version
     public Integer version;
 
+    /**
+     * When status of station was updated last time
+     */
     @Column(name="UPDATED_ON")
     public long updatedOn;
 
