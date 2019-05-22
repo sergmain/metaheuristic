@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Slf4j
@@ -87,8 +88,6 @@ public class EnvService {
         return envYaml;
     }
 
-    private static final Object syncObj = new Object();
-
     public void monitorHotDeployDir() {
         if (globals.isUnitTesting) {
             return;
@@ -97,11 +96,13 @@ public class EnvService {
             return;
         }
 
-        synchronized (syncObj) {
+        synchronized (this) {
             if (!globals.stationEnvHotDeployDir.exists()) {
+                //noinspection ResultOfMethodCallIgnored
                 globals.stationEnvHotDeployDir.mkdirs();
             }
             try {
+                AtomicBoolean changed = new AtomicBoolean(false);
                 Files.list(globals.stationEnvHotDeployDir.toPath())
                         .filter(o -> {
                             File f = o.toFile();
@@ -109,39 +110,51 @@ public class EnvService {
                         })
                         .forEach(dataFile -> {
                             File file = dataFile.toFile();
-                            if (file.isFile()) {
-                                try (InputStream is = new FileInputStream(file)) {
-                                    EnvYaml env = EnvYamlUtils.to(is);
-                                    env.envs.forEach((key, value) -> {
-                                        if (envYaml.envs.containsKey(key)) {
-                                            log.warn("Environment already has key {}", key);
-                                            return;
-                                        }
-                                        log.info("new env record was added, key: {}, value: {}", key, value);
-                                        envYaml.envs.put(key, value);
-                                    });
-                                } catch (Throwable th) {
-                                    log.error("Can't read file " + file.getAbsolutePath(), th);
+                            try {
+                                if (file.isFile()) {
+                                    try (InputStream is = new FileInputStream(file)) {
+                                        EnvYaml env = EnvYamlUtils.to(is);
+                                        env.envs.forEach((key, value) -> {
+                                            if (envYaml.envs.containsKey(key)) {
+                                                log.warn("Environment already has key {}", key);
+                                                return;
+                                            }
+                                            log.info("new env record was added, key: {}, value: {}", key, value);
+                                            envYaml.envs.put(key, value);
+                                            changed.set(true);
+                                        });
+                                    } catch (Throwable th) {
+                                        log.error("Can't read file " + file.getAbsolutePath(), th);
+                                    }
                                 }
                             }
-                            file.delete();
+                            finally {
+                                try {
+                                    //noinspection ResultOfMethodCallIgnored
+                                    file.delete();
+                                } catch (Throwable th) {
+                                    log.error("Can't delete dir " + file.getPath(), th);
+                                }
+                            }
                         });
 
-                final String newEnv = EnvYamlUtils.toString(envYaml);
-                final File envYamlFile = new File(globals.stationDir, Consts.ENV_YAML_FILE_NAME);
-                if (envYamlFile.exists()) {
-                    log.trace("env.yaml file exists. Make a backup.");
-                    File yamlFileBak = new File(globals.stationDir, Consts.ENV_YAML_FILE_NAME + ".bak");
-                    //noinspection ResultOfMethodCallIgnored
-                    yamlFileBak.delete();
+                if (changed.get()) {
+                    final String newEnv = EnvYamlUtils.toString(envYaml);
+                    final File envYamlFile = new File(globals.stationDir, Consts.ENV_YAML_FILE_NAME);
                     if (envYamlFile.exists()) {
+                        log.trace("env.yaml file exists. Make a backup.");
+                        File yamlFileBak = new File(globals.stationDir, Consts.ENV_YAML_FILE_NAME + ".bak");
                         //noinspection ResultOfMethodCallIgnored
-                        envYamlFile.renameTo(yamlFileBak);
+                        yamlFileBak.delete();
+                        if (envYamlFile.exists()) {
+                            //noinspection ResultOfMethodCallIgnored
+                            envYamlFile.renameTo(yamlFileBak);
+                        }
                     }
-                }
 
-                FileUtils.writeStringToFile(envYamlFile, newEnv, StandardCharsets.UTF_8);
-                setEnv(newEnv);
+                    FileUtils.writeStringToFile(envYamlFile, newEnv, StandardCharsets.UTF_8);
+                    setEnv(newEnv);
+                }
             } catch (Throwable th) {
                 log.error("Error", th);
             }
