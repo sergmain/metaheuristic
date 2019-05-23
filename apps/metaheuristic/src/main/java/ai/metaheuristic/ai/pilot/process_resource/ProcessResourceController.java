@@ -604,6 +604,7 @@ public class ProcessResourceController {
                                     ? globals.defaultResultFileExtension
                                     : ".bin"));
 
+            // TODO 2019-05-23 investigate all cases when this is happened
             Integer taskOrder = taskRepository.findMaxConcreteOrder(wb.getId());
             if (taskOrder == null) {
                 String msg = "#990.128, " + mainDocument + ", Tasks weren't created correctly for this batch, need to re-upload documents, " +
