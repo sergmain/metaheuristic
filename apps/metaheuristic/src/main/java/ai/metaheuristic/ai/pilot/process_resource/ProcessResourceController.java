@@ -100,7 +100,6 @@ public class ProcessResourceController {
     private final BatchRepository batchRepository;
     private final BatchWorkbookRepository batchWorkbookRepository;
     private final BinaryDataService binaryDataService;
-    private final PlanYamlUtils planYamlUtils;
 
     @Data
     @NoArgsConstructor
@@ -124,7 +123,7 @@ public class ProcessResourceController {
 
     private final Globals globals;
 
-    public ProcessResourceController(WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, PlanYamlUtils planYamlUtils, Globals globals) {
+    public ProcessResourceController(WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, Globals globals) {
         this.workbookRepository = workbookRepository;
         this.planRepository = planRepository;
         this.planCache = planCache;
@@ -134,7 +133,6 @@ public class ProcessResourceController {
         this.batchRepository = batchRepository;
         this.batchWorkbookRepository = batchWorkbookRepository;
         this.binaryDataService = binaryDataService;
-        this.planYamlUtils = planYamlUtils;
         this.globals = globals;
     }
 
@@ -593,7 +591,7 @@ public class ProcessResourceController {
                 status += (msg + '\n');
                 continue;
             }
-            PlanApiData.PlanYaml planYaml = planYamlUtils.toPlanYaml(plan.getParams());
+            PlanApiData.PlanYaml planYaml = PlanYamlUtils.toPlanYaml(plan.getParams());
             Meta meta = planYaml.getMeta(Consts.RESULT_FILE_EXTENSION);
 
             String mainDocument = StrUtils.getName(fullMainDocument) +

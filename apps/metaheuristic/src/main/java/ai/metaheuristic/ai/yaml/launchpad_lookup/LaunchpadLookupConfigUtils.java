@@ -27,10 +27,8 @@ import java.io.InputStream;
 @Slf4j
 public class LaunchpadLookupConfigUtils {
 
-    private static Yaml yaml;
-
-    static {
-        yaml = YamlUtils.init(LaunchpadLookupConfig.class);
+    private static Yaml getYaml() {
+        return YamlUtils.init(LaunchpadLookupConfig.class);
     }
 
     public static String toString(LaunchpadLookupConfig config) {
@@ -45,18 +43,18 @@ public class LaunchpadLookupConfigUtils {
                 throw new IllegalStateException("signatureConfig.type is null");
             }
         }
-        return YamlUtils.toString(config, yaml);
+        return YamlUtils.toString(config, getYaml());
     }
 
     public static LaunchpadLookupConfig to(String s) {
-        return (LaunchpadLookupConfig) YamlUtils.to(s, yaml);
+        return (LaunchpadLookupConfig) YamlUtils.to(s, getYaml());
     }
 
     public static LaunchpadLookupConfig to(InputStream is) {
-        return (LaunchpadLookupConfig) YamlUtils.to(is, yaml);
+        return (LaunchpadLookupConfig) YamlUtils.to(is, getYaml());
     }
 
     public static LaunchpadLookupConfig to(File file) {
-        return (LaunchpadLookupConfig) YamlUtils.to(file, yaml);
+        return (LaunchpadLookupConfig) YamlUtils.to(file, getYaml());
     }
 }

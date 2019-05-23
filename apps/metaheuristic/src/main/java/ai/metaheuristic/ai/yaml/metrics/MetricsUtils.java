@@ -25,32 +25,30 @@ import java.io.InputStream;
 @Slf4j
 public class MetricsUtils {
 
-    private static Yaml yaml;
-    private static Yaml valueYaml;
     public static final Metrics EMPTY_METRICS = new Metrics(Metrics.Status.NotFound, null, null);
 
-    static {
-        yaml = YamlUtils.init(Metrics.class);
+    private static Yaml getYaml() {
+        return YamlUtils.init(Metrics.class);
     }
 
-    static {
-        valueYaml = YamlUtils.init(MetricValues.class);
+    private static Yaml getValueYaml() {
+        return YamlUtils.init(MetricValues.class);
     }
 
     public static String toString(Metrics config) {
-        return YamlUtils.toString(config, yaml);
+        return YamlUtils.toString(config, getYaml());
     }
 
     public static Metrics to(String s) {
-        return (Metrics) YamlUtils.to(s, yaml);
+        return (Metrics) YamlUtils.to(s, getYaml());
     }
 
     public static Metrics to(InputStream is) {
-        return (Metrics) YamlUtils.to(is, yaml);
+        return (Metrics) YamlUtils.to(is, getYaml());
     }
 
     public static Metrics to(File file) {
-        return (Metrics) YamlUtils.to(file, yaml);
+        return (Metrics) YamlUtils.to(file, getYaml());
     }
 
     public static MetricValues getValues(Metrics metrics) {
@@ -58,7 +56,7 @@ public class MetricsUtils {
             return null;
         }
         //noinspection UnnecessaryLocalVariable
-        MetricValues metricValues = (MetricValues) YamlUtils.to(metrics.metrics, valueYaml);
+        MetricValues metricValues = (MetricValues) YamlUtils.to(metrics.metrics, getValueYaml());
         return metricValues;
     }
 

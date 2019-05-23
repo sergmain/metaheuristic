@@ -70,9 +70,6 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public SnippetCache snippetCache;
 
     @Autowired
-    public PlanYamlUtils planYamlUtils;
-
-    @Autowired
     public TaskCollector taskCollector;
 
     @Autowired
@@ -151,7 +148,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             planYaml.processes.add(p);
         }
 
-        String yaml = planYamlUtils.toString(planYaml);
+        String yaml = PlanYamlUtils.toString(planYaml);
         System.out.println(yaml);
         return yaml;
     }

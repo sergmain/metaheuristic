@@ -22,22 +22,20 @@ import org.yaml.snakeyaml.representer.Representer;
 
 public class HyperParamsUtils {
 
-    private static Yaml yaml;
-
-    static {
+    private static Yaml getYaml() {
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        yaml = new Yaml(new Constructor(HyperParams.class), new Representer(), options);
+        return new Yaml(new Constructor(HyperParams.class), new Representer(), options);
     }
 
     public static String toString(HyperParams hyperParams) {
-        return yaml.dump(hyperParams);
+        return getYaml().dump(hyperParams);
     }
 
     public static HyperParams toHyperParamsYaml(String s) {
-        return yaml.load(s);
+        return getYaml().load(s);
     }
 
     public static String toYaml(HyperParams hyperParams) {
@@ -45,7 +43,7 @@ public class HyperParamsUtils {
             return null;
         }
         String mapYaml;
-        mapYaml = yaml.dump(hyperParams.toSortedMap());
+        mapYaml = getYaml().dump(hyperParams.toSortedMap());
         return mapYaml;
     }
 

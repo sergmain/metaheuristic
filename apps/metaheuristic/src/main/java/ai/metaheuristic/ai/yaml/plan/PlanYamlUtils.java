@@ -22,33 +22,23 @@ import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
-@Service
 public class PlanYamlUtils {
 
-    private Yaml yamlPlanYaml;
-
-    // TODO 2018.09.12. so, snakeYaml isn't thread-safe or it was a side-effect?
-    private static final Object syncObj = new Object();
-
-    public PlanYamlUtils() {
-        yamlPlanYaml = YamlUtils.init(PlanApiData.PlanYaml.class);
+    private static Yaml getYaml() {
+        return YamlUtils.init(PlanApiData.PlanYaml.class);
     }
 
-    public String toString(PlanApiData.PlanYaml planYaml) {
-        synchronized (syncObj) {
-            return yamlPlanYaml.dump(planYaml);
-        }
+    public static String toString(PlanApiData.PlanYaml planYaml) {
+        return getYaml().dump(planYaml);
     }
 
-    public PlanApiData.PlanYaml toPlanYaml(String s) {
-        synchronized (syncObj) {
-            final PlanApiData.PlanYaml p = yamlPlanYaml.load(s);
-            for (Process process : p.processes) {
-                if (process.outputParams==null) {
-                    process.outputParams = Consts.SOURCING_LAUNCHPAD_PARAMS;
-                }
+    public static PlanApiData.PlanYaml toPlanYaml(String s) {
+        final PlanApiData.PlanYaml p = getYaml().load(s);
+        for (Process process : p.processes) {
+            if (process.outputParams==null) {
+                process.outputParams = Consts.SOURCING_LAUNCHPAD_PARAMS;
             }
-            return p;
         }
+        return p;
     }
 }

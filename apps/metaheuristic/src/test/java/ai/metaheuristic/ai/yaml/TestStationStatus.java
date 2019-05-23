@@ -13,25 +13,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.yaml.task;
 
-import ai.metaheuristic.api.v1.data.TaskApiData;
-import ai.metaheuristic.commons.yaml.YamlUtils;
-import org.yaml.snakeyaml.Yaml;
+package ai.metaheuristic.ai.yaml;
 
-public class TaskParamYamlUtils {
+import ai.metaheuristic.ai.yaml.station_status.StationStatus;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import org.junit.Test;
 
-    private static Yaml getYaml() {
-        return YamlUtils.init(TaskApiData.TaskParamYaml.class);
+import java.io.IOException;
+import java.io.InputStream;
+
+/**
+ * @author Serge
+ * Date: 5/23/2019
+ * Time: 3:54 PM
+ */
+public class TestStationStatus {
+
+    @Test
+    public void test() throws IOException {
+        try (InputStream is = TestStationStatus.class.getResourceAsStream("/yaml/station/station-status-01.yaml")) {
+            StationStatus ss = StationStatusUtils.to(is);
+        }
     }
-
-    public static String toString(TaskApiData.TaskParamYaml taskParamYaml) {
-        return getYaml().dump(taskParamYaml);
-    }
-
-    public static TaskApiData.TaskParamYaml toTaskYaml(String s) {
-        return getYaml().load(s);
-    }
-
-
 }

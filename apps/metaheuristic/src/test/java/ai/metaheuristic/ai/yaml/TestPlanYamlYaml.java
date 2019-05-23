@@ -36,9 +36,6 @@ import static org.junit.Assert.assertNotNull;
 @SpringBootTest
 public class TestPlanYamlYaml {
 
-    @Autowired
-    private PlanYamlUtils planYamlUtils;
-
     @Test
     public void testYaml() {
         PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();
@@ -119,10 +116,10 @@ public class TestPlanYamlYaml {
             planYaml.processes.add(p);
         }
 
-        String yaml = planYamlUtils.toString(planYaml);
+        String yaml = PlanYamlUtils.toString(planYaml);
         System.out.println(yaml);
 
-        PlanApiData.PlanYaml f1 = planYamlUtils.toPlanYaml(yaml);
+        PlanApiData.PlanYaml f1 = PlanYamlUtils.toPlanYaml(yaml);
         assertNotNull(f1);
         assertNotNull(f1.processes);
         assertFalse(f1.processes.isEmpty());
@@ -140,7 +137,7 @@ public class TestPlanYamlYaml {
 
         planYaml.processes = Collections.singletonList(p1);
 
-        String s = planYamlUtils.toString(planYaml);
+        String s = PlanYamlUtils.toString(planYaml);
 
         System.out.println(s);
 

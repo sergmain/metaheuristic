@@ -23,26 +23,24 @@ import java.io.InputStream;
 
 public class StationStatusUtils {
 
-    private static Yaml yaml;
-
-    static {
-        yaml = YamlUtils.init(StationStatus.class);
+    private static Yaml getYaml() {
+        return YamlUtils.init(StationStatus.class);
     }
 
     public static String toString(StationStatus config) {
-        return YamlUtils.toString(config, yaml);
+        return YamlUtils.toString(config, getYaml());
     }
 
     public static StationStatus to(String s) {
-        return (StationStatus) YamlUtils.to(s, yaml);
+        return (StationStatus) YamlUtils.to(s, getYaml());
     }
 
     public static StationStatus to(InputStream is) {
-        return (StationStatus) YamlUtils.to(is, yaml);
+        return (StationStatus) YamlUtils.to(is, getYaml());
     }
 
     public static StationStatus to(File file) {
-        return (StationStatus) YamlUtils.to(file, yaml);
+        return (StationStatus) YamlUtils.to(file, getYaml());
     }
 
 }

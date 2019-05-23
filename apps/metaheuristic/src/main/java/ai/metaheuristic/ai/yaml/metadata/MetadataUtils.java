@@ -26,22 +26,20 @@ import java.util.Map;
 @Slf4j
 public class MetadataUtils {
 
-    private static Yaml yaml;
-
-    static {
-        yaml = YamlUtils.init(Metadata.class);
+    private static Yaml getYaml() {
+        return YamlUtils.init(Metadata.class);
     }
 
     public static String toString(Metadata config) {
-        return YamlUtils.toString(config, yaml);
+        return YamlUtils.toString(config, getYaml());
     }
 
     public static Metadata to(String s) {
-        return (Metadata) YamlUtils.to(s, yaml);
+        return (Metadata) YamlUtils.to(s, getYaml());
     }
 
     public static Metadata to(InputStream is) {
-        Metadata m = (Metadata) YamlUtils.to(is, yaml);
+        Metadata m = (Metadata) YamlUtils.to(is, getYaml());
         for (Map.Entry<String, Metadata.LaunchpadInfo> entry : m.launchpad.entrySet()) {
             Metadata.LaunchpadInfo info = entry.getValue();
             if (info.value != null) {
@@ -55,6 +53,6 @@ public class MetadataUtils {
     }
 
     public static Metadata to(File file) {
-        return (Metadata) YamlUtils.to(file, yaml);
+        return (Metadata) YamlUtils.to(file, getYaml());
     }
 }

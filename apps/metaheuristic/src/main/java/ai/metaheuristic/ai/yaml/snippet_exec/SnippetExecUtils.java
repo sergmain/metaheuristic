@@ -26,25 +26,23 @@ import java.io.InputStream;
 @Slf4j
 public class SnippetExecUtils {
 
-    private static Yaml yaml;
-
-    static {
-        yaml = YamlUtils.init(SnippetApiData.SnippetExec.class);
+    private static Yaml getYaml() {
+        return YamlUtils.init(SnippetApiData.SnippetExec.class);
     }
 
     public static String toString(SnippetApiData.SnippetExec config) {
-        return YamlUtils.toString(config, yaml);
+        return YamlUtils.toString(config, getYaml());
     }
 
     public static SnippetApiData.SnippetExec to(String s) {
-        return (SnippetApiData.SnippetExec) YamlUtils.to(s, yaml);
+        return (SnippetApiData.SnippetExec) YamlUtils.to(s, getYaml());
     }
 
     public static SnippetApiData.SnippetExec to(InputStream is) {
-        return (SnippetApiData.SnippetExec) YamlUtils.to(is, yaml);
+        return (SnippetApiData.SnippetExec) YamlUtils.to(is, getYaml());
     }
 
     public static SnippetApiData.SnippetExec to(File file) {
-        return (SnippetApiData.SnippetExec) YamlUtils.to(file, yaml);
+        return (SnippetApiData.SnippetExec) YamlUtils.to(file, getYaml());
     }
 }

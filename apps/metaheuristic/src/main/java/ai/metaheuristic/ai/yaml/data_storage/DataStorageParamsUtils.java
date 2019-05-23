@@ -29,26 +29,24 @@ import java.io.InputStream;
  */
 public class DataStorageParamsUtils {
 
-    private static Yaml yaml;
-
-    static {
-        yaml = YamlUtils.init(DataStorageParams.class);
+    private static Yaml getYaml() {
+        return YamlUtils.init(DataStorageParams.class);
     }
 
     public static String toString(DataStorageParams config) {
-        return YamlUtils.toString(config, yaml);
+        return YamlUtils.toString(config, getYaml());
     }
 
     public static DataStorageParams to(String s) {
-        return (DataStorageParams) YamlUtils.to(s, yaml);
+        return (DataStorageParams) YamlUtils.to(s, getYaml());
     }
 
     public static DataStorageParams to(InputStream is) {
-        return (DataStorageParams) YamlUtils.to(is, yaml);
+        return (DataStorageParams) YamlUtils.to(is, getYaml());
     }
 
     public static DataStorageParams to(File file) {
-        return (DataStorageParams) YamlUtils.to(file, yaml);
+        return (DataStorageParams) YamlUtils.to(file, getYaml());
     }
 
 }

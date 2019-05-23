@@ -30,7 +30,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 
 /**
  * @author Serge
@@ -51,11 +51,18 @@ public class TestRequestStationId {
 
     private Long stationId;
 
-    private Long stationIdForEmptySession;
-
     @Before
     public void before() {
+        ExchangeData d = serverService.processRequest(new ExchangeData(), "127.0.0.1");
 
+        assertNotNull(d);
+        assertNotNull(d.getAssignedStationId());
+        assertNotNull(d.getAssignedStationId().getAssignedStationId());
+        assertNotNull(d.getAssignedStationId().getAssignedSessionId());
+
+        stationId = Long.valueOf(d.getAssignedStationId().getAssignedStationId());
+
+        System.out.println("stationId: " + stationId);
     }
 
     @After
@@ -64,14 +71,6 @@ public class TestRequestStationId {
         if (stationId!=null) {
             try {
                 stationsRepository.deleteById(stationId);
-            } catch (Throwable th) {
-                th.printStackTrace();
-            }
-        }
-
-        if (stationIdForEmptySession!=null) {
-            try {
-                stationsRepository.deleteById(stationIdForEmptySession);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -103,21 +102,23 @@ public class TestRequestStationId {
     public void testEmptySessionId() {
         final ExchangeData data = new ExchangeData();
 
-        // value of stationId doesn't matter here
-        // matter only sessionId which is null
-        data.initRequestToLaunchpad("123445", null);
+        data.initRequestToLaunchpad(stationId.toString(), null);
 
         ExchangeData d = serverService.processRequest(data, "127.0.0.1");
 
         assertNotNull(d);
-        assertNotNull(d.getAssignedStationId());
-        assertNotNull(d.getAssignedStationId().getAssignedStationId());
-        assertNotNull(d.getAssignedStationId().getAssignedSessionId());
+        assertNotNull(d.getReAssignedStationId());
+        assertNotNull(d.getReAssignedStationId().getReAssignedStationId());
+        assertNotNull(d.getReAssignedStationId().getSessionId());
+        // actually, only sessionId was changed, stationId must be the same
 
-        System.out.println("stationId: " + d.getAssignedStationId().getAssignedStationId());
-        System.out.println("sessionId: " + d.getAssignedStationId().getAssignedSessionId());
+        Long stationIdForEmptySession = Long.valueOf(d.getReAssignedStationId().getReAssignedStationId());
 
-        stationIdForEmptySession = Long.valueOf(d.getAssignedStationId().getAssignedStationId());
+        assertEquals(stationId, stationIdForEmptySession);
+
+
+        System.out.println("stationId: " + d.getReAssignedStationId().getReAssignedStationId());
+        System.out.println("sessionId: " + d.getReAssignedStationId().getSessionId());
 
         Station s = stationsRepository.findById(stationIdForEmptySession).orElse(null);
 

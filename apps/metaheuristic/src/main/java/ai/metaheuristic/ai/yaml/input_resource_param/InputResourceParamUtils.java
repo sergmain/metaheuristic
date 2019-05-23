@@ -26,26 +26,24 @@ import java.io.InputStream;
 
 public class InputResourceParamUtils {
 
-    private static Yaml yaml;
-
-    static {
+    private static Yaml getYaml() {
         final DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-        yaml = new Yaml(new Constructor(InputResourceParam.class), new Representer(), options);
+        return new Yaml(new Constructor(InputResourceParam.class), new Representer(), options);
     }
 
     public static String toString(InputResourceParam params) {
-        return yaml.dump(params);
+        return getYaml().dump(params);
     }
 
     public static InputResourceParam to(InputStream is) {
-        return (InputResourceParam) YamlUtils.to(is, yaml);
+        return (InputResourceParam) YamlUtils.to(is, getYaml());
     }
 
     public static InputResourceParam to(String s) {
-        return yaml.load(s);
+        return getYaml().load(s);
     }
 
 }

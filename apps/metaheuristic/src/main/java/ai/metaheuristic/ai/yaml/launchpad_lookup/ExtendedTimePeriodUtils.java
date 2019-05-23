@@ -23,26 +23,25 @@ import java.io.File;
 import java.io.InputStream;
 
 public class ExtendedTimePeriodUtils {
-    private static Yaml yaml;
 
-    static {
-        yaml = YamlUtils.init(ExtendedTimePeriod.class);
+    private static Yaml getYaml() {
+        return YamlUtils.init(ExtendedTimePeriod.class);
     }
 
     public static String toString(ExtendedTimePeriod config) {
-        return YamlUtils.toString(config, yaml);
+        return YamlUtils.toString(config, getYaml());
     }
 
     public static ExtendedTimePeriod to(String s) {
-        return (ExtendedTimePeriod) YamlUtils.to(s, yaml);
+        return (ExtendedTimePeriod) YamlUtils.to(s, getYaml());
     }
 
     public static ExtendedTimePeriod to(InputStream is) {
-        return (ExtendedTimePeriod) YamlUtils.to(is, yaml);
+        return (ExtendedTimePeriod) YamlUtils.to(is, getYaml());
     }
 
     public static ExtendedTimePeriod to(File file) {
-        return (ExtendedTimePeriod) YamlUtils.to(file, yaml);
+        return (ExtendedTimePeriod) YamlUtils.to(file, getYaml());
     }
 
 }

@@ -37,9 +37,6 @@ import static org.junit.Assert.assertNotNull;
 @ActiveProfiles("launchpad")
 public class TestProcess {
 
-    @Autowired
-    public PlanYamlUtils planYamlUtils;
-
     @Test
     public void testProcessMeta() {
         Process p = new Process();
@@ -54,9 +51,9 @@ public class TestProcess {
         PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();
         planYaml.processes.add(p);
 
-        String s = planYamlUtils.toString(planYaml);
+        String s = PlanYamlUtils.toString(planYaml);
 
-        PlanApiData.PlanYaml planYaml1 = planYamlUtils.toPlanYaml(s);
+        PlanApiData.PlanYaml planYaml1 = PlanYamlUtils.toPlanYaml(s);
 
         Process p1 = planYaml1.getProcesses().get(0);
 

@@ -25,25 +25,23 @@ import java.io.InputStream;
 @Slf4j
 public class StationTaskUtils {
 
-    private static Yaml yaml;
-
-    static {
-        yaml = YamlUtils.init(StationTask.class);
+    private static Yaml getYaml() {
+        return YamlUtils.init(StationTask.class);
     }
 
     public static String toString(StationTask config) {
-        return YamlUtils.toString(config, yaml);
+        return YamlUtils.toString(config, getYaml());
     }
 
     public static StationTask to(String s) {
-        return (StationTask) YamlUtils.to(s, yaml);
+        return (StationTask) YamlUtils.to(s, getYaml());
     }
 
     public static StationTask to(InputStream is) {
-        return (StationTask) YamlUtils.to(is, yaml);
+        return (StationTask) YamlUtils.to(is, getYaml());
     }
 
     public static StationTask to(File file) {
-        return (StationTask) YamlUtils.to(file, yaml);
+        return (StationTask) YamlUtils.to(file, getYaml());
     }
 }

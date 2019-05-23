@@ -34,6 +34,11 @@ import java.io.InputStream;
 @Slf4j
 public class YamlUtils {
 
+    // https://bitbucket.org/asomov/snakeyaml/wiki/Documentation#markdown-header-threading
+    // The implementation of Yaml is not thread-safe.
+    // Different threads may not call the same instance.
+    // Threads must have separate Yaml instances.
+
     public static Yaml init(Class<?> clazz) {
         return initWithTags(clazz, new Class[]{clazz}, null);
     }

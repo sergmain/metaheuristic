@@ -39,9 +39,6 @@ import java.util.Arrays;
 @ActiveProfiles("launchpad")
 public class TestProcessMeta {
 
-    @Autowired
-    public PlanYamlUtils planYamlUtils;
-
     @Test
     public void testProcessMeta() {
         PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();
@@ -62,11 +59,11 @@ public class TestProcessMeta {
 
             planYaml.processes.add(p);
         }
-        String s  = planYamlUtils.toString(planYaml);
+        String s  = PlanYamlUtils.toString(planYaml);
 
         System.out.println(s);
 
-        PlanApiData.PlanYaml yaml1 = planYamlUtils.toPlanYaml(s);
+        PlanApiData.PlanYaml yaml1 = PlanYamlUtils.toPlanYaml(s);
 
         Assert.assertEquals(planYaml, yaml1);
 

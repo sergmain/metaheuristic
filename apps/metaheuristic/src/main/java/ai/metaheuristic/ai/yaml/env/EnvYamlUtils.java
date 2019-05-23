@@ -25,26 +25,24 @@ import java.io.InputStream;
 @Slf4j
 public class EnvYamlUtils {
 
-    private static Yaml yaml;
-
-    static {
-        yaml = YamlUtils.init(EnvYaml.class);
+    private static Yaml getYaml() {
+        return YamlUtils.init(EnvYaml.class);
     }
 
     public static String toString(EnvYaml config) {
-        return YamlUtils.toString(config, yaml);
+        return YamlUtils.toString(config, getYaml());
     }
 
     public static EnvYaml to(String s) {
-        return (EnvYaml) YamlUtils.to(s, yaml);
+        return (EnvYaml) YamlUtils.to(s, getYaml());
     }
 
     public static EnvYaml to(InputStream is) {
-        return (EnvYaml) YamlUtils.to(is, yaml);
+        return (EnvYaml) YamlUtils.to(is, getYaml());
     }
 
     public static EnvYaml to(File file) {
-        return (EnvYaml) YamlUtils.to(file, yaml);
+        return (EnvYaml) YamlUtils.to(file, getYaml());
     }
 
 }

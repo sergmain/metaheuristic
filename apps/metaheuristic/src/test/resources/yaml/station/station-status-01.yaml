@@ -1,0 +1,17 @@
+env:
+  disk: [
+  ]
+  envs:
+    python-3: C:\Anaconda3\envs\python-3.7\python.exe
+    java-11: C:\jdk-11.0.2\bin\java.exe -jar
+  mirrors:
+    https://bitbucket.org/buzovskaya/jcons.git: \\192.168.10.9\disk-s\jcons-git-mirror
+    https://bitbucket.org/buzovskaya/ric411.git: \\192.168.10.9\disk-s\ric411-git-mirror
+gitStatusInfo:
+  status: installed
+  version: 2.21.0.windows.1
+schedule: |
+  workingDay: 0:00-23:59
+  weekend: 0:00-23:59
+sessionCreatedOn: 1558588131596
+sessionId: e7af5f04-7123-487d-a7af-39224ee9c6fa-b42407fd-b953-454e-82e9-7384a0c34669

@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.launchpad;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.utils.holders.BoolHolder;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
@@ -27,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 @Service
@@ -48,13 +48,13 @@ public class ArtifactCleanerAtLaunchpad {
         }
 
         @Transactional
-        public int cleanTasks(Set<Long> ids, int page, BoolHolder isFound) {
+        public int cleanTasks(Set<Long> ids, int page, AtomicBoolean isFound) {
             try (Stream<Object[]> stream = taskRepository.findAllAsTaskSimple(PageRequest.of(page++, 100))) {
                 stream
                         .forEach(t -> {
-                            isFound.value = true;
+                            isFound.set(true);
                             if (!ids.contains((Long) t[1])) {
-                                log.info("Found orphan task #{}", t[0]);
+                                log.info("Found orphan task #{}, workbookId: #{}", t[0], t[1]);
                                 taskRepository.deleteById((Long) t[0]);
                             }
                         });
@@ -63,7 +63,7 @@ public class ArtifactCleanerAtLaunchpad {
         }
     }
 
-    public ArtifactCleanerAtLaunchpad(Globals globals, WorkbookRepository workbookRepository, TaskRepository taskRepository, CleanerTasks cleanerTasks) {
+    public ArtifactCleanerAtLaunchpad(Globals globals, WorkbookRepository workbookRepository, CleanerTasks cleanerTasks) {
         this.globals = globals;
         this.workbookRepository = workbookRepository;
         this.cleanerTasks = cleanerTasks;
@@ -79,11 +79,11 @@ public class ArtifactCleanerAtLaunchpad {
         workbookRepository.findAll().forEach( o -> ids.add(o.getId()));
 
         int page = 0;
-        final BoolHolder isFound = new BoolHolder();
+        final AtomicBoolean isFound = new AtomicBoolean();
         do {
-            isFound.value = false;
+            isFound.set(false);
             page = cleanerTasks.cleanTasks(ids, page, isFound);
-        } while (isFound.value);
+        } while (isFound.get());
     }
 
 }

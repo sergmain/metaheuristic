@@ -67,7 +67,6 @@ import static ai.metaheuristic.api.v1.EnumsApi.PlanValidateStatus.PROCESS_VALIDA
 public class PlanService {
 
     private final Globals globals;
-    private final PlanYamlUtils planYamlUtils;
     private final ExperimentService experimentService;
     private final BinaryDataService binaryDataService;
 
@@ -85,9 +84,8 @@ public class PlanService {
     private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
     private final WorkbookService workbookService;
 
-    public PlanService(Globals globals, PlanYamlUtils planYamlUtils, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, WorkbookRepository workbookRepository, TaskRepository taskRepository, PlanCache planCache, PlanRepository planRepository, AtlasService atlasService, ExperimentRepository experimentRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, WorkbookService workbookService) {
+    public PlanService(Globals globals, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, WorkbookRepository workbookRepository, TaskRepository taskRepository, PlanCache planCache, PlanRepository planRepository, AtlasService atlasService, ExperimentRepository experimentRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, WorkbookService workbookService) {
         this.globals = globals;
-        this.planYamlUtils = planYamlUtils;
         this.experimentService = experimentService;
         this.binaryDataService = binaryDataService;
         this.experimentProcessService = experimentProcessService;
@@ -297,7 +295,7 @@ public class PlanService {
         if (StringUtils.isBlank(plan.getParams())) {
             return EnumsApi.PlanValidateStatus.PLAN_PARAMS_EMPTY_ERROR;
         }
-        PlanApiData.PlanYaml planYaml = planYamlUtils.toPlanYaml(plan.getParams());
+        PlanApiData.PlanYaml planYaml = PlanYamlUtils.toPlanYaml(plan.getParams());
         if (planYaml.getProcesses().isEmpty()) {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
@@ -498,7 +496,7 @@ public class PlanService {
         Monitoring.log("##025", Enums.Monitor.MEMORY);
 
         result.workbook = fi;
-        result.planYaml = planYamlUtils.toPlanYaml(plan.getParams());
+        result.planYaml = PlanYamlUtils.toPlanYaml(plan.getParams());
 
         plan.setClean( result.planYaml.clean );
         int idx = Consts.TASK_ORDER_START_VALUE;
