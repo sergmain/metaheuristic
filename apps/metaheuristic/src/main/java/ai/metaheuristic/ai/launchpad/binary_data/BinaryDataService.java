@@ -287,7 +287,7 @@ public class BinaryDataService {
     }
 
     public Optional<BinaryData> getByPoolCodeAndType(String poolCode, BinaryDataType type) {
-        return binaryDataRepository.findAnyByPoolCodeAndDataType(poolCode, type.value);
+        return binaryDataRepository.findFirstByPoolCodeAndDataType(poolCode, type.value);
     }
 
     public String getFilenameByPool1CodeAndType(String poolCode, BinaryDataType type) {

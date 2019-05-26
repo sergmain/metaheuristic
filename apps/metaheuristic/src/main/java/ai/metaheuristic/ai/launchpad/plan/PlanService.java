@@ -153,7 +153,7 @@ public class PlanService {
         workbookService.deleteById(workbookId);
         taskExperimentFeatureRepository.deleteByWorkbookId(workbookId);
         binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
-        Workbook workbook = workbookRepository.findAnyByPlanId(planId);
+        Workbook workbook = workbookRepository.findFirstByPlanId(planId);
         if (workbook==null) {
             Plan p = planCache.findById(planId);
             if (p!=null) {
