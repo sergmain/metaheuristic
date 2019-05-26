@@ -286,7 +286,11 @@ public class BinaryDataService {
         return binaryDataRepository.getAllAsSimpleResources(pageable);
     }
 
-    public List<BinaryData> getByPoolCodeAndType(String poolCode, BinaryDataType type) {
-        return binaryDataRepository.findAllByPoolCodeAndDataType(poolCode, type.value);
+    public Optional<BinaryData> getByPoolCodeAndType(String poolCode, BinaryDataType type) {
+        return binaryDataRepository.findFirstByPoolCodeAndDataType(poolCode, type.value);
+    }
+
+    public String getFilenameByPool11CodeAndType(String poolCode, BinaryDataType type) {
+        return binaryDataRepository.findFilenameByPoolCodeAndDataType(poolCode, type.value);
     }
 }

@@ -38,7 +38,6 @@ import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.*;
-import ai.metaheuristic.api.v1.launchpad.BinaryData;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
@@ -781,18 +780,9 @@ public class ProcessResourceController {
     }
 
     private String getMainDocumentForPoolCode(String mainDocumentPoolCode) {
-        List<BinaryData> datas = binaryDataService.getByPoolCodeAndType(mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
-
-        if (datas==null || datas.isEmpty()) {
-            return null;
-        }
-        if (datas.size()!=1) {
-            log.error("#990.15 There are more than one main document codes for pool code {}, codes: {}", mainDocumentPoolCode, datas);
-        }
-        final BinaryData data = datas.get(0);
-        final String filename = data.getFilename();
+        final String filename = binaryDataService.getFilenameByPool11CodeAndType(mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
         if (StringUtils.isBlank(filename)) {
-            log.error("#990.15 Filename is blank for data {}", data);
+            log.error("#990.15 Filename is blank for poolCode: {}, data type: {}", mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
             return null;
         }
         return filename;

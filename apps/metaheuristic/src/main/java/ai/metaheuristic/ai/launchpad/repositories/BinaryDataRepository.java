@@ -30,6 +30,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 import static ai.metaheuristic.api.v1.EnumsApi.*;
 
@@ -61,7 +62,10 @@ public interface BinaryDataRepository extends CrudRepository<BinaryDataImpl, Lon
 
     List<BinaryDataImpl> findAllByPoolCode(String poolCode);
 
-    List<BinaryData> findAllByPoolCodeAndDataType(String poolCode, int dataType);
+    Optional<BinaryData> findFirstByPoolCodeAndDataType(String poolCode, int dataType);
+
+    @Query(value="select b.filename from BinaryDataImpl b where b.poolCode=:poolCode and b.dataType=:dataType ")
+    String findFilenameByPoolCodeAndDataType(String poolCode, int dataType);
 
     BinaryDataImpl findByCode(String code);
 
