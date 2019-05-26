@@ -69,6 +69,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
@@ -89,11 +90,13 @@ public class ProcessResourceController {
     private static final String MAIN_DOCUMENT_POOL_CODE = "mainDocument";
     private static final String ATTACHMENTS_POOL_CODE = "attachments";
     private static final String RESULT_ZIP = "result.zip";
+    private static final String PLAN_NOT_FOUND = "Plan wasn't found";
 
     private static Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml");
 
     private static final String CONFIG_FILE = "config.yaml";
 
+    private final Globals globals;
     private final WorkbookRepository workbookRepository;
     private final PlanRepository planRepository;
     private final PlanCache planCache;
@@ -109,9 +112,10 @@ public class ProcessResourceController {
     @AllArgsConstructor
     public static class ProcessResourceItem {
         public Batch batch;
-        public Plan plan;
+        public String planCode;
         public String execStateStr;
         public int execState;
+        public boolean ok;
     }
 
     @Data
@@ -124,7 +128,30 @@ public class ProcessResourceController {
         public Iterable<Plan> items;
     }
 
-    private final Globals globals;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class BatchStatus {
+        public final StringBuilder sb = new StringBuilder();
+        public boolean ok = false;
+
+        public void add(String status) {
+            sb.append(status);
+        }
+
+        public void add(String status, char c) {
+            sb.append(status);
+            sb.append(c);
+        }
+
+        public String getStatus() {
+            return sb.toString();
+        }
+
+        public void add(char c) {
+            sb.append(c);
+        }
+    }
 
     public ProcessResourceController(WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, Globals globals) {
         this.workbookRepository = workbookRepository;
@@ -161,30 +188,40 @@ public class ProcessResourceController {
         List<ProcessResourceItem> items = new ArrayList<>();
         long total = batches.getTotalElements();
         for (Batch batch : batches) {
-            Plan plan = planCache.findById(batch.getPlanId());
-            if (plan == null) {
-                log.warn("#990.01 Found batch with wrong planId. planId: {}", batch.getPlanId());
-                total--;
-                continue;
-            }
-
             if (batch.execState!= Enums.BatchExecState.Finished.code && batch.execState!= Enums.BatchExecState.Archived.code) {
-                boolean isFinished = true;
+                Boolean isFinished = null;
                 for (Workbook fi : workbookRepository.findWorkbookByBatchId(batch.id)) {
+                    isFinished = Boolean.TRUE;
                     if (fi.getExecState() != EnumsApi.WorkbookExecState.ERROR.code &&
                             fi.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
-                        isFinished = false;
+                        isFinished = Boolean.FALSE;
                         break;
                     }
                 }
-                if (isFinished) {
+                if (Boolean.TRUE.equals(isFinished)) {
                     batch.setExecState(Enums.BatchExecState.Finished.code);
                     batch = batchRepository.save(batch);
 
                 }
             }
+            BatchStatus status = prepareStatusAndData(batch.id, null, false, false);
+            boolean ok = status.ok;
+            String planCode = PLAN_NOT_FOUND;
+            Plan plan = planCache.findById(batch.getPlanId());
+            if (plan!=null) {
+                planCode = plan.getCode();
+            }
+            else {
+                if (batch.execState!=Enums.BatchExecState.Preparing.code) {
+                    ok = false;
+                }
+            }
+            // fix current state in case when data is preparing right now
+            if (batch.execState==Enums.BatchExecState.Preparing.code) {
+                ok = true;
+            }
             String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
-            items.add( new ProcessResourceItem(batch, plan, execStateStr, batch.execState));
+            items.add( new ProcessResourceItem(batch, planCode, execStateStr, batch.execState, ok));
         }
         result.items = new PageImpl<>(items, pageable, total);
 
@@ -268,7 +305,7 @@ public class ProcessResourceController {
                 }
 
             }).start();
-
+            int i=0;
         }
         catch (Throwable th) {
             log.error("Error", th);
@@ -299,6 +336,12 @@ public class ProcessResourceController {
                     return !EXCLUDE_EXT.contains(StrUtils.getExtension(f.getName()));
                 })
                 .collect(Collectors.toList());
+
+        if (paths.isEmpty()) {
+            batch.setExecState(Enums.BatchExecState.Finished.code);
+            batchRepository.save(batch);
+            return;
+        }
 
         for (Path dataFile : paths) {
             File file = dataFile.toFile();
@@ -464,18 +507,22 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
-        File zipDir = new File(resultDir, "zip");
-        String status = prepareData(batchId, batch, zipDir, false);
+//        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
+//        File zipDir = new File(resultDir, "zip");
+        BatchStatus status = prepareStatusAndData(batchId, null, false, false);
+/*
+        // TODO 2019.05.25 Actually, status must never be null
         if (status==null) {
             final String es = "#990.120 Status can't be prepared, batchId: " + batchId;
             log.info(es);
             redirectAttributes.addAttribute("errorMessage",es );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
+*/
 
         model.addAttribute("batchId", batchId);
-        model.addAttribute("console", status);
+        model.addAttribute("console", status.getStatus());
+        model.addAttribute("isOk", status.ok);
         return "pilot/process-resource/process-resource-delete";
     }
 
@@ -519,16 +566,19 @@ public class ProcessResourceController {
 
         File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
         File zipDir = new File(resultDir, "zip");
-        String status = prepareData(batchId, batch, zipDir, true);
+        BatchStatus status = prepareStatusAndData(batchId, null, true, false);
+/*
+        // TODO 2019.05.25 Actually, status must never be null
         if (status==null) {
             final String es = "#990.220 Status can't be prepared, batchId: " + batchId;
             log.info(es);
             redirectAttributes.addAttribute("errorMessage",es );
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
+*/
 
         model.addAttribute("batchId", batchId);
-        model.addAttribute("console", status);
+        model.addAttribute("console", status.getStatus());
         return "pilot/process-resource/process-resource-status";
     }
 
@@ -547,13 +597,14 @@ public class ProcessResourceController {
             return null;
         }
 
-        String status = prepareData(batchId, batch, zipDir, false);
+        BatchStatus status = prepareStatusAndData(batchId, zipDir, false, true);
+        // 2019.05.25 Actually, status must never be null
         if (status==null) {
             return null;
         }
 
         File statusFile = new File(zipDir, "status.txt");
-        FileUtils.write(statusFile, status, StandardCharsets.UTF_8);
+        FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);
         File zipFile = new File(resultDir, RESULT_ZIP);
         ZipUtils.createZip(zipDir, zipFile);
 
@@ -564,130 +615,169 @@ public class ProcessResourceController {
         return new HttpEntity<>(new FileSystemResource(zipFile), getHeader(httpHeaders, zipFile.length()));
     }
 
-    @SuppressWarnings("StringConcatenationInLoop")
-    private String prepareData(Long batchId, Batch batch, File zipDir, boolean fullConsole)  {
-        String status = "";
-        log.info("#990.105 Start downloadProcessingResult(), batchId: {}", batchId);
+    private BatchStatus prepareStatusAndData(Long batchId, File zipDir, boolean fullConsole, boolean storeToDisk)  {
+        BatchStatus bs = new BatchStatus();
+        log.info("#990.105 Start preparing data, batchId: {}", batchId);
 
-        List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batch.id);
+        List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batchId);
+        if (bfis.isEmpty()) {
+            bs.add("#990.107, Batch is empty, there isn't any task, batchId: " + batchId, '\n');
+            bs.ok = true;
+            return bs;
+        }
 
+        boolean isOk = true;
         for (BatchWorkbook bfi : bfis) {
             Workbook wb = workbookRepository.findById(bfi.workbookId).orElse(null);
             if (wb == null) {
-                String msg = "#990.114 Batch #" + batch.id + " contains broken workbookId - #" + bfi.workbookId;
-                status += (msg + '\n');
+                String msg = "#990.114 Batch #" + batchId + " contains broken workbookId - #" + bfi.workbookId;
+                bs.add(msg, '\n');
                 log.warn(msg);
+                isOk = false;
                 continue;
             }
-            Plan plan = planCache.findById(wb.getPlanId());
-            if (plan == null) {
-                String msg = "#990.119 Batch #" + batch.id + " contains broken planId - #" + wb.getPlanId();
-                status += (msg + '\n');
-                log.warn(msg);
-                continue;
-            }
-
             String mainDocumentPoolCode = getMainDocumentPoolCode(wb.getInputResourceParam());
 
             final String fullMainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
             if (fullMainDocument == null) {
                 String msg = "#990.123, " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
-                        "batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
+                        "batchId: " + batchId + ", workbookId: " + bfi.workbookId;
                 log.warn(msg);
-                status += (msg + '\n');
+                bs.add(msg, '\n');
+                isOk = false;
                 continue;
             }
-            PlanApiData.PlanYaml planYaml = PlanYamlUtils.toPlanYaml(plan.getParams());
-            Meta meta = planYaml.getMeta(Consts.RESULT_FILE_EXTENSION);
+            String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
 
-            String mainDocument = StrUtils.getName(fullMainDocument) +
-                    (meta != null && StringUtils.isNotBlank(meta.getValue())
-                            ? meta.getValue()
-                            :
-                            (StringUtils.isNotBlank(globals.defaultResultFileExtension)
-                                    ? globals.defaultResultFileExtension
-                                    : ".bin"));
-
-            // TODO 2019-05-23 investigate all cases when this is happened
             Integer taskOrder = taskRepository.findMaxConcreteOrder(wb.getId());
+            // TODO 2019-05-23 investigate all cases when this is happened
             if (taskOrder == null) {
                 String msg = "#990.128, " + mainDocument + ", Tasks weren't created correctly for this batch, need to re-upload documents, " +
-                        "batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
+                        "batchId: " + batchId + ", workbookId: " + bfi.workbookId;
                 log.warn(msg);
-                status += (msg + '\n');
+                bs.add(msg, '\n');
+                isOk = false;
                 continue;
             }
             List<Task> tasks = taskRepository.findAnyWithConcreteOrder(wb.getId(), taskOrder);
             if (tasks.isEmpty()) {
                 String msg = "#990.133, " + mainDocument + ", Can't find any task for batchId: " + batchId;
                 log.info(msg);
-                status += (msg + '\n');
+                bs.add(msg,'\n');
+                isOk = false;
                 continue;
             }
             if (tasks.size() > 1) {
                 String msg = "#990.137, " + mainDocument + ", Can't download file because there are more than one task, " +
-                        "batchId: " + batch.id + ", workbookId: " + wb.getId();
+                        "batchId: " + batchId + ", workbookId: " + wb.getId();
                 log.info(msg);
-                status += (msg + '\n');
+                bs.add(msg,'\n');
+                isOk = false;
                 continue;
             }
             final Task task = tasks.get(0);
             EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
-            SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
+            SnippetApiData.SnippetExec snippetExec;
+            try {
+                snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
+            } catch (YAMLException e) {
+                bs.add("#990.139, " + mainDocument + ", Task has broken console output, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                        ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                        "taskId: " + task.getId(),'\n');
+                isOk = false;
+                continue;
+            }
             switch (execState) {
                 case NONE:
                 case IN_PROGRESS:
-                    status += ("#990.142, " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
-                            ", batchId:" + batch.id + ", workbookId: " + wb.getId() + ", " +
-                            "taskId: " + task.getId() + '\n');
+                    bs.add("#990.142, " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                            ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                            "taskId: " + task.getId(),'\n');
+                    isOk = true;
                     continue;
                 case ERROR:
-                    status += ("#990.149, " + mainDocument + ", Task was completed with error, batchId:" + batch.id + ", workbookId: " + wb.getId() + ", " +
+                    bs.add("#990.149, " + mainDocument + ", Task was completed with error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + "\n" +
                             "isOk: " + snippetExec.exec.isOk + "\n" +
                             "exitCode: " + snippetExec.exec.exitCode + "\n" +
                             "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
+                    isOk = true;
                     continue;
                 case OK:
                     if (fullConsole) {
-                        status += ("#990.151, " + mainDocument + ", Task completed without any error, batchId:" + batch.id + ", workbookId: " + wb.getId() + ", " +
+                        bs.add("#990.151, " + mainDocument + ", Task completed without any error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                 "taskId: " + task.getId() + "\n" +
                                 "isOk: " + snippetExec.exec.isOk + "\n" +
                                 "exitCode: " + snippetExec.exec.exitCode + "\n" +
                                 "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
                     }
-                    break;
+                    isOk = true;
+                    //noinspection EnumSwitchStatementWhichMissesCases
+                    continue;
             }
 
-            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskApiData.TaskParamYaml taskParamYaml;
+            try {
+                taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            } catch (YAMLException e) {
+                bs.add("#990.153, " + mainDocument + ", Task has broken data in params, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
+                        ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                        "taskId: " + task.getId(), '\n');
+                isOk = false;
+                continue;
+            }
 
             if (wb.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
-                status += ("#990.155, " + mainDocument + ", Task hasn't completed yet, " +
-                        "batchId:" + batch.id + ", workbookId: " + wb.getId() + ", " +
-                        "taskId: " + task.getId() + '\n');
+                bs.add("#990.155, " + mainDocument + ", Task hasn't completed yet, " +
+                        "batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                        "taskId: " + task.getId(),'\n');
+                isOk = true;
                 continue;
             }
 
-            File mainDocFile = new File(zipDir, mainDocument);
+            File mainDocFile = zipDir!=null ? new File(zipDir, mainDocument) : new File(mainDocument);
 
-            try {
-                binaryDataService.storeToFile(taskParamYaml.outputResourceCode, mainDocFile);
-            } catch (BinaryDataNotFoundException e) {
-                String msg = "#990.161 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.outputResourceCode +
-                        ", file: " + mainDocFile.getPath();
-                log.error(msg);
-                status += (msg + '\n');
-                continue;
+            if (storeToDisk) {
+                try {
+                    binaryDataService.storeToFile(taskParamYaml.outputResourceCode, mainDocFile);
+                } catch (BinaryDataNotFoundException e) {
+                    String msg = "#990.161 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.outputResourceCode +
+                            ", file: " + mainDocFile.getPath();
+                    log.error(msg);
+                    bs.add(msg,'\n');
+                    isOk = false;
+                    continue;
+                }
             }
 
             if (!fullConsole) {
-                String msg = "#990.167 status - Ok, doc: " + mainDocFile.getName() + ", batchId: " + batch.id + ", workbookId: " + bfi.workbookId;
-                status += (msg + '\n');
+                String msg = "#990.167 status - Ok, doc: " + mainDocFile.getName() + ", batchId: " + batchId + ", workbookId: " + bfi.workbookId;
+                bs.add(msg,'\n');
+                isOk = true;
             }
 
         }
+        bs.ok = isOk;
+        return bs;
+    }
 
-        return status;
+    private String getActualExtension(Long planId) {
+        Plan plan = planCache.findById(planId);
+        if (plan == null) {
+            return (StringUtils.isNotBlank(globals.defaultResultFileExtension)
+                    ? globals.defaultResultFileExtension
+                    : ".bin(???)");
+        }
+
+        PlanApiData.PlanYaml planYaml = PlanYamlUtils.toPlanYaml(plan.getParams());
+        Meta meta = planYaml.getMeta(Consts.RESULT_FILE_EXTENSION);
+
+        return meta != null && StringUtils.isNotBlank(meta.getValue())
+                ? meta.getValue()
+                :
+                (StringUtils.isNotBlank(globals.defaultResultFileExtension)
+                        ? globals.defaultResultFileExtension
+                        : ".bin");
     }
 
     private String getMainDocumentForPoolCode(String mainDocumentPoolCode) {

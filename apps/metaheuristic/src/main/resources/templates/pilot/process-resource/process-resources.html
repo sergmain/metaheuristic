@@ -36,6 +36,7 @@
         <tr th:align="center">
             <th>#</th>
             <th>Created on</th>
+            <th>Is batch consistent?</th>
             <th>Plan code</th>
             <th>Exec state</th>
             <th colspan="3">&nbsp;</th>
@@ -47,7 +48,11 @@
         <tr th:each="r : ${result.items}">
             <td th:text="${r.batch.id}">#Id</td>
             <td th:text="${#dates.format(r.batch.createdOn, 'dd-MMM-yy HH:mm')}">CreatedOn</td>
-            <td th:text="${r.plan.code}">Plan code</td>
+            <td>
+               <p th:if="${r.ok}" class="info-msg" >OK</p>
+               <p th:if="${!r.ok}" class="error-msg" >Error</p>
+            </td>
+            <td th:text="${r.planCode}">Plan code</td>
             <td th:text="${r.execStateStr}">Exec state as string</td>
             <td><a class="pure-button pure-button-primary"
                    th:href="${'/pilot/process-resource/process-resource-delete/' + r.batch.id}">Delete</a></td>
