@@ -21,6 +21,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,5 +30,6 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("launchpad")
 public interface BatchRepository extends JpaRepository<Batch, Long> {
 
-    Page<Batch> findAllByOrderByCreatedOnDesc(Pageable pageable);
+    @Query("select b.id from Batch b order by b.createdOn desc")
+    Page<Long> findAllByOrderByCreatedOnDesc(Pageable pageable);
 }

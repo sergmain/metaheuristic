@@ -290,7 +290,7 @@ public class BinaryDataService {
         return binaryDataRepository.findFirstByPoolCodeAndDataType(poolCode, type.value);
     }
 
-    public String getFilenameByPool11CodeAndType(String poolCode, BinaryDataType type) {
+    public String getFilenameByPool1CodeAndType(String poolCode, BinaryDataType type) {
         return binaryDataRepository.findFilenameByPoolCodeAndDataType(poolCode, type.value);
     }
 }

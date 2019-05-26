@@ -62,6 +62,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -105,6 +106,7 @@ public class ProcessResourceController {
     private final BatchRepository batchRepository;
     private final BatchWorkbookRepository batchWorkbookRepository;
     private final BinaryDataService binaryDataService;
+    private final BatchCache batchCache;
 
     @Data
     @NoArgsConstructor
@@ -152,7 +154,7 @@ public class ProcessResourceController {
         }
     }
 
-    public ProcessResourceController(WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, Globals globals) {
+    public ProcessResourceController(WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, Globals globals, BatchCache batchCache) {
         this.workbookRepository = workbookRepository;
         this.planRepository = planRepository;
         this.planCache = planCache;
@@ -163,6 +165,7 @@ public class ProcessResourceController {
         this.batchWorkbookRepository = batchWorkbookRepository;
         this.binaryDataService = binaryDataService;
         this.globals = globals;
+        this.batchCache = batchCache;
     }
 
     @GetMapping("/process-resources")
@@ -182,11 +185,12 @@ public class ProcessResourceController {
 
     private void prepareProcessResourcesResult(ProcessResourceResult result, Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(100, pageable);
-        Page<Batch> batches = batchRepository.findAllByOrderByCreatedOnDesc(pageable);
+        Page<Long> batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable);
 
         List<ProcessResourceItem> items = new ArrayList<>();
-        long total = batches.getTotalElements();
-        for (Batch batch : batches) {
+        long total = batchIds.getTotalElements();
+        for (Long batchId : batchIds) {
+            Batch batch = batchCache.findById(batchId);
             if (batch.execState!= Enums.BatchExecState.Finished.code && batch.execState!= Enums.BatchExecState.Archived.code) {
                 Boolean isFinished = null;
                 for (Workbook fi : workbookRepository.findWorkbookByBatchId(batch.id)) {
@@ -199,7 +203,7 @@ public class ProcessResourceController {
                 }
                 if (Boolean.TRUE.equals(isFinished)) {
                     batch.setExecState(Enums.BatchExecState.Finished.code);
-                    batch = batchRepository.save(batch);
+                    batch = batchCache.save(batch);
 
                 }
             }
@@ -269,7 +273,7 @@ public class ProcessResourceController {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
 
-            final Batch b = batchRepository.save(new Batch(plan.getId(), Enums.BatchExecState.Stored));
+            final Batch b = batchCache.save(new Batch(plan.getId(), Enums.BatchExecState.Stored));
             try(InputStream is = new FileInputStream(dataFile)) {
                 String code = toResourceCode(originFilename);
                 binaryDataService.save(
@@ -278,7 +282,7 @@ public class ProcessResourceController {
             }
 
             b.setExecState(Enums.BatchExecState.Preparing.code);
-            final Batch batch = batchRepository.save(b);
+            final Batch batch = batchCache.save(b);
 
             log.info("The file {} was successfully stored to disk", originFilename);
             new Thread(() -> {
@@ -316,14 +320,14 @@ public class ProcessResourceController {
     }
 
     private Batch storeErrorToBatch(Batch batch, String error) {
-        Batch b = batchRepository.findById(batch.id).orElse(null);
+        Batch b = batchCache.findById(batch.id);
         if (b==null) {
             log.warn("#990.410 batch not found in db, batchId: #{}", batch.id);
             return null;
         }
         b.setExecState(Enums.BatchExecState.Error.code);
         // TODO 2019.05.25 add storing of error message
-        batchRepository.save(b);
+        b = batchCache.save(b);
         return b;
     }
 
@@ -338,7 +342,7 @@ public class ProcessResourceController {
 
         if (paths.isEmpty()) {
             batch.setExecState(Enums.BatchExecState.Finished.code);
-            batchRepository.save(batch);
+            batchCache.save(batch);
             return;
         }
 
@@ -478,9 +482,20 @@ public class ProcessResourceController {
         }
         planService.createAllTasks();
 
-        batch.setExecState(Enums.BatchExecState.Processing.code);
-        batch = batchRepository.save(batch);
-
+        Batch b = batchCache.findById(batch.id);
+        if (b==null) {
+            log.error("#990.105 Batch is null");
+        }
+        else {
+            if (b.execState!=Enums.BatchExecState.Processing.code) {
+                b.setExecState(Enums.BatchExecState.Processing.code);
+                try {
+                    batchCache.save(b);
+                } catch (ObjectOptimisticLockingFailureException e) {
+                    throw e;
+                }
+            }
+        }
         operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
@@ -498,7 +513,7 @@ public class ProcessResourceController {
     @GetMapping("/process-resource-delete/{batchId}")
     public String processResourceDelete(Model model, @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
 
-        Batch batch = batchRepository.findById(batchId).orElse(null);
+        Batch batch = batchCache.findById(batchId);
         if (batch == null) {
             final String es = "#990.109 Batch wasn't found, batchId: " + batchId;
             log.info(es);
@@ -528,7 +543,7 @@ public class ProcessResourceController {
     @PostMapping("/process-resource-delete-commit")
     public String processResourceDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes) {
 
-        Batch batch = batchRepository.findById(batchId).orElse(null);
+        Batch batch = batchCache.findById(batchId);
         if (batch == null) {
             final String es = "#990.209 Batch wasn't found, batchId: " + batchId;
             log.info(es);
@@ -545,7 +560,7 @@ public class ProcessResourceController {
             planService.deleteWorkbook(wb.getId(), wb.getPlanId());
         }
         batchWorkbookRepository.deleteByBatchId(batch.id);
-        batchRepository.deleteById(batch.id);
+        batchCache.deleteById(batch.id);
 
         redirectAttributes.addAttribute("infoMessages", "Batch #"+batch.id+" was deleted successfully.");
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
@@ -555,7 +570,7 @@ public class ProcessResourceController {
     public String getProcessingResourceStatus(
             Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes) {
 
-        Batch batch = batchRepository.findById(batchId).orElse(null);
+        Batch batch = batchCache.findById(batchId);
         if (batch == null) {
             final String es = "#990.209 Batch wasn't found, batchId: " + batchId;
             log.info(es);
@@ -589,7 +604,7 @@ public class ProcessResourceController {
         File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
         File zipDir = new File(resultDir, "zip");
 
-        Batch batch = batchRepository.findById(batchId).orElse(null);
+        Batch batch = batchCache.findById(batchId);
         if (batch == null) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND);
             log.info("#990.109 Batch wasn't found, batchId: {}", batchId);
@@ -780,7 +795,7 @@ public class ProcessResourceController {
     }
 
     private String getMainDocumentForPoolCode(String mainDocumentPoolCode) {
-        final String filename = binaryDataService.getFilenameByPool11CodeAndType(mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
+        final String filename = binaryDataService.getFilenameByPool1CodeAndType(mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
         if (StringUtils.isBlank(filename)) {
             log.error("#990.15 Filename is blank for poolCode: {}, data type: {}", mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
             return null;
