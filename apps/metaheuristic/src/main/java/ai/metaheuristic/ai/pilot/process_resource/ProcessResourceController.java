@@ -726,8 +726,8 @@ public class ProcessResourceController {
                                 "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
                     }
                     isOk = true;
-                    //noinspection EnumSwitchStatementWhichMissesCases
-                    continue;
+                    // !!! Don't change to continue;
+                    break;
             }
 
             final TaskApiData.TaskParamYaml taskParamYaml;
