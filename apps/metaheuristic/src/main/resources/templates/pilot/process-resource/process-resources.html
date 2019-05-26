@@ -72,17 +72,17 @@
                         <li class="table-nav-padding">
                             <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                               th:href="@{/pilot/process-resource/process-resource-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                               th:href="@{/pilot/process-resource/process-resources-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                               th:href="@{/pilot/process-resource/process-resource-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/pilot/process-resource/process-resources-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                               th:href='@{/pilot/process-resource/process-resource-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
+                               th:href='@{/pilot/process-resource/process-resources-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>

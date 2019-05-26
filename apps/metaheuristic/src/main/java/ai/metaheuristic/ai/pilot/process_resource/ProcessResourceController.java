@@ -184,7 +184,7 @@ public class ProcessResourceController {
     }
 
     private void prepareProcessResourcesResult(ProcessResourceResult result, Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(20, pageable);
+        pageable = ControllerUtils.fixPageSize(10, pageable);
         Page<Long> batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable);
 
         List<ProcessResourceItem> items = new ArrayList<>();
