@@ -153,9 +153,12 @@ public class PlanService {
         workbookService.deleteById(workbookId);
         taskExperimentFeatureRepository.deleteByWorkbookId(workbookId);
         binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
-        Workbook workbook = workbookRepository.findFirstByPlanId(planId);
+        Workbook workbook = workbookRepository.findAnyByPlanId(planId);
         if (workbook==null) {
-            planRepository.findById(planId).ifPresent(plan -> setLockedTo(plan, false));
+            Plan p = planCache.findById(planId);
+            if (p!=null) {
+                setLockedTo(p, false);
+            }
         }
     }
 

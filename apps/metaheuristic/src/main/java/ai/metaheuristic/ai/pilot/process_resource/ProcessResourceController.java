@@ -184,7 +184,7 @@ public class ProcessResourceController {
     }
 
     private void prepareProcessResourcesResult(ProcessResourceResult result, Pageable pageable) {
-        pageable = ControllerUtils.fixPageSize(100, pageable);
+        pageable = ControllerUtils.fixPageSize(20, pageable);
         Page<Long> batchIds = batchRepository.findAllByOrderByCreatedOnDesc(pageable);
 
         List<ProcessResourceItem> items = new ArrayList<>();
@@ -682,8 +682,8 @@ public class ProcessResourceController {
                 continue;
             }
             if (tasks.size() > 1) {
-                String msg = "#990.137, " + mainDocument + ", Can't download file because there are more than one task, " +
-                        "batchId: " + batchId + ", workbookId: " + wb.getId();
+                String msg = "#990.137, " + mainDocument + ", Can't download file because there are more than one task " +
+                        "at the final state, batchId: " + batchId + ", workbookId: " + wb.getId();
                 log.info(msg);
                 bs.add(msg,'\n');
                 isOk = false;

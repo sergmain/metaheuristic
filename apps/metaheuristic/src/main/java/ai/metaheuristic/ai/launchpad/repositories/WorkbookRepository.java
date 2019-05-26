@@ -50,7 +50,7 @@ public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
 
     Slice<Workbook> findByPlanIdOrderByCreatedOnDesc(Pageable pageable, Long planId);
 
-    Workbook findFirstByPlanId(Long planId);
+    Workbook findAnyByPlanId(Long planId);
 
     @Transactional(readOnly = true)
     @Query(value="select w from BatchWorkbook b, WorkbookImpl w where b.batchId=:batchId and b.workbookId=w.id")
