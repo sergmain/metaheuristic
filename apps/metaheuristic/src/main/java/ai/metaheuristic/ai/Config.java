@@ -68,7 +68,7 @@ public class Config {
                         CacheBuilder
                                 .newBuilder()
                                 .expireAfterWrite(1, TimeUnit.DAYS)
-                                .maximumSize(50)
+                                .maximumSize(1000)
                                 .build()
                                 .asMap(), false);
             }
