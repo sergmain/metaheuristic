@@ -40,17 +40,14 @@ public class GeneratePasswords implements CommandLineRunner {
     @Override
     public void run(String... args) throws IOException, GeneralSecurityException {
 
-        if (args.length<2) {
-            System.out.println("GeneratePasswords <master password> <rest password>");
+        if (args.length==0) {
+            System.out.println("GeneratePasswords <master password>");
             return;
         }
 
         System.out.println("Passwords and tokens:");
         System.out.println("\tmaster password: " + args[0]);
-        System.out.println("\tmaster password encode: " + passwordEncoder.encode(args[0]));
+        System.out.println("\tmaster password encoded: " + passwordEncoder.encode(args[0]));
         System.out.println("\tmaster token: " + UUID.randomUUID());
-        System.out.println("\trest password: " + args[1]);
-        System.out.println("\trest password encoded: " + passwordEncoder.encode(args[1]));
-        System.out.println("\trest token: " + UUID.randomUUID());
    }
 }
