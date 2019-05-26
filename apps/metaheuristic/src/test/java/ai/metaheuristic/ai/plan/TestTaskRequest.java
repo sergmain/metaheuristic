@@ -59,16 +59,29 @@ public class TestTaskRequest extends FeatureMethods {
         produceTasks();
         toStarted();
 
+        ExchangeData dInit = new ExchangeData();
+        dInit.setStationId(stationIdAsStr);
+        dInit.setCommand(new Protocol.StationTaskStatus(Collections.emptyList()));
+        ExchangeData d0 = serverService.processRequest(dInit, Consts.LOCALHOST_IP);
+
+        assertNotNull(d0);
+        assertNotNull(d0.getReAssignedStationId());
+        assertNotNull(d0.getReAssignedStationId().sessionId);
+        assertEquals(stationIdAsStr, d0.getReAssignedStationId().reAssignedStationId);
+
+        String sessionId = d0.getReAssignedStationId().sessionId;
+
         List<Object[]> counts = taskRepository.getCountPerOrder(workbook.getId());
         for (Object[] count : counts) {
             if (((Number)count[0]).intValue() > 1) {
                 break;
             }
             ExchangeData data = new ExchangeData();
-            data.setStationId(stationIdAsStr);
+            data.initRequestToLaunchpad(stationIdAsStr, sessionId);
+
             data.setCommand(new Protocol.RequestTask(false));
 
-//            ExchangeData d = serverService.processRequest(data, Consts.LOCALHOST_IP);
+
             Protocol.AssignedTask r = new Protocol.AssignedTask();
             TaskService.TasksAndAssignToStationResult result = taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
             if (result.getSimpleTask()!=null) {
@@ -84,7 +97,7 @@ public class TestTaskRequest extends FeatureMethods {
             Protocol.AssignedTask.Task t = d.getAssignedTask().tasks.get(0);
 
             ExchangeData data1 = new ExchangeData();
-            data1.setStationId(stationIdAsStr);
+            data1.initRequestToLaunchpad(stationIdAsStr, sessionId);
             data1.setCommand(new Protocol.RequestTask(false));
 
             ExchangeData d1 = serverService.processRequest(data1, Consts.LOCALHOST_IP);
@@ -106,7 +119,7 @@ public class TestTaskRequest extends FeatureMethods {
         }
 
         ExchangeData data = new ExchangeData();
-        data.setStationId(stationIdAsStr);
+        data.initRequestToLaunchpad(stationIdAsStr, sessionId);
         data.setCommand(new Protocol.RequestTask(false));
 
         ExchangeData d = serverService.processRequest(data, Consts.LOCALHOST_IP);
@@ -116,7 +129,7 @@ public class TestTaskRequest extends FeatureMethods {
         assertFalse(d.getAssignedTask().tasks.isEmpty());
 
         ExchangeData data1 = new ExchangeData();
-        data1.setStationId(stationIdAsStr);
+        data1.initRequestToLaunchpad(stationIdAsStr, sessionId);
         data1.setCommand(new Protocol.RequestTask(false));
 
         ExchangeData d1 = serverService.processRequest(data1, Consts.LOCALHOST_IP);

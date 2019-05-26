@@ -20,6 +20,10 @@ import lombok.ToString;
 
 public class EnumsApi {
 
+    public enum BinaryDataRefType {
+        workbook, batch
+    }
+
     @ToString
     public enum DataSourcing {
         // data will be downloaded from launchpad
@@ -158,7 +162,7 @@ public class EnumsApi {
         ERROR,
     }
 
-    public enum BinaryDataType { UNKNOWN(0), DATA(1), SNIPPET(2), TEST(3), CONSOLE(4);
+    public enum BinaryDataType { UNKNOWN(0), DATA(1), SNIPPET(2), TEST(3), CONSOLE(4), BATCH(5);
 
         public int value;
         BinaryDataType(int value) {
@@ -175,14 +179,11 @@ public class EnumsApi {
                     return TEST;
                 case 4:
                     return CONSOLE;
+                case 5:
+                    return BATCH;
                 default:
                     return UNKNOWN;
             }
-        }
-
-        @SuppressWarnings("unused")
-        public boolean isProd() {
-            return this==DATA || this==SNIPPET;
         }
     }
 

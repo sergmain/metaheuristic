@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.pilot.beans;
 
+import ai.metaheuristic.ai.Enums;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -42,8 +43,15 @@ public class Batch implements Serializable {
     @Column(name="CREATED_ON")
     private long createdOn;
 
-    public Batch(Long planId) {
+    @Column(name = "EXEC_STATE")
+    public int execState;
+
+    @Column(name = "PARAMS")
+    public String params;
+
+    public Batch(Long planId, Enums.BatchExecState state) {
         this.planId = planId;
         this.createdOn = System.currentTimeMillis();
+        this.execState=state.code;
     }
 }

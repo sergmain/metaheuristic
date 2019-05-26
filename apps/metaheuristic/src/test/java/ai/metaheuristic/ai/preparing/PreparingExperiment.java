@@ -157,7 +157,7 @@ public abstract class PreparingExperiment {
                 mills = System.currentTimeMillis();
                 log.info("Start binaryDataService.save() #1");
                 binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, EnumsApi.BinaryDataType.SNIPPET, fitSnippet.getCode(), fitSnippet.getCode(),
-                        false, null, null);
+                        false, null, null, null);
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
 
@@ -185,7 +185,7 @@ public abstract class PreparingExperiment {
                 log.info("Start binaryDataService.save() #2");
                 binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length, EnumsApi.BinaryDataType.SNIPPET, predictSnippet.getCode(), predictSnippet.getCode(),
                         false, null,
-                        null);
+                        null, null);
                 log.info("binaryDataService.save() #2 was finished for {}", System.currentTimeMillis() - mills);
             }
 

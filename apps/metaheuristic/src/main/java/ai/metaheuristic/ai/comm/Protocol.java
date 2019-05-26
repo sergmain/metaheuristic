@@ -209,8 +209,8 @@ public class Protocol {
     @Data
     @EqualsAndHashCode(callSuper = false)
     public static class ReAssignStationId extends Command {
-        String reAssignedStationId;
-        String sessionId;
+        public String reAssignedStationId;
+        public String sessionId;
 
         public ReAssignStationId(Long stationId, String sessionId) {
             this(Long.toString(stationId), sessionId);

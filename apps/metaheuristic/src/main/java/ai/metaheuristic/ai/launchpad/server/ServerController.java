@@ -145,7 +145,7 @@ public class ServerController {
                         taskParamYaml.outputResourceCode,
                         false,
                         null,
-                        task.workbookId);
+                        task.workbookId, EnumsApi.BinaryDataRefType.workbook);
             }
         }
         catch (Throwable th) {

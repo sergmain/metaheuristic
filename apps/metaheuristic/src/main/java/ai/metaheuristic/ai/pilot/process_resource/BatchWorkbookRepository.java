@@ -17,8 +17,10 @@
 package ai.metaheuristic.ai.pilot.process_resource;
 
 import ai.metaheuristic.ai.pilot.beans.BatchWorkbook;
+import ai.metaheuristic.api.v1.launchpad.Workbook;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 

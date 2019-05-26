@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
+import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.launchpad.BinaryData;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
@@ -30,6 +31,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+import static ai.metaheuristic.api.v1.EnumsApi.*;
+
 /**
  * User: Serg
  * Date: 13.07.2017
@@ -42,8 +45,9 @@ public interface BinaryDataRepository extends CrudRepository<BinaryDataImpl, Lon
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
             "b.code, b.poolCode, b.params ) " +
-            "from BinaryDataImpl b where b.poolCode in :poolCodes and b.workbookId=:workbookId")
-    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes, long workbookId);
+            "from BinaryDataImpl b where b.poolCode in :poolCodes and " +
+            "b.refId=:refId and b.refType='workbook'")
+    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes, long refId);
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
             "b.code, b.poolCode, b.params ) " +
@@ -71,7 +75,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryDataImpl, Lon
     void deleteByCodeAndDataType(String code, int dataType);
 
     @Transactional
-    void deleteByWorkbookId(long workbookId);
+    void deleteByRefIdAndRefType(long refId, String refType);
 
     @Transactional
     void deleteByPoolCodeAndDataType(String poolCode, int dataType);

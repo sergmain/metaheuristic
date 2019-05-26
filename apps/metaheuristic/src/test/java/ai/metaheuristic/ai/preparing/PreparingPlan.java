@@ -188,15 +188,15 @@ public abstract class PreparingPlan extends PreparingExperiment {
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
                 EnumsApi.BinaryDataType.DATA,INPUT_RESOURCE_CODE+1, INPUT_POOL_CODE,
                 true, "file-01.txt",
-                null);
+                null, null);
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
                 EnumsApi.BinaryDataType.DATA,INPUT_RESOURCE_CODE+2, INPUT_POOL_CODE,
                 true, "file-02.txt",
-                null);
+                null, null);
         binaryDataService.save(new ByteArrayInputStream(bytes), bytes.length,
                 EnumsApi.BinaryDataType.DATA,INPUT_RESOURCE_CODE+3, INPUT_POOL_CODE,
                 true, "file-03.txt",
-                null);
+                null, null);
 
         inputResourceParam = new InputResourceParam();
         inputResourceParam.poolCodes = new HashMap<>();
@@ -253,7 +253,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             } catch (ObjectOptimisticLockingFailureException th) {
                 //
             } catch (Throwable th) {
-                log.error("Error while taskRepository.deleteByWorkbookId()", th);
+                log.error("Error while taskRepository.deleteByRefIdAndRefType()", th);
             }
         }
         try {

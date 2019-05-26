@@ -252,7 +252,7 @@ public class SnippetService {
         if (file != null) {
             try (InputStream inputStream = new FileInputStream(file)) {
                 String snippetCode = snippet.getCode();
-                binaryDataService.save(inputStream, snippetConfig.info.length, EnumsApi.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null, null);
+                binaryDataService.save(inputStream, snippetConfig.info.length, EnumsApi.BinaryDataType.SNIPPET, snippetCode, snippetCode, false, null, null, null);
             }
         }
     }

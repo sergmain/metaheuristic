@@ -41,6 +41,16 @@ public class BaseDataClass {
         infoMessages.add(infoMessage);
     }
 
+    public String getErrorMessagesAsStr() {
+        if (!isNotEmpty(errorMessages)) {
+            return "";
+        }
+        if (errorMessages.size()==1) {
+            return errorMessages.get(0);
+        }
+        return errorMessages.toString();
+    }
+
     public boolean isErrorMessages() {
         return isNotEmpty(errorMessages);
     }

@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
 import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
-import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -45,6 +44,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
+
+import static ai.metaheuristic.api.v1.EnumsApi.*;
 
 @Service
 @Transactional
@@ -115,11 +116,11 @@ public class BinaryDataService {
         }
     }
 
-    public void deleteByWorkbookId(long workbookId) {
-        binaryDataRepository.deleteByWorkbookId(workbookId);
+    public void deleteByRefId(long workbookId, BinaryDataRefType refType) {
+        binaryDataRepository.deleteByRefIdAndRefType(workbookId, refType.toString());
     }
 
-    public void deleteAllByType(EnumsApi.BinaryDataType binaryDataType) {
+    public void deleteAllByType(BinaryDataType binaryDataType) {
         binaryDataRepository.deleteAllByDataType(binaryDataType.value);
     }
 
@@ -137,19 +138,25 @@ public class BinaryDataService {
     }
 */
 
-    public void deleteByCodeAndDataType(String code, EnumsApi.BinaryDataType binaryDataType) {
+    public void deleteByCodeAndDataType(String code, BinaryDataType binaryDataType) {
         binaryDataRepository.deleteByCodeAndDataType(code, binaryDataType.value);
     }
 
-    public void deleteByPoolCodeAndDataType(String poolCode, EnumsApi.BinaryDataType binaryDataType) {
+    public void deleteByPoolCodeAndDataType(String poolCode, BinaryDataType binaryDataType) {
         binaryDataRepository.deleteByPoolCodeAndDataType(poolCode, binaryDataType.value);
     }
 
     public BinaryData save(InputStream is, long size,
-                           EnumsApi.BinaryDataType binaryDataType, String code, String poolCode,
-                           boolean isManual, String filename, Long workbookId) {
-        if (binaryDataType== EnumsApi.BinaryDataType.SNIPPET && workbookId!=null) {
+                           BinaryDataType binaryDataType, String code, String poolCode,
+                           boolean isManual, String filename, Long refId, BinaryDataRefType refType) {
+        if (binaryDataType== BinaryDataType.SNIPPET && refId!=null) {
             String es = "#087.01 Snippet can't be bound to workbook";
+            log.error(es);
+            throw new BinaryDataSaveException(es);
+        }
+        if ((refId==null && refType!=null) || (refId!=null && refType==null)) {
+            String es = "#087.02 refId and refType both must be null or both must not be null, " +
+                    "refId: #"+refId+", refType: "+refType;
             log.error(es);
             throw new BinaryDataSaveException(es);
         }
@@ -163,7 +170,8 @@ public class BinaryDataService {
                 data.setPoolCode(poolCode);
                 data.setManual(isManual);
                 data.setFilename(filename);
-                data.setWorkbookId(workbookId);
+                data.setRefId(refId);
+                data.setRefType(refType!=null ? refType.toString() : null);
                 data.setParams(Consts.SOURCING_LAUNCHPAD_PARAMS_STR);
             } else {
                 if (!poolCode.equals(data.getPoolCode())) {
@@ -173,7 +181,7 @@ public class BinaryDataService {
                     throw new BinaryDataSaveException(es);
                 }
                 DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
-                if (dataStorageParams.sourcing!= EnumsApi.DataSourcing.launchpad) {
+                if (dataStorageParams.sourcing!= DataSourcing.launchpad) {
                     // this is exception for the case when two resources have the same names but different pool codes
                     String es = "#087.05 Sourcing must be launchpad, value in db: " + data.getParams();
                     log.error(es);
@@ -213,12 +221,13 @@ public class BinaryDataService {
                     throw new IllegalStateException(es);
                 }
                 data = datas.get(0);
-                if (data.getDataType()!= EnumsApi.BinaryDataType.DATA.value) {
-                    String es = "#087.21 Can't create resource with storage url because record has different types: " + EnumsApi.BinaryDataType.from(data.getDataType());
+                if (data.getDataType()!= BinaryDataType.DATA.value) {
+                    String es = "#087.21 Can't create resource with storage url because record has different types: " + BinaryDataType.from(data.getDataType());
                     log.error(es);
                     throw new IllegalStateException(es);
                 }
 /*
+                // TODO 2019.05.25 need to decide - to use this check or to delete it finally
                 if (!data.getCode().equals(resourceCode)) {
                     String es = "#087.24 Can't create resource with storage url because record has different resource codes, " +
                             "in db: " + data.getCode()+", new resource code: " + resourceCode;
@@ -227,13 +236,14 @@ public class BinaryDataService {
                 }
 */
             }
-            data.setType(EnumsApi.BinaryDataType.DATA);
+            data.setType(BinaryDataType.DATA);
             data.setValid(true);
             data.setCode(resourceCode);
             data.setPoolCode(poolCode);
             data.setManual(true);
             data.setFilename(null);
-            data.setWorkbookId(null);
+            data.setRefId(null);
+            data.setRefType(null);
             data.setParams(storageUrl);
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setData(null);
@@ -276,7 +286,7 @@ public class BinaryDataService {
         return binaryDataRepository.getAllAsSimpleResources(pageable);
     }
 
-    public List<BinaryData> getByPoolCodeAndType(String poolCode, EnumsApi.BinaryDataType type) {
+    public List<BinaryData> getByPoolCodeAndType(String poolCode, BinaryDataType type) {
         return binaryDataRepository.findAllByPoolCodeAndDataType(poolCode, type.value);
     }
 }

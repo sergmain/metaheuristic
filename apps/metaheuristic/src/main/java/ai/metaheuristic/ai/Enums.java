@@ -64,4 +64,47 @@ public final class Enums {
             return this.toString().equals(type);
         }
     }
+
+    public enum BatchExecState {
+        Error(-1, "Error"),
+        Unknown(0, "None"),
+        Stored(1, "Preparing"),
+        Preparing(2, "Preparing"),
+        Processing(3, "Processing"),
+        Finished(4, "Finished"),
+        Archived(5, "Archived") ;
+
+        public final int code;
+        public final String info;
+
+        @SuppressWarnings("DuplicateBranchesInSwitch")
+        public static BatchExecState toState(int code) {
+            switch (code) {
+                case -1:
+                    return Error;
+                case 0:
+                    return Unknown;
+                case 1:
+                    return Stored;
+                case 2:
+                    return Preparing;
+                case 3:
+                    return Processing;
+                case 4:
+                    return Finished;
+                case 5:
+                    return Archived;
+                default:
+                    return Unknown;
+            }
+        }
+        BatchExecState(int code, String info) {
+            this.code = code;
+            this.info = info;
+        }
+
+        public boolean equals(String type) {
+            return this.toString().equals(type);
+        }
+    }
 }

@@ -36,7 +36,7 @@ public interface BinaryData {
 
     int getDataType();
 
-    Long getWorkbookId();
+    Long getRefId();
 
     java.sql.Timestamp getUploadTs();
 
@@ -64,7 +64,7 @@ public interface BinaryData {
 
     void setDataType(int dataType);
 
-    void setWorkbookId(Long workbookId);
+    void setRefId(Long refId);
 
     void setUploadTs(java.sql.Timestamp uploadTs);
 
@@ -81,4 +81,8 @@ public interface BinaryData {
     void setBytes(byte[] bytes);
 
     void setParams(String params);
+
+    String getRefType();
+
+    void setRefType(String refType);
 }

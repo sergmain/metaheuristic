@@ -102,7 +102,7 @@ public class PlanService {
         this.workbookService = workbookService;
     }
 
-    // TODO need to check all numbers of errors. Must be as #701.xx
+    // TODO 2019.05.25 need to check all numbers of errors. Must be as #701.xx
 
     public Workbook toStarted(Workbook workbook) {
         WorkbookImpl fi = workbookRepository.findById(workbook.getId()).orElse(null);
@@ -121,7 +121,7 @@ public class PlanService {
         return workbookRepository.save(fi);
     }
 
-    // TODO add reporting of producing of tasks
+    // TODO 2019.05.19 add reporting of producing of tasks
     public synchronized void createAllTasks() {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
@@ -152,14 +152,10 @@ public class PlanService {
         experimentService.resetExperiment(workbookId);
         workbookService.deleteById(workbookId);
         taskExperimentFeatureRepository.deleteByWorkbookId(workbookId);
-        binaryDataService.deleteByWorkbookId(workbookId);
-        List<Workbook> instances = workbookRepository.findByPlanId(planId);
-        if (instances.isEmpty()) {
-            PlanImpl plan = planRepository.findById(planId).orElse(null);
-            if (plan!=null) {
-                plan.locked = false;
-                save(plan);
-            }
+        binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
+        Workbook workbook = workbookRepository.findFirstByPlanId(planId);
+        if (workbook==null) {
+            planRepository.findById(planId).ifPresent(plan -> setLockedTo(plan, false));
         }
     }
 
@@ -194,8 +190,7 @@ public class PlanService {
             planValidation.addErrorMessage("#560.34 Error while parsing yaml config, " + e.toString());
             planValidation.status = EnumsApi.PlanValidateStatus.YAML_PARSING_ERROR;
         }
-        plan.setValid( planValidation.status == EnumsApi.PlanValidateStatus.OK );
-        save(plan);
+        setValidTo(plan, planValidation.status == EnumsApi.PlanValidateStatus.OK );
         if (plan.isValid()) {
             planValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
@@ -221,14 +216,36 @@ public class PlanService {
         workbook.setExecState(execState.code);
         save(workbook);
 
-        plan.setLocked(true);
-        save(plan);
+        setLockedTo(plan, true);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public PlanImpl save(Plan plan) {
+    private final static Object syncObj = new Object();
+
+    // TODO 2019.05.25 not so good but just workaround for ObjectOptimisticLockingFailureException
+    private void setValidTo(Plan plan, boolean valid) {
+        synchronized (syncObj) {
+            Plan p = planCache.findById(plan.getId());
+            if (p!=null && p.isValid()!=valid) {
+                p.setValid(true);
+                saveInternal(p);
+            }
+        }
+    }
+
+    private void setLockedTo(Plan plan, boolean locked) {
+        synchronized (syncObj) {
+            Plan p = planCache.findById(plan.getId());
+            if (p!=null && p.isLocked()!=locked) {
+                p.setLocked(true);
+                saveInternal(p);
+            }
+        }
+    }
+
+    private void saveInternal(Plan plan) {
         if (plan instanceof PlanImpl) {
-            return planCache.save((PlanImpl)plan);
+            planCache.save((PlanImpl)plan);
         }
         else {
             throw new NotImplementedException("Need to implement");

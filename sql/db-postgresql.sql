@@ -53,7 +53,8 @@ CREATE TABLE MH_DATA (
   POOL_CODE   VARCHAR(250) not null,
   DATA_TYPE   NUMERIC(2, 0) NOT NULL,
   VERSION     NUMERIC(5, 0) NOT NULL,
-  WORKBOOK_ID  NUMERIC(10, 0),
+  REF_ID      NUMERIC(10, 0),
+  REF_TYPE    VARCHAR(15),
   UPLOAD_TS   TIMESTAMP DEFAULT to_timestamp(0),
   DATA        OID,
   CHECKSUM    VARCHAR(2048),
@@ -202,7 +203,10 @@ create table PILOT_BATCH
   ID               SERIAL PRIMARY KEY,
   VERSION          NUMERIC(5, 0)  NOT NULL,
   PLAN_ID          NUMERIC(10, 0) NOT NULL,
-  CREATED_ON       bigint         NOT NULL
+  DATA_ID          NUMERIC(10, 0) NOT NULL,
+  CREATED_ON       bigint         NOT NULL,
+  EXEC_STATE      smallint not null default 0,
+  PARAMS           TEXT
 );
 
 CREATE TABLE PILOT_BATCH_WORKBOOK

@@ -148,7 +148,7 @@ public class AtlasService {
             //noinspection unused
             BinaryData data = binaryDataService.save(
                     is, filed.dumpOfConsoleOutputs.length(), EnumsApi.BinaryDataType.CONSOLE,
-                    poolCode, poolCode, false, null, null);
+                    poolCode, poolCode, false, null, null, null);
 
         } catch (FileNotFoundException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,

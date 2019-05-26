@@ -17,9 +17,10 @@
 package ai.metaheuristic.ai.pilot.process_resource;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.ai.exceptions.StoreNewFileException;
+import ai.metaheuristic.ai.exceptions.PilotResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
@@ -73,7 +74,9 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/pilot/process-resource")
@@ -108,7 +111,7 @@ public class ProcessResourceController {
         public Batch batch;
         public Plan plan;
         public String execStateStr;
-        public boolean finished;
+        public int execState;
     }
 
     @Data
@@ -159,27 +162,29 @@ public class ProcessResourceController {
         long total = batches.getTotalElements();
         for (Batch batch : batches) {
             Plan plan = planCache.findById(batch.getPlanId());
-            if (plan==null) {
+            if (plan == null) {
                 log.warn("#990.01 Found batch with wrong planId. planId: {}", batch.getPlanId());
                 total--;
                 continue;
             }
-            List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batch.id);
-            boolean isFinished = true;
-            for (BatchWorkbook bfi : bfis) {
-                Workbook fi = workbookRepository.findById(bfi.workbookId).orElse(null);
-                if (fi==null) {
-                    String msg = "#990.03 Batch #" + batch.id + " contains broken workbookId - #" + bfi.workbookId;
-                    log.warn(msg);
-                    continue;
+
+            if (batch.execState!= Enums.BatchExecState.Finished.code && batch.execState!= Enums.BatchExecState.Archived.code) {
+                boolean isFinished = true;
+                for (Workbook fi : workbookRepository.findWorkbookByBatchId(batch.id)) {
+                    if (fi.getExecState() != EnumsApi.WorkbookExecState.ERROR.code &&
+                            fi.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
+                        isFinished = false;
+                        break;
+                    }
                 }
-                if (fi.getExecState() != EnumsApi.WorkbookExecState.ERROR.code &&
-                        fi.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
-                    isFinished = false;
+                if (isFinished) {
+                    batch.setExecState(Enums.BatchExecState.Finished.code);
+                    batch = batchRepository.save(batch);
+
                 }
             }
-            String execStateStr = isFinished ? "FINISHED" : "IN PROGRESS";
-            items.add( new ProcessResourceItem(batch, plan, execStateStr, isFinished));
+            String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
+            items.add( new ProcessResourceItem(batch, plan, execStateStr, batch.execState));
         }
         result.items = new PageImpl<>(items, pageable, total);
 
@@ -196,18 +201,12 @@ public class ProcessResourceController {
     @PostMapping(value = "/process-resource-upload-from-file")
     public String uploadFile(final MultipartFile file, Long planId, final RedirectAttributes redirectAttributes) {
 
-        String originFilename = file.getOriginalFilename();
-        if (originFilename == null) {
+        String tempFilename = file.getOriginalFilename();
+        if (tempFilename == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.10 name of uploaded file is null");
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
-        originFilename = originFilename.toLowerCase();
-/*
-        if (!StringUtils.endsWithAny(originFilename, ".xml", ".zip", ".doc", ".docx", ".rtf")) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.20 only '.xml' and .zip files are supported, filename: " + originFilename);
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
-        }
-*/
+        final String originFilename = tempFilename.toLowerCase();
         Plan plan = planCache.findById(planId);
         if (plan == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.31 plan wasn't found, planId: " + planId);
@@ -234,30 +233,42 @@ public class ProcessResourceController {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
 
-            Batch batch = batchRepository.save(new Batch(plan.getId()));
-
-
-            log.info("The file {} was successfully uploaded", originFilename);
-
-            if (originFilename.endsWith(".zip")) {
-                log.debug("Start unzipping archive");
-                ZipUtils.unzipFolder(dataFile, tempDir);
-                log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(batch, tempDir, redirectAttributes, plan);
+            final Batch b = batchRepository.save(new Batch(plan.getId(), Enums.BatchExecState.Stored));
+            try(InputStream is = new FileInputStream(dataFile)) {
+                String code = toResourceCode(originFilename);
+                binaryDataService.save(
+                        is, dataFile.length(), EnumsApi.BinaryDataType.BATCH, code, code,
+                        true, originFilename, b.id, EnumsApi.BinaryDataRefType.batch);
             }
-            else {
-                log.debug("Start loading file data to db");
-                loadFilesFromDirAfterZip(batch, tempDir, redirectAttributes, plan);
-            }
-        }
-        catch(StoreNewFileWithRedirectException e) {
-            return e.redirect;
-        }
-        catch(UnzipArchiveException e) {
-            log.error("Error", e);
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "#990.65 can't unzip an archive. Error: " + e.getMessage()+", class: " + e.getClass());
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+
+            b.setExecState(Enums.BatchExecState.Preparing.code);
+            final Batch batch = batchRepository.save(b);
+
+            log.info("The file {} was successfully stored to disk", originFilename);
+            new Thread(() -> {
+                try {
+                    if (originFilename.endsWith(".zip")) {
+                        log.debug("Start unzipping archive");
+                        ZipUtils.unzipFolder(dataFile, tempDir);
+                        log.debug("Start loading file data to db");
+                        loadFilesFromDirAfterZip(batch, tempDir, plan);
+                    }
+                    else {
+                        log.debug("Start loading file data to db");
+                        loadFilesFromDirAfterZip(batch, tempDir,  plan);
+                    }
+                }
+                catch(UnzipArchiveException e) {
+                    log.error("Error", e);
+                    storeErrorToBatch(batch, "#990.65 can't unzip an archive. Error: " + e.getMessage()+", class: " + e.getClass());
+                }
+                catch(Throwable th) {
+                    log.error("Error", th);
+                    storeErrorToBatch(batch, "#990.65 General processing error. Error: " + th.getMessage()+", class: " + th.getClass());
+                }
+
+            }).start();
+
         }
         catch (Throwable th) {
             log.error("Error", th);
@@ -268,56 +279,59 @@ public class ProcessResourceController {
         return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
     }
 
-    private void loadFilesFromDirAfterZip(Batch batch, File srcDir, RedirectAttributes redirectAttributes, Plan plan) throws IOException {
+    private Batch storeErrorToBatch(Batch batch, String error) {
+        Batch b = batchRepository.findById(batch.id).orElse(null);
+        if (b==null) {
+            log.warn("#990.410 batch not found in db, batchId: #{}", batch.id);
+            return null;
+        }
+        b.setExecState(Enums.BatchExecState.Error.code);
+        // TODO 2019.05.25 add storing of error message
+        batchRepository.save(b);
+        return b;
+    }
 
-        Files.list(srcDir.toPath())
-                .filter( o -> {
+    private void loadFilesFromDirAfterZip(Batch batch, File srcDir, Plan plan) throws IOException {
+
+        List<Path> paths = Files.list(srcDir.toPath())
+                .filter(o -> {
                     File f = o.toFile();
                     return !EXCLUDE_EXT.contains(StrUtils.getExtension(f.getName()));
                 })
-                .forEach(dataFile -> {
-                    File file = dataFile.toFile();
-                    if (file.isDirectory()) {
-                        try {
-                            final File mainDocFile = getMainDocumentFile(file, redirectAttributes);
-                            final List<File> files = new ArrayList<>();
-                            Files.list(dataFile)
-                                    .filter(o -> o.toFile().isFile())
-                                    .forEach(f -> files.add(f.toFile()));
+                .collect(Collectors.toList());
 
-                            String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, plan, files, mainDocFile);
-                            if (redirectUrl1 != null) {
-                                throw new StoreNewFileWithRedirectException(redirectUrl1);
-                            }
-                        }
-                        catch (StoreNewFileWithRedirectException e) {
-                                throw e;
-                        }
-                        catch (Throwable th) {
-                            log.error("Error", th);
-                            redirectAttributes.addFlashAttribute("errorMessage", "#990.25 An error while saving data to file, " + th.toString());
-                            throw new StoreNewFileWithRedirectException(REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
-                        }
-                    }
-                    else {
-                        String redirectUrl1 = createAndProcessTask(batch, redirectAttributes, plan, Collections.singletonList(file), file);
-                        if (redirectUrl1 != null) {
-                            throw new StoreNewFileWithRedirectException(redirectUrl1);
-                        }
-                    }
-                });
+        for (Path dataFile : paths) {
+            File file = dataFile.toFile();
+            if (file.isDirectory()) {
+                try {
+                    final File mainDocFile = getMainDocumentFile(file);
+                    final List<File> files = new ArrayList<>();
+                    Files.list(dataFile)
+                            .filter(o -> o.toFile().isFile())
+                            .forEach(f -> files.add(f.toFile()));
+
+                    createAndProcessTask(batch, plan, files, mainDocFile);
+                } catch (StoreNewFileWithRedirectException e) {
+                    throw e;
+                } catch (Throwable th) {
+                    String es = "#990.25 An error while saving data to file, " + th.toString();
+                    log.error(es, th);
+                    throw new PilotResourceProcessingException(es);
+                }
+            } else {
+                createAndProcessTask(batch, plan, Collections.singletonList(file), file);
+            }
+        }
     }
 
-    private File getMainDocumentFile(File srcDir, RedirectAttributes redirectAttributes) throws IOException {
+    private File getMainDocumentFile(File srcDir) throws IOException {
         File configFile = new File(srcDir, CONFIG_FILE);
         if (!configFile.exists()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.18 config.yaml file wasn't found in path " + srcDir.getPath());
-            throw new StoreNewFileWithRedirectException(REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+            throw new PilotResourceProcessingException("#990.18 config.yaml file wasn't found in path " + srcDir.getPath());
         }
 
         if (!configFile.isFile()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.19 config.yaml must be a file, not a directory");
-            throw new StoreNewFileWithRedirectException(REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+            throw new PilotResourceProcessingException("#990.19 config.yaml must be a file, not a directory");
         }
         Yaml yaml = new Yaml();
 
@@ -328,14 +342,12 @@ public class ProcessResourceController {
         }
 
         if (StringUtils.isBlank(mainDocument)) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.17 config.yaml must contain non-empty field '" + MAIN_DOCUMENT_POOL_CODE + "' ");
-            throw new StoreNewFileWithRedirectException(REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+            throw new PilotResourceProcessingException("#990.17 config.yaml must contain non-empty field '" + MAIN_DOCUMENT_POOL_CODE + "' ");
         }
 
         final File mainDocFile = new File(srcDir, mainDocument);
         if (!mainDocFile.exists()) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.16 main document file "+mainDocument+" wasn't found in path " + srcDir.getPath());
-            throw new StoreNewFileWithRedirectException(REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES);
+            throw new PilotResourceProcessingException("#990.16 main document file "+mainDocument+" wasn't found in path " + srcDir.getPath());
         }
         return mainDocFile;
     }
@@ -350,50 +362,40 @@ public class ProcessResourceController {
         return yaml;
     }
 
-    private String createAndProcessTask(Batch batch, RedirectAttributes redirectAttributes, Plan plan, List<File> dataFile, File mainDocFile) {
+    private void createAndProcessTask(Batch batch, Plan plan, List<File> dataFile, File mainDocFile) {
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
         String mainPoolCode = String.format("%d-%s-%d", plan.getId(), MAIN_DOCUMENT_POOL_CODE, nanoTime);
         String attachPoolCode = String.format("%d-%s-%d", plan.getId(), ATTACHMENTS_POOL_CODE, nanoTime);
         boolean isMainDocPresent = false;
-        try {
-            for (File file : dataFile) {
-                String originFilename = file.getName();
-                if (EXCLUDE_EXT.contains(StrUtils.getExtension(originFilename))) {
-                    continue;
-                }
-                String name = StrUtils.getName(originFilename);
-                String ext = StrUtils.getExtension(originFilename);
-                final String code = StringUtils.replaceEach(name, new String[] {" "}, new String[] {"_"} ) + '-' + nanoTime + ext;
-
-                String poolCode;
-                if (file.equals(mainDocFile)) {
-                    poolCode = mainPoolCode;
-                    isMainDocPresent = true;
-                }
-                else {
-                    poolCode = attachPoolCode;
-                    attachments.add(code);
-                }
-
-                resourceService.storeInitialResource(file, code, poolCode, originFilename);
+        for (File file : dataFile) {
+            String originFilename = file.getName();
+            if (EXCLUDE_EXT.contains(StrUtils.getExtension(originFilename))) {
+                continue;
             }
-        } catch (StoreNewFileException e) {
-            log.error("Error", e);
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.26 An error while saving data to file, " + e.toString());
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            final String code = toResourceCode(originFilename);
+
+            String poolCode;
+            if (file.equals(mainDocFile)) {
+                poolCode = mainPoolCode;
+                isMainDocPresent = true;
+            }
+            else {
+                poolCode = attachPoolCode;
+                attachments.add(code);
+            }
+
+            resourceService.storeInitialResource(file, code, poolCode, originFilename);
         }
 
         if (!isMainDocPresent) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.28 main document wasn't found" );
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            throw new PilotResourceProcessingException("#990.28 main document wasn't found");
         }
 
         final String paramYaml = asInputResourceParams(mainPoolCode, attachPoolCode, attachments);
         PlanApiData.TaskProducingResultComplex producingResult = planService.createWorkbook(plan.getId(), paramYaml);
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.42 Error creating workbook: " + producingResult.planProducingStatus);
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            throw new PilotResourceProcessingException("#990.42 Error creating workbook: " + producingResult.planProducingStatus);
         }
         BatchWorkbook bfi = new BatchWorkbook();
         bfi.batchId=batch.id;
@@ -404,29 +406,25 @@ public class ProcessResourceController {
         Long planId = plan.getId();
         plan = planCache.findById(planId);
         if (plan == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.49 plan wasn't found, planId: " + planId);
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            throw new PilotResourceProcessingException("#990.49 plan wasn't found, planId: " + planId);
         }
 
         // validate the plan + the workbook
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.55 validation of plan was failed, status: " + planValidation.status);
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            throw new PilotResourceProcessingException("#990.55 validation of plan was failed, status: " + planValidation.status);
         }
 
         PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook);
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#990.60 validation of plan was failed, status: " + countTasks.planValidateStatus);
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            throw new PilotResourceProcessingException("#990.60 validation of plan was failed, status: " + countTasks.planValidateStatus);
         }
 
         if (globals.maxTasksPerPlan < countTasks.numberOfTasks) {
             planService.changeValidStatus(producingResult.workbook, false);
-            redirectAttributes.addFlashAttribute("errorMessage",
+            throw new PilotResourceProcessingException(
                     "#990.67 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                             "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + countTasks.numberOfTasks);
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
         planService.changeValidStatus(producingResult.workbook, true);
 
@@ -434,17 +432,25 @@ public class ProcessResourceController {
         OperationStatusRest operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.PRODUCING);
 
         if (operationStatus.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessages);
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            throw new PilotResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
         planService.createAllTasks();
+
+        batch.setExecState(Enums.BatchExecState.Processing.code);
+        batch = batchRepository.save(batch);
+
         operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatus.errorMessages);
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            throw new PilotResourceProcessingException(operationStatus.getErrorMessagesAsStr());
         }
-        return null;
+    }
+
+    private static String toResourceCode(String originFilename) {
+        long nanoTime = System.nanoTime();
+        String name = StrUtils.getName(originFilename);
+        String ext = StrUtils.getExtension(originFilename);
+        return StringUtils.replaceEach(name, new String[] {" "}, new String[] {"_"} ) + '-' + nanoTime + ext;
     }
 
     @GetMapping("/process-resource-delete/{batchId}")
