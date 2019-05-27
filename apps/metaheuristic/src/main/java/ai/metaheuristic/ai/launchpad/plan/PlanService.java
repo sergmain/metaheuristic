@@ -125,8 +125,7 @@ public class PlanService {
     public synchronized void createAllTasks() {
 
         Monitoring.log("##019", Enums.Monitor.MEMORY);
-        List<WorkbookImpl> workbooks = workbookRepository.findByExecState(
-                EnumsApi.WorkbookExecState.PRODUCING.code);
+        List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
         Monitoring.log("##020", Enums.Monitor.MEMORY);
         if (!workbooks.isEmpty()) {
             log.info("Start producing tasks");

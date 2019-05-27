@@ -35,9 +35,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
-import javax.transaction.Transactional;
 import java.io.*;
 import java.sql.Blob;
 import java.sql.SQLException;
@@ -63,6 +63,7 @@ public class BinaryDataService {
         this.globals = globals;
     }
 
+    @Transactional(readOnly = true)
     public BinaryDataImpl getBinaryData(long id) {
         if (!globals.isUnitTesting) {
             throw new IllegalStateException("this method intended to be only for test cases");
@@ -85,6 +86,7 @@ public class BinaryDataService {
         }
     }
 
+    @Transactional(readOnly = true)
     public byte[] getDataAsBytes(long id) {
         try {
             BinaryData data = binaryDataRepository.findById(id).orElse(null);
@@ -124,10 +126,12 @@ public class BinaryDataService {
         binaryDataRepository.deleteAllByDataType(binaryDataType.value);
     }
 
+    @Transactional(readOnly = true)
     public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode, long workbookId) {
         return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode, workbookId);
     }
 
+    @Transactional(readOnly = true)
     public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode) {
         return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode);
     }
@@ -278,18 +282,22 @@ public class BinaryDataService {
         binaryDataRepository.deleteById(id);
     }
 
+    @Transactional(readOnly = true)
     public Optional<BinaryDataImpl> findById(Long id) {
         return binaryDataRepository.findById(id);
     }
 
+    @Transactional(readOnly = true)
     public Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable) {
         return binaryDataRepository.getAllAsSimpleResources(pageable);
     }
 
-    public Optional<BinaryData> getByPoolCodeAndType(String poolCode, BinaryDataType type) {
-        return binaryDataRepository.findFirstByPoolCodeAndDataType(poolCode, type.value);
+    @Transactional(readOnly = true)
+    public List<Long> getByPoolCodeAndType(String poolCode, BinaryDataType type) {
+        return binaryDataRepository.findIdsByPoolCodeAndDataType(poolCode, type.value);
     }
 
+    @Transactional(readOnly = true)
     public String getFilenameByPool1CodeAndType(String poolCode, BinaryDataType type) {
         return binaryDataRepository.findFilenameByPoolCodeAndDataType(poolCode, type.value);
     }

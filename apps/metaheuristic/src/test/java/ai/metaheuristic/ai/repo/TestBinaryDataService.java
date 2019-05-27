@@ -14,30 +14,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.repositories;
+package ai.metaheuristic.ai.repo;
 
-import ai.metaheuristic.ai.launchpad.beans.Station;
+import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 /**
- * User: Serg
- * Date: 25.06.2017
- * Time: 15:52
+ * @author Serge
+ * Date: 5/27/2019
+ * Time: 2:55 AM
  */
-@Component
+@Service
 @Transactional
+@Slf4j
 @Profile("launchpad")
-public interface StationsRepository extends CrudRepository<Station, Long> {
+public class TestBinaryDataService {
 
-    @Transactional(readOnly = true)
-    Slice<Station> findAll(Pageable pageable);
+    @Autowired
+    private BinaryDataRepository binaryDataRepository;
 
-    @Transactional(readOnly = true)
-    Slice<Station> findAllByOrderByUpdatedOnDescId(Pageable pageable);
-
+    public List<String> getAllCodes() {
+        List<String> codes = binaryDataRepository.getAllCodes();
+        return codes;
+    }
 }

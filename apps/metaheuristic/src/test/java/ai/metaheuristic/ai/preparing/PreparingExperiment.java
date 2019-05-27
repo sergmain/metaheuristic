@@ -131,7 +131,7 @@ public abstract class PreparingExperiment {
             // Prepare snippets
             mills = System.currentTimeMillis();
             log.info("Start findByCode.save()");
-            fitSnippet = snippetRepository.findByCode(TEST_FIT_SNIPPET);
+            fitSnippet = snippetRepository.findByCodeForUpdate(TEST_FIT_SNIPPET);
             log.info("findByCode() was finished for {}", System.currentTimeMillis() - mills);
 
             byte[] bytes = "some program code".getBytes();
@@ -161,7 +161,7 @@ public abstract class PreparingExperiment {
                 log.info("binaryDataService.save() #1 was finished for {}", System.currentTimeMillis() - mills);
             }
 
-            predictSnippet = snippetRepository.findByCode(TEST_PREDICT_SNIPPET);
+            predictSnippet = snippetRepository.findByCodeForUpdate(TEST_PREDICT_SNIPPET);
             if (predictSnippet == null) {
                 predictSnippet = new Snippet();
                 SnippetApiData.SnippetConfig sc = new SnippetApiData.SnippetConfig();

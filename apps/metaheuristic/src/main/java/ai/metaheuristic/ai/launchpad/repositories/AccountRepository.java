@@ -32,8 +32,10 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("launchpad")
 public interface AccountRepository extends JpaRepository<Account, Long> {
 
+    @Transactional(readOnly = true)
     Account findByUsername(String username);
 
+    @Transactional(readOnly = true)
     Account findByMailAddress(String mailAddress);
 
 }

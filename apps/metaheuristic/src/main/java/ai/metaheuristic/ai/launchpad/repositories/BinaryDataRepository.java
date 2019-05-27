@@ -62,7 +62,8 @@ public interface BinaryDataRepository extends CrudRepository<BinaryDataImpl, Lon
 
     List<BinaryDataImpl> findAllByPoolCode(String poolCode);
 
-    Optional<BinaryData> findFirstByPoolCodeAndDataType(String poolCode, int dataType);
+    @Query(value="select b.id from BinaryDataImpl b where b.poolCode=:poolCode and b.dataType=:dataType ")
+    List<Long> findIdsByPoolCodeAndDataType(String poolCode, int dataType);
 
     @Query(value="select b.filename from BinaryDataImpl b where b.poolCode=:poolCode and b.dataType=:dataType ")
     String findFilenameByPoolCodeAndDataType(String poolCode, int dataType);
@@ -90,4 +91,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryDataImpl, Lon
             "from BinaryDataImpl b where b.manual=true ")
     Slice<SimpleResource> getAllAsSimpleResources(Pageable pageable);
 
+
+    @Query(value="select b.code from BinaryDataImpl b")
+    List<String> getAllCodes();
 }

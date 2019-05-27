@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.repo;
 
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
+import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
 import ai.metaheuristic.api.v1.launchpad.BinaryData;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.api.v1.EnumsApi;
@@ -30,6 +31,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.io.ByteArrayInputStream;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.List;
+import java.util.UUID;
 
 import static org.junit.Assert.*;
 
@@ -40,6 +43,9 @@ public class TestBinaryDataRepository {
 
     @Autowired
     private BinaryDataService binaryDataService;
+
+    @Autowired
+    private TestBinaryDataService testBinaryDataService;
 
     @Test
     public void testFeatureCompletionWithAllError() throws SQLException, InterruptedException {
@@ -71,6 +77,21 @@ public class TestBinaryDataRepository {
 
         binaryDataService.deleteAllByType(EnumsApi.BinaryDataType.TEST);
 
+    }
+
+
+    @Test
+    public void testNonExistRecord() {
+        List<String> codes = testBinaryDataService.getAllCodes();
+
+        String unique;
+        //noinspection StatementWithEmptyBody
+        while (codes.contains(unique= UUID.randomUUID().toString()) );
+
+        String file = binaryDataService.getFilenameByPool1CodeAndType(unique, EnumsApi.BinaryDataType.DATA);
+
+        System.out.println("file = " + file);
+        assertNull(file);
     }
 
 }

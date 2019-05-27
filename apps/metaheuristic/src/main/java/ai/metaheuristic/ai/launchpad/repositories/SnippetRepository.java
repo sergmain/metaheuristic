@@ -17,12 +17,19 @@ package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @Profile("launchpad")
 public interface SnippetRepository extends CrudRepository<Snippet, Long> {
 
+    @Transactional(readOnly = true)
     Snippet findByCode(String code);
+
+    @Transactional
+    @Query(value="select b from Snippet b where b.code=:code")
+    Snippet findByCodeForUpdate(String code);
 }

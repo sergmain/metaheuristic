@@ -454,13 +454,18 @@ public class AtlasTopLevelService {
         }
 
         String poolCode = AtlasService.getPoolCodeForExperiment(estb.workbook.id, estb.experiment.id);
-        Optional<BinaryData> datas = binaryDataService.getByPoolCodeAndType(poolCode, EnumsApi.BinaryDataType.CONSOLE);
-        if (datas.isEmpty()) {
+        List<Long> ids = binaryDataService.getByPoolCodeAndType(poolCode, EnumsApi.BinaryDataType.CONSOLE);
+        if (ids.isEmpty()) {
             return new AtlasData.ConsoleResult("#280.47 Can't find a console output");
         }
 
+        if (ids.size()>1) {
+            log.warn("Structure of console output is broken. " +
+                    "There is more than one console output for poolCode: {}, dataType: {}", poolCode, EnumsApi.BinaryDataType.CONSOLE);
+        }
+
         // TODO need to refactor to use InputStream
-        byte[] bytes = binaryDataService.getDataAsBytes(datas.get().getId());
+        byte[] bytes = binaryDataService.getDataAsBytes(ids.get(0));
         ConsoleOutputStoredToAtlas.TaskOutput taskOutput = null;
         try(InputStream is = new ByteArrayInputStream(bytes)) {
             LineIterator it = IOUtils.lineIterator(is, StandardCharsets.UTF_8);

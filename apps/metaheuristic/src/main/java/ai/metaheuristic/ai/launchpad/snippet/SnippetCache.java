@@ -50,7 +50,7 @@ public class SnippetCache {
     }
 
     @CacheEvict(cacheNames = {"snippets"}, key = "#snippetId")
-    public void delete(long snippetId) {
+    public void delete(Long snippetId) {
         try {
             snippetRepository.deleteById(snippetId);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -59,7 +59,7 @@ public class SnippetCache {
     }
 
     @Cacheable(cacheNames = "snippets", unless="#result==null")
-    public Snippet findById(long id) {
+    public Snippet findById(Long id) {
         return snippetRepository.findById(id).orElse(null);
     }
 

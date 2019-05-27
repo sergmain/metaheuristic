@@ -42,6 +42,7 @@ public interface PlanRepository extends CrudRepository<PlanImpl, Long> {
     @Transactional(readOnly = true)
     Slice<Plan> findAllByOrderByIdDesc(Pageable pageable);
 
+    @Transactional(readOnly = true)
     PlanImpl findByCode(String code);
 }
 

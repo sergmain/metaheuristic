@@ -42,74 +42,75 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Transactional(readOnly = true)
     Slice<Task> findAll(Pageable pageable);
 
-    List<Task> findAllByWorkbookId(long workbookId);
+    @Transactional(readOnly = true)
+    List<Task> findAllByWorkbookId(Long workbookId);
 
     @Transactional
     @Query(value="select t from TaskImpl t where t.workbookId=:workbookId")
-    Stream<Task> findAllByWorkbookIdAsStream(long workbookId);
+    Stream<Task> findAllByWorkbookIdAsStream(Long workbookId);
 
     @Query(value="select t.id, t.workbookId from TaskImpl t")
     Stream<Object[]> findAllAsTaskSimple(Pageable pageable);
 
     @Transactional(readOnly = true)
-    List<Task> findByStationIdAndResultReceivedIsFalse(long stationId);
+    List<Task> findByStationIdAndResultReceivedIsFalse(Long stationId);
 
     @Transactional(readOnly = true)
     @Query(value="select t.id, t.assignedOn from TaskImpl t " +
             "where t.stationId=:stationId and t.resultReceived=false")
-    List<Object[]> findAllByStationIdAndResultReceivedIsFalse(long stationId);
+    List<Object[]> findAllByStationIdAndResultReceivedIsFalse(Long stationId);
 
     @Transactional(readOnly = true)
     @Query(value="select t.id, t.assignedOn from TaskImpl t " +
             "where t.stationId=:stationId and t.resultReceived=false and t.isCompleted=false")
-    List<Object[]> findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(long stationId);
+    List<Object[]> findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(Long stationId);
 
 
     @Transactional
-    void deleteByWorkbookId(long workbookId);
+    void deleteByWorkbookId(Long workbookId);
 
     @Transactional
     @Query(value="select t.id, t.params from TaskImpl t where t.workbookId=:workbookId")
-    Stream<Object[]> findByWorkbookId(long workbookId);
+    Stream<Object[]> findByWorkbookId(Long workbookId);
 
     @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId and t.order =:taskOrder")
-    Slice<Task> findForAssigning(Pageable pageable, long workbookId, int taskOrder);
+    Slice<Task> findForAssigning(Pageable pageable, Long workbookId, int taskOrder);
 
     @Query("SELECT max(t.order) as max_order FROM TaskImpl t where t.workbookId=:workbookId")
-    Integer findMaxConcreteOrder(long workbookId);
+    Integer findMaxConcreteOrder(Long workbookId);
 
     @Query("SELECT t FROM TaskImpl t where t.stationId is not null and t.workbookId=:workbookId and t.order =:taskOrder")
-    List<Task> findWithConcreteOrder(long workbookId, int taskOrder);
+    List<Task> findWithConcreteOrder(Long workbookId, int taskOrder);
 
     @Query("SELECT t FROM TaskImpl t where t.workbookId=:workbookId and t.order =:taskOrder")
-    List<Task> findAnyWithConcreteOrder(long workbookId, int taskOrder);
+    List<Task> findAnyWithConcreteOrder(Long workbookId, int taskOrder);
 
     @Query("SELECT t.id FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId and t.order =:taskOrder")
-    List<Long> findAnyNotAssignedWithConcreteOrder(Pageable limit, long workbookId, int taskOrder);
+    List<Long> findAnyNotAssignedWithConcreteOrder(Pageable limit, Long workbookId, int taskOrder);
 
     @Query("SELECT t.id FROM TaskImpl t where t.stationId=:stationId and t.isCompleted=false")
-    List<Long> findAnyActiveForStationId(Pageable limit, long stationId);
+    List<Long> findAnyActiveForStationId(Pageable limit, Long stationId);
 
     @Query("SELECT count(t) FROM TaskImpl t where t.workbookId=:workbookId and t.order =:taskOrder")
     Long countWithConcreteOrder(long workbookId, int taskOrder);
 
     @Query("SELECT t FROM TaskImpl t where t.stationId=:stationId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - result_resource_scheduled_on > 15000) ")
-    List<Task> findForMissingResultResources(long stationId, long mills, int execState);
+    List<Task> findForMissingResultResources(Long stationId, long mills, int execState);
 
     @Transactional(readOnly = true)
     // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS
     @Query("SELECT t FROM TaskImpl t, ExperimentTaskFeature tef " +
             "where t.id=tef.taskId and tef.featureId=:featureId and " +
             " t.execState > 1")
-    List<Task> findByIsCompletedIsTrueAndFeatureId(long featureId);
+    List<Task> findByIsCompletedIsTrueAndFeatureId(Long featureId);
 
 
     // !!! class must not be inner class
     @Transactional(readOnly = true)
     @Query("SELECT new ai.metaheuristic.api.v1.data.TaskWIthType(t, tef.taskType) FROM TaskImpl t, ExperimentTaskFeature tef " +
             "where t.id=tef.taskId and tef.featureId=:featureId order by t.id asc ")
-    Slice<TaskWIthType> findPredictTasks(Pageable pageable, long featureId);
+    Slice<TaskWIthType> findPredictTasks(Pageable pageable, Long featureId);
 
 
     @Query(nativeQuery = true, value = "select z.* "+

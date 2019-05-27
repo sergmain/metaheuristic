@@ -198,7 +198,7 @@ public class SnippetService {
                     }
                 }
 
-                Snippet snippet = snippetRepository.findByCode(snippetConfig.code);
+                Snippet snippet = snippetRepository.findByCodeForUpdate(snippetConfig.code);
                 // there is snippet with the same name:version
                 if (snippet!=null) {
                     SnippetApiData.SnippetConfig sc = SnippetConfigUtils.to(snippet.params);
