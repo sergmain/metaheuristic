@@ -1,1 +1,1 @@
-web: java $JAVA_OPTS  -XX:-UseGCOverheadLimit -Xms228m -Xmx228m -Dserver.port=$PORT -jar apps/metaheuristic/target/metaheuristic.jar
+web: java $JAVA_OPTS  -XX:-UseGCOverheadLimit -Xms768m -Xmx768m -Dserver.port=$PORT -jar apps/metaheuristic/target/metaheuristic.jar
