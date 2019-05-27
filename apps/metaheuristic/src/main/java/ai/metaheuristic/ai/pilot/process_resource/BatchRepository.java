@@ -26,10 +26,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-@Transactional
 @Profile("launchpad")
 public interface BatchRepository extends JpaRepository<Batch, Long> {
 
+    @Transactional(readOnly = true)
     @Query("select b.id from Batch b order by b.createdOn desc")
     Page<Long> findAllByOrderByCreatedOnDesc(Pageable pageable);
 }

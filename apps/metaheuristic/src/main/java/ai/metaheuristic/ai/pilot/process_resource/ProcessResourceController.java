@@ -551,9 +551,9 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batch.id);
-        for (BatchWorkbook bfi : bfis) {
-            Workbook wb = workbookRepository.findById(bfi.workbookId).orElse(null);
+        List<Long> bfis = batchWorkbookRepository.findIdsByBatchId(batch.id);
+        for (Long workbookId : bfis) {
+            Workbook wb = workbookRepository.findById(workbookId).orElse(null);
             if (wb == null) {
                 continue;
             }
@@ -633,18 +633,18 @@ public class ProcessResourceController {
         BatchStatus bs = new BatchStatus();
         log.info("#990.105 Start preparing data, batchId: {}", batchId);
 
-        List<BatchWorkbook> bfis = batchWorkbookRepository.findAllByBatchId(batchId);
-        if (bfis.isEmpty()) {
+        List<Long> ids = batchWorkbookRepository.findIdsByBatchId(batchId);
+        if (ids.isEmpty()) {
             bs.add("#990.107, Batch is empty, there isn't any task, batchId: " + batchId, '\n');
             bs.ok = true;
             return bs;
         }
 
         boolean isOk = true;
-        for (BatchWorkbook bfi : bfis) {
-            Workbook wb = workbookRepository.findById(bfi.workbookId).orElse(null);
+        for (Long workbookId : ids) {
+            Workbook wb = workbookRepository.findById(workbookId).orElse(null);
             if (wb == null) {
-                String msg = "#990.114 Batch #" + batchId + " contains broken workbookId - #" + bfi.workbookId;
+                String msg = "#990.114 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
                 bs.add(msg, '\n');
                 log.warn(msg);
                 isOk = false;
@@ -655,7 +655,7 @@ public class ProcessResourceController {
             final String fullMainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
             if (fullMainDocument == null) {
                 String msg = "#990.123, " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
-                        "batchId: " + batchId + ", workbookId: " + bfi.workbookId;
+                        "batchId: " + batchId + ", workbookId: " + workbookId;
                 log.warn(msg);
                 bs.add(msg, '\n');
                 isOk = false;
@@ -667,7 +667,7 @@ public class ProcessResourceController {
             // TODO 2019-05-23 investigate all cases when this is happened
             if (taskOrder == null) {
                 String msg = "#990.128, " + mainDocument + ", Tasks weren't created correctly for this batch, need to re-upload documents, " +
-                        "batchId: " + batchId + ", workbookId: " + bfi.workbookId;
+                        "batchId: " + batchId + ", workbookId: " + workbookId;
                 log.warn(msg);
                 bs.add(msg, '\n');
                 isOk = false;
@@ -765,7 +765,7 @@ public class ProcessResourceController {
             }
 
             if (!fullConsole) {
-                String msg = "#990.167 status - Ok, doc: " + mainDocFile.getName() + ", batchId: " + batchId + ", workbookId: " + bfi.workbookId;
+                String msg = "#990.167 status - Ok, doc: " + mainDocFile.getName() + ", batchId: " + batchId + ", workbookId: " + workbookId;
                 bs.add(msg,'\n');
                 isOk = true;
             }
