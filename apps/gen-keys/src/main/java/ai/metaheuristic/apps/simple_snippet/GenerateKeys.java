@@ -71,5 +71,8 @@ public class GenerateKeys implements CommandLineRunner {
         System.out.println("Private key in base64 format:\n" + privateKey64 +"\n\n");
         System.out.println("Public key in base64 format:\n" + publicKey64);
 
+        System.out.println("\n\n\n\n!!! Phrases 'Private key in base64 format:' and 'Public key in base64 format' " +
+                "aren't parts of keys and must not be used or stored in file.");
+
    }
 }
