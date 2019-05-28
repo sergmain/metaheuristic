@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
+import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,11 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("!launchpad")
 public class NullLaunchpadService implements LaunchpadService {
+    @Override
+    public StationTopLevelService getStationTopLevelService() {
+        return null;
+    }
+
     @Override
     public StationsRepository getStationsRepository() {
         return null;

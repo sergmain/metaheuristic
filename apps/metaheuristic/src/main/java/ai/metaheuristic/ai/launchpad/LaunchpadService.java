@@ -19,9 +19,11 @@ package ai.metaheuristic.ai.launchpad;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
+import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 
 public interface LaunchpadService {
+    StationTopLevelService getStationTopLevelService();
     StationsRepository getStationsRepository();
     ExperimentService getExperimentService();
     TaskService getTaskService();

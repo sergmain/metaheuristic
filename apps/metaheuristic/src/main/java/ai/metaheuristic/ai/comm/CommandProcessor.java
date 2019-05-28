@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.StaleObjectStateException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -160,18 +161,7 @@ public class CommandProcessor {
 
     private Command[] processReportStationStatus(Protocol.ReportStationStatus command) {
         checkStationId(command);
-        final long stationId = Long.parseLong(command.getStationId());
-        Station station = launchpadService.getStationsRepository().findById(stationId).orElse(null);
-        if (station==null) {
-            // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("Station wasn't found for stationId: " + stationId );
-        }
-        final String stationStatus = StationStatusUtils.toString(command.status);
-        if (!stationStatus.equals(station.status)) {
-            station.status = stationStatus;
-            station.setUpdatedOn(System.currentTimeMillis());
-            launchpadService.getStationsRepository().save(station);
-        }
+        launchpadService.getStationTopLevelService().storeStationStatus(command);
         return Protocol.NOP_ARRAY;
     }
 

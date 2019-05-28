@@ -215,7 +215,7 @@ create table PILOT_BATCH
   ID               SERIAL PRIMARY KEY,
   VERSION          NUMERIC(5, 0)  NOT NULL,
   PLAN_ID          NUMERIC(10, 0) NOT NULL,
-  DATA_ID          NUMERIC(10, 0) NOT NULL,
+  DATA_ID          NUMERIC(10, 0),
   CREATED_ON       bigint         NOT NULL,
   EXEC_STATE      smallint not null default 0,
   PARAMS           TEXT

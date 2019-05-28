@@ -222,7 +222,7 @@ create table PILOT_BATCH
   ID               INT(10)        NOT NULL AUTO_INCREMENT PRIMARY KEY,
   VERSION          NUMERIC(5, 0)  NOT NULL,
   PLAN_ID          NUMERIC(10, 0) NOT NULL,
-  DATA_ID          NUMERIC(10, 0) NOT NULL,
+  DATA_ID          NUMERIC(10, 0),
   CREATED_ON       bigint         NOT NULL,
   EXEC_STATE  tinyint(1) not null default 0,
   PARAMS          MEDIUMTEXT
