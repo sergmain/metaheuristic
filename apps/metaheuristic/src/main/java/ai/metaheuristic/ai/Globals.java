@@ -20,6 +20,7 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
@@ -37,6 +38,8 @@ import java.util.Random;
 @Slf4j
 @ToString
 public class Globals {
+
+    private final Environment env;
 
     // Globals' globals
 
@@ -130,6 +133,10 @@ public class Globals {
 
     public PublicKey launchpadPublicKey = null;
 
+    public Globals(Environment env) {
+        this.env = env;
+    }
+
     @PostConstruct
     public void init() {
         if (launchpadPublicKeyStr!=null) {
@@ -169,6 +176,11 @@ public class Globals {
 
             launchpadResourcesDir = new File(launchpadDir, Consts.RESOURCES_DIR);
             launchpadResourcesDir.mkdirs();
+
+            String ext = env.getProperty("MH_DEFAULT_RESULT_FILE_EXTENSION");
+            if (ext!=null && !ext.isBlank()) {
+                defaultResultFileExtension = ext;
+            }
 
         }
         logGlobals();
