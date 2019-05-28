@@ -28,8 +28,6 @@ import java.lang.management.ManagementFactory;
 @Slf4j
 public class MetaheuristicApplication {
 
-    // https://grokonez.com/java-integration/create-windows-service-spring-boot-application-procrun
-
     private static ApplicationContext applicationContext = null;
 
     public static void main(String[] args) {

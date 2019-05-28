@@ -551,7 +551,7 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        List<Long> bfis = batchWorkbookRepository.findIdsByBatchId(batch.id);
+        List<Long> bfis = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
         for (Long workbookId : bfis) {
             Workbook wb = workbookRepository.findById(workbookId).orElse(null);
             if (wb == null) {
@@ -633,7 +633,7 @@ public class ProcessResourceController {
         BatchStatus bs = new BatchStatus();
         log.info("#990.105 Start preparing data, batchId: {}", batchId);
 
-        List<Long> ids = batchWorkbookRepository.findIdsByBatchId(batchId);
+        List<Long> ids = batchWorkbookRepository.findWorkbookIdsByBatchId(batchId);
         if (ids.isEmpty()) {
             bs.add("#990.107, Batch is empty, there isn't any task, batchId: " + batchId, '\n');
             bs.ok = true;

@@ -32,8 +32,8 @@ import java.util.List;
 public interface BatchWorkbookRepository extends JpaRepository<BatchWorkbook, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select b.id from BatchWorkbook b where b.batchId=:batchId")
-    List<Long> findIdsByBatchId(long batchId);
+    @Query(value="select b.workbookId from BatchWorkbook b where b.batchId=:batchId")
+    List<Long> findWorkbookIdsByBatchId(long batchId);
 
     void deleteByBatchId(Long batchId);
 }
