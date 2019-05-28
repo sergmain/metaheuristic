@@ -521,18 +521,7 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-//        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
-//        File zipDir = new File(resultDir, "zip");
         BatchStatus status = prepareStatusAndData(batchId, null, false, false);
-/*
-        // TODO 2019.05.25 Actually, status must never be null
-        if (status==null) {
-            final String es = "#990.120 Status can't be prepared, batchId: " + batchId;
-            log.info(es);
-            redirectAttributes.addAttribute("errorMessage",es );
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
-        }
-*/
 
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.getStatus());
@@ -630,7 +619,7 @@ public class ProcessResourceController {
     }
 
     private BatchStatus prepareStatusAndData(Long batchId, File zipDir, boolean fullConsole, boolean storeToDisk)  {
-        BatchStatus bs = new BatchStatus();
+        final BatchStatus bs = new BatchStatus();
         log.info("#990.105 Start preparing data, batchId: {}", batchId);
 
         List<Long> ids = batchWorkbookRepository.findWorkbookIdsByBatchId(batchId);
