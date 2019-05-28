@@ -130,7 +130,8 @@ public class PackageSnippet implements CommandLineRunner {
             String sum;
             if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.station ||
                     snippetConfig.sourcing==EnumsApi.SnippetSourcing.git) {
-                sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(snippetConfig.env.getBytes()));
+                String s = SnippetUtils.getDataForChecksumWhenGitSourcing(snippetConfig);
+                sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(s.getBytes()));
             }
             else if (snippetConfig.sourcing==EnumsApi.SnippetSourcing.launchpad) {
                 final File snippetFile = new File(targetDir, snippetConfig.file);

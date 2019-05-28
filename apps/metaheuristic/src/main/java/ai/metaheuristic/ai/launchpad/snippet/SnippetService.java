@@ -192,7 +192,7 @@ public class SnippetService {
                             break;
                         case station:
                         case git:
-                            String s = "" + snippetConfig.env+", " + snippetConfig.file +" " + snippetConfig.params;
+                            String s = SnippetUtils.getDataForChecksumWhenGitSourcing(snippetConfig);
                             sum = Checksum.getChecksum(EnumsApi.Type.SHA256, new ByteArrayInputStream(s.getBytes()));
                             break;
                     }

@@ -53,4 +53,8 @@ public class SnippetUtils {
         }
         return SNIPPET_CONFIG_STATUS_OK;
     }
+
+    public static String getDataForChecksumWhenGitSourcing(SnippetApiData.SnippetConfig snippetConfig) {
+        return "" + snippetConfig.env+", " + snippetConfig.file +" " + snippetConfig.params;
+    }
 }
