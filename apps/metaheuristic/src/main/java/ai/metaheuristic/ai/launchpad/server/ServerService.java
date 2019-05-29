@@ -34,8 +34,12 @@ import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
+import net.bytebuddy.implementation.bytecode.Throw;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
@@ -44,6 +48,12 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -65,16 +75,16 @@ public class ServerService {
     private final StationsRepository stationsRepository;
     private final CommandSetter commandSetter;
 
-    public HttpEntity<AbstractResource> deliverResource(String typeAsStr, String code) {
+    public HttpEntity<AbstractResource> deliverResource(String typeAsStr, String code, String chunkSize, int chunkNum) {
         EnumsApi.BinaryDataType binaryDataType = EnumsApi.BinaryDataType.valueOf(typeAsStr.toUpperCase());
-        return deliverResource(binaryDataType, code);
+        return deliverResource(binaryDataType, code, chunkSize, chunkNum);
     }
 
-    public HttpEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code) {
-        return deliverResource(binaryDataType, code, null);
+    public HttpEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, String chunkSize, int chunkNum) {
+        return deliverResource(binaryDataType, code, null, chunkSize, chunkNum);
     }
 
-    public HttpEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders) {
+    public HttpEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders, String chunkSize, int chunkNum) {
         AssetFile assetFile;
         switch(binaryDataType) {
             case SNIPPET:
@@ -100,7 +110,36 @@ public class ServerService {
             log.error("#442.16 Error store data to temp file, data doesn't exist in db, code " + code+", file: " + assetFile.file.getPath());
             throw e;
         }
-        return new HttpEntity<>(new FileSystemResource(assetFile.file.toPath()), getHeader(httpHeaders, assetFile.file.length()));
+        File f;
+        if (chunkSize==null || chunkSize.isBlank()) {
+            f = assetFile.file;
+        }
+        else {
+            f = new File(DirUtils.createTempDir("chunked-file-"), "file-part.bin");
+            final long size = Long.parseLong(chunkSize);
+            final long offset = size * chunkNum;
+            if (offset >= assetFile.file.length()) {
+                return null;
+            }
+            final long realSize = assetFile.file.length() < offset + size ? assetFile.file.length() - offset : size;
+            copyChunk(assetFile.file, f, offset, realSize);
+            long len = f.length();
+        }
+        return new HttpEntity<>(new FileSystemResource(f.toPath()), getHeader(httpHeaders, f.length()));
+    }
+
+    public static void copyChunk(File sourceFile, File destFile, long offset, long size) {
+
+        try (final FileInputStream fis = new FileInputStream(sourceFile);
+             final FileOutputStream fos = new FileOutputStream(destFile);
+             FileChannel source = fis.getChannel();
+             FileChannel destination = fos.getChannel()
+        ){
+            destination.transferFrom(source, offset, size);
+        }
+        catch (Throwable th) {
+            ExceptionUtils.wrapAndThrow(th);
+        }
     }
 
     private static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {

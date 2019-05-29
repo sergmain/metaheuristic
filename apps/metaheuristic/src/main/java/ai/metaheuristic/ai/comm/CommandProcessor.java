@@ -209,12 +209,19 @@ public class CommandProcessor {
 
     // processing on station side
     private Command[] reAssignStationId(Protocol.ReAssignStationId command) {
+        final String currStationId = stationServicesHolder.getMetadataService().getStationId(command.launchpadUrl);
+        final String currSessionId = stationServicesHolder.getMetadataService().getSessionId(command.launchpadUrl);
+        if (currStationId!=null && currSessionId!=null &&
+                currStationId.equals(command.getReAssignedStationId()) &&
+                currSessionId.equals(command.sessionId)
+        ) {
+            return Protocol.NOP_ARRAY;
+        }
+
         log.info("reAssignStationId(),\n\t\tcurrent stationId: {}, sessionId: {}\n\t\t" +
                         "new stationId: {}, sessionId: {}",
-                stationServicesHolder.getMetadataService().getStationId(command.launchpadUrl),
-                stationServicesHolder.getMetadataService().getSessionId(command.launchpadUrl),
-                command.getReAssignedStationId(),
-                command.sessionId
+                currStationId, currSessionId,
+                command.getReAssignedStationId(), command.sessionId
         );
         stationServicesHolder.getMetadataService().setStationIdAndSessionId(
                 command.launchpadUrl, command.getReAssignedStationId(), command.sessionId);

@@ -36,6 +36,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -92,13 +94,21 @@ public class ServerController {
 
     @GetMapping(value="/payload/resource/{type}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> deliverResourceAuth(
+            HttpServletResponse response,
             @PathVariable("type") String typeAsStr,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @SuppressWarnings("unused") String stationId,
             @SuppressWarnings("unused") Long taskId,
-            String code) {
-        log.debug("deliverResourceAuth(), globals.isSecurityEnabled: {}, typeAsStr: {}, code: {}", globals.isSecurityEnabled, typeAsStr, code);
-        return serverService.deliverResource(typeAsStr, code);
+            String code, String chunkSize, int chunkNum) throws IOException {
+        String normalCode = new File(code).getName();
+        log.debug("deliverResourceAuth(), globals.isSecurityEnabled: {}, typeAsStr: {}, code: {}, chunkSize: {}, chunkNum: {}",
+                globals.isSecurityEnabled, typeAsStr, normalCode, chunkSize, chunkNum);
+        final HttpEntity<AbstractResource> entity = serverService.deliverResource(typeAsStr, normalCode, chunkSize, chunkNum);
+        if (entity==null) {
+//            response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
+            return new HttpEntity<>(new ByteArrayResource(new byte[0]));
+        }
+        return entity;
     }
 
     @PostMapping("/upload/{random-part}")
