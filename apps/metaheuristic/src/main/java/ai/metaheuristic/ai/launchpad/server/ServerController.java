@@ -103,10 +103,11 @@ public class ServerController {
         String normalCode = new File(code).getName();
         log.debug("deliverResourceAuth(), globals.isSecurityEnabled: {}, typeAsStr: {}, code: {}, chunkSize: {}, chunkNum: {}",
                 globals.isSecurityEnabled, typeAsStr, normalCode, chunkSize, chunkNum);
+        if (chunkSize==null || chunkSize.isBlank()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+        }
         final HttpEntity<AbstractResource> entity = serverService.deliverResource(typeAsStr, normalCode, chunkSize, chunkNum);
-        //noinspection ReplaceNullCheck
         if (entity==null) {
-//            response.sendError(HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE);
             return new HttpEntity<>(new ByteArrayResource(new byte[0]));
         }
         return entity;

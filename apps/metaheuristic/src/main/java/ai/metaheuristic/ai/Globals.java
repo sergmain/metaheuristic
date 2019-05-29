@@ -197,6 +197,10 @@ public class Globals {
             if (chunkSize==null) {
                 chunkSize = parseChunkSizeValue(chunkSizeStr);
             }
+            // we will use 10mb size of chunk by default
+            if (chunkSize==null) {
+                chunkSize = parseChunkSizeValue("10m");
+            }
         }
         logGlobals();
         logSystemEnvs();
@@ -270,6 +274,7 @@ public class Globals {
         log.info("\tisSslRequired: {}", isSslRequired);
         log.info("\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
         log.info("\tlaunchpadDir: {}", launchpadDir);
+        log.info("\tchunkSize: {}", chunkSize);
         log.info("\tresourceRowsLimit: {}", resourceRowsLimit);
         log.info("\texperimentRowsLimit: {}", experimentRowsLimit);
         log.info("\tplanRowsLimit: {}", planRowsLimit);
