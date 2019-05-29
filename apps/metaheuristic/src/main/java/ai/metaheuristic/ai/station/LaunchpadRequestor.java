@@ -185,6 +185,7 @@ public class LaunchpadRequestor {
                     return;
                 }
                 result.launchpadUrl = launchpadUrl;
+                storeLaunchpadConfig(result);
 
                 Monitoring.log("##017", Enums.Monitor.MEMORY);
                 addCommands(commandProcessor.processExchangeData(result).getCommands());
@@ -233,6 +234,18 @@ public class LaunchpadRequestor {
         data.setCommand(command);
     }
 
+    private void storeLaunchpadConfig(ExchangeData data) {
+        if (data==null || data.getLaunchpadConfig()==null) {
+            return;
+        }
+        LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
+                launchpadLookupExtendedService.lookupExtendedMap.get(data.launchpadUrl);
+
+        if (launchpad==null) {
+            return;
+        }
+        launchpad.config = data.getLaunchpadConfig();
+    }
 }
 
 

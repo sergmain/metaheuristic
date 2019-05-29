@@ -93,6 +93,11 @@ public class TaskAssetPreparer {
             final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
                     launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
 
+            // process only if launchpad already sent its config
+            if (launchpad.config==null) {
+                continue;
+            }
+
             File taskDir = stationTaskService.prepareTaskDir(launchpadCode, task.taskId);
 
             StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadCode, taskParamYaml, launchpad, taskDir);
@@ -106,7 +111,14 @@ public class TaskAssetPreparer {
                 AssetFile assetFile = ResourceUtils.prepareSnippetFile(snippetDir, taskParamYaml.snippet.getCode(), taskParamYaml.snippet.file);
                 if (assetFile.isError || !assetFile.isContent) {
                     isAllLoaded = false;
-                    DownloadSnippetTask snippetTask = new DownloadSnippetTask(taskParamYaml.snippet.getCode(), taskParamYaml.snippet.file, taskParamYaml.snippet.checksum, snippetDir, task.getTaskId());
+                    DownloadSnippetTask snippetTask = new DownloadSnippetTask(
+                            taskParamYaml.snippet.getCode(),
+                            taskParamYaml.snippet.file,
+                            taskParamYaml.snippet.checksum,
+                            snippetDir,
+                            task.getTaskId(),
+                            launchpad.config.chunkSize
+                    );
                     snippetTask.launchpad = launchpad.launchpadLookup;
                     snippetTask.stationId = launchpadCode.stationId;
                     downloadSnippetActor.add(snippetTask);

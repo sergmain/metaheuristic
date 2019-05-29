@@ -28,6 +28,7 @@ public class DownloadResourceTask extends StationRestTask {
     public String id;
     public long taskId;
     public File targetDir;
+    public Long chunkSize;
 
     @Override
     public String toString() {

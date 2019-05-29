@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.server.LaunchpadConfig;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfigUtils;
@@ -52,6 +53,7 @@ public class LaunchpadLookupExtendedService {
     public static class LaunchpadLookupExtended {
         public LaunchpadLookupConfig.LaunchpadLookup launchpadLookup;
         public LaunchpadSchedule schedule;
+        public LaunchpadConfig config;
     }
 
     @PostConstruct
@@ -64,7 +66,7 @@ public class LaunchpadLookupExtendedService {
         try {
             final String cfg = FileUtils.readFileToString(launchpadFile, Charsets.UTF_8);
             LaunchpadLookupConfig launchpadLookupConfig = LaunchpadLookupConfigUtils.to(cfg);
-            ;
+
             if (launchpadLookupConfig == null) {
                 log.error("{} wasn't found or empty. path: {}{}{}",
                         Consts.LAUNCHPAD_YAML_FILE_NAME, globals.stationDir,

@@ -55,13 +55,14 @@ public class LaunchpadResourceProvider implements ResourceProvider {
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
             String resourceCode, DataStorageParams dataStorageParams) {
 
-        DownloadResourceTask resourceTask = new DownloadResourceTask(resourceCode, task.getTaskId(), taskDir);
-        resourceTask.launchpad = launchpad.launchpadLookup;
-        resourceTask.stationId = launchpadCode.stationId;
-        downloadResourceActor.add(resourceTask);
-
-        AssetFile assetFile = ResourceUtils.prepareDataFile(taskDir, resourceCode, null);
-        return Collections.singletonList(assetFile);
+        // process only if launchpad already sent its config
+        if (launchpad.config != null) {
+            DownloadResourceTask resourceTask = new DownloadResourceTask(resourceCode, task.getTaskId(), taskDir, launchpad.config.chunkSize);
+            resourceTask.launchpad = launchpad.launchpadLookup;
+            resourceTask.stationId = launchpadCode.stationId;
+            downloadResourceActor.add(resourceTask);
+        }
+        return Collections.singletonList(ResourceUtils.prepareDataFile(taskDir, resourceCode, null));
     }
 
     @Override
