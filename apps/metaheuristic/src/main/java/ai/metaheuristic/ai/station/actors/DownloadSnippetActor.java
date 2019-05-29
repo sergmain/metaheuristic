@@ -150,40 +150,51 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 }
 
                 File snippetTempFile = new File(assetFile.file.getAbsolutePath() + ".tmp");
+
+                String mask = assetFile.file.getName() + ".%s.tmp";
+                File dir = assetFile.file.getParentFile();
                 boolean isFinished = false;
                 int idx = 0;
                 do {
+                    final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
+                            .addParameter("stationId", task.stationId)
+                            .addParameter("taskId", Long.toString(task.getTaskId()))
+                            .addParameter("code", task.snippetCode)
+                            .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
+                            .addParameter("chunkNum", Integer.toString(idx));
+
                     try {
-                        final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
-                                .addParameter("stationId", task.stationId)
-                                .addParameter("taskId", Long.toString(task.getTaskId()))
-                                .addParameter("code", task.snippetCode)
-                                .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
-                                .addParameter("chunkNum", Integer.toString(idx));
-
-
                         final Request request = Request.Get(builder.build())
                                 .connectTimeout(5000)
                                 .socketTimeout(5000);
 
+                        RestUtils.addHeaders(request);
+
                         Response response;
                         if (task.launchpad.securityEnabled) {
                             response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
-                        } else {
+                        }
+                        else {
                             response = request.execute();
                         }
-                        File snippetPartFile = new File(assetFile.file.getAbsolutePath() + "." + idx + ".tmp");
-                        response.saveContent(snippetPartFile);
+                        File partFile = new File(dir, String.format(mask, idx));
+                        response.saveContent(partFile);
+                        if (partFile.length()==0) {
+                            isFinished = true;
+                            break;
+                        }
                     } catch (HttpResponseException e) {
-                        if (e.getStatusCode() == HttpServletResponse.SC_NO_CONTENT) {
+                        if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ||
+                                e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE
+                        ) {
                             isFinished = true;
                             break;
                         }
                     }
                     idx++;
-                } while (idx<100);
+                } while (idx<1000);
                 if (!isFinished) {
-                    log.error("#xxx.xxx something wrong, is file too big?");
+                    log.error("#xxx.xxx something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
                     continue;
                 }
                 try (FileOutputStream fos = new FileOutputStream(snippetTempFile)) {

@@ -210,7 +210,7 @@ public class Globals {
             return null;
         }
 
-        final char ch = str.charAt(str.length() - 1);
+        final char ch = Character.toLowerCase(str.charAt(str.length() - 1));
         if (Character.isLetter(ch)) {
             if (str.length()==1) {
                 return null;

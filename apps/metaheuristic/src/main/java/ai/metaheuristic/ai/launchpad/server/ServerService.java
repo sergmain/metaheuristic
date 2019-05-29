@@ -49,10 +49,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.channels.FileChannel;
 import java.util.List;
 import java.util.UUID;
@@ -130,6 +127,36 @@ public class ServerService {
 
     public static void copyChunk(File sourceFile, File destFile, long offset, long size) {
 
+        try (final FileOutputStream fos = new FileOutputStream(destFile)){
+            RandomAccessFile raf = new RandomAccessFile(sourceFile,"r");
+            raf.seek(offset);
+            long left = size;
+            int realChunkSize = (int)(size > 64000 ? 64000 : size);
+            byte[] bytes = new byte[realChunkSize];
+            while (left>0) {
+                int realSize = (int)(left>realChunkSize ? realChunkSize : left);
+                int state;
+                try {
+                    state = raf.read(bytes, 0, realSize);
+                } catch (IndexOutOfBoundsException e) {
+                    throw e;
+                }
+                if (state==-1) {
+                    log.error("Error in algo, read after EOF, file len: {}, offset: {}, size: {}", raf.length(), offset, size);
+                    break;
+                }
+                fos.write(bytes, 0, realSize);
+                left -= realSize;
+            }
+        }
+        catch (Throwable th) {
+            ExceptionUtils.wrapAndThrow(th);
+        }
+    }
+
+/*
+    public static void copyChunk(File sourceFile, File destFile, long offset, long size) {
+
         try (final FileInputStream fis = new FileInputStream(sourceFile);
              final FileOutputStream fos = new FileOutputStream(destFile);
              FileChannel source = fis.getChannel();
@@ -142,6 +169,7 @@ public class ServerService {
         }
     }
 
+*/
     private static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
         HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
         header.setContentLength(length);

@@ -110,18 +110,19 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                     continue;
                 }
 
+                String mask = assetFile.file.getName() + ".%s.tmp";
+                File dir = assetFile.file.getParentFile();
                 boolean isFinished = false;
                 int idx = 0;
                 do {
+                    final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)
+                            .addParameter("stationId", task.stationId)
+                            .addParameter("taskId", Long.toString(task.getTaskId()))
+                            .addParameter("code", task.getId())
+                            .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
+                            .addParameter("chunkNum", Integer.toString(idx));
+
                     try {
-                        final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)
-                                .addParameter("stationId", task.stationId)
-                                .addParameter("taskId", Long.toString(task.getTaskId()))
-                                .addParameter("code", task.getId())
-                                .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
-                                .addParameter("chunkNum", Integer.toString(idx));
-
-
                         final Request request = Request.Get(builder.build())
                                 .connectTimeout(5000)
                                 .socketTimeout(5000);
@@ -135,7 +136,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                         else {
                             response = request.execute();
                         }
-                        File partFile = new File(assetFile.file.getAbsolutePath() + "." + idx + ".tmp");
+                        File partFile = new File(dir, String.format(mask, idx));
                         response.saveContent(partFile);
                         if (partFile.length()==0) {
                             isFinished = true;
@@ -150,9 +151,9 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                         }
                     }
                     idx++;
-                } while (idx<100);
+                } while (idx<1000);
                 if (!isFinished) {
-                    log.error("#xxx.xxx something wrong, is file too big?");
+                    log.error("#xxx.xxx something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
                     continue;
                 }
                 try (FileOutputStream fos = new FileOutputStream(tempFile)) {
