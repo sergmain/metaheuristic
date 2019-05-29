@@ -212,8 +212,8 @@ public class Globals {
 
         final char ch = Character.toLowerCase(str.charAt(str.length() - 1));
         if (Character.isLetter(ch)) {
-            if (str.length()==1) {
-                return null;
+            if (str.length()==1 || !sizes.keySet().contains(ch)) {
+                throw new IllegalArgumentException("Wrong value of chunkSize: " + str);
             }
             return Long.parseLong(str.substring(0, str.length()-1)) * sizes.get(ch);
         }
