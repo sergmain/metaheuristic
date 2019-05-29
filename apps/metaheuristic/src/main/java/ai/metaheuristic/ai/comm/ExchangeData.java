@@ -16,12 +16,14 @@
 
 package ai.metaheuristic.ai.comm;
 
+import ai.metaheuristic.ai.launchpad.server.LaunchpadConfig;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +37,7 @@ import java.util.List;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties(value = {"commands"})
 @ToString
+@Slf4j
 public class ExchangeData {
 
     private Protocol.Nop nop;
@@ -61,6 +64,8 @@ public class ExchangeData {
 
 //    @JsonProperty(value = "session_id")
     private String sessionId;
+
+    private LaunchpadConfig launchpadConfig;
 
     @JsonIgnore
     public String launchpadUrl;
@@ -91,7 +96,7 @@ public class ExchangeData {
                 break;
             case ReportStation:
                 if (this.reportStation != null) {
-                    throw new IllegalStateException("Was already initialized");
+                    throw new IllegalStateException("#509.010 Was already initialized");
                 }
                 this.reportStation = (Protocol.ReportStation) command;
                 break;
@@ -112,7 +117,7 @@ public class ExchangeData {
                 break;
             case RequestStationId:
                 if (this.requestStationId != null) {
-                    throw new IllegalStateException("Was already initialized");
+                    throw new IllegalStateException("#509.020 Was already initialized");
                 }
                 this.requestStationId = (Protocol.RequestStationId) command;
                 break;
@@ -124,7 +129,7 @@ public class ExchangeData {
                 break;
             case RequestTask:
                 if (this.requestTask != null) {
-                    throw new IllegalStateException("Was already initialized");
+                    throw new IllegalStateException("#509.030 Was already initialized");
                 }
                 this.requestTask = (Protocol.RequestTask) command;
                 break;
@@ -137,22 +142,24 @@ public class ExchangeData {
                 break;
             case ReportStationStatus:
                 if (this.reportStationStatus != null) {
-                    throw new IllegalStateException("Was already initialized");
+                    throw new IllegalStateException("#509.040 Was already initialized");
                 }
                 this.reportStationStatus = (Protocol.ReportStationStatus) command;
                 break;
             case ReportTaskProcessingResult:
                 if (this.reportTaskProcessingResult != null) {
-                    throw new IllegalStateException("Was already initialized");
+                    throw new IllegalStateException("#509.050 Was already initialized");
                 }
                 this.reportTaskProcessingResult = (Protocol.ReportTaskProcessingResult) command;
                 break;
             case ReportResultDelivering:
                 if (this.reportResultDelivering != null) {
-                    throw new IllegalStateException("Was already initialized");
+                    throw new IllegalStateException("#509.060 Was already initialized");
                 }
                 this.reportResultDelivering = (Protocol.ReportResultDelivering) command;
                 break;
+            default:
+                log.warn("#509.070 unknown command: {}", command.getType());
         }
     }
 

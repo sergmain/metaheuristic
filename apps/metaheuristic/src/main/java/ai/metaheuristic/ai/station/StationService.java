@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Command;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.exceptions.ResourceProviderException;
@@ -58,6 +59,7 @@ import java.util.Map;
 @Profile("station")
 public class StationService {
 
+    private final Globals globals;
     private final StationTaskService stationTaskService;
     private final UploadResourceActor uploadResourceActor;
     private final MetadataService metadataService;
@@ -66,7 +68,8 @@ public class StationService {
     private final ResourceProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
-    public StationService(StationTaskService stationTaskService, UploadResourceActor uploadResourceActor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, EnvService envService, ResourceProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
+    public StationService(Globals globals, StationTaskService stationTaskService, UploadResourceActor uploadResourceActor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, EnvService envService, ResourceProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
+        this.globals = globals;
         this.stationTaskService = stationTaskService;
         this.uploadResourceActor = uploadResourceActor;
         this.metadataService = metadataService;
@@ -84,7 +87,7 @@ public class StationService {
                 schedule.asString,
                 metadataService.getSessionId(launchpadUrl),
                 System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null);
+                "[unknown]", "[unknown]", null, globals.logFile!=null && globals.logFile.exists());
 
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();

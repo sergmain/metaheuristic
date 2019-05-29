@@ -18,8 +18,6 @@ package ai.metaheuristic.ai.comm;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
-import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
-import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.api.v1.EnumsApi;
 import lombok.AllArgsConstructor;
@@ -40,7 +38,7 @@ import java.util.List;
 public class Protocol {
 
     public static final Protocol.Nop NOP = new Nop();
-    static final Command[] NOP_ARRAY = new Nop[]{NOP};
+    public static final Command[] NOP_ARRAY = new Nop[]{NOP};
 
     /**
      * stub command, which is actually doing nothing

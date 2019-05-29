@@ -42,6 +42,7 @@ public class StationStatus {
     public String ip;
     public String host;
     public List<String> errors = null;
+    public boolean logDownloadable;
 
     public void addError(String error) {
         if (errors==null) {

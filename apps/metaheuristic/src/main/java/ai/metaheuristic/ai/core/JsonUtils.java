@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.core;
 
 import ai.metaheuristic.ai.comm.ExchangeData;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 
@@ -26,8 +27,10 @@ public class JsonUtils {
 
     private static ObjectMapper mapper;
     static {
-        mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        ObjectMapper m = new ObjectMapper();
+        m.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        m.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper = m;
     }
 
     public static ObjectMapper getMapper() {

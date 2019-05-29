@@ -122,16 +122,21 @@ public class LaunchpadRequestor {
             ExchangeData data = new ExchangeData();
             final String stationId = metadataService.getStationId(launchpadUrl);
             final String sessionId = metadataService.getSessionId(launchpadUrl);
-            if (stationId == null) {
-                data.setCommand(new Protocol.RequestStationId());
-            }
             data.initRequestToLaunchpad(stationId, sessionId);
 
-            if (stationId != null) {
+            // !!! always use data.setCommand() for correct initializing of stationId !!!
+
+            if (stationId == null || sessionId==null) {
+                data.setCommand(new Protocol.RequestStationId());
+            }
+            else {
+
                 // always report about current active sequences, if we have actual stationId
                 final Protocol.StationTaskStatus stationTaskStatus = stationTaskService.produceStationTaskStatus(launchpadUrl);
                 data.setCommand(stationTaskStatus);
                 data.setCommand(stationService.produceReportStationStatus(launchpadUrl, launchpad.schedule));
+
+                // we have to pull new tasks from server constantly
                 if (currentExecState.isInited(launchpadUrl)) {
                     Monitoring.log("##011", Enums.Monitor.MEMORY);
                     final boolean b = stationTaskService.isNeedNewTask(launchpadUrl, stationId);
@@ -144,22 +149,19 @@ public class LaunchpadRequestor {
                     data.setCommand(new Protocol.CheckForMissingOutputResources());
                     lastRequestForMissingResources = System.currentTimeMillis();
                 }
+
+                Monitoring.log("##013", Enums.Monitor.MEMORY);
+                reportTaskProcessingResult(data);
+                Monitoring.log("##014", Enums.Monitor.MEMORY);
+
+                List<Command> cmds;
+                synchronized (commands) {
+                    cmds = new ArrayList<>(commands);
+                    commands.clear();
+                }
+                data.setCommands(cmds);
             }
 
-            Monitoring.log("##013", Enums.Monitor.MEMORY);
-            reportTaskProcessingResult(data);
-            Monitoring.log("##014", Enums.Monitor.MEMORY);
-
-            List<Command> cmds;
-            synchronized (commands) {
-                cmds = new ArrayList<>(commands);
-                commands.clear();
-            }
-            data.setCommands(cmds);
-
-            // !!! always use data.setCommand() for correct initializing of stationId !!!
-
-            // we have to pull new tasks from server constantly
             try {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));

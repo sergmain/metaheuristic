@@ -121,7 +121,7 @@ public abstract class PreparingExperiment {
             StationStatus ss = new StationStatus(envYaml,
                     new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                     ""+ UUID.randomUUID().toString(), System.currentTimeMillis(),
-                    "[unknown]", "[unknown]", null);
+                    "[unknown]", "[unknown]", null, false);
             station.setStatus(StationStatusUtils.toString(ss));
 
             station.setDescription("Test station. Must be deleted automatically");

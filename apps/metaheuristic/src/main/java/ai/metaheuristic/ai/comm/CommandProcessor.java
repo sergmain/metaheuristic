@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.StaleObjectStateException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -223,7 +222,7 @@ public class CommandProcessor {
         String sessionId = UUID.randomUUID().toString()+'-'+UUID.randomUUID().toString();
         StationStatus ss = new StationStatus(null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
-                "", sessionId, System.currentTimeMillis(), "", "", null);
+                "", sessionId, System.currentTimeMillis(), "", "", null, false);
         st.status = StationStatusUtils.toString(ss);
         launchpadService.getStationsRepository().save(st);
 

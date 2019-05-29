@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.server;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Command;
@@ -74,6 +73,7 @@ public class ServerService {
     public HttpEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code) {
         return deliverResource(binaryDataType, code, null);
     }
+
     public HttpEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders) {
         AssetFile assetFile;
         switch(binaryDataType) {
@@ -122,6 +122,8 @@ public class ServerService {
             this.workbookRepository = workbookRepository;
         }
 
+        // TODO 2019-05-28 Transaction is read-only but method is setCommandInTransaction
+        // need to investigate and fix
         @Transactional(readOnly = true)
         public void setCommandInTransaction(ExchangeData resultData) {
             try (Stream<Workbook> stream = workbookRepository.findAllAsStream() ) {
@@ -140,9 +142,9 @@ public class ServerService {
     }
 
     public ExchangeData processRequest(ExchangeData data, String remoteAddress) {
-        ExchangeData exchangeData = checkStationId(data, remoteAddress);
-        if (exchangeData!=null) {
-            return exchangeData;
+        Command[] cmds = checkStationId(data, remoteAddress);
+        if (cmds!=null) {
+            return new ExchangeData(cmds);
         }
 
         ExchangeData resultData = new ExchangeData();
@@ -155,14 +157,20 @@ public class ServerService {
             }
             resultData.setCommands(commandProcessor.process(command));
         }
+        addLaunchpadInfo(resultData);
 
-        return resultData.getCommands().isEmpty() ? EXCHANGE_DATA_NOP : resultData;
+        return resultData;
     }
 
-    @SuppressWarnings("Duplicates")
-    private ExchangeData checkStationId(ExchangeData data, String remoteAddress) {
+    private void addLaunchpadInfo(ExchangeData data) {
+        LaunchpadConfig lc = new LaunchpadConfig();
+        lc.chunkSize = globals.chunkSize;
+        data.setLaunchpadConfig(lc);
+    }
+
+    private Command[] checkStationId(ExchangeData data, String remoteAddress) {
         if (StringUtils.isBlank(data.getStationId())) {
-            return new ExchangeData(commandProcessor.process(new Protocol.RequestStationId()));
+            return commandProcessor.process(new Protocol.RequestStationId());
         }
         final Station station = stationsRepository.findById(Long.parseLong(data.getStationId())).orElse(null);
         if (station == null) {
@@ -175,7 +183,7 @@ public class ServerService {
             log.error("Error parsing current status of station:\n{}", station.status);
             log.error("Error ", e);
             // skip any command from this station
-            return new ExchangeData(Protocol.NOP);
+            return Protocol.NOP_ARRAY;
         }
         if (StringUtils.isBlank(data.getSessionId())) {
             // the same station but with different and expired sessionId
@@ -202,7 +210,7 @@ public class ServerService {
                 station.status = StationStatusUtils.toString(ss);
                 stationsRepository.save(station);
                 // the same stationId but new sessionId
-                return new ExchangeData(new Protocol.ReAssignStationId(station.getId(), ss.sessionId));
+                return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
             } else {
                 // the same stationId, the same sessionId, session isn't expired
                 return null;
@@ -210,16 +218,16 @@ public class ServerService {
         }
     }
 
-    private ExchangeData assignNewSessionId(Station station, StationStatus ss) {
+    private Command[] assignNewSessionId(Station station, StationStatus ss) {
         ss.sessionId = UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
         ss.sessionCreatedOn = System.currentTimeMillis();
         station.status = StationStatusUtils.toString(ss);
         stationsRepository.save(station);
         // the same stationId but new sessionId
-        return new ExchangeData(new Protocol.ReAssignStationId(station.getId(), ss.sessionId));
+        return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
     }
 
-    public ExchangeData reassignStationId(String remoteAddress, String description) {
+    public Command[] reassignStationId(String remoteAddress, String description) {
         Station s = new Station();
         s.setIp(remoteAddress);
         s.setDescription(description);
@@ -228,11 +236,11 @@ public class ServerService {
         StationStatus ss = new StationStatus(null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null);
+                "[unknown]", "[unknown]", null, false);
 
         s.status = StationStatusUtils.toString(ss);
         stationsRepository.save(s);
-        return new ExchangeData(new Protocol.ReAssignStationId(s.getId(), sessionId));
+        return new Command[]{new Protocol.ReAssignStationId(s.getId(), sessionId)};
     }
 
     private static Protocol.WorkbookStatus.SimpleStatus to(Workbook workbook) {

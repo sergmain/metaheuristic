@@ -25,11 +25,18 @@ public class EnvProperty {
         return new File(filename);
     }
 
-    public static String strIfBlankThenNull(String prop) {
+    public static String strIfNotBlankElseNull(String prop) {
         if (StringUtils.isBlank(prop)) {
             return null;
         }
         return prop;
+    }
+
+    public static Long longIfNotBlankElseNull(String prop) {
+        if (StringUtils.isBlank(prop)) {
+            return null;
+        }
+        return Long.valueOf(prop);
     }
 
     public static int minMax(String prop, int min, int max, Integer defForBlank) {

@@ -32,6 +32,7 @@ import java.nio.file.Path;
 import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.security.PublicKey;
+import java.util.Map;
 import java.util.Random;
 
 @Component
@@ -52,6 +53,9 @@ public class Globals {
     @Value("${mh.system-owner:#{null}}")
     public String systemOwner;
 
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file' )) }")
+    public File logFile;
+
     // Launchpad's globals
 
     @Value("${mh.launchpad.is-security-enabled:#{true}}")
@@ -66,16 +70,16 @@ public class Globals {
     @Value("${mh.launchpad.snippet-signature-required:#{true}}")
     public boolean isSnippetSignatureRequired = true;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('mh.launchpad.master-username')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-username')) }")
     public String launchpadMasterUsername;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('mh.launchpad.master-token')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-token')) }")
     public String launchpadMasterToken;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('mh.launchpad.master-password')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-password')) }")
     public String launchpadMasterPassword;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('mh.launchpad.public-key')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.public-key')) }")
     public String launchpadPublicKeyStr;
 
     @Value("${mh.launchpad.enabled:#{false}}")
@@ -111,8 +115,12 @@ public class Globals {
     @Value("${mh.launchpad.is-replace-snapshot:#{true}}")
     public boolean isReplaceSnapshot;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfBlankThenNull( environment.getProperty('mh.launchpad.default-result-file-extension')) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.default-result-file-extension')) }")
     public String defaultResultFileExtension;
+
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.chunk-size')) }")
+    public String chunkSizeStr;
+
 
     // Station's globals
 
@@ -132,6 +140,8 @@ public class Globals {
     public File stationEnvHotDeployDir;
 
     public PublicKey launchpadPublicKey = null;
+
+    public Long chunkSize = null;
 
     public Globals(Environment env) {
         this.env = env;
@@ -182,9 +192,32 @@ public class Globals {
                 defaultResultFileExtension = ext;
             }
 
+            String size = env.getProperty("MH_CHUNK_SIZE");
+            chunkSize = parseChunkSizeValue(size);
+            if (chunkSize==null) {
+                chunkSize = parseChunkSizeValue(chunkSizeStr);
+            }
         }
         logGlobals();
         logSystemEnvs();
+    }
+
+    private static final Map<Character, Long> sizes = Map.of(
+            'b',1L, 'k',1024L, 'm', 1024L*1024, 'g', 1024L*1024*1024);
+
+    private Long parseChunkSizeValue(String str) {
+        if (str==null || str.isBlank()) {
+            return null;
+        }
+
+        final char ch = str.charAt(str.length() - 1);
+        if (Character.isLetter(ch)) {
+            if (str.length()==1) {
+                return null;
+            }
+            return Long.parseLong(str.substring(0, str.length()-1)) * sizes.get(ch);
+        }
+        return Long.parseLong(str);
     }
 
     private void checkOwnership(File file) {
