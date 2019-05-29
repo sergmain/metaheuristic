@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.station;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.Station;
+import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.StationData;
@@ -26,6 +27,7 @@ import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.StaleObjectStateException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -45,7 +47,7 @@ public class StationTopLevelService {
     private final Globals globals;
     private final StationsRepository stationsRepository;
 
-    public static final long STATION_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
+    private static final long STATION_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
     public StationTopLevelService(Globals globals, StationsRepository stationsRepository) {
         this.globals = globals;
@@ -58,8 +60,13 @@ public class StationTopLevelService {
         Slice<Station> items = stationsRepository.findAllByOrderByUpdatedOnDescId(pageable);
         List<StationData.StationStatus> ss = new ArrayList<>(pageable.getPageSize()+1);
         for (Station item : items) {
+            StationStatus status = StationStatusUtils.to(item.status);
+
             ss.add(new StationData.StationStatus(
-                    item, System.currentTimeMillis() - item.updatedOn < STATION_TIMEOUT, item.updatedOn));
+                    item, System.currentTimeMillis() - item.updatedOn < STATION_TIMEOUT, item.updatedOn,
+                    (StringUtils.isNotBlank(status.ip) ? status.ip : "[unknown]"),
+                    (StringUtils.isNotBlank(status.host) ? status.host : "[unknown]")
+            ));
         }
         result.items =  new SliceImpl<>(ss, pageable, items.hasNext());
         return result;
@@ -76,7 +83,6 @@ public class StationTopLevelService {
         if (s==null) {
             return new StationData.StationResult("#807.05 station wasn't found, stationId: " + station.getId());
         }
-        s.ip = station.ip;
         s.description = station.description;
         //noinspection UnnecessaryLocalVariable
         StationData.StationResult r = new StationData.StationResult(stationsRepository.save(s));

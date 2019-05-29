@@ -39,6 +39,8 @@ public class StationData {
         public Station station;
         public boolean active;
         public long lastSeen;
+        public String ip;
+        public String host;
     }
 
     @Data

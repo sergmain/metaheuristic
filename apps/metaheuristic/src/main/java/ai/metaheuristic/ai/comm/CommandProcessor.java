@@ -216,12 +216,14 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
+    // processing on launchpad side
     private Command[] getNewStationId(@SuppressWarnings("unused") Protocol.RequestStationId command) {
         final Station st = new Station();
         // TODO 2019.05.19 need to decide do we need better solution or it's ok
         String sessionId = UUID.randomUUID().toString()+'-'+UUID.randomUUID().toString();
         StationStatus ss = new StationStatus(null,
-                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "", sessionId, System.currentTimeMillis());
+                new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
+                "", sessionId, System.currentTimeMillis(), "", "", null);
         st.status = StationStatusUtils.toString(ss);
         launchpadService.getStationsRepository().save(st);
 

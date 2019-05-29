@@ -120,7 +120,8 @@ public abstract class PreparingExperiment {
             envYaml.getEnvs().put("env-snippet-05:1.1", "python.exe" );
             StationStatus ss = new StationStatus(envYaml,
                     new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
-                    ""+ UUID.randomUUID().toString(), System.currentTimeMillis());
+                    ""+ UUID.randomUUID().toString(), System.currentTimeMillis(),
+                    "[unknown]", "[unknown]", null);
             station.setStatus(StationStatusUtils.toString(ss));
 
             station.setDescription("Test station. Must be deleted automatically");

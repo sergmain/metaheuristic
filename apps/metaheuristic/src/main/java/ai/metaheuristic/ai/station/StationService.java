@@ -29,6 +29,7 @@ import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
 import ai.metaheuristic.ai.station.tasks.UploadResourceTask;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
+import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
 import ai.metaheuristic.api.v1.data.TaskApiData;
@@ -38,11 +39,14 @@ import lombok.extern.slf4j.Slf4j;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -73,11 +77,25 @@ public class StationService {
     }
 
     Command produceReportStationStatus(String launchpadUrl, LaunchpadSchedule schedule) {
-        //noinspection UnnecessaryLocalVariable
-        Protocol.ReportStationStatus reportStationStatus = new Protocol.ReportStationStatus(
-                envService.getEnvYaml(), schedule.asString, gitSourcingService.gitStatusInfo,
-                metadataService.getSessionId(launchpadUrl));
-        return reportStationStatus;
+
+        StationStatus status = new StationStatus(
+                envService.getEnvYaml(),
+                gitSourcingService.gitStatusInfo,
+                schedule.asString,
+                metadataService.getSessionId(launchpadUrl),
+                System.currentTimeMillis(),
+                "[unknown]", "[unknown]", null);
+
+        try {
+            InetAddress inetAddress = InetAddress.getLocalHost();
+            status.ip = inetAddress.getHostAddress();
+            status.host = inetAddress.getHostName();
+        } catch (UnknownHostException e) {
+            log.error("Error", e);
+            status.addError(ExceptionUtils.getStackTrace(e));
+        }
+
+        return new Protocol.ReportStationStatus(status);
     }
 
     /**

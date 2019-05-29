@@ -23,6 +23,9 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -32,5 +35,18 @@ public class StationStatus {
     public GitSourcingService.GitStatusInfo gitStatusInfo;
     public String schedule;
     public String sessionId;
+    // TODO 2019-05-28, multi-timezoned deployment isn't supported right now
+    // it'll work but in some cases behaviour can be different
+    // need to change to UTC, Coordinated Universal Time
     public long sessionCreatedOn;
+    public String ip;
+    public String host;
+    public List<String> errors = null;
+
+    public void addError(String error) {
+        if (errors==null) {
+            errors = new ArrayList<>();
+        }
+        errors.add(error);
+    }
 }

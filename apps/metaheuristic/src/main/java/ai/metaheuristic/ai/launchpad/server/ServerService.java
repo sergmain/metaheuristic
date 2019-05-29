@@ -227,7 +227,8 @@ public class ServerService {
         String sessionId = UUID.randomUUID().toString()+'-'+UUID.randomUUID().toString();
         StationStatus ss = new StationStatus(null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
-                sessionId, System.currentTimeMillis());
+                sessionId, System.currentTimeMillis(),
+                "[unknown]", "[unknown]", null);
 
         s.status = StationStatusUtils.toString(ss);
         stationsRepository.save(s);

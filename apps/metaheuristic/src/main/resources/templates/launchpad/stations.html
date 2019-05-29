@@ -64,7 +64,7 @@
         <thead>
         <tr>
             <th>Id</th>
-            <th>IP address</th>
+            <th>IP, Host name</th>
             <th>Description</th>
             <th>Status of station</th>
             <th>Is active</th>
@@ -75,7 +75,7 @@
         <tbody>
         <tr th:each="r : ${result.items}">
             <td th:text="${r.station.id}">Station Id</td>
-            <td th:text="${r.station.ip}">IP address</td>
+            <td><div th:text="${r.ip}" class="no-wrap">IP</div><div th:text="${r.host}" class="no-wrap">Host name</div></td>
             <td th:text="${r.station.description}">Sample Description</td>
             <td><pre style="display: none;" id="station-status" th:if="${r.station.status}!=null" th:text="${r.station.status}">Status of station </pre></td>
             <td th:text="${r.active ? 'Yes' : 'No'}">Is active</td>
