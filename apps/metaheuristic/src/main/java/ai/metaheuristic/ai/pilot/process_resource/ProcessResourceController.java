@@ -555,7 +555,9 @@ public class ProcessResourceController {
 
         File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
         File zipDir = new File(resultDir, "zip");
-        BatchStatus status = prepareStatusAndData(batchId, null, true, false);
+        // TODO 2019-05-29 right noew fullConsole output is disabled because of storing in db with flag==false
+//        BatchStatus status = prepareStatusAndData(batchId, null, true, false);
+        BatchStatus status = prepareStatusAndData(batchId, null, false, false);
 /*
         // TODO 2019.05.25 Actually, status must never be null
         if (status==null) {
