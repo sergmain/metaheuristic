@@ -32,9 +32,12 @@ import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.pilot.beans.Batch;
+import ai.metaheuristic.ai.pilot.beans.BatchParams;
+import ai.metaheuristic.ai.pilot.beans.BatchStatus;
 import ai.metaheuristic.ai.pilot.beans.BatchWorkbook;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.ai.yaml.pilot.BatchParamsUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
@@ -134,31 +137,6 @@ public class ProcessResourceController {
     @Data
     public static class PlanListResult {
         public Iterable<Plan> items;
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class BatchStatus {
-        public final StringBuilder sb = new StringBuilder();
-        public boolean ok = false;
-
-        public void add(String status) {
-            sb.append(status);
-        }
-
-        public void add(String status, char c) {
-            sb.append(status);
-            sb.append(c);
-        }
-
-        public String getStatus() {
-            return sb.toString();
-        }
-
-        public void add(char c) {
-            sb.append(c);
-        }
     }
 
     public ProcessResourceController(WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, Globals globals, BatchCache batchCache, StationCache stationCache) {
@@ -628,7 +606,20 @@ public class ProcessResourceController {
 
     private BatchStatus prepareStatusAndData(Long batchId, File zipDir, boolean fullConsole, boolean storeToDisk)  {
         final BatchStatus bs = new BatchStatus();
-        log.info("#990.105 Start preparing data, batchId: {}", batchId);
+//        log.info("#990.505 Start preparing data, batchId: {}", batchId);
+
+        Batch b = batchCache.findById(batchId);
+        if (b==null) {
+            bs.add("#990.520, Batch wasn't found, batchId: " + batchId, '\n');
+            bs.ok = false;
+            return bs;
+        }
+
+        if (b.getParams()!=null && !b.getParams().isBlank() &&
+                (b.execState==Enums.BatchExecState.Finished.code || b.execState==Enums.BatchExecState.Error.code)) {
+            BatchParams batchParams = BatchParamsUtils.to(b.getParams());
+            return batchParams.batchStatus;
+        }
 
         List<Long> ids = batchWorkbookRepository.findWorkbookIdsByBatchId(batchId);
         if (ids.isEmpty()) {
@@ -781,7 +772,25 @@ public class ProcessResourceController {
             }
 
         }
+
+        if (b.getParams()!=null && !b.getParams().isBlank() &&
+                (b.execState==Enums.BatchExecState.Finished.code || b.execState==Enums.BatchExecState.Error.code)) {
+            BatchParams batchParams = BatchParamsUtils.to(b.getParams());
+            return batchParams.batchStatus;
+        }
+
         bs.ok = isOk;
+
+        BatchParams batchParams = BatchParamsUtils.to(b.getParams());
+        if (batchParams==null) {
+            batchParams = new BatchParams();
+        }
+        bs.init();
+        batchParams.batchStatus = bs;
+
+        b.params = BatchParamsUtils.toString(batchParams);
+        batchCache.save(b);
+
         return bs;
     }
 
