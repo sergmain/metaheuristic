@@ -57,10 +57,15 @@ public class LaunchpadResourceProvider implements ResourceProvider {
 
         // process only if launchpad already sent its config
         if (launchpad.config != null) {
-            DownloadResourceTask resourceTask = new DownloadResourceTask(resourceCode, task.getTaskId(), taskDir, launchpad.config.chunkSize);
-            resourceTask.launchpad = launchpad.launchpadLookup;
-            resourceTask.stationId = launchpadCode.stationId;
-            downloadResourceActor.add(resourceTask);
+            if (launchpad.config.chunkSize==null) {
+                log.error("Launchpad {} doesn't provide chunkSize", task.launchpadUrl);
+            }
+            else {
+                DownloadResourceTask resourceTask = new DownloadResourceTask(resourceCode, task.getTaskId(), taskDir, launchpad.config.chunkSize);
+                resourceTask.launchpad = launchpad.launchpadLookup;
+                resourceTask.stationId = launchpadCode.stationId;
+                downloadResourceActor.add(resourceTask);
+            }
         }
         return Collections.singletonList(ResourceUtils.prepareDataFile(taskDir, resourceCode, null));
     }

@@ -97,6 +97,10 @@ public class TaskAssetPreparer {
             if (launchpad.config==null) {
                 continue;
             }
+            if (launchpad.config.chunkSize==null) {
+                log.error("Launchpad {} doesn't provide chunkSize", task.launchpadUrl);
+                continue;
+            }
 
             File taskDir = stationTaskService.prepareTaskDir(launchpadCode, task.taskId);
 
