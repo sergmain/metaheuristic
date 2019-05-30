@@ -40,6 +40,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -122,10 +123,11 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                             .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
                             .addParameter("chunkNum", Integer.toString(idx));
 
+                    final URI build = builder.build();
                     try {
-                        final Request request = Request.Get(builder.build())
+                        final Request request = Request.Get(build)
                                 .connectTimeout(5000)
-                                .socketTimeout(5000);
+                                .socketTimeout(20000);
 
                         RestUtils.addHeaders(request);
 
@@ -149,6 +151,10 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                             isFinished = true;
                             break;
                         }
+                    }
+                    catch(SocketTimeoutException e) {
+                        log.error("SocketTimeoutException, uri: " + uri, e);
+                        return;
                     }
                     idx++;
                 } while (idx<1000);
