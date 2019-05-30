@@ -88,4 +88,5 @@ public class Consts {
     public static final String SOURCING_LAUNCHPAD_PARAMS_STR = DataStorageParamsUtils.toString(SOURCING_LAUNCHPAD_PARAMS);
 
     public static final String RESULT_FILE_EXTENSION = "result-file-extension";
+    public static final String UNKNOWN_INFO = "[unknown]";
 }

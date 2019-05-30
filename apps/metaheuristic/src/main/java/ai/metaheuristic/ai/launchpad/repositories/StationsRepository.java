@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.launchpad.beans.Station;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +39,7 @@ public interface StationsRepository extends CrudRepository<Station, Long> {
     Slice<Station> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
-    Slice<Station> findAllByOrderByUpdatedOnDescId(Pageable pageable);
+    @Query(value="select s.id from Station s order by s.updatedOn desc")
+    Slice<Long> findAllByOrderByUpdatedOnDescId(Pageable pageable);
 
 }

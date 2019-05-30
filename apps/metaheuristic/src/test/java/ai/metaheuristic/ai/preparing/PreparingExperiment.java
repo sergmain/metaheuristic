@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentCache;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.repositories.*;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
+import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
@@ -64,7 +65,7 @@ public abstract class PreparingExperiment {
     protected ExperimentFeatureRepository experimentFeatureRepository;
 
     @Autowired
-    protected StationsRepository stationsRepository;
+    protected StationCache stationCache;
 
     @Autowired
     protected SnippetCache snippetCache;
@@ -125,7 +126,7 @@ public abstract class PreparingExperiment {
             station.setStatus(StationStatusUtils.toString(ss));
 
             station.setDescription("Test station. Must be deleted automatically");
-            stationsRepository.save(station);
+            stationCache.save(station);
             log.info("stationsRepository.save() was finished for {}", System.currentTimeMillis() - mills);
             stationIdAsStr =  Long.toString(station.getId());
 
@@ -278,7 +279,7 @@ public abstract class PreparingExperiment {
         }
         if (station != null) {
             try {
-                stationsRepository.deleteById(station.getId());
+                stationCache.deleteById(station.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

@@ -23,21 +23,19 @@ import ai.metaheuristic.ai.comm.CommandProcessor;
 import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
-import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
-import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
+import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
-import net.bytebuddy.implementation.bytecode.Throw;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
@@ -48,9 +46,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.*;
-import java.nio.channels.FileChannel;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.RandomAccessFile;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -69,7 +67,7 @@ public class ServerService {
     private final Globals globals;
     private final BinaryDataService binaryDataService;
     private final CommandProcessor commandProcessor;
-    private final StationsRepository stationsRepository;
+    private final StationCache stationCache;
     private final CommandSetter commandSetter;
 
     public HttpEntity<AbstractResource> deliverResource(String typeAsStr, String code, String chunkSize, int chunkNum) {
@@ -200,11 +198,11 @@ public class ServerService {
         }
     }
 
-    public ServerService(Globals globals, BinaryDataService binaryDataService, CommandProcessor commandProcessor, StationsRepository stationsRepository, CommandSetter commandSetter) {
+    public ServerService(Globals globals, BinaryDataService binaryDataService, CommandProcessor commandProcessor, StationCache stationCache, CommandSetter commandSetter) {
         this.globals = globals;
         this.binaryDataService = binaryDataService;
         this.commandProcessor = commandProcessor;
-        this.stationsRepository = stationsRepository;
+        this.stationCache = stationCache;
         this.commandSetter = commandSetter;
     }
 
@@ -239,7 +237,7 @@ public class ServerService {
         if (StringUtils.isBlank(data.getStationId())) {
             return commandProcessor.process(new Protocol.RequestStationId());
         }
-        final Station station = stationsRepository.findById(Long.parseLong(data.getStationId())).orElse(null);
+        final Station station = stationCache.findById(Long.parseLong(data.getStationId()));
         if (station == null) {
             return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
         }
@@ -275,7 +273,7 @@ public class ServerService {
                 // so we need just to refresh sessionId
                 ss.sessionCreatedOn = System.currentTimeMillis();
                 station.status = StationStatusUtils.toString(ss);
-                stationsRepository.save(station);
+                stationCache.save(station);
                 // the same stationId but new sessionId
                 return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
             } else {
@@ -289,7 +287,7 @@ public class ServerService {
         ss.sessionId = UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
         ss.sessionCreatedOn = System.currentTimeMillis();
         station.status = StationStatusUtils.toString(ss);
-        stationsRepository.save(station);
+        stationCache.save(station);
         // the same stationId but new sessionId
         return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
     }
@@ -306,7 +304,7 @@ public class ServerService {
                 "[unknown]", "[unknown]", null, false);
 
         s.status = StationStatusUtils.toString(ss);
-        stationsRepository.save(s);
+        stationCache.save(s);
         return new Command[]{new Protocol.ReAssignStationId(s.getId(), sessionId)};
     }
 

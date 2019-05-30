@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
+import ai.metaheuristic.ai.launchpad.station.StationCache;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -47,7 +47,7 @@ public class TestReAssignStationIdUnknownStationId {
     public ServerService serverService;
 
     @Autowired
-    public StationsRepository stationsRepository;
+    public StationCache stationCache;
 
     private Long stationIdBefore;
     private String sessionIdBefore;
@@ -62,7 +62,7 @@ public class TestReAssignStationIdUnknownStationId {
 
         for (int i = 0; i < 100; i++) {
             final long id = -1L - i;
-            Station s = stationsRepository.findById(id).orElse(null);
+            Station s = stationCache.findById(id);
             if (s==null) {
                 unknownStationId = id;
                 break;
@@ -93,7 +93,7 @@ public class TestReAssignStationIdUnknownStationId {
         log.info("Start after()");
         if (stationIdBefore!=null) {
             try {
-                stationsRepository.deleteById(stationIdBefore);
+                stationCache.deleteById(stationIdBefore);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -119,7 +119,7 @@ public class TestReAssignStationIdUnknownStationId {
 
         assertNotEquals(unknownStationId, stationId);
 
-        Station s = stationsRepository.findById(stationId).orElse(null);
+        Station s = stationCache.findById(stationId);
 
         assertNotNull(s);
     }

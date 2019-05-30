@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.PilotResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
@@ -29,12 +30,15 @@ import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.pilot.beans.Batch;
 import ai.metaheuristic.ai.pilot.beans.BatchWorkbook;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
+import ai.metaheuristic.ai.yaml.station_status.StationStatus;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.*;
@@ -91,6 +95,8 @@ public class ProcessResourceController {
     private static final String ATTACHMENTS_POOL_CODE = "attachments";
     private static final String RESULT_ZIP = "result.zip";
     private static final String PLAN_NOT_FOUND = "Plan wasn't found";
+    private static final String IP_HOST = "IP: %s, host: %s";
+
 
     private static Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml");
 
@@ -107,6 +113,7 @@ public class ProcessResourceController {
     private final BatchWorkbookRepository batchWorkbookRepository;
     private final BinaryDataService binaryDataService;
     private final BatchCache batchCache;
+    private final StationCache stationCache;
 
     @Data
     @NoArgsConstructor
@@ -154,7 +161,7 @@ public class ProcessResourceController {
         }
     }
 
-    public ProcessResourceController(WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, Globals globals, BatchCache batchCache) {
+    public ProcessResourceController(WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, TaskRepository taskRepository, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, Globals globals, BatchCache batchCache, StationCache stationCache) {
         this.workbookRepository = workbookRepository;
         this.planRepository = planRepository;
         this.planCache = planCache;
@@ -166,6 +173,7 @@ public class ProcessResourceController {
         this.binaryDataService = binaryDataService;
         this.globals = globals;
         this.batchCache = batchCache;
+        this.stationCache = stationCache;
     }
 
     @GetMapping("/process-resources")
@@ -690,17 +698,25 @@ public class ProcessResourceController {
                 isOk = false;
                 continue;
             }
+            Station s = null;
+            if (task.getStationId()!=null) {
+                s = stationCache.findById(task.getStationId());
+            }
             switch (execState) {
                 case NONE:
                 case IN_PROGRESS:
                     bs.add("#990.142, " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                             ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                            "taskId: " + task.getId(),'\n');
+                            "taskId: " + task.getId() + ", stationId: " + task.getStationId() +
+                            ", " + getStationIpAndHost(s)
+                            ,'\n');
                     isOk = true;
                     continue;
                 case ERROR:
                     bs.add("#990.149, " + mainDocument + ", Task was completed with error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + "\n" +
+                            "stationId: " + task.getStationId() + "\n" +
+                            getStationIpAndHost(s) + "\n" +
                             "isOk: " + snippetExec.exec.isOk + "\n" +
                             "exitCode: " + snippetExec.exec.exitCode + "\n" +
                             "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
@@ -710,6 +726,8 @@ public class ProcessResourceController {
                     if (fullConsole) {
                         bs.add("#990.151, " + mainDocument + ", Task completed without any error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                 "taskId: " + task.getId() + "\n" +
+                                "stationId: " + task.getStationId() + "\n" +
+                                getStationIpAndHost(s) + "\n" +
                                 "isOk: " + snippetExec.exec.isOk + "\n" +
                                 "exitCode: " + snippetExec.exec.exitCode + "\n" +
                                 "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
@@ -733,7 +751,9 @@ public class ProcessResourceController {
             if (wb.getExecState() != EnumsApi.WorkbookExecState.FINISHED.code) {
                 bs.add("#990.155, " + mainDocument + ", Task hasn't completed yet, " +
                         "batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                        "taskId: " + task.getId(),'\n');
+                        "taskId: " + task.getId() + ", " +
+                        "stationId: " + task.getStationId() + ", " + getStationIpAndHost(s)
+                        ,'\n');
                 isOk = true;
                 continue;
             }
@@ -754,7 +774,8 @@ public class ProcessResourceController {
             }
 
             if (!fullConsole) {
-                String msg = "#990.167 status - Ok, doc: " + mainDocFile.getName() + ", batchId: " + batchId + ", workbookId: " + workbookId;
+                String msg = "#990.167 status - Ok, doc: " + mainDocFile.getName() + ", batchId: " + batchId + ", workbookId: " + workbookId +
+                        ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + getStationIpAndHost(s);
                 bs.add(msg,'\n');
                 isOk = true;
             }
@@ -762,6 +783,19 @@ public class ProcessResourceController {
         }
         bs.ok = isOk;
         return bs;
+    }
+
+    private String getStationIpAndHost(Station station) {
+
+        if (station==null) {
+            return String.format(IP_HOST, Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO);
+        }
+
+        StationStatus status = StationStatusUtils.to(station.status);
+        final String ip = StringUtils.isNotBlank(status.ip) ? status.ip : Consts.UNKNOWN_INFO;
+        final String host = StringUtils.isNotBlank(status.host) ? status.host : Consts.UNKNOWN_INFO;
+
+        return String.format(IP_HOST, ip, host);
     }
 
     private String getActualExtension(Long planId) {

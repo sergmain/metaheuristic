@@ -55,9 +55,6 @@ public abstract class FeatureMethods extends PreparingPlan {
     protected ExperimentFeatureRepository experimentFeatureRepository;
 
     @Autowired
-    protected StationsRepository stationsRepository;
-
-    @Autowired
     protected SnippetCache snippetCache;
 
     @Autowired

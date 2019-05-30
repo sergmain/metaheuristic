@@ -20,13 +20,13 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.api.v1.data.TaskApiData;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
-import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
@@ -58,7 +58,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final WorkbookRepository workbookRepository;
-    private final StationsRepository stationsRepository;
+    private final StationCache stationCache;
 
     public List<Long> resourceReceivingChecker(long stationId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
@@ -115,11 +115,11 @@ public class TaskService {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, WorkbookRepository workbookRepository, StationsRepository stationsRepository) {
+    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, WorkbookRepository workbookRepository, StationCache stationCache) {
         this.taskRepository = taskRepository;
         this.taskPersistencer = taskPersistencer;
         this.workbookRepository = workbookRepository;
-        this.stationsRepository = stationsRepository;
+        this.stationCache = stationCache;
     }
 
     public List<Long> storeAllConsoleResults(List<SimpleTaskExecResult> results) {
@@ -186,7 +186,7 @@ public class TaskService {
             workbooks = Collections.singletonList(workbook);
         }
 
-        Station station = stationsRepository.findById(stationId).orElse(null);
+        Station station = stationCache.findById(stationId);
         if (station==null) {
             log.error("#317.47 Station wasn't found for id: {}", stationId);
             return EMPTY_RESULT;

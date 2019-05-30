@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
+import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -49,7 +49,7 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
     public ServerService serverService;
 
     @Autowired
-    public StationsRepository stationsRepository;
+    public StationCache stationCache;
 
     private Long stationIdBefore;
     private String sessionIdBefore;
@@ -73,8 +73,8 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
         System.out.println("stationIdBefore: " + stationIdBefore);
         System.out.println("sessionIdBefore: " + sessionIdBefore);
 
-        Long stationId = Long.valueOf(stationIdBefore);
-        Station s = stationsRepository.findById(stationId).orElse(null);
+        Long stationId = stationIdBefore;
+        Station s = stationCache.findById(stationId);
         assertNotNull(s);
 
         StationStatus ss = StationStatusUtils.to(s.status);
@@ -85,7 +85,7 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
         sessionCreatedOn = ss.sessionCreatedOn;
         s.status = StationStatusUtils.toString(ss);
 
-        Station s1 = stationsRepository.save(s);
+        Station s1 = stationCache.save(s);
 
         StationStatus ss1 = StationStatusUtils.to(s1.status);
         assertEquals(ss.sessionCreatedOn, ss1.sessionCreatedOn);
@@ -96,7 +96,7 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
         log.info("Start after()");
         if (stationIdBefore!=null) {
             try {
-                stationsRepository.deleteById(stationIdBefore);
+                stationCache.deleteById(stationIdBefore);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -122,7 +122,7 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
         assertEquals(stationIdBefore, stationId);
         assertEquals(sessionIdBefore, d.getReAssignedStationId().getSessionId());
 
-        Station s = stationsRepository.findById(stationId).orElse(null);
+        Station s = stationCache.findById(stationId);
 
         assertNotNull(s);
         StationStatus ss = StationStatusUtils.to(s.status);

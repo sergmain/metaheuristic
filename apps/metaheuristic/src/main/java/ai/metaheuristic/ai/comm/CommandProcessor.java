@@ -237,7 +237,7 @@ public class CommandProcessor {
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false);
         st.status = StationStatusUtils.toString(ss);
-        launchpadService.getStationsRepository().save(st);
+        launchpadService.getStationCache().save(st);
 
         // TODO 2019.05.19 why we send stationId as a String?
         return Protocol.asArray(new Protocol.AssignedStationId(Long.toString(st.getId()), sessionId));

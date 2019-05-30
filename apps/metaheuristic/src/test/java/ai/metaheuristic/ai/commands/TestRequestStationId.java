@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
+import ai.metaheuristic.ai.launchpad.station.StationCache;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -47,7 +47,7 @@ public class TestRequestStationId {
     public ServerService serverService;
 
     @Autowired
-    public StationsRepository stationsRepository;
+    public StationCache stationCache;
 
     private Long stationId;
 
@@ -70,7 +70,7 @@ public class TestRequestStationId {
         log.info("Start after()");
         if (stationId!=null) {
             try {
-                stationsRepository.deleteById(stationId);
+                stationCache.deleteById(stationId);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -93,7 +93,7 @@ public class TestRequestStationId {
 
         stationId = Long.valueOf(d.getAssignedStationId().getAssignedStationId());
 
-        Station s = stationsRepository.findById(stationId).orElse(null);
+        Station s = stationCache.findById(stationId);
 
         assertNotNull(s);
     }
@@ -120,7 +120,7 @@ public class TestRequestStationId {
         System.out.println("stationId: " + d.getReAssignedStationId().getReAssignedStationId());
         System.out.println("sessionId: " + d.getReAssignedStationId().getSessionId());
 
-        Station s = stationsRepository.findById(stationIdForEmptySession).orElse(null);
+        Station s = stationCache.findById(stationIdForEmptySession);
 
         assertNotNull(s);
     }

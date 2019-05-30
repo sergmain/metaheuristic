@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad;
 
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
-import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
+import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import lombok.Getter;
@@ -29,15 +29,15 @@ import org.springframework.stereotype.Service;
 @Getter
 @Profile("launchpad")
 public class RealLaunchpadService implements LaunchpadService{
-    private final StationsRepository stationsRepository;
+    private final StationCache stationCache;
     private final ExperimentService experimentService;
     private final TaskService taskService;
     private final PlanService planService;
     private final ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad;
     private final StationTopLevelService stationTopLevelService;
 
-    public RealLaunchpadService(StationsRepository stationsRepository, ExperimentService experimentService, TaskService taskService, PlanService planService, ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad, StationTopLevelService stationTopLevelService) {
-        this.stationsRepository = stationsRepository;
+    public RealLaunchpadService(StationCache stationCache, ExperimentService experimentService, TaskService taskService, PlanService planService, ArtifactCleanerAtLaunchpad artifactCleanerAtLaunchpad, StationTopLevelService stationTopLevelService) {
+        this.stationCache = stationCache;
         this.experimentService = experimentService;
         this.taskService = taskService;
         this.planService = planService;

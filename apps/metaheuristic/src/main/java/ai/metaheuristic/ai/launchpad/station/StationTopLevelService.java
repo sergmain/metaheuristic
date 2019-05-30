@@ -46,29 +46,35 @@ public class StationTopLevelService {
 
     private final Globals globals;
     private final StationsRepository stationsRepository;
+    private final StationCache stationCache;
 
     private static final long STATION_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
-    public StationTopLevelService(Globals globals, StationsRepository stationsRepository) {
+    public StationTopLevelService(Globals globals, StationsRepository stationsRepository, StationCache stationCache) {
         this.globals = globals;
         this.stationsRepository = stationsRepository;
+        this.stationCache = stationCache;
     }
 
     public StationData.StationsResult getStations(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.stationRowsLimit, pageable);
         StationData.StationsResult result = new StationData.StationsResult();
-        Slice<Station> items = stationsRepository.findAllByOrderByUpdatedOnDescId(pageable);
+        Slice<Long> ids = stationsRepository.findAllByOrderByUpdatedOnDescId(pageable);
         List<StationData.StationStatus> ss = new ArrayList<>(pageable.getPageSize()+1);
-        for (Station item : items) {
-            StationStatus status = StationStatusUtils.to(item.status);
+        for (Long stationId : ids) {
+            Station station = stationCache.findById(stationId);
+            if (station==null) {
+                continue;
+            }
+            StationStatus status = StationStatusUtils.to(station.status);
 
             ss.add(new StationData.StationStatus(
-                    item, System.currentTimeMillis() - item.updatedOn < STATION_TIMEOUT, item.updatedOn,
+                    station, System.currentTimeMillis() - station.updatedOn < STATION_TIMEOUT, station.updatedOn,
                     (StringUtils.isNotBlank(status.ip) ? status.ip : "[unknown]"),
                     (StringUtils.isNotBlank(status.host) ? status.host : "[unknown]")
             ));
         }
-        result.items =  new SliceImpl<>(ss, pageable, items.hasNext());
+        result.items =  new SliceImpl<>(ss, pageable, ids.hasNext());
         return result;
     }
 

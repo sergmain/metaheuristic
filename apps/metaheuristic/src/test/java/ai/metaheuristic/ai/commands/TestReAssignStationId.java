@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
+import ai.metaheuristic.ai.launchpad.station.StationCache;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
@@ -48,7 +48,7 @@ public class TestReAssignStationId {
     public ServerService serverService;
 
     @Autowired
-    public StationsRepository stationsRepository;
+    public StationCache stationCache;
 
     private Long stationIdBefore;
     private String sessionIdBefore;
@@ -79,7 +79,7 @@ public class TestReAssignStationId {
         log.info("Start after()");
         if (stationIdBefore!=null) {
             try {
-                stationsRepository.deleteById(stationIdBefore);
+                stationCache.deleteById(stationIdBefore);
             } catch (Throwable th) {
                 th.printStackTrace();
             }
@@ -103,7 +103,7 @@ public class TestReAssignStationId {
 
         Long stationId = Long.valueOf(d.getReAssignedStationId().getReAssignedStationId());
 
-        Station s = stationsRepository.findById(stationId).orElse(null);
+        Station s = stationCache.findById(stationId);
 
         assertNotNull(s);
     }
