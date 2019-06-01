@@ -253,24 +253,37 @@ public class ServerService {
             }
         }
         else {
-            if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
-                // the same station, with the same sessionId
-                // so we need just to refresh sessionId
-                ss.sessionCreatedOn = System.currentTimeMillis();
-                station.status = StationStatusUtils.toString(ss);
+            return updateSession(station, ss, true);
+        }
+    }
+
+    private Command[] updateSession(Station station, StationStatus ss, boolean isOneMoreTry) {
+        if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
+            // the same station, with the same sessionId
+            // so we need just to refresh sessionId
+            ss.sessionCreatedOn = System.currentTimeMillis();
+            station.status = StationStatusUtils.toString(ss);
+            try {
                 try {
                     stationCache.save(station);
                 } catch (StaleObjectStateException e) {
-                    log.error("#442.040 Error saving station. old : {}, new: {}", stationCache.findById(station.id), station);
-                    log.error("#442.045 Error");
-                    throw e;
+                    if (isOneMoreTry) {
+                        Station s = stationCache.findById(station.id);
+                        StationStatus stationStatus = StationStatusUtils.to(s.status);
+                        return updateSession(s, stationStatus, false);
+                    }
+                    return null;
                 }
-                // the same stationId but new sessionId
-                return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
-            } else {
-                // the same stationId, the same sessionId, session isn't expired
-                return null;
+            } catch (StaleObjectStateException e) {
+                log.error("#442.040 Error saving station. old : {}, new: {}", stationCache.findById(station.id), station);
+                log.error("#442.045 Error");
+                throw e;
             }
+            // the same stationId but new sessionId
+            return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
+        } else {
+            // the same stationId, the same sessionId, session isn't expired
+            return null;
         }
     }
 
