@@ -268,6 +268,7 @@ public class ServerService {
                     stationCache.save(station);
                 } catch (StaleObjectStateException e) {
                     if (isOneMoreTry) {
+                        log.info("#442.040 station was updated, lets try one more time");
                         Station s = stationCache.findById(station.id);
                         StationStatus stationStatus = StationStatusUtils.to(s.status);
                         return updateSession(s, stationStatus, false);

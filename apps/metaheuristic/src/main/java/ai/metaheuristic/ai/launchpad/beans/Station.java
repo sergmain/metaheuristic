@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.launchpad.beans;
 
 import lombok.Data;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -28,6 +29,7 @@ import java.io.Serializable;
 @Entity
 @Table(name = "MH_STATION")
 @Data
+@ToString(exclude = "status")
 public class Station implements Serializable {
     private static final long serialVersionUID = -6094247705164836600L;
 
