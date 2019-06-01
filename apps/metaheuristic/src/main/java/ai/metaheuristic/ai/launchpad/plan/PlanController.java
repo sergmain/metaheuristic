@@ -203,7 +203,7 @@ public class PlanController {
 
     @PostMapping("/workbook-delete-commit")
     public String workbookDeleteCommit(Long planId, Long workbookId, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(planId, workbookId);
+        OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(workbookId);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;

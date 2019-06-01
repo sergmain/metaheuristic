@@ -62,7 +62,6 @@ public class ExchangeData {
     @JsonProperty(value = "station_id")
     private String stationId;
 
-//    @JsonProperty(value = "session_id")
     private String sessionId;
 
     private LaunchpadConfig launchpadConfig;
@@ -71,6 +70,11 @@ public class ExchangeData {
     public String launchpadUrl;
 
     public ExchangeData() {
+    }
+
+    public ExchangeData(Command command, boolean isSuccess) {
+        setCommand(command);
+        this.isSuccess = isSuccess;
     }
 
     public ExchangeData(Command[] commands) {

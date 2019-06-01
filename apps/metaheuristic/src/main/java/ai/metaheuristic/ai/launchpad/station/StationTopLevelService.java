@@ -28,11 +28,11 @@ import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.StaleObjectStateException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.domain.SliceImpl;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -80,33 +80,33 @@ public class StationTopLevelService {
 
     public StationData.StationResult getStation(Long id) {
         //noinspection UnnecessaryLocalVariable
-        StationData.StationResult r = new StationData.StationResult(stationsRepository.findById(id).orElse(null));
+        StationData.StationResult r = new StationData.StationResult(stationCache.findById(id));
         return r;
     }
 
     public StationData.StationResult saveStation(Station station) {
-        Station s = stationsRepository.findById(station.getId()).orElse(null);
+        Station s = stationCache.findById(station.getId());
         if (s==null) {
             return new StationData.StationResult("#807.05 station wasn't found, stationId: " + station.getId());
         }
         s.description = station.description;
         //noinspection UnnecessaryLocalVariable
-        StationData.StationResult r = new StationData.StationResult(stationsRepository.save(s));
+        StationData.StationResult r = new StationData.StationResult(stationCache.save(s));
         return r;
     }
 
     public OperationStatusRest deleteStationById(Long id) {
-        Station station = stationsRepository.findById(id).orElse(null);
+        Station station = stationCache.findById(id);
         if (station == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#807.15 Station wasn't found, stationId: " + id);
         }
-        stationsRepository.deleteById(id);
+        stationCache.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public void storeStationStatus(Protocol.ReportStationStatus command) {
         final Long stationId = Long.valueOf(command.getStationId());
-        final Station station = stationsRepository.findById(stationId).orElse(null);
+        final Station station = stationCache.findById(stationId);
         if (station==null) {
             // we throw ISE cos all checks have to be made early
             throw new IllegalStateException("Station wasn't found for stationId: " + stationId );
@@ -116,9 +116,9 @@ public class StationTopLevelService {
             station.status = stationStatus;
             station.setUpdatedOn(System.currentTimeMillis());
             try {
-                stationsRepository.save(station);
-            } catch (StaleObjectStateException e) {
-                log.warn("#807.105 StaleObjectStateException was encountered\n" +
+                stationCache.save(station);
+            } catch (ObjectOptimisticLockingFailureException e) {
+                log.warn("#807.105 ObjectOptimisticLockingFailureException was encountered\n" +
                         "new station:\n{}\n" +
                         "db station\n{}", station, stationsRepository.findById(stationId));
                 // we dont do anything about this error because station will report again in short time

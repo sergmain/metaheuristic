@@ -38,12 +38,12 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.hibernate.StaleObjectStateException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +64,7 @@ public class ServerService {
     private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
 
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
+    public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(1);
 
     private final Globals globals;
     private final BinaryDataService binaryDataService;
@@ -192,24 +193,30 @@ public class ServerService {
     }
 
     public ExchangeData processRequest(ExchangeData data, String remoteAddress) {
-        Command[] cmds = checkStationId(data, remoteAddress);
-        if (cmds!=null) {
-            return new ExchangeData(cmds);
-        }
-
-        ExchangeData resultData = new ExchangeData();
-        commandSetter.setCommandInTransaction(resultData);
-
-        List<Command> commands = data.getCommands();
-        for (Command command : commands) {
-            if (data.getStationId()!=null && command instanceof Protocol.RequestStationId) {
-                continue;
+        try {
+            Command[] cmds = checkStationId(data, remoteAddress);
+            if (cmds!=null) {
+                return new ExchangeData(cmds);
             }
-            resultData.setCommands(commandProcessor.process(command));
-        }
-        addLaunchpadInfo(resultData);
 
-        return resultData;
+            ExchangeData resultData = new ExchangeData();
+            commandSetter.setCommandInTransaction(resultData);
+
+            List<Command> commands = data.getCommands();
+            for (Command command : commands) {
+                if (data.getStationId()!=null && command instanceof Protocol.RequestStationId) {
+                    continue;
+                }
+                resultData.setCommands(commandProcessor.process(command));
+            }
+            addLaunchpadInfo(resultData);
+
+            return resultData;
+        } catch (Throwable th) {
+            log.error("Error while processing client's request,ExchangeData:\n{}", data);
+            log.error("Error", th);
+            return new ExchangeData(Protocol.NOP, false);
+        }
     }
 
     private void addLaunchpadInfo(ExchangeData data) {
@@ -258,24 +265,24 @@ public class ServerService {
     }
 
     private Command[] updateSession(Station station, StationStatus ss, boolean isOneMoreTry) {
-        if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
+        if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_UPDATE_TIMEOUT) {
             // the same station, with the same sessionId
             // so we need just to refresh sessionId
             ss.sessionCreatedOn = System.currentTimeMillis();
             station.status = StationStatusUtils.toString(ss);
             try {
-                try {
+//                try {
                     stationCache.save(station);
-                } catch (StaleObjectStateException e) {
-                    if (isOneMoreTry) {
-                        log.info("#442.040 station was updated, lets try one more time");
-                        Station s = stationCache.findById(station.id);
-                        StationStatus stationStatus = StationStatusUtils.to(s.status);
-                        return updateSession(s, stationStatus, false);
-                    }
-                    return null;
-                }
-            } catch (StaleObjectStateException e) {
+//                } catch (Throwable e) {
+//                    if (isOneMoreTry) {
+//                        log.info("#442.040 station was updated, lets try one more time");
+//                        Station s = stationCache.findById(station.id);
+//                        StationStatus stationStatus = StationStatusUtils.to(s.status);
+//                        return updateSession(s, stationStatus, false);
+//                    }
+//                    return null;
+//                }
+            } catch (ObjectOptimisticLockingFailureException e) {
                 log.error("#442.040 Error saving station. old : {}, new: {}", stationCache.findById(station.id), station);
                 log.error("#442.045 Error");
                 throw e;

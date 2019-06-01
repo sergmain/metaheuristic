@@ -181,7 +181,11 @@ public class LaunchpadRequestor {
                 Monitoring.log("##016", Enums.Monitor.MEMORY);
                 ExchangeData result = response.getBody();
                 if (result == null) {
-                    log.warn("#775.05 Launchpad returned null as a result");
+                    log.warn("#775.050 Launchpad returned null as a result");
+                    return;
+                }
+                if (!result.isSuccess()) {
+                    log.error("#775.055 Something wrong at the launchpad side. Check the launchpad's logs for more info.");
                     return;
                 }
                 result.launchpadUrl = launchpadUrl;

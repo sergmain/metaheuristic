@@ -169,7 +169,7 @@ public class PlanTopLevelService {
         }
         result.workbook = producingResult.workbook;
 
-        // ugly work-around on StaleObjectStateException
+        // ugly work-around on ObjectOptimisticLockingFailureException, StaleObjectStateException
         result.plan = planCache.findById(planId);
         if (result.plan == null) {
             return new PlanApiData.WorkbookResult("#560.73 plan wasn't found, planId: " + planId);
@@ -220,7 +220,7 @@ public class PlanTopLevelService {
         return result;
     }
 
-    public OperationStatusRest deleteWorkbookById(Long planId, Long workbookId) {
+    public OperationStatusRest deleteWorkbookById(Long workbookId) {
         PlanApiData.WorkbookResult result = planService.getWorkbookExtended(workbookId);
         if (CollectionUtils.isNotEmpty(result.errorMessages)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);

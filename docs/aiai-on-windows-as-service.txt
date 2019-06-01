@@ -14,6 +14,6 @@ config:
              <name>aiai</name>
              <description>Aiai Spring Boot as a service.</description>
              <executable>java</executable>
-             <arguments>-Dhttps.protocols=TLSv1.2,SSLv3 -Xrs -Xms512m -Xmx512m -jar "%BASE%\git\apps\aiai\target\aiai.jar" --httpPort=8080</arguments>
+             <arguments>-XX:+AlwaysActAsServerClassMachine -Dhttps.protocols=TLSv1.2,SSLv3 -Xrs -Xms512m -Xmx512m -jar "%BASE%\git\apps\aiai\target\aiai.jar" --httpPort=8080</arguments>
              <logmode>rotate</logmode>
           </service>

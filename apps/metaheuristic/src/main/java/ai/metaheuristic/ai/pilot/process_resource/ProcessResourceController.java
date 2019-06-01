@@ -434,7 +434,7 @@ public class ProcessResourceController {
         bfi.workbookId=producingResult.workbook.getId();
         batchWorkbookRepository.save(bfi);
 
-        // ugly work-around on StaleObjectStateException
+        // ugly work-around on ObjectOptimisticLockingFailureException, StaleObjectStateException
         Long planId = plan.getId();
         plan = planCache.findById(planId);
         if (plan == null) {

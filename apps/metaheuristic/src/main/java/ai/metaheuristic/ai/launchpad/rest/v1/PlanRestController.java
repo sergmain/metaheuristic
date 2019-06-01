@@ -97,7 +97,7 @@ public class PlanRestController {
 
     @PostMapping("/workbook-delete-commit")
     public OperationStatusRest workbookDeleteCommit(Long planId, Long workbookId) {
-        return planTopLevelService.deleteWorkbookById(planId, workbookId);
+        return planTopLevelService.deleteWorkbookById(workbookId);
     }
 
     @GetMapping("/workbook-target-exec-state/{planId}/{state}/{id}")

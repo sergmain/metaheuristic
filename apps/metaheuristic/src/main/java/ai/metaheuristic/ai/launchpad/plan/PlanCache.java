@@ -37,12 +37,8 @@ public class PlanCache {
         this.planRepository = planRepository;
     }
 
-//    @CachePut(cacheNames = "plans", key = "#result.id")
     @CacheEvict(value = "plans", key = "#result.id")
     public PlanImpl save(PlanImpl plan) {
-        // TODO 2019.05.03 need to deal with such error:
-        // org.hibernate.StaleObjectStateException: Row was updated or deleted by another transaction
-        // (or unsaved-value mapping was incorrect) : [aiai.ai.launchpad.beans.Plan#349]
         return planRepository.save(plan);
     }
 
@@ -51,7 +47,6 @@ public class PlanCache {
         return planRepository.findById(id).orElse(null);
     }
 
-//    @CacheEvict(cacheNames = {"plans"}, allEntries=true)
     @CacheEvict(cacheNames = {"plans"}, key = "#plan.id")
     public void delete(Plan plan) {
         try {
@@ -61,7 +56,6 @@ public class PlanCache {
         }
     }
 
-//    @CacheEvict(cacheNames = {"plans"}, allEntries=true)
     @CacheEvict(cacheNames = {"plans"}, key = "#id")
     public void deleteById(Long id) {
         try {
