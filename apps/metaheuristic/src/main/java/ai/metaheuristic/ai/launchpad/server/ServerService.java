@@ -38,6 +38,7 @@ import ai.metaheuristic.commons.utils.DirUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hibernate.StaleObjectStateException;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
@@ -95,14 +96,14 @@ public class ServerService {
         }
 
         if (assetFile==null) {
-            String es = "#442.12 resource with code "+code+" wasn't found";
+            String es = "#442.012 resource with code "+code+" wasn't found";
             log.error(es);
             throw new BinaryDataNotFoundException(es);
         }
         try {
             binaryDataService.storeToFile(code, assetFile.file);
         } catch (BinaryDataNotFoundException e) {
-            log.error("#442.16 Error store data to temp file, data doesn't exist in db, code " + code+", file: " + assetFile.file.getPath());
+            log.error("#442.016 Error store data to temp file, data doesn't exist in db, code " + code+", file: " + assetFile.file.getPath());
             throw e;
         }
         File f;
@@ -140,7 +141,7 @@ public class ServerService {
                     throw e;
                 }
                 if (state==-1) {
-                    log.error("Error in algo, read after EOF, file len: {}, offset: {}, size: {}", raf.length(), offset, size);
+                    log.error("#442.030 Error in algo, read after EOF, file len: {}, offset: {}, size: {}", raf.length(), offset, size);
                     break;
                 }
                 fos.write(bytes, 0, realSize);
@@ -152,22 +153,6 @@ public class ServerService {
         }
     }
 
-/*
-    public static void copyChunk(File sourceFile, File destFile, long offset, long size) {
-
-        try (final FileInputStream fis = new FileInputStream(sourceFile);
-             final FileOutputStream fos = new FileOutputStream(destFile);
-             FileChannel source = fis.getChannel();
-             FileChannel destination = fos.getChannel()
-        ){
-            destination.transferFrom(source, offset, size);
-        }
-        catch (Throwable th) {
-            ExceptionUtils.wrapAndThrow(th);
-        }
-    }
-
-*/
     private static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
         HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
         header.setContentLength(length);
@@ -245,8 +230,8 @@ public class ServerService {
         try {
             ss = StationStatusUtils.to(station.status);
         } catch (Throwable e) {
-            log.error("Error parsing current status of station:\n{}", station.status);
-            log.error("Error ", e);
+            log.error("#442.035 Error parsing current status of station:\n{}", station.status);
+            log.error("#442.036 Error ", e);
             // skip any command from this station
             return Protocol.NOP_ARRAY;
         }
@@ -273,7 +258,13 @@ public class ServerService {
                 // so we need just to refresh sessionId
                 ss.sessionCreatedOn = System.currentTimeMillis();
                 station.status = StationStatusUtils.toString(ss);
-                stationCache.save(station);
+                try {
+                    stationCache.save(station);
+                } catch (StaleObjectStateException e) {
+                    log.error("#442.040 Error saving station. old : {}, new: {}", stationCache.findById(station.id), station);
+                    log.error("#442.045 Error");
+                    throw e;
+                }
                 // the same stationId but new sessionId
                 return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
             } else {

@@ -212,24 +212,6 @@ public class GitSourcingService {
         return new GitExecResult(repoDir, new SnippetApiData.SnippetExecResult(true, 0, "" ), false, null);
     }
 
-    private GitExecResult execCheckoutRevision(File repoDir, SnippetApiData.SnippetConfig snippet) {
-        // git checkout sha1
-        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", snippet.git.commit);
-        log.info("exec {}", cmd);
-        //noinspection UnnecessaryLocalVariable
-        GitExecResult result = execGitCmd(cmd, 0L);
-        return result;
-    }
-
-    private GitExecResult execPullOrigin(File repoDir, SnippetApiData.SnippetConfig snippet) {
-        // pull origin master
-        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", snippet.git.branch);
-        log.info("exec {}", cmd);
-        //noinspection UnnecessaryLocalVariable
-        GitExecResult result = execGitCmd(cmd, 0L);
-        return result;
-    }
-
     public GitExecResult tryToRepairRepo(File snippetDir, SnippetApiData.SnippetConfig snippet) {
         File repoDir = new File(snippetDir, "git");
         GitExecResult result;
@@ -243,32 +225,58 @@ public class GitSourcingService {
         return result;
     }
 
+    private GitExecResult execFileSystemCheck(File repoDir, SnippetApiData.SnippetConfig snippet) {
+//git>git fsck --full
+//Checking object directories: 100% (256/256), done.
+//Checking objects: 100% (10432/10432), done.
+//error: bad signature 0x00000000
+//fatal: index file corrupt
+
+        // git fsck --full
+        //noinspection UnnecessaryLocalVariable
+        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", snippet.git.commit),0L);
+        return result;
+    }
+
+    private GitExecResult execCheckoutRevision(File repoDir, SnippetApiData.SnippetConfig snippet) {
+        // git checkout sha1
+        //noinspection UnnecessaryLocalVariable
+        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "checkout", snippet.git.commit),0L);
+        return result;
+    }
+
+    private GitExecResult execPullOrigin(File repoDir, SnippetApiData.SnippetConfig snippet) {
+        // pull origin master
+        //noinspection UnnecessaryLocalVariable
+        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "pull", "origin", snippet.git.branch),0L);
+        return result;
+    }
+
     private GitExecResult execCleanDF(File repoDir) {
         // git clean -df
-        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "clean", "-df");
-        log.info("exec {}", cmd);
         //noinspection UnnecessaryLocalVariable
-        GitExecResult result = execGitCmd(cmd, 120L);
+        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "clean", "-df"),120L);
         return result;
     }
 
     private GitExecResult execRevParse(File repoDir) {
         // git rev-parse --is-inside-work-tree
-        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "rev-parse", "--is-inside-work-tree");
-        log.info("exec {}", cmd);
         //noinspection UnnecessaryLocalVariable
-        GitExecResult result = execGitCmd(cmd, 60L);
+        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "rev-parse", "--is-inside-work-tree"),60L);
         return result;
     }
 
     // TODO 2019-05-11 add this before checkout for new changes
     private GitExecResult execResetHardHead(File repoDir) {
         // git reset --hard HEAD
-        List<String> cmd = List.of("git", "-C", repoDir.getAbsolutePath(), "reset", "--hard", "HEAD");
-        log.info("exec {}", cmd);
         //noinspection UnnecessaryLocalVariable
-        GitExecResult result = execGitCmd(cmd, 120L);
+        GitExecResult result = execCommonCmd(List.of("git", "-C", repoDir.getAbsolutePath(), "reset", "--hard", "HEAD"),120L);
         return result;
+    }
+
+    private GitExecResult execCommonCmd(List<String> cmd, long timeout) {
+        log.info("exec {}", cmd);
+        return execGitCmd(cmd, timeout);
     }
 
     private GitExecResult execClone(File repoDir, SnippetApiData.SnippetConfig snippet) {
