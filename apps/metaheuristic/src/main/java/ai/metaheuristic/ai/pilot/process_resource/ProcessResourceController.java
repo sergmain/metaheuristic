@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.pilot.process_resource;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.exceptions.PilotResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
@@ -218,14 +219,15 @@ public class ProcessResourceController {
                 }
                 catch(UnzipArchiveException e) {
                     log.error("Error", e);
-                    batchService.changeStateToError(batch, "#990.65 can't unzip an archive. Error: " + e.getMessage()+", class: " + e.getClass());
+                    batchService.changeStateToError(batch.id, "#990.65 can't unzip an archive. Error: " + e.getMessage()+", class: " + e.getClass());
                 }
                 catch(Throwable th) {
                     log.error("Error", th);
-                    batchService.changeStateToError(batch, "#990.65 General processing error. Error: " + th.getMessage()+", class: " + th.getClass());
+                    batchService.changeStateToError(batch.id, "#990.65 General processing error. Error: " + th.getMessage()+", class: " + th.getClass());
                 }
 
             }).start();
+            //noinspection unused
             int i=0;
         }
         catch (Throwable th) {
@@ -414,7 +416,19 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        BatchStatus status = batchService.prepareStatusAndData(batchId, null, false, false);
+        BatchStatus status;
+        try {
+            status = batchService.updateStatus(batchId, false);
+        } catch (NeedRetryAfterCacheCleanException e) {
+            try {
+                status = batchService.updateStatus(batchId, false);
+            } catch (Throwable th) {
+                final String es = "#990.115 Error preparing status for batch #" + batchId+", error: " + th.toString();
+                log.error(es, th);
+                redirectAttributes.addAttribute("errorMessage", es );
+                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            }
+        }
 
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.getStatus());
@@ -460,11 +474,7 @@ public class ProcessResourceController {
             return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
         }
 
-        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
-        File zipDir = new File(resultDir, "zip");
-        // TODO 2019-05-29 right now fullConsole output is disabled because of storing in db with flag==false
-//        BatchStatus status = prepareStatusAndData(batchId, null, true, false);
-        BatchStatus status = batchService.prepareStatusAndData(batchId, null, false, false);
+        BatchStatus status = batchService.updateStatus(batchId, false);
 
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.getStatus());
@@ -487,10 +497,6 @@ public class ProcessResourceController {
         }
 
         BatchStatus status = batchService.prepareStatusAndData(batchId, zipDir, false, true);
-        // 2019.05.25 Actually, status must never be null
-        if (status==null) {
-            return null;
-        }
 
         File statusFile = new File(zipDir, "status.txt");
         FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);

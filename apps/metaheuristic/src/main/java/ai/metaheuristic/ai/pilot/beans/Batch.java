@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.pilot.beans;
 import ai.metaheuristic.ai.Enums;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -27,6 +28,7 @@ import java.io.Serializable;
 @Table(name = "PILOT_BATCH")
 @Data
 @NoArgsConstructor
+@ToString(exclude = "params")
 public class Batch implements Serializable {
     private static final long serialVersionUID = -3509391644278818781L;
 

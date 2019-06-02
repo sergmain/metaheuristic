@@ -41,7 +41,7 @@ public class BatchCache {
     }
 
     @Cacheable(cacheNames = "batches", unless="#result==null")
-    public Batch findById(long id) {
+    public Batch findById(Long id) {
         return batchRepository.findById(id).orElse(null);
     }
 
@@ -61,5 +61,10 @@ public class BatchCache {
         } catch (ObjectOptimisticLockingFailureException e) {
             log.warn("Error", e);
         }
+    }
+
+    @CacheEvict(cacheNames = {"batches"}, key = "#id")
+    public void evictById(Long id) {
+        //
     }
 }
