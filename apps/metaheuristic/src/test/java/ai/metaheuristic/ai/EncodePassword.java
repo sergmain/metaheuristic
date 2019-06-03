@@ -13,31 +13,28 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.pilot.beans;
 
-import lombok.Data;
-import lombok.NoArgsConstructor;
+package ai.metaheuristic.ai;
 
-import javax.persistence.*;
-import java.io.Serializable;
 
-@Entity
-@Table(name = "PILOT_BATCH_WORKBOOK")
-@Data
-@NoArgsConstructor
-public class BatchWorkbook implements Serializable {
-    private static final long serialVersionUID = -2816493662535597212L;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.junit4.SpringRunner;
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class EncodePassword {
 
-    @Version
-    private Integer version;
+    public static final String PASS = "xxx";
 
-    @Column(name = "BATCH_ID")
-    public Long batchId;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
-    @Column(name = "WORKBOOK_ID")
-    public Long workbookId;
+    @Test
+    public void testEncodePass() {
+        System.out.println(passwordEncoder.encode(PASS));
+    }
 }

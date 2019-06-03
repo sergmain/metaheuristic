@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.pilot.process_resource;
+package ai.metaheuristic.ai.batch.process_resource;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
@@ -26,10 +26,10 @@ import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
-import ai.metaheuristic.ai.pilot.beans.Batch;
-import ai.metaheuristic.ai.pilot.beans.BatchStatus;
-import ai.metaheuristic.ai.pilot.beans.BatchWorkbook;
-import ai.metaheuristic.ai.pilot.data.BatchData;
+import ai.metaheuristic.ai.batch.beans.Batch;
+import ai.metaheuristic.ai.batch.beans.BatchStatus;
+import ai.metaheuristic.ai.batch.beans.BatchWorkbook;
+import ai.metaheuristic.ai.batch.data.BatchData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.OperationStatusRest;

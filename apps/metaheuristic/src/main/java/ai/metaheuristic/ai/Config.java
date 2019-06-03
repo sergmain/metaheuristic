@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.ai.launchpad.repositories.RefToLaunchpadRepositories;
-import ai.metaheuristic.ai.pilot.process_resource.RefToPilotRepositories;
+import ai.metaheuristic.ai.batch.process_resource.RefToPilotRepositories;
 import com.google.common.cache.CacheBuilder;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.springframework.cache.Cache;

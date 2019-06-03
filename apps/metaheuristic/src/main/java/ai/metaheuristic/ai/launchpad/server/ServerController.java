@@ -99,13 +99,15 @@ public class ServerController {
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
             @SuppressWarnings("unused") String stationId,
             @SuppressWarnings("unused") Long taskId,
-            String code, String chunkSize, int chunkNum) throws IOException {
+            String code, String chunkSize, Integer chunkNum) throws IOException {
         String normalCode = new File(code).getName();
         log.debug("deliverResourceAuth(), globals.isSecurityEnabled: {}, typeAsStr: {}, code: {}, chunkSize: {}, chunkNum: {}",
                 globals.isSecurityEnabled, typeAsStr, normalCode, chunkSize, chunkNum);
-        if (chunkSize==null || chunkSize.isBlank()) {
+        if (chunkSize==null || chunkSize.isBlank() || chunkNum==null) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST);
+            return new HttpEntity<>(new ByteArrayResource(new byte[0]));
         }
+
         final HttpEntity<AbstractResource> entity = serverService.deliverResource(typeAsStr, normalCode, chunkSize, chunkNum);
         if (entity==null) {
             return new HttpEntity<>(new ByteArrayResource(new byte[0]));

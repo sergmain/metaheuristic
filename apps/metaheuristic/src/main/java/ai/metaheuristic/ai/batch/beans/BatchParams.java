@@ -14,27 +14,34 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai;
+package ai.metaheuristic.ai.batch.beans;
 
+import ai.metaheuristic.api.v1.EnumsApi;
 
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.junit4.SpringRunner;
+import java.util.List;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
-public class EncodePassord {
+/**
+ * @author Serge
+ * Date: 5/29/2019
+ * Time: 11:38 PM
+ */
+public class BatchParams {
 
-    public static final String PASS = "xxx";
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Test
-    public void testEncodePass() throws Exception {
-        System.out.println(passwordEncoder.encode(PASS));
+    public static class TaskStatus {
+        public long taskId;
+        public long stationId;
+        public String ip;
+        public String host;
+        public String execResults;
+        public EnumsApi.TaskExecState state;
     }
+
+//    public static class PilotWorkbookStatus {
+//        public TaskStatus taskStatus;
+//    }
+
+    public BatchStatus batchStatus;
+    public List<TaskStatus> taskStatuses;
+    public boolean ok = false;
+
 }

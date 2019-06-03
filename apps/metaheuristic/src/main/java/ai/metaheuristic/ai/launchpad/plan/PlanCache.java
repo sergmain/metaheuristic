@@ -25,10 +25,11 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-@Component
-@Profile("launchpad")
+@Service
 @Slf4j
+@Profile("launchpad")
 public class PlanCache {
 
     private final PlanRepository planRepository;

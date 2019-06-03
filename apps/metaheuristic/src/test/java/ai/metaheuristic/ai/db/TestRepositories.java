@@ -29,7 +29,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
-public class TestControllers {
+public class TestRepositories {
 
     @Autowired
     private LogDataRepository logDataRepository;

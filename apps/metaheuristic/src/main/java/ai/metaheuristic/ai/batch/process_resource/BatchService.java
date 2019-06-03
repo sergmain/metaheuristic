@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.pilot.process_resource;
+package ai.metaheuristic.ai.batch.process_resource;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
@@ -27,10 +27,10 @@ import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
-import ai.metaheuristic.ai.pilot.beans.Batch;
-import ai.metaheuristic.ai.pilot.beans.BatchParams;
-import ai.metaheuristic.ai.pilot.beans.BatchStatus;
-import ai.metaheuristic.ai.pilot.data.BatchData;
+import ai.metaheuristic.ai.batch.beans.Batch;
+import ai.metaheuristic.ai.batch.beans.BatchParams;
+import ai.metaheuristic.ai.batch.beans.BatchStatus;
+import ai.metaheuristic.ai.batch.data.BatchData;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.ai.yaml.pilot.BatchParamsUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
@@ -46,6 +46,7 @@ import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
@@ -64,6 +65,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @SuppressWarnings({"UnusedReturnValue"})
 @Service
 @Slf4j
+@Profile("launchpad")
 public class BatchService {
 
     private static final String PLAN_NOT_FOUND = "Plan wasn't found";

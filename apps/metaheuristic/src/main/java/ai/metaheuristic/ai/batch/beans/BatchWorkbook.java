@@ -13,28 +13,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package ai.metaheuristic.ai.batch.beans;
 
-package ai.metaheuristic.ai.pilot.data;
-
-import ai.metaheuristic.ai.pilot.beans.Batch;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * @author Serge
- * Date: 6/1/2019
- * Time: 4:21 PM
- */
-public final class BatchData {
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ProcessResourceItem {
-        public Batch batch;
-        public String planCode;
-        public String execStateStr;
-        public int execState;
-        public boolean ok;
-    }
+import javax.persistence.*;
+import java.io.Serializable;
+
+@Entity
+@Table(name = "PILOT_BATCH_WORKBOOK")
+@Data
+@NoArgsConstructor
+public class BatchWorkbook implements Serializable {
+    private static final long serialVersionUID = -2816493662535597212L;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Version
+    private Integer version;
+
+    @Column(name = "BATCH_ID")
+    public Long batchId;
+
+    @Column(name = "WORKBOOK_ID")
+    public Long workbookId;
 }

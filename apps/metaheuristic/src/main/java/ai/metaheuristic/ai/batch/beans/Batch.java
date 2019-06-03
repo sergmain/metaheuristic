@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.pilot.beans;
+package ai.metaheuristic.ai.batch.beans;
 
 import ai.metaheuristic.ai.Enums;
 import lombok.Data;

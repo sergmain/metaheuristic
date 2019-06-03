@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.pilot.process_resource;
+package ai.metaheuristic.ai.batch.process_resource;
 
-import ai.metaheuristic.ai.pilot.beans.Batch;
+import ai.metaheuristic.ai.batch.beans.Batch;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

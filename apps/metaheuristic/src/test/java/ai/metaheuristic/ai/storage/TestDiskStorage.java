@@ -14,14 +14,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.lombok;
+package ai.metaheuristic.ai.storage;
 
 import org.junit.Test;
 
-public class TestCommandMarshaling {
+/**
+ * @author Serge
+ * Date: 6/2/2019
+ * Time: 8:21 PM
+ */
+public class TestDiskStorage {
 
     @Test
-    public void test() {
+    public void testDiskStorage() {
         // TODO need to implement
     }
 }

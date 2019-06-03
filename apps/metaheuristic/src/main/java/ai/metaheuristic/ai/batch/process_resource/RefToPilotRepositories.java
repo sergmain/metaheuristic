@@ -13,7 +13,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.pilot.process_resource;
+package ai.metaheuristic.ai.batch.process_resource;
 
 public interface RefToPilotRepositories {
 }

@@ -14,21 +14,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.pilot;
+package ai.metaheuristic.ai.batch.process_resource;
 
+import ai.metaheuristic.ai.batch.beans.BatchWorkbook;
 import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
-@Controller
-@RequestMapping("/pilot")
+import java.util.List;
+
+@Repository
+@Transactional
 @Profile("launchpad")
-public class PilotIndexController {
+public interface BatchWorkbookRepository extends JpaRepository<BatchWorkbook, Long> {
 
-    @GetMapping("/index")
-    public String index() {
-        return "pilot/index";
-    }
+    @Transactional(readOnly = true)
+    @Query(value="select b.workbookId from BatchWorkbook b where b.batchId=:batchId")
+    List<Long> findWorkbookIdsByBatchId(long batchId);
 
+    void deleteByBatchId(Long batchId);
 }
