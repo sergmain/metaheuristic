@@ -56,8 +56,8 @@ public class TestExperimentToJson extends PreparingPlan {
     }
 
     @Override
-    public String getPlanParamsAsYaml() {
-        return getPlanParamsAsYaml_Simple();
+    public String getPlanYamlAsString() {
+        return getPlanYamlAsString_Simple();
     }
 
     @Test

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Process;
@@ -38,7 +39,6 @@ import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.repositories.*;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import ai.metaheuristic.api.v1.data.InputResourceParam;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
@@ -197,8 +197,9 @@ public class PlanService {
             planValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
         else {
-            log.error("Validation error: {}", planValidation.status);
-            planValidation.addErrorMessage("#561.01 Validation error: " + planValidation.status);
+            final String es = "#561.01 Validation error: " + planValidation.status;
+            log.error(es);
+            planValidation.addErrorMessage(es);
         }
         return planValidation;
     }
@@ -314,7 +315,8 @@ public class PlanService {
         if (StringUtils.isBlank(plan.getParams())) {
             return EnumsApi.PlanValidateStatus.PLAN_PARAMS_EMPTY_ERROR;
         }
-        PlanApiData.PlanYaml planYaml = PlanYamlUtils.toPlanYaml(plan.getParams());
+        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(plan.getParams());
+        PlanApiData.PlanYaml planYaml = planParams.planYaml;
         if (planYaml.getProcesses().isEmpty()) {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
@@ -515,7 +517,8 @@ public class PlanService {
         Monitoring.log("##025", Enums.Monitor.MEMORY);
 
         result.workbook = fi;
-        result.planYaml = PlanYamlUtils.toPlanYaml(plan.getParams());
+        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(plan.getParams());
+        result.planYaml = planParams.planYaml;
 
         plan.setClean( result.planYaml.clean );
         int idx = Consts.TASK_ORDER_START_VALUE;

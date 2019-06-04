@@ -17,16 +17,16 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
+import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.launchpad.Process;
-import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
-import ai.metaheuristic.api.v1.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -63,7 +63,8 @@ public class TestProcessMeta {
 
         System.out.println(s);
 
-        PlanApiData.PlanYaml yaml1 = PlanYamlUtils.toPlanYaml(s);
+        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(s);
+        PlanApiData.PlanYaml yaml1 = planParams.planYaml;
 
         Assert.assertEquals(planYaml, yaml1);
 

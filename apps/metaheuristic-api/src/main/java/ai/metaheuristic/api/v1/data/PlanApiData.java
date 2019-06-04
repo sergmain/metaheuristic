@@ -84,6 +84,7 @@ public class PlanApiData {
     @NoArgsConstructor
     public static class PlanResult extends BaseDataClass {
         public Plan plan;
+        public String planYamlAsStr;
         public EnumsApi.PlanValidateStatus status = EnumsApi.PlanValidateStatus.NOT_VERIFIED_YET;
 
         public PlanResult(String errorMessage, EnumsApi.PlanValidateStatus status) {
@@ -100,8 +101,9 @@ public class PlanApiData {
             this.errorMessages = Collections.singletonList(errorMessage);
         }
 
-        public PlanResult(Plan plan) {
+        public PlanResult(Plan plan, String planYamlAsStr) {
             this.plan = plan;
+            this.planYamlAsStr = planYamlAsStr;
         }
     }
 
@@ -167,6 +169,18 @@ public class PlanApiData {
             }
             return null;
         }
+    }
+
+    @Data
+    public static class PlanInternalParamsYaml {
+        public boolean archived;
+    }
+
+    @Data
+    public static class PlanParamsYaml {
+        public Integer version;
+        public PlanYaml planYaml;
+        public PlanInternalParamsYaml internalParams;
     }
 
 }

@@ -87,9 +87,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public InputResourceParam inputResourceParam;
 
 
-    public abstract String getPlanParamsAsYaml();
+    public abstract String getPlanYamlAsString();
 
-    public String getPlanParamsAsYaml_Simple() {
+    public String getPlanYamlAsString_Simple() {
         planYaml = new PlanApiData.PlanYaml();
         {
             Process p = new Process();
@@ -172,7 +172,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         plan = new PlanImpl();
         plan.setCode("test-plan-code");
 
-        String params = getPlanParamsAsYaml();
+        String params = getPlanYamlAsString();
         plan.setParams(params);
         plan.setCreatedOn(System.currentTimeMillis());
 

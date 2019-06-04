@@ -33,7 +33,7 @@ import ai.metaheuristic.ai.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.batch.data.BatchData;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.ai.yaml.pilot.BatchParamsUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
@@ -268,10 +268,6 @@ public class BatchService {
                     ok = false;
                 }
             }
-            // fix current state in case when data is preparing right now
-//            if (batch.execState==Enums.BatchExecState.Preparing.code) {
-//                ok = true;
-//            }
             String execStateStr = Enums.BatchExecState.toState(batch.execState).toString();
             items.add( new BatchData.ProcessResourceItem(batch, planCode, execStateStr, batch.execState, ok));
         }
@@ -636,8 +632,8 @@ public class BatchService {
                     : ".bin(???)");
         }
 
-        PlanApiData.PlanYaml planYaml = PlanYamlUtils.toPlanYaml(plan.getParams());
-        Meta meta = planYaml.getMeta(Consts.RESULT_FILE_EXTENSION);
+        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(plan.getParams());
+        Meta meta = planParams.planYaml.getMeta(Consts.RESULT_FILE_EXTENSION);
 
         return meta != null && StringUtils.isNotBlank(meta.getValue())
                 ? meta.getValue()

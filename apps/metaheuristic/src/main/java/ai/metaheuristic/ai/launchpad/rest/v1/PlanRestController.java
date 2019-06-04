@@ -57,13 +57,13 @@ public class PlanRestController {
     }
 
     @PostMapping("/plan-add-commit")
-    public PlanApiData.PlanResult addFormCommit(@RequestBody PlanImpl plan) {
-        return planTopLevelService.addPlan(plan);
+    public PlanApiData.PlanResult addFormCommit(@RequestBody PlanImpl plan, String planYamlAsStr) {
+        return planTopLevelService.addPlan(plan, planYamlAsStr);
     }
 
     @PostMapping("/plan-edit-commit")
-    public PlanApiData.PlanResult editFormCommit(@RequestBody Plan plan) {
-        return planTopLevelService.updatePlan(plan);
+    public PlanApiData.PlanResult editFormCommit(@RequestBody Plan plan, String planYamlAsStr) {
+        return planTopLevelService.updatePlan(plan, planYamlAsStr);
     }
 
     @PostMapping("/plan-delete-commit")

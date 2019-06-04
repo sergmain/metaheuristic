@@ -69,8 +69,8 @@ public abstract class FeatureMethods extends PreparingPlan {
     public boolean isCorrectInit = true;
 
     @Override
-    public String getPlanParamsAsYaml() {
-        return getPlanParamsAsYaml_Simple();
+    public String getPlanYamlAsString() {
+        return getPlanYamlAsString_Simple();
     }
 
     public void toStarted() {

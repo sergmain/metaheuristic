@@ -16,18 +16,19 @@
 
 package ai.metaheuristic.ai.yaml;
 
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
+import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Process;
-import ai.metaheuristic.api.v1.EnumsApi;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -119,10 +120,12 @@ public class TestPlanYamlYaml {
         String yaml = PlanYamlUtils.toString(planYaml);
         System.out.println(yaml);
 
-        PlanApiData.PlanYaml f1 = PlanYamlUtils.toPlanYaml(yaml);
-        assertNotNull(f1);
-        assertNotNull(f1.processes);
-        assertFalse(f1.processes.isEmpty());
+        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(yaml);
+        PlanApiData.PlanYaml py = planParams.planYaml;
+
+        assertNotNull(py);
+        assertNotNull(py.processes);
+        assertFalse(py.processes.isEmpty());
     }
 
     @Test

@@ -17,24 +17,29 @@
 package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.api.v1.launchpad.Workbook;
-import ai.metaheuristic.api.v1.data.PlanApiData;
-import ai.metaheuristic.api.v1.data.OperationStatusRest;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.launchpad.Plan;
+import ai.metaheuristic.api.v1.launchpad.Workbook;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Profile("launchpad")
@@ -57,10 +62,26 @@ public class PlanTopLevelService {
 
     public PlanApiData.PlansResult getPlans(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.planRowsLimit, pageable);
-        PlanApiData.PlansResult result = new PlanApiData.PlansResult();
-        result.items = planRepository.findAllByOrderByIdDesc(pageable);
-        result.items.forEach( o -> o.setParams(null) );
-        return result;
+        List<Plan> plans = planRepository.findAllByOrderByIdDesc();
+        AtomicInteger count = new AtomicInteger();
+        plans = plans.stream()
+                .filter(o-> {
+                    PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(o.getParams());
+                    final boolean b = ppy.internalParams == null || !ppy.internalParams.archived;
+                    if (b) {
+                        count.incrementAndGet();
+                    }
+                    return b;
+                })
+                .skip(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .peek(o-> o.setParams(null))
+                .collect(Collectors.toList());
+
+        PlanApiData.PlansResult plansResultRest = new PlanApiData.PlansResult();
+        plansResultRest.items = new PageImpl<>(plans, pageable, count.get());
+
+        return plansResultRest;
     }
 
     public PlanApiData.PlanResult getPlan(Long id) {
@@ -70,7 +91,10 @@ public class PlanTopLevelService {
                     "#560.01 plan wasn't found, planId: " + id,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
-        return new PlanApiData.PlanResult(plan);
+        String s = PlanYamlUtils.toString(
+                PlanParamsYamlUtils.to(plan.getParams()).planYaml);
+
+        return new PlanApiData.PlanResult(plan, s);
     }
 
     public PlanApiData.PlanResult validatePlan(Long id) {
@@ -79,7 +103,10 @@ public class PlanTopLevelService {
             return new PlanApiData.PlanResult("#560.02 plan wasn't found, planId: " + id,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan);
+        String s = PlanYamlUtils.toString(
+                PlanParamsYamlUtils.to(plan.getParams()).planYaml);
+
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, s);
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         result.errorMessages = planValidation.errorMessages;
         result.infoMessages = planValidation.infoMessages;
@@ -87,11 +114,11 @@ public class PlanTopLevelService {
         return result;
     }
 
-    public PlanApiData.PlanResult addPlan(PlanImpl plan) {
-        return processPlanCommit(plan);
+    public PlanApiData.PlanResult addPlan(PlanImpl plan, String planYamlAsStr) {
+        return processPlanCommit(plan, planYamlAsStr);
     }
 
-    public PlanApiData.PlanResult updatePlan(Plan planModel) {
+    public PlanApiData.PlanResult updatePlan(Plan planModel, String planYamlAsStr) {
         PlanImpl plan = planCache.findById(planModel.getId());
         if (plan == null) {
             return new PlanApiData.PlanResult(
@@ -99,11 +126,14 @@ public class PlanTopLevelService {
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
         plan.setCode(planModel.getCode());
-        plan.setParams(planModel.getParams());
-        return processPlanCommit(plan);
+
+        return processPlanCommit(plan, planYamlAsStr);
     }
 
-    private PlanApiData.PlanResult processPlanCommit(PlanImpl plan) {
+    private PlanApiData.PlanResult processPlanCommit(PlanImpl plan, String planYamlAsStr) {
+        if (StringUtils.isBlank(planYamlAsStr)) {
+            return new PlanApiData.PlanResult("#560.17 plan yaml is empty");
+        }
         if (StringUtils.isBlank(plan.code)) {
             return new PlanApiData.PlanResult("#560.20 code of plan is empty");
         }
@@ -114,11 +144,24 @@ public class PlanTopLevelService {
         if (f!=null && !f.getId().equals(plan.getId())) {
             return new PlanApiData.PlanResult("#560.33 plan with such code already exists, code: " + plan.code);
         }
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(planCache.save(plan));
+
+        // we don't use full PlanParamYaml, only PlanYamlUtils field
+        PlanApiData.PlanParamsYaml planParamsYaml = setNewPlanYaml(plan, planYamlAsStr);
+
+        plan = planCache.save(plan);
+
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, PlanYamlUtils.toString(planParamsYaml.planYaml) );
         PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
         return result;
+    }
+
+    private PlanApiData.PlanParamsYaml setNewPlanYaml(PlanImpl plan, String planYamlAsStr) {
+        PlanApiData.PlanParamsYaml ppy = plan.params!=null ? PlanParamsYamlUtils.to(plan.params) : new PlanApiData.PlanParamsYaml();
+        ppy.planYaml = PlanYamlUtils.toPlanYaml(planYamlAsStr);
+        plan.setParams(PlanParamsYamlUtils.toString(ppy));
+        return ppy;
     }
 
     public OperationStatusRest deletePlanById(Long id) {
@@ -128,6 +171,23 @@ public class PlanTopLevelService {
                     "#560.50 plan wasn't found, planId: " + id);
         }
         planCache.deleteById(id);
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public OperationStatusRest archivePlanById(Long id) {
+        PlanImpl plan = planCache.findById(id);
+        if (plan == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.50 plan wasn't found, planId: " + id);
+        }
+        PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(plan.params);
+        if (ppy.internalParams==null) {
+            ppy.internalParams = new PlanApiData.PlanInternalParamsYaml();
+        }
+        ppy.internalParams.archived = true;
+        plan.params = PlanParamsYamlUtils.toString(ppy);
+
+        plan = planCache.save(plan);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

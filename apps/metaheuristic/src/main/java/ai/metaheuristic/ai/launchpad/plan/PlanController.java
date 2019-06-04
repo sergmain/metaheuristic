@@ -16,13 +16,14 @@
 
 package ai.metaheuristic.ai.launchpad.plan;
 
-import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.api.v1.data.PlanApiData;
-import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.launchpad.Plan;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -72,7 +73,6 @@ public class PlanController {
         return "launchpad/plan/plan-add";
     }
 
-    @SuppressWarnings("Duplicates")
     @GetMapping(value = "/plan-edit/{id}")
     public String edit(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id);
@@ -81,10 +81,10 @@ public class PlanController {
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         model.addAttribute("plan", planResultRest.plan);
+        model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
         return "launchpad/plan/plan-edit";
     }
 
-    @SuppressWarnings("Duplicates")
     @GetMapping(value = "/plan-validate/{id}")
     public String validate(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         PlanApiData.PlanResult planResultRest = planTopLevelService.validatePlan(id);
@@ -94,28 +94,27 @@ public class PlanController {
         }
 
         model.addAttribute("plan", planResultRest.plan);
+        model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
         model.addAttribute("infoMessages", planResultRest.infoMessages);
         model.addAttribute("errorMessage", planResultRest.errorMessages);
         return "launchpad/plan/plan-edit";
     }
 
     @PostMapping("/plan-add-commit")
-    public String addFormCommit(Model model, PlanImpl plan, final RedirectAttributes redirectAttributes) {
-        PlanApiData.PlanResult planResultRest = planTopLevelService.addPlan(plan);
+    public String addFormCommit(Model model, PlanImpl plan, String planYamlAsStr, final RedirectAttributes redirectAttributes) {
+        PlanApiData.PlanResult planResultRest = planTopLevelService.addPlan(plan, planYamlAsStr);
         if (planResultRest.isErrorMessages()) {
-            model.addAttribute("errorMessage", planResultRest.errorMessages);
-            return "launchpad/plan/plan-add";
+            redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
         }
-
-        if (planResultRest.status== EnumsApi.PlanValidateStatus.OK ) {
+        if (planResultRest.status==EnumsApi.PlanValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("infoMessages", Collections.singletonList("Validation result: OK"));
         }
         return REDIRECT_LAUNCHPAD_PLAN_PLANS;
     }
 
     @PostMapping("/plan-edit-commit")
-    public String editFormCommit(Model model, Plan planModel, final RedirectAttributes redirectAttributes) {
-        PlanApiData.PlanResult planResultRest = planTopLevelService.updatePlan(planModel);
+    public String editFormCommit(Model model, Plan plan, String planYamlAsStr, final RedirectAttributes redirectAttributes) {
+        PlanApiData.PlanResult planResultRest = planTopLevelService.updatePlan(plan, planYamlAsStr);
         if (planResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", planResultRest.errorMessages);
             return "redirect:/launchpad/plan/plan-edit/"+planResultRest.plan.getId();
@@ -127,7 +126,6 @@ public class PlanController {
         return "redirect:/launchpad/plan/plan-edit/"+planResultRest.plan.getId();
     }
 
-    @SuppressWarnings("Duplicates")
     @GetMapping("/plan-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
         PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id);
@@ -136,12 +134,34 @@ public class PlanController {
             return REDIRECT_LAUNCHPAD_PLAN_PLANS;
         }
         model.addAttribute("plan", planResultRest.plan);
+        model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
         return "launchpad/plan/plan-delete";
     }
 
     @PostMapping("/plan-delete-commit")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = planTopLevelService.deletePlanById(id);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#560.40 plan wasn't found, id: "+id) );
+        }
+        return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+    }
+
+    @GetMapping("/plan-archive/{id}")
+    public String archive(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
+        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id);
+        if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
+            redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
+            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        }
+        model.addAttribute("plan", planResultRest.plan);
+        model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
+        return "launchpad/plan/plan-delete";
+    }
+
+    @PostMapping("/plan-archive-commit")
+    public String archiveCommit(Long id, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = planTopLevelService.archivePlanById(id);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#560.40 plan wasn't found, id: "+id) );
         }

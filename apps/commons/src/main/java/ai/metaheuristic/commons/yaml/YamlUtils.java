@@ -48,7 +48,6 @@ public class YamlUtils {
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
 
-//        Representer representer = new Representer();
         Representer representer = new Representer() {
             @Override
             protected NodeTuple representJavaBeanProperty(Object javaBean, Property property, Object propertyValue, Tag customTag) {

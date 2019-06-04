@@ -4,7 +4,7 @@
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">New plan</h1>
+        <h1 class="widget-header">Add new plan</h1>
 
         <!--/*@thymesVar id="plan" type="ai.metaheuristic.ai.launchpad.beans.PlanImpl"*/-->
         <form class="pure-form pure-form-stacked" th:object="${plan}" method="post" action="#" th:method="POST" th:action="@{/launchpad/plan/plan-add-commit}" accept-charset="UTF-8" id="plan-form" name="f">
@@ -14,8 +14,9 @@
                 <input name="code" id="code" type="text" placeholder="Code of plan" th:field="*{code}" size="50">
                 <span class="pure-form-message">This is a required field.</span>
 
-                <label for="params">Parameters of plan</label>
-                <textarea name="params" id="params" placeholder="Parameters of plan" cols="70" rows="15" th:field="*{params}" maxlength="10000"></textarea>
+                <label for="planYamlAsStr">Parameters of plan</label>
+                <textarea name="planYamlAsStr" id="planYamlAsStr" placeholder="Parameters of plan" cols="70" rows="15"
+                          th:text="${planYamlAsStr}" maxlength="10000"></textarea>
                 <span class="pure-form-message">This is a required field.</span>
 
                 <table>

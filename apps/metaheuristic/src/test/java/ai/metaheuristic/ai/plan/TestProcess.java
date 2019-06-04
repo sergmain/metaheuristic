@@ -16,13 +16,13 @@
 
 package ai.metaheuristic.ai.plan;
 
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.launchpad.Process;
-import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -52,8 +52,8 @@ public class TestProcess {
         planYaml.processes.add(p);
 
         String s = PlanYamlUtils.toString(planYaml);
-
-        PlanApiData.PlanYaml planYaml1 = PlanYamlUtils.toPlanYaml(s);
+        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(s);
+        PlanApiData.PlanYaml planYaml1 = planParams.planYaml;
 
         Process p1 = planYaml1.getProcesses().get(0);
 

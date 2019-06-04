@@ -4,7 +4,7 @@
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">Delete the plan</h1>
+        <h1 class="widget-header">Archive the plan</h1>
 
         <!--/*@thymesVar id="plan" type="ai.metaheuristic.ai.launchpad.beans.PlanImpl"*/-->
         <form class="pure-form pure-form-stacked" th:object="${plan}">
@@ -23,13 +23,13 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${plan}" th:method="post" th:action="@{/launchpad/plan/plan-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${plan}" th:method="post" th:action="@{/launchpad/plan/plan-archive-commit}"
                           accept-charset="UTF-8"
-                          id="plan-delete-commit"
+                          id="plan-archive-commit"
                           name="f">
                         <input type="hidden" th:field="*{id}"/>
                         <fieldset>
-                            <button type="submit" class="pure-button pure-button-primary">Delete</button>
+                            <button type="submit" class="pure-button pure-button-primary">Archive</button>
                         </fieldset>
                     </form>
                 </td>
@@ -37,7 +37,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/plan/plans}" accept-charset="UTF-8" id="plan-delete-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/plan/plans}" accept-charset="UTF-8" id="plan-archive-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

@@ -52,8 +52,8 @@ public class TestPlanService extends PreparingPlan {
     public TaskCollector taskCollector;
 
     @Override
-    public String getPlanParamsAsYaml() {
-        return getPlanParamsAsYaml_Simple();
+    public String getPlanYamlAsString() {
+        return getPlanYamlAsString_Simple();
     }
 
     @After

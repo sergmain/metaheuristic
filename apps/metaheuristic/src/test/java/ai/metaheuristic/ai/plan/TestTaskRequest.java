@@ -50,8 +50,8 @@ public class TestTaskRequest extends FeatureMethods {
     public TaskService taskService;
 
     @Override
-    public String getPlanParamsAsYaml() {
-        return getPlanParamsAsYaml_Simple();
+    public String getPlanYamlAsString() {
+        return getPlanYamlAsString_Simple();
     }
 
     @Test
