@@ -63,9 +63,9 @@ public class DiskResourceProvider implements ResourceProvider {
         DiskInfo diskInfo = dataStorageParams.disk;
 
         EnvYaml env = envService.getEnvYaml();
-        DiskStorage diskStorage = env.findDiskStorageByCode(diskInfo.env);
+        DiskStorage diskStorage = env.findDiskStorageByCode(diskInfo.code);
         if (diskStorage==null) {
-            throw new ResourceProviderException("#015.020 The disk storage wasn't found for code: " + diskInfo.env);
+            throw new ResourceProviderException("#015.020 The disk storage wasn't found for code: " + diskInfo.code);
         }
         File path = new File(diskStorage.path);
         if (!path.exists()) {
@@ -73,7 +73,7 @@ public class DiskResourceProvider implements ResourceProvider {
         }
 
         AssetFile assetFile;
-        if (diskInfo.code.equals("*")) {
+        if (diskInfo.mask.equals("*")) {
             assetFile = new AssetFile();
             // TODO 2019.05.08 is this correct to declare file with '*' ?
             assetFile.setFile( new File(path, "*") );
@@ -84,7 +84,7 @@ public class DiskResourceProvider implements ResourceProvider {
             assetFile.setFileLength(0);
         }
         else {
-            assetFile = ResourceUtils.prepareAssetFile(path, null, diskInfo.code);
+            assetFile = ResourceUtils.prepareAssetFile(path, null, diskInfo.mask);
         }
 
         return Collections.singletonList(assetFile);
@@ -112,9 +112,9 @@ public class DiskResourceProvider implements ResourceProvider {
             StationTask task, String outputResourceCode, DataStorageParams dataStorageParams) {
 
         EnvYaml env = envService.getEnvYaml();
-        DiskStorage diskStorage = env.findDiskStorageByCode(dataStorageParams.disk.env);
+        DiskStorage diskStorage = env.findDiskStorageByCode(dataStorageParams.disk.code);
         if (diskStorage==null) {
-            throw new ResourceProviderException("#015.037 The disk storage wasn't found for code: " + dataStorageParams.disk.env);
+            throw new ResourceProviderException("#015.037 The disk storage wasn't found for code: " + dataStorageParams.disk.code);
         }
         File path = new File(diskStorage.path);
         if (!path.exists()) {

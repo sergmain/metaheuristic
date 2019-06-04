@@ -39,7 +39,7 @@
             <th>Created on</th>
             <th>Is valid?</th>
             <th>Is locked?</th>
-            <th colspan="3">&nbsp;</th>
+            <th colspan="4">&nbsp;</th>
         </tr>
         </thead>
         <tbody>
@@ -53,7 +53,7 @@
                    th:disabled="${f.locked}"
                    th:href="${'/launchpad/plan/plan-edit/' + f.id}">Edit</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/plan-delete/' + f.id}">Delete</a></td>
-            <!--th:disabled="${not f.valid}"-->
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/plan/plan-archive/' + f.id}">To archive</a></td>
             <td><a class="pure-button pure-button-primary"
                    th:href="${'/launchpad/plan/workbooks/' + f.id}">Workbooks</a></td>
         </tr>

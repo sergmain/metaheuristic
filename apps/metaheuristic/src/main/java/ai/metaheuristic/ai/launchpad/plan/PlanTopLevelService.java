@@ -35,6 +35,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,12 +67,19 @@ public class PlanTopLevelService {
         AtomicInteger count = new AtomicInteger();
         plans = plans.stream()
                 .filter(o-> {
-                    PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(o.getParams());
-                    final boolean b = ppy.internalParams == null || !ppy.internalParams.archived;
-                    if (b) {
-                        count.incrementAndGet();
+                    try {
+                        PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(o.getParams());
+                        final boolean b = ppy.internalParams == null || !ppy.internalParams.archived;
+                        if (b) {
+                            count.incrementAndGet();
+                        }
+                        return b;
+                    } catch (YAMLException e) {
+                        log.error("#560.300 Can't parse Plan params. It's broken or unknown version. Plan id: #{}", o.getId());
+                        log.error("#560.301 Parama:\n{}", o.getParams());
+                        log.error("#560.302 Error: {}", e.toString());
+                        return false;
                     }
-                    return b;
                 })
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize())
@@ -88,7 +96,7 @@ public class PlanTopLevelService {
         final PlanImpl plan = planCache.findById(id);
         if (plan == null) {
             return new PlanApiData.PlanResult(
-                    "#560.01 plan wasn't found, planId: " + id,
+                    "#560.001 plan wasn't found, planId: " + id,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
         String s = PlanYamlUtils.toString(
@@ -100,7 +108,7 @@ public class PlanTopLevelService {
     public PlanApiData.PlanResult validatePlan(Long id) {
         final PlanImpl plan = planCache.findById(id);
         if (plan == null) {
-            return new PlanApiData.PlanResult("#560.02 plan wasn't found, planId: " + id,
+            return new PlanApiData.PlanResult("#560.002 plan wasn't found, planId: " + id,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
         String s = PlanYamlUtils.toString(
@@ -122,7 +130,7 @@ public class PlanTopLevelService {
         PlanImpl plan = planCache.findById(planModel.getId());
         if (plan == null) {
             return new PlanApiData.PlanResult(
-                    "#560.10 plan wasn't found, planId: " + planModel.getId(),
+                    "#560.010 plan wasn't found, planId: " + planModel.getId(),
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
         plan.setCode(planModel.getCode());
@@ -132,17 +140,17 @@ public class PlanTopLevelService {
 
     private PlanApiData.PlanResult processPlanCommit(PlanImpl plan, String planYamlAsStr) {
         if (StringUtils.isBlank(planYamlAsStr)) {
-            return new PlanApiData.PlanResult("#560.17 plan yaml is empty");
+            return new PlanApiData.PlanResult("#560.017 plan yaml is empty");
         }
         if (StringUtils.isBlank(plan.code)) {
-            return new PlanApiData.PlanResult("#560.20 code of plan is empty");
+            return new PlanApiData.PlanResult("#560.020 code of plan is empty");
         }
         if (StringUtils.isBlank(plan.code)) {
-            return new PlanApiData.PlanResult("#560.30 plan is empty");
+            return new PlanApiData.PlanResult("#560.030 plan is empty");
         }
         Plan f = planRepository.findByCode(plan.code);
         if (f!=null && !f.getId().equals(plan.getId())) {
-            return new PlanApiData.PlanResult("#560.33 plan with such code already exists, code: " + plan.code);
+            return new PlanApiData.PlanResult("#560.033 plan with such code already exists, code: " + plan.code);
         }
 
         // we don't use full PlanParamYaml, only PlanYamlUtils field
@@ -168,7 +176,7 @@ public class PlanTopLevelService {
         Plan plan = planCache.findById(id);
         if (plan == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.50 plan wasn't found, planId: " + id);
+                    "#560.050 plan wasn't found, planId: " + id);
         }
         planCache.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -178,7 +186,7 @@ public class PlanTopLevelService {
         PlanImpl plan = planCache.findById(id);
         if (plan == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.50 plan wasn't found, planId: " + id);
+                    "#560.055 plan wasn't found, planId: " + id);
         }
         PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(plan.params);
         if (ppy.internalParams==null) {
@@ -200,17 +208,17 @@ public class PlanTopLevelService {
     public PlanApiData.WorkbookResult addWorkbook(Long planId, String poolCode, String inputResourceParams) {
         PlanApiData.WorkbookResult result = new PlanApiData.WorkbookResult(planCache.findById(planId));
         if (result.plan == null) {
-            result.addErrorMessage("#560.60 plan wasn't found, planId: " + planId);
+            result.addErrorMessage("#560.060 plan wasn't found, planId: " + planId);
             return result;
         }
 
         if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams) ) {
-            result.addErrorMessage("#560.63 both inputResourcePoolCode of Workbook and inputResourceParams are empty");
+            result.addErrorMessage("#560.063 both inputResourcePoolCode of Workbook and inputResourceParams are empty");
             return result;
         }
 
         if (StringUtils.isNotBlank(poolCode) && StringUtils.isNotBlank(inputResourceParams) ) {
-            result.addErrorMessage("#560.65 both inputResourcePoolCode of Workbook and inputResourceParams aren't empty");
+            result.addErrorMessage("#560.065 both inputResourcePoolCode of Workbook and inputResourceParams aren't empty");
             return result;
         }
 
@@ -224,7 +232,7 @@ public class PlanTopLevelService {
         PlanApiData.TaskProducingResultComplex producingResult = planService.createWorkbook(result.plan.getId(),
                 StringUtils.isNotBlank(inputResourceParams) ? inputResourceParams : PlanService.asInputResourceParams(poolCode));
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
-            result.addErrorMessage("#560.72 Error creating workbook: " + producingResult.planProducingStatus);
+            result.addErrorMessage("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
             return result;
         }
         result.workbook = producingResult.workbook;
@@ -232,7 +240,7 @@ public class PlanTopLevelService {
         // ugly work-around on ObjectOptimisticLockingFailureException, StaleObjectStateException
         result.plan = planCache.findById(planId);
         if (result.plan == null) {
-            return new PlanApiData.WorkbookResult("#560.73 plan wasn't found, planId: " + planId);
+            return new PlanApiData.WorkbookResult("#560.073 plan wasn't found, planId: " + planId);
         }
 
         // validate the plan + the workbook
@@ -246,13 +254,13 @@ public class PlanTopLevelService {
         PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, result.getPlan(), producingResult.workbook);
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             planService.changeValidStatus(producingResult.workbook, false);
-            result.addErrorMessage("#560.77 plan producing was failed, status: " + countTasks.planProducingStatus);
+            result.addErrorMessage("#560.077 plan producing was failed, status: " + countTasks.planProducingStatus);
             return result;
         }
 
         if (globals.maxTasksPerPlan < countTasks.numberOfTasks) {
             planService.changeValidStatus(producingResult.workbook, false);
-            result.addErrorMessage("#560.81 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
+            result.addErrorMessage("#560.081 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                     "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + countTasks.numberOfTasks);
             return result;
         }
@@ -288,7 +296,7 @@ public class PlanTopLevelService {
 
         Workbook fi = workbookRepository.findById(workbookId).orElse(null);
         if (fi==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.84 Workbook wasn't found, workbookId: " + workbookId );
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.084 Workbook wasn't found, workbookId: " + workbookId );
         }
         planService.deleteWorkbook(workbookId, fi.getPlanId());
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -297,7 +305,7 @@ public class PlanTopLevelService {
     public OperationStatusRest changeWorkbookExecState(String state, Long workbookId) {
         EnumsApi.WorkbookExecState execState = EnumsApi.WorkbookExecState.valueOf(state.toUpperCase());
         if (execState== EnumsApi.WorkbookExecState.UNKNOWN) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.87 Unknown exec state, state: " + state);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.070 Unknown exec state, state: " + state);
         }
         //noinspection UnnecessaryLocalVariable
         OperationStatusRest status = planService.workbookTargetExecState(workbookId, execState);
@@ -311,7 +319,7 @@ public class PlanTopLevelService {
         PlanApiData.WorkbookResult workbook = planService.getWorkbookExtended(workbookId);
         if (workbook.isErrorMessages()) {
             return new PlanApiData.TaskProducingResult(
-                    List.of("#560.10 plan wasn't found, workbookId: " + workbookId),
+                    List.of("#560.100 plan wasn't found, workbookId: " + workbookId),
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR, null, null );
 
         }
@@ -329,7 +337,7 @@ public class PlanTopLevelService {
         Workbook workbook = workbookRepository.findById(workbookId).orElse(null);
         if (workbook == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.57 workbook wasn't found, workbookId: " + workbookId);
+                    "#560.057 workbook wasn't found, workbookId: " + workbookId);
         }
         planService.changeValidStatus(workbook, state);
         return OperationStatusRest.OPERATION_STATUS_OK;

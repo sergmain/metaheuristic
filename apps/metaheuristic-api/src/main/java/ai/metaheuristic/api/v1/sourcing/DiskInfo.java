@@ -25,8 +25,6 @@ import lombok.Data;
  */
 @Data
 public class DiskInfo {
+    public String mask;
     public String code;
-    public String env;
-
-    public String path;
 }

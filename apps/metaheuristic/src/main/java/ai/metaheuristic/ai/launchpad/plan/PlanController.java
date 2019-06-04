@@ -23,7 +23,6 @@ import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -156,7 +155,7 @@ public class PlanController {
         }
         model.addAttribute("plan", planResultRest.plan);
         model.addAttribute("planYamlAsStr", planResultRest.planYamlAsStr);
-        return "launchpad/plan/plan-delete";
+        return "launchpad/plan/plan-archive";
     }
 
     @PostMapping("/plan-archive-commit")
