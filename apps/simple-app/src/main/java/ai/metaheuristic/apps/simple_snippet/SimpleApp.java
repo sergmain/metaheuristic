@@ -66,8 +66,9 @@ public class SimpleApp implements CommandLineRunner {
     }
 
     public String getInputFile() {
-        //noinspection unchecked
+        @SuppressWarnings("unchecked")
         Map<String, List<String>> inputResourceCodes = (Map)cfg.get("inputResourceAbsolutePaths");
+
         Collection<List<String>> values = inputResourceCodes.values();
         if (values.isEmpty()) {
             throw new IllegalStateException("inputResourceAbsolutePaths is empty");

@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.plan;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import org.junit.Test;
@@ -36,7 +36,7 @@ public class TestResourcePools {
         new ArrayList<>();
         p.collectedInputs.put("aaa", new ArrayList<>(List.of("a1", "a2", "a3")));
         p.inputStorageUrls = new HashMap<>();
-        p.inputStorageUrls.put("aaa", Consts.SOURCING_LAUNCHPAD_PARAMS);
+        p.inputStorageUrls.put("aaa", new DataStorageParams(EnumsApi.DataSourcing.launchpad));
 
         PlanService.ResourcePools p1 = new PlanService.ResourcePools();
         p1.collectedInputs.put("aaa", new ArrayList<>(List.of("a4")));
@@ -60,7 +60,7 @@ public class TestResourcePools {
 
         assertEquals(2, p.inputStorageUrls.keySet().size());
         DataStorageParams params = p.inputStorageUrls.get("aaa");
-        assertEquals(Consts.SOURCING_LAUNCHPAD_PARAMS.sourcing, params.sourcing);
+        assertEquals(new DataStorageParams(EnumsApi.DataSourcing.launchpad).sourcing, params.sourcing);
 
         params = p.inputStorageUrls.get("bbb");
         assertEquals(SOURCING_DISK_PARAMS.sourcing, params.sourcing);

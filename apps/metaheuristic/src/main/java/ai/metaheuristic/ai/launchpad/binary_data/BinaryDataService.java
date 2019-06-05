@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.binary_data;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
@@ -176,7 +175,7 @@ public class BinaryDataService {
                 data.setFilename(filename);
                 data.setRefId(refId);
                 data.setRefType(refType!=null ? refType.toString() : null);
-                data.setParams(Consts.SOURCING_LAUNCHPAD_PARAMS_STR);
+                data.setParams(DataStorageParamsUtils.toString(new DataStorageParams(DataSourcing.launchpad)));
             } else {
                 if (!poolCode.equals(data.getPoolCode())) {
                     // this is exception for the case when two resources have the same names but different pool codes

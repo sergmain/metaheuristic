@@ -1,0 +1,43 @@
+clean: false
+hyperParams:
+  RNN: LSTM
+  aaa: '13'
+  batches: '20'
+  seed: '42'
+inputResourceAbsolutePaths: {
+}
+inputResourceCodes:
+  feature:
+    - 649-941-3-snippet-03-1_1-feature-processing
+    - 649-941-3-snippet-04-1_1-feature-processing
+    - 649-941-3-snippet-05-1_1-feature-processing
+  assembled-raw:
+    - 649-941-1-snippet-01-1_1-assembly-raw-file
+  dataset:
+    - 649-941-2-snippet-02-1_1-dataset-processing
+outputResourceCode: task-51648-ml_model.bin
+resourceStorageUrls:
+  649-941-3-snippet-03-1_1-feature-processing: &id001
+    sourcing: launchpad
+    storageType: feature-output
+  649-941-1-snippet-01-1_1-assembly-raw-file:
+    sourcing: launchpad
+    storageType: assembled-raw-output
+  task-51648-ml_model.bin:
+    sourcing: launchpad
+  649-941-3-snippet-04-1_1-feature-processing: *id001
+  649-941-3-snippet-05-1_1-feature-processing: *id001
+  649-941-2-snippet-02-1_1-dataset-processing:
+    sourcing: launchpad
+    storageType: dataset-processing-output
+snippet:
+  checksum: sha2
+  code: test.fit.snippet:1.0
+  env: python-3
+  file: fit-filename.txt
+  info:
+    length: 17
+    signed: false
+  metrics: false
+  skipParams: false
+  type: fit

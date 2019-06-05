@@ -16,12 +16,12 @@
 
 package ai.metaheuristic.ai.plan;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Process;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
@@ -47,7 +47,7 @@ public class TestProcessMeta {
             p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = "test-experiment-code-01";
-            p.outputParams = Consts.SOURCING_LAUNCHPAD_PARAMS;
+            p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
 
             p.metas.addAll(
                     Arrays.asList(

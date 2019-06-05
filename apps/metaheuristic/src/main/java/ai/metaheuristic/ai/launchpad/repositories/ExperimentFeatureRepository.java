@@ -35,9 +35,11 @@ public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFe
     @Transactional(readOnly = true)
     List<ExperimentFeature> findByExperimentId(Long experimentId);
 
+    @Transactional(readOnly = true)
     @Query("SELECT f.id, f.resourceCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
     List<Object[]> getAsExperimentFeatureSimpleByExperimentId(Long experimentId);
 
+    @Transactional(readOnly = true)
     @Query("SELECT f.checksumIdCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
     List<String> getChecksumIdCodesByExperimentId(long experimentId);
 

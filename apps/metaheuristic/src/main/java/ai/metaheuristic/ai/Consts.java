@@ -84,9 +84,6 @@ public class Consts {
     public static final String MODEL_ATTR_ERROR_MESSAGE = "errorMessage";
     public static final String MODEL_ATTR_INFO_MESSAGES = "infoMessages";
 
-    public static final DataStorageParams SOURCING_LAUNCHPAD_PARAMS = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-    public static final String SOURCING_LAUNCHPAD_PARAMS_STR = DataStorageParamsUtils.toString(SOURCING_LAUNCHPAD_PARAMS);
-
     public static final String RESULT_FILE_EXTENSION = "result-file-extension";
     public static final String UNKNOWN_INFO = "[unknown]";
 }

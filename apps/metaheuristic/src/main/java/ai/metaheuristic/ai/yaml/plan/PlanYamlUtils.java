@@ -15,11 +15,11 @@
  */
 package ai.metaheuristic.ai.yaml.plan;
 
-import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Process;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
 public class PlanYamlUtils {
@@ -36,7 +36,7 @@ public class PlanYamlUtils {
         final PlanApiData.PlanYaml p = getYaml().load(s);
         for (Process process : p.processes) {
             if (process.outputParams==null) {
-                process.outputParams = Consts.SOURCING_LAUNCHPAD_PARAMS;
+                process.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             }
         }
         return p;

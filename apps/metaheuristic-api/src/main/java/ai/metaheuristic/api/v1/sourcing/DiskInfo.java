@@ -25,6 +25,20 @@ import lombok.Data;
  */
 @Data
 public class DiskInfo {
+    /**
+     * A file mask. Can include * and ? as well
+     */
     public String mask;
+
+    /**
+     * A code for directory. This code must be configured at station side in file env.yaml
+     */
     public String code;
+
+    /**
+     * A direct path to file(s), path + mask
+     * i.e. \tmp\some-dir\file??.*
+     */
+    public String path;
+
 }

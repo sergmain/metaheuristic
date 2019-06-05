@@ -67,10 +67,8 @@ public class ExperimentProcessService {
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
         Map<String, DataStorageParams> inputStorageUrls = pools.inputStorageUrls;
 
-        Experiment e = experimentRepository.findByCode(process.code);
-
-        // real copy of experiment
-        e = experimentCache.findById(e.getId());
+        Long experimentId = experimentRepository.findIdByCode(process.code);
+        Experiment e = experimentCache.findById(experimentId);
         PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
         if (e==null) {
             result.status = EnumsApi.PlanProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;

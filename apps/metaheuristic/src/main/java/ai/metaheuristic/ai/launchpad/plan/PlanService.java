@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Process;
-import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
@@ -320,12 +319,6 @@ public class PlanService {
         if (planYaml.getProcesses().isEmpty()) {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
-/*
-        // TODO 2019-05-09 decide to delete or don't this check
-        if (StringUtils.isBlank(planYaml.getProcesses().get(0).inputType)) {
-            return Enums.PlanValidateStatus.INPUT_TYPE_EMPTY_ERROR;
-        }
-*/
 
         Process lastProcess = null;
         boolean experimentPresent = false;
@@ -599,12 +592,12 @@ public class PlanService {
                 workbook.setExecState(EnumsApi.WorkbookExecState.FINISHED.code);
                 Workbook instance = save(workbook);
 
-                Experiment e = experimentRepository.findByWorkbookId(instance.getId());
-                if (e==null) {
+                Long experimentId = experimentRepository.findIdByWorkbookId(instance.getId());
+                if (experimentId==null) {
                     log.info("#701.23 Can't store an experiment to atlas, the workbook "+instance.getId()+" doesn't contain an experiment" );
                     return instance;
                 }
-                atlasService.toAtlas(instance.getId(), e.getId());
+                atlasService.toAtlas(instance.getId(), experimentId);
                 return instance;
             }
             return workbook;

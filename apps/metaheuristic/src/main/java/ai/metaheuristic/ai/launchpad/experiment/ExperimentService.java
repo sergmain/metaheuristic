@@ -136,11 +136,11 @@ public class ExperimentService {
     }
 
     public void updateMaxValueForExperimentFeatures(Long workbookId) {
-        Experiment e = experimentRepository.findByWorkbookId(workbookId);
-        if (e==null) {
+        Long experimentId = experimentRepository.findIdByWorkbookId(workbookId);
+        if (experimentId==null) {
             return;
         }
-        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(e.getId());
+        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experimentId);
         log.info("Start calculatingMaxValueOfMetrics");
         for (ExperimentFeature feature : features) {
             double value = metricsMaxValueCollector.calcMaxValueForMetrics(feature.getId());
@@ -386,13 +386,13 @@ public class ExperimentService {
 
     public void resetExperiment(long workbookId) {
 
-        Experiment e = experimentRepository.findByWorkbookId(workbookId);
-        if (e==null) {
+        Long experimentId = experimentRepository.findIdByWorkbookId(workbookId);
+        if (experimentId==null) {
             return;
         }
-        experimentFeatureRepository.deleteByExperimentId(e.getId());
+        experimentFeatureRepository.deleteByExperimentId(experimentId);
 
-        e = experimentCache.findById(e.getId());
+        Experiment e = experimentCache.findById(experimentId);
 
         e.setWorkbookId(null);
         e.setAllTaskProduced(false);
@@ -528,7 +528,7 @@ public class ExperimentService {
                             type = EnumsApi.ExperimentTaskType.PREDICT;
 
                             // TODO 2019.05.02 add implementation of disk storage for models
-                            yaml.resourceStorageUrls.put(modelFilename, Consts.SOURCING_LAUNCHPAD_PARAMS);
+                            yaml.resourceStorageUrls.put(modelFilename, new DataStorageParams(EnumsApi.DataSourcing.launchpad));
 //                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                         } else {
                             throw new IllegalStateException("#179.31 Not supported type of snippet encountered, type: " + snippet.getType());

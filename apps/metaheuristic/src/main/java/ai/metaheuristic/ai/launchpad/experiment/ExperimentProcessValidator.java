@@ -44,12 +44,14 @@ public class ExperimentProcessValidator implements ProcessValidator {
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
+    private final ExperimentCache experimentCache;
     private final WorkbookRepository workbookRepository;
 
-    public ExperimentProcessValidator(SnippetRepository snippetRepository, SnippetService snippetService, ExperimentRepository experimentRepository, WorkbookRepository workbookRepository) {
+    public ExperimentProcessValidator(SnippetRepository snippetRepository, SnippetService snippetService, ExperimentRepository experimentRepository, ExperimentCache experimentCache, WorkbookRepository workbookRepository) {
         this.snippetRepository = snippetRepository;
         this.snippetService = snippetService;
         this.experimentRepository = experimentRepository;
+        this.experimentCache = experimentCache;
         this.workbookRepository = workbookRepository;
     }
 
@@ -78,7 +80,8 @@ public class ExperimentProcessValidator implements ProcessValidator {
                 return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }
-        Experiment e = experimentRepository.findByCode(process.code);
+        Long experimentId = experimentRepository.findIdByCode(process.code);
+        Experiment e = experimentCache.findById(experimentId);
         if (e==null) {
             return EnumsApi.PlanValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
         }

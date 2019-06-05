@@ -31,7 +31,9 @@ public interface ExperimentTaskFeatureRepository extends CrudRepository<Experime
     @Transactional
     void deleteByWorkbookId(long workbookId);
 
+    @Transactional(readOnly = true)
     ExperimentTaskFeature findByTaskId(Long taskId);
 
+    @Transactional(readOnly = true)
     List<ExperimentTaskFeature> findByWorkbookId(long workbookID);
 }

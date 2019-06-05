@@ -102,7 +102,8 @@ public abstract class PreparingExperiment {
         try {
             long mills;
 
-            Experiment e = experimentRepository.findByCode(TEST_EXPERIMENT_CODE_01);
+            Long experimentId = experimentRepository.findIdByCode(TEST_EXPERIMENT_CODE_01);
+            Experiment e = experimentId!=null ? experimentCache.findById(experimentId) : null;
             if (e!=null) {
                 experimentCache.delete(e);
             }

@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,11 +43,15 @@ public interface ExperimentRepository extends CrudRepository<Experiment, Long> {
     @Transactional(readOnly = true)
     Slice<Experiment> findAllByOrderByIdDesc(Pageable pageable);
 
-    Experiment findByWorkbookId(long workbookId);
+    @Transactional(readOnly = true)
+    @Query(value="select e.id from Experiment e where e.workbookId=:workbookId")
+    Long findIdByWorkbookId(long workbookId);
 
     @Override
     @Transactional(readOnly = true)
     List<Experiment> findAll();
 
-    Experiment findByCode(String code);
+    @Transactional(readOnly = true)
+    @Query(value="select e.id from Experiment e where e.code=:code")
+    Long findIdByCode(String code);
 }

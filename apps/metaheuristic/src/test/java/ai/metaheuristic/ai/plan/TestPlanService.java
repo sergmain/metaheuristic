@@ -80,13 +80,13 @@ public class TestPlanService extends PreparingPlan {
 
         int taskNumber = 0;
         for (Process process : planYaml.processes) {
-            if (process.type== EnumsApi.ProcessType.EXPERIMENT) {
+            if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }
             taskNumber += process.snippetCodes.size();
         }
 
-        assertEquals( 1+1+3+ 2*12*7, taskNumber +  experiment.getNumberOfTask());
+        assertEquals(1 + 1 + 3 + 2 * 12 * 7, taskNumber + experiment.getNumberOfTask());
 
         // ======================
 
@@ -97,80 +97,118 @@ public class TestPlanService extends PreparingPlan {
         assertNull(simpleTask0);
 
         workbook = planService.toStarted(workbook);
+        {
+            TaskService.TasksAndAssignToStationResult assignToStation =
+                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
-        TaskService.TasksAndAssignToStationResult assignToStation =
+            Protocol.AssignedTask.Task simpleTask = assignToStation.getSimpleTask();
+
+            assertNotNull(simpleTask);
+            assertNotNull(simpleTask.getTaskId());
+            Task task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
+            assertNotNull(task);
+            assertEquals(1, task.getOrder());
+
+            TaskService.TasksAndAssignToStationResult assignToStation2 =
+                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            assertNull(assignToStation2.getSimpleTask());
+
+            storeExecResult(simpleTask);
+            planService.markOrderAsProcessed();
+        }
+        {
+            TaskService.TasksAndAssignToStationResult assignToStation20 =
+                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+
+            Protocol.AssignedTask.Task simpleTask20 = assignToStation20.getSimpleTask();
+
+            assertNotNull(simpleTask20);
+            assertNotNull(simpleTask20.getTaskId());
+            Task task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
+            assertNotNull(task3);
+            assertEquals(2, task3.getOrder());
+
+            TaskService.TasksAndAssignToStationResult assignToStation21 =
+                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            assertNull(assignToStation21.getSimpleTask());
+
+            storeExecResult(simpleTask20);
+            planService.markOrderAsProcessed();
+        }
+        {
+            TaskService.TasksAndAssignToStationResult assignToStation30 =
+                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+
+            Protocol.AssignedTask.Task simpleTask30 = assignToStation30.getSimpleTask();
+            assertNotNull(simpleTask30);
+            assertNotNull(simpleTask30.getTaskId());
+            Task task30 = taskRepository.findById(simpleTask30.getTaskId()).orElse(null);
+            assertNotNull(task30);
+            assertEquals(3, task30.getOrder());
+
+            TaskService.TasksAndAssignToStationResult assignToStation31 =
+                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+
+            Protocol.AssignedTask.Task simpleTask31 = assignToStation31.getSimpleTask();
+            assertNull(simpleTask31);
+
+            storeExecResult(simpleTask30);
+            planService.markOrderAsProcessed();
+        }
+        {
+            TaskService.TasksAndAssignToStationResult assignToStation32 =
+                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+
+            Protocol.AssignedTask.Task simpleTask32 = assignToStation32.getSimpleTask();
+            assertNotNull(simpleTask32);
+            assertNotNull(simpleTask32.getTaskId());
+            Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
+            assertNotNull(task32);
+            assertEquals(3, task32.getOrder());
+            storeExecResult(simpleTask32);
+            planService.markOrderAsProcessed();
+        }
+        int j;
+        for ( j = 0; j < 1000; j++) {
+
+            System.out.println("j = " + j);
+            TaskService.TasksAndAssignToStationResult loopAssignToStation =
+                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+
+            Protocol.AssignedTask.Task loopSimpleTask = loopAssignToStation.getSimpleTask();
+            assertNotNull(loopSimpleTask);
+            assertNotNull(loopSimpleTask.getTaskId());
+            Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
+            assertNotNull(loopTask);
+            taskPersistencer.setResultReceived(loopSimpleTask.getTaskId(), true);
+            planService.markOrderAsProcessed();
+            if (loopTask.getOrder()==4) {
+                break;
+            }
+        }
+        assertNotEquals(1000, j);
+
+        TaskService.TasksAndAssignToStationResult assignToStation40 =
                 taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
-        Protocol.AssignedTask.Task simpleTask = assignToStation.getSimpleTask();
+        Protocol.AssignedTask.Task simpleTask40 = assignToStation40.getSimpleTask();
+        assertNotNull(simpleTask40);
+        assertNotNull(simpleTask40.getTaskId());
+        Task task40 = taskRepository.findById(simpleTask40.getTaskId()).orElse(null);
+        assertNotNull(task40);
+        assertEquals(4, task40.getOrder());
+        taskPersistencer.setResultReceived(simpleTask40.getTaskId(), true);
 
-//        if (true)  throw new NotImplementedException("Not yet");
+        int i=0;
+    }
 
-        assertNotNull(simpleTask);
-        assertNotNull(simpleTask.getTaskId());
-        Task task = taskRepository.findById(simpleTask.getTaskId()). orElse(null);
-        assertNotNull(task);
-        assertEquals(1, task.getOrder());
-
-        TaskService.TasksAndAssignToStationResult assignToStation2 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-        assertNull(assignToStation2.getSimpleTask());
-
+    public void storeExecResult(Protocol.AssignedTask.Task simpleTask) {
         SimpleTaskExecResult r = new SimpleTaskExecResult();
         r.setTaskId(simpleTask.getTaskId());
         r.setMetrics(null);
         r.setResult(getOKExecResult());
         taskPersistencer.storeExecResult(r);
         taskPersistencer.setResultReceived(simpleTask.getTaskId(), true);
-        planService.markOrderAsProcessed();
-
-        TaskService.TasksAndAssignToStationResult assignToStation3 =
-                taskService.getTaskAndAssignToStation(
-                        station.getId(), false, workbook.getId());
-
-        Protocol.AssignedTask.Task simpleTask3 = assignToStation3.getSimpleTask();
-
-        assertNotNull(simpleTask3);
-        assertNotNull(simpleTask3.getTaskId());
-        Task task3 = taskRepository.findById(simpleTask3.getTaskId()). orElse(null);
-        assertNotNull(task3);
-        assertEquals(2, task3.getOrder());
-
-        TaskService.TasksAndAssignToStationResult assignToStation4 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-        assertNull(assignToStation4.getSimpleTask());
-
-        taskPersistencer.setResultReceived(simpleTask3.getTaskId(), true);
-        planService.markOrderAsProcessed();
-
-        TaskService.TasksAndAssignToStationResult assignToStation51 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-
-        Protocol.AssignedTask.Task simpleTask51 = assignToStation51.getSimpleTask();
-        assertNotNull(simpleTask51);
-        assertNotNull(simpleTask51.getTaskId());
-        Task task51 = taskRepository.findById(simpleTask51.getTaskId()). orElse(null);
-        assertNotNull(task51);
-        assertEquals(3, task51.getOrder());
-
-        TaskService.TasksAndAssignToStationResult assignToStation52 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-
-        Protocol.AssignedTask.Task simpleTask52 = assignToStation52.getSimpleTask();
-        assertNull(simpleTask52);
-
-        taskPersistencer.setResultReceived(simpleTask51.getTaskId(), true);
-
-        TaskService.TasksAndAssignToStationResult assignToStation53 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-
-        Protocol.AssignedTask.Task simpleTask53 = assignToStation53.getSimpleTask();
-        assertNotNull(simpleTask53);
-        assertNotNull(simpleTask53.getTaskId());
-        Task task53 = taskRepository.findById(simpleTask53.getTaskId()).orElse(null);
-        assertNotNull(task53);
-        assertEquals(3, task53.getOrder());
-
-        int i=0;
     }
 
     private String getOKExecResult() {

@@ -33,10 +33,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -103,7 +100,15 @@ public class FileProcessService {
             yaml.inputResourceCodes.put(entry.getKey(), entry.getValue());
         }
         yaml.outputResourceCode = outputResourceCode;
-        yaml.resourceStorageUrls = inputStorageUrls;
+
+        // work around with SnakeYaml's refs
+        Map<String, DataStorageParams> map = new HashMap<>();
+        for (Map.Entry<String, DataStorageParams> entry : inputStorageUrls.entrySet()) {
+            final DataStorageParams v = entry.getValue();
+            map.put(entry.getKey(), new DataStorageParams(
+                    v.sourcing, v.git, v.disk, v.storageType));
+        }
+        yaml.resourceStorageUrls = map;
 
         yaml.snippet = snippetService.getSnippetConfig(snippetCode);
         if (yaml.snippet==null) {
