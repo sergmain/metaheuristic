@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.batch.beans;
 
 import ai.metaheuristic.api.v1.EnumsApi;
+import lombok.Data;
 
 import java.util.List;
 
@@ -25,8 +26,10 @@ import java.util.List;
  * Date: 5/29/2019
  * Time: 11:38 PM
  */
+@Data
 public class BatchParams {
 
+    @Data
     public static class TaskStatus {
         public long taskId;
         public long stationId;
@@ -35,10 +38,6 @@ public class BatchParams {
         public String execResults;
         public EnumsApi.TaskExecState state;
     }
-
-//    public static class PilotWorkbookStatus {
-//        public TaskStatus taskStatus;
-//    }
 
     public BatchStatus batchStatus;
     public List<TaskStatus> taskStatuses;

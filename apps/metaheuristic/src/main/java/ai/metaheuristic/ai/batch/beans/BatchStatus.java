@@ -58,6 +58,9 @@ public class BatchStatus {
         sb.append(c);
     }
 
+    /**
+     * Don't forget to call this method before storing in db
+     */
     public void init() {
         status = sb.toString();
     }

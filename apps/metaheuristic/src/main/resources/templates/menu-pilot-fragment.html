@@ -2,13 +2,13 @@
      sec:authorize="isAuthenticated()"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
-    <a class="pure-menu-heading">Pilot</a>
+    <a class="pure-menu-heading">Batch</a>
     <ul>
         <li th:attr="class=${#httpServletRequest.requestURI=='/pilot/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="pilot/index.html" th:href="@{/pilot/index}">Pilot index</a>
+            <a class="pure-menu-link" href="pilot/index.html" th:href="@{/pilot/index}">Batch index</a>
         </li>
         <li th:attr="class=${#httpServletRequest.requestURI.startsWith('/pilot/process-resource/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
-            <a class="pure-menu-link" href="pilot/process-resource/process-resources.html" th:href="@{/pilot/process-resource/process-resources}">Process resource</a>
+            <a class="pure-menu-link" href="pilot/process-resource/process-resources.html" th:href="@{/pilot/process-resource/process-resources}">Process resources</a>
         </li>
     </ul>
 </div>

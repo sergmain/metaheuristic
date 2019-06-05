@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.plan.WorkbookService;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
-import ai.metaheuristic.ai.utils.holders.BoolHolder;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
@@ -57,6 +56,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -174,7 +174,7 @@ public class ExperimentService {
         }
     }
 
-    public PlotData findExperimentTaskForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
+    private PlotData findExperimentTaskForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
         if (experiment == null || feature == null) {
             return EMPTY_PLOT_DATA;
         } else {
@@ -431,10 +431,10 @@ public class ExperimentService {
         numberOfTasks.value = allHyperParams.size() * experimentSnippets.size();
 
         log.debug("total size of tasks' params is {} bytes", size.value);
-        final BoolHolder boolHolder = new BoolHolder();
+        final AtomicBoolean boolHolder = new AtomicBoolean();
         final Consumer<Long> longConsumer = o -> {
             if (workbook.getId().equals(o)) {
-                boolHolder.value = true;
+                boolHolder.set(true);
             }
         };
         final WorkbookService.WorkbookDeletionListener listener =
@@ -462,7 +462,7 @@ public class ExperimentService {
                     Task prevTask;
                     Task task = null;
                     for (ExperimentSnippet experimentSnippet : experimentSnippets) {
-                        if (boolHolder.value) {
+                        if (boolHolder.get()) {
                             return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
                         }
                         prevTask = task;

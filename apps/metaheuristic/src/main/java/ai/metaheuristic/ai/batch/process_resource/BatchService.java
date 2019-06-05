@@ -187,7 +187,17 @@ public class BatchService {
                     return null;
                 }
                 b.setExecState(Enums.BatchExecState.Error.code);
-                // TODO 2019.05.25 add storing of error message
+
+                BatchParams batchParams = BatchParamsUtils.to(b.params);
+                if (batchParams == null) {
+                    batchParams = new BatchParams();
+                }
+                batchParams.batchStatus = new BatchStatus();
+                batchParams.batchStatus.add(error);
+                batchParams.batchStatus.init();
+
+                b.params = BatchParamsUtils.toString(batchParams);
+
                 b = batchCache.save(b);
                 return b;
             }

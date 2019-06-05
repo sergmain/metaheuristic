@@ -68,6 +68,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
@@ -119,6 +122,15 @@ public class ProcessResourceController {
         this.globals = globals;
         this.batchService = batchService;
     }
+
+    private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[A-Za-z0-9._-]*$";
+    private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
+
+    public static boolean isZipEntityNameOk(String name) {
+        Matcher m = zipCharsPattern.matcher(name);
+        return m.matches();
+    }
+    public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = ProcessResourceController::isZipEntityNameOk;
 
     @GetMapping("/process-resources")
     public String plans(@ModelAttribute(name = "result") ProcessResourceResult result, @PageableDefault(size = 5) Pageable pageable,
@@ -207,6 +219,17 @@ public class ProcessResourceController {
             new Thread(() -> {
                 try {
                     if (originFilename.endsWith(".zip")) {
+
+                        List<String> errors = ZipUtils.validate(dataFile, VALIDATE_ZIP_FUNCTION);
+                        if (!errors.isEmpty()) {
+                            StringBuilder err = new StringBuilder("Zip archive contains wrong chars in name(s):\n");
+                            for (String error : errors) {
+                                err.append('\t').append(error).append('\n');
+                            }
+                            batchService.changeStateToError(batch.id, err.toString());
+                            return;
+                        }
+
                         log.debug("Start unzipping archive");
                         ZipUtils.unzipFolder(dataFile, tempDir);
                         log.debug("Start loading file data to db");

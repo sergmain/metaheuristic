@@ -25,7 +25,10 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
+import java.util.function.Function;
 
 /**
  * Utility to Zip and Unzip nested directories recursively.
@@ -99,6 +102,33 @@ public class ZipUtils {
         }
     }
 
+    public static List<String> validate(File archiveFile, Function<String, Boolean> validateZip) {
+
+        log.debug("Start validating archive file");
+        log.debug("'\tzip archive file: {}", archiveFile.getAbsolutePath());
+        log.debug("'\t\texists: {}", archiveFile.exists());
+        log.debug("'\t\tis writable: {}", archiveFile.canWrite());
+        log.debug("'\t\tis readable: {}", archiveFile.canRead());
+        List<String> errors = new ArrayList<>();
+        try (MyZipFile zipFile = new MyZipFile(archiveFile)) {
+            Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+            while (entries.hasMoreElements()) {
+                ZipArchiveEntry zipEntry = entries.nextElement();
+                log.debug("'\t\tzip entry: {}, is directory: {}", zipEntry.getName(), zipEntry.isDirectory());
+
+                String name = zipEntry.getName();
+                if (!validateZip.apply(name)) {
+                    errors.add(name);
+                }
+            }
+        }
+        catch (Throwable th) {
+            log.error("Unzipping error", th);
+            throw new UnzipArchiveException("Unzip failed, error: " + th.toString(), th);
+        }
+        return errors;
+    }
+
     /**
      * Unzips a zip file into the given destination directory.
      *
@@ -150,7 +180,7 @@ public class ZipUtils {
         }
         catch (Throwable th) {
             log.error("Unzipping error", th);
-            throw new UnzipArchiveException("Unzip failed", th);
+            throw new UnzipArchiveException("Unzip failed, error: " + th.toString(), th);
         }
     }
 }
