@@ -23,8 +23,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 /**
  * @author Serge
  * Date: 5/7/2019
