@@ -29,41 +29,50 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class BatchCache {
 
+    private static final String BATCHES_CACHE = "batches";
+
     private final BatchRepository batchRepository;
 
     public BatchCache(BatchRepository batchRepository) {
         this.batchRepository = batchRepository;
     }
 
-    @CacheEvict(value = "batches", key = "#result.id")
+    @CacheEvict(value = BATCHES_CACHE, key = "#result.id")
     public Batch save(Batch batch) {
         return batchRepository.save(batch);
     }
 
-    @Cacheable(cacheNames = "batches", unless="#result==null")
+    @Cacheable(cacheNames = BATCHES_CACHE, unless="#result==null")
     public Batch findById(Long id) {
         return batchRepository.findById(id).orElse(null);
     }
 
-    @CacheEvict(cacheNames = {"batches"}, key = "#batch.id")
+    @CacheEvict(cacheNames = {BATCHES_CACHE}, key = "#batch.id")
     public void delete(Batch batch) {
+        if (batch==null) {
+            return;
+        }
         try {
             batchRepository.deleteById(batch.getId());
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error", e);
+            log.warn("Error while deleting, batch in db: " + batchRepository.findById(batch.getId()), e);
         }
     }
 
-    @CacheEvict(cacheNames = {"batches"}, key = "#id")
+    @CacheEvict(cacheNames = {BATCHES_CACHE}, key = "#id")
     public void deleteById(Long id) {
+        if (id==null) {
+            return;
+        }
         try {
             batchRepository.deleteById(id);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error", e);
+
+            log.warn("Error while deletingById, batch in db: " + batchRepository.findById(id), e);
         }
     }
 
-    @CacheEvict(cacheNames = {"batches"}, key = "#id")
+    @CacheEvict(cacheNames = {BATCHES_CACHE}, key = "#id")
     public void evictById(Long id) {
         //
     }

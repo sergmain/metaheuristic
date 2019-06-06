@@ -292,7 +292,7 @@ public class BatchService {
                 return updateStatusInternal(batchId, fullConsole);
             }
             catch(NeedRetryAfterCacheCleanException e) {
-                //
+                log.warn("#990.097 NeedRetryAfterCacheCleanException was caught");
             }
             try {
                 return updateStatusInternal(batchId, fullConsole);

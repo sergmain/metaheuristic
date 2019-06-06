@@ -36,18 +36,19 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class StationCache {
 
+    public static final String STATIONS_CACHE = "stations";
     private final StationsRepository stationsRepository;
 
     public StationCache(StationsRepository stationsRepository) {
         this.stationsRepository = stationsRepository;
     }
 
-    @CacheEvict(cacheNames = "stations", key = "#result.id")
+    @CacheEvict(cacheNames = STATIONS_CACHE, key = "#result.id")
     public Station save(Station station) {
         return stationsRepository.save(station);
     }
 
-    @CacheEvict(cacheNames = {"stations"}, key = "#station.id")
+    @CacheEvict(cacheNames = {STATIONS_CACHE}, key = "#station.id")
     public void delete(Station station) {
         try {
             stationsRepository.delete(station);
@@ -56,7 +57,7 @@ public class StationCache {
         }
     }
 
-    @CacheEvict(cacheNames = {"stations"}, key = "#stationId")
+    @CacheEvict(cacheNames = {STATIONS_CACHE}, key = "#stationId")
     public void delete(Long stationId) {
         try {
             stationsRepository.deleteById(stationId);
@@ -65,7 +66,7 @@ public class StationCache {
         }
     }
 
-    @CacheEvict(cacheNames = {"stations"}, key = "#stationId")
+    @CacheEvict(cacheNames = {STATIONS_CACHE}, key = "#stationId")
     public void deleteById(Long stationId) {
         try {
             stationsRepository.deleteById(stationId);
@@ -74,7 +75,7 @@ public class StationCache {
         }
     }
 
-    @Cacheable(cacheNames = "stations", unless="#result==null")
+    @Cacheable(cacheNames = STATIONS_CACHE, unless="#result==null")
     public Station findById(Long id) {
         return stationsRepository.findById(id).orElse(null);
     }

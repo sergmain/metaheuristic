@@ -102,12 +102,24 @@ public class BinaryDataService {
 
     public void storeToFile(String code, File trgFile) {
         try {
+/*
+            // TODO 2019-06-08 need to confirm that new version is working with postgres.
+            // after that this part can be deleted
             BinaryData data = binaryDataRepository.findByCode(code);
             if (data==null) {
                 log.warn("#087.14.01 Binary data for code {} wasn't found", code);
                 throw new BinaryDataNotFoundException("#087.14 Binary data wasn't found, code: " + code);
             }
             FileUtils.copyInputStreamToFile(data.getData().getBinaryStream(), trgFile);
+*/
+            Blob blob = binaryDataRepository.getDataAsStreamByCode(code);
+            if (blob==null) {
+                log.warn("#087.14.01 Binary data for code {} wasn't found", code);
+                throw new BinaryDataNotFoundException("#087.14 Binary data wasn't found, code: " + code);
+            }
+            try (InputStream is = blob.getBinaryStream()) {
+                FileUtils.copyInputStreamToFile(is, trgFile);
+            }
         } catch (BinaryDataNotFoundException e) {
             throw e;
         } catch (Exception e) {
@@ -164,7 +176,7 @@ public class BinaryDataService {
             throw new BinaryDataSaveException(es);
         }
         try {
-            BinaryDataImpl data = binaryDataRepository.findByCode(code);
+            BinaryDataImpl data = binaryDataRepository.findByCodeForUpdate(code);
             if (data == null) {
                 data = new BinaryDataImpl();
                 data.setType(binaryDataType);

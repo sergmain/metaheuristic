@@ -17,10 +17,9 @@
 package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.launchpad.BinaryData;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
+import ai.metaheuristic.api.v1.launchpad.BinaryData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -29,10 +28,8 @@ import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Blob;
 import java.util.List;
-import java.util.Optional;
-
-import static ai.metaheuristic.api.v1.EnumsApi.*;
 
 /**
  * User: Serg
@@ -68,7 +65,16 @@ public interface BinaryDataRepository extends CrudRepository<BinaryDataImpl, Lon
     @Query(value="select b.filename from BinaryDataImpl b where b.poolCode=:poolCode and b.dataType=:dataType ")
     String findFilenameByPoolCodeAndDataType(String poolCode, int dataType);
 
+    @Transactional(readOnly = true)
     BinaryDataImpl findByCode(String code);
+
+    @Transactional(readOnly = true)
+    @Query(value="select b.data from BinaryDataImpl b where b.code=:code")
+    Blob getDataAsStreamByCode(String code);
+
+    @Transactional
+    @Query(value="select b from BinaryDataImpl b where b.code=:code")
+    BinaryDataImpl findByCodeForUpdate(String code);
 
     @Transactional(readOnly = true)
     Slice<BinaryData> findAll(Pageable pageable);
