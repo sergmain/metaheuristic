@@ -37,6 +37,8 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -54,6 +56,10 @@ public class StationTopLevelService {
         this.globals = globals;
         this.stationsRepository = stationsRepository;
         this.stationCache = stationCache;
+    }
+
+    public static String createNewSessionId() {
+        return UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
     }
 
     public StationData.StationsResult getStations(Pageable pageable) {
@@ -104,24 +110,35 @@ public class StationTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
+    private static final ConcurrentHashMap<Long, Object> syncMap = new ConcurrentHashMap<>(50, 0.75f, 10);
+
     public void storeStationStatus(Protocol.ReportStationStatus command) {
         final Long stationId = Long.valueOf(command.getStationId());
-        final Station station = stationCache.findById(stationId);
-        if (station==null) {
-            // we throw ISE cos all checks have to be made early
-            throw new IllegalStateException("Station wasn't found for stationId: " + stationId );
-        }
-        final String stationStatus = StationStatusUtils.toString(command.status);
-        if (!stationStatus.equals(station.status)) {
-            station.status = stationStatus;
-            station.setUpdatedOn(System.currentTimeMillis());
+        final Object obj = syncMap.computeIfAbsent(stationId, o -> new Object());
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
             try {
-                stationCache.save(station);
-            } catch (ObjectOptimisticLockingFailureException e) {
-                log.warn("#807.105 ObjectOptimisticLockingFailureException was encountered\n" +
-                        "new station:\n{}\n" +
-                        "db station\n{}", station, stationsRepository.findById(stationId));
-                // we dont do anything about this error because station will report again in short time
+                final Station station = stationCache.findById(stationId);
+                if (station == null) {
+                    // we throw ISE cos all checks have to be made early
+                    throw new IllegalStateException("Station wasn't found for stationId: " + stationId);
+                }
+                final String stationStatus = StationStatusUtils.toString(command.status);
+                if (!stationStatus.equals(station.status)) {
+                    station.status = stationStatus;
+                    station.setUpdatedOn(System.currentTimeMillis());
+                    try {
+                        stationCache.save(station);
+                    } catch (ObjectOptimisticLockingFailureException e) {
+                        log.warn("#807.105 ObjectOptimisticLockingFailureException was encountered\n" +
+                                "new station:\n{}\n" +
+                                "db station\n{}", station, stationsRepository.findById(stationId));
+                        // we dont do anything about this error because station will report again in short time
+                    }
+                }
+            }
+            finally {
+                syncMap.remove(stationId);
             }
         }
     }

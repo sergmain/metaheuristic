@@ -27,6 +27,7 @@ import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
+import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
@@ -51,7 +52,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.RandomAccessFile;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -194,7 +194,7 @@ public class ServerService {
 
     public ExchangeData processRequest(ExchangeData data, String remoteAddress) {
         try {
-            Command[] cmds = checkStationId(data, remoteAddress);
+            Command[] cmds = checkStationId(data.getStationId(), data.getSessionId(), remoteAddress);
             if (cmds!=null) {
                 return new ExchangeData(cmds);
             }
@@ -225,13 +225,13 @@ public class ServerService {
         data.setLaunchpadConfig(lc);
     }
 
-    private Command[] checkStationId(ExchangeData data, String remoteAddress) {
-        if (StringUtils.isBlank(data.getStationId())) {
+    private Command[] checkStationId(String stationId, String sessionId, String remoteAddress) {
+        if (StringUtils.isBlank(stationId)) {
             return commandProcessor.process(new Protocol.RequestStationId());
         }
-        final Station station = stationCache.findById(Long.parseLong(data.getStationId()));
+        final Station station = stationCache.findById(Long.parseLong(stationId));
         if (station == null) {
-            return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
+            return reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
         }
         StationStatus ss;
         try {
@@ -242,12 +242,12 @@ public class ServerService {
             // skip any command from this station
             return Protocol.NOP_ARRAY;
         }
-        if (StringUtils.isBlank(data.getSessionId())) {
+        if (StringUtils.isBlank(sessionId)) {
             // the same station but with different and expired sessionId
             // so we can continue to use this stationId with new sessionId
             return assignNewSessionId(station, ss);
         }
-        if (!ss.sessionId.equals(data.getSessionId())) {
+        if (!ss.sessionId.equals(sessionId)) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
                 // the same station but with different and expired sessionId
                 // so we can continue to use this stationId with new sessionId
@@ -256,7 +256,7 @@ public class ServerService {
             } else {
                 // different stations with the same stationId
                 // there is other active station with valid sessionId
-                return reassignStationId(remoteAddress, "Id was reassigned from " + data.getStationId());
+                return reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
             }
         }
         else {
@@ -296,7 +296,7 @@ public class ServerService {
     }
 
     private Command[] assignNewSessionId(Station station, StationStatus ss) {
-        ss.sessionId = UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
+        ss.sessionId = StationTopLevelService.createNewSessionId();
         ss.sessionCreatedOn = System.currentTimeMillis();
         station.status = StationStatusUtils.toString(ss);
         stationCache.save(station);
@@ -309,7 +309,7 @@ public class ServerService {
         s.setIp(remoteAddress);
         s.setDescription(description);
 
-        String sessionId = UUID.randomUUID().toString()+'-'+UUID.randomUUID().toString();
+        String sessionId = StationTopLevelService.createNewSessionId();
         StationStatus ss = new StationStatus(null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),

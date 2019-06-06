@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.comm;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.LaunchpadService;
 import ai.metaheuristic.ai.launchpad.beans.Station;
+import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.station.StationServicesHolder;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
@@ -30,7 +31,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * User: Serg
@@ -230,12 +230,12 @@ public class CommandProcessor {
 
     // processing on launchpad side
     private Command[] getNewStationId(@SuppressWarnings("unused") Protocol.RequestStationId command) {
+        String sessionId = StationTopLevelService.createNewSessionId();
         final Station st = new Station();
-        // TODO 2019.05.19 need to decide do we need better solution or it's ok
-        String sessionId = UUID.randomUUID().toString()+'-'+UUID.randomUUID().toString();
         StationStatus ss = new StationStatus(null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
                 "", sessionId, System.currentTimeMillis(), "", "", null, false);
+
         st.status = StationStatusUtils.toString(ss);
         launchpadService.getStationCache().save(st);
 

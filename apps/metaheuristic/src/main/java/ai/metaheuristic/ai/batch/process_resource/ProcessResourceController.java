@@ -123,7 +123,7 @@ public class ProcessResourceController {
         this.batchService = batchService;
     }
 
-    private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[A-Za-z0-9._-]*$";
+    private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[/\\\\A-Za-z0-9._-]*$";
     private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
 
     public static boolean isZipEntityNameOk(String name) {

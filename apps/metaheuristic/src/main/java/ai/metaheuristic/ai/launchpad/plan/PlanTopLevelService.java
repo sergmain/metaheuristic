@@ -76,18 +76,17 @@ public class PlanTopLevelService {
                         return b;
                     } catch (YAMLException e) {
                         log.error("#560.300 Can't parse Plan params. It's broken or unknown version. Plan id: #{}", o.getId());
-                        log.error("#560.301 Parama:\n{}", o.getParams());
+                        log.error("#560.301 Params:\n{}", o.getParams());
                         log.error("#560.302 Error: {}", e.toString());
                         return false;
                     }
                 })
                 .skip(pageable.getOffset())
-                .limit(pageable.getPageSize())
                 .peek(o-> o.setParams(null))
                 .collect(Collectors.toList());
 
         PlanApiData.PlansResult plansResultRest = new PlanApiData.PlansResult();
-        plansResultRest.items = new PageImpl<>(plans, pageable, count.get());
+        plansResultRest.items = new PageImpl<>(plans.subList(0, plans.size()<pageable.getPageSize()?plans.size():pageable.getPageSize()), pageable, count.get());
 
         return plansResultRest;
     }
