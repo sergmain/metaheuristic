@@ -1,0 +1,18 @@
+div {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.mat-list-base {
+  padding-top: 16px;
+}
+
+.mat-button {
+  width: 100%;
+  text-align: left;
+}
+
+.active {
+    background-color: rgba(0,0,0,0.1);
+}

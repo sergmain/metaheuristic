@@ -1,0 +1,26 @@
+.ct-wrap-block {
+    position: relative;
+}
+
+
+.ct-wrap-block__wait {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(256, 256, 256, 0.1);
+}
+
+.ct-wrap-block--wait {
+    .ct-wrap-block__body {
+        opacity: 0.5;
+    }
+
+    .ct-wrap-block__wait {
+        display: flex;
+    }
+}

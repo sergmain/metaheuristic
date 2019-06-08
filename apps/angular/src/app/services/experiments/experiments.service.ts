@@ -1,119 +1,63 @@
-import { Injectable } from '@angular/core';
-import { fakeExperiments } from '@app/services/fake/fake.service'
-
-export class Metadata {
-    key: string;
-    value: string;
-
-    constructor(key: string = '--none--', value: string = '--none--') {
-        this.key = key
-        this.value = value
-    }
-
-    setValue(key: string, value: string) {
-
-    }
-}
-
-export class Task {
-    id: string;
-    type: string;
-    isCompleted: string;
-    completedOn: string;
-    assignedOn: string;
-
-    constructor(data) {
-        this.id = data.id
-        this.type = data.type
-        this.isCompleted = data.isCompleted
-        this.completedOn = data.completedOn
-        this.assignedOn = data.assignedOn
-    }
-}
-
-export class Hyper {
-    key: string;
-    values: string[];
-    constructor(data) {
-        this.key = data.key;
-        this.values = data.values;
-    }
-}
-
-export class Feature {
-    id: string;
-    setOfFeatures: string[];
-    execStatus: string;
-    maxValue: string;
-    constructor(data) {
-        this.id = data.id;
-        this.setOfFeatures = data.setOfFeatures;
-        this.execStatus = data.execStatus;
-        this.maxValue = data.maxValue;
-    }
-}
-
-export class Experiment {
-    id: string;
-    name: string;
-    createdOn: string;
-    description: string;
-    experimentCode: string;
-    seed: string;
-    metadatas: Metadata[];
-    hyper: Hyper[];
-    features: Feature[];
-    tasks: Task[];
-    constructor(data) {
-        this.id = data.id;
-        this.name = data.name;
-        this.createdOn = data.createdOn;
-        this.description = data.description;
-        this.experimentCode = data.experimentCode;
-        this.seed = data.seed;
-        this.metadatas = data.metadatas;
-        this.hyper = data.hyper
-        this.features = data.features
-        this.tasks = data.tasks    
-    }
-}
+import {
+    Injectable
+} from '@angular/core';
+import {
+    HttpClient,
+    HttpHeaders
+} from '@angular/common/http';
+import {
+    Observable,
+    of ,
+    from
+} from 'rxjs';
+import {
+    map
+} from 'rxjs/operators';
+import {
+    urls
+} from './urls';
 
 @Injectable({
     providedIn: 'root'
 })
 
 export class ExperimentsService {
-    private data: Experiment[] = fakeExperiments();
+    constructor(
+        private http: HttpClient
+    ) {}
 
-    constructor() {}
+    experiments = {
+        get: (page) => this.http.get(urls.experiments.get(page))
+    };
 
-    getExperiments(): Experiment[] {
-        return this.data
-    }
+    experiment = {
+        get: id => this.http.get(urls.experiment.get(id)),
+        info: id => this.http.get(urls.experiment.info(id)),
 
-    getExperiment(id): Experiment {
-        return this.data.find(el => id === el.id)
-    }
+        edit: (id) => this.http.get(urls.experiment.edit(id)),
+        addCommit: (data) => this.http.post(urls.experiment.addCommit(), data),
+        editCommit: (data) => this.http.post(urls.experiment.editCommit(), data),
+        deleteCommit: (data) => this.http.post(urls.experiment.deleteCommit(data), null),
+        cloneCommit: (data) => this.http.post(urls.experiment.cloneCommit(data), null),
 
-    setDefault(arr) {
-        let data = {
-            "epoch": "[10]",
-            "RNN": "[LSTM, GRU, SimpleRNN]",
-            "activation": "[hard_sigmoid, softplus, softmax, softsign, relu, tanh, sigmoid, linear, elu]",
-            "optimizer": "[sgd, nadam, adagrad, adadelta, rmsprop, adam, adamax]",
-            "batch_size": "[20, 40, 60]",
-            "time_steps": "[5, 40, 60]",
-            "metrics_functions": "['#in_top_draw_digit, accuracy', 'accuracy']"
-        }
+        featurePlotDataPart: (experimentId, featureId, params, paramsAxis) => {
+            return this.http.post(urls.experiment.featurePlotDataPart(experimentId, featureId, params, paramsAxis), null);
+        },
+        featureProgressPart: (experimentId, featureId, params) => {
+            return this.http.post(urls.experiment.featureProgressPart(experimentId, featureId, params), null);
+        },
+        featureProgress: (experimentId, featureId) => this.http.get(urls.experiment.featureProgress(experimentId, featureId)),
+        featureProgressConsole: taskId => this.http.get(urls.experiment.featureProgressConsole(taskId)),
+        featureProgressConsolePart: taskId => this.http.post(urls.experiment.featureProgressConsolePart(taskId), null),
 
-        for (let prop in data) {
-            let metadata = arr.find(metadata => metadata.key == prop)
-            if (metadata) {
-                metadata.value = data[prop]
-            } else {
-                arr.push(new Metadata(prop, data[prop]))
-            }
-        }
-        return arr
-    }
+        taskRerun: taskId => this.http.post(urls.experiment.taskRerun(taskId), null),
+
+        metadataAddCommit: (experimentId, data) => this.http.post(urls.experiment.metadataAddCommit(experimentId, data), null),
+        metadataEditCommit: (experimentId, data) => this.http.post(urls.experiment.metadataEditCommit(experimentId, data), null),
+        metadataDeleteCommit: (experimentId, id) => this.http.get(urls.experiment.metadataDeleteCommit(experimentId, id)),
+        metadataDefaultAddCommit: (experimentId) => this.http.get(urls.experiment.metadataDefaultAddCommit(experimentId)),
+
+        snippetAddCommit: (id, data) => this.http.post(urls.experiment.snippetAddCommit(id, data), null),
+        snippetDeleteCommit: (experimentId, id) => this.http.get(urls.experiment.snippetDeleteCommit(experimentId, id)),
+    };
 }

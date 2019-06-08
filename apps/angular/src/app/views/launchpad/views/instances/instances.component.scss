@@ -1,4 +1,5 @@
-@import '~mixins.scss';
-
-@include tablePageLayout()
-
+.mat-row--deleted {
+    filter: grayscale(1);
+    opacity: 0.33;
+    pointer-events: none;
+}

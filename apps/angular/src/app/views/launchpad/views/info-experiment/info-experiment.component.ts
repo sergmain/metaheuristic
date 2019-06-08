@@ -1,8 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator, MatTableDataSource } from '@angular/material';
-import { Metadata, Experiment, ExperimentsService } from '@app/services/experiments/experiments.service'
+import { ExperimentsService } from '@app/services/experiments/experiments.service'
 import { Location } from '@angular/common'
 import { ActivatedRoute } from '@angular/router'
+import { state } from '@app/helpers/state'
+import { ExperimentInfoResponse } from '@app/models';
 
 @Component({
     selector: 'info-experiment',
@@ -11,7 +13,11 @@ import { ActivatedRoute } from '@angular/router'
 })
 
 export class InfoExperimentComponent implements OnInit {
-    experiment: Experiment;
+    state = state;
+    currentState = this.state.loading;    
+    experiment: ExperimentInfoResponse.Experiment;
+    experimentInfo: ExperimentInfoResponse.ExperimentInfo;
+
     tables = {
         generalInfo: {
             table: [],
@@ -23,7 +29,7 @@ export class InfoExperimentComponent implements OnInit {
         },
         features: {
             table: new MatTableDataSource([]),
-            columnsToDisplay: ['id', 'setOfFeatures', 'execStatus', 'maxValue', 'bts'],
+            columnsToDisplay: ['id', 'resourceCodes', 'execStatus', 'maxValue', 'bts'],
         },
     }
 
@@ -32,15 +38,23 @@ export class InfoExperimentComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private experimentsService: ExperimentsService,
-        private location: Location) {}
+        private location: Location
+    ) {}
 
     ngOnInit() {
-        const id = this.route.snapshot.paramMap.get('experimentId');
-        this.experiment = this.experimentsService.getExperiment(id)
-        this.tables.generalInfo.table = Object.keys(this.experiment)
-            .map((key, i, a) => [key, this.experiment[key]])
-        this.tables.hyperParameters.table = new MatTableDataSource(this.experiment.hyper)
-        this.tables.features.table = new MatTableDataSource(this.experiment.features)
+        this.load()
+    }
 
+    load() {
+        const id = this.route.snapshot.paramMap.get('experimentId');
+        let subscribe =  this.experimentsService.experiment.info(id)
+            .subscribe((response:ExperimentInfoResponse.Response) => {
+                this.experiment = response.experiment 
+                this.experimentInfo = response.experimentInfo 
+                this.tables.generalInfo.table = Object.keys(this.experiment).map(key => [key, this.experiment[key]])
+                this.tables.hyperParameters.table = new MatTableDataSource(this.experiment.hyperParams)
+                this.tables.features.table = new MatTableDataSource(this.experimentInfo.features)
+                subscribe.unsubscribe()
+            })
     }
 }

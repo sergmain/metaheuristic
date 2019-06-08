@@ -1,42 +1,56 @@
-
-
-import { Injectable } from '@angular/core';
-
-export interface Station {
-    id: string,
-    ipAddress: string,
-    description: string,
-    environment: string,
-    activeTime: string,
-}
-
-function rand(min, max) {
-    return Math.floor(Math.random() * (max - min)) + min;
-}
-
-function initItem() {
-    return {
-        id: 'id' + rand(1, 9999),
-        ipAddress: '' + rand(0, 256) + '.' + rand(0, 256) + '.' + rand(0, 256) + '.' + rand(0, 256),
-        description: 'description-' + rand(1, 9999),
-        environment: 'environment-' + rand(1, 9999),
-        activeTime: 'activeTime-' + rand(1, 9999),
-
-    }
-}
-
-function initItems(): Station[] {
-    return Array.from(Array(99)).map(el => initItem())
-}
-
+import {
+    Injectable
+} from '@angular/core';
+import {
+    environment
+} from 'environments/environment';
+import {
+    HttpClient
+} from '@angular/common/http';
+import {
+    Observable
+} from 'rxjs';
+import {
+    StationResponse
+} from '@app/models';
+import {
+    urls
+} from './urls';
 @Injectable({
     providedIn: 'root'
 })
 
 export class StationsService {
-    private data: Station[] = initItems();
-    constructor() { }
-    getStations(): Station[] {
-        return this.data
+
+
+    // @GetMapping("/stations")
+    // @GetMapping(value = "/station/{id}")
+    // @PostMapping("/station-form-commit")
+    // @PostMapping("/station-delete-commit")
+
+    constructor(
+        private http: HttpClient
+    ) {}
+
+    stations = {
+        get: (page: string | number) => this.http.get(urls.stations.get({
+            page
+        }))
     }
+
+    station = {
+        get: (id) => this.http.get(urls.station.get + id),
+        form: (station: StationResponse.Station): Observable < any > => this.http.post(urls.station.form, station),
+        delete: (id) => {
+            return Observable.create((observer) => {
+                this.http.post < any > (urls.station.delete + '?id=' + id, {
+                        id
+                    })
+                    .subscribe(data => {
+                        observer.next(data);
+                        observer.complete();
+                    });
+            });
+        }
+    };
 }

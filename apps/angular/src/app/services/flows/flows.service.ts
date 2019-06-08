@@ -1,86 +1,90 @@
-import { Injectable } from '@angular/core';
-
-export class Instance {
-    id: string;
-    planCode: string;
-    inputPoolCodes: string;
-    createdOn: string;
-    isPlanValid: string;
-    isWorkbookValid: string;
-    execState: string;
-    completedOn: string;
-    constructor(p: any) {
-        this.id = 'id' + p.id || 'id' + rand(111111, 999999);
-        this.planCode = p.planCode || 'planCode-' + rand(1, 9999);
-        this.inputPoolCodes = p.inputPoolCodes || 'inputPoolCodes-' + rand(1, 9999);
-        this.createdOn = p.createdOn || rand(1, 31) + '.' + rand(1, 12) + '.2018';
-        this.isPlanValid = p.isPlanValid || ['Yes', 'No'][rand(0, 2)];
-        this.isWorkbookValid = p.isWorkbookValid || ['Yes', 'No'][rand(0, 2)];
-        this.execState = p.execState || 'execState-' + rand(1, 9999);
-        this.completedOn = p.completedOn || rand(1, 31) + '.' + rand(1, 12) + '.2018';
-    }
-}
-
-export class Plan {
-    id: string;
-    codeOfPlan: string;
-    createdOn: string;
-    isValid: string;
-    isLocked: string;
-    parameters: string;
-    instances: Instance[];
-    constructor(p: any) {
-        this.id = 'id' + p.id || 'id' + rand(111111, 999999);
-        this.codeOfPlan = p.codeOfPlan || 'codeOfPlan-' + rand(1, 9999);
-        this.createdOn = p.createdOn || rand(1, 31) + '.' + rand(1, 12) + '.2018';
-        this.isValid = p.isValid || ['Yes', 'No'][rand(0, 2)];
-        this.isLocked = p.isLocked || ['Yes', 'No'][rand(0, 2)];
-        this.parameters = p.parameters || initParameters();
-        this.instances = p.instances ||
-            Array.from(Array(99)).map((el, i) => new Instance({ id: i + 1 }));
-    }
-}
-
-function rand(min, max) {
-    return Math.floor(Math.random() * (max - min)) + min;
-}
-
-function initParameters() {
-    return `- parameters
-    a ${rand(1111, 9999)}
-    b ${rand(1111, 9999)}
-    c ${rand(1111, 9999)}
-`
-}
-
-function initPlans(): Plan[] {
-    return Array.from(Array(99)).map((el, i) => new Plan({ id: i + 1 }))
-}
+import {
+    Injectable
+} from '@angular/core';
+import {
+    HttpClient,
+} from '@angular/common/http';
+import {
+    urls
+} from './urls';
+import {
+    Observable
+} from 'rxjs';
+import {
+    FlowResponse
+} from '@app/models';
 
 @Injectable({
     providedIn: 'root'
 })
 
-export class PlansService {
-    private data: Plan[] = initPlans();
+export class FlowsService {
+    constructor(
+        private http: HttpClient
+    ) {}
 
-    constructor() {}
-
-    getPlans(): Plan[] {
-        return this.data
+    flows: any = {
+        get: data => this.http.get(urls.flows.get(data))
     }
 
-    getInstancesByPlanId(id: string): Instance[] {
-        return [].concat(this.data.find(el => el.id === id).instances)
+    flow: any = {
+        get: (id: string): Observable < object > => this.http.get(urls.flow.get(id)),
+        update: (id: number, code: string, params: string): Observable < object > => {
+            return this.http.post(urls.flow.edit(), {
+                id,
+                code,
+                params
+            });
+        },
+
+        validate: (id: string | number): Observable < object > => {
+            return this.http.get(urls.flow.validate(id))
+        },
+
+        delete: (id: string | number): Observable < object > => {
+            return this.http.post(urls.flow.delete({
+                id
+            }), {
+                id
+            });
+        },
+
+        add: (code: string, params: string): Observable < FlowResponse.Response > => {
+            return this.http.post < FlowResponse.Response > (urls.flow.add(), {
+                code,
+                params
+            });
+        }
+    };
+
+    instances: any = {
+        get: (flowId, page): Observable < object > => {
+            return this.http.get(urls.instances.get(flowId, {
+                page
+            }));
+        }
     }
 
-    getPlan(id: string): Plan {
-        return Object.assign({}, this.data.find(el => el.id === id))
+    instance: any = {
+        get: () => {},
+        edit: () => {},
+        validate: () => {},
+        delete: () => {},
+        targetExecState: (flowId, state, id): Observable < object > => {
+            return this.http.get(urls.instance.targetExecState(flowId, state, id))
+        },
+        deleteCommit: (flowId, instanceId): Observable < object > => {
+            return this.http.post(urls.instance.deleteCommit({
+                flowId,
+                flowInstanceId: instanceId,
+            }), null);
+        },
+        addCommit: (flowId, code, inputResourceParams): Observable < object > => {
+            return this.http.post(urls.instance.addCommit({
+                flowId,
+                poolCode: code || '',
+                inputResourceParams: inputResourceParams || ''
+            }), null);
+        },
     }
-
-    updatePlan(id, newPlan) {}
-
-    deletePlan(id) {}
-
-    getInstance(planId: string, instanceId: string) {}
 }

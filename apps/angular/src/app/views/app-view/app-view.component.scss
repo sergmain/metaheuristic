@@ -60,7 +60,8 @@
 .app-view-sidenav-content {
     margin-top: 64px;
     padding: 16px;
-    overplan :hidden;
+    overflow: hidden;
+    margin-bottom: 20vh;
 }
 
 .flex {
@@ -81,18 +82,16 @@
     align-items: flex-start;
 }
 
-.mat-button.active {
-    background-color: rgba(0, 0, 0, 0.1);
+.mat-button--menu-item.active {
+    background-color: rgba(0, 0, 0, 0.2);
 }
 
-
-
-.app-view__nav-button {
+.mat-button--sidenav[disabled] {
+    color: inherit !important;
     opacity: 0.5;
     pointer-events: none;
+}
 
-    &--show {
-        opacity: 1;
-            pointer-events: all;
-    }
+mat-slide-toggle.mat-checked {
+    filter: invert(0.5)
 }

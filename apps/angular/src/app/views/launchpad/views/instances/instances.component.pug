@@ -1,0 +1,69 @@
+.section
+	.section__header
+		ct-section-caption Instances of Flow \#{{ flowId }}
+	.section__body
+		.simple-table(*ngIf="currentState == states.show")
+			table(mat-table '[dataSource]'="dataSource" class="mat-table")
+				ng-container(matColumnDef="id")
+					th(mat-header-cell *matHeaderCellDef) Id
+					td(mat-cell *matCellDef="let el") {{el.id}}
+				ng-container(matColumnDef="flowCode")
+					th(mat-header-cell *matHeaderCellDef) Flow Code
+					td(mat-cell *matCellDef="let el") {{flow.code}}
+				ng-container(matColumnDef="inputResourceParam")
+					th(mat-header-cell *matHeaderCellDef) Input Pool Codes
+					td(mat-cell *matCellDef="let el") 
+						pre {{el.inputResourceParam}}
+				ng-container(matColumnDef="createdOn")
+					th(mat-header-cell *matHeaderCellDef) Created On
+					td(mat-cell *matCellDef="let el") {{el.createdOn | date}}
+				ng-container(matColumnDef="isFlowValid")
+					th(mat-header-cell *matHeaderCellDef) Is Flow<br> Valid
+					td(mat-cell *matCellDef="let el") {{flow.valid}}
+				ng-container(matColumnDef="isFlowInstanceValid")
+					th(mat-header-cell *matHeaderCellDef) Is Flow <br> Instance Valid
+					td(mat-cell *matCellDef="let el") {{el.valid}}
+				ng-container(matColumnDef="execState")
+					th(mat-header-cell *matHeaderCellDef) ExecState
+					td(mat-cell *matCellDef="let el") {{execState[el.execState]}}
+				ng-container(matColumnDef="completedOn")
+					th(mat-header-cell *matHeaderCellDef) Completed on
+					td(mat-cell *matCellDef="let el") {{el.completedOn | date}}
+				ng-container(matColumnDef="bts")
+					th(mat-header-cell *matHeaderCellDef)
+					td(mat-cell *matCellDef="let el")
+						.buttons.buttons--right
+							span(*ngIf="(el.execState == execState.NONE) && (el.valid) && (flow.valid)")
+								button(mat-flat-button color="primary" '(click)'="produce(el,$event)") Produce
+							span(*ngIf="(el.execState == execState.PRODUCED) || (el.execState == execState.STOPPED)")
+								button(mat-flat-button color="primary" '(click)'="start(el,$event)") Start
+							span(*ngIf="(el.execState == execState.STARTED)")
+								button(mat-flat-button color="primary" '(click)'="stop(el,$event)") Stop
+							button(mat-flat-button color="warn" '(click)'="delete(el)"): mat-icon delete
+				tr(mat-header-row *matHeaderRowDef="columnsToDisplay")
+				tr(mat-row '[class.mat-row--deleted]'="row.__deleted" '*matRowDef'="let row; columns: columnsToDisplay;")
+		.section__content(*ngIf="currentState == states.loading")
+			mat-progress-bar(mode="indeterminate")
+	.section__footer
+		.flex.flex--jc_sb
+			.buttons.buttons--left 
+				button(mat-flat-button #prevTable '(click)'='prev()' disabled): mat-icon arrow_back_ios
+				button(mat-flat-button #nextTable '(click)'='next()' disabled): mat-icon arrow_forward_ios
+			.buttons.buttons--right
+				a(mat-flat-button color="primary"
+					'[disabled]'="currentState == states.loading"
+					'[routerLink]'="['/launchpad','flows',flowId,'instances','add']") Add Instance
+
+
+ng-template('[ngIf]'="currentState == states.empty")
+	.section
+		.section__header
+			ct-section-caption Instances of Flow \#{{ flowId }}
+		.section__body
+			.section__content
+				.flex.flex--jc_c Empty
+		.section__footer
+			.flex.flex--jc_fe
+				div
+					a('[routerLink]'="['/launchpad','flows',flowId,'instances','add']")
+						button(mat-flat-button color="primary") Add Instance

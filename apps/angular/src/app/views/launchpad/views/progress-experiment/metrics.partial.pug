@@ -1,17 +1,26 @@
 ct-cols
-    ct-col(size=4) 
-        ct-section-caption Metrics as the table
-        .simple-table
-            table(mat-table '[dataSource]'="tables.metrics.table") 
-                ng-container(matColumnDef="sum") 
-                    th(mat-header-cell *matHeaderCellDef) Sum 
-                    td(mat-cell *matCellDef="let el") {{el.name}} 
-                ng-container(matColumnDef="params") 
-                    th(mat-header-cell *matHeaderCellDef) Params 
-                    td(mat-cell *matCellDef="let el") {{el.value}} 
-                tr(mat-header-row *matHeaderRowDef="tables.metrics.columnsToDisplay") 
-                tr(mat-row *matRowDef="let row; columns: tables.metrics.columnsToDisplay;") 
-    ct-col(size=8) 
-        ct-section-caption As the graph
-        .graph
-            plotly-plot('[data]'="graph.data" '[layout]'="graph.layout" '[useResizeHandler]'="true" '[style]'="{position: 'relative', width: '100%', height: '100%'}")
+	ct-col
+		ct-section-caption(style="white-space: nowrap;") Metrics as the table
+		.simple-table
+			table(mat-table '[dataSource]'="tables.metrics.table") 
+				ng-container(matColumnDef="values") 
+					th(mat-header-cell *matHeaderCellDef) {{response.metricsResult.metricNames}} 
+					td(mat-cell *matCellDef="let el") {{el.values}} 
+				ng-container(matColumnDef="params") 
+					th(mat-header-cell *matHeaderCellDef) Hyper Params 
+					td(mat-cell *matCellDef="let el") {{el.params}} 
+				tr(mat-header-row *matHeaderRowDef="tables.metrics.columnsToDisplay") 
+				tr(mat-row *matRowDef="let row; columns: tables.metrics.columnsToDisplay;") 
+	ct-col(style="flex:1")
+		ct-section-caption ...as the graph
+		.section
+			.section__body
+				.section__content
+					.flex.flex--jc_c 
+						button(mat-flat-button color="primary" 
+							'[disabled]' = "pickedAxes.includes(false)"
+							'(click)'="drawPlot()") Draw Plot 
+				.section__content(*ngIf="dataGraph.show")
+					.graph
+						plotly-plot('[data]'="dataGraph.data" '[config]'="dataGraph.config" '[layout]'="dataGraph.layout" '[useResizeHandler]'="true" '[style]'="{position: 'relative', width: '100%', height: '100%'}")
+

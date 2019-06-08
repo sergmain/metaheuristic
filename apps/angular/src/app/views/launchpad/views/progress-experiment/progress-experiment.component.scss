@@ -1,6 +1,7 @@
-@import '~mixins.scss';
 
-@include simpleTable();
+
+
+
 
 :host /deep/ .ngx-json-viewer {
     line-height: 1.6;
@@ -31,11 +32,12 @@
     background-color: white;
     padding: 8px;
     margin-bottom: 10vh;
+    white-space: pre-line;
 }
 
 .graph {
     position: relative;
-    overplan: hidden;
+    overflow: hidden;
 
     >* {
         position: absolute;
@@ -60,7 +62,7 @@
     table {
         button {
             margin: 0 8px;
-            margin-top: 2px;
+            margin: 2px 0;
             font-size: 14px;
         }
 
@@ -93,10 +95,22 @@
             }
         }
     }
+    .completed {
+        background-color: crimson;
+        padding: 0 4px; 
+        color:white;
+        font-weight: bold;
+        border-radius: 3px
+    }
+    .completed--on {
+        background-color: mediumseagreen;
+    }
+
 }
 
 .general-info{
     button{
+        margin: 4px 0;
         margin-right: 8px;
     }
 }

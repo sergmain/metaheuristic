@@ -24,6 +24,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import static junit.framework.TestCase.assertTrue;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 /**
@@ -43,16 +44,20 @@ public class TestCacheIsEnabled {
     public void test() {
 
         CacheForTest.cacheWasMissed = false;
-        cache.save( new SimpleBeanForTest(1, "aaa"));
+        final SimpleBeanForTest bean1 = new SimpleBeanForTest(1, "aaa");
+        cache.save(bean1);
 
         assertFalse(CacheForTest.cacheWasMissed);
         SimpleBeanForTest bean = cache.findById(1);
+
+        assertEquals(bean1, bean);
 
         assertTrue(CacheForTest.cacheWasMissed);
 
         CacheForTest.cacheWasMissed = false;
 
         bean = cache.findById(1);
+        assertEquals(bean1, bean);
         assertFalse(CacheForTest.cacheWasMissed);
 
     }

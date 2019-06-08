@@ -1,57 +1,32 @@
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { BrowserModule } from '@angular/platform-browser';
-import { FormsModule } from '@angular/forms';
-import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MaterialAppModule } from './ngmaterial.module';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
+import { NgModule } from '@angular/core';
+import { FormsModule, ReactiveFormsModule  } from '@angular/forms';
+import { BrowserModule } from '@angular/platform-browser';
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { AuthGuard } from '@app/guards/auth/auth.guard';
+import { AccountsService } from '@app/services/accounts/accounts.service';
+// import { AuthService } from '@app/services/auth/auth.service'
+import { AuthenticationService } from '@app/services/authentication/authentication.service';
+import { PlotlyModule } from 'angular-plotly.js';
+import { SimpleNotificationsModule } from 'angular2-notifications';
+import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { PlotlyModule } from 'angular-plotly.js';
-import { NgxJsonViewerModule } from 'ngx-json-viewer';
-// 
-import { AppViewComponent } from './views/app-view/app-view.component';
-// 
-import { AuthService } from '@app/services/auth/auth.service'
-import { AccountsService } from '@app/services/accounts/accounts.service'
-import {
-    NavLaunchpadComponent,
-    LaunchpadComponent,
-
-    AccountsComponent,
-    AddAccountComponent,
-    EditAccountComponent,
-    EditPassAccountComponent,
-
-    ExperimentsComponent,
-    AddExperimentComponent,
-    EditExperimentComponent,
-    InfoExperimentComponent,
-    ProgressExperimentComponent,
-
-    PlansComponent,
-    AddPlanComponent,
-    EditPlanComponent,
-
-    InstancesComponent,
-    AddInstanceComponent,
-    EditInstanceComponent,
-
-    ResourcesComponent,
-    AddResourceComponent,
-
-    SnippetsComponent,
-    StationsComponent,
-} from './views/launchpad';
-// 
-import { PilotComponent } from './views/pilot/pilot.component';
-import { AboutComponent } from './views/about/about.component';
-import { SigninComponent } from './views/signin/signin.component';
-// 
+import { CtColComponent } from './custom-tags/ct-col/ct-col.component';
 import { CtColsComponent } from './custom-tags/ct-cols/ct-cols.component';
 import { CtSectionCaptionComponent } from './custom-tags/ct-section-caption/ct-section-caption.component';
-import { CtColComponent } from './custom-tags/ct-col/ct-col.component';
+import { JwtInterceptor } from './jwt.interceptor';
+import { MaterialAppModule } from './ngmaterial.module';
+import { NotificationsInterceptor } from './notifications.interceptor';
+import { AboutComponent } from './views/about/about.component';
+import { AppViewComponent } from './views/app-view/app-view.component';
+import { AccountsComponent, AddAccountComponent, AddExperimentComponent, AddFlowComponent, AddInstanceComponent, AddResourceComponent, AddSnippetComponent, EditAccountComponent, EditExperimentComponent, EditFlowComponent, EditInstanceComponent, EditPassAccountComponent, EditStationComponent, ExperimentsComponent, FlowsComponent, InfoExperimentComponent, InstancesComponent, LaunchpadComponent, NavLaunchpadComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent } from './views/launchpad';
+import { LoginComponent } from './views/login/login.component';
+import { NavPilotComponent, PilotComponent, ProcessResourcesComponent } from './views/pilot';
+import { CtTableComponent } from './custom-tags/ct-table/ct-table.component';
+import { CtWrapBlockComponent } from './custom-tags/ct-wrap-block/ct-wrap-block.component';
 
-// 
 @NgModule({
     declarations: [
         AppComponent,
@@ -71,9 +46,9 @@ import { CtColComponent } from './custom-tags/ct-col/ct-col.component';
         InfoExperimentComponent,
         ProgressExperimentComponent,
 
-        PlansComponent,
-        AddPlanComponent,
-        EditPlanComponent,
+        FlowsComponent,
+        AddFlowComponent,
+        EditFlowComponent,
 
         InstancesComponent,
         AddInstanceComponent,
@@ -83,17 +58,24 @@ import { CtColComponent } from './custom-tags/ct-col/ct-col.component';
         AddResourceComponent,
 
         SnippetsComponent,
+        AddSnippetComponent,
+
         StationsComponent,
+        EditStationComponent,
         //
         PilotComponent,
+        NavPilotComponent,
+        ProcessResourcesComponent,
         //
         AboutComponent,
         //
-        SigninComponent,
+        LoginComponent,
         // custom-tags
         CtColsComponent,
         CtSectionCaptionComponent,
         CtColComponent,
+        CtTableComponent,
+        CtWrapBlockComponent
     ],
     imports: [
         CommonModule,
@@ -103,9 +85,26 @@ import { CtColComponent } from './custom-tags/ct-col/ct-col.component';
         BrowserAnimationsModule,
         MaterialAppModule,
         FormsModule,
-        NgxJsonViewerModule
+        ReactiveFormsModule ,
+        NgxJsonViewerModule,
+        HttpClientModule,
+        SimpleNotificationsModule.forRoot(),
     ],
-    providers: [AuthService, AccountsService],
+    providers: [
+        AuthGuard,
+        AuthenticationService,
+        AccountsService,
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: JwtInterceptor,
+            multi: true
+        },
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: NotificationsInterceptor,
+            multi: true
+        }
+    ],
     bootstrap: [AppComponent]
 })
 export class AppModule {}

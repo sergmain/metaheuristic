@@ -1,184 +1,101 @@
-@import '~mixins.scss';
-
-@include planCardLayout();
-@include tablePageLayout();
-
-.edit-experiment__body {
-    margin-bottom: 5em;
-}
-
 mat-form-field {
     width: 100%;
 }
 
+.metadata-sections {
 
-.default-metadata-table {
-    display: flex;
-    margin: 0 -8px;
-    margin-bottom: 5em;
-
-    >* {
-        margin: 0 8px;
+    .mat-column-key,
+    .mat-column-empty {
+        flex: none;
+        width: 250px;
+        padding-top: 4px;
+        padding-bottom: 4px;
     }
 
-    >*:first-child {
+    .mat-column-values,
+    .mat-column-edit {
+        flex-grow: 1;
+    }
+
+    .mat-column-delete,
+    .mat-column-done {
+        flex: none;
+    }
+
+    .mat-column-bts {
+        flex: none;
+    }
+
+    div {
         width: 100%;
-    }
-
-    table {
-        width: 100%;
-        opacity: 0.5;
-        border-collapse: collapse;
-    }
-
-    thead {
-        font-size: 12px;
-        font-weight: 500;
-    }
-
-    td {
-        line-height: 1;
-        padding: 8px 16px;
-        vertical-align: baseline;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.1)
-    }
-
-    td:first-child {
-        padding-left: 0;
-    }
-
-    td:last-child {
-        padding-right: 0;
-    }
-
-    tbody {
-        tr:last-child {
-            td {
-                border-bottom: none
-            }
-        }
-    }
-
-    button {
-        margin: 0;
-    }
-
-    .default-metadata-table__key-cell {
-        min-width: 300px;
-    }
-
-    .default-metadata-table__key-value {
-        width: 100%;
-    }
-
-}
-
-.metadata-table {
-    width: 100%;
-
-    .mat-header-row {
-        height: 0;
-
-        th {
-            padding-top: 16px;
-            padding-bottom: 16px;
-        }
     }
 
     .mat-row {
-        height: 0;
+        align-items: baseline;
     }
 
-    th,
-    td {
-        padding: 4px 16px;
-        vertical-align: baseline;
+    .mat-row:after {
+        content: none;
     }
 
-    th:first-child,
-    td:first-child {
-        padding-left: 0px;
+    mat-form-field {
+        margin-top: 1.34375em;
     }
 
-    th:last-child,
-    td:last-child {
-        padding-right: 0px;
-    }
+    .metadata-default-param {
 
-    tr:last-child {
-        td {
-            border: none;
+        mat-row,
+        mat-header-row {
+            min-height: auto
+        }
+
+        mat-cell,
+        mat-header-cell {
+            padding-top: 0.2em;
+            padding-bottom: 0.2em;
+        }
+
+        .simple-table {
+            opacity: 0.5;
         }
     }
 
-    .metadata-table__cell-key {
-        min-width: 300px;
-    }
+    .metadata-new-param {}
 
-    .metadata-table__cell-value {
-        width: 100%;
-    }
+    .metadata-params {
+        .caption-row:hover{
+            background: rgba(0,0,0,0.033);
+        }
+        .caption-row.picked-row:hover{
+            background: rgba(0,0,0,0);
+        }
+        .caption-row+.edit-row {
+            // display: none;
+        }
 
-    .metadata-table__cell-bt {
-        white-space: nowrap;
-
-        button {
-            margin: 0;
+        .caption-row.picked-row+.edit-row {
+            display: flex;
+            // position: relative;
+            // top: -2px;
         }
     }
 }
 
-.metadata-edit-block {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    margin: 0 -5px;
-
-    textarea {
-        width: 100%;
-        padding: 8px 4px;
-        resize: vertical;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        margin-top: 8px;
-        border-radius: 3px 3px 0 3px;
-
-        margin-bottom: 4px;
-        padding-bottom: 1.5em;
-    }
-
-    button {
-        margin-right: 8px;
-    }
+.simple-experiment-section {
+    margin-bottom: 3em;
 }
 
-.metadata-edit {}
+.snippets-section {
+    margin-bottom: 3em;
 
-.metadata-edited {}
+    // .mat-column-type {
+    //     flex: none;
+    //     width: 250px;
+    // }
 
-.new-metadata-table {
-    display: flex;
-    align-items: baseline;
-    margin: 0 -8px;
-
-    .new-metadata-table__cell {
-        margin: 0 8px;
+    .mat-form-field {
+        padding: 16px 16px 0;
+        border-radius: 5px;
+        box-shadow: 0px 0px 0px 1px rgba(0, 0, 0, 0.2);
     }
-
-    .new-metadata-table__cell:nth-child(1) {
-        width: 300px;
-        flex-shrink: 0;
-    }
-
-    .new-metadata-table__cell:nth-child(2) {
-        width: 100%;
-        flex-shrink: 1;
-    }
-
-    .new-metadata-table__cell:nth-child(3) {
-        button {
-            margin: 0;
-        }
-    }
-
-
 }

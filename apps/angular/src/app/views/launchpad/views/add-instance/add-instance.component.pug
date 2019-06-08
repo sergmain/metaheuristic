@@ -1,0 +1,53 @@
+.section
+    .section__header
+        ct-section-caption New Flow Instance with Single Input
+    .section__body
+        ct-cols(align-items="baseline")
+            ct-col(size="6")
+                .section__content
+                    mat-form-field(appearance="outline") 
+                        mat-label Input pool code for this flow 
+                        input(matInput '[(ngModel)]'="code" autocomplete="off") 
+                        mat-hint This is a required field.
+                    .buttons.buttons--right
+                        button(mat-stroked-button '(click)'="cancel()") Back 
+                        button(mat-flat-button '(click)'="createWithCode()" color="primary" 
+                            '[disabled]'="currentStates.has(states.loading)") Create 
+            ct-col(size="1")
+            ct-col(size="5")
+                div(*ngIf="responseSingle")
+                    p STATUS: {{responseSingle.status}}
+                    p(*ngFor="let error of responseSingle.errorMessages; index as i; trackBy: trackByFn") {{error}}
+
+
+
+.section
+    .section__header
+        ct-section-caption New Flow Instance with Multiply Inputs
+    .section__body
+        ct-cols(align-items="baseline")
+            ct-col(size="6")
+                .section__content
+                    div Example:
+                    pre
+                        |poolCodes:
+                        |    dataset-files:
+                        |      - file-01.csv
+                        |      - file-02.csv
+                        |    vocabular:
+                        |      - voc-01.txt
+                    br
+                    mat-form-field(appearance="outline") 
+                        mat-label Input resources of flow instance 
+                        textarea('[(ngModel)]'="resources" matInput cdkTextareaAutosize cdkAutosizeMinRows="10" value="" autocomplete="off") )  
+                        mat-hint This is a required field.
+                    .buttons.buttons--right
+                        button(mat-stroked-button '(click)'="cancel()") Back 
+                        button(mat-flat-button '(click)'="createWithResource()" color="primary" '[disabled]'="currentStates.has(states.loading)") Create 
+            ct-col(size="1")
+            ct-col(size="5")
+                div(*ngIf="responseMulti")
+                    p STATUS: {{responseMulti.status}}
+                    p(*ngFor="let error of responseMulti.errorMessages; index as i; trackBy: trackByFn") {{error}}
+
+

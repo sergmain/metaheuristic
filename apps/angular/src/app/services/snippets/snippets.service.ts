@@ -1,41 +1,32 @@
-import { Injectable } from '@angular/core';
-
-export interface Snippet {
-  name: string;
-  version: string;
-  type: string;
-  environment: string;
-  params: string;
-  isSigned: boolean;
-}
-
-function rand(min, max) {
-  return Math.floor(Math.random() * (max - min)) + min;
-}
-
-function initItem() {
-  return {
-    name: 'name-' + rand(1, 9999),
-    version: 'v' + rand(1, 9999),
-    type: 'type-' + rand(1, 9999),
-    environment: 'environment-' + rand(1, 9999),
-    params: 'params-' + rand(1, 9999),
-    isSigned: [true, false][rand(0, 2)]
-  }
-}
-
-function initItems(): Snippet[] {
-  return Array.from(Array(99)).map(el => initItem())
-}
-
+import {
+    Injectable
+} from '@angular/core';
+import {
+    environment
+} from 'environments/environment';
+import {
+    HttpClient,
+} from '@angular/common/http';
+import {
+    urls
+} from './urls';
 @Injectable({
-  providedIn: 'root'
+    providedIn: 'root'
 })
 
 export class SnippetsService {
-  private data: Snippet[] = initItems();
-  constructor() { }
-  getSnippets(): Snippet[] {
-    return this.data
-  }
+    constructor(
+        private http: HttpClient
+    ) {}
+
+    snippets = {
+        get: (page) => this.http.get(urls.snippets.get({
+            page
+        }))
+
+    }
+    snippet = {
+        upload: (formData) => this.http.post(urls.snippet.upload(), formData),
+        delete: (id) => this.http.get(urls.snippet.delete(id))
+    }
 }

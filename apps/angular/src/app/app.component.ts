@@ -7,5 +7,5 @@ import {FormBuilder, FormGroup} from '@angular/forms';
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent {
-  title = 'aiai-app';
+  title = 'metaheuristic-app';
 }

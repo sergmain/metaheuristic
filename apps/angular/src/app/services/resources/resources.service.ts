@@ -1,49 +1,50 @@
-
-
-import { Injectable } from '@angular/core';
-
-export interface Resource {
-    isValid: boolean;
-    uploadDate: string;
-    typeOfResource: string;
-    checksum: string;
-    code: string;
-    poolCode: string;
-    isManual: boolean;
-    filename: string;
-    storageUrl: string;
-}
-
-function rand(min, max) {
-    return Math.floor(Math.random() * (max - min)) + min;
-}
-
-function initItem() {
-    return {
-        isValid: [true, false][rand(0, 2)],
-        uploadDate: rand(1, 32) + '.' + rand(1, 13) + '.2018',
-        typeOfResource: ['DATA', ' -- '][rand(0, 2)],
-        checksum: '--',
-        code: '--',
-        poolCode: '--',
-        isManual: [true, false][rand(0, 2)],
-        filename: '--',
-        storageUrl: ['launchpad://', '--'][rand(0, 2)],
-    }
-}
-
-function initItems(): Resource[] {
-    return Array.from(Array(99)).map(el => initItem())
-}
+import {
+    Injectable
+} from '@angular/core';
+import {
+    HttpClient
+} from '@angular/common/http';
+import {
+    Observable,
+} from 'rxjs';
+import {
+    ResourcesResponse
+} from '@app/models';
+import {
+    urls
+} from './urls';
 
 @Injectable({
     providedIn: 'root'
 })
 
 export class ResourcesService {
-    private data: Resource[] = initItems();
-    constructor() {}
-    getResources(): Resource[] {
-        return this.data
-    }
+    private items: (ResourcesResponse.Resource)[];
+
+
+    constructor(
+        private http: HttpClient
+    ) {}
+
+    resources = {
+        get: (page) => this.http.get(urls.resources.get({
+            page
+        }))
+    };
+
+    resource = {
+        // get: () => this.http.get(urls.resources.get()),
+
+        upload: (formData) => this.http.post(urls.resource.upload(), formData),
+
+        external: (resource) => this.http.post(urls.resource.external({
+            resource
+        }), resource),
+
+        delete: (id) => this.http.post(urls.resource.delete({
+            id
+        }), {
+            id
+        }),
+    };
 }

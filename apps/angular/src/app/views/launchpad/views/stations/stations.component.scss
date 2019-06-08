@@ -1,4 +1,10 @@
-@import '~mixins.scss';
 
-@include tablePageLayout()
 
+
+.section {
+    .first-row{
+        td {
+            border-width: 0;
+        }
+    }
+}

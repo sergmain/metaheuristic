@@ -1,70 +1,77 @@
 import {
     Component,
     OnInit,
-    DoCheck,
-    ViewChild,
-    Input,
-    SimpleChanges
+    ViewChild
 } from '@angular/core';
-
-import { AuthService, AuthState, ThemeState } from '@app/services/auth/auth.service'
-import { ActivatedRoute } from '@angular/router'
-
+import {
+    MatSidenav
+} from '@angular/material';
+import {
+    ActivatedRoute
+} from '@angular/router';
+import {
+    AuthenticationService
+} from '@app/services/authentication/authentication.service';
+import {
+    SettingsService
+} from '@app/services/settings/settings.service';
+import {
+    Subscription
+} from 'rxjs';
 @Component({
     selector: 'app-view',
-    templateUrl: './app-view.component.html',
+    templateUrl: './app-view.component.pug',
     styleUrls: ['./app-view.component.scss']
 })
 
-export class AppViewComponent implements OnInit, DoCheck {
-    authState: AuthState
-    themeState: ThemeState
-    sidenavOpen: boolean = true
+export class AppViewComponent implements OnInit {
+    sidenavIsOpen: boolean = false;
+    sidenavIsDisabled: boolean = false;
+    themeActive: boolean = false;
+    @ViewChild(MatSidenav) sidenav: MatSidenav;
+
     constructor(
-        private authService: AuthService,
+        private authenticationService: AuthenticationService,
+        private settingsService: SettingsService,
         private route: ActivatedRoute
     ) {}
 
     ngOnInit() {
-        this.obsThemeState()
-        this.obsAuthState()
-        this.route.data.subscribe(v => this.sidenavOpen = v.sidenavOpen === false ? false : true)
-        console.log(this.sidenavOpen)
+        this.settingsService.getSettings().subscribe(data => {
+            this.themeActive = data.darkTheme;
+            this.sidenavIsOpen = data.openSide;
+        });
+        this.checkSidenav();
+        this.isAuth();
     }
 
-
-    ngDoCheck() {
-        this.toggle()
+    isAuth() {
+        return this.authenticationService.isAuth();
     }
 
-    obsAuthState() {
-        this.authService.getAuthState()
-            .subscribe(authState => {
-                this.authState = authState
-            });
+    checkSidenav() {
+        this.route.data.subscribe(data => {
+            this.sidenavIsDisabled = data.sidenavIsDisabled || false;
+            this.sidenavIsDisabled ?
+                this.sidenavIsOpen = false :
+                this.sidenavIsOpen = this.sidenavIsOpen;
+        });
     }
 
-    obsThemeState() {
-        this.authService.getThemeState()
-            .subscribe(themeState => {
-                this.themeState = themeState
-            })
+    sideToggle() {
+        this.sidenav.toggle();
+        this.sidenav.opened ?
+            this.settingsService.showSide() :
+            this.settingsService.hideSide();
     }
 
-    change() {
-        this.authService.toggleTheme()
+    themeToggle(event) {
+        event.checked ?
+            this.settingsService.setDarkTheme() :
+            this.settingsService.setLightTheme();
     }
 
-    toggle() {
-        if (!this.themeState.dark) {
-            document.body.classList.remove('dark-theme')
-            document.body.classList.add('light-theme')
-        } else {
-            document.body.classList.remove('light-theme')
-            document.body.classList.add('dark-theme')
-        }
-    }
-    ngOnDestroy() {
-        // TODO: unscribe
+    logout() {
+        return this.authenticationService.logout();
     }
 }

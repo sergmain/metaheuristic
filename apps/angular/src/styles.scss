@@ -8,12 +8,38 @@ body {
     height: 100%;
     min-height: 100%;
     font-size: 18px;
+    overflow-y: scroll;
 }
 
 * {
     box-sizing: border-box;
 }
 
+pre {
+    margin: 0;
+    white-space: pre-wrap;
+}
 
+button * {
+    pointer-events: none;
+}
 
+.simple-notification {
+    word-break: break-word;
+    float: right !important;
+    width: auto !important;
+    min-width: 300px;
+}
 
+.simple-notification-wrapper {
+    min-width: 300px;
+    width: auto !important;
+    max-width: 400px;
+}
+
+.deleted-table-row {
+    opacity: 0.5;
+    filter: grayscale(1);
+    pointer-events: none;
+    user-select: none;
+}
