@@ -1,7 +1,7 @@
 export interface Experiment {
   id: number;
   version: number;
-  flowInstanceId: number;
+  workbookId: number;
   name: string;
   description: string;
   code: string;

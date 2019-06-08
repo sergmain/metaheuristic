@@ -12,9 +12,9 @@ export * from './ExperimentFeatureProgressResponse';
 export * from './ExperimentFeatureProgressConsolePartResponse';
 export * from './ExperimentFeaturePlotDataPartResponse';
 
-export * from './FlowsResponse';
-export * from './FlowInstancesResponse';
-export * from './FlowInstancesAddCommitResponse';
+export * from './PlansResponse';
+export * from './WorkbooksResponse';
+export * from './WorkbookAddCommitResponse';
 
 
 export * from './StationResponse';
@@ -31,11 +31,11 @@ export * from './AccountResponse';
 
 export * from './ItemsResponse';
 
-export * from './FlowResponse';
+export * from './PlanResponse';
 export * from './ExperimentResponse';
 
-export * from './Flow';
-export * from './FlowInstance';
+export * from './Plan';
+export * from './Workbook';
 export * from './Station';
 export * from './Snippet';
 export * from './Experiment';

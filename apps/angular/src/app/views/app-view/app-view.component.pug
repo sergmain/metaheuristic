@@ -8,9 +8,9 @@
 						'[disabled]'="sidenavIsDisabled"
 						'(click)'="sideToggle()")
 							mat-icon(class="mat-icon") menu
-					button(class="mat-button mat-button--menu-item" mat-button routerLinkActive="active" '[routerLinkActiveOptions]'="{ exact: true }" routerLink="") AiAi
+					button(class="mat-button mat-button--menu-item" mat-button routerLinkActive="active" '[routerLinkActiveOptions]'="{ exact: true }" routerLink="") Metaheuristic
 					button(class="mat-button mat-button--menu-item" mat-button routerLinkActive="active" routerLink="/launchpad") Launchpad
-					button(class="mat-button mat-button--menu-item" mat-button routerLinkActive="active" routerLink="/pilot") Pilot
+					button(class="mat-button mat-button--menu-item" mat-button routerLinkActive="active" routerLink="/pilot") Batch
 				.app-view-header__right
 					mat-slide-toggle('[checked]'="themeActive" '(change)'="themeToggle($event)")
 					button(class="mat-button mat-button--menu-item" mat-button routerLinkActive="active" routerLink="/about") About
@@ -25,7 +25,7 @@
 		mat-toolbar(class="app-view-header" color="primary")
 			mat-toolbar-row(class="app-view-header__row")
 				.app-view-header__left
-					button(class="mat-button" mat-button routerLink="/") AiAi
+					button(class="mat-button" mat-button routerLink="/") Metaheuristic
 				.app-view-header__right
 		mat-sidenav-container(class="app-view-body")
 			mat-sidenav-content(class="app-view-sidenav-content")

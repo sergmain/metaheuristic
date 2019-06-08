@@ -8,18 +8,8 @@ export namespace SnippetsResponse {
     export interface Snippet {
         id: number;
         version: number;
-        name: string;
+        code: string;
         type: string;
-        snippetVersion: string;
-        filename: string;
-        params ?: null;
-        checksum: string;
-        env: string;
-        isSigned: boolean;
-        reportMetrics: boolean;
-        length: number;
-        fileProvided: boolean;
-        signed: boolean;
-        snippetCode: string;
+        params ?: string | null;
     }
 }

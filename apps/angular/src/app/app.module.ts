@@ -21,7 +21,7 @@ import { MaterialAppModule } from './ngmaterial.module';
 import { NotificationsInterceptor } from './notifications.interceptor';
 import { AboutComponent } from './views/about/about.component';
 import { AppViewComponent } from './views/app-view/app-view.component';
-import { AccountsComponent, AddAccountComponent, AddExperimentComponent, AddFlowComponent, AddInstanceComponent, AddResourceComponent, AddSnippetComponent, EditAccountComponent, EditExperimentComponent, EditFlowComponent, EditInstanceComponent, EditPassAccountComponent, EditStationComponent, ExperimentsComponent, FlowsComponent, InfoExperimentComponent, InstancesComponent, LaunchpadComponent, NavLaunchpadComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent } from './views/launchpad';
+import { AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddWorkbookComponent, AddResourceComponent, AddSnippetComponent, EditAccountComponent, EditExperimentComponent, EditPlanComponent, EditWorkbookComponent, EditPassAccountComponent, EditStationComponent, ExperimentsComponent, PlansComponent, InfoExperimentComponent, WorkbooksComponent, LaunchpadComponent, NavLaunchpadComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent } from './views/launchpad';
 import { LoginComponent } from './views/login/login.component';
 import { NavPilotComponent, PilotComponent, ProcessResourcesComponent } from './views/pilot';
 import { CtTableComponent } from './custom-tags/ct-table/ct-table.component';
@@ -46,13 +46,13 @@ import { CtWrapBlockComponent } from './custom-tags/ct-wrap-block/ct-wrap-block.
         InfoExperimentComponent,
         ProgressExperimentComponent,
 
-        FlowsComponent,
-        AddFlowComponent,
-        EditFlowComponent,
+        PlansComponent,
+        AddPlanComponent,
+        EditPlanComponent,
 
-        InstancesComponent,
-        AddInstanceComponent,
-        EditInstanceComponent,
+        WorkbooksComponent,
+        AddWorkbookComponent,
+        EditWorkbookComponent,
 
         ResourcesComponent,
         AddResourceComponent,

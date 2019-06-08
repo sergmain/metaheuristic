@@ -4,7 +4,7 @@ import {
 import jsonToUrlParams from '@app/helpers/jsonToUrlParams';
 
 
-const base = environment.baseUrl + '/ng/launchpad/resource';
+const base = environment.baseUrl + '/rest/v1/launchpad/resource';
 
 const urls = {
     resources: {

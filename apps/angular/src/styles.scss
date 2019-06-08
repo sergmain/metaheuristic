@@ -1,3 +1,5 @@
+@import "~material-design-icons/iconfont/material-icons.css";
+
 html {
     height: 100%;
     min-height: 100%;
@@ -42,4 +44,16 @@ button * {
     filter: grayscale(1);
     pointer-events: none;
     user-select: none;
+}
+
+@font-face {
+    font-family: 'Material Icons';
+    font-style: normal;
+    font-weight: 400;
+    src: url(https://localhost:4200/MaterialIcons-Regular.eot); /* For IE6-8 */
+    src: local('Material Icons'),
+    local('MaterialIcons-Regular'),
+    url(https://localhost:4200/MaterialIcons-Regular.woff2) format('woff2'),
+    url(https://localhost:4200/MaterialIcons-Regular.woff) format('woff'),
+    url(https://localhost:4200/MaterialIcons-Regular.ttf) format('truetype');
 }

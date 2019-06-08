@@ -59,7 +59,7 @@ export namespace ExperimentFeatureProgressResponse {
     isCompleted: boolean;
     metrics?: string | null;
     order: number;
-    flowInstanceId: number;
+    workbookId: number;
     execState: number;
     processType: number;
     resultReceived: boolean;
@@ -82,7 +82,7 @@ export namespace ExperimentFeatureProgressResponse {
   export interface Experiment {
     id: number;
     version: number;
-    flowInstanceId: number;
+    workbookId: number;
     name: string;
     description: string;
     code: string;

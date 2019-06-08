@@ -8,7 +8,7 @@ export namespace ExperimentInfoResponse{
 	export interface Experiment {
 	  id: number;
 	  version: number;
-	  flowInstanceId: number;
+	  workbookId: number;
 	  name: string;
 	  description: string;
 	  code: string;
@@ -31,8 +31,8 @@ export namespace ExperimentInfoResponse{
 	export interface ExperimentInfo {
 	  allDatasetOptions?: (null)[] | null;
 	  features?: (FeaturesEntity)[] | null;
-	  flowInstance: FlowInstance;
-	  flowInstanceExecState: string;
+	  workbook: Workbook;
+	  workbookExecState: string;
 	}
 	export interface FeaturesEntity {
 	  id: number;
@@ -43,10 +43,10 @@ export namespace ExperimentInfoResponse{
 	  experimentId: number;
 	  maxValue: number;
 	}
-	export interface FlowInstance {
+	export interface Workbook {
 	  id: number;
 	  version: number;
-	  flowId: number;
+	  planId: number;
 	  createdOn: number;
 	  completedOn: number;
 	  inputResourceParam: string;

@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { Router, ActivatedRoute } from '@angular/router';
+import { environment } from 'environments/environment';
 
 export interface AuthState {
     auth: boolean
@@ -39,7 +40,7 @@ export class AuthService {
         });
 
 
-        let url = 'http://localhost:8080/ng/user';
+        let url = environment.baseUrl + '/rest/v1/user';
         this.http.post < Observable < boolean >> (url, {
             username: data.username,
             password: data.password

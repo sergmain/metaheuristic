@@ -36,12 +36,9 @@ export class SnippetsComponent implements OnInit {
     response: SnippetsResponse.Response;
     dataSource = new MatTableDataSource < SnippetsResponse.Snippet > ([]);
     columnsToDisplay: (string)[] = [
-        'name',
-        'version',
+        'code',
         'type',
-        'env',
         'params',
-        'isSigned',
         'bts'
     ];
     deletedSnippets: (SnippetsResponse.Snippet)[] = [];

@@ -14,13 +14,13 @@ import {
     EditAccountComponent,
     EditPassAccountComponent,
 
-    FlowsComponent,
-    AddFlowComponent,
-    EditFlowComponent,
+    PlansComponent,
+    AddPlanComponent,
+    EditPlanComponent,
 
-    InstancesComponent,
-    AddInstanceComponent,
-    EditInstanceComponent,
+    WorkbooksComponent,
+    AddWorkbookComponent,
+    EditWorkbookComponent,
 
     ResourcesComponent,
     AddResourceComponent,
@@ -83,12 +83,12 @@ let routes: Routes = [
     },
 
     launchpadRoute({ path: 'launchpad', body: LaunchpadComponent }),
-    launchpadRoute({ path: 'launchpad/flows', body: FlowsComponent }),
-    launchpadRoute({ path: 'launchpad/flows/add', body: AddFlowComponent }),
-    launchpadRoute({ path: 'launchpad/flows/:flowId/edit', body: EditFlowComponent }),
-    launchpadRoute({ path: 'launchpad/flows/:flowId/instances', body: InstancesComponent }),
-    launchpadRoute({ path: 'launchpad/flows/:flowId/instances/add', body: AddInstanceComponent }),
-    launchpadRoute({ path: 'launchpad/flows/:flowId/instances/:instanceId/edit', body: AddInstanceComponent }),
+    launchpadRoute({ path: 'launchpad/plans', body: PlansComponent }),
+    launchpadRoute({ path: 'launchpad/plans/add', body: AddPlanComponent }),
+    launchpadRoute({ path: 'launchpad/plans/:planId/edit', body: EditPlanComponent }),
+    launchpadRoute({ path: 'launchpad/plans/:planId/workbooks', body: WorkbooksComponent }),
+    launchpadRoute({ path: 'launchpad/plans/:planId/workbooks/add', body: AddWorkbookComponent }),
+    launchpadRoute({ path: 'launchpad/plans/:planId/workbooks/:workbookId/edit', body: AddWorkbookComponent }),
 
     launchpadRoute({ path: 'launchpad/experiments', body: ExperimentsComponent }),
     launchpadRoute({ path: 'launchpad/experiments/add', body: AddExperimentComponent }),

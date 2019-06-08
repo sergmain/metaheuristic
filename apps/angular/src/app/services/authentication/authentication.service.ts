@@ -23,7 +23,7 @@ export class AuthenticationService {
 
 
     login(username: string, password: string) {
-        const url = environment.baseUrl + '/ng/user';
+        const url = environment.baseUrl + '/rest/v1/user';
         const headers = new HttpHeaders({
             "Authorization": 'Basic ' + btoa(username + ':' + password)
         });

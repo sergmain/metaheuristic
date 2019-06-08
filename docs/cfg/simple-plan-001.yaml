@@ -1,7 +1,7 @@
 processes:
   - code: fileless-document
     collectResources: false
-    name: Fileless flow for documents
+    name: Fileless plan for documents
     snippetCodes:
       - fileless-snippet:1.0
     type: FILE_PROCESSING

@@ -18,7 +18,7 @@ export namespace ExperimentsResponse {
   export interface ContentEntity {
     id: number;
     version: number;
-    flowInstanceId: number;
+    workbookId: number;
     name: string;
     description: string;
     code: string;

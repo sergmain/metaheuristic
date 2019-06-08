@@ -1,10 +1,10 @@
-import { FlowInstance } from '@app/models/FlowInstance'
+import { Workbook } from '@app/models/Workbook'
 import { Features } from '@app/models/Features'
 
 
 export interface ExperimentInfo {
   allDatasetOptions?: (null)[] | null;
   features?: (Features)[] | null;
-  flowInstance: FlowInstance;
-  flowInstanceExecState: string;
+  workbook: Workbook;
+  workbookExecState: string;
 }

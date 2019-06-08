@@ -7,7 +7,7 @@ export namespace ExperimentEditCommitResponse {
     export interface Experiment {
         id: number;
         version: number;
-        flowInstanceId ? : null;
+        workbookId ? : null;
         name: string;
         description: string;
         code: string;
