@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.launchpad.experiment;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -35,9 +36,7 @@ public class ExperimentCache {
         this.experimentRepository = experimentRepository;
     }
 
-//    @CachePut(cacheNames = "experiments", key = "#result.id")
-//    @Cacheable(cacheNames = "experiments", unless="#result==null")
-    @CacheEvict(value = "experiments", key = "#result.id")
+    @CacheEvict(value = Consts.EXPERIMENTS_CACHE, key = "#result.id")
     public Experiment save(Experiment experiment) {
         // noinspection UnusedAssignment
         Experiment save=null;
@@ -50,12 +49,12 @@ public class ExperimentCache {
         }
     }
 
-    @Cacheable(cacheNames = "experiments", unless="#result==null")
+    @Cacheable(cacheNames = Consts.EXPERIMENTS_CACHE, unless="#result==null")
     public Experiment findById(long id) {
         return experimentRepository.findById(id).orElse(null);
     }
 
-    @CacheEvict(cacheNames = {"experiments"}, key = "#experiment.id")
+    @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#experiment.id")
     public void delete(Experiment experiment) {
         try {
             experimentRepository.delete(experiment);
@@ -64,12 +63,12 @@ public class ExperimentCache {
         }
     }
 
-    @CacheEvict(cacheNames = {"experiments"}, key = "#id")
+    @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#id")
     public void invalidate(Long id) {
         //
     }
 
-    @CacheEvict(cacheNames = {"experiments"}, key = "#id")
+    @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#id")
     public void deleteById(Long id) {
         try {
             experimentRepository.deleteById(id);

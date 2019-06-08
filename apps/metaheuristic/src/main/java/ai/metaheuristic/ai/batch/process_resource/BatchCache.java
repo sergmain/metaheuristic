@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.batch.process_resource;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.batch.beans.Batch;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -29,25 +30,23 @@ import org.springframework.stereotype.Component;
 @Slf4j
 public class BatchCache {
 
-    private static final String BATCHES_CACHE = "batches";
-
     private final BatchRepository batchRepository;
 
     public BatchCache(BatchRepository batchRepository) {
         this.batchRepository = batchRepository;
     }
 
-    @CacheEvict(value = BATCHES_CACHE, key = "#result.id")
+    @CacheEvict(value = Consts.BATCHES_CACHE, key = "#result.id")
     public Batch save(Batch batch) {
         return batchRepository.save(batch);
     }
 
-    @Cacheable(cacheNames = BATCHES_CACHE, unless="#result==null")
+    @Cacheable(cacheNames = Consts.BATCHES_CACHE, unless="#result==null")
     public Batch findById(Long id) {
         return batchRepository.findById(id).orElse(null);
     }
 
-    @CacheEvict(cacheNames = {BATCHES_CACHE}, key = "#batch.id")
+    @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#batch.id")
     public void delete(Batch batch) {
         if (batch==null) {
             return;
@@ -59,7 +58,7 @@ public class BatchCache {
         }
     }
 
-    @CacheEvict(cacheNames = {BATCHES_CACHE}, key = "#id")
+    @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#id")
     public void deleteById(Long id) {
         if (id==null) {
             return;
@@ -72,7 +71,7 @@ public class BatchCache {
         }
     }
 
-    @CacheEvict(cacheNames = {BATCHES_CACHE}, key = "#id")
+    @CacheEvict(cacheNames = {Consts.BATCHES_CACHE}, key = "#id")
     public void evictById(Long id) {
         //
     }

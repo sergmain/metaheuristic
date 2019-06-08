@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Service
 @Slf4j
@@ -80,12 +81,12 @@ public class ArtifactCleanerAtStation {
             }
             synchronized (StationSyncHolder.stationGlobalSync) {
                 try {
-                    final BoolHolder isEmpty = new BoolHolder(true);
+                    final AtomicBoolean isEmpty = new AtomicBoolean(true);
                     Files.list(launchpadDir.toPath()).forEach(s -> {
-                        isEmpty.value = true;
+                        isEmpty.set(true);
                         try {
                             Files.list(s).forEach(t -> {
-                                isEmpty.value = false;
+                                isEmpty.set(false);
                                 try {
                                     File taskYaml = new File(t.toFile(), Consts.TASK_YAML);
                                     if (!taskYaml.exists()) {

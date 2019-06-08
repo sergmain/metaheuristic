@@ -16,15 +16,10 @@
 
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.launchpad.repositories.RefToLaunchpadRepositories;
 import ai.metaheuristic.ai.batch.process_resource.RefToPilotRepositories;
-import com.google.common.cache.CacheBuilder;
+import ai.metaheuristic.ai.launchpad.repositories.RefToLaunchpadRepositories;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
-import org.springframework.cache.concurrent.ConcurrentMapCache;
-import org.springframework.cache.concurrent.ConcurrentMapCacheManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ApplicationEventMulticaster;
@@ -33,8 +28,6 @@ import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-
-import java.util.concurrent.TimeUnit;
 
 /**
  * User: Serg
@@ -58,12 +51,22 @@ public class Config {
         return new LayoutDialect();
     }
 
+/*
     @Bean
     public CacheManager cacheManager() {
+
+        LoadingCache<Key, Graph> graphs = Caffeine.newBuilder()
+                .maximumSize(10_000)
+                .expireAfterWrite(5, TimeUnit.MINUTES)
+                .refreshAfterWrite(1, TimeUnit.MINUTES)
+                .build(key -> createExpensiveGraph(key));            }
+
+
         //noinspection UnnecessaryLocalVariable
         ConcurrentMapCacheManager cacheManager = new ConcurrentMapCacheManager() {
             @Override
             protected Cache createConcurrentMapCache(final String name) {
+
                 return new ConcurrentMapCache(name,
                         CacheBuilder
                                 .newBuilder()
@@ -76,6 +79,7 @@ public class Config {
 
         return cacheManager;
     }
+*/
 
     @Bean(name = "applicationEventMulticaster")
     public ApplicationEventMulticaster simpleApplicationEventMulticaster() {

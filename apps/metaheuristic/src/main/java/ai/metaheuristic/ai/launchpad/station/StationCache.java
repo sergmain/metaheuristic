@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.station;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -36,19 +37,18 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class StationCache {
 
-    public static final String STATIONS_CACHE = "stations";
     private final StationsRepository stationsRepository;
 
     public StationCache(StationsRepository stationsRepository) {
         this.stationsRepository = stationsRepository;
     }
 
-    @CacheEvict(cacheNames = STATIONS_CACHE, key = "#result.id")
+    @CacheEvict(cacheNames = Consts.STATIONS_CACHE, key = "#result.id")
     public Station save(Station station) {
         return stationsRepository.save(station);
     }
 
-    @CacheEvict(cacheNames = {STATIONS_CACHE}, key = "#station.id")
+    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#station.id")
     public void delete(Station station) {
         try {
             stationsRepository.delete(station);
@@ -57,7 +57,7 @@ public class StationCache {
         }
     }
 
-    @CacheEvict(cacheNames = {STATIONS_CACHE}, key = "#stationId")
+    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#stationId")
     public void delete(Long stationId) {
         try {
             stationsRepository.deleteById(stationId);
@@ -66,7 +66,7 @@ public class StationCache {
         }
     }
 
-    @CacheEvict(cacheNames = {STATIONS_CACHE}, key = "#stationId")
+    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#stationId")
     public void deleteById(Long stationId) {
         try {
             stationsRepository.deleteById(stationId);
@@ -75,7 +75,7 @@ public class StationCache {
         }
     }
 
-    @Cacheable(cacheNames = STATIONS_CACHE, unless="#result==null")
+    @Cacheable(cacheNames = Consts.STATIONS_CACHE, unless="#result==null")
     public Station findById(Long id) {
         return stationsRepository.findById(id).orElse(null);
     }

@@ -31,7 +31,7 @@ import static org.junit.Assert.assertNull;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
-public class TextExperimentCache extends PreparingExperiment {
+public class TestExperimentCache extends PreparingExperiment {
 
     @Test
     public void testCache() {

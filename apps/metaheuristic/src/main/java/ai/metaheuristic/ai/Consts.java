@@ -86,4 +86,11 @@ public class Consts {
 
     public static final String RESULT_FILE_EXTENSION = "result-file-extension";
     public static final String UNKNOWN_INFO = "[unknown]";
+
+
+    public static final String STATIONS_CACHE = "stations";
+    public static final String BATCHES_CACHE = "batches";
+    public static final String EXPERIMENTS_CACHE = "experiments";
+    public static final String PLANS_CACHE = "plans";
+    public static final String SNIPPETS_CACHE = "snippets";
 }

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.plan;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
@@ -37,17 +38,17 @@ public class PlanCache {
         this.planRepository = planRepository;
     }
 
-    @CacheEvict(value = "plans", key = "#result.id")
+    @CacheEvict(value = Consts.PLANS_CACHE, key = "#result.id")
     public PlanImpl save(PlanImpl plan) {
         return planRepository.save(plan);
     }
 
-    @Cacheable(cacheNames = "plans", unless="#result==null")
+    @Cacheable(cacheNames = Consts.PLANS_CACHE, unless="#result==null")
     public PlanImpl findById(long id) {
         return planRepository.findById(id).orElse(null);
     }
 
-    @CacheEvict(cacheNames = {"plans"}, key = "#plan.id")
+    @CacheEvict(cacheNames = {Consts.PLANS_CACHE}, key = "#plan.id")
     public void delete(Plan plan) {
         try {
             planRepository.deleteById(plan.getId());
@@ -56,7 +57,7 @@ public class PlanCache {
         }
     }
 
-    @CacheEvict(cacheNames = {"plans"}, key = "#id")
+    @CacheEvict(cacheNames = {Consts.PLANS_CACHE}, key = "#id")
     public void deleteById(Long id) {
         try {
             planRepository.deleteById(id);

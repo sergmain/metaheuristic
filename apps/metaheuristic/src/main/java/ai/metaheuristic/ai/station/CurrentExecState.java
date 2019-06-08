@@ -16,12 +16,12 @@
 package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.comm.Protocol;
-import ai.metaheuristic.ai.utils.holders.BoolHolder;
 import ai.metaheuristic.api.v1.EnumsApi;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Component
 @Profile("station")
@@ -30,17 +30,17 @@ public class CurrentExecState {
     // this is a map for holding the current status of Workbook, Not a task
     private final Map<String, Map<Long, EnumsApi.WorkbookExecState>> workbookState = new HashMap<>();
 
-    private Map<String, BoolHolder> isInit = new HashMap<>();
+    private Map<String, AtomicBoolean> isInit = new HashMap<>();
 
     public boolean isInited(String launchpadUrl) {
         synchronized(workbookState) {
-            return isInit.computeIfAbsent(launchpadUrl, v -> new BoolHolder(false)).value;
+            return isInit.computeIfAbsent(launchpadUrl, v -> new AtomicBoolean(false)).get();
         }
     }
 
     void register(String launchpadUrl, List<Protocol.WorkbookStatus.SimpleStatus> statuses) {
         synchronized(workbookState) {
-            isInit.computeIfAbsent(launchpadUrl, v -> new BoolHolder()).value = true;
+            isInit.computeIfAbsent(launchpadUrl, v -> new AtomicBoolean()).set(true);
             // statuses==null when there isn't any workbook
             if (statuses==null) {
                 workbookState.computeIfAbsent(launchpadUrl, m -> new HashMap<>()).clear();

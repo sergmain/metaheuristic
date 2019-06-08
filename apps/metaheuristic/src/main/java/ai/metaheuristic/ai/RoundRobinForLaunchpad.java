@@ -23,11 +23,12 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 public class RoundRobinForLaunchpad {
 
-    public Map<String, BoolHolder> urls = new HashMap<>();
+    public Map<String, AtomicBoolean> urls = new HashMap<>();
 
     public RoundRobinForLaunchpad(Map<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> launchpads) {
         for (Map.Entry<String, LaunchpadLookupExtendedService.LaunchpadLookupExtended> entry : launchpads.entrySet()) {
@@ -37,7 +38,7 @@ public class RoundRobinForLaunchpad {
                 continue;
             }
             log.info("launchpad {} was added to round-robin", launchpadLookup.url);
-            this.urls.putIfAbsent(launchpadLookup.url, new BoolHolder(true));
+            this.urls.putIfAbsent(launchpadLookup.url, new AtomicBoolean(true));
         }
     }
 
@@ -55,16 +56,16 @@ public class RoundRobinForLaunchpad {
     }
 
     public void reset() {
-        for (Map.Entry<String, BoolHolder> entry : urls.entrySet()) {
-            entry.getValue().value = true;
+        for (Map.Entry<String, AtomicBoolean> entry : urls.entrySet()) {
+            entry.getValue().set(true);
         }
     }
 
     private String findNext() {
         String url = null;
-        for (Map.Entry<String, BoolHolder> entry : urls.entrySet()) {
-            if (entry.getValue().value) {
-                entry.getValue().value = false;
+        for (Map.Entry<String, AtomicBoolean> entry : urls.entrySet()) {
+            if (entry.getValue().get()) {
+                entry.getValue().set(false);
                 url = entry.getKey();
                 break;
             }

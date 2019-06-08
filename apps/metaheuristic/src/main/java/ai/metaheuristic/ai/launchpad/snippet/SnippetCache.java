@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.launchpad.snippet;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -35,12 +36,12 @@ public class SnippetCache {
         this.snippetRepository = snippetRepository;
     }
 
-    @CacheEvict(cacheNames = "snippets", key = "#result.id")
+    @CacheEvict(cacheNames = Consts.SNIPPETS_CACHE, key = "#result.id")
     public Snippet save(Snippet snippet) {
         return snippetRepository.save(snippet);
     }
 
-    @CacheEvict(cacheNames = {"snippets"}, key = "#snippet.id")
+    @CacheEvict(cacheNames = {Consts.SNIPPETS_CACHE}, key = "#snippet.id")
     public void delete(Snippet snippet) {
         try {
             snippetRepository.delete(snippet);
@@ -49,7 +50,7 @@ public class SnippetCache {
         }
     }
 
-    @CacheEvict(cacheNames = {"snippets"}, key = "#snippetId")
+    @CacheEvict(cacheNames = {Consts.SNIPPETS_CACHE}, key = "#snippetId")
     public void delete(Long snippetId) {
         try {
             snippetRepository.deleteById(snippetId);
@@ -58,7 +59,7 @@ public class SnippetCache {
         }
     }
 
-    @Cacheable(cacheNames = "snippets", unless="#result==null")
+    @Cacheable(cacheNames = Consts.SNIPPETS_CACHE, unless="#result==null")
     public Snippet findById(Long id) {
         return snippetRepository.findById(id).orElse(null);
     }
