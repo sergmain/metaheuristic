@@ -38,6 +38,10 @@ public class BatchCache {
 
     @CacheEvict(value = Consts.BATCHES_CACHE, key = "#result.id")
     public Batch save(Batch batch) {
+        if (batch==null) {
+            return null;
+        }
+        log.info("#459.010 save batch, id: #{}, batch: {}", batch.id, batch);
         return batchRepository.save(batch);
     }
 
@@ -54,7 +58,7 @@ public class BatchCache {
         try {
             batchRepository.deleteById(batch.getId());
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error while deleting, batch in db: " + batchRepository.findById(batch.getId()), e);
+            log.warn("#459.030 Error while deleting, batch in db: " + batchRepository.findById(batch.getId()), e);
         }
     }
 
@@ -67,7 +71,7 @@ public class BatchCache {
             batchRepository.deleteById(id);
         } catch (ObjectOptimisticLockingFailureException e) {
 
-            log.warn("Error while deletingById, batch in db: " + batchRepository.findById(id), e);
+            log.warn("#459.050 Error while deletingById, batch in db: " + batchRepository.findById(id), e);
         }
     }
 
