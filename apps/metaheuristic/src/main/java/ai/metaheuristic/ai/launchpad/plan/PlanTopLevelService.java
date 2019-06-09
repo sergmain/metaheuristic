@@ -61,6 +61,7 @@ public class PlanTopLevelService {
         this.workbookRepository = workbookRepository;
     }
 
+    @SuppressWarnings("Duplicates")
     public PlanApiData.PlansResult getPlans(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.planRowsLimit, pageable);
         List<Plan> plans = planRepository.findAllByOrderByIdDesc();
