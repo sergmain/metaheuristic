@@ -17,7 +17,10 @@
 package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.Account;
+import ai.metaheuristic.api.v1.launchpad.BinaryData;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,5 +40,8 @@ public interface AccountRepository extends CrudRepository<Account, Long> {
 
     @Transactional(readOnly = true)
     Account findByMailAddress(String mailAddress);
+
+    @Transactional(readOnly = true)
+    Page<Account> findAll(Pageable pageable);
 
 }
