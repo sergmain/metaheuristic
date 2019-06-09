@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.batch.process_resource;
 
 import ai.metaheuristic.ai.batch.beans.BatchWorkbook;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +28,7 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface BatchWorkbookRepository extends JpaRepository<BatchWorkbook, Long> {
+public interface BatchWorkbookRepository extends CrudRepository<BatchWorkbook, Long> {
 
     @Transactional(readOnly = true)
     @Query(value="select b.workbookId from BatchWorkbook b where b.batchId=:batchId")
