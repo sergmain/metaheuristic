@@ -94,10 +94,10 @@ public class Schedulers {
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke System.gc()");
+            log.warn("Invoke System.gc()");
             System.gc();
             final Runtime rt = Runtime.getRuntime();
-            log.info("Memory after GC. Free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
+            log.warn("Memory after GC. Free: {}, max: {}, total: {}", rt.freeMemory(), rt.maxMemory(), rt.totalMemory());
         }
 
     }
