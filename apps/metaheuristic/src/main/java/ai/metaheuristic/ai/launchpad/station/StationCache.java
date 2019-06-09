@@ -45,6 +45,10 @@ public class StationCache {
 
     @CacheEvict(cacheNames = Consts.STATIONS_CACHE, key = "#result.id")
     public Station save(Station station) {
+        if (station==null) {
+            return null;
+        }
+        log.debug("#457.010 save station, id: {}, station: {}", station.id, station);
         return stationsRepository.save(station);
     }
 
@@ -53,8 +57,13 @@ public class StationCache {
         try {
             stationsRepository.delete(station);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error deleting of snippet by object", e);
+            log.error("#457.030 Error deleting of snippet by object", e);
         }
+    }
+
+    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#id")
+    public void evictById(Long id) {
+        //
     }
 
     @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#stationId")
@@ -62,7 +71,7 @@ public class StationCache {
         try {
             stationsRepository.deleteById(stationId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error deleting of station by id", e);
+            log.error("#457.050 Error deleting of station by id", e);
         }
     }
 
@@ -71,7 +80,7 @@ public class StationCache {
         try {
             stationsRepository.deleteById(stationId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.warn("Error deleting of station by id", e);
+            log.error("#457.070 Error deleting of station by id", e);
         }
     }
 

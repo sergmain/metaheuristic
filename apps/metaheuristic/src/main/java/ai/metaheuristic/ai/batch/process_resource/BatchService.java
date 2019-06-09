@@ -336,7 +336,8 @@ public class BatchService {
             return batchParams.batchStatus;
 
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#990.120 Error updating batch, new: {}, curr: {}", b, batchRepository.findById(batchId));
+            log.error("#990.120 Error updating batch, new: {}, curr: {}", b, batchRepository.findById(batchId).orElse(null));
+            log.error("#990.121 Error updating batch", e);
             batchCache.evictById(batchId);
             throw new NeedRetryAfterCacheCleanException();
         }
