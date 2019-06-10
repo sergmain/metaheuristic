@@ -174,7 +174,8 @@ public class ProcessResourceController {
                 log.error("#990.020 Error: {}", e.toString());
                 return false;
             }
-        }).collect(Collectors.toList());
+        }).sorted((o1,o2)-> Long.compare(o2.getId(), o1.getId())
+        ).collect(Collectors.toList());
         return "pilot/process-resource/process-resource-add";
     }
 
