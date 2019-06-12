@@ -31,7 +31,6 @@ import org.springframework.transaction.annotation.Transactional;
  * Time: 15:52
  */
 @Component
-@Transactional
 @Profile("launchpad")
 public interface StationsRepository extends CrudRepository<Station, Long> {
 

@@ -22,7 +22,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "PILOT_BATCH_WORKBOOK")
+@Table(name = "MH_BATCH_WORKBOOK")
 @Data
 @NoArgsConstructor
 public class BatchWorkbook implements Serializable {

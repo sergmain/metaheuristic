@@ -25,7 +25,7 @@ import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "PILOT_BATCH")
+@Table(name = "MH_BATCH")
 @Data
 @NoArgsConstructor
 @ToString(exclude = "params")
