@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.station.actors.UploadResourceActor;
 import ai.metaheuristic.ai.station.env.EnvService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -59,7 +60,13 @@ public class Schedulers {
                 return;
             }
             log.info("Invoke PlanService.markOrderAsProcessed()");
-            launchpadService.getPlanService().markOrderAsProcessed();
+            try {
+                launchpadService.getPlanService().markOrderAsProcessed();
+            } catch (InvalidDataAccessResourceUsageException e) {
+                log.error("Error while markOrderAsProcessed()",e);
+                // TODO 2019-06-11 or just log an error?
+                System.exit(-1);
+            }
         }
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.create-all-tasks'), 5, 40, 5)*1000 }")
