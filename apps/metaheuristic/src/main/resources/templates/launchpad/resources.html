@@ -61,26 +61,48 @@
         };
     </script>
 
-
     <h1 class="widget-header">Create resource with storage url</h1>
-
-    <form class="pure-form" action="#" method="post" th:method="POST"
-          th:action="@{/launchpad/resource-in-external-storage}"
-    >
+    <form class="pure-form pure-form-stacked" action="#" th:method="POST"
+          th:action="@{/launchpad/resource-in-external-storage}" accept-charset="UTF-8" id="workbook-multiply-add-form" name="f">
         <fieldset>
             <label for="poolCode1">Resource pool code</label>
             <input name="poolCode" id="poolCode1" type="text" placeholder="Pool code">
             <span class="pure-form-message">This is a required field.</span>
         </fieldset>
-        <fieldset>
-            <label for="storageUrl">Storage url</label>
-            <input name="storageUrl" id="storageUrl" type="text" placeholder="Storage url">
-            <span class="pure-form-message">This is a required field if resource is stored in other storage than launchpad.
-                Right now, the only one supported type of storage is disk://</span>
-        </fieldset>
 
-        <p></p>
-        <button type="submit" class="pure-button pure-button-primary">Create resource</button>
+        <fieldset>
+
+            <p th:text="Examples"></p>
+            <pre style="width:50%">
+sourcing: disk
+disk:
+  code: storage-code
+  mask: '*'
+</pre>
+
+            <pre style="width:50%">
+sourcing: git
+git:
+  repo: https://github.com/sergmain/metaheuristic.git
+  branch: master
+  commit: b25331edba72a1a901634212ac55752238fd2dd5
+</pre>
+
+
+            <label for="params">Params of resources</label>
+            <textarea name="params" id="params" placeholder="Params of resources" cols="70" rows="15"
+                      maxlength="10000"></textarea>
+            <span class="pure-form-message"></span>
+
+            <p>&nbsp;</p>
+            <table>
+                <tr>
+                    <td>
+                        <button type="submit" class="pure-button pure-button-primary">Create</button>
+                    </td>
+                </tr>
+            </table>
+        </fieldset>
     </form>
 
     <p>&nbsp;</p>

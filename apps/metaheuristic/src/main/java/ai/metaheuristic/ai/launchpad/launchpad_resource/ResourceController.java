@@ -83,10 +83,10 @@ public class ResourceController {
     @PostMapping(value = "/resource-in-external-storage")
     public String registerResourceInExternalStorage(
             @RequestParam(name = "poolCode") String resourcePoolCode,
-            @RequestParam(name = "storageUrl") String storageUrl,
+            @RequestParam(name = "params") String params,
             final RedirectAttributes redirectAttributes) {
 
-        OperationStatusRest operationStatusRest = resourceTopLevelService.registerResourceInExternalStorage(resourcePoolCode, storageUrl);
+        OperationStatusRest operationStatusRest = resourceTopLevelService.registerResourceInExternalStorage(resourcePoolCode, params);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }

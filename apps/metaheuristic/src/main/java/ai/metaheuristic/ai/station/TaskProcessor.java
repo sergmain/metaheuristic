@@ -144,7 +144,33 @@ public class TaskProcessor {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Can't create outputResourceFile");
                 continue;
             }
-            taskParamYaml.outputResourceAbsolutePath = outputResourceFile.getAbsolutePath();
+            DataStorageParams dsp = taskParamYaml.getResourceStorageUrls().get(taskParamYaml.outputResourceCode);
+            if (dsp==null) {
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Can't find params for outputResourceCode");
+                continue;
+            }
+            switch(dsp.sourcing) {
+                case launchpad:
+                    taskParamYaml.outputResourceAbsolutePath = outputResourceFile.getAbsolutePath();
+                    break;
+                case disk:
+                    if (dsp.disk!=null && StringUtils.isNotBlank(dsp.disk.path)) {
+                        File f = new File(outputResourceFile.getParent(), dsp.disk.path);
+                        taskParamYaml.outputResourceAbsolutePath = f.getAbsolutePath();
+                    }
+                    else {
+                        taskParamYaml.outputResourceAbsolutePath = outputResourceFile.getAbsolutePath();
+                    }
+                    break;
+                case git:
+                    stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId,
+                            "Git sourcing isn't implemented yet");
+                    continue;
+                default:
+                    stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId,
+                            "Unknown sourcing type: " + dsp.sourcing);
+                    continue;
+            }
             if (taskParamYaml.snippet==null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Snippet isn't defined");
                 continue;

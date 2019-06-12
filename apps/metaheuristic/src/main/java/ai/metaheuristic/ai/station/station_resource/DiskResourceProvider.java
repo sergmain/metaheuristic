@@ -73,7 +73,7 @@ public class DiskResourceProvider implements ResourceProvider {
         }
 
         AssetFile assetFile;
-        if (diskInfo.mask.equals("*")) {
+        if (diskInfo.mask!=null && diskInfo.mask.equals("*")) {
             assetFile = new AssetFile();
             // TODO 2019.05.08 is this correct to declare file with '*' ?
             assetFile.setFile( new File(path, "*") );
@@ -84,7 +84,15 @@ public class DiskResourceProvider implements ResourceProvider {
             assetFile.setFileLength(0);
         }
         else {
-            assetFile = ResourceUtils.prepareAssetFile(path, null, diskInfo.mask);
+            if (diskInfo.mask!=null) {
+                assetFile = ResourceUtils.prepareAssetFile(path, null, diskInfo.mask);
+            }
+            else if (diskInfo.path!=null) {
+                assetFile = ResourceUtils.prepareAssetFile(path, null, diskInfo.path);
+            }
+            else {
+                throw new IllegalStateException("diskInfo.mask and diskInfo.path are both blank");
+            }
         }
 
         return Collections.singletonList(assetFile);

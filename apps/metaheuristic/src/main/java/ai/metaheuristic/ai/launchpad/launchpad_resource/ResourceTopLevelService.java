@@ -16,8 +16,11 @@
 package ai.metaheuristic.ai.launchpad.launchpad_resource;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.batch.process_resource.ProcessResourceController;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
+import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.BinaryData;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.api.v1.data.OperationStatusRest;
@@ -62,13 +65,13 @@ public class ResourceTopLevelService {
 
     public OperationStatusRest storeFileInternal(MultipartFile file, String resourceCode, String resourcePoolCode, String originFilename) {
         if (originFilename == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.01 name of uploaded file is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.010 name of uploaded file is null");
         }
         File tempFile = globals.createTempFileForLaunchpad("temp-raw-file-");
         if (tempFile.exists()) {
             if (!tempFile.delete() ) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#173.36 can't delete dir " + tempFile.getAbsolutePath());
+                        "#172.020 can't delete dir " + tempFile.getAbsolutePath());
             }
         }
         try {
@@ -76,7 +79,7 @@ public class ResourceTopLevelService {
         } catch (IOException e) {
             log.error("Error while storing data to temp file", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#173.06 can't persist uploaded file as " +
+                    "#172.030 can't persist uploaded file as " +
                             tempFile.getAbsolutePath()+", error: " + e.toString());
         }
 
@@ -87,32 +90,32 @@ public class ResourceTopLevelService {
         try {
             resourceService.storeInitialResource(tempFile, code, resourcePoolCode, originFilename);
         } catch (StoreNewFileException e) {
-            String es = "#172.04 An error while saving data to file, " + e.toString();
+            String es = "#172.040 An error while saving data to file, " + e.toString();
             log.error(es, e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest registerResourceInExternalStorage(String resourcePoolCode, String storageUrl ) {
+    public OperationStatusRest registerResourceInExternalStorage(String resourcePoolCode, String params ) {
 
-        if (StringUtils.contains(storageUrl, ' ')) {
-            String es = "#172.05 storage url can't contain 'space' char: " + storageUrl;
+        if (StringUtils.isBlank(params)) {
+            String es = "#172.050 resource params is blank";
+            log.error(es);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
+        }
+        DataStorageParams dsp = DataStorageParamsUtils.to(params);
+        if (dsp.sourcing==null || dsp.sourcing== EnumsApi.DataSourcing.launchpad) {
+            String es = "#172.055 Sourcing must be "+ EnumsApi.DataSourcing.launchpad + " or " +EnumsApi.DataSourcing.launchpad +", actual: " + dsp.sourcing;
             log.error(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
 
-        if (!StringUtils.startsWith(storageUrl, "disk://")) {
-            String es = "#172.06 wrong format of storage url: " + storageUrl;
-            log.error(es);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
-        }
-
-        String code = StringUtils.replaceEach(storageUrl, new String[] {"://", "/", "*", "?"}, new String[] {"-", "-", "-", "-"} );
+        String code = ProcessResourceController.toResourceCode(resourcePoolCode);
         try {
-            binaryDataService.saveWithSpecificStorageUrl(code, resourcePoolCode, storageUrl);
+            binaryDataService.saveWithSpecificStorageUrl(code, resourcePoolCode, params);
         } catch (StoreNewFileException e) {
-            String es = "#172.08 An error while saving data to file, " + e.toString();
+            String es = "#172.080 An error while saving data to file, " + e.toString();
             log.error(es, e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -122,7 +125,7 @@ public class ResourceTopLevelService {
     public ResourceData.ResourceResult getResourceById(Long id) {
         final BinaryData data = binaryDataService.findById(id).orElse(null);
         if (data==null) {
-            return new ResourceData.ResourceResult("#172.10 Resource wasn't found for id: " + id);
+            return new ResourceData.ResourceResult("#172.100 Resource wasn't found for id: " + id);
         }
         return new ResourceData.ResourceResult(data);
     }
@@ -130,7 +133,7 @@ public class ResourceTopLevelService {
     public OperationStatusRest deleteResource(Long id) {
         final BinaryData data = binaryDataService.findById(id).orElse(null);
         if (data==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.20 Resource wasn't found for id: " + id);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#172.120 Resource wasn't found for id: " + id);
         }
         binaryDataService.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;

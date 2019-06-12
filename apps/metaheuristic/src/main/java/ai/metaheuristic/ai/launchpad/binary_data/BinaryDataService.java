@@ -222,7 +222,7 @@ public class BinaryDataService {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public BinaryData saveWithSpecificStorageUrl(String resourceCode, String poolCode, String storageUrl) {
+    public BinaryData saveWithSpecificStorageUrl(String resourceCode, String poolCode, String params) {
 
         try {
             List<BinaryDataImpl> datas = binaryDataRepository.findAllByPoolCode(poolCode);
@@ -241,15 +241,6 @@ public class BinaryDataService {
                     log.error(es);
                     throw new IllegalStateException(es);
                 }
-/*
-                // TODO 2019.05.25 need to decide - to use this check or to delete it finally
-                if (!data.getCode().equals(resourceCode)) {
-                    String es = "#087.24 Can't create resource with storage url because record has different resource codes, " +
-                            "in db: " + data.getCode()+", new resource code: " + resourceCode;
-                    log.error(es);
-                    throw new IllegalStateException(es);
-                }
-*/
             }
             data.setType(BinaryDataType.DATA);
             data.setValid(true);
@@ -259,7 +250,7 @@ public class BinaryDataService {
             data.setFilename(null);
             data.setRefId(null);
             data.setRefType(null);
-            data.setParams(storageUrl);
+            data.setParams(params);
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setData(null);
 

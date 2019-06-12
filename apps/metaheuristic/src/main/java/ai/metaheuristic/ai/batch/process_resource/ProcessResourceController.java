@@ -434,7 +434,7 @@ public class ProcessResourceController {
         }
     }
 
-    private static String toResourceCode(String originFilename) {
+    public static String toResourceCode(String originFilename) {
         long nanoTime = System.nanoTime();
         String name = StrUtils.getName(originFilename);
         String ext = StrUtils.getExtension(originFilename);

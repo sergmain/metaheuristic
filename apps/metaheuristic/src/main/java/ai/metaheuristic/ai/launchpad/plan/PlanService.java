@@ -74,7 +74,6 @@ public class PlanService {
     private final WorkbookRepository workbookRepository;
     private final TaskRepository taskRepository;
     private final PlanCache planCache;
-    private final PlanRepository planRepository;
 
     private final AtlasService atlasService;
     private final ExperimentRepository experimentRepository;
@@ -83,7 +82,7 @@ public class PlanService {
     private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
     private final WorkbookService workbookService;
 
-    public PlanService(Globals globals, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, WorkbookRepository workbookRepository, TaskRepository taskRepository, PlanCache planCache, PlanRepository planRepository, AtlasService atlasService, ExperimentRepository experimentRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, WorkbookService workbookService) {
+    public PlanService(Globals globals, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, WorkbookRepository workbookRepository, TaskRepository taskRepository, PlanCache planCache, AtlasService atlasService, ExperimentRepository experimentRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, WorkbookService workbookService) {
         this.globals = globals;
         this.experimentService = experimentService;
         this.binaryDataService = binaryDataService;
@@ -92,7 +91,6 @@ public class PlanService {
         this.workbookRepository = workbookRepository;
         this.taskRepository = taskRepository;
         this.planCache = planCache;
-        this.planRepository = planRepository;
         this.atlasService = atlasService;
         this.experimentRepository = experimentRepository;
         this.experimentProcessValidator = experimentProcessValidator;
@@ -179,6 +177,7 @@ public class PlanService {
             return new PlanApiData.WorkbookResult("#560.73 planId doesn't match to workbook.planId, planId: " + workbook.getPlanId()+", workbook.planId: " + workbook.getPlanId());
         }
 
+        //noinspection UnnecessaryLocalVariable
         PlanApiData.WorkbookResult result = new PlanApiData.WorkbookResult(plan, workbook);
         return result;
     }
@@ -239,7 +238,7 @@ public class PlanService {
         synchronized (syncObj) {
             Plan p = planCache.findById(plan.getId());
             if (p!=null && p.isLocked()!=locked) {
-                p.setLocked(true);
+                p.setLocked(locked);
                 saveInternal(p);
             }
         }
@@ -402,7 +401,7 @@ public class PlanService {
         return result;
     }
 
-    public void toStopped(boolean isPersist, long workbookId) {
+    private void toStopped(boolean isPersist, long workbookId) {
         if (!isPersist) {
             return;
         }
@@ -439,9 +438,9 @@ public class PlanService {
                 return;
             }
 
-            initialInputResourceCodes.forEach(o-> {
-                collectedInputs.computeIfAbsent(o.poolCode, p -> new ArrayList<>()).add(o.code);
-            });
+            initialInputResourceCodes.forEach(o->
+                collectedInputs.computeIfAbsent(o.poolCode, p -> new ArrayList<>()).add(o.code)
+            );
 
             //noinspection Convert2MethodRef
             inputStorageUrls = initialInputResourceCodes
