@@ -35,7 +35,9 @@ public class StationStatus {
     public GitSourcingService.GitStatusInfo gitStatusInfo;
     public String schedule;
     public String sessionId;
-    public String stationUUID;
+
+//    public String stationUUID;
+
     // TODO 2019-05-28, multi-timezoned deployment isn't supported right now
     // it'll work but in some cases behaviour can be different
     // need to change to UTC, Coordinated Universal Time
