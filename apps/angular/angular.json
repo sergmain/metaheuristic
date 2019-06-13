@@ -18,6 +18,7 @@
                     "builder": "@angular-devkit/build-angular:browser",
                     "options": {
                         "outputPath": "dist/metaheuristic-app",
+                        "resourcesOutputPath": "resources",
                         "index": "src/index.html",
                         "main": "src/main.ts",
                         "polyfills": "src/polyfills.ts",
@@ -27,7 +28,6 @@
                             "src/assets"
                         ],
                         "styles": [
-                            "node_modules/material-design-icons/iconfont/material-icons.css",
                             "node_modules/normalize.css/normalize.css",
                             "src/styles.scss",
                             "src/styles-theme.scss"

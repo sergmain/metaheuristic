@@ -1,4 +1,7 @@
-@import "~material-design-icons/iconfont/material-icons.css";
+@import "./fonts/roboto/roboto.css";
+@import "./fonts/robotocondensed/robotocondensed.css";
+@import "./fonts/robotomono/robotomono.css";
+@import "./fonts/material-design-icons/material-icons.css";
 
 html {
     height: 100%;
@@ -44,16 +47,4 @@ button * {
     filter: grayscale(1);
     pointer-events: none;
     user-select: none;
-}
-
-@font-face {
-    font-family: 'Material Icons';
-    font-style: normal;
-    font-weight: 400;
-    src: url(https://localhost:4200/MaterialIcons-Regular.eot); /* For IE6-8 */
-    src: local('Material Icons'),
-    local('MaterialIcons-Regular'),
-    url(https://localhost:4200/MaterialIcons-Regular.woff2) format('woff2'),
-    url(https://localhost:4200/MaterialIcons-Regular.woff) format('woff'),
-    url(https://localhost:4200/MaterialIcons-Regular.ttf) format('truetype');
 }
