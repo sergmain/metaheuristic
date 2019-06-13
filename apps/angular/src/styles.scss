@@ -25,6 +25,11 @@ pre {
     white-space: pre-wrap;
 }
 
+code,
+pre {
+    font-family: 'Roboto Mono', 'Courier New', Courier, monospace
+}
+
 button * {
     pointer-events: none;
 }
