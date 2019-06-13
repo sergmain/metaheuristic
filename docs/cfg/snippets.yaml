@@ -1,0 +1,9 @@
+snippets:
+    - code: simple-app:1.0
+      type: simple-app
+      file: simple-app.jar
+      sourcing: launchpad
+      metrics: false
+      env: java-11
+
+
