@@ -14,8 +14,7 @@
                 <span class="pure-form-message">This is a required field.</span>
 
                 <label for="planYamlAsStr">Parameters of plan</label>
-                <textarea name="planYamlAsStr" id="planYamlAsStr" placeholder="Parameters of plan" cols="70" rows="15"
-                          th:text="${planYamlAsStr}" maxlength="10000"></textarea>
+                <pre id="planYamlAsStr" th:text="${planYamlAsStr}" ></pre>
                 <span class="pure-form-message">This is a required field.</span>
             </fieldset>
         </form>

@@ -71,6 +71,11 @@ public class PlanRestController {
         return planTopLevelService.deletePlanById(id);
     }
 
+    @PostMapping("/plan-archive-commit")
+    public OperationStatusRest archiveCommit(Long id) {
+        return planTopLevelService.archivePlanById(id);
+    }
+
     // ============= Workbooks =============
 
     @GetMapping("/workbooks/{id}")
