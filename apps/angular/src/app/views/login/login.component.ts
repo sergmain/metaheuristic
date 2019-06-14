@@ -1,7 +1,8 @@
 import { Component, OnInit } from '@angular/core';
-import { AuthenticationService } from '@app/services/authentication/authentication.service'
+import { AuthenticationService } from '@app/services/authentication/authentication.service';
 
 @Component({
+    // tslint:disable-next-line: component-selector
     selector: 'login-view',
     templateUrl: './login.component.html',
     styleUrls: ['./login.component.scss']
@@ -9,8 +10,8 @@ import { AuthenticationService } from '@app/services/authentication/authenticati
 export class LoginComponent implements OnInit {
 
 
-    username: string = ''
-    password: string = ''
+    username: string = '';
+    password: string = '';
 
     constructor(
         private authenticationService: AuthenticationService
@@ -19,7 +20,7 @@ export class LoginComponent implements OnInit {
     ngOnInit() {}
 
     login() {
-        this.authenticationService.login(this.username, this.password)
+        this.authenticationService.login(this.username, this.password);
     }
 
 }

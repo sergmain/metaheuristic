@@ -6,13 +6,11 @@
     "rules": {
         "typedef": [
             true,
-            // "call-signature",
             "arrow-call-signature",
             "parameter",
             "arrow-parameter",
             "property-declaration",
             "variable-declaration",
-            // "member-variable-declaration",
             "object-destructuring",
             "array-destructuring"
         ],
@@ -53,10 +51,6 @@
             "trace"
         ],
         "no-empty": false,
-        // "no-inferrable-types": [
-        //     true,
-        //     "ignore-params"
-        // ],
         "no-non-null-assertion": true,
         "no-redundant-jsdoc": true,
         "no-switch-case-fall-through": true,
@@ -85,9 +79,9 @@
         "directive-class-suffix": true,
         "eofline": false,
         "typedef-whitespace": [
-            true,
+            false,
             {
-                "property-declaration": "onespace",
+                "property-declaration": "onespace"
             }
         ]
     }

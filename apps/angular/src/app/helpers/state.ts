@@ -1,11 +1,9 @@
-const state = {
-    show: "show",
-    loading: "loading",
-    empty: "empty",
-    wait: "wait",
-    firstLoading: "firstLoading"
+const state: any = {
+    show: 'show',
+    loading: 'loading',
+    empty: 'empty',
+    wait: 'wait',
+    firstLoading: 'firstLoading'
 };
 
-export {
-    state
-}
+export { state };
