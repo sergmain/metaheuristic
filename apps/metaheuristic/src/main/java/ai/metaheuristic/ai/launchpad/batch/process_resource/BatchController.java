@@ -43,8 +43,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 @Controller
 @RequestMapping("/launchpad/batch")
@@ -63,13 +61,6 @@ public class BatchController {
         this.batchTopLevelService = batchTopLevelService;
     }
 
-    private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[/\\\\A-Za-z0-9._-]*$";
-    private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
-
-    public static boolean isZipEntityNameOk(String name) {
-        Matcher m = zipCharsPattern.matcher(name);
-        return m.matches();
-    }
     @GetMapping("/index")
     public String index() {
         return "launchpad/batch/index";
@@ -95,7 +86,6 @@ public class BatchController {
         return "launchpad/batch/batches :: table";
     }
 
-    @SuppressWarnings("Duplicates")
     @GetMapping(value = "/batch-add")
     public String batchAdd(Model model) {
         BatchData.PlansForBatchResult plans = batchTopLevelService.getPlansForBatchResult();

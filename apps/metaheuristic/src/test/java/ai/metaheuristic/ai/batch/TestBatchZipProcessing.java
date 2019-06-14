@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.batch;
 
-import ai.metaheuristic.ai.launchpad.batch.process_resource.BatchController;
+import ai.metaheuristic.ai.launchpad.batch.process_resource.BatchTopLevelService;
 import org.junit.Test;
 
 import static org.junit.Assert.assertFalse;
@@ -31,13 +31,13 @@ public class TestBatchZipProcessing {
 
     @Test
     public void testZipName() {
-        assertTrue(BatchController.isZipEntityNameOk("aaa.txt"));
-        assertTrue(BatchController.isZipEntityNameOk("aaa."));
-        assertTrue(BatchController.isZipEntityNameOk("bbb/aaa."));
-        assertTrue(BatchController.isZipEntityNameOk("bbb/aaa"));
+        assertTrue(BatchTopLevelService.isZipEntityNameOk("aaa.txt"));
+        assertTrue(BatchTopLevelService.isZipEntityNameOk("aaa."));
+        assertTrue(BatchTopLevelService.isZipEntityNameOk("bbb/aaa."));
+        assertTrue(BatchTopLevelService.isZipEntityNameOk("bbb/aaa"));
 
-        assertFalse(BatchController.isZipEntityNameOk("aaa bbb.txt"));
-        assertFalse(BatchController.isZipEntityNameOk("aaa,bbb.txt"));
-        assertFalse(BatchController.isZipEntityNameOk("aaaäöü.txt"));
+        assertFalse(BatchTopLevelService.isZipEntityNameOk("aaa bbb.txt"));
+        assertFalse(BatchTopLevelService.isZipEntityNameOk("aaa,bbb.txt"));
+        assertFalse(BatchTopLevelService.isZipEntityNameOk("aaaäöü.txt"));
     }
 }

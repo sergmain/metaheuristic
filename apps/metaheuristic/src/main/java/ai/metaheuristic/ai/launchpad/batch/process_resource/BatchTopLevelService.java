@@ -59,6 +59,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Function;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -76,7 +78,9 @@ public class BatchTopLevelService {
     private static final String ITEM_LIST_PREFIX = "  - ";
 
     private static final String CONFIG_FILE = "config.yaml";
-    private static Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml");
+    private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[/\\\\A-Za-z0-9._-]*$";
+    private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
+    private static final Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml");
 
     private final Globals globals;
     private final PlanCache planCache;
@@ -89,7 +93,7 @@ public class BatchTopLevelService {
     private final WorkbookRepository workbookRepository;
     private final BatchWorkbookRepository batchWorkbookRepository;
 
-    public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchController::isZipEntityNameOk;
+    public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
     public BatchTopLevelService(PlanCache planCache, PlanService planService, BinaryDataService binaryDataService, Globals globals, ResourceService resourceService, BatchRepository batchRepository, BatchService batchService, PlanRepository planRepository, WorkbookRepository workbookRepository, BatchWorkbookRepository batchWorkbookRepository) {
         this.planCache = planCache;
@@ -102,6 +106,11 @@ public class BatchTopLevelService {
         this.planRepository = planRepository;
         this.workbookRepository = workbookRepository;
         this.batchWorkbookRepository = batchWorkbookRepository;
+    }
+
+    public static boolean isZipEntityNameOk(String name) {
+        Matcher m = zipCharsPattern.matcher(name);
+        return m.matches();
     }
 
     public BatchData.BatchesResult getBatches(Pageable pageable) {

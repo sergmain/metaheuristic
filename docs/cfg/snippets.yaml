@@ -1,9 +1,12 @@
 snippets:
-    - code: simple-app:1.0
-      type: simple-app
-      file: simple-app.jar
-      sourcing: launchpad
-      metrics: false
-      env: java-11
+  - code: simple-snippet-git:1.0
+    type: simple-snippet
+    file: some-file
+    params:  param1
+    sourcing: git
+    git:
+      repo: https://github.com/sergmain/metaheuristic.git
+      branch: master
+      commit: 8301a67d3fef357a7d771ecb69c7dfbec06276ff
 
 
