@@ -80,7 +80,7 @@ public class SnippetService {
             if (postSnippet != null) {
                 snippetConfig = SnippetConfigUtils.to(postSnippet.params);
             } else {
-                log.warn("#295.07 Can't find snippet for code {}", snippetCode);
+                log.warn("#295.010 Can't find snippet for code {}", snippetCode);
             }
         }
         return snippetConfig;
@@ -159,7 +159,7 @@ public class SnippetService {
     List<SnippetApiData.SnippetConfigStatus> loadSnippetsFromDir(File srcDir) throws IOException {
         File yamlConfigFile = new File(srcDir, "snippets.yaml");
         if (!yamlConfigFile.exists()) {
-            log.error("#295.11 File 'snippets.yaml' wasn't found in dir {}", srcDir.getAbsolutePath());
+            log.error("#295.020 File 'snippets.yaml' wasn't found in dir {}", srcDir.getAbsolutePath());
             return Collections.emptyList();
         }
 
@@ -181,8 +181,9 @@ public class SnippetService {
                         case launchpad:
                             file = new File(srcDir, snippetConfig.file);
                             if (!file.exists()) {
-                                status = new SnippetApiData.SnippetConfigStatus(false,
-                                        "#295.14 File " + snippetConfig.file + " wasn't found in dir " + srcDir.getAbsolutePath());
+                                final String es = "#295.030 Snippet has a sourcing as 'launchpad' but file " + snippetConfig.file + " wasn't found.";
+                                status = new SnippetApiData.SnippetConfigStatus(false, es);
+                                log.warn(es+" Temp dir: " + srcDir.getAbsolutePath());
                                 continue;
                             }
                             try (InputStream inputStream = new FileInputStream(file)) {
@@ -219,7 +220,7 @@ public class SnippetService {
                     }
                     else {
                         status = new SnippetApiData.SnippetConfigStatus(false,
-                                "#295.20 Updating of snippets is prohibited, not a snapshot version, '"+snippet.code+"'");
+                                "#295.040 Updating of snippets is prohibited, not a snapshot version, '"+snippet.code+"'");
                         //noinspection UnnecessaryContinue
                         continue;
                     }
@@ -231,13 +232,13 @@ public class SnippetService {
             }
             catch(Throwable th) {
                 status = new SnippetApiData.SnippetConfigStatus(false,
-                        "#295.23 Error "+th.getClass().getName()+" while processing snippet '"+snippetConfig.code+"': "+th.getMessage());
+                        "#295.050 Error "+th.getClass().getName()+" while processing snippet '"+snippetConfig.code+"': "+th.getMessage());
             }
             finally {
                 statuses.add(status!=null
                         ? status
                         : new SnippetApiData.SnippetConfigStatus(false,
-                        "#295.30 Status of snippet "+snippetConfig.code+" is unknown, this status needs to be investigated"));
+                        "#295.060 Status of snippet "+snippetConfig.code+" is unknown, this status needs to be investigated"));
             }
         }
         return statuses;
