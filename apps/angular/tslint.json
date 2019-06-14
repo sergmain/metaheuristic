@@ -79,7 +79,7 @@
         "directive-class-suffix": true,
         "eofline": false,
         "typedef-whitespace": [
-            true,
+            false,
             {
                 "property-declaration": "onespace"
             }

@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { NgModule } from '@angular/core';
-import { FormsModule, ReactiveFormsModule  } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
@@ -23,6 +23,7 @@ import { AboutComponent } from './views/about/about.component';
 import { AppViewComponent } from './views/app-view/app-view.component';
 import { AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddWorkbookComponent, AddResourceComponent, AddSnippetComponent, EditAccountComponent, EditExperimentComponent, EditPlanComponent, EditWorkbookComponent, EditPassAccountComponent, EditStationComponent, ExperimentsComponent, PlansComponent, InfoExperimentComponent, WorkbooksComponent, LaunchpadComponent, NavLaunchpadComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent } from './views/launchpad';
 import { LoginComponent } from './views/login/login.component';
+import { AppDialogConfirmationComponent } from './views/app-dialog-confirmation/app-dialog-confirmation.component';
 import { NavPilotComponent, PilotComponent, ProcessResourcesComponent } from './views/pilot';
 import { CtTableComponent } from './custom-tags/ct-table/ct-table.component';
 import { CtWrapBlockComponent } from './custom-tags/ct-wrap-block/ct-wrap-block.component';
@@ -70,6 +71,7 @@ import { CtWrapBlockComponent } from './custom-tags/ct-wrap-block/ct-wrap-block.
         AboutComponent,
         //
         LoginComponent,
+        AppDialogConfirmationComponent,
         // custom-tags
         CtColsComponent,
         CtSectionCaptionComponent,
@@ -85,10 +87,13 @@ import { CtWrapBlockComponent } from './custom-tags/ct-wrap-block/ct-wrap-block.
         BrowserAnimationsModule,
         MaterialAppModule,
         FormsModule,
-        ReactiveFormsModule ,
+        ReactiveFormsModule,
         NgxJsonViewerModule,
         HttpClientModule,
         SimpleNotificationsModule.forRoot(),
+    ],
+    entryComponents: [
+        AppDialogConfirmationComponent
     ],
     providers: [
         AuthGuard,
@@ -108,3 +113,4 @@ import { CtWrapBlockComponent } from './custom-tags/ct-wrap-block/ct-wrap-block.
     bootstrap: [AppComponent]
 })
 export class AppModule {}
+

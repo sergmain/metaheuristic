@@ -1,27 +1,12 @@
-import {
-    Component,
-    OnInit,
-    ViewChild,
-} from '@angular/core';
-import {
-    PlansService
-} from '@app/services/plans/plans.service';
-import {
-    MatTableDataSource,
-    MatButton
-} from '@angular/material';
-import {
-    LoadStates
-} from '@app/enums/LoadStates';
-import {
-    PlansResponse
-} from '@app/models';
-import {
-    CtTableComponent
-} from '@app/custom-tags/ct-table/ct-table.component';
-import {
-    Subscription
-} from 'rxjs';
+import { Component, OnInit, ViewChild, } from '@angular/core';
+import { PlansService } from '@app/services/plans/plans.service';
+import { MatTableDataSource, MatButton } from '@angular/material';
+import { LoadStates } from '@app/enums/LoadStates';
+import { PlansResponse } from '@app/models';
+import { CtTableComponent } from '@app/custom-tags/ct-table/ct-table.component';
+import { Subscription } from 'rxjs';
+import { MatDialog } from '@angular/material';
+import { ConfirmationDialogMethod } from '@app/views/app-dialog-confirmation/app-dialog-confirmation.component';
 
 @Component({
     // tslint:disable-next-line: component-selector
@@ -29,7 +14,7 @@ import {
     templateUrl: './plans.component.pug',
     styleUrls: ['./plans.component.scss']
 })
-
+// @ConfirmationDialogClass
 export class PlansComponent implements OnInit {
     readonly states = LoadStates;
     currentStates = new Set();
@@ -42,6 +27,7 @@ export class PlansComponent implements OnInit {
     @ViewChild('table') table: CtTableComponent;
 
     constructor(
+        private dialog: MatDialog,
         private planService: PlansService
     ) {}
 
@@ -72,6 +58,7 @@ export class PlansComponent implements OnInit {
             );
     }
 
+    @ConfirmationDialogMethod()
     delete(plan: PlansResponse.Plan) {
         this.deletedPlans.push(plan);
         const subscribe: Subscription = this.planService.plan
