@@ -37,9 +37,12 @@ Batch ===============
 - основной линк к батчам распологается в верхнем меню
 
 Atlas ===============
-- реализовать новый модуль Atlas.
-  TODO - предоставить rest урл для Атласа
+- реализовать новый модуль Atlas. Фактически это таже функциональность, которая доступна по урл /launchpad/experiment-info
+- т.е. фактически можно скопировать модуль apps/angular/src/app/views/launchpad/views/info-experiment ,
+  поменять названия и сделать небольшие изменения
+- правильное содержимое таблицы mh_atlas в дампе sql/dump/Dump20190613-atlas.sql
 - основной линк к Atlas распологается в меню launchpad (которое выезжает слева)
+- все rest url перечислены в классе ai.metaheuristic.ai.launchpad.rest.v1.AtlasRestController
 
 Billing ===============
 - реализовать новый модуль Billing.
