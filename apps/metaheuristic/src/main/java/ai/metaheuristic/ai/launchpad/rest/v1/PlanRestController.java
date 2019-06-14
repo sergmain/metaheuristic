@@ -43,7 +43,12 @@ public class PlanRestController {
 
     @GetMapping("/plans")
     public PlanApiData.PlansResult plans(@PageableDefault(size = 5) Pageable pageable) {
-        return planTopLevelService.getPlans(pageable);
+        return planTopLevelService.getPlans(pageable, false);
+    }
+
+    @GetMapping("/plans-archived-only")
+    public PlanApiData.PlansResult plansArchivedOnly(@PageableDefault(size = 5) Pageable pageable) {
+        return planTopLevelService.getPlans(pageable, true);
     }
 
     @GetMapping(value = "/plan/{id}")

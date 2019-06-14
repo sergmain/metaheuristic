@@ -28,9 +28,8 @@ UI ================
     как и при удалении Плана
     rest url длz отправки в архив - /rest/v1/launchpad/plan/plan-archive-commit
 - на странице Планы сделать 2 таба - Current, Archive. По умолчанию показывать Current.
-  Сейчас для Archive вызывать тот же урл что и для Current, но при этом вся логика должна быть своя. т.е. при извенении урл
-  архивы должны заработать (показывать реально архивированниые Планы)
-  TODO - предоставить rest урл для получения архивированных планов
+  rest url для обычных Планов(не менялся) - http://localhost:8080/rest/v1/launchpad/plan/plans
+  rest url для архивированных Планов - http://localhost:8080/rest/v1/launchpad/plan/plans-archived-only
 
 Batch ===============
 - реализовать новый модуль Batch (бывший pilot).

@@ -62,7 +62,7 @@ public class PlanTopLevelService {
     }
 
     @SuppressWarnings("Duplicates")
-    public PlanApiData.PlansResult getPlans(Pageable pageable) {
+    public PlanApiData.PlansResult getPlans(Pageable pageable, boolean isArchive) {
         pageable = ControllerUtils.fixPageSize(globals.planRowsLimit, pageable);
         List<Plan> plans = planRepository.findAllByOrderByIdDesc();
         AtomicInteger count = new AtomicInteger();
@@ -70,7 +70,8 @@ public class PlanTopLevelService {
                 .filter(o-> {
                     try {
                         PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(o.getParams());
-                        final boolean b = ppy.internalParams == null || !ppy.internalParams.archived;
+                        boolean b = ppy.internalParams == null || !ppy.internalParams.archived;
+                        b = isArchive != b;
                         if (b) {
                             count.incrementAndGet();
                         }

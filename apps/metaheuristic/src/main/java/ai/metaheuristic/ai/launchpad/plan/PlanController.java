@@ -53,7 +53,7 @@ public class PlanController {
     public String plans(Model model, @PageableDefault(size = 5) Pageable pageable,
                         @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                         @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
-        PlanApiData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable);
+        PlanApiData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable, false);
         ControllerUtils.addMessagesToModel(model, plansResultRest);
         model.addAttribute("result", plansResultRest);
         return "launchpad/plan/plans";
@@ -62,7 +62,7 @@ public class PlanController {
     // for AJAX
     @PostMapping("/plans-part")
     public String plansPart(Model model, @PageableDefault(size = 10) Pageable pageable) {
-        PlanApiData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable);
+        PlanApiData.PlansResult plansResultRest = planTopLevelService.getPlans(pageable, false);
         model.addAttribute("result", plansResultRest);
         return "launchpad/plan/plans :: table";
     }
