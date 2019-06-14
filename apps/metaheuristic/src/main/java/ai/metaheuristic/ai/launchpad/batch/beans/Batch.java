@@ -13,31 +13,47 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.batch.beans;
 
+package ai.metaheuristic.ai.launchpad.batch.beans;
+
+import ai.metaheuristic.ai.Enums;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import javax.persistence.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "MH_BATCH_WORKBOOK")
+@Table(name = "MH_BATCH")
 @Data
 @NoArgsConstructor
-public class BatchWorkbook implements Serializable {
-    private static final long serialVersionUID = -2816493662535597212L;
+@ToString(exclude = "params")
+public class Batch implements Serializable {
+    private static final long serialVersionUID = -3509391644278818781L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    public Long id;
 
     @Version
     private Integer version;
 
-    @Column(name = "BATCH_ID")
-    public Long batchId;
+    @Column(name = "PLAN_ID")
+    public Long planId;
 
-    @Column(name = "WORKBOOK_ID")
-    public Long workbookId;
+    @Column(name="CREATED_ON")
+    private long createdOn;
+
+    @Column(name = "EXEC_STATE")
+    public int execState;
+
+    @Column(name = "PARAMS")
+    public String params;
+
+    public Batch(Long planId, Enums.BatchExecState state) {
+        this.planId = planId;
+        this.createdOn = System.currentTimeMillis();
+        this.execState=state.code;
+    }
 }

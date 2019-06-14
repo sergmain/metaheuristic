@@ -14,33 +14,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.batch.beans;
+package ai.metaheuristic.ai.launchpad.data;
 
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.util.List;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Serge
- * Date: 5/29/2019
- * Time: 11:38 PM
+ * Date: 6/1/2019
+ * Time: 4:21 PM
  */
-@Data
-public class BatchParams {
-
+public final class BatchData {
     @Data
-    public static class TaskStatus {
-        public long taskId;
-        public long stationId;
-        public String ip;
-        public String host;
-        public String execResults;
-        public EnumsApi.TaskExecState state;
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ProcessResourceItem {
+        public Batch batch;
+        public String planCode;
+        public String execStateStr;
+        public int execState;
+        public boolean ok;
     }
-
-    public BatchStatus batchStatus;
-    public List<TaskStatus> taskStatuses;
-    public boolean ok = false;
-
 }

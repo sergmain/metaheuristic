@@ -93,4 +93,5 @@ public class Consts {
     public static final String EXPERIMENTS_CACHE = "experiments";
     public static final String PLANS_CACHE = "plans";
     public static final String SNIPPETS_CACHE = "snippets";
+    public static final String MAIN_DOCUMENT_POOL_CODE_FOR_BATCH = "mainDocument";
 }

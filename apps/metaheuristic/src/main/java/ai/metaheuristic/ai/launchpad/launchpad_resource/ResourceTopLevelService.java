@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.launchpad.launchpad_resource;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.batch.process_resource.ProcessResourceController;
+import ai.metaheuristic.ai.launchpad.batch.process_resource.BatchController;
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
@@ -111,7 +111,7 @@ public class ResourceTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
 
-        String code = ProcessResourceController.toResourceCode(resourcePoolCode);
+        String code = BatchController.toResourceCode(resourcePoolCode);
         try {
             binaryDataService.saveWithSpecificStorageUrl(code, resourcePoolCode, params);
         } catch (StoreNewFileException e) {

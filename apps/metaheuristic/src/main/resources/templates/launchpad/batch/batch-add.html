@@ -1,6 +1,6 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity4"
-     layout:decorate="~{layout-pilot}"
+     layout:decorate="~{layout-batch}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
     <div sec:authorize="isAuthenticated()">
@@ -8,7 +8,7 @@
 
         <!--/*@thymesVar id="result" type="ai.metaheuristic.api.v1.data.PlanApiData.PlansResultRest"*/-->
         <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-              th:action="@{/pilot/process-resource/process-resource-upload-from-file}"
+              th:action="@{/launchpad/batch/batch-upload-from-file}"
         >
             <fieldset>
 
@@ -35,7 +35,7 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="process-resources.html" th:href="${'/pilot/process-resource/process-resources'}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="process-resources.html" th:href="${'/launchpad/batch/batches'}">Cancel</a>
                         </td>
                     </tr>
                 </table>

@@ -14,22 +14,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.batch.process_resource;
+package ai.metaheuristic.ai.launchpad.batch.process_resource;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.exceptions.PilotResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
+import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
-import ai.metaheuristic.ai.batch.beans.Batch;
-import ai.metaheuristic.ai.batch.beans.BatchStatus;
-import ai.metaheuristic.ai.batch.beans.BatchWorkbook;
-import ai.metaheuristic.ai.batch.data.BatchData;
+import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
+import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
+import ai.metaheuristic.ai.launchpad.batch.beans.BatchWorkbook;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
@@ -76,14 +77,13 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Controller
-@RequestMapping("/pilot/process-resource")
+@RequestMapping("/launchpad/batch")
 @Slf4j
 @Profile("launchpad")
-public class ProcessResourceController {
+public class BatchController {
 
-    private static final String REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES = "redirect:/pilot/process-resource/process-resources";
+    private static final String REDIRECT_BATCH_BATCHES = "redirect:/launchpad/batch/batches";
     private static final String ITEM_LIST_PREFIX = "  - ";
-    public static final String MAIN_DOCUMENT_POOL_CODE = "mainDocument";
     private static final String ATTACHMENTS_POOL_CODE = "attachments";
     private static final String RESULT_ZIP = "result.zip";
 
@@ -112,7 +112,7 @@ public class ProcessResourceController {
         public Iterable<Plan> items;
     }
 
-    public ProcessResourceController(WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, Globals globals, BatchService batchService) {
+    public BatchController(WorkbookRepository workbookRepository, PlanRepository planRepository, PlanCache planCache, PlanService planService, ResourceService resourceService, BatchRepository batchRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, Globals globals, BatchService batchService) {
         this.workbookRepository = workbookRepository;
         this.planRepository = planRepository;
         this.planCache = planCache;
@@ -132,21 +132,26 @@ public class ProcessResourceController {
         Matcher m = zipCharsPattern.matcher(name);
         return m.matches();
     }
-    public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = ProcessResourceController::isZipEntityNameOk;
+    public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchController::isZipEntityNameOk;
 
-    @GetMapping("/process-resources")
+    @GetMapping("/index")
+    public String index() {
+        return "launchpad/batch/index";
+    }
+
+    @GetMapping("/batches")
     public String plans(@ModelAttribute(name = "result") ProcessResourceResult result, @PageableDefault(size = 5) Pageable pageable,
                         @ModelAttribute("errorMessage") final String errorMessage,
                         @ModelAttribute("infoMessages") final String infoMessages ) {
         prepareProcessResourcesResult(result, pageable);
-        return "pilot/process-resource/process-resources";
+        return "launchpad/batch/batches";
     }
 
-    @PostMapping("/process-resources-part")
+    @PostMapping("/batches-part")
     public String workbooksPart(@ModelAttribute(name = "result") ProcessResourceResult result,
                                     @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
         prepareProcessResourcesResult(result, pageable);
-        return "pilot/process-resource/process-resources :: table";
+        return "launchpad/batch/batches :: table";
     }
 
     private void prepareProcessResourcesResult(ProcessResourceResult result, Pageable pageable) {
@@ -162,7 +167,7 @@ public class ProcessResourceController {
     }
 
     @SuppressWarnings("Duplicates")
-    @GetMapping(value = "/process-resource-add")
+    @GetMapping(value = "/batch-add")
     public String workbookAdd(@ModelAttribute("result") PlanListResult result) {
         result.items = planRepository.findAllAsPlan().stream().filter(o->{
             try {
@@ -176,36 +181,36 @@ public class ProcessResourceController {
             }
         }).sorted((o1,o2)-> Long.compare(o2.getId(), o1.getId())
         ).collect(Collectors.toList());
-        return "pilot/process-resource/process-resource-add";
+        return "launchpad/batch/batch-add";
     }
 
-    @PostMapping(value = "/process-resource-upload-from-file")
+    @PostMapping(value = "/batch-upload-from-file")
     public String uploadFile(final MultipartFile file, Long planId, final RedirectAttributes redirectAttributes) {
 
         String tempFilename = file.getOriginalFilename();
         if (tempFilename == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.040 name of uploaded file is null");
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            return REDIRECT_BATCH_BATCHES;
         }
         final String originFilename = tempFilename.toLowerCase();
         Plan plan = planCache.findById(planId);
         if (plan == null) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.050 plan wasn't found, planId: " + planId);
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            return REDIRECT_BATCH_BATCHES;
         }
 
         // validate the plan
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
             redirectAttributes.addFlashAttribute("errorMessage", "#990.060 validation of plan was failed, status: " + planValidation.status);
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            return REDIRECT_BATCH_BATCHES;
         }
 
         try {
             File tempDir = DirUtils.createTempDir("batch-file-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 redirectAttributes.addFlashAttribute("errorMessage", "#990.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
-                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+                return REDIRECT_BATCH_BATCHES;
             }
 
             final File dataFile = new File(tempDir, originFilename );
@@ -225,7 +230,7 @@ public class ProcessResourceController {
             final Batch batch = batchService.changeStateToPreparing(b.id);
             if (batch==null) {
                 redirectAttributes.addFlashAttribute("errorMessage","#990.080 can't find batch with id " + b.id);
-                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+                return REDIRECT_BATCH_BATCHES;
             }
 
             log.info("The file {} was successfully stored to disk", originFilename);
@@ -269,10 +274,10 @@ public class ProcessResourceController {
         catch (Throwable th) {
             log.error("Error", th);
             redirectAttributes.addFlashAttribute("errorMessage", "#990.120 can't load file, error: " + th.getMessage()+", class: " + th.getClass());
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            return REDIRECT_BATCH_BATCHES;
         }
 
-        return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        return REDIRECT_BATCH_BATCHES;
     }
 
     private void loadFilesFromDirAfterZip(Batch batch, File srcDir, Plan plan) throws IOException {
@@ -327,11 +332,11 @@ public class ProcessResourceController {
         String mainDocument;
         try (InputStream is = new FileInputStream(configFile)) {
             Map<String, Object> config = yaml.load(is);
-            mainDocument = config.get(MAIN_DOCUMENT_POOL_CODE).toString();
+            mainDocument = config.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH).toString();
         }
 
         if (StringUtils.isBlank(mainDocument)) {
-            throw new PilotResourceProcessingException("#990.160 config.yaml must contain non-empty field '" + MAIN_DOCUMENT_POOL_CODE + "' ");
+            throw new PilotResourceProcessingException("#990.160 config.yaml must contain non-empty field '" + Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH + "' ");
         }
 
         final File mainDocFile = new File(srcDir, mainDocument);
@@ -343,7 +348,7 @@ public class ProcessResourceController {
 
     private static String asInputResourceParams(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
         String yaml ="preservePoolNames: true\n" +
-                "poolCodes:\n  " + MAIN_DOCUMENT_POOL_CODE + ":\n" + ITEM_LIST_PREFIX + mainPoolCode;
+                "poolCodes:\n  " + Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH + ":\n" + ITEM_LIST_PREFIX + mainPoolCode;
         if (attachmentCodes.isEmpty()) {
             return yaml;
         }
@@ -354,7 +359,7 @@ public class ProcessResourceController {
     private void createAndProcessTask(Batch batch, Plan plan, List<File> dataFile, File mainDocFile) {
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
-        String mainPoolCode = String.format("%d-%s-%d", plan.getId(), MAIN_DOCUMENT_POOL_CODE, nanoTime);
+        String mainPoolCode = String.format("%d-%s-%d", plan.getId(), Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
         String attachPoolCode = String.format("%d-%s-%d", plan.getId(), ATTACHMENTS_POOL_CODE, nanoTime);
         boolean isMainDocPresent = false;
         for (File file : dataFile) {
@@ -441,7 +446,7 @@ public class ProcessResourceController {
         return StringUtils.replaceEach(name, new String[] {" "}, new String[] {"_"} ) + '-' + nanoTime + ext;
     }
 
-    @GetMapping("/process-resource-delete/{batchId}")
+    @GetMapping("/batch-delete/{batchId}")
     public String processResourceDelete(Model model, @PathVariable Long batchId, final RedirectAttributes redirectAttributes) {
 
         Batch batch = batchService.findById(batchId);
@@ -449,7 +454,7 @@ public class ProcessResourceController {
             final String es = "#990.230 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             redirectAttributes.addAttribute("errorMessage",es );
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            return REDIRECT_BATCH_BATCHES;
         }
 
         BatchStatus status;
@@ -462,17 +467,17 @@ public class ProcessResourceController {
                 final String es = "#990.240 Error preparing status for batch #" + batchId+", error: " + th.toString();
                 log.error(es, th);
                 redirectAttributes.addAttribute("errorMessage", es );
-                return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+                return REDIRECT_BATCH_BATCHES;
             }
         }
 
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.getStatus());
         model.addAttribute("isOk", status.ok);
-        return "pilot/process-resource/process-resource-delete";
+        return "launchpad/batch/batch-delete";
     }
 
-    @PostMapping("/process-resource-delete-commit")
+    @PostMapping("/batch-delete-commit")
     public String processResourceDeleteCommit(Long batchId, final RedirectAttributes redirectAttributes) {
 
         Batch batch = batchService.findById(batchId);
@@ -480,7 +485,7 @@ public class ProcessResourceController {
             final String es = "#990.250 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             redirectAttributes.addAttribute("errorMessage",es );
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            return REDIRECT_BATCH_BATCHES;
         }
 
         List<Long> bfis = batchWorkbookRepository.findWorkbookIdsByBatchId(batch.id);
@@ -495,10 +500,10 @@ public class ProcessResourceController {
         batchService.deleteById(batch.id);
 
         redirectAttributes.addAttribute("infoMessages", "Batch #"+batch.id+" was deleted successfully.");
-        return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+        return REDIRECT_BATCH_BATCHES;
     }
 
-    @GetMapping(value= "/process-resource-status/{batchId}" )
+    @GetMapping(value= "/batch-status/{batchId}" )
     public String getProcessingResourceStatus(
             Model model, @PathVariable("batchId") Long batchId, final RedirectAttributes redirectAttributes) {
 
@@ -507,17 +512,17 @@ public class ProcessResourceController {
             final String es = "#990.260 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             redirectAttributes.addAttribute("errorMessage",es );
-            return REDIRECT_PILOT_PROCESS_RESOURCE_PROCESS_RESOURCES;
+            return REDIRECT_BATCH_BATCHES;
         }
 
         BatchStatus status = batchService.updateStatus(batchId, false);
 
         model.addAttribute("batchId", batchId);
         model.addAttribute("console", status.getStatus());
-        return "pilot/process-resource/process-resource-status";
+        return "launchpad/batch/batch-status";
     }
 
-    @GetMapping(value= "/process-resource-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value= "/batch-download-result/{batchId}/{fileName}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public HttpEntity<AbstractResource> downloadProcessingResult(
             HttpServletResponse response, @PathVariable("batchId") Long batchId,
             @SuppressWarnings("unused") @PathVariable("fileName") String fileName/*, final RedirectAttributes redirectAttributes*/) throws IOException {

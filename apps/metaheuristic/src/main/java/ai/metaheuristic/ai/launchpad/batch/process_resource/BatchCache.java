@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.batch.process_resource;
+package ai.metaheuristic.ai.launchpad.batch.process_resource;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.batch.beans.Batch;
+import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;

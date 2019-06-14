@@ -1,12 +1,12 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
-     layout:decorate="~{layout-pilot}"
+     layout:decorate="~{layout-batch}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
 
-    <h2 class="title">Pilot index page</h2>
+    <h2 class="title">Batch index page</h2>
 
     <p>
-        There is a collection of different pilot interfaces which are a subject to change frequently.
+        Batch processing of resources.
     </p>
 
 </div>

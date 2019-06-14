@@ -14,23 +14,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.batch.process_resource;
+package ai.metaheuristic.ai.launchpad.batch.process_resource;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
+import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
+import ai.metaheuristic.ai.launchpad.batch.beans.BatchParams;
+import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
-import ai.metaheuristic.ai.batch.beans.Batch;
-import ai.metaheuristic.ai.batch.beans.BatchParams;
-import ai.metaheuristic.ai.batch.beans.BatchStatus;
-import ai.metaheuristic.ai.batch.data.BatchData;
+import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.ai.yaml.pilot.BatchParamsUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
@@ -230,7 +230,7 @@ public class BatchService {
 
     private static String getMainDocumentPoolCode(String inputResourceParams) {
         InputResourceParam resourceParams = InputResourceParamUtils.to(inputResourceParams);
-        List<String> codes = resourceParams.poolCodes.get(ProcessResourceController.MAIN_DOCUMENT_POOL_CODE);
+        List<String> codes = resourceParams.poolCodes.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH);
         if (codes.isEmpty()) {
             throw new IllegalStateException("#990.080 Main document section is missed. inputResourceParams:\n" + inputResourceParams);
         }

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.pilot;
 
-import ai.metaheuristic.ai.batch.beans.BatchStatus;
+import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.Yaml;
 

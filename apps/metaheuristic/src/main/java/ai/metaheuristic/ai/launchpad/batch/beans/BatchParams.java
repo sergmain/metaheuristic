@@ -14,21 +14,33 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.batch;
+package ai.metaheuristic.ai.launchpad.batch.beans;
 
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import ai.metaheuristic.api.v1.EnumsApi;
+import lombok.Data;
 
-@Controller
-@RequestMapping("/pilot")
-@Profile("launchpad")
-public class PilotIndexController {
+import java.util.List;
 
-    @GetMapping("/index")
-    public String index() {
-        return "pilot/index";
+/**
+ * @author Serge
+ * Date: 5/29/2019
+ * Time: 11:38 PM
+ */
+@Data
+public class BatchParams {
+
+    @Data
+    public static class TaskStatus {
+        public long taskId;
+        public long stationId;
+        public String ip;
+        public String host;
+        public String execResults;
+        public EnumsApi.TaskExecState state;
     }
+
+    public BatchStatus batchStatus;
+    public List<TaskStatus> taskStatuses;
+    public boolean ok = false;
 
 }

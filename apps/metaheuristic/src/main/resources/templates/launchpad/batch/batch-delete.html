@@ -1,4 +1,4 @@
-<div layout:fragment="content" layout:decorate="~{layout-pilot}"
+<div layout:fragment="content" layout:decorate="~{layout-batch}"
      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
 >
     <div>
@@ -12,7 +12,7 @@
             <tr>
                 <td>
                     <form class="pure-form pure-form-stacked" method="post" action="#"
-                          th:method="post" th:action="@{/pilot/process-resource/process-resource-delete-commit}"
+                          th:method="post" th:action="@{/launchpad/batch/batch-delete-commit}"
                           accept-charset="UTF-8"
                           id="workbook-delete-commit"
                           name="f">
@@ -24,7 +24,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <a class="pure-button pure-button-primary" href="process-resources.html" th:href="${'/pilot/process-resource/process-resources'}">To list of batches</a>
+                    <a class="pure-button pure-button-primary" href="process-resources.html" th:href="${'/launchpad/batch/batches'}">To list of batches</a>
                 </td>
             </tr>
         </table>

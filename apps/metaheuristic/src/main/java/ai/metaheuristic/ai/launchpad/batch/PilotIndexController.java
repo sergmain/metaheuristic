@@ -14,27 +14,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.batch.data;
+package ai.metaheuristic.ai.launchpad.batch;
 
-import ai.metaheuristic.ai.batch.beans.Batch;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
-/**
- * @author Serge
- * Date: 6/1/2019
- * Time: 4:21 PM
- */
-public final class BatchData {
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class ProcessResourceItem {
-        public Batch batch;
-        public String planCode;
-        public String execStateStr;
-        public int execState;
-        public boolean ok;
+@Controller
+@RequestMapping("/pilot")
+@Profile("launchpad")
+public class PilotIndexController {
+
+    @GetMapping("/index")
+    public String index() {
+        return "pilot/index";
     }
+
 }
