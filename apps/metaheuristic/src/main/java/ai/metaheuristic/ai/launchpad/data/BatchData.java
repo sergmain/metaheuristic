@@ -17,9 +17,17 @@
 package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
+import ai.metaheuristic.ai.launchpad.beans.Station;
+import ai.metaheuristic.api.v1.data.BaseDataClass;
+import ai.metaheuristic.api.v1.launchpad.Plan;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Slice;
+
+import java.util.List;
 
 /**
  * @author Serge
@@ -27,6 +35,14 @@ import lombok.NoArgsConstructor;
  * Time: 4:21 PM
  */
 public final class BatchData {
+
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class PlansForBatchResult extends BaseDataClass {
+        public List<Plan> items;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
@@ -37,4 +53,44 @@ public final class BatchData {
         public int execState;
         public boolean ok;
     }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class Status extends BaseDataClass {
+        public Long batchId;
+        public String console;
+        public boolean ok;
+
+        public Status(String errorMessage) {
+            addErrorMessage(errorMessage);
+        }
+
+        public Status(Long batchId, String console, boolean ok) {
+            this.batchId = batchId;
+            this.console = console;
+            this.ok = ok;
+        }
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    public static class BatchesResult extends BaseDataClass {
+        public Page<ProcessResourceItem> batches;
+    }
+
+    @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class BatchResult extends BaseDataClass {
+        public Batch batch;
+
+        public BatchResult(String errorMessage) {
+            addErrorMessage(errorMessage);
+        }
+
+        public BatchResult(Batch batch) {
+            this.batch = batch;
+        }
+    }
+
 }

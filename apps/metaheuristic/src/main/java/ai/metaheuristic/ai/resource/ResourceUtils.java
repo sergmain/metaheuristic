@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.resource;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -109,4 +110,10 @@ public class ResourceUtils {
         return assetFile;
     }
 
+    public static String toResourceCode(String originFilename) {
+        long nanoTime = System.nanoTime();
+        String name = StrUtils.getName(originFilename);
+        String ext = StrUtils.getExtension(originFilename);
+        return StringUtils.replaceEach(name, new String[] {" "}, new String[] {"_"} ) + '-' + nanoTime + ext;
+    }
 }

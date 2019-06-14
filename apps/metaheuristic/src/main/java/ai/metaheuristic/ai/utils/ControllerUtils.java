@@ -21,6 +21,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.ui.Model;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class ControllerUtils {
@@ -36,10 +37,18 @@ public class ControllerUtils {
     public static void addMessagesToModel(Model model, BaseDataClass baseData) {
         if (CollectionUtils.isNotEmpty(baseData.errorMessages)) {
             List errorMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_ERROR_MESSAGE));
+            if (errorMessages==null) {
+                errorMessages = new ArrayList();
+                model.addAttribute(Consts.MODEL_ATTR_ERROR_MESSAGE, errorMessages);
+            }
             errorMessages.addAll(baseData.errorMessages);
         }
         if (CollectionUtils.isNotEmpty(baseData.infoMessages)) {
             List infoMessages = ((List)model.asMap().get(Consts.MODEL_ATTR_INFO_MESSAGES));
+            if (infoMessages==null) {
+                infoMessages = new ArrayList();
+                model.addAttribute(Consts.MODEL_ATTR_INFO_MESSAGES, infoMessages);
+            }
             infoMessages.addAll(baseData.infoMessages);
         }
     }
