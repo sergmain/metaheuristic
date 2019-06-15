@@ -27,23 +27,22 @@
             $.post('/launchpad/stations-part', table);
         });
 
-
         function switchStatus() {
-            $('#table').find('#station-status').each(function () {
+            // $('#table').html(html).find('#station-status').each(function () {
+            $('pre').each(function () {
                 let $2 = $(this);
                 printLogMain('$(this).id: ' + $2.attr('id'));
                 printLogMain('$(this).content: ' + $2.content);
 
                 if (isShowStatus) {
-                    $(this).hide();
-                    isShowStatus = false;
+                    $2.hide();
                 }
                 else {
-                    $(this).show();
-                    isShowStatus = true;
+                    $2.show();
                 }
 
             });
+            isShowStatus = isShowStatus===false;
 
             return false;
         }
