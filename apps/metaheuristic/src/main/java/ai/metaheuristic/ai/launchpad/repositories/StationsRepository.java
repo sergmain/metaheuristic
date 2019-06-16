@@ -27,6 +27,8 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 /**
  * User: Serg
  * Date: 25.06.2017
@@ -36,6 +38,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(propagation = Propagation.REQUIRES_NEW)
 @Profile("launchpad")
 public interface StationsRepository extends JpaRepository<Station, Long> {
+
+    @Transactional(readOnly = true)
+    Optional<Station> findById(Long id);
+
+    @Query(value="select s from Station s where s.id=:id")
+    Station findByIdForUpdate(Long id);
 
     @Transactional(readOnly = true)
     Page<Station> findAll(Pageable pageable);

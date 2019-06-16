@@ -419,13 +419,14 @@ public class BatchService {
             if (task.getStationId()!=null) {
                 s = stationCache.findById(task.getStationId());
             }
+            final String stationIpAndHost = getStationIpAndHost(s);
             switch (execState) {
                 case NONE:
                 case IN_PROGRESS:
                     bs.add("#990.200 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                                     ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                     "taskId: " + task.getId() + ", stationId: " + task.getStationId() +
-                                    ", " + getStationIpAndHost(s)
+                                    ", " + stationIpAndHost
                             ,'\n');
                     isOk = true;
                     continue;
@@ -433,7 +434,7 @@ public class BatchService {
                     bs.add("#990.210 " + mainDocument + ", Task was completed with error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + "\n" +
                             "stationId: " + task.getStationId() + "\n" +
-                            getStationIpAndHost(s) + "\n" +
+                            stationIpAndHost + "\n" +
                             "isOk: " + snippetExec.exec.isOk + "\n" +
                             "exitCode: " + snippetExec.exec.exitCode + "\n" +
                             "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
@@ -444,7 +445,7 @@ public class BatchService {
                         bs.add("#990.220 " + mainDocument + ", Task completed without any error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                 "taskId: " + task.getId() + "\n" +
                                 "stationId: " + task.getStationId() + "\n" +
-                                getStationIpAndHost(s) + "\n" +
+                                stationIpAndHost + "\n" +
                                 "isOk: " + snippetExec.exec.isOk + "\n" +
                                 "exitCode: " + snippetExec.exec.exitCode + "\n" +
                                 "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
@@ -458,7 +459,7 @@ public class BatchService {
                 bs.add("#990.230 " + mainDocument + ", Task hasn't completed yet, " +
                                 "batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                 "taskId: " + task.getId() + ", " +
-                                "stationId: " + task.getStationId() + ", " + getStationIpAndHost(s)
+                                "stationId: " + task.getStationId() + ", " + stationIpAndHost
                         ,'\n');
                 isOk = true;
                 continue;
@@ -466,7 +467,7 @@ public class BatchService {
 
             if (!fullConsole) {
                 String msg = "#990.240 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", workbookId: " + workbookId +
-                        ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + getStationIpAndHost(s);
+                        ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
                 bs.add(msg,'\n');
                 isOk = true;
             }
@@ -561,13 +562,14 @@ public class BatchService {
             if (task.getStationId()!=null) {
                 s = stationCache.findById(task.getStationId());
             }
+            final String stationIpAndHost = getStationIpAndHost(s);
             switch (execState) {
                 case NONE:
                 case IN_PROGRESS:
                     bs.add("#990.320 " + mainDocument + ", Task hasn't completed yet, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                                     ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                     "taskId: " + task.getId() + ", stationId: " + task.getStationId() +
-                                    ", " + getStationIpAndHost(s)
+                                    ", " + stationIpAndHost
                             ,'\n');
                     isOk = true;
                     continue;
@@ -575,7 +577,7 @@ public class BatchService {
                     bs.add("#990.330 " + mainDocument + ", Task was completed with error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + "\n" +
                             "stationId: " + task.getStationId() + "\n" +
-                            getStationIpAndHost(s) + "\n" +
+                            stationIpAndHost + "\n" +
                             "isOk: " + snippetExec.exec.isOk + "\n" +
                             "exitCode: " + snippetExec.exec.exitCode + "\n" +
                             "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
@@ -586,7 +588,7 @@ public class BatchService {
                         bs.add("#990.340 " + mainDocument + ", Task completed without any error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                 "taskId: " + task.getId() + "\n" +
                                 "stationId: " + task.getStationId() + "\n" +
-                                getStationIpAndHost(s) + "\n" +
+                                stationIpAndHost + "\n" +
                                 "isOk: " + snippetExec.exec.isOk + "\n" +
                                 "exitCode: " + snippetExec.exec.exitCode + "\n" +
                                 "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
@@ -611,7 +613,7 @@ public class BatchService {
                 bs.add("#990.360 " + mainDocument + ", Task hasn't completed yet, " +
                                 "batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                                 "taskId: " + task.getId() + ", " +
-                                "stationId: " + task.getStationId() + ", " + getStationIpAndHost(s)
+                                "stationId: " + task.getStationId() + ", " + stationIpAndHost
                         ,'\n');
                 isOk = true;
                 continue;
@@ -634,7 +636,7 @@ public class BatchService {
 
             if (!fullConsole) {
                 String msg = "#990.380 status - Ok, doc: " + mainDocFile.getName() + ", batchId: " + batchId + ", workbookId: " + workbookId +
-                        ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + getStationIpAndHost(s);
+                        ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
                 bs.add(msg,'\n');
                 isOk = true;
             }
@@ -676,7 +678,6 @@ public class BatchService {
     }
 
     private String getStationIpAndHost(Station station) {
-
         if (station==null) {
             return String.format(IP_HOST, Consts.UNKNOWN_INFO, Consts.UNKNOWN_INFO);
         }

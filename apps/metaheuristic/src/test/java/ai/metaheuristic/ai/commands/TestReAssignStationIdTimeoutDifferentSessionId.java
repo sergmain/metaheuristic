@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.launchpad.beans.Station;
+import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
@@ -51,6 +52,9 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
     @Autowired
     public StationCache stationCache;
 
+    @Autowired
+    public StationsRepository stationsRepository;
+
     private Long stationIdBefore;
     private String sessionIdBefore;
     private long sessionCreatedOn;
@@ -74,7 +78,7 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
         System.out.println("sessionIdBefore: " + sessionIdBefore);
 
         Long stationId = stationIdBefore;
-        Station s = stationCache.findById(stationId);
+        Station s = stationsRepository.findByIdForUpdate(stationId);
         assertNotNull(s);
 
         StationStatus ss = StationStatusUtils.to(s.status);

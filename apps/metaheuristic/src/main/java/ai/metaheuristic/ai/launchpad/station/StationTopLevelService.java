@@ -91,7 +91,7 @@ public class StationTopLevelService {
     }
 
     public StationData.StationResult saveStation(Station station) {
-        Station s = stationCache.findById(station.getId());
+        Station s = stationsRepository.findByIdForUpdate(station.getId());
         if (s==null) {
             return new StationData.StationResult("#807.05 station wasn't found, stationId: " + station.getId());
         }
@@ -118,7 +118,7 @@ public class StationTopLevelService {
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
-                final Station station = stationCache.findById(stationId);
+                final Station station = stationsRepository.findByIdForUpdate(stationId);
                 if (station == null) {
                     // we throw ISE cos all checks have to be made early
                     throw new IllegalStateException("Station wasn't found for stationId: " + stationId);

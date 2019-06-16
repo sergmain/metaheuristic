@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
@@ -71,6 +72,7 @@ public class ServerService {
     private final CommandProcessor commandProcessor;
     private final StationCache stationCache;
     private final CommandSetter commandSetter;
+    private final StationsRepository stationsRepository;
 
     public HttpEntity<AbstractResource> deliverResource(String typeAsStr, String code, String chunkSize, int chunkNum) {
         EnumsApi.BinaryDataType binaryDataType = EnumsApi.BinaryDataType.valueOf(typeAsStr.toUpperCase());
@@ -184,12 +186,13 @@ public class ServerService {
         }
     }
 
-    public ServerService(Globals globals, BinaryDataService binaryDataService, CommandProcessor commandProcessor, StationCache stationCache, CommandSetter commandSetter) {
+    public ServerService(Globals globals, BinaryDataService binaryDataService, CommandProcessor commandProcessor, StationCache stationCache, CommandSetter commandSetter, StationsRepository stationsRepository) {
         this.globals = globals;
         this.binaryDataService = binaryDataService;
         this.commandProcessor = commandProcessor;
         this.stationCache = stationCache;
         this.commandSetter = commandSetter;
+        this.stationsRepository = stationsRepository;
     }
 
     public ExchangeData processRequest(ExchangeData data, String remoteAddress) {
@@ -229,7 +232,7 @@ public class ServerService {
         if (StringUtils.isBlank(stationId)) {
             return commandProcessor.process(new Protocol.RequestStationId());
         }
-        final Station station = stationCache.findById(Long.parseLong(stationId));
+        final Station station = stationsRepository.findByIdForUpdate(Long.parseLong(stationId));
         if (station == null) {
             return reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
         }
