@@ -38,12 +38,12 @@ public class PlanCache {
         this.planRepository = planRepository;
     }
 
-    @CacheEvict(value = Consts.PLANS_CACHE, key = "#result.id")
+    @CacheEvict(value = {Consts.PLANS_CACHE}, key = "#result.id")
     public PlanImpl save(PlanImpl plan) {
         return planRepository.save(plan);
     }
 
-    @Cacheable(cacheNames = Consts.PLANS_CACHE, unless="#result==null")
+    @Cacheable(cacheNames = {Consts.PLANS_CACHE}, unless="#result==null")
     public PlanImpl findById(long id) {
         return planRepository.findById(id).orElse(null);
     }

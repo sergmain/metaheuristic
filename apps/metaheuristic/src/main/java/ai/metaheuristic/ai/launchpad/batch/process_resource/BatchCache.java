@@ -36,7 +36,7 @@ public class BatchCache {
         this.batchRepository = batchRepository;
     }
 
-    @CacheEvict(value = Consts.BATCHES_CACHE, key = "#result.id")
+    @CacheEvict(value = {Consts.BATCHES_CACHE}, key = "#result.id")
     public Batch save(Batch batch) {
         if (batch==null) {
             return null;
@@ -45,7 +45,7 @@ public class BatchCache {
         return batchRepository.save(batch);
     }
 
-    @Cacheable(cacheNames = Consts.BATCHES_CACHE, unless="#result==null")
+    @Cacheable(cacheNames = {Consts.BATCHES_CACHE}, unless="#result==null")
     public Batch findById(Long id) {
         return batchRepository.findById(id).orElse(null);
     }

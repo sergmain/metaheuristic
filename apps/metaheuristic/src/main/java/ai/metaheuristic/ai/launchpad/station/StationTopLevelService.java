@@ -133,7 +133,8 @@ public class StationTopLevelService {
                         log.warn("#807.105 ObjectOptimisticLockingFailureException was encountered\n" +
                                 "new station:\n{}\n" +
                                 "db station\n{}", station, stationsRepository.findById(stationId).orElse(null));
-                        // we dont do anything about this error because station will report again in short time
+
+                        stationCache.clearCache();
                     }
                 }
             }

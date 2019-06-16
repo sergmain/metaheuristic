@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -39,11 +40,15 @@ public class StationCache {
 
     private final StationsRepository stationsRepository;
 
+    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, allEntries = true)
+    public void clearCache() {
+    }
+
     public StationCache(StationsRepository stationsRepository) {
         this.stationsRepository = stationsRepository;
     }
 
-    @CacheEvict(cacheNames = Consts.STATIONS_CACHE, key = "#result.id")
+    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#result.id")
     public Station save(Station station) {
         if (station==null) {
             return null;
@@ -84,7 +89,7 @@ public class StationCache {
         }
     }
 
-    @Cacheable(cacheNames = Consts.STATIONS_CACHE, unless="#result==null")
+    @Cacheable(cacheNames = {Consts.STATIONS_CACHE}, unless="#result==null")
     public Station findById(Long id) {
         return stationsRepository.findById(id).orElse(null);
     }

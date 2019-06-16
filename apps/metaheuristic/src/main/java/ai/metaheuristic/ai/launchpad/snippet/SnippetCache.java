@@ -36,7 +36,7 @@ public class SnippetCache {
         this.snippetRepository = snippetRepository;
     }
 
-    @CacheEvict(cacheNames = Consts.SNIPPETS_CACHE, key = "#result.id")
+    @CacheEvict(cacheNames = {Consts.SNIPPETS_CACHE}, key = "#result.id")
     public Snippet save(Snippet snippet) {
         return snippetRepository.save(snippet);
     }
@@ -59,7 +59,7 @@ public class SnippetCache {
         }
     }
 
-    @Cacheable(cacheNames = Consts.SNIPPETS_CACHE, unless="#result==null")
+    @Cacheable(cacheNames = {Consts.SNIPPETS_CACHE}, unless="#result==null")
     public Snippet findById(Long id) {
         return snippetRepository.findById(id).orElse(null);
     }

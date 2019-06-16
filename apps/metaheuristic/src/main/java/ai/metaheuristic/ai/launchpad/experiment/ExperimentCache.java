@@ -36,7 +36,7 @@ public class ExperimentCache {
         this.experimentRepository = experimentRepository;
     }
 
-    @CacheEvict(value = Consts.EXPERIMENTS_CACHE, key = "#result.id")
+    @CacheEvict(value = {Consts.EXPERIMENTS_CACHE}, key = "#result.id")
     public Experiment save(Experiment experiment) {
         // noinspection UnusedAssignment
         Experiment save=null;
@@ -49,7 +49,7 @@ public class ExperimentCache {
         }
     }
 
-    @Cacheable(cacheNames = Consts.EXPERIMENTS_CACHE, unless="#result==null")
+    @Cacheable(cacheNames = {Consts.EXPERIMENTS_CACHE}, unless="#result==null")
     public Experiment findById(long id) {
         return experimentRepository.findById(id).orElse(null);
     }
