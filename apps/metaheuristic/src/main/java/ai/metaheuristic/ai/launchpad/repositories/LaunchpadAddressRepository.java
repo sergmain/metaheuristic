@@ -20,8 +20,10 @@ import ai.metaheuristic.ai.launchpad.beans.LaunchpadAddress;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+@Transactional
 @Profile("launchpad")
 public interface LaunchpadAddressRepository extends CrudRepository<LaunchpadAddress, Long> {
 }

@@ -141,11 +141,11 @@ public class BatchTopLevelService {
                 PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(o.getParams());
                 return ppy.internalParams == null || !ppy.internalParams.archived;
             } catch (YAMLException e) {
-                final String es = "#990.010 Can't parse Plan params. It's broken or unknown version. Plan id: #" + o.getId();
+                final String es = "#995.010 Can't parse Plan params. It's broken or unknown version. Plan id: #" + o.getId();
                 plans.addErrorMessage(es);
                 log.error(es);
-                log.error("#990.015 Params:\n{}", o.getParams());
-                log.error("#990.020 Error: {}", e.toString());
+                log.error("#995.015 Params:\n{}", o.getParams());
+                log.error("#995.020 Error: {}", e.toString());
                 return false;
             }
         }).sorted((o1,o2)-> Long.compare(o2.getId(), o1.getId())
@@ -158,24 +158,24 @@ public class BatchTopLevelService {
 
         String tempFilename = file.getOriginalFilename();
         if (tempFilename == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#990.040 name of uploaded file is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.040 name of uploaded file is null");
         }
         final String originFilename = tempFilename.toLowerCase();
         Plan plan = planCache.findById(planId);
         if (plan == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#990.050 plan wasn't found, planId: " + planId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
         }
 
         // validate the plan
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#990.060 validation of plan was failed, status: " + planValidation.status);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.060 validation of plan was failed, status: " + planValidation.status);
         }
 
         try {
             File tempDir = DirUtils.createTempDir("batch-file-upload-");
             if (tempDir==null || tempDir.isFile()) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#990.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
             }
 
             final File dataFile = new File(tempDir, originFilename );
@@ -195,7 +195,7 @@ public class BatchTopLevelService {
 
             final Batch batch = batchService.changeStateToPreparing(b.id);
             if (batch==null) {
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#990.080 can't find batch with id " + b.id);
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.080 can't find batch with id " + b.id);
             }
 
             log.info("The file {} was successfully stored to disk", originFilename);
@@ -205,7 +205,7 @@ public class BatchTopLevelService {
 
                         List<String> errors = ZipUtils.validate(dataFile, VALIDATE_ZIP_FUNCTION);
                         if (!errors.isEmpty()) {
-                            StringBuilder err = new StringBuilder("#990.090 Zip archive contains wrong chars in name(s):\n");
+                            StringBuilder err = new StringBuilder("#995.090 Zip archive contains wrong chars in name(s):\n");
                             for (String error : errors) {
                                 err.append('\t').append(error).append('\n');
                             }
@@ -225,11 +225,11 @@ public class BatchTopLevelService {
                 }
                 catch(UnzipArchiveException e) {
                     log.error("Error", e);
-                    batchService.changeStateToError(batch.id, "#990.100 can't unzip an archive. Error: " + e.getMessage()+", class: " + e.getClass());
+                    batchService.changeStateToError(batch.id, "#995.100 can't unzip an archive. Error: " + e.getMessage()+", class: " + e.getClass());
                 }
                 catch(Throwable th) {
                     log.error("Error", th);
-                    batchService.changeStateToError(batch.id, "#990.110 General processing error. Error: " + th.getMessage()+", class: " + th.getClass());
+                    batchService.changeStateToError(batch.id, "#995.110 General processing error. Error: " + th.getMessage()+", class: " + th.getClass());
                 }
 
             }).start();
@@ -238,7 +238,7 @@ public class BatchTopLevelService {
         }
         catch (Throwable th) {
             log.error("Error", th);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#990.120 can't load file, error: " + th.getMessage()+", class: " + th.getClass());
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.120 can't load file, error: " + th.getMessage()+", class: " + th.getClass());
         }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -247,7 +247,7 @@ public class BatchTopLevelService {
 
         Batch batch = batchCache.findById(batchId);
         if (batch == null) {
-            final String es = "#990.250 Batch wasn't found, batchId: " + batchId;
+            final String es = "#995.250 Batch wasn't found, batchId: " + batchId;
             log.info(es);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, es);
         }
@@ -294,7 +294,7 @@ public class BatchTopLevelService {
                 } catch (StoreNewFileWithRedirectException e) {
                     throw e;
                 } catch (Throwable th) {
-                    String es = "#990.130 An error while saving data to file, " + th.toString();
+                    String es = "#995.130 An error while saving data to file, " + th.toString();
                     log.error(es, th);
                     throw new PilotResourceProcessingException(es);
                 }
@@ -307,11 +307,11 @@ public class BatchTopLevelService {
     private File getMainDocumentFile(File srcDir) throws IOException {
         File configFile = new File(srcDir, CONFIG_FILE);
         if (!configFile.exists()) {
-            throw new PilotResourceProcessingException("#990.140 config.yaml file wasn't found in path " + srcDir.getPath());
+            throw new PilotResourceProcessingException("#995.140 config.yaml file wasn't found in path " + srcDir.getPath());
         }
 
         if (!configFile.isFile()) {
-            throw new PilotResourceProcessingException("#990.150 config.yaml must be a file, not a directory");
+            throw new PilotResourceProcessingException("#995.150 config.yaml must be a file, not a directory");
         }
         Yaml yaml = new Yaml();
 
@@ -322,12 +322,12 @@ public class BatchTopLevelService {
         }
 
         if (StringUtils.isBlank(mainDocument)) {
-            throw new PilotResourceProcessingException("#990.160 config.yaml must contain non-empty field '" + Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH + "' ");
+            throw new PilotResourceProcessingException("#995.160 config.yaml must contain non-empty field '" + Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH + "' ");
         }
 
         final File mainDocFile = new File(srcDir, mainDocument);
         if (!mainDocFile.exists()) {
-            throw new PilotResourceProcessingException("#990.170 main document file "+mainDocument+" wasn't found in path " + srcDir.getPath());
+            throw new PilotResourceProcessingException("#995.170 main document file "+mainDocument+" wasn't found in path " + srcDir.getPath());
         }
         return mainDocFile;
     }
@@ -369,13 +369,13 @@ public class BatchTopLevelService {
         }
 
         if (!isMainDocPresent) {
-            throw new PilotResourceProcessingException("#990.180 main document wasn't found");
+            throw new PilotResourceProcessingException("#995.180 main document wasn't found");
         }
 
         final String paramYaml = asInputResourceParams(mainPoolCode, attachPoolCode, attachments);
         PlanApiData.TaskProducingResultComplex producingResult = planService.createWorkbook(plan.getId(), paramYaml);
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
-            throw new PilotResourceProcessingException("#990.190 Error creating workbook: " + producingResult.planProducingStatus);
+            throw new PilotResourceProcessingException("#995.190 Error creating workbook: " + producingResult.planProducingStatus);
         }
         BatchWorkbook bfi = new BatchWorkbook();
         bfi.batchId=batch.id;
@@ -386,24 +386,24 @@ public class BatchTopLevelService {
         Long planId = plan.getId();
         plan = planCache.findById(planId);
         if (plan == null) {
-            throw new PilotResourceProcessingException("#990.200 plan wasn't found, planId: " + planId);
+            throw new PilotResourceProcessingException("#995.200 plan wasn't found, planId: " + planId);
         }
 
         // validate the plan + the workbook
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
-            throw new PilotResourceProcessingException("#990.210 validation of plan was failed, status: " + planValidation.status);
+            throw new PilotResourceProcessingException("#995.210 validation of plan was failed, status: " + planValidation.status);
         }
 
         PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook);
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
-            throw new PilotResourceProcessingException("#990.220 validation of plan was failed, status: " + countTasks.planValidateStatus);
+            throw new PilotResourceProcessingException("#995.220 validation of plan was failed, status: " + countTasks.planValidateStatus);
         }
 
         if (globals.maxTasksPerPlan < countTasks.numberOfTasks) {
             planService.changeValidStatus(producingResult.workbook, false);
             throw new PilotResourceProcessingException(
-                    "#990.220 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
+                    "#995.220 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                             "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + countTasks.numberOfTasks);
         }
         planService.changeValidStatus(producingResult.workbook, true);
@@ -428,7 +428,7 @@ public class BatchTopLevelService {
     public BatchData.Status getProcessingResourceStatus(Long batchId) {
         Batch batch = batchCache.findById(batchId);
         if (batch == null) {
-            final String es = "#990.260 Batch wasn't found, batchId: " + batchId;
+            final String es = "#995.260 Batch wasn't found, batchId: " + batchId;
             log.warn(es);
             return new BatchData.Status(es);
         }

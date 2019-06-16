@@ -30,8 +30,8 @@ import java.util.List;
 import java.util.stream.Stream;
 
 @Repository
-@Profile("launchpad")
 @Transactional
+@Profile("launchpad")
 public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
 
     @Transactional(readOnly = true)

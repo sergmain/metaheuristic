@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
+@Transactional
 @Profile("launchpad")
 public interface ExperimentTaskFeatureRepository extends CrudRepository<ExperimentTaskFeature, Long> {
 

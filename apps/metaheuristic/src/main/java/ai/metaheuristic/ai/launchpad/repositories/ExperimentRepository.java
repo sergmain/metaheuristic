@@ -23,6 +23,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -32,7 +33,7 @@ import java.util.List;
  * Date: 13.07.2017
  * Time: 15:41
  */
-@Component
+@Repository
 @Transactional
 @Profile("launchpad")
 public interface ExperimentRepository extends CrudRepository<Experiment, Long> {

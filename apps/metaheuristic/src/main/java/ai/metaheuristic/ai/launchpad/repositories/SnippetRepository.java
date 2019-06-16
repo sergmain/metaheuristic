@@ -23,6 +23,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
+@Transactional
 @Profile("launchpad")
 public interface SnippetRepository extends CrudRepository<Snippet, Long> {
 

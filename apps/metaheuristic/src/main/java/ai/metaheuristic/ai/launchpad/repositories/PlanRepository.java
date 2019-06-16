@@ -29,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Repository
+@Transactional
 @Profile("launchpad")
 public interface PlanRepository extends CrudRepository<PlanImpl, Long> {
 

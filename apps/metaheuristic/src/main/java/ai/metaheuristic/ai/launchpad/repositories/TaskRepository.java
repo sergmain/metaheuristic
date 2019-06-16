@@ -25,12 +25,14 @@ import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Stream;
 
-@Component
+@Repository
+@Transactional
 @Profile("launchpad")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
@@ -125,3 +127,4 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     List<Object[]> getCountPerOrder(Long workbookId);
 
 }
+
