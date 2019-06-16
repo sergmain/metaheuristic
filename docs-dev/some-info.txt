@@ -50,3 +50,8 @@ How to deal with new thymeleaf
 =======================
 SHA256+Signature
     https://www.mkyong.com/java/java-asymmetric-cryptography-example/
+
+=======================
+Red Hat's OpenJDK 
+	https://github.com/AdoptOpenJDK/openjdk11-upstream-binaries/releases/
+

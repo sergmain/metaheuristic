@@ -323,17 +323,24 @@ public class BatchService {
                 return batchParams.batchStatus;
             }
 
+            BatchStatus batchStatus = prepareStatus(batchId, fullConsole);
+
+            b = batchCache.findById(batchId);
+            if (b == null) {
+                final BatchStatus bs = new BatchStatus();
+                bs.add("#990.113, Batch wasn't found, batchId: " + batchId, '\n');
+                bs.ok = false;
+                return bs;
+            }
             BatchParams batchParams = BatchParamsUtils.to(b.getParams());
             if (batchParams == null) {
                 batchParams = new BatchParams();
             }
-
-            batchParams.batchStatus = prepareStatus(batchId, fullConsole);
-
+            batchParams.batchStatus = batchStatus;
             b.params = BatchParamsUtils.toString(batchParams);
             batchCache.save(b);
 
-            return batchParams.batchStatus;
+            return batchStatus;
 
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#990.120 Error updating batch, new: {}, curr: {}", b, batchRepository.findById(batchId).orElse(null));
