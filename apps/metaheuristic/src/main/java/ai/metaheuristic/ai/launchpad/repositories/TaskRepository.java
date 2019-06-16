@@ -51,6 +51,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(value="select t from TaskImpl t where t.workbookId=:workbookId")
     Stream<Task> findAllByWorkbookIdAsStream(Long workbookId);
 
+    @Transactional
     @Query(value="select t.id, t.workbookId from TaskImpl t")
     Stream<Object[]> findAllAsTaskSimple(Pageable pageable);
 
@@ -67,7 +68,6 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
             "where t.stationId=:stationId and t.resultReceived=false and t.isCompleted=false")
     List<Object[]> findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(Long stationId);
 
-
     @Transactional
     void deleteByWorkbookId(Long workbookId);
 
@@ -75,6 +75,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(value="select t.id, t.params from TaskImpl t where t.workbookId=:workbookId")
     Stream<Object[]> findByWorkbookId(Long workbookId);
 
+    @Transactional
     @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId and t.order =:taskOrder")
     Slice<Task> findForAssigning(Pageable pageable, Long workbookId, int taskOrder);
 
@@ -82,21 +83,27 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query("SELECT max(t.order) as max_order FROM TaskImpl t where t.workbookId=:workbookId")
     Integer findMaxConcreteOrder(Long workbookId);
 
+    @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.stationId is not null and t.workbookId=:workbookId and t.order =:taskOrder")
     List<Task> findWithConcreteOrder(Long workbookId, int taskOrder);
 
+    @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.workbookId=:workbookId and t.order =:taskOrder")
     List<Task> findAnyWithConcreteOrder(Long workbookId, int taskOrder);
 
+    @Transactional(readOnly = true)
     @Query("SELECT t.id FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId and t.order =:taskOrder")
     List<Long> findAnyNotAssignedWithConcreteOrder(Pageable limit, Long workbookId, int taskOrder);
 
+    @Transactional(readOnly = true)
     @Query("SELECT t.id FROM TaskImpl t where t.stationId=:stationId and t.isCompleted=false")
     List<Long> findAnyActiveForStationId(Pageable limit, Long stationId);
 
+    @Transactional(readOnly = true)
     @Query("SELECT count(t) FROM TaskImpl t where t.workbookId=:workbookId and t.order =:taskOrder")
     Long countWithConcreteOrder(long workbookId, int taskOrder);
 
+    @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.stationId=:stationId and t.resultReceived=false and " +
             " t.execState =:execState and (:mills - result_resource_scheduled_on > 15000) ")
     List<Task> findForMissingResultResources(Long stationId, long mills, int execState);
@@ -116,6 +123,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     Slice<TaskWIthType> findPredictTasks(Pageable pageable, Long featureId);
 
 
+    @Transactional(readOnly = true)
     @Query(nativeQuery = true, value = "select z.* "+
             "from ( "+
             "           SELECT count(*) count, t.TASK_ORDER "+

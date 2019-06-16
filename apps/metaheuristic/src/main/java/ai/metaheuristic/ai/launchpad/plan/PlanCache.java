@@ -44,7 +44,7 @@ public class PlanCache {
     }
 
     @Cacheable(cacheNames = {Consts.PLANS_CACHE}, unless="#result==null")
-    public PlanImpl findById(long id) {
+    public PlanImpl findById(Long id) {
         return planRepository.findById(id).orElse(null);
     }
 

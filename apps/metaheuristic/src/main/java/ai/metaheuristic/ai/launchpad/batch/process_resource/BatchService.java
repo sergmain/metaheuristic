@@ -378,7 +378,16 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            List<Task> tasks = taskRepository.findAnyWithConcreteOrder(wb.getId(), taskOrder);
+            List<Task> tasks;
+            try {
+                tasks = taskRepository.findAnyWithConcreteOrder(wb.getId(), taskOrder);
+            } catch (ObjectOptimisticLockingFailureException e) {
+                String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
+                log.warn(msg);
+                bs.add(msg,'\n');
+                isOk = false;
+                continue;
+            }
             if (tasks.isEmpty()) {
                 String msg = "#990.170 " + mainDocument + ", Can't find any task for batchId: " + batchId;
                 log.info(msg);
