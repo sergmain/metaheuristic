@@ -21,8 +21,8 @@ import ai.metaheuristic.api.v1.launchpad.Workbook;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,7 +32,7 @@ import java.util.stream.Stream;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface WorkbookRepository extends CrudRepository<WorkbookImpl, Long> {
+public interface WorkbookRepository extends JpaRepository<WorkbookImpl, Long> {
 
     @Transactional(readOnly = true)
     @Query(value="select f from WorkbookImpl f")

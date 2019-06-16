@@ -63,7 +63,7 @@ public class TaskPersistencer {
                         return null;
                     }
                     task.setParams(taskParams);
-                    taskRepository.save(task);
+                    taskRepository.saveAndFlush(task);
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.error("#307.07 Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
@@ -88,7 +88,7 @@ public class TaskPersistencer {
                     task.setCompleted(true);
                     task.setCompletedOn(System.currentTimeMillis());
                     task.setResultReceived(resultReceived);
-                    taskRepository.save(task);
+                    taskRepository.saveAndFlush(task);
                     return Enums.UploadResourceStatus.OK;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.warn("#307.18 Error set resultReceived to {} try #{}, taskId: {}, error: {}", resultReceived, i, taskId, e.toString());
@@ -108,7 +108,7 @@ public class TaskPersistencer {
                     task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
                     task.setResultResourceScheduledOn(System.currentTimeMillis());
 
-                    taskRepository.save((TaskImpl) task);
+                    taskRepository.saveAndFlush((TaskImpl) task);
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.error("#307.21 Error assign task {}, taskId: {}, error: {}", task.toString(), task.getId(), e.toString());
                 }
@@ -135,7 +135,7 @@ public class TaskPersistencer {
                     task.setExecState(EnumsApi.TaskExecState.NONE.value);
                     task.setResultReceived(false);
                     task.setResultResourceScheduledOn(0);
-                    taskRepository.save(task);
+                    taskRepository.saveAndFlush(task);
 
                     Workbook workbook = workbookRepository.findById(task.workbookId).orElse(null);
                     if (workbook != null) {
@@ -160,7 +160,7 @@ public class TaskPersistencer {
 
     public Workbook save(Workbook workbook) {
         if (workbook instanceof WorkbookImpl) {
-            return workbookRepository.save((WorkbookImpl)workbook);
+            return workbookRepository.saveAndFlush((WorkbookImpl)workbook);
         }
         else {
             throw new NotImplementedException("Need to implement");
@@ -207,7 +207,7 @@ public class TaskPersistencer {
             task.setResultReceived(true);
 
             //noinspection UnusedAssignment
-            task = taskRepository.save(task);
+            task = taskRepository.saveAndFlush(task);
         }
     }
 
@@ -238,7 +238,7 @@ public class TaskPersistencer {
         task.setSnippetExecResults(result.getResult());
         task.setMetrics(result.getMetrics());
         task.setResultResourceScheduledOn(System.currentTimeMillis());
-        task = taskRepository.save(task);
+        task = taskRepository.saveAndFlush(task);
 
         return task;
     }

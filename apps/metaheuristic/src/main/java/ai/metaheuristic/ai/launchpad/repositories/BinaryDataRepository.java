@@ -21,10 +21,11 @@ import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
 import ai.metaheuristic.api.v1.launchpad.BinaryData;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +39,7 @@ import java.util.List;
  */
 @Repository
 @Profile("launchpad")
-public interface BinaryDataRepository extends CrudRepository<BinaryDataImpl, Long> {
+public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long> {
     List<BinaryData> findAllByDataType(int dataType);
 
     @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
@@ -77,7 +78,7 @@ public interface BinaryDataRepository extends CrudRepository<BinaryDataImpl, Lon
     BinaryDataImpl findByCodeForUpdate(String code);
 
     @Transactional(readOnly = true)
-    Slice<BinaryData> findAll(Pageable pageable);
+    Page<BinaryDataImpl> findAll(Pageable pageable);
 
     @Transactional
     void deleteAllByDataType(int dataType);

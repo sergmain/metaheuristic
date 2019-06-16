@@ -55,7 +55,7 @@ public class AccountService {
 
     @CachePut(cacheNames = "byUsername", key = "#account.username")
     public void save(Account account) {
-        accountRepository.save(account);
+        accountRepository.saveAndFlush(account);
     }
 
     @Cacheable(cacheNames = "byUsername", unless="#result==null")

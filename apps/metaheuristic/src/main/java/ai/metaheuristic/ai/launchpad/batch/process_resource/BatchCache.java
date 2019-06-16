@@ -42,7 +42,7 @@ public class BatchCache {
             return null;
         }
         log.info("#459.010 save batch, id: #{}, batch: {}", batch.id, batch);
-        return batchRepository.save(batch);
+        return batchRepository.saveAndFlush(batch);
     }
 
     @Cacheable(cacheNames = {Consts.BATCHES_CACHE}, unless="#result==null")

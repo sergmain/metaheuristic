@@ -111,11 +111,11 @@ public class PlanService {
         PlanImpl plan = planCache.findById(fi.getPlanId());
         if (plan==null) {
             workbook.setExecState(EnumsApi.WorkbookExecState.ERROR.code);
-            workbookRepository.save(fi);
+            workbookRepository.saveAndFlush(fi);
             return null;
         }
         fi.setExecState(EnumsApi.WorkbookExecState.STARTED.code);
-        return workbookRepository.save(fi);
+        return workbookRepository.saveAndFlush(fi);
     }
 
     // TODO 2019.05.19 add reporting of producing of tasks
@@ -131,7 +131,7 @@ public class PlanService {
             PlanImpl plan = planCache.findById(workbook.getPlanId());
             if (plan==null) {
                 workbook.setExecState(EnumsApi.WorkbookExecState.ERROR.code);
-                workbookRepository.save(workbook);
+                workbookRepository.saveAndFlush(workbook);
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
@@ -173,7 +173,7 @@ public class PlanService {
 
         if (!plan.getId().equals(workbook.getPlanId())) {
             workbook.setValid(false);
-            workbookRepository.save(workbook);
+            workbookRepository.saveAndFlush(workbook);
             return new PlanApiData.WorkbookResult("#560.73 planId doesn't match to workbook.planId, planId: " + workbook.getPlanId()+", workbook.planId: " + workbook.getPlanId());
         }
 
@@ -255,7 +255,7 @@ public class PlanService {
 
     public Workbook save(Workbook workbook) {
         if (workbook instanceof WorkbookImpl) {
-            return workbookRepository.save((WorkbookImpl)workbook);
+            return workbookRepository.saveAndFlush((WorkbookImpl)workbook);
         }
         else {
             throw new NotImplementedException("Need to implement");

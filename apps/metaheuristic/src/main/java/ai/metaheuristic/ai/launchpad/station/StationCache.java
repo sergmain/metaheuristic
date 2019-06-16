@@ -54,7 +54,7 @@ public class StationCache {
             return null;
         }
         log.info("#457.010 save station, id: #{}, station: {}", station.id, station);
-        return stationsRepository.save(station);
+        return stationsRepository.saveAndFlush(station);
     }
 
     @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#station.id")

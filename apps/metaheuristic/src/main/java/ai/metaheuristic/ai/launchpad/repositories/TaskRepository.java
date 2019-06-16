@@ -20,11 +20,11 @@ import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.api.v1.data.TaskWIthType;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +34,7 @@ import java.util.stream.Stream;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
+public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
 
     @Transactional
     @Query(value="select t.id, t.metrics from TaskImpl t, ExperimentTaskFeature f " +
@@ -42,7 +42,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     Stream<Object[]> findMetricsByExperimentFeatureId(long experimentFeatureId);
 
     @Transactional(readOnly = true)
-    Slice<Task> findAll(Pageable pageable);
+    Page<TaskImpl> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
     List<Task> findAllByWorkbookId(Long workbookId);

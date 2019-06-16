@@ -38,7 +38,7 @@ public class SnippetCache {
 
     @CacheEvict(cacheNames = {Consts.SNIPPETS_CACHE}, key = "#result.id")
     public Snippet save(Snippet snippet) {
-        return snippetRepository.save(snippet);
+        return snippetRepository.saveAndFlush(snippet);
     }
 
     @CacheEvict(cacheNames = {Consts.SNIPPETS_CACHE}, key = "#snippet.id")

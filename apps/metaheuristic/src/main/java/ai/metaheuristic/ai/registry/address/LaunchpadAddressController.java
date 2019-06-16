@@ -86,7 +86,7 @@ public class LaunchpadAddressController {
             return errorTarget;
         }
 
-        launchpadAddressRepository.save(address);
+        launchpadAddressRepository.saveAndFlush(address);
         return normalTarget;
     }
 

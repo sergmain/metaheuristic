@@ -82,7 +82,7 @@ public class AccountTopLevelService {
         account.setCredentialsNonExpired(true);
         account.setEnabled(true);
 
-        accountRepository.save(account);
+        accountRepository.saveAndFlush(account);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -102,7 +102,7 @@ public class AccountTopLevelService {
         }
         account.setEnabled(enabled);
         account.setPublicName(publicName);
-        accountRepository.save(account);
+        accountRepository.saveAndFlush(account);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", null);
     }
 
@@ -121,7 +121,7 @@ public class AccountTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.14 Both passwords must be equal");
         }
         a.setPassword(passwordEncoder.encode(a.getPassword()));
-        accountRepository.save(a);
+        accountRepository.saveAndFlush(a);
 
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The password was changed successfully", null);
     }

@@ -93,7 +93,7 @@ public class TaskService {
 
                 if (task.order<workbook.getProducingOrder()) {
                     workbook.setProducingOrder(task.order);
-                    workbookRepository.save(workbook);
+                    workbookRepository.saveAndFlush(workbook);
                 }
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
@@ -282,7 +282,7 @@ public class TaskService {
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         resultTask.setResultResourceScheduledOn(0);
 
-        taskRepository.save((TaskImpl)resultTask);
+        taskRepository.saveAndFlush((TaskImpl)resultTask);
 
         return new TasksAndAssignToStationResult(assignedTask);
     }

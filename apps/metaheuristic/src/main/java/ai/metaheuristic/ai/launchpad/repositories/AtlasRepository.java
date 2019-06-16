@@ -21,15 +21,15 @@ import ai.metaheuristic.ai.launchpad.beans.Atlas;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface AtlasRepository extends CrudRepository<Atlas, Long> {
+public interface AtlasRepository extends JpaRepository<Atlas, Long> {
 
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.launchpad.atlas.AtlasSimple(" +

@@ -18,9 +18,8 @@ package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.ExperimentFeature;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +28,7 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface ExperimentFeatureRepository extends CrudRepository<ExperimentFeature, Long> {
+public interface ExperimentFeatureRepository extends JpaRepository<ExperimentFeature, Long> {
 
     @Transactional(readOnly = true)
     List<ExperimentFeature> findByExperimentIdOrderByMaxValueDesc(Long experimentId);

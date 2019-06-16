@@ -18,12 +18,13 @@ package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -32,12 +33,12 @@ import org.springframework.transaction.annotation.Transactional;
  * Time: 15:52
  */
 @Repository
-@Transactional
+@Transactional(propagation = Propagation.REQUIRES_NEW)
 @Profile("launchpad")
-public interface StationsRepository extends CrudRepository<Station, Long> {
+public interface StationsRepository extends JpaRepository<Station, Long> {
 
     @Transactional(readOnly = true)
-    Slice<Station> findAll(Pageable pageable);
+    Page<Station> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
     @Query(value="select s.id from Station s order by s.updatedOn desc")

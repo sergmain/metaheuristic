@@ -148,7 +148,7 @@ public class TestRest {
     public void testRegisterInvite() throws Exception {
         ExchangeData dataReqest = new ExchangeData(new Protocol.RegisterInvite("invite-123"));
         Station s = new Station();
-        stationsRepository.save(s);
+        stationsRepository.saveAndFlush(s);
 
         dataReqest.setStationId(s.getId().toString());
         String jsonReqest = JsonUtils.toJson(dataReqest);

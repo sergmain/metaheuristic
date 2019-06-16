@@ -137,7 +137,7 @@ public class AtlasService {
         b.description = stored.experimentStoredToAtlas.experiment.getDescription();
         b.code = stored.experimentStoredToAtlas.experiment.getCode();
         b.createdOn = stored.experimentStoredToAtlas.experiment.getCreatedOn();
-        atlasRepository.save(b);
+        atlasRepository.saveAndFlush(b);
 
         ConsoleOutputStoredToAtlas filed = toConsoleOutputStoredToAtlas(
                 stored.experimentStoredToAtlas.workbook.id);

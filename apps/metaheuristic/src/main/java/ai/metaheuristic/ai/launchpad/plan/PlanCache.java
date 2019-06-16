@@ -40,7 +40,7 @@ public class PlanCache {
 
     @CacheEvict(value = {Consts.PLANS_CACHE}, key = "#result.id")
     public PlanImpl save(PlanImpl plan) {
-        return planRepository.save(plan);
+        return planRepository.saveAndFlush(plan);
     }
 
     @Cacheable(cacheNames = {Consts.PLANS_CACHE}, unless="#result==null")

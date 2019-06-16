@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.ExperimentTaskFeature;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +27,7 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface ExperimentTaskFeatureRepository extends CrudRepository<ExperimentTaskFeature, Long> {
+public interface ExperimentTaskFeatureRepository extends JpaRepository<ExperimentTaskFeature, Long> {
 
     @Transactional
     void deleteByWorkbookId(long workbookId);

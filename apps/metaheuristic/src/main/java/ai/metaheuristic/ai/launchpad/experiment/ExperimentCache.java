@@ -42,7 +42,7 @@ public class ExperimentCache {
         Experiment save=null;
         //noinspection CaughtExceptionImmediatelyRethrown
         try {
-            save = experimentRepository.save(experiment);
+            save = experimentRepository.saveAndFlush(experiment);
             return save;
         } catch (ObjectOptimisticLockingFailureException e) {
             throw e;

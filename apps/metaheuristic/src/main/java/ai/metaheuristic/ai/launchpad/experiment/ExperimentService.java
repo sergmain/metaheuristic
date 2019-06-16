@@ -146,7 +146,7 @@ public class ExperimentService {
             double value = metricsMaxValueCollector.calcMaxValueForMetrics(feature.getId());
             log.info("\tFeature #{}, max value: {}", feature.getId(), value);
             feature.setMaxValue(value);
-            experimentFeatureRepository.save(feature);
+            experimentFeatureRepository.saveAndFlush(feature);
         }
     }
 
@@ -474,7 +474,7 @@ public class ExperimentService {
                         task.setOrder(process.order + (orderAdd++));
                         task.setProcessType(process.type.value);
                         if (isPersist) {
-                            taskRepository.save((TaskImpl)task);
+                            taskRepository.saveAndFlush((TaskImpl)task);
                         }
                         // inc number of tasks
                         numberOfTasks.value++;
@@ -547,7 +547,7 @@ public class ExperimentService {
                         tef.setFeatureId((Long) feature[0]);
                         tef.setTaskType(type.value);
                         if (isPersist) {
-                            taskExperimentFeatureRepository.save(tef);
+                            taskExperimentFeatureRepository.saveAndFlush(tef);
                         }
 
                         yaml.snippet = SnippetConfigUtils.to(snippet.params);
@@ -633,7 +633,7 @@ public class ExperimentService {
                         feature.setResourceCodes(listAsStr);
                         feature.setChecksumIdCodes(checksumIdCodes);
                         if (isPersist) {
-                            experimentFeatureRepository.save(feature);
+                            experimentFeatureRepository.saveAndFlush(feature);
                         }
                         //noinspection UnusedAssignment
                         feature = null;

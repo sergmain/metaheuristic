@@ -44,7 +44,7 @@ public class TestRepositories {
         logData1.setLogData("This is log data");
         logData1.setType(LogData.Type.ASSEMBLING);
         logData1.setRefId(42L);
-        LogData newlogData = logDataRepository.save(logData1);
+        LogData newlogData = logDataRepository.saveAndFlush(logData1);
         Assert.assertNotNull(newlogData);
 
         LogData datasetWithLogs = logDataRepository.findById(newlogData.getId()).orElse(null);

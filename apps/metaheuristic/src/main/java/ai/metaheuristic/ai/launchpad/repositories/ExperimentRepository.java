@@ -18,11 +18,11 @@ package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,10 +36,10 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface ExperimentRepository extends CrudRepository<Experiment, Long> {
+public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
 
     @Transactional(readOnly = true)
-    Slice<Experiment> findAll(Pageable pageable);
+    Page<Experiment> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
     Slice<Experiment> findAllByOrderByIdDesc(Pageable pageable);

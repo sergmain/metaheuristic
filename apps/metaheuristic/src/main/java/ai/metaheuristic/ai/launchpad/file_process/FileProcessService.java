@@ -128,7 +128,7 @@ public class FileProcessService {
         task.setOrder(process.order);
         task.setParams(taskParams);
         task.setProcessType(process.type.value);
-        taskRepository.save(task);
+        taskRepository.saveAndFlush(task);
     }
 
 }

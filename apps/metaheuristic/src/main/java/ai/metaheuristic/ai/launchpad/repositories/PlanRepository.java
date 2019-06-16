@@ -19,10 +19,11 @@ package ai.metaheuristic.ai.launchpad.repositories;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,10 +32,10 @@ import java.util.List;
 @Repository
 @Transactional
 @Profile("launchpad")
-public interface PlanRepository extends CrudRepository<PlanImpl, Long> {
+public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
 
     @Transactional(readOnly = true)
-    Slice<Plan> findAll(Pageable pageable);
+    Page<PlanImpl> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
     @Query(value="select p from PlanImpl p")

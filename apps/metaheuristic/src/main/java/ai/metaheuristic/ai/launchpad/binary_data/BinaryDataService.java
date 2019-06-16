@@ -31,6 +31,7 @@ import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
@@ -208,7 +209,7 @@ public class BinaryDataService {
             Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
             data.setData(blob);
 
-            binaryDataRepository.save(data);
+            binaryDataRepository.saveAndFlush(data);
 
             return data;
         }
@@ -254,7 +255,7 @@ public class BinaryDataService {
             data.setUploadTs(new Timestamp(System.currentTimeMillis()));
             data.setData(null);
 
-            binaryDataRepository.save(data);
+            binaryDataRepository.saveAndFlush(data);
 
             return data;
         }
@@ -273,10 +274,10 @@ public class BinaryDataService {
         Blob blob = Hibernate.getLobCreator(em.unwrap(Session.class)).createBlob(is, size);
         data.setData(blob);
 
-        binaryDataRepository.save(data);
+        binaryDataRepository.saveAndFlush(data);
     }
 
-    public Slice<BinaryData> findAll(Pageable pageable) {
+    public Page<BinaryDataImpl> findAll(Pageable pageable) {
         return binaryDataRepository.findAll(pageable);
     }
 

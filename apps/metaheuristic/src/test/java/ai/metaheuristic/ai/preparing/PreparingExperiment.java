@@ -111,7 +111,7 @@ public abstract class PreparingExperiment {
             // Prepare station
             station = new Station();
             mills = System.currentTimeMillis();
-            log.info("Start stationsRepository.save()");
+            log.info("Start stationsRepository.saveAndFlush()");
 
             EnvYaml envYaml = new EnvYaml();
             envYaml.getEnvs().put("python-3", "C:\\Anaconda3\\envs\\python-36\\python.exe" );
@@ -223,7 +223,7 @@ public abstract class PreparingExperiment {
 
             mills = System.currentTimeMillis();
             log.info("Start experimentRepository.save()");
-            experimentRepository.save(experiment);
+            experimentRepository.saveAndFlush(experiment);
             log.info("experimentRepository.save() was finished for {}", System.currentTimeMillis() - mills);
 
             // set snippets for experiment

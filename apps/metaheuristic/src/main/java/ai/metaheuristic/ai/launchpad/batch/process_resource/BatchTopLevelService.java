@@ -380,7 +380,7 @@ public class BatchTopLevelService {
         BatchWorkbook bfi = new BatchWorkbook();
         bfi.batchId=batch.id;
         bfi.workbookId=producingResult.workbook.getId();
-        batchWorkbookRepository.save(bfi);
+        batchWorkbookRepository.saveAndFlush(bfi);
 
         // ugly work-around on ObjectOptimisticLockingFailureException, StaleObjectStateException
         Long planId = plan.getId();
