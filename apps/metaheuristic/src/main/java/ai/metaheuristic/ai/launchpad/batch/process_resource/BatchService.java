@@ -339,6 +339,8 @@ public class BatchService {
             log.error("#990.120 Error updating batch, new: {}, curr: {}", b, batchRepository.findById(batchId).orElse(null));
             log.error("#990.121 Error updating batch", e);
             batchCache.evictById(batchId);
+            // because this error is somehow relatetd to stationCache, let's invalidate it
+            stationCache.clearCache();
             throw new NeedRetryAfterCacheCleanException();
         }
         finally {
