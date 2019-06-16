@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.batch.process_resource;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.PilotResourceProcessingException;
 import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
@@ -89,13 +90,14 @@ public class BatchTopLevelService {
     private final ResourceService resourceService;
     private final BatchRepository batchRepository;
     private final BatchService batchService;
+    private final BatchCache batchCache;
     private final PlanRepository planRepository;
     private final WorkbookRepository workbookRepository;
     private final BatchWorkbookRepository batchWorkbookRepository;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
-    public BatchTopLevelService(PlanCache planCache, PlanService planService, BinaryDataService binaryDataService, Globals globals, ResourceService resourceService, BatchRepository batchRepository, BatchService batchService, PlanRepository planRepository, WorkbookRepository workbookRepository, BatchWorkbookRepository batchWorkbookRepository) {
+    public BatchTopLevelService(PlanCache planCache, PlanService planService, BinaryDataService binaryDataService, Globals globals, ResourceService resourceService, BatchRepository batchRepository, BatchService batchService, BatchCache batchCache, PlanRepository planRepository, WorkbookRepository workbookRepository, BatchWorkbookRepository batchWorkbookRepository) {
         this.planCache = planCache;
         this.planService = planService;
         this.binaryDataService = binaryDataService;
@@ -103,6 +105,7 @@ public class BatchTopLevelService {
         this.resourceService = resourceService;
         this.batchRepository = batchRepository;
         this.batchService = batchService;
+        this.batchCache = batchCache;
         this.planRepository = planRepository;
         this.workbookRepository = workbookRepository;
         this.batchWorkbookRepository = batchWorkbookRepository;
@@ -181,7 +184,8 @@ public class BatchTopLevelService {
                 IOUtils.copy(file.getInputStream(), os, 32000);
             }
 
-            final Batch b = batchService.createNewBatch(plan.getId());
+            final Batch b = batchCache.save(new Batch(planId, Enums.BatchExecState.Stored));
+
             try(InputStream is = new FileInputStream(dataFile)) {
                 String code = ResourceUtils.toResourceCode(originFilename);
                 binaryDataService.save(
@@ -241,7 +245,7 @@ public class BatchTopLevelService {
 
     public OperationStatusRest processResourceDeleteCommit(Long batchId) {
 
-        Batch batch = batchService.findById(batchId);
+        Batch batch = batchCache.findById(batchId);
         if (batch == null) {
             final String es = "#990.250 Batch wasn't found, batchId: " + batchId;
             log.info(es);
@@ -257,7 +261,7 @@ public class BatchTopLevelService {
             planService.deleteWorkbook(wb.getId(), wb.getPlanId());
         }
         batchWorkbookRepository.deleteByBatchId(batch.id);
-        batchService.deleteById(batch.id);
+        batchCache.deleteById(batch.id);
 
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
     }
@@ -422,7 +426,7 @@ public class BatchTopLevelService {
     }
 
     public BatchData.Status getProcessingResourceStatus(Long batchId) {
-        Batch batch = batchService.findById(batchId);
+        Batch batch = batchCache.findById(batchId);
         if (batch == null) {
             final String es = "#990.260 Batch wasn't found, batchId: " + batchId;
             log.warn(es);

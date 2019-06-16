@@ -207,27 +207,6 @@ public class BatchService {
         }
     }
 
-    public Batch createNewBatch(Long planId) {
-        return batchCache.save(new Batch(planId, Enums.BatchExecState.Stored));
-    }
-
-    public Batch findById(Long id) {
-        return batchCache.findById(id);
-    }
-
-    public void deleteById(Long batchId) {
-        final Object obj = batchMap.computeIfAbsent(batchId, o -> new Object());
-        //noinspection SynchronizationOnLocalVariableOrMethodParameter
-        synchronized (obj) {
-            try {
-                batchCache.deleteById(batchId);
-            }
-            finally {
-                batchMap.remove(batchId);
-            }
-        }
-    }
-
     private static String getMainDocumentPoolCode(String inputResourceParams) {
         InputResourceParam resourceParams = InputResourceParamUtils.to(inputResourceParams);
         List<String> codes = resourceParams.poolCodes.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH);
@@ -346,7 +325,7 @@ public class BatchService {
             log.error("#990.120 Error updating batch, new: {}, curr: {}", b, batchRepository.findById(batchId).orElse(null));
             log.error("#990.121 Error updating batch", e);
             batchCache.evictById(batchId);
-            // because this error is somehow relatetd to stationCache, let's invalidate it
+            // because this error is somehow related to stationCache, let's invalidate it
             stationCache.clearCache();
             throw new NeedRetryAfterCacheCleanException();
         }
@@ -493,6 +472,13 @@ public class BatchService {
     @SuppressWarnings("Duplicates")
     public BatchStatus prepareStatusAndData(Long batchId, File zipDir, boolean fullConsole, boolean storeToDisk) {
         final BatchStatus bs = new BatchStatus();
+
+        Batch batch = batchCache.findById(batchId);
+        if (batch == null) {
+            bs.add("#990.270 Batch #"+batchId+" wasn't found", '\n');
+            bs.ok = false;
+            return bs;
+        }
 
         List<Long> ids = batchWorkbookRepository.findWorkbookIdsByBatchId(batchId);
         if (ids.isEmpty()) {

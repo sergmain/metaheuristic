@@ -146,13 +146,6 @@ public class BatchController {
         File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
         File zipDir = new File(resultDir, "zip");
 
-        Batch batch = batchService.findById(batchId);
-        if (batch == null) {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-            log.info("#990.270 Batch wasn't found, batchId: {}", batchId);
-            return null;
-        }
-
         BatchStatus status = batchService.prepareStatusAndData(batchId, zipDir, false, true);
 
         File statusFile = new File(zipDir, "status.txt");

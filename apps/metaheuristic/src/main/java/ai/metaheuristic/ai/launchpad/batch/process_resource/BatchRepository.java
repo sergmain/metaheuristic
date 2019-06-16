@@ -27,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Repository
 @Profile("launchpad")
+@Transactional
 public interface BatchRepository extends CrudRepository<Batch, Long> {
 
     @Transactional(readOnly = true)
