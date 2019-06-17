@@ -31,7 +31,7 @@ create table mh_account
 
 CREATE TABLE mh_station (
   ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-  VERSION     NUMERIC(5, 0)  NOT NULL,
+  VERSION     NUMERIC(10, 0)  NOT NULL,
   UPDATED_ON  bigint not null,
   IP          VARCHAR(30),
   DESCRIPTION VARCHAR(250),
