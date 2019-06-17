@@ -1,0 +1,1 @@
+alter table mh_station alter column version type numeric(10) using version::numeric(10);

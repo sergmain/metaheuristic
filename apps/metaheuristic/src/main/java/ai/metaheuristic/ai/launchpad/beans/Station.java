@@ -38,7 +38,7 @@ public class Station implements Serializable {
     public Long id;
 
     @Version
-    public Integer version;
+    public Long version;
 
     /**
      * When status of station was updated last time
