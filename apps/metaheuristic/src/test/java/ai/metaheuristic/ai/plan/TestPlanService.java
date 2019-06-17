@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import org.junit.After;
 import org.junit.Test;
@@ -53,7 +53,7 @@ public class TestPlanService extends PreparingPlan {
 
     @Override
     public String getPlanYamlAsString() {
-        return getPlanYamlAsString_Simple();
+        return getPlanParamsYamlAsString_Simple();
     }
 
     @After

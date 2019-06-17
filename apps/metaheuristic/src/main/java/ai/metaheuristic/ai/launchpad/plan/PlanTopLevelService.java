@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import ai.metaheuristic.api.v1.data.PlanApiData;
@@ -100,10 +99,7 @@ public class PlanTopLevelService {
                     "#560.001 plan wasn't found, planId: " + id,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
-        String s = PlanYamlUtils.toString(
-                PlanParamsYamlUtils.to(plan.getParams()).planYaml);
-
-        return new PlanApiData.PlanResult(plan, s);
+        return new PlanApiData.PlanResult(plan, plan.getParams());
     }
 
     public PlanApiData.PlanResult validatePlan(Long id) {
@@ -112,10 +108,8 @@ public class PlanTopLevelService {
             return new PlanApiData.PlanResult("#560.002 plan wasn't found, planId: " + id,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
-        String s = PlanYamlUtils.toString(
-                PlanParamsYamlUtils.to(plan.getParams()).planYaml);
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, s);
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.getParams());
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         result.errorMessages = planValidation.errorMessages;
         result.infoMessages = planValidation.infoMessages;
@@ -154,23 +148,16 @@ public class PlanTopLevelService {
             return new PlanApiData.PlanResult("#560.033 plan with such code already exists, code: " + plan.code);
         }
 
-        // we don't use full PlanParamYaml, only PlanYamlUtils field
-        PlanApiData.PlanParamsYaml planParamsYaml = setNewPlanYaml(plan, planYamlAsStr);
+        PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(planYamlAsStr);
+        plan.setParams(PlanParamsYamlUtils.toString(ppy));
 
         plan = planCache.save(plan);
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, PlanYamlUtils.toString(planParamsYaml.planYaml) );
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, PlanParamsYamlUtils.toString(ppy) );
         PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
         return result;
-    }
-
-    private PlanApiData.PlanParamsYaml setNewPlanYaml(PlanImpl plan, String planYamlAsStr) {
-        PlanApiData.PlanParamsYaml ppy = plan.params!=null ? PlanParamsYamlUtils.to(plan.params) : new PlanApiData.PlanParamsYaml();
-        ppy.planYaml = PlanYamlUtils.toPlanYaml(planYamlAsStr);
-        plan.setParams(PlanParamsYamlUtils.toString(ppy));
-        return ppy;
     }
 
     public OperationStatusRest deletePlanById(Long id) {
@@ -196,7 +183,7 @@ public class PlanTopLevelService {
         ppy.internalParams.archived = true;
         plan.params = PlanParamsYamlUtils.toString(ppy);
 
-        plan = planCache.save(plan);
+        planCache.save(plan);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

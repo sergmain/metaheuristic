@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.launchpad.Plan;
-import ai.metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;

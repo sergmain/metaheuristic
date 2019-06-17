@@ -18,26 +18,26 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.plan.TaskCollector;
-import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
-import ai.metaheuristic.api.v1.data.Meta;
-import ai.metaheuristic.api.v1.data.PlanApiData;
-import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import ai.metaheuristic.api.v1.launchpad.Process;
-import ai.metaheuristic.api.v1.launchpad.Plan;
-import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
-import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
-import ai.metaheuristic.api.v1.data.InputResourceParam;
+import ai.metaheuristic.ai.plan.TaskCollector;
+import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsFactory;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.InputResourceParam;
+import ai.metaheuristic.api.v1.data.Meta;
+import ai.metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
+import ai.metaheuristic.api.v1.launchpad.Plan;
+import ai.metaheuristic.api.v1.launchpad.Workbook;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -46,10 +46,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.io.ByteArrayInputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 
+import static ai.metaheuristic.api.v1.data.PlanApiData.*;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
 
 @Slf4j
 public abstract class PreparingPlan extends PreparingExperiment {
@@ -76,7 +79,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public TaskPersistencer taskPersistencer;
 
     public PlanImpl plan = null;
-    public PlanApiData.PlanYaml planYaml = null;
+    public PlanParamsYaml planParamsYaml = null;
     public Snippet s1 = null;
     public Snippet s2 = null;
     public Snippet s3 = null;
@@ -86,11 +89,10 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
     public InputResourceParam inputResourceParam;
 
-
     public abstract String getPlanYamlAsString();
 
-    public String getPlanYamlAsString_Simple() {
-        planYaml = new PlanApiData.PlanYaml();
+    public String getPlanParamsYamlAsString_Simple() {
+        PlanYaml planYaml = new PlanYaml();
         {
             Process p = new Process();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
@@ -148,7 +150,10 @@ public abstract class PreparingPlan extends PreparingExperiment {
             planYaml.processes.add(p);
         }
 
-        String yaml = PlanYamlUtils.toString(planYaml);
+        planParamsYaml.planYaml = planYaml;
+        planParamsYaml.version = PlanParamsYamlUtilsFactory.DEFAULT_UTILS.getVersion();
+
+        String yaml = PlanParamsYamlUtils.toString(planParamsYaml);
         System.out.println(yaml);
         return yaml;
     }
@@ -263,14 +268,14 @@ public abstract class PreparingPlan extends PreparingExperiment {
         }
     }
 
-    public PlanApiData.TaskProducingResultComplex produceTasksForTest() {
-        assertFalse(planYaml.processes.isEmpty());
-        assertEquals(EnumsApi.ProcessType.EXPERIMENT, planYaml.processes.get(planYaml.processes.size()-1).type);
+    public TaskProducingResultComplex produceTasksForTest() {
+        assertFalse(planParamsYaml.planYaml.processes.isEmpty());
+        assertEquals(EnumsApi.ProcessType.EXPERIMENT, planParamsYaml.planYaml.processes.get(planParamsYaml.planYaml.processes.size()-1).type);
 
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        PlanApiData.TaskProducingResultComplex result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
+        TaskProducingResultComplex result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
         workbook = result.workbook;
 
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);

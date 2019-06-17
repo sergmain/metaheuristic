@@ -39,7 +39,7 @@ public class TestFeatures extends PreparingPlan {
 
     @Override
     public String getPlanYamlAsString() {
-        return getPlanYamlAsString_Simple();
+        return getPlanParamsYamlAsString_Simple();
     }
 
     @Test

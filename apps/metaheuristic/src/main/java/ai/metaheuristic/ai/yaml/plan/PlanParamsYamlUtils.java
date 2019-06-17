@@ -15,55 +15,59 @@
  */
 package ai.metaheuristic.ai.yaml.plan;
 
-import ai.metaheuristic.api.v1.data.PlanApiData;
-import ai.metaheuristic.commons.yaml.YamlUtils;
-import lombok.Data;
+import ai.metaheuristic.api.v1.data.YamlVersion;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;
 import org.yaml.snakeyaml.representer.Representer;
 
+import static ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsFactory.DEFAULT_UTILS;
+import static ai.metaheuristic.api.v1.data.PlanApiData.PlanInternalParamsYaml;
+import static ai.metaheuristic.api.v1.data.PlanApiData.PlanParamsYaml;
+
 public class PlanParamsYamlUtils {
 
-
-    @Data
-    public static class YamlVersion {
-        public Integer version;
+    public static String toString(PlanParamsYaml planYaml) {
+        planYaml.version = DEFAULT_UTILS.getVersion();
+        return DEFAULT_UTILS.getYaml().dump(planYaml);
     }
 
-    private static final int CURRENT_PLAN_PARAM_VERSION = 2;
-
-    private static Yaml getYaml() {
-        return YamlUtils.init(PlanApiData.PlanParamsYaml.class);
-    }
-
-    public static String toString(PlanApiData.PlanParamsYaml planYaml) {
-        planYaml.version = CURRENT_PLAN_PARAM_VERSION;
-        return getYaml().dump(planYaml);
-    }
-
-    public static PlanApiData.PlanParamsYaml to(String s) {
+    public static PlanParamsYaml to(String s) {
         YamlVersion v = getYamlForVersion().load(s);
-        PlanApiData.PlanParamsYaml p;
+        AbstractPlanParamsYamlUtils yamlUtils;
         if (v.version==null) {
-            p = new PlanApiData.PlanParamsYaml();
-            p.version = CURRENT_PLAN_PARAM_VERSION;
-            p.planYaml = PlanYamlUtils.toPlanYaml(s);
+            yamlUtils = PlanParamsYamlUtilsFactory.YAML_UTILS_V_1;
         }
         else {
-            //noinspection SwitchStatementWithTooFewBranches
             switch (v.version) {
+                case 1:
+                    yamlUtils = PlanParamsYamlUtilsFactory.YAML_UTILS_V_1;
+                    break;
                 case 2:
-                    p = getYaml().load(s);
+                    yamlUtils = PlanParamsYamlUtilsFactory.YAML_UTILS_V_2;
+                    break;
+                case 3:
+                    yamlUtils = PlanParamsYamlUtilsFactory.YAML_UTILS_V_3;
                     break;
                 default:
                     throw new IllegalStateException("#635.007 Unsupported version of plan: " + v.version);
             }
         }
-        if (p.internalParams==null) {
-            p.internalParams = new PlanApiData.PlanInternalParamsYaml();
+        Object currPlanParamsYaml = yamlUtils.to(s);
+        while (yamlUtils.nextUtil()!=null) {
+            //noinspection unchecked
+            currPlanParamsYaml = yamlUtils.upgradeTo(currPlanParamsYaml);
         }
-        if (p.planYaml==null) {
+
+        if (!(currPlanParamsYaml instanceof PlanParamsYaml)) {
+            throw new IllegalStateException("#635.007 Plan Yaml is null");
+        }
+        PlanParamsYaml p = (PlanParamsYaml)currPlanParamsYaml;
+
+        if (p.internalParams==null) {
+            p.internalParams = new PlanInternalParamsYaml();
+        }
+        if (p.planYaml ==null) {
             throw new IllegalStateException("#635.010 Plan Yaml is null");
         }
         return p;

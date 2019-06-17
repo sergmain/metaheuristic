@@ -17,10 +17,9 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsFactory;
 import ai.metaheuristic.api.v1.data.Meta;
-import ai.metaheuristic.api.v1.data.PlanApiData;
-import ai.metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -29,6 +28,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Arrays;
 
+import static ai.metaheuristic.api.v1.data.PlanApiData.PlanParamsYaml;
+import static ai.metaheuristic.api.v1.data.PlanApiData.PlanYaml;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -48,14 +49,17 @@ public class TestProcess {
                         new Meta("feature", "feature", null)
                 )
         );
-        PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();
+        PlanParamsYaml planParamsYaml = new PlanParamsYaml();
+        PlanYaml planYaml = new PlanYaml();
         planYaml.processes.add(p);
+        planParamsYaml.planYaml = planYaml;
+        planParamsYaml.version = PlanParamsYamlUtilsFactory.DEFAULT_UTILS.getVersion();
 
-        String s = PlanYamlUtils.toString(planYaml);
-        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(s);
-        PlanApiData.PlanYaml planYaml1 = planParams.planYaml;
+        String s = PlanParamsYamlUtils.toString(planParamsYaml);
+        PlanParamsYaml planParams = PlanParamsYamlUtils.to(s);
+        PlanYaml planYamlV21 = planParams.planYaml;
 
-        Process p1 = planYaml1.getProcesses().get(0);
+        Process p1 = planYamlV21.getProcesses().get(0);
 
         assertNotNull(p.getMeta("dataset"));
         assertEquals("dataset-processing", p.getMeta("dataset").getValue());

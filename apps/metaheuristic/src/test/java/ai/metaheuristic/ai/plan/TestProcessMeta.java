@@ -17,12 +17,12 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsFactory;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import ai.metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;
@@ -59,7 +59,12 @@ public class TestProcessMeta {
 
             planYaml.processes.add(p);
         }
-        String s  = PlanYamlUtils.toString(planYaml);
+        PlanApiData.PlanParamsYaml planParamsYaml = new PlanApiData.PlanParamsYaml();
+        planParamsYaml.planYaml = planYaml;
+        planParamsYaml.version = PlanParamsYamlUtilsFactory.DEFAULT_UTILS.getVersion();
+
+
+        String s = PlanParamsYamlUtils.toString(planParamsYaml);
 
         System.out.println(s);
 

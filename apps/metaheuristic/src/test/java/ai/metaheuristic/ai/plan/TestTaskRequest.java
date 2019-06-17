@@ -51,7 +51,7 @@ public class TestTaskRequest extends FeatureMethods {
 
     @Override
     public String getPlanYamlAsString() {
-        return getPlanYamlAsString_Simple();
+        return getPlanParamsYamlAsString_Simple();
     }
 
     @Test

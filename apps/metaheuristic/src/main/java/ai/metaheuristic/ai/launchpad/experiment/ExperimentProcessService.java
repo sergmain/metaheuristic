@@ -22,7 +22,7 @@ import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.launchpad.Plan;
-import ai.metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;

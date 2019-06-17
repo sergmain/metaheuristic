@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.file_process;
 
 import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;

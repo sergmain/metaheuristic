@@ -14,12 +14,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.plan;
+package ai.metaheuristic.ai.yaml.plan;
 
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.launchpad.process.Process;
-import ai.metaheuristic.api.v1.launchpad.Plan;
+/**
+ * @author Serge
+ * Date: 6/17/2019
+ * Time: 12:53 AM
+ */
+public class PlanParamsYamlUtilsFactory {
 
-public interface ProcessValidator {
-    EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst);
+    public static final PlanParamsYamlUtilsV1 YAML_UTILS_V_1 = new PlanParamsYamlUtilsV1();
+    public static final PlanParamsYamlUtilsV2 YAML_UTILS_V_2 = new PlanParamsYamlUtilsV2();
+    public static final PlanParamsYamlUtilsV3 YAML_UTILS_V_3 = new PlanParamsYamlUtilsV3();
+    public static final PlanParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
+
+
 }

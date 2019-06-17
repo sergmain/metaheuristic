@@ -70,7 +70,7 @@ public abstract class FeatureMethods extends PreparingPlan {
 
     @Override
     public String getPlanYamlAsString() {
-        return getPlanYamlAsString_Simple();
+        return getPlanParamsYamlAsString_Simple();
     }
 
     public void toStarted() {

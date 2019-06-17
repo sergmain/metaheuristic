@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.api.v1.data.PlanApiData;
-import ai.metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
@@ -43,7 +43,7 @@ public class TestCountOfTasks extends PreparingPlan {
 
     @Override
     public String getPlanYamlAsString() {
-        return getPlanYamlAsString_Simple();
+        return getPlanParamsYamlAsString_Simple();
     }
 
     @Autowired

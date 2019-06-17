@@ -14,12 +14,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.plan;
+package ai.metaheuristic.api.v1.data;
 
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.launchpad.process.Process;
-import ai.metaheuristic.api.v1.launchpad.Plan;
+import lombok.Data;
 
-public interface ProcessValidator {
-    EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst);
+/**
+ * @author Serge
+ * Date: 6/17/2019
+ * Time: 12:32 AM
+ */
+@Data
+public class YamlVersion {
+    public Integer version;
 }

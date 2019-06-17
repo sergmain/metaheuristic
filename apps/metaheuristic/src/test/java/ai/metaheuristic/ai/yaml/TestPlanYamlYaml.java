@@ -17,11 +17,11 @@
 package ai.metaheuristic.ai.yaml;
 
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsFactory;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import ai.metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -117,7 +117,11 @@ public class TestPlanYamlYaml {
             planYaml.processes.add(p);
         }
 
-        String yaml = PlanYamlUtils.toString(planYaml);
+        PlanApiData.PlanParamsYaml planParamsYaml = new PlanApiData.PlanParamsYaml();
+        planParamsYaml.planYaml = planYaml;
+        planParamsYaml.version = PlanParamsYamlUtilsFactory.DEFAULT_UTILS.getVersion();
+
+        String yaml = PlanParamsYamlUtils.toString(planParamsYaml);
         System.out.println(yaml);
 
         PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(yaml);
@@ -140,11 +144,12 @@ public class TestPlanYamlYaml {
 
         planYaml.processes = Collections.singletonList(p1);
 
-        String s = PlanYamlUtils.toString(planYaml);
+        PlanApiData.PlanParamsYaml planParamsYaml = new PlanApiData.PlanParamsYaml();
+        planParamsYaml.planYaml = planYaml;
+        planParamsYaml.version = PlanParamsYamlUtilsFactory.DEFAULT_UTILS.getVersion();
+
+        String s = PlanParamsYamlUtils.toString(planParamsYaml);
 
         System.out.println(s);
-
-//        TaskParamYaml seq1 = TaskParamYamlUtils.toTaskYaml(s);
-//        Assert.assertEquals(plan, seq1);
     }
 }

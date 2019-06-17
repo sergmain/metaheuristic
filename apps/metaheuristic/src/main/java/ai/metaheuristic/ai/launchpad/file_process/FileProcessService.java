@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import ai.metaheuristic.api.v1.launchpad.Process;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;

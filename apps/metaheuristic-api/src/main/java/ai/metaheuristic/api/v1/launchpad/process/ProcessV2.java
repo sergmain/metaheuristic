@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.v1.launchpad;
+package ai.metaheuristic.api.v1.launchpad.process;
 
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.Meta;
@@ -27,7 +27,7 @@ import java.util.List;
 
 @Data
 @ToString
-public class Process {
+public class ProcessV2 {
 
     public String name;
     public String code;
