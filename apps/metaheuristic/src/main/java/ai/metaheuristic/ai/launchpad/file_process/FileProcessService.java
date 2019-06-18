@@ -17,16 +17,16 @@
 package ai.metaheuristic.ai.launchpad.file_process;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.api.v1.data.TaskApiData;
-import ai.metaheuristic.api.v1.launchpad.Plan;
-import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
+import ai.metaheuristic.api.v1.launchpad.Plan;
+import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -85,6 +85,7 @@ public class FileProcessService {
         return result;
     }
 
+    @SuppressWarnings("Duplicates")
     private void createTaskInternal(
             Plan plan, Workbook workbook, Process process,
             String outputResourceCode,
@@ -94,12 +95,12 @@ public class FileProcessService {
                     "expected: "+ EnumsApi.ProcessType.FILE_PROCESSING+", " +
                     "actual: " + process.type);
         }
-        TaskApiData.TaskParamYaml yaml = new TaskApiData.TaskParamYaml();
-        yaml.setHyperParams( Collections.emptyMap() );
+        TaskParamsYaml yaml = new TaskParamsYaml();
+        yaml.taskYaml.setHyperParams( Collections.emptyMap() );
         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
-            yaml.inputResourceCodes.put(entry.getKey(), entry.getValue());
+            yaml.taskYaml.inputResourceCodes.put(entry.getKey(), entry.getValue());
         }
-        yaml.outputResourceCode = outputResourceCode;
+        yaml.taskYaml.outputResourceCode = outputResourceCode;
 
         // work around with SnakeYaml's refs
         Map<String, DataStorageParams> map = new HashMap<>();
@@ -108,20 +109,29 @@ public class FileProcessService {
             map.put(entry.getKey(), new DataStorageParams(
                     v.sourcing, v.git, v.disk, v.storageType));
         }
-        yaml.resourceStorageUrls = map;
+        yaml.taskYaml.resourceStorageUrls = map;
 
-        yaml.snippet = snippetService.getSnippetConfig(snippetCode);
-        if (yaml.snippet==null) {
+        yaml.taskYaml.snippet = snippetService.getSnippetConfig(snippetCode);
+        if (yaml.taskYaml.snippet==null) {
             log.error("#171.07 Snippet wasn't found for code: {}", snippetCode);
             return;
         }
-        yaml.preSnippet = snippetService.getSnippetConfig(process.getPreSnippetCode());
-        yaml.postSnippet = snippetService.getSnippetConfig(process.getPostSnippetCode());
+        yaml.taskYaml.preSnippet = new ArrayList<>();
+        if (process.getPreSnippetCode()!=null) {
+            for (String preSnippetCode : process.getPreSnippetCode()) {
+                yaml.taskYaml.preSnippet.add(snippetService.getSnippetConfig(preSnippetCode));
+            }
+        }
+        yaml.taskYaml.postSnippet = new ArrayList<>();
+        if (process.getPostSnippetCode()!=null) {
+            for (String postSnippetCode : process.getPostSnippetCode()) {
+                yaml.taskYaml.postSnippet.add(snippetService.getSnippetConfig(postSnippetCode));
+            }
+        }
+        yaml.taskYaml.clean = plan.isClean();
+        yaml.taskYaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
-        yaml.clean = plan.isClean();
-        yaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
-
-        String taskParams = TaskParamYamlUtils.toString(yaml);
+        String taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);
 
         TaskImpl task = new TaskImpl();
         task.setWorkbookId(workbook.getId());

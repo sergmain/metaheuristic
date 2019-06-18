@@ -27,10 +27,10 @@ import ai.metaheuristic.ai.station.station_resource.ResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -125,7 +125,7 @@ public class TaskProcessor {
 
             File taskDir = stationTaskService.prepareTaskDir(task.launchpadUrl, task.taskId);
 
-            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
             StationService.ResultOfChecking resultOfChecking = stationService.checkForPreparingOfAssets(task, launchpadCode, taskParamYaml, launchpad, taskDir);
             if (resultOfChecking.isError) {
@@ -134,7 +134,7 @@ public class TaskProcessor {
             boolean isAllLoaded = resultOfChecking.isAllLoaded;
             for (Map.Entry<String, List<AssetFile>> entry : resultOfChecking.assetFiles.entrySet()) {
                 for (AssetFile assetFile : entry.getValue()) {
-                    taskParamYaml.inputResourceAbsolutePaths
+                    taskParamYaml.taskYaml.inputResourceAbsolutePaths
                             .computeIfAbsent(entry.getKey(), o-> new ArrayList<>())
                             .add(assetFile.file.getAbsolutePath());
                 }
@@ -144,22 +144,22 @@ public class TaskProcessor {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Can't create outputResourceFile");
                 continue;
             }
-            DataStorageParams dsp = taskParamYaml.getResourceStorageUrls().get(taskParamYaml.outputResourceCode);
+            DataStorageParams dsp = taskParamYaml.taskYaml.getResourceStorageUrls().get(taskParamYaml.taskYaml.outputResourceCode);
             if (dsp==null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Can't find params for outputResourceCode");
                 continue;
             }
             switch(dsp.sourcing) {
                 case launchpad:
-                    taskParamYaml.outputResourceAbsolutePath = outputResourceFile.getAbsolutePath();
+                    taskParamYaml.taskYaml.outputResourceAbsolutePath = outputResourceFile.getAbsolutePath();
                     break;
                 case disk:
                     if (dsp.disk!=null && StringUtils.isNotBlank(dsp.disk.path)) {
                         File f = new File(outputResourceFile.getParent(), dsp.disk.path);
-                        taskParamYaml.outputResourceAbsolutePath = f.getAbsolutePath();
+                        taskParamYaml.taskYaml.outputResourceAbsolutePath = f.getAbsolutePath();
                     }
                     else {
-                        taskParamYaml.outputResourceAbsolutePath = outputResourceFile.getAbsolutePath();
+                        taskParamYaml.taskYaml.outputResourceAbsolutePath = outputResourceFile.getAbsolutePath();
                     }
                     break;
                 case git:
@@ -171,7 +171,7 @@ public class TaskProcessor {
                             "Unknown sourcing type: " + dsp.sourcing);
                     continue;
             }
-            if (taskParamYaml.snippet==null) {
+            if (taskParamYaml.taskYaml.snippet==null) {
                 stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Snippet isn't defined");
                 continue;
             }
@@ -188,8 +188,8 @@ public class TaskProcessor {
                 continue;
             }
 
-            taskParamYaml.workingPath = taskDir.getAbsolutePath();
-            final String params = TaskParamYamlUtils.toString(taskParamYaml);
+            taskParamYaml.taskYaml.workingPath = taskDir.getAbsolutePath();
+            final String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml);
             // persist params.yaml file
             final File paramFile = prepareParamFile(taskDir, params);
             if (paramFile == null) {
@@ -201,10 +201,17 @@ public class TaskProcessor {
 
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
 
-            SnippetApiData.SnippetExecResult preSnippetExecResult = prepareAndExecSnippet(taskParamYaml.getPreSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
-            SnippetApiData.SnippetExecResult snippetExecResult = prepareAndExecSnippet(taskParamYaml.getSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
-            SnippetApiData.SnippetExecResult postSnippetExecResult = prepareAndExecSnippet(taskParamYaml.getPostSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
-
+            List<SnippetApiData.SnippetExecResult> preSnippetExecResult = new ArrayList<>();
+            for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippet) {
+                SnippetApiData.SnippetExecResult pre = prepareAndExecSnippet(preSnippetConfig, task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
+                preSnippetExecResult.add(pre);
+            }
+            SnippetApiData.SnippetExecResult snippetExecResult = prepareAndExecSnippet(taskParamYaml.taskYaml.getSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
+            List<SnippetApiData.SnippetExecResult> postSnippetExecResult = new ArrayList<>();
+            for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippet) {
+                SnippetApiData.SnippetExecResult post = prepareAndExecSnippet(postSnippetConfig, task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
+                preSnippetExecResult.add(post);
+            }
             if (snippetExecResult == null) {
                 continue;
             }
@@ -215,7 +222,7 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public SnippetApiData.SnippetExecResult prepareAndExecSnippet(SnippetApiData.SnippetConfig snippet, StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskApiData.TaskParamYaml taskParamYaml, boolean isAllLoaded, File artifactDir, File systemDir, File paramFile) {
+    public SnippetApiData.SnippetExecResult prepareAndExecSnippet(SnippetApiData.SnippetConfig snippet, StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamsYaml taskParamYaml, boolean isAllLoaded, File artifactDir, File systemDir, File paramFile) {
         if (snippet==null) {
             return null;
         }
@@ -235,7 +242,7 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public SnippetApiData.SnippetExecResult execSnippet(StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskApiData.TaskParamYaml taskParamYaml, File artifactDir, File systemDir, File paramFile, SnippetPrepareResult snippetPrepareResult) {
+    public SnippetApiData.SnippetExecResult execSnippet(StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamsYaml taskParamYaml, File artifactDir, File systemDir, File paramFile, SnippetPrepareResult snippetPrepareResult) {
         List<String> cmd;
         Interpreter interpreter=null;
         if (StringUtils.isNotBlank(snippetPrepareResult.snippet.env)) {
@@ -289,17 +296,17 @@ public class TaskProcessor {
             long startedOn = System.currentTimeMillis();
 
             // Exec snippet
-            snippetExecResult = execProcessService.execCommand(cmd, taskDir, consoleLogFile, taskParamYaml.timeoutBeforeTerminate);
+            snippetExecResult = execProcessService.execCommand(cmd, taskDir, consoleLogFile, taskParamYaml.taskYaml.timeoutBeforeTerminate);
 
             // Store result
             stationTaskService.storeExecResult(task.launchpadUrl, task.getTaskId(), startedOn, snippetPrepareResult.snippet, snippetExecResult, artifactDir);
 
             if (snippetExecResult.isOk()) {
-                final DataStorageParams params = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
+                final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
                 ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                 SnippetApiData.SnippetExecResult tempSnippetExecResult = resourceProvider.processResultingFile(
                         launchpad, task, launchpadCode,
-                        new File(taskParamYaml.outputResourceAbsolutePath)
+                        new File(taskParamYaml.taskYaml.outputResourceAbsolutePath)
                 );
                 if (tempSnippetExecResult !=null) {
                     snippetExecResult = tempSnippetExecResult;

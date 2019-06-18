@@ -17,26 +17,26 @@
 package ai.metaheuristic.ai.launchpad.atlas;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
 import ai.metaheuristic.ai.launchpad.data.ExperimentData;
-import ai.metaheuristic.api.v1.data.OperationStatusRest;
-import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.data.TaskWIthType;
-import ai.metaheuristic.api.v1.data.TaskApiData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.metrics.MetricValues;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.launchpad.BinaryData;
+import ai.metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.v1.data.task.TaskApiData;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.v1.data.task.TaskWIthType;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import lombok.extern.slf4j.Slf4j;
-import ai.metaheuristic.ai.launchpad.beans.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
@@ -246,9 +246,9 @@ public class AtlasTopLevelService {
                 }
             }
 
-            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
-            int idxX = mapX.get(taskParamYaml.hyperParams.get(paramCleared.get(0)));
-            int idxY = mapY.get(taskParamYaml.hyperParams.get(paramCleared.get(1)));
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            int idxX = mapX.get(taskParamYaml.taskYaml.hyperParams.get(paramCleared.get(0)));
+            int idxY = mapY.get(taskParamYaml.taskYaml.hyperParams.get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
         }
 
@@ -270,10 +270,10 @@ public class AtlasTopLevelService {
 
         List<Task> selected = new ArrayList<>();
         for (Task task : tasks) {
-            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
-            boolean[] isOk = new boolean[taskParamYaml.hyperParams.size()];
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            boolean[] isOk = new boolean[taskParamYaml.taskYaml.hyperParams.size()];
             int idx = 0;
-            for (Map.Entry<String, String> entry : taskParamYaml.hyperParams.entrySet()) {
+            for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.hyperParams.entrySet()) {
                 try {
                     if (!paramFilterKeys.contains(entry.getKey())) {
                         isOk[idx] = true;

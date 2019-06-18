@@ -14,16 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.v1.data;
+package ai.metaheuristic.api.v1.data.plan;
 
-import ai.metaheuristic.api.v1.launchpad.process.Process;
+import ai.metaheuristic.api.v1.data.BaseDataClass;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.launchpad.process.ProcessV1;
-import ai.metaheuristic.api.v1.launchpad.process.ProcessV2;
-import ai.metaheuristic.api.v1.launchpad.process.ProcessV3;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -61,7 +58,7 @@ public class PlanApiData {
         public EnumsApi.PlanValidateStatus planValidateStatus = EnumsApi.PlanValidateStatus.NOT_VALIDATED_YET_ERROR;
         public EnumsApi.PlanProducingStatus planProducingStatus = EnumsApi.PlanProducingStatus.NOT_PRODUCING_YET_ERROR;
         public List<Task> tasks = new ArrayList<>();
-        public PlanYaml planYaml;
+        public PlanParamsYaml.PlanYaml planYaml;
         public Workbook workbook;
         public int numberOfTasks;
 
@@ -156,104 +153,8 @@ public class PlanApiData {
     }
 
     @Data
-    public static class PlanYaml {
-        public List<Process> processes = new ArrayList<>();
-        public boolean clean = false;
-        public List<Meta> metas;
-
-        public Meta getMeta(String key) {
-            if (metas==null) {
-                return null;
-            }
-            for (Meta meta : metas) {
-                if (meta.key.equals(key)) {
-                    return meta;
-                }
-            }
-            return null;
-        }
-    }
-
-    @Data
-    public static class PlanYamlV2 {
-        public List<ProcessV2> processes = new ArrayList<>();
-        public boolean clean = false;
-        public List<Meta> metas;
-
-        public Meta getMeta(String key) {
-            if (metas==null) {
-                return null;
-            }
-            for (Meta meta : metas) {
-                if (meta.key.equals(key)) {
-                    return meta;
-                }
-            }
-            return null;
-        }
-    }
-
-    @Data
-    public static class PlanYamlV3 {
-        public List<ProcessV3> processes = new ArrayList<>();
-        public boolean clean = false;
-        public List<Meta> metas;
-
-        public Meta getMeta(String key) {
-            if (metas==null) {
-                return null;
-            }
-            for (Meta meta : metas) {
-                if (meta.key.equals(key)) {
-                    return meta;
-                }
-            }
-            return null;
-        }
-    }
-
-    @Data
     public static class PlanInternalParamsYaml {
         public boolean archived;
-    }
-
-    @Data
-    public static class PlanParamsYaml {
-        public Integer version;
-        public PlanYaml planYaml;
-        public PlanInternalParamsYaml internalParams;
-    }
-
-    @Data
-    public static class PlanParamsYamlV1 {
-        public List<ProcessV1> processes = new ArrayList<>();
-        public boolean clean = false;
-        public List<Meta> metas;
-
-        public Meta getMeta(String key) {
-            if (metas==null) {
-                return null;
-            }
-            for (Meta meta : metas) {
-                if (meta.key.equals(key)) {
-                    return meta;
-                }
-            }
-            return null;
-        }
-    }
-    @Data
-    public static class PlanParamsYamlV2 {
-        public Integer version;
-        public PlanYamlV2 planYaml;
-        public PlanInternalParamsYaml internalParams;
-    }
-
-    @Data
-    public static class PlanParamsYamlV3 {
-        public Integer version;
-        public PlanYamlV3 planYaml;
-        public PlanInternalParamsYaml internalParams;
     }
 
 }

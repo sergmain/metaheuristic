@@ -29,11 +29,11 @@ import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.plan.TaskCollector;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsFactory;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.InputResourceParam;
 import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
@@ -51,7 +51,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
-import static ai.metaheuristic.api.v1.data.PlanApiData.*;
+import static ai.metaheuristic.api.v1.data.plan.PlanApiData.TaskProducingResultComplex;
 import static org.junit.Assert.*;
 
 @Slf4j
@@ -92,7 +92,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public abstract String getPlanYamlAsString();
 
     public String getPlanParamsYamlAsString_Simple() {
-        PlanYaml planYaml = new PlanYaml();
+        PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
         {
             Process p = new Process();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
@@ -150,10 +150,10 @@ public abstract class PreparingPlan extends PreparingExperiment {
             planYaml.processes.add(p);
         }
 
+        planParamsYaml = new PlanParamsYaml();
         planParamsYaml.planYaml = planYaml;
-        planParamsYaml.version = PlanParamsYamlUtilsFactory.DEFAULT_UTILS.getVersion();
 
-        String yaml = PlanParamsYamlUtils.toString(planParamsYaml);
+        String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
         System.out.println(yaml);
         return yaml;
     }

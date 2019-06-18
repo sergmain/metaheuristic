@@ -14,8 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.v1.data;
+package ai.metaheuristic.api.v1.data.task;
 
+import ai.metaheuristic.api.v1.data.BaseDataClass;
+import ai.metaheuristic.api.v1.data.SnippetApiData;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import lombok.AllArgsConstructor;
@@ -47,30 +49,4 @@ public class TaskApiData {
     }
 
 
-    @Data
-    public static class TaskParamYaml {
-        public Map<String, List<String>> inputResourceCodes = new HashMap<>();
-        public SnippetApiData.SnippetConfig snippet;
-        public SnippetApiData.SnippetConfig preSnippet;
-        public SnippetApiData.SnippetConfig postSnippet;
-        public Map<String, String> hyperParams;
-        public String outputResourceCode;
-        public Map<String, DataStorageParams> resourceStorageUrls = new HashMap<>();
-        public boolean clean = false;
-
-        /**
-         * Timeout before terminate a process with snippet
-         * value in seconds
-         * null or 0 mean the infinite execution
-         */
-        public Long timeoutBeforeTerminate;
-
-        // fields which are initialized at station
-        public String workingPath;
-
-        // todo this isn't good solution because it doesn't support ftp, hadoop or something else
-        // todo as a result we'll support only direct access to files
-        public Map<String, List<String>> inputResourceAbsolutePaths = new HashMap<>();
-        public String outputResourceAbsolutePath;
-    }
 }

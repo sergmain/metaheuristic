@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanApiData;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
 import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.api.v1.launchpad.Task;
@@ -79,7 +79,7 @@ public class TestPlanService extends PreparingPlan {
         assertFalse(tasks.isEmpty());
 
         int taskNumber = 0;
-        for (Process process : planYaml.processes) {
+        for (Process process : planParamsYaml.planYaml.processes) {
             if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }

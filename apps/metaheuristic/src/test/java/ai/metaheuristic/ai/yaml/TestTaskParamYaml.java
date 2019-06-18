@@ -15,10 +15,11 @@
  */
 package ai.metaheuristic.ai.yaml;
 
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYamlV1;
 import ai.metaheuristic.commons.CommonConsts;
 import org.junit.Assert;
 import org.junit.Test;
@@ -35,8 +36,9 @@ import java.util.Map;
 public class TestTaskParamYaml {
 
     @Test
-    public void testSequenceYaml() {
-        TaskApiData.TaskParamYaml seq = new TaskApiData.TaskParamYaml();
+    public void testSequenceYaml_v1() {
+/*
+        TaskParamsYamlV1 seq = new TaskParamsYamlV1();
 
         seq.inputResourceCodes.put("type1", Collections.singletonList("1"));
         seq.inputResourceCodes.put("type2", Collections.singletonList("2"));
@@ -60,10 +62,44 @@ public class TestTaskParamYaml {
                 false
         ));
 
-        String s = TaskParamYamlUtils.toString(seq);
+        String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(seq);
         System.out.println(s);
 
-        TaskApiData.TaskParamYaml seq1 = TaskParamYamlUtils.toTaskYaml(s);
+        TaskParamsYaml seq1 = TaskParamsYamlUtils.BASE_YAML_UTILS.to(s);
+        Assert.assertEquals(seq, seq1);
+*/
+    }
+
+    @Test
+    public void testSequenceYaml() {
+        TaskParamsYaml seq = new TaskParamsYaml();
+
+        seq.taskYaml.inputResourceCodes.put("type1", Collections.singletonList("1"));
+        seq.taskYaml.inputResourceCodes.put("type2", Collections.singletonList("2"));
+        seq.taskYaml.inputResourceCodes.put("type3", Collections.singletonList("3"));
+        Map<String, String> map = new HashMap<>();
+        map.put("key1", "#1");
+        map.put("key2", "#1");
+        seq.taskYaml.setHyperParams(map);
+        seq.taskYaml.setSnippet(new SnippetApiData.SnippetConfig(
+                "123:1.0",
+                CommonConsts.FIT_TYPE,
+                "file.txt",
+                "112233",
+                "python.exe",
+                EnumsApi.SnippetSourcing.launchpad,
+                true,
+                null,
+                new SnippetApiData.SnippetConfig.SnippetInfo(),
+                null,
+                null,
+                false
+        ));
+
+        String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(seq);
+        System.out.println(s);
+
+        TaskParamsYaml seq1 = TaskParamsYamlUtils.BASE_YAML_UTILS.to(s);
         Assert.assertEquals(seq, seq1);
     }
 }

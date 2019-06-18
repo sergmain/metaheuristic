@@ -23,7 +23,6 @@ import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -50,18 +49,22 @@ public class FileProcessValidator implements ProcessValidator {
                 return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }
-        if (StringUtils.isNotBlank(process.preSnippetCode)) {
-            Snippet snippet = snippetRepository.findByCode(process.preSnippetCode);
-            if (snippet==null) {
-                log.error("#175.09 Pre-snippet wasn't found for code: {}, process: {}", process.preSnippetCode, process);
-                return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+        if (process.preSnippetCode!=null) {
+            for (String snippetCode : process.preSnippetCode) {
+                Snippet snippet = snippetRepository.findByCode(snippetCode);
+                if (snippet==null) {
+                    log.error("#175.09 Pre-snippet wasn't found for code: {}, process: {}", snippetCode, process);
+                    return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+                }
             }
         }
-        if (StringUtils.isNotBlank(process.postSnippetCode)) {
-            Snippet snippet = snippetRepository.findByCode(process.postSnippetCode);
-            if (snippet==null) {
-                log.error("#175.11 Post-snippet wasn't found for code: {}, process: {}", process.postSnippetCode, process);
-                return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+        if (process.postSnippetCode!=null) {
+            for (String snippetCode : process.postSnippetCode) {
+                Snippet snippet = snippetRepository.findByCode(snippetCode);
+                if (snippet == null) {
+                    log.error("#175.11 Post-snippet wasn't found for code: {}, process: {}", snippetCode, process);
+                    return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+                }
             }
         }
 

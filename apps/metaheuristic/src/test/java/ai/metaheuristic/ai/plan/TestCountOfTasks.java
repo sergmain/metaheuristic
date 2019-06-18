@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.plan;
 
-import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanApiData;
 import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
@@ -55,8 +55,8 @@ public class TestCountOfTasks extends PreparingPlan {
     public void testCountNumberOfTasks() {
         log.info("Start TestCountOfTasks.testCountNumberOfTasks()");
 
-        assertFalse(planYaml.processes.isEmpty());
-        assertEquals(EnumsApi.ProcessType.EXPERIMENT, planYaml.processes.get(planYaml.processes.size()-1).type);
+        assertFalse(planParamsYaml.planYaml.processes.isEmpty());
+        assertEquals(EnumsApi.ProcessType.EXPERIMENT, planParamsYaml.planYaml.processes.get(planParamsYaml.planYaml.processes.size()-1).type);
 
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
@@ -109,7 +109,7 @@ public class TestCountOfTasks extends PreparingPlan {
         assertEquals(numberOfTasks, tasks.size());
 
         int taskNumber = 0;
-        for (Process process : planYaml.processes) {
+        for (Process process : planParamsYaml.planYaml.processes) {
             if (process.type== EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }

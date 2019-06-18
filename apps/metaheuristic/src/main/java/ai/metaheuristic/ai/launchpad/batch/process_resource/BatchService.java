@@ -23,23 +23,27 @@ import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.NeedRetryAfterCacheCleanException;
 import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchParams;
-import ai.metaheuristic.ai.launchpad.data.BatchData;
+import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
-import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.ai.yaml.pilot.BatchParamsUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.*;
+import ai.metaheuristic.api.v1.data.InputResourceParam;
+import ai.metaheuristic.api.v1.data.Meta;
+import ai.metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
@@ -598,9 +602,9 @@ public class BatchService {
                     break;
             }
 
-            final TaskApiData.TaskParamYaml taskParamYaml;
+            final TaskParamsYaml taskParamYaml;
             try {
-                taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+                taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             } catch (YAMLException e) {
                 bs.add("#990.350 " + mainDocument + ", Task has broken data in params, status: " + EnumsApi.TaskExecState.from(task.getExecState()) +
                         ", batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
@@ -623,9 +627,9 @@ public class BatchService {
 
             if (storeToDisk) {
                 try {
-                    binaryDataService.storeToFile(taskParamYaml.outputResourceCode, mainDocFile);
+                    binaryDataService.storeToFile(taskParamYaml.taskYaml.outputResourceCode, mainDocFile);
                 } catch (BinaryDataNotFoundException e) {
-                    String msg = "#990.370 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.outputResourceCode +
+                    String msg = "#990.370 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.taskYaml.outputResourceCode +
                             ", file: " + mainDocFile.getPath();
                     log.error(msg);
                     bs.add(msg,'\n');
@@ -666,7 +670,7 @@ public class BatchService {
                     : ".bin");
         }
 
-        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(plan.getParams());
+        PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
         Meta meta = planParams.planYaml.getMeta(Consts.RESULT_FILE_EXTENSION);
 
         return meta != null && StringUtils.isNotBlank(meta.getValue())

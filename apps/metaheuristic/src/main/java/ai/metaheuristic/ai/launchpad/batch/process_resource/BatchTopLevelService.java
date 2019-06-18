@@ -36,7 +36,8 @@ import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.OperationStatusRest;
-import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
@@ -138,7 +139,7 @@ public class BatchTopLevelService {
                 return false;
             }
             try {
-                PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(o.getParams());
+                PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
                 return ppy.internalParams == null || !ppy.internalParams.archived;
             } catch (YAMLException e) {
                 final String es = "#995.010 Can't parse Plan params. It's broken or unknown version. Plan id: #" + o.getId();

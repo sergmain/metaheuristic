@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.task_params_new;
 
-import ai.metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -75,25 +75,25 @@ public class TaskParamYamlNewUtils {
         options.setPrettyFlow(true);
 
         Representer representer = new NonAnchorRepresenter();
-        representer.addClassTag(TaskApiData.TaskParamYaml.class, Tag.MAP);
+        representer.addClassTag(TaskParamsYaml.class, Tag.MAP);
 
-        Constructor constructor = new Constructor(TaskApiData.TaskParamYaml.class);
+        Constructor constructor = new Constructor(TaskParamsYaml.class);
 
         //noinspection UnnecessaryLocalVariable
         Yaml yaml = new Yaml(constructor, representer, options);
         return yaml;
     }
 
-    public static String toString(TaskApiData.TaskParamYaml taskParamYaml) {
+    public static String toString(TaskParamsYaml taskParamYaml) {
         return getYaml().dump(taskParamYaml);
     }
 
-    public static TaskApiData.TaskParamYaml toTaskYamlNew(String s) {
+    public static TaskParamsYaml toTaskYamlNew(String s) {
         return TaskParamYamlNewUtils.getYaml().load(s);
     }
 
-    public static TaskApiData.TaskParamYaml to(InputStream is) {
-        return (TaskApiData.TaskParamYaml) YamlUtils.to(is, getYaml());
+    public static TaskParamsYaml to(InputStream is) {
+        return (TaskParamsYaml) YamlUtils.to(is, getYaml());
     }
 
 }

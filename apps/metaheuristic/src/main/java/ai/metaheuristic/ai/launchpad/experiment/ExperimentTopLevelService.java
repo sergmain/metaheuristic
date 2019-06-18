@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.data.ExperimentData;
 import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.api.v1.data.task.TaskApiData;
 import ai.metaheuristic.ai.launchpad.repositories.*;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;

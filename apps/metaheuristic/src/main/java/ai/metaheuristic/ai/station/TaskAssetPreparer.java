@@ -22,9 +22,9 @@ import ai.metaheuristic.ai.station.actors.DownloadSnippetActor;
 import ai.metaheuristic.ai.station.tasks.DownloadSnippetTask;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -85,8 +85,8 @@ public class TaskAssetPreparer {
                 log.info("Deleted orphan task {}", task);
                 continue;
             }
-            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
-            if (taskParamYaml.inputResourceCodes.isEmpty()) {
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            if (taskParamYaml.taskYaml.inputResourceCodes.isEmpty()) {
                 log.warn("taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;
             }
@@ -111,14 +111,14 @@ public class TaskAssetPreparer {
             boolean isAllLoaded = resultOfChecking.isAllLoaded;
 
             File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
-            if (taskParamYaml.snippet.sourcing==EnumsApi.SnippetSourcing.launchpad) {
-                AssetFile assetFile = ResourceUtils.prepareSnippetFile(snippetDir, taskParamYaml.snippet.getCode(), taskParamYaml.snippet.file);
+            if (taskParamYaml.taskYaml.snippet.sourcing==EnumsApi.SnippetSourcing.launchpad) {
+                AssetFile assetFile = ResourceUtils.prepareSnippetFile(snippetDir, taskParamYaml.taskYaml.snippet.getCode(), taskParamYaml.taskYaml.snippet.file);
                 if (assetFile.isError || !assetFile.isContent) {
                     isAllLoaded = false;
                     DownloadSnippetTask snippetTask = new DownloadSnippetTask(
-                            taskParamYaml.snippet.getCode(),
-                            taskParamYaml.snippet.file,
-                            taskParamYaml.snippet.checksum,
+                            taskParamYaml.taskYaml.snippet.getCode(),
+                            taskParamYaml.taskYaml.snippet.file,
+                            taskParamYaml.taskYaml.snippet.checksum,
                             snippetDir,
                             task.getTaskId(),
                             launchpad.config.chunkSize

@@ -15,75 +15,22 @@
  */
 package ai.metaheuristic.ai.yaml.plan;
 
-import ai.metaheuristic.api.v1.data.YamlVersion;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-import org.yaml.snakeyaml.nodes.Tag;
-import org.yaml.snakeyaml.representer.Representer;
+import ai.metaheuristic.ai.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
 
-import static ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsFactory.DEFAULT_UTILS;
-import static ai.metaheuristic.api.v1.data.PlanApiData.PlanInternalParamsYaml;
-import static ai.metaheuristic.api.v1.data.PlanApiData.PlanParamsYaml;
+import java.util.Map;
 
 public class PlanParamsYamlUtils {
 
-    public static String toString(PlanParamsYaml planYaml) {
-        planYaml.version = DEFAULT_UTILS.getVersion();
-        return DEFAULT_UTILS.getYaml().dump(planYaml);
-    }
+    private static final PlanParamsYamlUtilsV1 YAML_UTILS_V_1 = new PlanParamsYamlUtilsV1();
+    private static final PlanParamsYamlUtilsV2 YAML_UTILS_V_2 = new PlanParamsYamlUtilsV2();
+    private static final PlanParamsYamlUtilsV3 YAML_UTILS_V_3 = new PlanParamsYamlUtilsV3();
+    private static final PlanParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
 
-    public static PlanParamsYaml to(String s) {
-        YamlVersion v = getYamlForVersion().load(s);
-        AbstractPlanParamsYamlUtils yamlUtils;
-        if (v.version==null) {
-            yamlUtils = PlanParamsYamlUtilsFactory.YAML_UTILS_V_1;
-        }
-        else {
-            switch (v.version) {
-                case 1:
-                    yamlUtils = PlanParamsYamlUtilsFactory.YAML_UTILS_V_1;
-                    break;
-                case 2:
-                    yamlUtils = PlanParamsYamlUtilsFactory.YAML_UTILS_V_2;
-                    break;
-                case 3:
-                    yamlUtils = PlanParamsYamlUtilsFactory.YAML_UTILS_V_3;
-                    break;
-                default:
-                    throw new IllegalStateException("#635.007 Unsupported version of plan: " + v.version);
-            }
-        }
-        Object currPlanParamsYaml = yamlUtils.to(s);
-        while (yamlUtils.nextUtil()!=null) {
-            //noinspection unchecked
-            currPlanParamsYaml = yamlUtils.upgradeTo(currPlanParamsYaml);
-        }
+    public static final BaseYamlUtils<PlanParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(1, YAML_UTILS_V_1, 2, YAML_UTILS_V_2, 3, YAML_UTILS_V_3),
+            DEFAULT_UTILS
+    );
 
-        if (!(currPlanParamsYaml instanceof PlanParamsYaml)) {
-            throw new IllegalStateException("#635.007 Plan Yaml is null");
-        }
-        PlanParamsYaml p = (PlanParamsYaml)currPlanParamsYaml;
 
-        if (p.internalParams==null) {
-            p.internalParams = new PlanInternalParamsYaml();
-        }
-        if (p.planYaml ==null) {
-            throw new IllegalStateException("#635.010 Plan Yaml is null");
-        }
-        return p;
-    }
-
-    private static Yaml getYamlForVersion() {
-        Representer representer = new Representer();
-        representer.getPropertyUtils().setSkipMissingProperties(true);
-        representer.addClassTag(YamlVersion.class, Tag.MAP);
-
-        Constructor constructor = new Constructor(YamlVersion.class);
-
-        //noinspection UnnecessaryLocalVariable
-        Yaml yaml = new Yaml(constructor, representer);
-        return yaml;
-    }
-
-    
 }

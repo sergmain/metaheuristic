@@ -14,26 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.plan;
-
-import org.yaml.snakeyaml.Yaml;
+package ai.metaheuristic.api.v1.data;
 
 /**
  * @author Serge
  * Date: 6/17/2019
- * Time: 12:17 AM
+ * Time: 11:39 PM
  */
-abstract public class AbstractPlanParamsYamlUtils<T, S, P> {
-
-    public abstract Yaml getYaml();
-
-    public abstract S upgradeTo(T yaml);
-
-    public abstract P nextUtil();
-
-    public abstract String toString(T planYaml);
-
-    public abstract T to(String s);
-
-    public abstract int getVersion();
+public interface BaseParams {
 }

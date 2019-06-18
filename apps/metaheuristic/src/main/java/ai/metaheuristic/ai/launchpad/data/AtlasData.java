@@ -23,7 +23,7 @@ import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.ExperimentFeature;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.BaseDataClass;
-import ai.metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.api.v1.data.task.TaskApiData;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.ai.utils.SimpleSelectOption;
 import lombok.AllArgsConstructor;

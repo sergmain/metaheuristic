@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.ExperimentFeature;
 import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanApiData;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;

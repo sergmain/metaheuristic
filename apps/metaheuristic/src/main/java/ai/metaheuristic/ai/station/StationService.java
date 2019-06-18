@@ -21,6 +21,8 @@ import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Command;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.exceptions.ResourceProviderException;
+import ai.metaheuristic.ai.resource.AssetFile;
+import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.actors.UploadResourceActor;
 import ai.metaheuristic.ai.station.env.EnvService;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
@@ -32,13 +34,11 @@ import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
-import ai.metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import ai.metaheuristic.ai.resource.AssetFile;
-import ai.metaheuristic.ai.resource.ResourceUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
@@ -141,20 +141,20 @@ public class StationService {
             log.error("#747.13 Error reading param file "+ paramFile.getPath(), e);
             return Enums.ResendTaskOutputResourceStatus.TASK_PARAM_FILE_NOT_FOUND;
         }
-        final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(params);
-        final DataStorageParams dataStorageParams = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
+        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
+        final DataStorageParams dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
         ResourceProvider resourceProvider;
         try {
             resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
         } catch (ResourceProviderException e) {
-            log.error("#747.23 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.outputResourceCode);
+            log.error("#747.23 storageUrl wasn't found for outputResourceCode {}", taskParamYaml.taskYaml.outputResourceCode);
             return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
         }
         if (resourceProvider instanceof DiskResourceProvider) {
             return Enums.ResendTaskOutputResourceStatus.OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE;
         }
 
-        final AssetFile assetFile = ResourceUtils.prepareArtifactFile(taskDir, taskParamYaml.outputResourceCode, taskParamYaml.outputResourceCode);
+        final AssetFile assetFile = ResourceUtils.prepareArtifactFile(taskDir, taskParamYaml.taskYaml.outputResourceCode, taskParamYaml.taskYaml.outputResourceCode);
         // is this resource prepared?
         if (assetFile.isError || !assetFile.isContent) {
             log.warn("#747.28 Resource hasn't been prepared yet, {}", assetFile);
@@ -178,12 +178,12 @@ public class StationService {
         public Map<String, List<AssetFile>> assetFiles = new HashMap<>();
     }
 
-    public StationService.ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.LaunchpadInfo launchpadCode, TaskApiData.TaskParamYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
+    public StationService.ResultOfChecking checkForPreparingOfAssets(StationTask task, Metadata.LaunchpadInfo launchpadCode, TaskParamsYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
         StationService.ResultOfChecking result = new StationService.ResultOfChecking();
         try {
-            taskParamYaml.inputResourceCodes.forEach((key, value) -> {
+            taskParamYaml.taskYaml.inputResourceCodes.forEach((key, value) -> {
                 for (String resourceCode : value) {
-                    final DataStorageParams params = taskParamYaml.resourceStorageUrls.get(resourceCode);
+                    final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(resourceCode);
                     ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                     List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, params);
                     result.assetFiles.computeIfAbsent(key, o -> new ArrayList<>()).addAll(assetFiles);
@@ -216,14 +216,14 @@ public class StationService {
         return result;
     }
 
-    public File getOutputResourceFile(StationTask task, TaskApiData.TaskParamYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
+    public File getOutputResourceFile(StationTask task, TaskParamsYaml taskParamYaml, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir) {
         try {
-            final DataStorageParams dataStorageParams = taskParamYaml.resourceStorageUrls.get(taskParamYaml.outputResourceCode);
+            final DataStorageParams dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
 
             ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(dataStorageParams.sourcing);
             //noinspection UnnecessaryLocalVariable
             File outputResourceFile = resourceProvider.getOutputResourceFile(
-                    taskDir, launchpad, task, taskParamYaml.outputResourceCode, dataStorageParams);
+                    taskDir, launchpad, task, taskParamYaml.taskYaml.outputResourceCode, dataStorageParams);
             return outputResourceFile;
         } catch (ResourceProviderException e) {
             final String msg = "#747.42 Error: " + e.toString();

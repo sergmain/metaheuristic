@@ -2,7 +2,7 @@
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
-    <!--/*@thymesVar id="result" type="ai.metaheuristic.api.v1.data.PlanApiData$WorkbooksResult"*/-->
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.api.v1.data.plan.PlanApiData$WorkbooksResult"*/-->
     <script>
         var table = function (html) {
             $('#table').html(html).find('.ajax-elem').each(function () {

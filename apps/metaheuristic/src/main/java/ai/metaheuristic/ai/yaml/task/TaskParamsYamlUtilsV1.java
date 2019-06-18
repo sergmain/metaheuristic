@@ -14,19 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.plan;
+package ai.metaheuristic.ai.yaml.task;
 
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsV2;
 import ai.metaheuristic.ai.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV1;
 import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV2;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYamlV2;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYamlV1;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.process.ProcessV1;
 import ai.metaheuristic.api.v1.launchpad.process.ProcessV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -34,8 +41,8 @@ import java.util.stream.Collectors;
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
-public class PlanParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<PlanParamsYamlV1, PlanParamsYamlV2, PlanParamsYamlUtilsV2> {
+public class TaskParamsYamlUtilsV1
+        extends AbstractParamsYamlUtils<TaskParamsYamlV1, TaskParamsYamlV2, TaskParamsYamlUtilsV2> {
 
     @Override
     public int getVersion() {
@@ -43,42 +50,34 @@ public class PlanParamsYamlUtilsV1
     }
 
     public Yaml getYaml() {
-        return YamlUtils.init(PlanParamsYamlV1.class);
+        return YamlUtils.init(TaskParamsYamlV1.class);
     }
 
     @Override
-    public PlanParamsYamlV2 upgradeTo(PlanParamsYamlV1 yaml) {
-        PlanParamsYamlV2 p = new PlanParamsYamlV2();
-        p.planYaml = new PlanParamsYamlV2.PlanYamlV2();
-        p.planYaml.metas = yaml.metas;
-        p.planYaml.clean = yaml.clean;
-        p.planYaml.processes = yaml.processes
-                .stream()
-                .map(o->{
-                    ProcessV2 pV2 = new ProcessV2();
-                    BeanUtils.copyProperties(o, pV2);
-                    return pV2;
-                })
-                .collect(Collectors.toList());
-        return p;
+    public TaskParamsYamlV2 upgradeTo(TaskParamsYamlV1 taskParams) {
+        TaskParamsYamlV2 t = new TaskParamsYamlV2();
+        BeanUtils.copyProperties(taskParams, t.taskYaml, "preSnippet", "postSnippet");
+        if (taskParams.preSnippet!=null) {
+            t.taskYaml.preSnippet = List.of(taskParams.preSnippet);
+        }
+        if (taskParams.postSnippet!=null) {
+            t.taskYaml.postSnippet = List.of(taskParams.postSnippet);
+        }
+        return t;
     }
 
     @Override
-    public PlanParamsYamlUtilsV2 nextUtil() {
-        return (PlanParamsYamlUtilsV2)PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public TaskParamsYamlUtilsV2 nextUtil() {
+        return (TaskParamsYamlUtilsV2)TaskParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
     }
 
-    public String toString(PlanParamsYamlV1 planYaml) {
+    public String toString(TaskParamsYamlV1 planYaml) {
         return getYaml().dump(planYaml);
     }
 
-    public PlanParamsYamlV1 to(String s) {
-        final PlanParamsYamlV1 p = getYaml().load(s);
-        for (ProcessV1 process : p.processes) {
-            if (process.outputParams==null) {
-                process.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
-            }
-        }
+    public TaskParamsYamlV1 to(String s) {
+        //noinspection UnnecessaryLocalVariable
+        final TaskParamsYamlV1 p = getYaml().load(s);
         return p;
     }
 

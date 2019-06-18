@@ -15,25 +15,14 @@
  */
 package ai.metaheuristic.ai.yaml.task_params_new;
 
-import ai.metaheuristic.ai.yaml.TestYamlParser;
-import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.data.TaskApiData;
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYamlV1;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
-import static org.junit.Assert.*;
 
 public class TestTaskParamYamlWithoutRef {
 
@@ -41,7 +30,7 @@ public class TestTaskParamYamlWithoutRef {
     public void testTaskParamYaml() throws IOException {
         String yaml = IOUtils.resourceToString("/yaml/task_params_new/params-complex.yaml", StandardCharsets.UTF_8);
 
-        TaskApiData.TaskParamYaml taskParam = TaskParamYamlUtils.toTaskYaml(yaml);
+        TaskParamsYaml taskParam = TaskParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
 
         String s = TaskParamYamlNewUtils.toString(taskParam);
 

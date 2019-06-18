@@ -16,14 +16,23 @@
 
 package ai.metaheuristic.ai.yaml.plan;
 
+import ai.metaheuristic.ai.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.plan.PlanApiData;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.api.v1.launchpad.process.ProcessV3;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import static ai.metaheuristic.api.v1.data.PlanApiData.PlanParamsYaml;
-import static ai.metaheuristic.api.v1.data.PlanApiData.PlanParamsYamlV3;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
+
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV3;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -31,11 +40,11 @@ import static ai.metaheuristic.api.v1.data.PlanApiData.PlanParamsYamlV3;
  * Time: 12:10 AM
  */
 public class PlanParamsYamlUtilsV3
-        extends AbstractPlanParamsYamlUtils<PlanParamsYamlV3, PlanParamsYaml, Void> {
+        extends AbstractParamsYamlUtils<PlanParamsYamlV3, PlanParamsYaml, Void> {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     public Yaml getYaml() {
@@ -43,8 +52,20 @@ public class PlanParamsYamlUtilsV3
     }
 
     @Override
-    public PlanParamsYaml upgradeTo(PlanParamsYamlV3 yaml) {
-        throw new IllegalStateException("There isn't a next yamlUtils");
+    public PlanParamsYaml upgradeTo(PlanParamsYamlV3 pV3) {
+        PlanParamsYaml p = new PlanParamsYaml();
+        p.internalParams = pV3.internalParams;
+        p.planYaml = new PlanParamsYaml.PlanYaml();
+        if (pV3.planYaml.metas!=null){
+            p.planYaml.metas = new ArrayList<>(pV3.planYaml.metas);
+        }
+        p.planYaml.clean = pV3.planYaml.clean;
+        p.planYaml.processes = pV3.planYaml.processes.stream().map( o-> {
+            Process pr = new Process();
+            BeanUtils.copyProperties(o, pr);
+            return pr;
+        }).collect(Collectors.toList());
+        return p;
     }
 
     @Override
@@ -58,10 +79,16 @@ public class PlanParamsYamlUtilsV3
 
     public PlanParamsYamlV3 to(String s) {
         final PlanParamsYamlV3 p = getYaml().load(s);
+        if (p.planYaml ==null) {
+            throw new IllegalStateException("#635.010 Plan Yaml is null");
+        }
         for (ProcessV3 process : p.planYaml.processes) {
             if (process.outputParams==null) {
                 process.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             }
+        }
+        if (p.internalParams==null) {
+            p.internalParams = new PlanApiData.PlanInternalParamsYaml();
         }
         return p;
     }

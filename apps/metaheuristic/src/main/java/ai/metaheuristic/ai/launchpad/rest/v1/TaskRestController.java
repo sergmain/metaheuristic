@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.rest.v1;
 
 import ai.metaheuristic.api.v1.data.SimpleApiData;
-import ai.metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.api.v1.data.task.TaskApiData;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import org.springframework.context.annotation.Profile;

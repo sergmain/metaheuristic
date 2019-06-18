@@ -25,10 +25,10 @@ import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +37,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -139,7 +138,7 @@ public class ServerController {
             return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#442.83 taskId is null" );
         }
 
-        final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
 
         try {
             File tempDir = DirUtils.createTempDir("upload-resource-");
@@ -155,8 +154,8 @@ public class ServerController {
             try (InputStream is = new FileInputStream(resFile)) {
                 binaryDataService.save(
                         is, resFile.length(), EnumsApi.BinaryDataType.DATA,
-                        taskParamYaml.outputResourceCode,
-                        taskParamYaml.outputResourceCode,
+                        taskParamYaml.taskYaml.outputResourceCode,
+                        taskParamYaml.taskYaml.outputResourceCode,
                         false,
                         null,
                         task.workbookId, EnumsApi.BinaryDataRefType.workbook);

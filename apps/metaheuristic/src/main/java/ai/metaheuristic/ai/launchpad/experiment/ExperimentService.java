@@ -18,14 +18,9 @@ package ai.metaheuristic.ai.launchpad.experiment;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.api.v1.data.Meta;
-import ai.metaheuristic.api.v1.data.TaskWIthType;
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import ai.metaheuristic.api.v1.launchpad.Plan;
-import ai.metaheuristic.api.v1.launchpad.process.Process;
-import ai.metaheuristic.api.v1.data.TaskApiData;
 import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.plan.WorkbookService;
+import ai.metaheuristic.ai.launchpad.repositories.*;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
@@ -33,15 +28,21 @@ import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
 import ai.metaheuristic.ai.yaml.metrics.MetricValues;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.Meta;
+import ai.metaheuristic.api.v1.data.task.TaskApiData;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.v1.data.task.TaskWIthType;
+import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
+import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
+import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
-import ai.metaheuristic.ai.launchpad.repositories.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -240,9 +241,9 @@ public class ExperimentService {
                 }
             }
 
-            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
-            int idxX = mapX.get(taskParamYaml.hyperParams.get(paramCleared.get(0)));
-            int idxY = mapY.get(taskParamYaml.hyperParams.get(paramCleared.get(1)));
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            int idxX = mapX.get(taskParamYaml.taskYaml.hyperParams.get(paramCleared.get(0)));
+            int idxY = mapY.get(taskParamYaml.taskYaml.hyperParams.get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
         }
 
@@ -267,10 +268,10 @@ public class ExperimentService {
 
         List<Task> selected = new ArrayList<>();
         for (Task task : list) {
-            final TaskApiData.TaskParamYaml taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
-            boolean[] isOk = new boolean[taskParamYaml.hyperParams.size()];
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            boolean[] isOk = new boolean[taskParamYaml.taskYaml.hyperParams.size()];
             int idx = 0;
-            for (Map.Entry<String, String> entry : taskParamYaml.hyperParams.entrySet()) {
+            for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.hyperParams.entrySet()) {
                 try {
                     if (!paramFilterKeys.contains(entry.getKey())) {
                         isOk[idx] = true;
@@ -403,6 +404,7 @@ public class ExperimentService {
         e = experimentCache.save(e);
     }
 
+    @SuppressWarnings("Duplicates")
     public EnumsApi.PlanProducingStatus produceTasks(
             boolean isPersist, Plan plan, Workbook workbook, Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
@@ -474,18 +476,18 @@ public class ExperimentService {
                         task.setOrder(process.order + (orderAdd++));
                         task.setProcessType(process.type.value);
                         if (isPersist) {
-                            taskRepository.saveAndFlush((TaskImpl)task);
+                            taskRepository.saveAndFlush((TaskImpl) task);
                         }
                         // inc number of tasks
                         numberOfTasks.value++;
 
-                        TaskApiData.TaskParamYaml yaml = new TaskApiData.TaskParamYaml();
-                        yaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
+                        TaskParamsYaml yaml = new TaskParamsYaml();
+                        yaml.taskYaml.resourceStorageUrls = new HashMap<>(inputStorageUrls);
 
-                        yaml.setHyperParams(hyperParams.toSortedMap());
+                        yaml.taskYaml.setHyperParams(hyperParams.toSortedMap());
                         // TODO need to implement an unit-test for a plan without metas in experiment
                         // TODO and see that features are correctly defined
-                        yaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
+                        yaml.taskYaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
 
                             // TODO 2019.04.24 need to decide do we need this check or not
@@ -499,7 +501,7 @@ public class ExperimentService {
                                     .orElse(null);
 
                             if (meta != null) {
-                                yaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
+                                yaml.taskYaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
                             }
                         }
                         Snippet snippet = localCache.get(experimentSnippet.getSnippetCode());
@@ -516,26 +518,26 @@ public class ExperimentService {
 
                         EnumsApi.ExperimentTaskType type;
                         if (CommonConsts.FIT_TYPE.equals(snippet.getType())) {
-                            yaml.outputResourceCode = getModelFilename(task);
+                            yaml.taskYaml.outputResourceCode = getModelFilename(task);
                             type = EnumsApi.ExperimentTaskType.FIT;
                         } else if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
                             if (prevTask == null) {
                                 throw new IllegalStateException("#179.29 prevTask is null");
                             }
                             String modelFilename = getModelFilename(prevTask);
-                            yaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(modelFilename);
-                            yaml.outputResourceCode = "task-" + task.getId() + "-output-stub-for-predict";
+                            yaml.taskYaml.inputResourceCodes.computeIfAbsent("model", k -> new ArrayList<>()).add(modelFilename);
+                            yaml.taskYaml.outputResourceCode = "task-" + task.getId() + "-output-stub-for-predict";
                             type = EnumsApi.ExperimentTaskType.PREDICT;
 
                             // TODO 2019.05.02 add implementation of disk storage for models
-                            yaml.resourceStorageUrls.put(modelFilename, new DataStorageParams(EnumsApi.DataSourcing.launchpad));
+                            yaml.taskYaml.resourceStorageUrls.put(modelFilename, new DataStorageParams(EnumsApi.DataSourcing.launchpad));
 //                            yaml.resourceStorageUrls.put(modelFilename, StringUtils.isBlank(process.outputStorageUrl) ? Consts.LAUNCHPAD_STORAGE_URL : process.outputStorageUrl);
                         } else {
                             throw new IllegalStateException("#179.31 Not supported type of snippet encountered, type: " + snippet.getType());
                         }
-                        yaml.resourceStorageUrls.put(yaml.outputResourceCode, process.outputParams);
+                        yaml.taskYaml.resourceStorageUrls.put(yaml.taskYaml.outputResourceCode, process.outputParams);
 
-                        yaml.inputResourceCodes.forEach((key, value) -> {
+                        yaml.taskYaml.inputResourceCodes.forEach((key, value) -> {
                             HashSet<String> set = new HashSet<>(value);
                             value.clear();
                             value.addAll(set);
@@ -550,13 +552,23 @@ public class ExperimentService {
                             taskExperimentFeatureRepository.saveAndFlush(tef);
                         }
 
-                        yaml.snippet = SnippetConfigUtils.to(snippet.params);
-                        yaml.preSnippet = snippetService.getSnippetConfig(process.getPreSnippetCode());
-                        yaml.postSnippet = snippetService.getSnippetConfig(process.getPostSnippetCode());
+                        yaml.taskYaml.snippet = SnippetConfigUtils.to(snippet.params);
+                        yaml.taskYaml.preSnippet = new ArrayList<>();
+                        if (process.getPreSnippetCode() != null) {
+                            for (String snippetCode : process.getPreSnippetCode()) {
+                                yaml.taskYaml.preSnippet.add(snippetService.getSnippetConfig(snippetCode));
+                            }
+                        }
+                        yaml.taskYaml.postSnippet = new ArrayList<>();
+                        if (process.getPostSnippetCode()!=null) {
+                            for (String snippetCode : process.getPostSnippetCode()) {
+                                yaml.taskYaml.postSnippet.add(snippetService.getSnippetConfig(snippetCode));
+                            }
+                        }
 
-                        yaml.clean = plan.isClean();
+                        yaml.taskYaml.clean = plan.isClean();
 
-                        String currTaskParams = TaskParamYamlUtils.toString(yaml);
+                        String currTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);
 
                         processed++;
                         if (processed % 100 == 0) {

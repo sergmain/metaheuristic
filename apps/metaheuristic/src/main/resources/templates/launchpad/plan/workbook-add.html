@@ -10,7 +10,7 @@
 
         <h1 class="widget-header">New workbook with single input</h1>
 
-        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.v1.data.PlanApiData$PlanResult"*/-->
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.v1.data.plan.PlanApiData$PlanResult"*/-->
         <form class="pure-form pure-form-stacked" action="#" th:method="POST" th:action="@{/launchpad/plan/workbook-add-commit}" accept-charset="UTF-8" id="workbook-add-form" name="f">
             <input type="hidden" name="planId" th:value="${result.plan.id}"/>
             <fieldset>

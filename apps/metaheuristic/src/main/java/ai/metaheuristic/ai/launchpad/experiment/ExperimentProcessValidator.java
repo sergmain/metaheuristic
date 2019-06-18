@@ -66,18 +66,26 @@ public class ExperimentProcessValidator implements ProcessValidator {
         if (StringUtils.isBlank(process.code)) {
             return EnumsApi.PlanValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }
-        if (StringUtils.isNotBlank(process.preSnippetCode)) {
-            Snippet snippet = snippetRepository.findByCode(process.preSnippetCode);
-            if (snippet==null) {
-                log.error("#177.09 Pre-snippet wasn't found for code: {}, process: {}", process.preSnippetCode, process);
-                return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+        if (process.preSnippetCode!=null) {
+            for (String snippetCode : process.preSnippetCode) {
+                if (StringUtils.isNotBlank(snippetCode)) {
+                    Snippet snippet = snippetRepository.findByCode(snippetCode);
+                    if (snippet == null) {
+                        log.error("#177.09 Pre-snippet wasn't found for code: {}, process: {}", snippetCode, process);
+                        return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+                    }
+                }
             }
         }
-        if (StringUtils.isNotBlank(process.postSnippetCode)) {
-            Snippet snippet = snippetRepository.findByCode(process.postSnippetCode);
-            if (snippet==null) {
-                log.error("#177.11 Post-snippet wasn't found for code: {}, process: {}", process.postSnippetCode, process);
-                return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+        if (process.postSnippetCode!=null) {
+            for (String snippetCode : process.postSnippetCode) {
+                if (StringUtils.isNotBlank(snippetCode)) {
+                    Snippet snippet = snippetRepository.findByCode(snippetCode);
+                    if (snippet == null) {
+                        log.error("#177.11 Post-snippet wasn't found for code: {}, process: {}", snippetCode, process);
+                        return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+                    }
+                }
             }
         }
         Long experimentId = experimentRepository.findIdByCode(process.code);

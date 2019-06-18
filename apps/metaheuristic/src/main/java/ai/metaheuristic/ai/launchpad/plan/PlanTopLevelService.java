@@ -25,7 +25,8 @@ import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.OperationStatusRest;
-import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +69,7 @@ public class PlanTopLevelService {
         plans = plans.stream()
                 .filter(o-> {
                     try {
-                        PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(o.getParams());
+                        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
                         boolean b = ppy.internalParams == null || !ppy.internalParams.archived;
                         b = isArchive != b;
                         if (b) {
@@ -148,12 +149,12 @@ public class PlanTopLevelService {
             return new PlanApiData.PlanResult("#560.033 plan with such code already exists, code: " + plan.code);
         }
 
-        PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(planYamlAsStr);
-        plan.setParams(PlanParamsYamlUtils.toString(ppy));
+        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsStr);
+        plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
 
         plan = planCache.save(plan);
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, PlanParamsYamlUtils.toString(ppy) );
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy) );
         PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
@@ -176,12 +177,12 @@ public class PlanTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.055 plan wasn't found, planId: " + id);
         }
-        PlanApiData.PlanParamsYaml ppy = PlanParamsYamlUtils.to(plan.params);
+        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.params);
         if (ppy.internalParams==null) {
             ppy.internalParams = new PlanApiData.PlanInternalParamsYaml();
         }
         ppy.internalParams.archived = true;
-        plan.params = PlanParamsYamlUtils.toString(ppy);
+        plan.params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
 
         planCache.save(plan);
         return OperationStatusRest.OPERATION_STATUS_OK;

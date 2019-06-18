@@ -19,21 +19,21 @@ package ai.metaheuristic.ai.launchpad.task;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.comm.Protocol;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.station.StationCache;
-import ai.metaheuristic.api.v1.data.TaskApiData;
-import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.v1.launchpad.Task;
+import ai.metaheuristic.api.v1.launchpad.Workbook;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -215,9 +215,9 @@ public class TaskService {
         Slice<Task> tasks;
         while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), workbook.getId(), workbook.getProducingOrder())).hasContent()) {
             for (Task task : tasks) {
-                final TaskApiData.TaskParamYaml taskParamYaml;
+                final TaskParamsYaml taskParamYaml;
                 try {
-                    taskParamYaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
+                    taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
                 }
                 catch (YAMLException e) {
                     log.error("Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
@@ -229,7 +229,7 @@ public class TaskService {
                 }
 
                 StationStatus stationStatus = StationStatusUtils.to(station.status);
-                if (taskParamYaml.snippet.sourcing== EnumsApi.SnippetSourcing.git &&
+                if (taskParamYaml.taskYaml.snippet.sourcing== EnumsApi.SnippetSourcing.git &&
                         stationStatus.gitStatusInfo.status!= Enums.GitStatus.installed) {
                     log.warn("#317.62 Can't assign task #{} to station #{} because this station doesn't correctly installed git, git status info: {}",
                             station.getId(), task.getId(), stationStatus.gitStatusInfo
@@ -238,11 +238,11 @@ public class TaskService {
                     continue;
                 }
 
-                if (taskParamYaml.snippet.env!=null) {
-                    String interpreter = stationStatus.env.getEnvs().get(taskParamYaml.snippet.env);
+                if (taskParamYaml.taskYaml.snippet.env!=null) {
+                    String interpreter = stationStatus.env.getEnvs().get(taskParamYaml.taskYaml.snippet.env);
                     if (interpreter == null) {
                         log.warn("#317.64 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
-                                station.getId(), task.getId(), taskParamYaml.snippet.env
+                                station.getId(), task.getId(), taskParamYaml.taskYaml.snippet.env
                         );
                         longHolder.value = System.currentTimeMillis();
                         continue;
@@ -250,8 +250,8 @@ public class TaskService {
                 }
 
                 if (isAcceptOnlySigned) {
-                    if (!taskParamYaml.snippet.info.isSigned()) {
-                        log.warn("#317.69 Snippet with code {} wasn't signed", taskParamYaml.snippet.getCode());
+                    if (!taskParamYaml.taskYaml.snippet.info.isSigned()) {
+                        log.warn("#317.69 Snippet with code {} wasn't signed", taskParamYaml.taskYaml.snippet.getCode());
                         continue;
                     }
                     resultTask = task;

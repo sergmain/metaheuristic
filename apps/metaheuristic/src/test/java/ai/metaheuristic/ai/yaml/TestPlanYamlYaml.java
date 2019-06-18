@@ -17,9 +17,8 @@
 package ai.metaheuristic.ai.yaml;
 
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsFactory;
 import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.process.Process;
 import org.junit.Test;
@@ -39,7 +38,7 @@ public class TestPlanYamlYaml {
 
     @Test
     public void testYaml() {
-        PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();
+        PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
         {
             Process p = new Process();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
@@ -117,15 +116,14 @@ public class TestPlanYamlYaml {
             planYaml.processes.add(p);
         }
 
-        PlanApiData.PlanParamsYaml planParamsYaml = new PlanApiData.PlanParamsYaml();
+        PlanParamsYaml planParamsYaml = new PlanParamsYaml();
         planParamsYaml.planYaml = planYaml;
-        planParamsYaml.version = PlanParamsYamlUtilsFactory.DEFAULT_UTILS.getVersion();
 
-        String yaml = PlanParamsYamlUtils.toString(planParamsYaml);
+        String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
         System.out.println(yaml);
 
-        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(yaml);
-        PlanApiData.PlanYaml py = planParams.planYaml;
+        PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
+        PlanParamsYaml.PlanYaml py = planParams.planYaml;
 
         assertNotNull(py);
         assertNotNull(py.processes);
@@ -134,7 +132,7 @@ public class TestPlanYamlYaml {
 
     @Test
     public void testYaml_2() {
-        PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();
+        PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
 
         Process p1 = new Process();
         p1.name="experiment";
@@ -144,11 +142,10 @@ public class TestPlanYamlYaml {
 
         planYaml.processes = Collections.singletonList(p1);
 
-        PlanApiData.PlanParamsYaml planParamsYaml = new PlanApiData.PlanParamsYaml();
+        PlanParamsYaml planParamsYaml = new PlanParamsYaml();
         planParamsYaml.planYaml = planYaml;
-        planParamsYaml.version = PlanParamsYamlUtilsFactory.DEFAULT_UTILS.getVersion();
 
-        String s = PlanParamsYamlUtils.toString(planParamsYaml);
+        String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
 
         System.out.println(s);
     }

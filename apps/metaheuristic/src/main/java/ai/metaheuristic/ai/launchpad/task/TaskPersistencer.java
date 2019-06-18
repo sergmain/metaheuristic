@@ -23,10 +23,10 @@ import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
-import ai.metaheuristic.ai.yaml.task.TaskParamYamlUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.data.TaskApiData;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
@@ -226,8 +226,8 @@ public class TaskPersistencer {
             // TODO we have to stop processing workbook if there is error in tasks
         }
         else {
-            TaskApiData.TaskParamYaml yaml = TaskParamYamlUtils.toTaskYaml(task.getParams());
-            final DataStorageParams dataStorageParams = yaml.resourceStorageUrls.get(yaml.outputResourceCode);
+            TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            final DataStorageParams dataStorageParams = yaml.taskYaml.resourceStorageUrls.get(yaml.taskYaml.outputResourceCode);
 
             if (dataStorageParams.sourcing == EnumsApi.DataSourcing.disk) {
                 task.setCompleted(true);

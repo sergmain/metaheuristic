@@ -13,20 +13,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+package ai.metaheuristic.ai.yaml.task;
 
-package ai.metaheuristic.ai.yaml.plan;
+import ai.metaheuristic.ai.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 
-/**
- * @author Serge
- * Date: 6/17/2019
- * Time: 12:53 AM
- */
-public class PlanParamsYamlUtilsFactory {
+import java.util.Map;
 
-    public static final PlanParamsYamlUtilsV1 YAML_UTILS_V_1 = new PlanParamsYamlUtilsV1();
-    public static final PlanParamsYamlUtilsV2 YAML_UTILS_V_2 = new PlanParamsYamlUtilsV2();
-    public static final PlanParamsYamlUtilsV3 YAML_UTILS_V_3 = new PlanParamsYamlUtilsV3();
-    public static final PlanParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
+public class TaskParamsYamlUtils {
 
+    private static final TaskParamsYamlUtilsV1 YAML_UTILS_V_1 = new TaskParamsYamlUtilsV1();
+    private static final TaskParamsYamlUtilsV2 YAML_UTILS_V_2 = new TaskParamsYamlUtilsV2();
+    private static final TaskParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+
+    public static final BaseYamlUtils<TaskParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(1, YAML_UTILS_V_1, 2, YAML_UTILS_V_2),
+            DEFAULT_UTILS
+    );
 
 }

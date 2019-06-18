@@ -17,10 +17,9 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsFactory;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.Meta;
-import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.process.Process;
 import lombok.extern.slf4j.Slf4j;
@@ -41,7 +40,7 @@ public class TestProcessMeta {
 
     @Test
     public void testProcessMeta() {
-        PlanApiData.PlanYaml planYaml = new PlanApiData.PlanYaml();
+        PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
         {
             Process p = new Process();
             p.type = EnumsApi.ProcessType.EXPERIMENT;
@@ -59,17 +58,15 @@ public class TestProcessMeta {
 
             planYaml.processes.add(p);
         }
-        PlanApiData.PlanParamsYaml planParamsYaml = new PlanApiData.PlanParamsYaml();
+        PlanParamsYaml planParamsYaml = new PlanParamsYaml();
         planParamsYaml.planYaml = planYaml;
-        planParamsYaml.version = PlanParamsYamlUtilsFactory.DEFAULT_UTILS.getVersion();
 
-
-        String s = PlanParamsYamlUtils.toString(planParamsYaml);
+        String s = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
 
         System.out.println(s);
 
-        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(s);
-        PlanApiData.PlanYaml yaml1 = planParams.planYaml;
+        PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(s);
+        PlanParamsYaml.PlanYaml yaml1 = planParams.planYaml;
 
         Assert.assertEquals(planYaml, yaml1);
 

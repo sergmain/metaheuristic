@@ -14,33 +14,26 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.v1.data;
+package ai.metaheuristic.ai.yaml.versioning;
 
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.launchpad.Task;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * @author Serge
- * Date: 5/9/2019
- * Time: 4:57 PM
- *
- * !!! Must be top level class (not inner) because it's using in SqlQuery in Repository
+ * Date: 6/17/2019
+ * Time: 12:17 AM
  */
-@Data
-@NoArgsConstructor
-public class TaskWIthType {
-    public Task task;
-    public int type;
+abstract public class AbstractParamsYamlUtils<T, S, P> {
 
-    public TaskWIthType(Task task, int type) {
-        this.task = task;
-        this.type = type;
-    }
+    public abstract Yaml getYaml();
 
-    public String typeAsString() {
-        return EnumsApi.ExperimentTaskType.from(type).toString();
-    }
+    public abstract S upgradeTo(T yaml);
 
+    public abstract P nextUtil();
+
+    public abstract String toString(T yaml);
+
+    public abstract T to(String s);
+
+    public abstract int getVersion();
 }

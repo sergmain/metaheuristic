@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.plan;
 
+import ai.metaheuristic.ai.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.PlanApiData;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.process.ProcessV2;
 import ai.metaheuristic.api.v1.launchpad.process.ProcessV3;
@@ -29,8 +29,9 @@ import org.yaml.snakeyaml.Yaml;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.v1.data.PlanApiData.PlanParamsYamlV2;
-import static ai.metaheuristic.api.v1.data.PlanApiData.PlanParamsYamlV3;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV2;
+
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV3;
 
 /**
  * @author Serge
@@ -38,7 +39,7 @@ import static ai.metaheuristic.api.v1.data.PlanApiData.PlanParamsYamlV3;
  * Time: 12:10 AM
  */
 public class PlanParamsYamlUtilsV2
-        extends AbstractPlanParamsYamlUtils<PlanParamsYamlV2, PlanParamsYamlV3, PlanParamsYamlUtilsV3> {
+        extends AbstractParamsYamlUtils<PlanParamsYamlV2, PlanParamsYamlV3, PlanParamsYamlUtilsV3> {
 
     @Override
     public int getVersion() {
@@ -51,11 +52,10 @@ public class PlanParamsYamlUtilsV2
 
     @Override
     public PlanParamsYamlV3 upgradeTo(PlanParamsYamlV2 yaml) {
-        PlanApiData.PlanParamsYamlV3 p = new PlanApiData.PlanParamsYamlV3();
-        p.version = 3;
+        PlanParamsYamlV3 p = new PlanParamsYamlV3();
         p.internalParams = yaml.internalParams;
         p.planYaml.clean = yaml.planYaml.clean;
-        p.planYaml = new PlanApiData.PlanYamlV3();
+        p.planYaml = new PlanParamsYamlV3.PlanYamlV3();
         p.planYaml.processes = yaml.planYaml.processes
                 .stream()
                 .map(o->{
@@ -75,7 +75,7 @@ public class PlanParamsYamlUtilsV2
 
     @Override
     public PlanParamsYamlUtilsV3 nextUtil() {
-        return null;
+        return (PlanParamsYamlUtilsV3)PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
     }
 
     public String toString(PlanParamsYamlV2 planYaml) {

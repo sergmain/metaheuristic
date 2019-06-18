@@ -13,25 +13,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.yaml.task;
 
-import ai.metaheuristic.api.v1.data.TaskApiData;
-import ai.metaheuristic.commons.yaml.YamlUtils;
-import org.yaml.snakeyaml.Yaml;
+package ai.metaheuristic.api.v1.data.task;
 
-public class TaskParamYamlUtils {
+import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.launchpad.Task;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    private static Yaml getYaml() {
-        return YamlUtils.init(TaskApiData.TaskParamYaml.class);
+/**
+ * @author Serge
+ * Date: 5/9/2019
+ * Time: 4:57 PM
+ *
+ * !!! Must be top level class (not inner) because it's using in SqlQuery in Repository
+ */
+@Data
+@NoArgsConstructor
+public class TaskWIthType {
+    public Task task;
+    public int type;
+
+    public TaskWIthType(Task task, int type) {
+        this.task = task;
+        this.type = type;
     }
 
-    public static String toString(TaskApiData.TaskParamYaml taskParamYaml) {
-        return getYaml().dump(taskParamYaml);
+    public String typeAsString() {
+        return EnumsApi.ExperimentTaskType.from(type).toString();
     }
-
-    public static TaskApiData.TaskParamYaml toTaskYaml(String s) {
-        return getYaml().load(s);
-    }
-
 
 }

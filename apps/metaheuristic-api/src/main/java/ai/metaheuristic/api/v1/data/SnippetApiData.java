@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -46,8 +47,8 @@ public class SnippetApiData {
     @AllArgsConstructor
     public static class SnippetExec {
         public SnippetExecResult exec = new SnippetExecResult();
-        public SnippetExecResult preExec;
-        public SnippetExecResult postExec;
+        public List<SnippetExecResult> preExec;
+        public List<SnippetExecResult> postExec;
     }
 
     @Data

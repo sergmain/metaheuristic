@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.process.Process;
@@ -34,7 +35,7 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessValidator;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessValidator;
-import ai.metaheuristic.api.v1.data.PlanApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanApiData;
 import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.repositories.*;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -313,8 +314,8 @@ public class PlanService {
         if (StringUtils.isBlank(plan.getParams())) {
             return EnumsApi.PlanValidateStatus.PLAN_PARAMS_EMPTY_ERROR;
         }
-        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(plan.getParams());
-        PlanApiData.PlanYaml planYaml = planParams.planYaml;
+        PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
+        PlanParamsYaml.PlanYaml planYaml = planParams.planYaml;
         if (planYaml.getProcesses().isEmpty()) {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
@@ -509,7 +510,7 @@ public class PlanService {
         Monitoring.log("##025", Enums.Monitor.MEMORY);
 
         result.workbook = fi;
-        PlanApiData.PlanParamsYaml planParams = PlanParamsYamlUtils.to(plan.getParams());
+        PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
         result.planYaml = planParams.planYaml;
 
         plan.setClean( result.planYaml.clean );
