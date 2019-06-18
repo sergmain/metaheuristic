@@ -1,34 +1,56 @@
 .app-view
 	div(*ngIf="isAuth(); then thenBlock else elseBlock")
 	ng-template(#thenBlock)
-		mat-toolbar(class="app-view-header" color="primary")
-			mat-toolbar-row(class="app-view-header__row")
-				.app-view-header__left
-					button(mat-button class="mat-button mat-button--sidenav" 
+		mat-toolbar.toolbar(color="primary")
+			mat-toolbar-row.toolbar__row
+				.toolbar__left
+					button.mat-button(mat-button class="mat-button--sidenav" 
 						'[disabled]'="sidenavIsDisabled"
 						'(click)'="sideToggle()")
 							mat-icon(class="mat-icon") menu
-					button(class="mat-button mat-button--menu-item" mat-button routerLinkActive="active" '[routerLinkActiveOptions]'="{ exact: true }" routerLink="") Metaheuristic
-					button(class="mat-button mat-button--menu-item" mat-button routerLinkActive="active" routerLink="/launchpad") Launchpad
-					button(class="mat-button mat-button--menu-item" mat-button routerLinkActive="active" routerLink="/pilot") Batch
-				.app-view-header__right
-					mat-slide-toggle('[checked]'="themeActive" '(change)'="themeToggle($event)")
-					button(class="mat-button mat-button--menu-item" mat-button routerLinkActive="active" routerLink="/about") About
-					button(class="mat-button mat-button--menu-item" '(click)'="logout()") Logout
-		mat-sidenav-container(class="app-view-body")
-			mat-sidenav(class="app-view-sidenav" mode="side" '[opened]'="sidenavIsOpen")
-				router-outlet(name="nav")
-			mat-sidenav-content(class="app-view-sidenav-content")
-				router-outlet(name="body") 
+					button(class="mat-button mat-button--menu-item" 
+						mat-button 
+						routerLinkActive="active" 
+						'[routerLinkActiveOptions]'="{ exact: true }" 
+						routerLink="") Metaheuristic
+					button(class="mat-button mat-button--menu-item" 
+						mat-button 
+						routerLinkActive="active" 
+						routerLink="/launchpad") Launchpad
+					button(class="mat-button mat-button--menu-item" 
+						mat-button 
+						routerLinkActive="active" 
+						routerLink="/pilot") Batch
+				.toolbar__right
+					mat-slide-toggle('[checked]'="themeActive" 
+						'(change)'="themeToggle($event)")
+					button(class="mat-button mat-button--menu-item" 
+						mat-button 
+						routerLinkActive="active" 
+						routerLink="/about") About
+					button(class="mat-button mat-button--menu-item" 
+						'(click)'="logout()") Logout
+		mat-sidenav-container(class="app-view__container")
+			mat-sidenav(class="app-view__sidenav" mode="side" 
+				'[opened]'="sidenavIsOpen")
+					router-outlet(name="nav")
+			mat-sidenav-content(class="app-view__sidenav-content")
+				.content
+					.content__body
+						router-outlet(name="body")
+					.content__footer Metaheuristic, © 2017-2019
 
 	ng-template(#elseBlock)
-		mat-toolbar(class="app-view-header" color="primary")
-			mat-toolbar-row(class="app-view-header__row")
-				.app-view-header__left
+		mat-toolbar.toolbar(color="primary")
+			mat-toolbar-row.toolbar__row
+				.toolbar__left
 					button(class="mat-button" mat-button routerLink="/") Metaheuristic
-				.app-view-header__right
-		mat-sidenav-container(class="app-view-body")
-			mat-sidenav-content(class="app-view-sidenav-content")
-				div(class="flex space-between flex-start")
-					about-view 
-					login-view 
+				.toolbar__right
+		mat-sidenav-container(class="app-view__container")
+			mat-sidenav-content(class="app-view__sidenav-content")
+				.content
+					.content__body
+						div(class="flex space-between flex-start")
+							about-view 
+							login-view 
+					.content__footer Metaheuristic, © 2017-2019
