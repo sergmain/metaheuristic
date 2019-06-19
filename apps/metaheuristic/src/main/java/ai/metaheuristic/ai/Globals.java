@@ -44,7 +44,7 @@ public class Globals {
 
     // Globals' globals
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.thread-number'), 1, 8, 3) }")
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.thread-number'), 1, 8, 4) }")
     public int threadNumber;
 
     @Value("${mh.is-testing:#{false}}")
@@ -125,7 +125,7 @@ public class Globals {
     // Station's globals
 
     @Value("${mh.station.enabled:#{false}}")
-    public boolean isStationEnabled = true;
+    public boolean isStationEnabled = false;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.dir' )) }")
     public File stationDir;
@@ -149,12 +149,49 @@ public class Globals {
 
     @PostConstruct
     public void init() {
+        String publicKeyAsStr = env.getProperty("MH_PUBLIC_KEY");
+        if (publicKeyAsStr!=null && !publicKeyAsStr.isBlank()) {
+            launchpadPublicKeyStr = publicKeyAsStr;
+        }
+
         if (launchpadPublicKeyStr!=null) {
             launchpadPublicKey = SecUtils.getPublicKey(launchpadPublicKeyStr);
         }
+        String threadNumberAsStr = env.getProperty("MH_THREAD_NUMBER");
+        if (threadNumberAsStr!=null && !threadNumberAsStr.isBlank()) {
+            try {
+                threadNumber = Integer.parseInt(threadNumberAsStr);
+            } catch (Throwable th) {
+                log.error("Wrong value in env MH_THREAD_NUMBER, must be digit, " +
+                        "actual: " + threadNumberAsStr+". Will be used a 4 thread value.");
+                threadNumber = 4;
+            }
+        }
+
+        String size = env.getProperty("MH_CHUNK_SIZE");
+        chunkSize = parseChunkSizeValue(size);
+        if (chunkSize==null) {
+            chunkSize = parseChunkSizeValue(chunkSizeStr);
+        }
+        // we will use 10mb size of chunk by default
+        if (chunkSize==null) {
+            chunkSize = parseChunkSizeValue("10m");
+        }
+
+
+        String stationEnabledAsStr = env.getProperty("MH_IS_STATION_ENABLED");
+        if (stationEnabledAsStr!=null && !stationEnabledAsStr.isBlank()) {
+            try {
+                isStationEnabled = Boolean.valueOf(stationEnabledAsStr);
+            } catch (Throwable th) {
+                log.error("Wrong value in env MH_IS_STATION_ENABLED, must be boolean (true/false), " +
+                        "actual: " + stationEnabledAsStr+". Will be used 'false' as value.");
+                isStationEnabled = false;
+            }
+        }
 
         if (stationDir==null) {
-            log.warn("Station is disabled, stationDir: {}, isStationEnabled: {}", stationDir, isStationEnabled);
+            log.warn("Station is disabled, stationDir is null, isStationEnabled: {}", isStationEnabled);
             isStationEnabled = false;
         }
         else {
@@ -165,13 +202,26 @@ public class Globals {
             stationEnvHotDeployDir = new File(stationDir, Consts.ENV_HOT_DEPLOY_DIR);
             stationEnvHotDeployDir.mkdirs();
 
-            // TODO 2019.04.26 right now the change of ownership is disabled but may be required in future
+            // TODO 2019.04.26 right now the change of ownership is disabled
+            //  but maybe will be required in future
 //            checkOwnership(stationEnvHotDeployDir);
         }
 
+        String launchpadDirAsStr = env.getProperty("MH_LAUNCHPAD_DIR");
+        if (launchpadDirAsStr!=null && !launchpadDirAsStr.isBlank()) {
+            try {
+                launchpadDir = new File(launchpadDirAsStr);
+            } catch (Throwable th) {
+                log.error("Wrong value in env MH_LAUNCHPAD_DIR, must be a correct path to dir, " +
+                        "actual: " + launchpadDirAsStr);
+                launchpadDir = null;
+            }
+        }
+
         if (isLaunchpadEnabled && launchpadDir==null) {
-            log.warn("Launchpad is disabled, launchpadDir: {}, isLaunchpadEnabled: {}", launchpadDir, isLaunchpadEnabled);
-            isLaunchpadEnabled = false;
+            launchpadDir = new File("./target/mh-launchpad");
+            log.warn("Launchpad is enabled, but launchpadDir in null. " +
+                    "Will be used a default value as: {}", launchpadDir.getAbsolutePath());
         }
 
         if (isLaunchpadEnabled) {
@@ -191,15 +241,19 @@ public class Globals {
             if (ext!=null && !ext.isBlank()) {
                 defaultResultFileExtension = ext;
             }
-
-            String size = env.getProperty("MH_CHUNK_SIZE");
-            chunkSize = parseChunkSizeValue(size);
-            if (chunkSize==null) {
-                chunkSize = parseChunkSizeValue(chunkSizeStr);
+            if (defaultResultFileExtension==null || defaultResultFileExtension.isBlank()) {
+                defaultResultFileExtension = ".bin";
             }
-            // we will use 10mb size of chunk by default
-            if (chunkSize==null) {
-                chunkSize = parseChunkSizeValue("10m");
+
+            String sslRequiredAsStr = env.getProperty("MH_IS_SSL_REQUIRED");
+            if (sslRequiredAsStr!=null && !sslRequiredAsStr.isBlank()) {
+                try {
+                    isSslRequired = Boolean.valueOf(sslRequiredAsStr);
+                } catch (Throwable th) {
+                    log.error("Wrong value in env MH_IS_SSL_REQUIRED, must be boolean (true/false), " +
+                            "actual: " + sslRequiredAsStr+". Will be used 'true' as value.");
+                    isSslRequired = true;
+                }
             }
         }
         logGlobals();
