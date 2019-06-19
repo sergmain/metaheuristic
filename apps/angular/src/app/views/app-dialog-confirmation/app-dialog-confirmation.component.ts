@@ -1,17 +1,23 @@
 import { Component, Inject } from '@angular/core';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 
+export interface DialogData {
+    resolveTitle: string;
+    rejectTitle: string;
+}
+
 @Component({
     selector: 'app-dialog-confirmation',
     templateUrl: './app-dialog-confirmation.component.pug',
     styleUrls: ['./app-dialog-confirmation.component.scss']
 })
-
 export class AppDialogConfirmationComponent {
     constructor(
         public dialogRef: MatDialogRef < AppDialogConfirmationComponent > ,
         @Inject(MAT_DIALOG_DATA) public data: any
-    ) {}
+    ) {
+        console.log(data);
+    }
 
     onNoClick(): void {
         this.dialogRef.close(0);
@@ -32,7 +38,7 @@ export class AppDialogConfirmationComponent {
  * ) {}
  *
  */
-export function ConfirmationDialogMethod() {
+export function ConfirmationDialogMethod(dialogData: DialogData) {
     return function fn(
         target: object,
         propertyName: string,
@@ -43,7 +49,7 @@ export function ConfirmationDialogMethod() {
             const params: any = JSON.parse(args.map((a: any) => JSON.stringify(a)).join());
             const dialogRef: MatDialogRef < any > = this.dialog.open(AppDialogConfirmationComponent, {
                 width: '250px',
-                data: { params }
+                data: { dialogData }
             });
             dialogRef.afterClosed().subscribe((result: boolean) => {
                 if (result) {

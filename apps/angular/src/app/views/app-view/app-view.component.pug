@@ -4,7 +4,8 @@
 		mat-toolbar.toolbar(color="primary")
 			mat-toolbar-row.toolbar__row
 				.toolbar__left
-					button.mat-button(mat-button class="mat-button--sidenav" 
+					button(class="mat-button mat-button--sidenav" 
+						mat-button 
 						'[disabled]'="sidenavIsDisabled"
 						'(click)'="sideToggle()")
 							mat-icon(class="mat-icon") menu
@@ -29,6 +30,7 @@
 						routerLinkActive="active" 
 						routerLink="/about") About
 					button(class="mat-button mat-button--menu-item" 
+						mat-button
 						'(click)'="logout()") Logout
 		mat-sidenav-container(class="app-view__container")
 			mat-sidenav(class="app-view__sidenav" mode="side" 

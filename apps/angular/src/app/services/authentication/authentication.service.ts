@@ -16,37 +16,37 @@ export class AuthenticationService {
 
     isAuth() {
         if (localStorage.getItem('user')) {
-            return true
+            return true;
         }
-        return false
+        return false;
     }
 
 
     login(username: string, password: string) {
-        const url = environment.baseUrl + '/rest/v1/user';
+        const url = environment.baseUrl + 'user';
         const headers = new HttpHeaders({
-            "Authorization": 'Basic ' + btoa(username + ':' + password)
+            'Authorization': 'Basic ' + btoa(username + ':' + password)
         });
 
         this.http.post < Observable < any >> (
                 url, {
-                    username: username,
-                    password: password
+                    username,
+                    password
                 }, {
-                    headers: headers
+                    headers
                 })
             .subscribe(user => {
                 if (user) {
                     localStorage.setItem('user', JSON.stringify(Object.assign({}, user, {
                         token: 'Basic ' + btoa(username + ':' + password)
-                    })))
+                    })));
                 }
-                return user
-            })
+                return user;
+            });
     }
 
     logout() {
-        localStorage.removeItem('user')
+        localStorage.removeItem('user');
     }
 
 }

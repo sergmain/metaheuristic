@@ -34,6 +34,19 @@
     right: 0;
     z-index: 999;
     display: flex;
+    padding: 0 4px;
+    button {
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        font-weight: 400;
+        padding-top: 2px;
+        font-size: 16px;
+        font-family: 'Roboto Condensed';
+        min-width: auto;
+        mat-icon {
+            margin-top: -4px;
+        }
+    }
 }
 
 .toolbar__row {
@@ -48,7 +61,7 @@
     justify-content: space-between;
 
     >* {
-        margin-right: 8px;
+        margin: 0 2px;
     }
 }
 
@@ -58,7 +71,7 @@
     align-items: center;
 
     >* {
-        margin-left: 8px;
+        margin: 0 2px;
     }
 }
 

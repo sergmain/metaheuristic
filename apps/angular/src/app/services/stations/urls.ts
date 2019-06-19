@@ -3,7 +3,7 @@ import {
 } from 'environments/environment';
 import jsonToUrlParams from '@app/helpers/jsonToUrlParams'
 
-const base = environment.baseUrl + '/rest/v1/launchpad'
+const base = environment.baseUrl + 'launchpad'
 
 let urls = {
     stations: {

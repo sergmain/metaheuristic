@@ -1,22 +1,10 @@
-import {
-    Injectable
-} from '@angular/core';
-import {
-    HttpClient,
-} from '@angular/common/http';
-import {
-    urls
-} from './urls';
-import {
-    Observable
-} from 'rxjs';
-import {
-    PlanResponse
-} from '@app/models';
+import { Injectable } from '@angular/core';
+import { HttpClient, } from '@angular/common/http';
+import { urls } from './urls';
+import { Observable } from 'rxjs';
+import { PlanResponse } from '@app/models';
 
-@Injectable({
-    providedIn: 'root'
-})
+@Injectable({ providedIn: 'root' })
 
 export class PlansService {
     constructor(

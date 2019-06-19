@@ -35,7 +35,11 @@ import {
     AddExperimentComponent,
     EditExperimentComponent,
     InfoExperimentComponent,
-    ProgressExperimentComponent
+    ProgressExperimentComponent,
+
+    BatchComponent,
+
+    AtlasComponent
 } from './views/launchpad';
 
 import {
@@ -112,6 +116,10 @@ const routes: Routes = [
     launchpadRoute({ path: 'launchpad/accounts/add', body: AddAccountComponent }),
     launchpadRoute({ path: 'launchpad/accounts/edit/:id', body: EditAccountComponent }),
     launchpadRoute({ path: 'launchpad/accounts/edit-password/:id', body: EditPassAccountComponent }),
+
+    launchpadRoute({ path: 'launchpad/batch', body: BatchComponent }),
+
+    launchpadRoute({ path: 'launchpad/atlas', body: AtlasComponent }),
     // 
     // 
     // 
