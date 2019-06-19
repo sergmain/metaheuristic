@@ -146,8 +146,8 @@ public abstract class FeatureMethods extends PreparingPlan {
             assertEquals(expectedSeqs, tasks.size());
         }
         for (Task task : tasks) {
-            SnippetApiData.SnippetExecResult snippetExecResult = new SnippetApiData.SnippetExecResult(false, -1, "This is sample console output");
-            SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec(snippetExecResult, null, null);
+            SnippetApiData.SnippetExecResult snippetExecResult = new SnippetApiData.SnippetExecResult("output-of-a-snippet",false, -1, "This is sample console output");
+            SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec(snippetExecResult, null, null, null);
             String yaml = SnippetExecUtils.toString(snippetExec);
 
             SimpleTaskExecResult sser = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));
@@ -166,7 +166,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         }
         for (Task task : tasks) {
             SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec();
-            snippetExec.setExec( new SnippetApiData.SnippetExecResult(true, 0, "This is sample console output. fit"));
+            snippetExec.setExec( new SnippetApiData.SnippetExecResult("output-of-a-snippet", true, 0, "This is sample console output. fit"));
             String yaml = SnippetExecUtils.toString(snippetExec);
 
             SimpleTaskExecResult ster = new SimpleTaskExecResult(task.getId(), yaml, MetricsUtils.toString(MetricsUtils.EMPTY_METRICS));

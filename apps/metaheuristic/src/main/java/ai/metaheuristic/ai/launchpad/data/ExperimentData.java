@@ -166,6 +166,7 @@ public class ExperimentData {
         @AllArgsConstructor
         @NoArgsConstructor
         public static class SimpleConsoleOutput {
+            public String snippetCode;
             public int exitCode;
             public boolean isOk;
             public String console;

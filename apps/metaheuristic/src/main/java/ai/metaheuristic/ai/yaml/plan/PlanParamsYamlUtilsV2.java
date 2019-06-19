@@ -54,8 +54,8 @@ public class PlanParamsYamlUtilsV2
     public PlanParamsYamlV3 upgradeTo(PlanParamsYamlV2 yaml) {
         PlanParamsYamlV3 p = new PlanParamsYamlV3();
         p.internalParams = yaml.internalParams;
-        p.planYaml.clean = yaml.planYaml.clean;
         p.planYaml = new PlanParamsYamlV3.PlanYamlV3();
+        p.planYaml.clean = yaml.planYaml.clean;
         p.planYaml.processes = yaml.planYaml.processes
                 .stream()
                 .map(o->{

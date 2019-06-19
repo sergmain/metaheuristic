@@ -129,7 +129,8 @@ public class ExperimentTopLevelService {
             SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
             if (snippetExec!=null) {
                 final SnippetApiData.SnippetExecResult execSnippetExecResult = snippetExec.getExec();
-                result.items.add(new ConsoleResult.SimpleConsoleOutput(execSnippetExecResult.exitCode, execSnippetExecResult.isOk, execSnippetExecResult.console));
+                result.items.add(new ConsoleResult.SimpleConsoleOutput(
+                        execSnippetExecResult.snippetCode, execSnippetExecResult.exitCode, execSnippetExecResult.isOk, execSnippetExecResult.console));
             }
             else {
                 log.info("#285.10 snippetExec is null");

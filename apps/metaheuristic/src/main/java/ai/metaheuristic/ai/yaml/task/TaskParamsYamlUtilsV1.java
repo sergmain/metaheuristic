@@ -16,25 +16,14 @@
 
 package ai.metaheuristic.ai.yaml.task;
 
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsV2;
 import ai.metaheuristic.ai.yaml.versioning.AbstractParamsYamlUtils;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV1;
-import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV2;
 import ai.metaheuristic.api.v1.data.task.TaskParamsYamlV2;
 import ai.metaheuristic.api.v1.data.task.TaskParamsYamlV1;
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import ai.metaheuristic.api.v1.launchpad.process.ProcessV1;
-import ai.metaheuristic.api.v1.launchpad.process.ProcessV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -58,10 +47,10 @@ public class TaskParamsYamlUtilsV1
         TaskParamsYamlV2 t = new TaskParamsYamlV2();
         BeanUtils.copyProperties(taskParams, t.taskYaml, "preSnippet", "postSnippet");
         if (taskParams.preSnippet!=null) {
-            t.taskYaml.preSnippet = List.of(taskParams.preSnippet);
+            t.taskYaml.preSnippets = List.of(taskParams.preSnippet);
         }
         if (taskParams.postSnippet!=null) {
-            t.taskYaml.postSnippet = List.of(taskParams.postSnippet);
+            t.taskYaml.postSnippets = List.of(taskParams.postSnippet);
         }
         return t;
     }

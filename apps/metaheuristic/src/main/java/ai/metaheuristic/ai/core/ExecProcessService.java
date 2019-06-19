@@ -41,13 +41,15 @@ public class ExecProcessService {
         public InputStream is;
     }
 
-    public SnippetApiData.SnippetExecResult execCommand(List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate) throws IOException, InterruptedException {
+    public SnippetApiData.SnippetExecResult execCommand(
+            List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate, String snippetCode) throws IOException, InterruptedException {
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
         log.info("\ttaskDir: {}", execDir.getPath());
         log.info("\ttaskDir abs: {}", execDir.getAbsolutePath());
         log.info("\tconsoleLogFile abs: {}", consoleLogFile.getAbsolutePath());
         log.info("\ttimeoutBeforeTerminate (seconds): {}", timeoutBeforeTerminate);
+        log.info("\tsnippetCode: {}", snippetCode);
 
         final AtomicLong timeout = new AtomicLong(0);
         if (timeoutBeforeTerminate!=null && timeoutBeforeTerminate!=0) {
@@ -144,7 +146,7 @@ public class ExecProcessService {
         String console = readLastLines(1000, consoleLogFile) + '\n' + timeoutMessage;
 
         log.debug("'\tconsole output:\n{}", console);
-        return new SnippetApiData.SnippetExecResult(exitCode==0, exitCode, console);
+        return new SnippetApiData.SnippetExecResult(snippetCode, exitCode==0, exitCode, console);
     }
 
     public static void collectHandlers(List<ProcessHandle> handles, ProcessHandle handle) {

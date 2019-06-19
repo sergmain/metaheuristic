@@ -553,16 +553,16 @@ public class ExperimentService {
                         }
 
                         yaml.taskYaml.snippet = SnippetConfigUtils.to(snippet.params);
-                        yaml.taskYaml.preSnippet = new ArrayList<>();
+                        yaml.taskYaml.preSnippets = new ArrayList<>();
                         if (process.getPreSnippetCode() != null) {
                             for (String snippetCode : process.getPreSnippetCode()) {
-                                yaml.taskYaml.preSnippet.add(snippetService.getSnippetConfig(snippetCode));
+                                yaml.taskYaml.preSnippets.add(snippetService.getSnippetConfig(snippetCode));
                             }
                         }
-                        yaml.taskYaml.postSnippet = new ArrayList<>();
+                        yaml.taskYaml.postSnippets = new ArrayList<>();
                         if (process.getPostSnippetCode()!=null) {
                             for (String snippetCode : process.getPostSnippetCode()) {
-                                yaml.taskYaml.postSnippet.add(snippetService.getSnippetConfig(snippetCode));
+                                yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(snippetCode));
                             }
                         }
 

@@ -63,6 +63,14 @@ public class TaskProcessor {
     private final ResourceProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
 
+    @Data
+    public static class SnippetPrepareResult {
+        public SnippetApiData.SnippetConfig snippet;
+        public AssetFile snippetAssetFile;
+        public SnippetApiData.SnippetExecResult snippetExecResult;
+        boolean isLoaded = true;
+    }
+
     public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationTaskService stationTaskService, CurrentExecState currentExecState, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, EnvService envService, StationService stationService, ResourceProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
         this.globals = globals;
         this.execProcessService = execProcessService;
@@ -76,6 +84,7 @@ public class TaskProcessor {
         this.gitSourcingService = gitSourcingService;
     }
 
+    @SuppressWarnings("Duplicates")
     public void fixedDelay() {
         if (globals.isUnitTesting) {
             return;
@@ -201,28 +210,111 @@ public class TaskProcessor {
 
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
 
-            List<SnippetApiData.SnippetExecResult> preSnippetExecResult = new ArrayList<>();
-            for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippet) {
-                SnippetApiData.SnippetExecResult pre = prepareAndExecSnippet(preSnippetConfig, task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
-                preSnippetExecResult.add(pre);
+            boolean isNotReady = false;
+            final Map<String, SnippetPrepareResult> results = new HashMap<>();
+            SnippetPrepareResult result;
+            for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
+                result = prepareSnippet(launchpadCode, preSnippetConfig);
+                if (!result.isLoaded || !isAllLoaded) {
+                    isNotReady = true;
+                    break;
+                }
+                results.put(preSnippetConfig.code, result);
             }
-            SnippetApiData.SnippetExecResult snippetExecResult = prepareAndExecSnippet(taskParamYaml.taskYaml.getSnippet(), task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
-            List<SnippetApiData.SnippetExecResult> postSnippetExecResult = new ArrayList<>();
-            for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippet) {
-                SnippetApiData.SnippetExecResult post = prepareAndExecSnippet(postSnippetConfig, task, launchpadCode, launchpad, taskDir, taskParamYaml, isAllLoaded, artifactDir, systemDir, paramFile);
-                preSnippetExecResult.add(post);
-            }
-            if (snippetExecResult == null) {
+            if (isNotReady) {
                 continue;
             }
 
-            stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(), new SnippetApiData.SnippetExec(snippetExecResult, preSnippetExecResult, postSnippetExecResult));
+            result = prepareSnippet(launchpadCode, taskParamYaml.taskYaml.getSnippet());
+            if (!result.isLoaded || !isAllLoaded) {
+                continue;
+            }
+
+            for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
+                result = prepareSnippet(launchpadCode, postSnippetConfig);
+                if (!result.isLoaded) {
+                    isNotReady = true;
+                    break;
+                }
+                results.put(postSnippetConfig.code, result);
+            }
+            if (isNotReady) {
+                continue;
+            }
+
+
+            List<SnippetApiData.SnippetExecResult> preSnippetExecResult = new ArrayList<>();
+            List<SnippetApiData.SnippetExecResult> postSnippetExecResult = new ArrayList<>();
+            boolean isOk = true;
+            for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
+                result = results.get(preSnippetConfig.code);
+                SnippetApiData.SnippetExecResult execResult;
+                if (result==null) {
+                    execResult = new SnippetApiData.SnippetExecResult(
+                            preSnippetConfig.code, false, -999,
+                            "Illegal State, result of preparing of snippet "+preSnippetConfig.code+" is null");
+                }
+                else {
+                    execResult = execSnippet(task, launchpadCode, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, paramFile, result);
+                }
+                preSnippetExecResult.add(execResult);
+                if (!execResult.isOk) {
+                    isOk = false;
+                    break;
+                }
+            }
+            SnippetApiData.SnippetExecResult snippetExecResult = null;
+            if (isOk) {
+                result = results.get(taskParamYaml.taskYaml.getSnippet().code);
+                if (result==null) {
+                    snippetExecResult = new SnippetApiData.SnippetExecResult(
+                            taskParamYaml.taskYaml.getSnippet().code, false, -999,
+                            "Illegal State, result of preparing of snippet "+taskParamYaml.taskYaml.getSnippet()+" is null");
+                    isOk = false;
+                }
+
+                if (isOk) {
+                    snippetExecResult = execSnippet(task, launchpadCode, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, paramFile, result);
+                    if (!snippetExecResult.isOk) {
+                        isOk = false;
+                    }
+                    if (isOk) {
+                        for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
+                            result = results.get(postSnippetConfig.code);
+                            SnippetApiData.SnippetExecResult execResult;
+                            if (result==null) {
+                                execResult = new SnippetApiData.SnippetExecResult(
+                                        postSnippetConfig.code, false, -999,
+                                        "Illegal State, result of preparing of snippet "+postSnippetConfig.code+" is null");
+                            }
+                            else {
+                                execResult = execSnippet(task, launchpadCode, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, paramFile, result);
+                            }
+                            postSnippetExecResult.add(execResult);
+                            if (!execResult.isOk) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(),
+                    new SnippetApiData.SnippetExec(snippetExecResult, preSnippetExecResult, postSnippetExecResult, null));
         }
     }
 
-    @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public SnippetApiData.SnippetExecResult prepareAndExecSnippet(SnippetApiData.SnippetConfig snippet, StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamsYaml taskParamYaml, boolean isAllLoaded, File artifactDir, File systemDir, File paramFile) {
+    private SnippetPrepareResult prepareSnippet(SnippetApiData.SnippetConfig snippet, StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamsYaml taskParamYaml, boolean isAllLoaded, File artifactDir, File systemDir, File paramFile) {
+        if (snippet==null) {
+            return null;
+        }
+        SnippetPrepareResult snippetPrepareResult = prepareSnippet(launchpadCode, snippet);
+        return snippetPrepareResult;
+    }
+
+    // TODO 2019.05.02 implement unit-test for this method
+    private SnippetApiData.SnippetExecResult prepareAndExecSnippet(SnippetApiData.SnippetConfig snippet, StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamsYaml taskParamYaml, boolean isAllLoaded, File artifactDir, File systemDir, File paramFile) {
         if (snippet==null) {
             return null;
         }
@@ -242,7 +334,11 @@ public class TaskProcessor {
 
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
-    public SnippetApiData.SnippetExecResult execSnippet(StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamsYaml taskParamYaml, File artifactDir, File systemDir, File paramFile, SnippetPrepareResult snippetPrepareResult) {
+    public SnippetApiData.SnippetExecResult execSnippet(
+            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir,
+            TaskParamsYaml taskParamYaml, File artifactDir, File systemDir,
+            File paramFile, SnippetPrepareResult snippetPrepareResult) {
         List<String> cmd;
         Interpreter interpreter=null;
         if (StringUtils.isNotBlank(snippetPrepareResult.snippet.env)) {
@@ -296,7 +392,8 @@ public class TaskProcessor {
             long startedOn = System.currentTimeMillis();
 
             // Exec snippet
-            snippetExecResult = execProcessService.execCommand(cmd, taskDir, consoleLogFile, taskParamYaml.taskYaml.timeoutBeforeTerminate);
+            snippetExecResult = execProcessService.execCommand(cmd, taskDir, consoleLogFile, taskParamYaml.taskYaml.timeoutBeforeTerminate,
+                    snippetPrepareResult.snippet.code);
 
             // Store result
             stationTaskService.storeExecResult(task.launchpadUrl, task.getTaskId(), startedOn, snippetPrepareResult.snippet, snippetExecResult, artifactDir);
@@ -306,7 +403,9 @@ public class TaskProcessor {
                 ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                 SnippetApiData.SnippetExecResult tempSnippetExecResult = resourceProvider.processResultingFile(
                         launchpad, task, launchpadCode,
-                        new File(taskParamYaml.taskYaml.outputResourceAbsolutePath)
+                        new File(taskParamYaml.taskYaml.outputResourceAbsolutePath),
+                        snippetPrepareResult.snippet
+
                 );
                 if (tempSnippetExecResult !=null) {
                     snippetExecResult = tempSnippetExecResult;
@@ -320,7 +419,8 @@ public class TaskProcessor {
                     ? snippetPrepareResult.snippetAssetFile.file.getAbsolutePath()
                     : snippetPrepareResult.snippet.file) +"\n" +
                     "\tparams", th);
-            snippetExecResult = new SnippetApiData.SnippetExecResult(false, -1, ExceptionUtils.getStackTrace(th));
+            snippetExecResult = new SnippetApiData.SnippetExecResult(
+                    snippetPrepareResult.snippet.code, false, -1, ExceptionUtils.getStackTrace(th));
         }
         return snippetExecResult;
     }
@@ -346,7 +446,9 @@ public class TaskProcessor {
             GitSourcingService.GitExecResult result = gitSourcingService.prepareSnippet(snippetRootDir, snippetPrepareResult.snippet);
             if (result.isError) {
                 log.warn("Snippet {} has a permanent error, {}", snippetPrepareResult.snippet.code, result.error);
-                return null;
+                snippetPrepareResult.snippetExecResult = new SnippetApiData.SnippetExecResult(snippet.code, false, -1, result.error);
+                snippetPrepareResult.isLoaded = false;
+                return snippetPrepareResult;
             }
             snippetPrepareResult.snippetAssetFile = new AssetFile();
             snippetPrepareResult.snippetAssetFile.file = new File(result.snippetDir, snippetPrepareResult.snippet.file);
@@ -354,14 +456,6 @@ public class TaskProcessor {
         }
         return snippetPrepareResult;
     }
-
-    @Data
-    public static class SnippetPrepareResult {
-        public SnippetApiData.SnippetConfig snippet;
-        public AssetFile snippetAssetFile;
-        boolean isLoaded = true;
-    }
-
 
     private File prepareParamFile(File taskDir, String params) {
         File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);

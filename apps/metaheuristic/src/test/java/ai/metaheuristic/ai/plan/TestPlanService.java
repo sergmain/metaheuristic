@@ -213,7 +213,8 @@ public class TestPlanService extends PreparingPlan {
 
     private String getOKExecResult() {
         SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec(
-                new SnippetApiData.SnippetExecResult(true, 0, "Everything is Ok."), null, null);
+                new SnippetApiData.SnippetExecResult("output-of-a-snippet",true, 0, "Everything is Ok."),
+                null, null, null);
 
         return SnippetExecUtils.toString(snippetExec);
     }

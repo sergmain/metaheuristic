@@ -32,7 +32,8 @@ public interface ResourceProvider {
     SnippetApiData.SnippetExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            File outputResourceFile
+            File outputResourceFile,
+            SnippetApiData.SnippetConfig snippet
     );
 
     File getOutputResourceFile(

@@ -35,7 +35,7 @@ public class SimpleApp implements CommandLineRunner {
         SpringApplication.run(SimpleApp.class, args);
     }
 
-    private Map<String, Object> cfg;
+    private Map<String, Object> taskYaml;
 
     @Override
     public void run(String... args) throws IOException, InterruptedException {
@@ -51,7 +51,11 @@ public class SimpleApp implements CommandLineRunner {
         System.out.println("Yaml config file:\n"+config);
 
         Yaml yaml = new Yaml();
-        cfg = yaml.load(config);
+        Map<String, Object> cfg = yaml.load(config);
+
+        //noinspection unchecked
+        taskYaml = (Map)cfg.get("taskYaml");
+
 
         String inputFile = getInputFile();
         System.out.println("input file: " + inputFile);
@@ -62,12 +66,13 @@ public class SimpleApp implements CommandLineRunner {
     }
 
     public String getOutputFile() {
-        return ""+cfg.get("outputResourceAbsolutePath");
+        return ""+taskYaml.get("outputResourceAbsolutePath");
     }
 
     public String getInputFile() {
+
         @SuppressWarnings("unchecked")
-        Map<String, List<String>> inputResourceCodes = (Map)cfg.get("inputResourceAbsolutePaths");
+        Map<String, List<String>> inputResourceCodes = (Map)taskYaml.get("inputResourceAbsolutePaths");
 
         Collection<List<String>> values = inputResourceCodes.values();
         if (values.isEmpty()) {

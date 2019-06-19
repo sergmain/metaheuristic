@@ -37,6 +37,7 @@ public class SnippetApiData {
     @AllArgsConstructor
     @NoArgsConstructor
     public static class SnippetExecResult {
+        public String snippetCode;
         public boolean isOk;
         public int exitCode;
         public String console;
@@ -46,9 +47,34 @@ public class SnippetApiData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SnippetExec {
-        public SnippetExecResult exec = new SnippetExecResult();
-        public List<SnippetExecResult> preExec;
-        public List<SnippetExecResult> postExec;
+        public SnippetExecResult exec;
+        public List<SnippetExecResult> preExecs;
+        public List<SnippetExecResult> postExecs;
+        public SnippetExecResult generalExec;
+
+        public boolean allSnippetsAreOk() {
+            if (exec==null || !exec.isOk) {
+                return false;
+            }
+            if (generalExec!=null && !generalExec.isOk) {
+                return false;
+            }
+            if (preExecs!=null) {
+                for (SnippetExecResult preExec : preExecs) {
+                    if (!preExec.isOk) {
+                        return false;
+                    }
+                }
+            }
+            if (postExecs!=null) {
+                for (SnippetExecResult postExec : postExecs) {
+                    if (!postExec.isOk) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
     }
 
     @Data

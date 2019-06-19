@@ -229,8 +229,9 @@ public class StationTaskService {
     public void markAsFinishedWithError(String launchpadUrl, long taskId, String es) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             markAsFinished(launchpadUrl, taskId,
-                    new SnippetApiData.SnippetExec( new SnippetApiData.SnippetExecResult(false, -1, es),
-                            null, null));
+                    new SnippetApiData.SnippetExec(
+                            null, null, null,
+                            new SnippetApiData.SnippetExecResult("system-error", false, -1, es)));
         }
     }
 
@@ -246,7 +247,7 @@ public class StationTaskService {
                     log.info("\t713.38.1 task #{} doesn't have the launchedOn as inited", taskId);
                     task.setLaunchedOn(System.currentTimeMillis());
                 }
-                if (!snippetExec.exec.isOk) {
+                if (!snippetExec.allSnippetsAreOk()) {
                     log.info("\t713.38.2 task #{} finished with an error, set completed to true", taskId);
                     // there are some problems with this task. mark it as completed
                     task.setCompleted(true);

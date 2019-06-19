@@ -74,7 +74,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
     public SnippetApiData.SnippetExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            File outputResourceFile) {
+            File outputResourceFile, SnippetApiData.SnippetConfig snippet) {
         if (outputResourceFile.exists()) {
             log.info("Register task for uploading result data to server, resultDataFile: {}", outputResourceFile.getPath());
             UploadResourceTask uploadResourceTask = new UploadResourceTask(task.taskId, outputResourceFile);
@@ -84,7 +84,7 @@ public class LaunchpadResourceProvider implements ResourceProvider {
         } else {
             String es = "Result data file doesn't exist, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
-            return new SnippetApiData.SnippetExecResult(false, -1, es);
+            return new SnippetApiData.SnippetExecResult(snippet.code,false, -1, es);
         }
         return null;
     }

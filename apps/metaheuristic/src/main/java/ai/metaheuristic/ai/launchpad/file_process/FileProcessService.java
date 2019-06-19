@@ -116,16 +116,16 @@ public class FileProcessService {
             log.error("#171.07 Snippet wasn't found for code: {}", snippetCode);
             return;
         }
-        yaml.taskYaml.preSnippet = new ArrayList<>();
+        yaml.taskYaml.preSnippets = new ArrayList<>();
         if (process.getPreSnippetCode()!=null) {
             for (String preSnippetCode : process.getPreSnippetCode()) {
-                yaml.taskYaml.preSnippet.add(snippetService.getSnippetConfig(preSnippetCode));
+                yaml.taskYaml.preSnippets.add(snippetService.getSnippetConfig(preSnippetCode));
             }
         }
-        yaml.taskYaml.postSnippet = new ArrayList<>();
+        yaml.taskYaml.postSnippets = new ArrayList<>();
         if (process.getPostSnippetCode()!=null) {
             for (String postSnippetCode : process.getPostSnippetCode()) {
-                yaml.taskYaml.postSnippet.add(snippetService.getSnippetConfig(postSnippetCode));
+                yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(postSnippetCode));
             }
         }
         yaml.taskYaml.clean = plan.isClean();

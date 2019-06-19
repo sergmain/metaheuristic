@@ -20,6 +20,7 @@ import ai.metaheuristic.api.v1.data.BaseParams;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,14 +32,15 @@ import java.util.Map;
  * Time: 9:10 PM
  */
 @Data
+@EqualsAndHashCode
 public class TaskParamsYaml implements BaseParams {
 
     @Data
     public static class TaskYaml {
         public Map<String, List<String>> inputResourceCodes = new HashMap<>();
         public SnippetApiData.SnippetConfig snippet;
-        public List<SnippetApiData.SnippetConfig> preSnippet;
-        public List<SnippetApiData.SnippetConfig> postSnippet;
+        public List<SnippetApiData.SnippetConfig> preSnippets;
+        public List<SnippetApiData.SnippetConfig> postSnippets;
         public Map<String, String> hyperParams;
         public String outputResourceCode;
         public Map<String, DataStorageParams> resourceStorageUrls = new HashMap<>();

@@ -37,8 +37,8 @@ public class TaskParamsYamlV2 implements BaseParams {
     public static class TaskYamlV2 {
         public Map<String, List<String>> inputResourceCodes = new HashMap<>();
         public SnippetApiData.SnippetConfig snippet;
-        public List<SnippetApiData.SnippetConfig> preSnippet;
-        public List<SnippetApiData.SnippetConfig> postSnippet;
+        public List<SnippetApiData.SnippetConfig> preSnippets;
+        public List<SnippetApiData.SnippetConfig> postSnippets;
         public Map<String, String> hyperParams;
         public String outputResourceCode;
         public Map<String, DataStorageParams> resourceStorageUrls = new HashMap<>();

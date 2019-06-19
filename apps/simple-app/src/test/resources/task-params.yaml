@@ -1,0 +1,87 @@
+taskYaml:
+  clean: false
+  hyperParams: {
+  }
+  inputResourceAbsolutePaths:
+    mainDocument:
+      - C:\sandbox\git\aiai\aiai-station\task\localhost-8080\6\7398\DATA\81509-4576776670200.xml
+  inputResourceCodes:
+    mainDocument:
+      - 81509-4576776670200.xml
+  outputResourceAbsolutePath: C:\sandbox\git\aiai\aiai-station\task\localhost-8080\6\7398\artifacts\780-1044-1-simple-app-1_0-simple-app-with-timeout
+  outputResourceCode: 780-1044-1-simple-app-1_0-simple-app-with-timeout
+  postSnippets:
+    - checksum: '{"checksums":{"SHA256WithSignature":"538639c4ba14c75faf8b7ea5530b2817990bb261eb700ffa57792a68f324db9e###RnaaP9bk56BfF485jvE+SWTY1+81VMrWMBwTVIXuicfsljfQq0KnnMi6dsSh8rzKIQ7jCPqDZNPyzLSkAuoCuFR+WwcMyBDgy0vwiMfnVcw0v58YKQMAkfFSygYidWqwkahrjzMg7tnJCIAWwz9r/V6+LUSGX9CcwfjgBTFl7JpojQqxpyxHsmFGYhjyrcW5HU6+d/pBk9qhW2KgsfmFcQVhj5HSL9k14LAQu1NjLWiC4Zzad5RpPdT7kTWscqQiUviNMm7uBLtf7/gKJxfTF9U/L5ONNW71u7SjUdLUWF1N6uB9JXWNMvubLASJ8mYtYPyrDGrTcm19L+/nNlchPw=="}}'
+      checksumMap:
+        SHA256WithSignature: 538639c4ba14c75faf8b7ea5530b2817990bb261eb700ffa57792a68f324db9e###RnaaP9bk56BfF485jvE+SWTY1+81VMrWMBwTVIXuicfsljfQq0KnnMi6dsSh8rzKIQ7jCPqDZNPyzLSkAuoCuFR+WwcMyBDgy0vwiMfnVcw0v58YKQMAkfFSygYidWqwkahrjzMg7tnJCIAWwz9r/V6+LUSGX9CcwfjgBTFl7JpojQqxpyxHsmFGYhjyrcW5HU6+d/pBk9qhW2KgsfmFcQVhj5HSL9k14LAQu1NjLWiC4Zzad5RpPdT7kTWscqQiUviNMm7uBLtf7/gKJxfTF9U/L5ONNW71u7SjUdLUWF1N6uB9JXWNMvubLASJ8mYtYPyrDGrTcm19L+/nNlchPw==
+      code: simple-app:1.0
+      env: java-11
+      file: simple-app.jar
+      info:
+        length: 7681832
+        signed: true
+      metrics: false
+      skipParams: false
+      sourcing: launchpad
+      type: simple-app
+    - checksum: '{"checksums":{"SHA256WithSignature":"538639c4ba14c75faf8b7ea5530b2817990bb261eb700ffa57792a68f324db9e###RnaaP9bk56BfF485jvE+SWTY1+81VMrWMBwTVIXuicfsljfQq0KnnMi6dsSh8rzKIQ7jCPqDZNPyzLSkAuoCuFR+WwcMyBDgy0vwiMfnVcw0v58YKQMAkfFSygYidWqwkahrjzMg7tnJCIAWwz9r/V6+LUSGX9CcwfjgBTFl7JpojQqxpyxHsmFGYhjyrcW5HU6+d/pBk9qhW2KgsfmFcQVhj5HSL9k14LAQu1NjLWiC4Zzad5RpPdT7kTWscqQiUviNMm7uBLtf7/gKJxfTF9U/L5ONNW71u7SjUdLUWF1N6uB9JXWNMvubLASJ8mYtYPyrDGrTcm19L+/nNlchPw=="}}'
+      checksumMap:
+        SHA256WithSignature: 538639c4ba14c75faf8b7ea5530b2817990bb261eb700ffa57792a68f324db9e###RnaaP9bk56BfF485jvE+SWTY1+81VMrWMBwTVIXuicfsljfQq0KnnMi6dsSh8rzKIQ7jCPqDZNPyzLSkAuoCuFR+WwcMyBDgy0vwiMfnVcw0v58YKQMAkfFSygYidWqwkahrjzMg7tnJCIAWwz9r/V6+LUSGX9CcwfjgBTFl7JpojQqxpyxHsmFGYhjyrcW5HU6+d/pBk9qhW2KgsfmFcQVhj5HSL9k14LAQu1NjLWiC4Zzad5RpPdT7kTWscqQiUviNMm7uBLtf7/gKJxfTF9U/L5ONNW71u7SjUdLUWF1N6uB9JXWNMvubLASJ8mYtYPyrDGrTcm19L+/nNlchPw==
+      code: simple-app:1.0
+      env: java-11
+      file: simple-app.jar
+      info:
+        length: 7681832
+        signed: true
+      metrics: false
+      skipParams: false
+      sourcing: launchpad
+      type: simple-app
+  preSnippets:
+    - checksum: '{"checksums":{"SHA256WithSignature":"538639c4ba14c75faf8b7ea5530b2817990bb261eb700ffa57792a68f324db9e###RnaaP9bk56BfF485jvE+SWTY1+81VMrWMBwTVIXuicfsljfQq0KnnMi6dsSh8rzKIQ7jCPqDZNPyzLSkAuoCuFR+WwcMyBDgy0vwiMfnVcw0v58YKQMAkfFSygYidWqwkahrjzMg7tnJCIAWwz9r/V6+LUSGX9CcwfjgBTFl7JpojQqxpyxHsmFGYhjyrcW5HU6+d/pBk9qhW2KgsfmFcQVhj5HSL9k14LAQu1NjLWiC4Zzad5RpPdT7kTWscqQiUviNMm7uBLtf7/gKJxfTF9U/L5ONNW71u7SjUdLUWF1N6uB9JXWNMvubLASJ8mYtYPyrDGrTcm19L+/nNlchPw=="}}'
+      checksumMap:
+        SHA256WithSignature: 538639c4ba14c75faf8b7ea5530b2817990bb261eb700ffa57792a68f324db9e###RnaaP9bk56BfF485jvE+SWTY1+81VMrWMBwTVIXuicfsljfQq0KnnMi6dsSh8rzKIQ7jCPqDZNPyzLSkAuoCuFR+WwcMyBDgy0vwiMfnVcw0v58YKQMAkfFSygYidWqwkahrjzMg7tnJCIAWwz9r/V6+LUSGX9CcwfjgBTFl7JpojQqxpyxHsmFGYhjyrcW5HU6+d/pBk9qhW2KgsfmFcQVhj5HSL9k14LAQu1NjLWiC4Zzad5RpPdT7kTWscqQiUviNMm7uBLtf7/gKJxfTF9U/L5ONNW71u7SjUdLUWF1N6uB9JXWNMvubLASJ8mYtYPyrDGrTcm19L+/nNlchPw==
+      code: simple-app:1.0
+      env: java-11
+      file: simple-app.jar
+      info:
+        length: 7681832
+        signed: true
+      metrics: false
+      skipParams: false
+      sourcing: launchpad
+      type: simple-app
+    - checksum: '{"checksums":{"SHA256WithSignature":"538639c4ba14c75faf8b7ea5530b2817990bb261eb700ffa57792a68f324db9e###RnaaP9bk56BfF485jvE+SWTY1+81VMrWMBwTVIXuicfsljfQq0KnnMi6dsSh8rzKIQ7jCPqDZNPyzLSkAuoCuFR+WwcMyBDgy0vwiMfnVcw0v58YKQMAkfFSygYidWqwkahrjzMg7tnJCIAWwz9r/V6+LUSGX9CcwfjgBTFl7JpojQqxpyxHsmFGYhjyrcW5HU6+d/pBk9qhW2KgsfmFcQVhj5HSL9k14LAQu1NjLWiC4Zzad5RpPdT7kTWscqQiUviNMm7uBLtf7/gKJxfTF9U/L5ONNW71u7SjUdLUWF1N6uB9JXWNMvubLASJ8mYtYPyrDGrTcm19L+/nNlchPw=="}}'
+      checksumMap:
+        SHA256WithSignature: 538639c4ba14c75faf8b7ea5530b2817990bb261eb700ffa57792a68f324db9e###RnaaP9bk56BfF485jvE+SWTY1+81VMrWMBwTVIXuicfsljfQq0KnnMi6dsSh8rzKIQ7jCPqDZNPyzLSkAuoCuFR+WwcMyBDgy0vwiMfnVcw0v58YKQMAkfFSygYidWqwkahrjzMg7tnJCIAWwz9r/V6+LUSGX9CcwfjgBTFl7JpojQqxpyxHsmFGYhjyrcW5HU6+d/pBk9qhW2KgsfmFcQVhj5HSL9k14LAQu1NjLWiC4Zzad5RpPdT7kTWscqQiUviNMm7uBLtf7/gKJxfTF9U/L5ONNW71u7SjUdLUWF1N6uB9JXWNMvubLASJ8mYtYPyrDGrTcm19L+/nNlchPw==
+      code: simple-app:1.0
+      env: java-11
+      file: simple-app.jar
+      info:
+        length: 7681832
+        signed: true
+      metrics: false
+      skipParams: false
+      sourcing: launchpad
+      type: simple-app
+  resourceStorageUrls:
+    81509-4576776670200.xml:
+      sourcing: launchpad
+    780-1044-1-simple-app-1_0-simple-app-with-timeout:
+      sourcing: launchpad
+  snippet:
+    checksum: '{"checksums":{"SHA256WithSignature":"538639c4ba14c75faf8b7ea5530b2817990bb261eb700ffa57792a68f324db9e###RnaaP9bk56BfF485jvE+SWTY1+81VMrWMBwTVIXuicfsljfQq0KnnMi6dsSh8rzKIQ7jCPqDZNPyzLSkAuoCuFR+WwcMyBDgy0vwiMfnVcw0v58YKQMAkfFSygYidWqwkahrjzMg7tnJCIAWwz9r/V6+LUSGX9CcwfjgBTFl7JpojQqxpyxHsmFGYhjyrcW5HU6+d/pBk9qhW2KgsfmFcQVhj5HSL9k14LAQu1NjLWiC4Zzad5RpPdT7kTWscqQiUviNMm7uBLtf7/gKJxfTF9U/L5ONNW71u7SjUdLUWF1N6uB9JXWNMvubLASJ8mYtYPyrDGrTcm19L+/nNlchPw=="}}'
+    checksumMap:
+      SHA256WithSignature: 538639c4ba14c75faf8b7ea5530b2817990bb261eb700ffa57792a68f324db9e###RnaaP9bk56BfF485jvE+SWTY1+81VMrWMBwTVIXuicfsljfQq0KnnMi6dsSh8rzKIQ7jCPqDZNPyzLSkAuoCuFR+WwcMyBDgy0vwiMfnVcw0v58YKQMAkfFSygYidWqwkahrjzMg7tnJCIAWwz9r/V6+LUSGX9CcwfjgBTFl7JpojQqxpyxHsmFGYhjyrcW5HU6+d/pBk9qhW2KgsfmFcQVhj5HSL9k14LAQu1NjLWiC4Zzad5RpPdT7kTWscqQiUviNMm7uBLtf7/gKJxfTF9U/L5ONNW71u7SjUdLUWF1N6uB9JXWNMvubLASJ8mYtYPyrDGrTcm19L+/nNlchPw==
+    code: simple-app:1.0
+    env: java-11
+    file: simple-app.jar
+    info:
+      length: 7681832
+      signed: true
+    metrics: false
+    skipParams: false
+    sourcing: launchpad
+    type: simple-app
+  workingPath: C:\sandbox\git\aiai\aiai-station\task\localhost-8080\6\7398
+version: 2

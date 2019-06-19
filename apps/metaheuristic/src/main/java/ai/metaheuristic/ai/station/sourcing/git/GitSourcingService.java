@@ -102,8 +102,10 @@ public class GitSourcingService {
         try {
             File consoleLogFile = File.createTempFile("console-", ".log");
             consoleLogFile.deleteOnExit();
-            SnippetApiData.SnippetExecResult snippetExecResult = execProcessService.execCommand(gitVersionCmd, new File("."), consoleLogFile, timeout);
-            return new GitExecResult(snippetExecResult, false, null);
+            SnippetApiData.SnippetExecResult snippetExecResult = execProcessService.execCommand(
+                    gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec" );
+
+            return new GitExecResult(snippetExecResult, snippetExecResult.isOk, snippetExecResult.console);
         } catch (InterruptedException | IOException e) {
             log.error("Error", e);
             return new GitExecResult(null, true, "Error: " + e.getMessage());
@@ -209,7 +211,7 @@ public class GitSourcingService {
         }
         log.info("#027.50 repoDir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists());
 
-        return new GitExecResult(repoDir, new SnippetApiData.SnippetExecResult(true, 0, "" ), false, null);
+        return new GitExecResult(repoDir, new SnippetApiData.SnippetExecResult(snippet.code, true, 0, "" ), false, null);
     }
 
     public GitExecResult tryToRepairRepo(File snippetDir, SnippetApiData.SnippetConfig snippet) {

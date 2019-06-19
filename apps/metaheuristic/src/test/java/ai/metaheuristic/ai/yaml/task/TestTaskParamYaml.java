@@ -13,26 +13,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.yaml;
+package ai.metaheuristic.ai.yaml.task;
 
-import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
 import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.v1.data.task.TaskParamsYamlV1;
 import ai.metaheuristic.commons.CommonConsts;
 import org.junit.Assert;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
+import static org.junit.Assert.assertFalse;
+
+//@RunWith(SpringRunner.class)
+//@SpringBootTest
 public class TestTaskParamYaml {
 
     @Test
@@ -98,6 +95,8 @@ public class TestTaskParamYaml {
 
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(seq);
         System.out.println(s);
+
+        assertFalse(s.startsWith("!!"));
 
         TaskParamsYaml seq1 = TaskParamsYamlUtils.BASE_YAML_UTILS.to(s);
         Assert.assertEquals(seq, seq1);

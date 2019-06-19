@@ -102,7 +102,7 @@ public class DiskResourceProvider implements ResourceProvider {
     public SnippetApiData.SnippetExecResult processResultingFile(
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
             StationTask task, Metadata.LaunchpadInfo launchpadCode,
-            File outputResourceFile
+            File outputResourceFile, SnippetApiData.SnippetConfig snippet
     ) {
         if (outputResourceFile.exists()) {
             log.info("The result data was already written to file {}, no need to upload to launchpad", outputResourceFile.getPath());
@@ -110,7 +110,7 @@ public class DiskResourceProvider implements ResourceProvider {
         } else {
             String es = "#015.030 Result data file wasn't found, resultDataFile: " + outputResourceFile.getPath();
             log.error(es);
-            return new SnippetApiData.SnippetExecResult(false, -1, es);
+            return new SnippetApiData.SnippetExecResult(snippet.code, false, -1, es);
         }
         return null;    }
 

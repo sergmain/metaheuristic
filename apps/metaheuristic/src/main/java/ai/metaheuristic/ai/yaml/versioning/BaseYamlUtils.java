@@ -44,8 +44,8 @@ public class BaseYamlUtils<T > {
     }
 
     public String toString(BaseParams planYaml) {
-//        planYaml.version = getDefault().getVersion();
-        return getDefault().getYaml().dump(planYaml);
+//        return getDefault().getYaml().dumpAs(planYaml, Tag.MAP, DumperOptions.FlowStyle.BLOCK);
+        return getDefault().getYaml().dumpAsMap(planYaml);
     }
 
     public T to(String s) {
