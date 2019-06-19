@@ -22,6 +22,7 @@ import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.api.v1.launchpad.process.SnippetDefForPlan;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -39,36 +40,36 @@ public class FileProcessValidator implements ProcessValidator {
 
     @Override
     public EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst) {
-        if (process.getSnippetCodes() == null || process.getSnippetCodes().isEmpty()) {
+        if (process.getSnippets() == null || process.getSnippets().isEmpty()) {
             return EnumsApi.PlanValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
         }
-        for (String snippetCode : process.snippetCodes) {
-            Snippet snippet = snippetRepository.findByCode(snippetCode);
+        for (SnippetDefForPlan snDef : process.snippets) {
+            Snippet snippet = snippetRepository.findByCode(snDef.code);
             if (snippet==null) {
-                log.error("#175.07 Snippet wasn't found for code: {}, process: {}", snippetCode, process);
+                log.error("#175.07 Snippet wasn't found for code: {}, process: {}", snDef.code, process);
                 return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
             }
         }
-        if (process.preSnippetCode!=null) {
-            for (String snippetCode : process.preSnippetCode) {
-                Snippet snippet = snippetRepository.findByCode(snippetCode);
+        if (process.preSnippets!=null) {
+            for (SnippetDefForPlan snDef : process.preSnippets) {
+                Snippet snippet = snippetRepository.findByCode(snDef.code);
                 if (snippet==null) {
-                    log.error("#175.09 Pre-snippet wasn't found for code: {}, process: {}", snippetCode, process);
+                    log.error("#175.09 Pre-snippet wasn't found for code: {}, process: {}", snDef.code, process);
                     return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
                 }
             }
         }
-        if (process.postSnippetCode!=null) {
-            for (String snippetCode : process.postSnippetCode) {
-                Snippet snippet = snippetRepository.findByCode(snippetCode);
+        if (process.postSnippets!=null) {
+            for (SnippetDefForPlan snDef : process.postSnippets) {
+                Snippet snippet = snippetRepository.findByCode(snDef.code);
                 if (snippet == null) {
-                    log.error("#175.11 Post-snippet wasn't found for code: {}, process: {}", snippetCode, process);
+                    log.error("#175.11 Post-snippet wasn't found for code: {}, process: {}", snDef.code, process);
                     return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
                 }
             }
         }
 
-        if (!process.parallelExec && process.snippetCodes.size()>1) {
+        if (!process.parallelExec && process.snippets.size()>1) {
             return EnumsApi.PlanValidateStatus.TOO_MANY_SNIPPET_CODES_ERROR;
         }
 

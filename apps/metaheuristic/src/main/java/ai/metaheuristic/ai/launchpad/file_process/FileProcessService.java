@@ -28,6 +28,7 @@ import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.api.v1.launchpad.process.Process;
+import ai.metaheuristic.api.v1.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -60,24 +61,24 @@ public class FileProcessService {
 
         result.outputResourceCodes = new ArrayList<>();
         if (process.parallelExec) {
-            for (String snippetCode : process.snippetCodes) {
-                String resourceName = StrUtils.normalizeSnippetCode(snippetCode);
+            for (SnippetDefForPlan snDef : process.snippets) {
+                String resourceName = StrUtils.normalizeSnippetCode(snDef.code);
                 String outputResourceCode = PlanUtils.getResourceCode(plan.getId(), workbook.getId(), process.code, resourceName, process.order);
                 result.outputResourceCodes.add(outputResourceCode);
                 inputStorageUrls.put(outputResourceCode, process.outputParams);
                 if (isPersist) {
-                    createTaskInternal(plan, workbook, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
+                    createTaskInternal(plan, workbook, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
                 }
             }
         }
         else {
-            String snippetCode = process.snippetCodes.get(0);
-            String resourceName = StrUtils.normalizeSnippetCode(snippetCode);
+            SnippetDefForPlan snDef = process.snippets.get(0);
+            String resourceName = StrUtils.normalizeSnippetCode(snDef.code);
             String outputResourceCode = PlanUtils.getResourceCode(plan.getId(), workbook.getId(), process.code, resourceName, process.order);
             result.outputResourceCodes.add(outputResourceCode);
             inputStorageUrls.put(outputResourceCode, process.outputParams);
             if (isPersist) {
-                createTaskInternal(plan, workbook, process, outputResourceCode, snippetCode, collectedInputs, inputStorageUrls);
+                createTaskInternal(plan, workbook, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
             }
         }
         result.status = EnumsApi.PlanProducingStatus.OK;
@@ -89,7 +90,7 @@ public class FileProcessService {
     private void createTaskInternal(
             Plan plan, Workbook workbook, Process process,
             String outputResourceCode,
-            String snippetCode, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls) {
+            SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls) {
         if (process.type!= EnumsApi.ProcessType.FILE_PROCESSING) {
             throw new IllegalStateException("#171.01 Wrong type of process, " +
                     "expected: "+ EnumsApi.ProcessType.FILE_PROCESSING+", " +
@@ -111,21 +112,21 @@ public class FileProcessService {
         }
         yaml.taskYaml.resourceStorageUrls = map;
 
-        yaml.taskYaml.snippet = snippetService.getSnippetConfig(snippetCode);
+        yaml.taskYaml.snippet = snippetService.getSnippetConfig(snDef);
         if (yaml.taskYaml.snippet==null) {
-            log.error("#171.07 Snippet wasn't found for code: {}", snippetCode);
+            log.error("#171.07 Snippet wasn't found for code: {}", snDef.code);
             return;
         }
         yaml.taskYaml.preSnippets = new ArrayList<>();
-        if (process.getPreSnippetCode()!=null) {
-            for (String preSnippetCode : process.getPreSnippetCode()) {
-                yaml.taskYaml.preSnippets.add(snippetService.getSnippetConfig(preSnippetCode));
+        if (process.getPreSnippets()!=null) {
+            for (SnippetDefForPlan preSnippet : process.getPreSnippets()) {
+                yaml.taskYaml.preSnippets.add(snippetService.getSnippetConfig(preSnippet));
             }
         }
         yaml.taskYaml.postSnippets = new ArrayList<>();
-        if (process.getPostSnippetCode()!=null) {
-            for (String postSnippetCode : process.getPostSnippetCode()) {
-                yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(postSnippetCode));
+        if (process.getPostSnippets()!=null) {
+            for (SnippetDefForPlan postSnippet : process.getPostSnippets()) {
+                yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(postSnippet));
             }
         }
         yaml.taskYaml.clean = plan.isClean();

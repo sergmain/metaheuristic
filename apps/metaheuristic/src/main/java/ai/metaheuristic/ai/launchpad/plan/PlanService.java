@@ -359,7 +359,7 @@ public class PlanService {
                 return status;
             }
 
-            if (process.parallelExec && (process.snippetCodes==null || process.snippetCodes.size()<2)) {
+            if (process.parallelExec && (process.snippets==null || process.snippets.size()<2)) {
                 return EnumsApi.PlanValidateStatus.NOT_ENOUGH_FOR_PARALLEL_EXEC_ERROR;
             }
         }

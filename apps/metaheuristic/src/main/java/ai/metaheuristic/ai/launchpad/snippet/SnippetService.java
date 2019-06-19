@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.launchpad.snippet;
 
+import ai.metaheuristic.api.v1.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
@@ -73,14 +74,20 @@ public class SnippetService {
         return experimentSnippets;
     }
 
-    public SnippetApiData.SnippetConfig getSnippetConfig(String snippetCode) {
+    public SnippetApiData.SnippetConfig getSnippetConfig(SnippetDefForPlan snippetDef) {
         SnippetApiData.SnippetConfig snippetConfig = null;
-        if(StringUtils.isNotBlank(snippetCode)) {
-            Snippet postSnippet = snippetRepository.findByCode(snippetCode);
-            if (postSnippet != null) {
-                snippetConfig = SnippetConfigUtils.to(postSnippet.params);
+        if(StringUtils.isNotBlank(snippetDef.code)) {
+            Snippet snippet = snippetRepository.findByCode(snippetDef.code);
+            if (snippet != null) {
+                snippetConfig = SnippetConfigUtils.to(snippet.params);
+                if (!snippetConfig.skipParams) {
+                    snippetConfig.params =
+                            snippetConfig.params!=null
+                                    ? snippetConfig.params + ' ' + snippetDef.params
+                                    : snippetDef.params;
+                }
             } else {
-                log.warn("#295.010 Can't find snippet for code {}", snippetCode);
+                log.warn("#295.010 Can't find snippet for code {}", snippetDef.code);
             }
         }
         return snippetConfig;

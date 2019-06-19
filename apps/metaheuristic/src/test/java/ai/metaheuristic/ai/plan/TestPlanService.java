@@ -83,7 +83,7 @@ public class TestPlanService extends PreparingPlan {
             if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }
-            taskNumber += process.snippetCodes.size();
+            taskNumber += process.snippets.size();
         }
 
         assertEquals(1 + 1 + 3 + 2 * 12 * 7, taskNumber + experiment.getNumberOfTask());

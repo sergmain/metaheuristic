@@ -39,6 +39,7 @@ import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Task;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.api.v1.launchpad.process.Process;
+import ai.metaheuristic.api.v1.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
@@ -554,18 +555,17 @@ public class ExperimentService {
 
                         yaml.taskYaml.snippet = SnippetConfigUtils.to(snippet.params);
                         yaml.taskYaml.preSnippets = new ArrayList<>();
-                        if (process.getPreSnippetCode() != null) {
-                            for (String snippetCode : process.getPreSnippetCode()) {
-                                yaml.taskYaml.preSnippets.add(snippetService.getSnippetConfig(snippetCode));
+                        if (process.getPreSnippets() != null) {
+                            for (SnippetDefForPlan snDef : process.getPreSnippets()) {
+                                yaml.taskYaml.preSnippets.add(snippetService.getSnippetConfig(snDef));
                             }
                         }
                         yaml.taskYaml.postSnippets = new ArrayList<>();
-                        if (process.getPostSnippetCode()!=null) {
-                            for (String snippetCode : process.getPostSnippetCode()) {
-                                yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(snippetCode));
+                        if (process.getPostSnippets()!=null) {
+                            for (SnippetDefForPlan snDef : process.getPostSnippets()) {
+                                yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(snDef));
                             }
                         }
-
                         yaml.taskYaml.clean = plan.isClean();
 
                         String currTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);

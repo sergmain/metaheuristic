@@ -27,15 +27,15 @@ import java.util.List;
 
 @Data
 @ToString
-public class Process {
+public class ProcessV4 {
 
     public String name;
     public String code;
     public EnumsApi.ProcessType type;
     public boolean collectResources = false;
-    public List<SnippetDefForPlan> snippets;
-    public List<SnippetDefForPlan> preSnippets;
-    public List<SnippetDefForPlan> postSnippets;
+    public List<SnippetDefForPlanV4> snippets;
+    public List<SnippetDefForPlanV4> preSnippets;
+    public List<SnippetDefForPlanV4> postSnippets;
     public boolean parallelExec = false;
 
     /**

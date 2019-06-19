@@ -20,6 +20,7 @@ import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.process.Process;
+import ai.metaheuristic.api.v1.launchpad.process.SnippetDefForPlan;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -39,7 +40,7 @@ public class TestPlanYamlYaml {
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
-            p.snippetCodes = Collections.singletonList("snippet-01:1.1");
+            p.snippets = Collections.singletonList(new SnippetDefForPlan("snippet-01:1.1"));
             p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "assembled-raw";
@@ -57,7 +58,7 @@ public class TestPlanYamlYaml {
             p.name = "dataset processing";
             p.code = "dataset-processing";
 
-            p.snippetCodes = Collections.singletonList("snippet-02:1.1");
+            p.snippets = Collections.singletonList(new SnippetDefForPlan("snippet-02:1.1"));
             p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "dataset-processing";
@@ -77,7 +78,7 @@ public class TestPlanYamlYaml {
             p.name = "feature processing";
             p.code = "feature-processing";
 
-            p.snippetCodes = Arrays.asList("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
+            p.snippets = Arrays.asList(new SnippetDefForPlan("snippet-03:1.1"), new SnippetDefForPlan("snippet-04:1.1"), new SnippetDefForPlan("snippet-05:1.1"));
             p.parallelExec = true;
             p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);

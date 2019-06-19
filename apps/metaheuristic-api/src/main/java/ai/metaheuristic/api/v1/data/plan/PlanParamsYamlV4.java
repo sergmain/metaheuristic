@@ -18,7 +18,8 @@ package ai.metaheuristic.api.v1.data.plan;
 
 import ai.metaheuristic.api.v1.data.BaseParams;
 import ai.metaheuristic.api.v1.data.Meta;
-import ai.metaheuristic.api.v1.launchpad.process.Process;
+import ai.metaheuristic.api.v1.launchpad.process.ProcessV3;
+import ai.metaheuristic.api.v1.launchpad.process.ProcessV4;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -27,19 +28,19 @@ import java.util.List;
 /**
  * @author Serge
  * Date: 6/17/2019
- * Time: 9:01 PM
+ * Time: 8:58 PM
  */
 @Data
-public class PlanParamsYaml implements BaseParams {
+public class PlanParamsYamlV4 implements BaseParams {
 
     @Data
-    public static class PlanYaml {
-        public List<Process> processes = new ArrayList<>();
+    public static class PlanYamlV4 {
+        public List<ProcessV4> processes = new ArrayList<>();
         public boolean clean = false;
         public List<Meta> metas;
 
         public Meta getMeta(String key) {
-            if (metas==null) {
+            if (metas == null) {
                 return null;
             }
             for (Meta meta : metas) {
@@ -52,6 +53,7 @@ public class PlanParamsYaml implements BaseParams {
     }
 
     public final int version=4;
-    public PlanYaml planYaml;
+    public PlanYamlV4 planYaml;
     public PlanApiData.PlanInternalParamsYaml internalParams;
+
 }

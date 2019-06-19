@@ -25,10 +25,16 @@ public class PlanParamsYamlUtils {
     private static final PlanParamsYamlUtilsV1 YAML_UTILS_V_1 = new PlanParamsYamlUtilsV1();
     private static final PlanParamsYamlUtilsV2 YAML_UTILS_V_2 = new PlanParamsYamlUtilsV2();
     private static final PlanParamsYamlUtilsV3 YAML_UTILS_V_3 = new PlanParamsYamlUtilsV3();
-    private static final PlanParamsYamlUtilsV3 DEFAULT_UTILS = YAML_UTILS_V_3;
+    private static final PlanParamsYamlUtilsV4 YAML_UTILS_V_4 = new PlanParamsYamlUtilsV4();
+    private static final PlanParamsYamlUtilsV4 DEFAULT_UTILS = YAML_UTILS_V_4;
 
     public static final BaseYamlUtils<PlanParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
-            Map.of(1, YAML_UTILS_V_1, 2, YAML_UTILS_V_2, 3, YAML_UTILS_V_3),
+            Map.of(
+                    1, YAML_UTILS_V_1,
+                    2, YAML_UTILS_V_2,
+                    3, YAML_UTILS_V_3,
+                    4, YAML_UTILS_V_4
+            ),
             DEFAULT_UTILS
     );
 

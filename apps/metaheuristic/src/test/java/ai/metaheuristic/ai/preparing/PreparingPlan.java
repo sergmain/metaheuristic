@@ -38,6 +38,7 @@ import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.api.v1.launchpad.process.Process;
+import ai.metaheuristic.api.v1.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -46,10 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.io.ByteArrayInputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 
 import static ai.metaheuristic.api.v1.data.plan.PlanApiData.TaskProducingResultComplex;
 import static org.junit.Assert.*;
@@ -99,7 +97,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
-            p.snippetCodes = Collections.singletonList("snippet-01:1.1");
+            p.snippets = Collections.singletonList(new SnippetDefForPlan("snippet-01:1.1"));
             p.collectResources = false;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "assembled-raw-output";
@@ -112,7 +110,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.name = "dataset processing";
             p.code = "dataset-processing";
 
-            p.snippetCodes = Collections.singletonList("snippet-02:1.1");
+            p.snippets = Collections.singletonList(new SnippetDefForPlan("snippet-02:1.1"));
             p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "dataset-processing-output";
@@ -125,7 +123,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
             p.name = "feature processing";
             p.code = "feature-processing";
 
-            p.snippetCodes = Arrays.asList("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
+            p.snippets = List.of(new SnippetDefForPlan("snippet-03:1.1"), new SnippetDefForPlan("snippet-04:1.1"), new SnippetDefForPlan("snippet-05:1.1"));
             p.parallelExec = true;
             p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
