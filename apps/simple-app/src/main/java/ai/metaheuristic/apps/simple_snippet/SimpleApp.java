@@ -46,7 +46,7 @@ public class SimpleApp implements CommandLineRunner {
         // sleep for testing timeoutBeforeTerminate
         Thread.sleep(TimeUnit.SECONDS.toMillis(5));
 
-        if (true) {
+        if (args.length==2) {
             throw new RuntimeException("Just for test");
         }
 

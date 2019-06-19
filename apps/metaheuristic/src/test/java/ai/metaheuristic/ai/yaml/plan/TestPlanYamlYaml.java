@@ -16,15 +16,11 @@
 
 package ai.metaheuristic.ai.yaml.plan;
 
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.process.Process;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -32,8 +28,6 @@ import java.util.Collections;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
-@RunWith(SpringRunner.class)
-@SpringBootTest
 public class TestPlanYamlYaml {
 
     @Test
@@ -121,6 +115,9 @@ public class TestPlanYamlYaml {
 
         String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
         System.out.println(yaml);
+
+        assertFalse(yaml.startsWith("!!"));
+
 
         PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(yaml);
         PlanParamsYaml.PlanYaml py = planParams.planYaml;
