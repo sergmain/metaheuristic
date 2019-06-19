@@ -22,7 +22,7 @@ SQL DB =================
 
   Preparing:
   -- create database mh
-  -- run scrip sql/db-mysql.sql in mh database
+  -- run scrip https://github.com/sergmain/metaheuristic/blob/master/sql/db-mysql.sql in mh database
   -- replace <pass-for-db> in app server's variable JDBC_DATABASE_PASSWORD
   -- replace <ip-address>: in app server's variable JDBC_DATABASE_URL
 
