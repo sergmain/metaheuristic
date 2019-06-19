@@ -42,6 +42,6 @@ Link github repo =======
   branch - master
 
 =====================
-If everything will be ok then you can use credential to login into Metaheuristic with configured:
+If everything will be ok then you can use a configured credential to login into Metaheuristic :
 login: q=1
 pass: 123
