@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.batch.process_resource;
 
-import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.utils.ControllerUtils;

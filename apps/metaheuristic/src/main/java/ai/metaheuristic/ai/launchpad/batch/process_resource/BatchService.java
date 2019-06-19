@@ -435,13 +435,7 @@ public class BatchService {
                     isOk = true;
                     continue;
                 case ERROR:
-                    bs.add("#990.210 " + mainDocument + ", Task was completed with error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
-                            "taskId: " + task.getId() + "\n" +
-                            "stationId: " + task.getStationId() + "\n" +
-                            stationIpAndHost + "\n" +
-                            "isOk: " + snippetExec.exec.isOk + "\n" +
-                            "exitCode: " + snippetExec.exec.exitCode + "\n" +
-                            "console:\n" + (StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<output to console is blank>") + "\n\n");
+                    bs.add(getStatusForError(batchId, wb, mainDocument, task, snippetExec, stationIpAndHost));
                     isOk = true;
                     continue;
                 case OK:
@@ -481,6 +475,43 @@ public class BatchService {
         bs.init();
 
         return bs;
+    }
+
+    private String getStatusForError(Long batchId, Workbook wb, String mainDocument, Task task, SnippetApiData.SnippetExec snippetExec, String stationIpAndHost) {
+
+        final String header =
+                "#990.210 " + mainDocument + ", Task was completed with error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                "taskId: " + task.getId() + "\n" +
+                "stationId: " + task.getStationId() + "\n" +
+                stationIpAndHost + "\n\n";
+        StringBuilder sb = new StringBuilder(header);
+        if (snippetExec.preExecs!=null && !snippetExec.preExecs.isEmpty()) {
+            sb.append("Pre snippets:\n");
+            for (SnippetApiData.SnippetExecResult preExec : snippetExec.preExecs) {
+                sb.append(execResultAsStr(preExec));
+            }
+        }
+        if (StringUtils.isNotBlank(snippetExec.exec.snippetCode)) {
+            sb.append("Main snippet:\n");
+            sb.append(execResultAsStr(snippetExec.exec));
+        }
+
+        if (snippetExec.postExecs!=null && !snippetExec.postExecs.isEmpty()) {
+            sb.append("Post snippets:\n");
+            for (SnippetApiData.SnippetExecResult postExec : snippetExec.postExecs) {
+                sb.append(execResultAsStr(postExec));
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private String execResultAsStr(SnippetApiData.SnippetExecResult execResult) {
+        return
+                "snippet: " + execResult.snippetCode + "\n" +
+                "isOk: " + execResult.isOk + "\n" +
+                "exitCode: " + execResult.exitCode + "\n" +
+                "console:\n" + (StringUtils.isNotBlank(execResult.console) ? execResult.console : "<output to console is blank>") + "\n\n";
     }
 
     @SuppressWarnings("Duplicates")

@@ -47,7 +47,7 @@ public class SnippetApiData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class SnippetExec {
-        public SnippetExecResult exec;
+        public SnippetExecResult exec = new SnippetExecResult();
         public List<SnippetExecResult> preExecs;
         public List<SnippetExecResult> postExecs;
         public SnippetExecResult generalExec;

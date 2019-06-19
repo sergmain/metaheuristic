@@ -44,7 +44,11 @@ public class SimpleApp implements CommandLineRunner {
             System.exit(-1);
         }
         // sleep for testing timeoutBeforeTerminate
-        Thread.sleep(TimeUnit.SECONDS.toMillis(10));
+        Thread.sleep(TimeUnit.SECONDS.toMillis(5));
+
+        if (true) {
+            throw new RuntimeException("Just for test");
+        }
 
         File yamlFile = new File(args[0]);
         String config = FileUtils.readFileToString(yamlFile, "utf-8");
@@ -52,9 +56,11 @@ public class SimpleApp implements CommandLineRunner {
 
         Yaml yaml = new Yaml();
         Map<String, Object> cfg = yaml.load(config);
+        System.out.println("cfg: " + cfg);
 
         //noinspection unchecked
         taskYaml = (Map)cfg.get("taskYaml");
+        System.out.println("taskYaml = " + taskYaml);
 
 
         String inputFile = getInputFile();
