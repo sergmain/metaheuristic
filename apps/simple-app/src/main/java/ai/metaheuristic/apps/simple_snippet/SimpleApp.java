@@ -23,6 +23,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -43,10 +44,11 @@ public class SimpleApp implements CommandLineRunner {
             System.out.println("Parameter file wasn't specified");
             System.exit(-1);
         }
+        System.out.println("args = " + Arrays.toString(args));
         // sleep for testing timeoutBeforeTerminate
         Thread.sleep(TimeUnit.SECONDS.toMillis(5));
 
-        if (args.length==2) {
+        if (args.length>1 ) {
             throw new RuntimeException("Just for test");
         }
 
