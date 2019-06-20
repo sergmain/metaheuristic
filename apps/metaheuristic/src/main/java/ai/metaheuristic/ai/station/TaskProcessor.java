@@ -211,7 +211,8 @@ public class TaskProcessor {
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
 
             boolean isNotReady = false;
-            final Map<String, SnippetPrepareResult> results = new HashMap<>();
+            final SnippetPrepareResult[] results = new SnippetPrepareResult[ totalCountOfSnippets(taskParamYaml.taskYaml) ];
+            int idx = 0;
             SnippetPrepareResult result;
             for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
                 result = prepareSnippet(launchpadCode, preSnippetConfig);
@@ -219,13 +220,14 @@ public class TaskProcessor {
                     isNotReady = true;
                     break;
                 }
-                results.put(preSnippetConfig.code, result);
+                results[idx++] = result;
             }
             if (isNotReady) {
                 continue;
             }
 
             result = prepareSnippet(launchpadCode, taskParamYaml.taskYaml.getSnippet());
+            results[idx++] = result;
             if (!result.isLoaded || !isAllLoaded) {
                 continue;
             }
@@ -236,7 +238,7 @@ public class TaskProcessor {
                     isNotReady = true;
                     break;
                 }
-                results.put(postSnippetConfig.code, result);
+                results[idx++] = result;
             }
             if (isNotReady) {
                 continue;
@@ -246,8 +248,9 @@ public class TaskProcessor {
             List<SnippetApiData.SnippetExecResult> preSnippetExecResult = new ArrayList<>();
             List<SnippetApiData.SnippetExecResult> postSnippetExecResult = new ArrayList<>();
             boolean isOk = true;
+            idx = 0;
             for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
-                result = results.get(preSnippetConfig.code);
+                result = results[idx++];
                 SnippetApiData.SnippetExecResult execResult;
                 if (result==null) {
                     execResult = new SnippetApiData.SnippetExecResult(
@@ -265,7 +268,7 @@ public class TaskProcessor {
             }
             SnippetApiData.SnippetExecResult snippetExecResult = null;
             if (isOk) {
-                result = results.get(taskParamYaml.taskYaml.getSnippet().code);
+                result = results[idx++];
                 if (result==null) {
                     snippetExecResult = new SnippetApiData.SnippetExecResult(
                             taskParamYaml.taskYaml.getSnippet().code, false, -999,
@@ -280,7 +283,7 @@ public class TaskProcessor {
                     }
                     if (isOk) {
                         for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
-                            result = results.get(postSnippetConfig.code);
+                            result = results[idx++];
                             SnippetApiData.SnippetExecResult execResult;
                             if (result==null) {
                                 execResult = new SnippetApiData.SnippetExecResult(
@@ -302,6 +305,14 @@ public class TaskProcessor {
             stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(),
                     new SnippetApiData.SnippetExec(snippetExecResult, preSnippetExecResult, postSnippetExecResult, null));
         }
+    }
+
+    private int totalCountOfSnippets(TaskParamsYaml.TaskYaml taskYaml) {
+        int count = 0;
+        count += (taskYaml.preSnippets!=null) ? taskYaml.preSnippets.size() : 0;
+        count += (taskYaml.postSnippets!=null) ? taskYaml.postSnippets.size() : 0;
+        count += (taskYaml.snippet!=null) ? 1 : 0;
+        return count;
     }
 
     // TODO 2019.05.02 implement unit-test for this method
