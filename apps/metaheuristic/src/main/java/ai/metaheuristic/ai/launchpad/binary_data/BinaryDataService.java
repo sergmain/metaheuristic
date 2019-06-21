@@ -31,6 +31,7 @@ import org.apache.commons.io.IOUtils;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -213,10 +214,9 @@ public class BinaryDataService {
 
             return data;
         }
-        catch(BinaryDataSaveException e) {
+        catch(BinaryDataSaveException | PessimisticLockingFailureException e) {
             throw e;
-        }
-        catch(Throwable th) {
+        } catch(Throwable th) {
             log.error("#087.09 error storing data to db", th);
             throw new BinaryDataSaveException("Error", th);
         }

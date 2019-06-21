@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.file_process;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
@@ -23,6 +24,7 @@ import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.Meta;
 import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.Plan;
@@ -107,8 +109,7 @@ public class FileProcessService {
         Map<String, DataStorageParams> map = new HashMap<>();
         for (Map.Entry<String, DataStorageParams> entry : inputStorageUrls.entrySet()) {
             final DataStorageParams v = entry.getValue();
-            map.put(entry.getKey(), new DataStorageParams(
-                    v.sourcing, v.git, v.disk, v.storageType));
+            map.put(entry.getKey(), new DataStorageParams(v.sourcing, v.git, v.disk, v.storageType));
         }
         yaml.taskYaml.resourceStorageUrls = map;
 
@@ -132,7 +133,15 @@ public class FileProcessService {
         yaml.taskYaml.clean = plan.isClean();
         yaml.taskYaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
-        String taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);
+        final Meta meta = process.getMeta(Consts.META_TASK_PARAMS_VERSION);
+        String taskParams;
+        if (meta!=null) {
+            int version = Integer.parseInt(meta.value);
+            taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(yaml, version);
+        }
+        else {
+            taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);
+        }
 
         TaskImpl task = new TaskImpl();
         task.setWorkbookId(workbook.getId());

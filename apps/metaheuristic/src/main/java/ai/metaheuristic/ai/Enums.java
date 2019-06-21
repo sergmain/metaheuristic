@@ -28,7 +28,8 @@ public final class Enums {
         FILENAME_IS_BLANK,
         TASK_WAS_RESET,
         TASK_NOT_FOUND,
-        PROBLEM_WITH_OPTIMISTIC_LOCKING,
+        UNRECOVERABLE_ERROR,
+        PROBLEM_WITH_LOCKING,
         GENERAL_ERROR
     }
 

@@ -95,7 +95,7 @@ public class TaskPersistencer {
                 }
             }
         }
-        return Enums.UploadResourceStatus.PROBLEM_WITH_OPTIMISTIC_LOCKING;
+        return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
     }
 
     @SuppressWarnings("unused")

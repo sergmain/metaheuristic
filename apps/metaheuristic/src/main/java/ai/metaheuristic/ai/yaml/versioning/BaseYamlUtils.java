@@ -44,8 +44,30 @@ public class BaseYamlUtils<T > {
     }
 
     public String toString(BaseParams planYaml) {
-//        return getDefault().getYaml().dumpAs(planYaml, Tag.MAP, DumperOptions.FlowStyle.BLOCK);
         return getDefault().getYaml().dumpAsMap(planYaml);
+    }
+
+    public String toStringAsVersion(BaseParams planYaml, int version) {
+        if (getDefault().getVersion()==version) {
+            return getDefault().getYaml().dumpAsMap(planYaml);
+        }
+        else {
+
+            AbstractParamsYamlUtils yamlUtils = getDefault();
+            Object currPlanParamsYaml = planYaml;
+            do {
+                if (yamlUtils.getVersion()==version) {
+                    break;
+                }
+                //noinspection unchecked
+                currPlanParamsYaml = yamlUtils.downgradeTo(currPlanParamsYaml);
+            } while ((yamlUtils=(AbstractParamsYamlUtils)yamlUtils.prevUtil())!=null);
+
+            //noinspection unchecked
+            T p = (T)currPlanParamsYaml;
+
+            return getForVersion(version).getYaml().dumpAsMap(p);
+        }
     }
 
     public T to(String s) {

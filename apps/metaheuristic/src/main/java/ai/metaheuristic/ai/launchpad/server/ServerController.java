@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.server;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.ExchangeData;
+import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
@@ -37,6 +38,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -128,14 +130,14 @@ public class ServerController {
     private UploadResult uploadResource(MultipartFile file, Long taskId) {
         String originFilename = file.getOriginalFilename();
         if (StringUtils.isBlank(originFilename)) {
-            return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#442.01 name of uploaded file is blank");
+            return new UploadResult(Enums.UploadResourceStatus.FILENAME_IS_BLANK, "#440.010 name of uploaded file is blank");
         }
         if (taskId==null) {
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#442.87 taskId is null" );
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.020 taskId is null" );
         }
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task==null) {
-            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#442.83 taskId is null" );
+            return new UploadResult(Enums.UploadResourceStatus.TASK_NOT_FOUND,"#440.030 taskId is null" );
         }
 
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
@@ -144,7 +146,7 @@ public class ServerController {
             File tempDir = DirUtils.createTempDir("upload-resource-");
             if (tempDir==null || tempDir.isFile()) {
                 final String location = System.getProperty("java.io.tmpdir");
-                return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, "#442.04 can't create temporary directory in " + location);
+                return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, "#440.040 can't create temporary directory in " + location);
             }
             final File resFile = new File(tempDir, "resource.");
             log.debug("Start storing an uploaded resource data to disk, target file: {}", resFile.getPath());
@@ -161,14 +163,25 @@ public class ServerController {
                         task.workbookId, EnumsApi.BinaryDataRefType.workbook);
             }
         }
+        catch (BinaryDataSaveException th) {
+            final String es = "#440.045 can't store the result, unrecoverable error with data. Error: " + th.toString();
+            log.error(es, th);
+            return new UploadResult(Enums.UploadResourceStatus.UNRECOVERABLE_ERROR, es);
+        }
+        catch (PessimisticLockingFailureException th) {
+            final String es = "#440.050 can't store the result, need to try again. Error: " + th.toString();
+            log.error(es, th);
+            return new UploadResult(Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING, es);
+        }
         catch (Throwable th) {
-            log.error("#442.01 Error", th);
-            return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, "#442.05 can't upload result, Error: " + th.toString());
+            final String error = "#440.060 can't store the result, Error: " + th.toString();
+            log.error(error, th);
+            return new UploadResult(Enums.UploadResourceStatus.GENERAL_ERROR, error);
         }
         Enums.UploadResourceStatus status = taskPersistencer.setResultReceived(task.getId(), true);
         return status== Enums.UploadResourceStatus.OK
                 ? OK_UPLOAD_RESULT
-                : new UploadResult(status, "#442.08 can't update resultReceived field for task #"+task.getId()+"");
+                : new UploadResult(status, "#440.080 can't update resultReceived field for task #"+task.getId()+"");
     }
 
     @SuppressWarnings("unused")
@@ -186,7 +199,7 @@ public class ServerController {
     private String getSnippetChecksum(HttpServletResponse response, String snippetCode) throws IOException {
         Snippet snippet = snippetRepository.findByCode(snippetCode);
         if (snippet==null) {
-            log.warn("#442.23 Snippet wasn't found for code {}", snippetCode);
+            log.warn("#440.100 Snippet wasn't found for code {}", snippetCode);
             response.sendError(HttpServletResponse.SC_GONE);
             return null;
         }

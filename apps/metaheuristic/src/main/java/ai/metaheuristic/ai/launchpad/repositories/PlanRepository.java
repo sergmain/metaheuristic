@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.api.v1.launchpad.Plan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -33,6 +34,9 @@ import java.util.List;
 @Transactional
 @Profile("launchpad")
 public interface PlanRepository extends JpaRepository<PlanImpl, Long> {
+
+    @Query(value="select p from PlanImpl p where p.id=:id")
+    Plan findByIdForUpdate(Long id);
 
     @Transactional(readOnly = true)
     Page<PlanImpl> findAll(Pageable pageable);

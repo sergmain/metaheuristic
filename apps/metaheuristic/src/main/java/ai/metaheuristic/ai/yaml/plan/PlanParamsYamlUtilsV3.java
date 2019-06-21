@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.yaml.plan;
 import ai.metaheuristic.ai.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.plan.PlanApiData;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV2;
 import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV3;
 import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV4;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
@@ -38,7 +39,7 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 public class PlanParamsYamlUtilsV3
-        extends AbstractParamsYamlUtils<PlanParamsYamlV3, PlanParamsYamlV4, PlanParamsYamlUtilsV4> {
+        extends AbstractParamsYamlUtils<PlanParamsYamlV3, PlanParamsYamlV4, PlanParamsYamlUtilsV4, PlanParamsYamlV2, PlanParamsYamlUtilsV2, Void> {
 
     @Override
     public int getVersion() {
@@ -85,8 +86,20 @@ public class PlanParamsYamlUtilsV3
     }
 
     @Override
+    public PlanParamsYamlV2 downgradeTo(Void yaml) {
+        // not supported
+        return null;
+    }
+
+    @Override
     public PlanParamsYamlUtilsV4 nextUtil() {
         return (PlanParamsYamlUtilsV4)PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(4);
+    }
+
+    @Override
+    public PlanParamsYamlUtilsV2 prevUtil() {
+        // not supported
+        return null;
     }
 
     public String toString(PlanParamsYamlV3 planYaml) {

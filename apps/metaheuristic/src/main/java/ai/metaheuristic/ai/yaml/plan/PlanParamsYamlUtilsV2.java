@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.ai.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV2;
+import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV3;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import ai.metaheuristic.api.v1.launchpad.process.ProcessV2;
 import ai.metaheuristic.api.v1.launchpad.process.ProcessV3;
@@ -29,17 +31,13 @@ import org.yaml.snakeyaml.Yaml;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV2;
-
-import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV3;
-
 /**
  * @author Serge
  * Date: 6/17/2019
  * Time: 12:10 AM
  */
 public class PlanParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<PlanParamsYamlV2, PlanParamsYamlV3, PlanParamsYamlUtilsV3> {
+        extends AbstractParamsYamlUtils<PlanParamsYamlV2, PlanParamsYamlV3, PlanParamsYamlUtilsV3, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -74,8 +72,20 @@ public class PlanParamsYamlUtilsV2
     }
 
     @Override
+    public Void downgradeTo(Void yaml) {
+        // not supported
+        return null;
+    }
+
+    @Override
     public PlanParamsYamlUtilsV3 nextUtil() {
         return (PlanParamsYamlUtilsV3)PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(3);
+    }
+
+    @Override
+    public Void prevUtil() {
+        // not supported
+        return null;
     }
 
     public String toString(PlanParamsYamlV2 planYaml) {

@@ -46,6 +46,7 @@ import ai.metaheuristic.api.v1.launchpad.Task;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
@@ -64,6 +65,7 @@ import static ai.metaheuristic.api.v1.EnumsApi.PlanValidateStatus.PROCESS_VALIDA
 @Service
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class PlanService {
 
     private final Globals globals;
@@ -75,6 +77,7 @@ public class PlanService {
     private final WorkbookRepository workbookRepository;
     private final TaskRepository taskRepository;
     private final PlanCache planCache;
+    private final PlanRepository planRepository;
 
     private final AtlasService atlasService;
     private final ExperimentRepository experimentRepository;
@@ -83,29 +86,10 @@ public class PlanService {
     private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
     private final WorkbookService workbookService;
 
-    public PlanService(Globals globals, ExperimentService experimentService, BinaryDataService binaryDataService, ExperimentProcessService experimentProcessService, FileProcessService fileProcessService, WorkbookRepository workbookRepository, TaskRepository taskRepository, PlanCache planCache, AtlasService atlasService, ExperimentRepository experimentRepository, ExperimentProcessValidator experimentProcessValidator, FileProcessValidator fileProcessValidator, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, WorkbookService workbookService) {
-        this.globals = globals;
-        this.experimentService = experimentService;
-        this.binaryDataService = binaryDataService;
-        this.experimentProcessService = experimentProcessService;
-        this.fileProcessService = fileProcessService;
-        this.workbookRepository = workbookRepository;
-        this.taskRepository = taskRepository;
-        this.planCache = planCache;
-        this.atlasService = atlasService;
-        this.experimentRepository = experimentRepository;
-        this.experimentProcessValidator = experimentProcessValidator;
-        this.fileProcessValidator = fileProcessValidator;
-        this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
-        this.workbookService = workbookService;
-    }
-
-    // TODO 2019.05.25 need to check all numbers of errors. Must be as #701.xx
-
     public Workbook toStarted(Workbook workbook) {
         WorkbookImpl fi = workbookRepository.findById(workbook.getId()).orElse(null);
         if (fi==null) {
-            String es = "#701.01 Can't change exec state to PRODUCED for workbook #" + workbook.getId();
+            String es = "#701.010 Can't change exec state to PRODUCED for workbook #" + workbook.getId();
             log.error(es);
             throw new IllegalStateException(es);
         }
@@ -126,7 +110,7 @@ public class PlanService {
         List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
         Monitoring.log("##020", Enums.Monitor.MEMORY);
         if (!workbooks.isEmpty()) {
-            log.info("Start producing tasks");
+            log.info("#701.020 Start producing tasks");
         }
         for (WorkbookImpl workbook : workbooks) {
             PlanImpl plan = planCache.findById(workbook.getPlanId());
@@ -136,12 +120,12 @@ public class PlanService {
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
-            log.info("Producing tasks for plan.code: {}, input resource pool: \n{}",plan.code, workbook.inputResourceParam);
+            log.info("#701.030 Producing tasks for plan.code: {}, input resource pool: \n{}",plan.code, workbook.inputResourceParam);
             produceAllTasks(true, plan, workbook);
             Monitoring.log("##022", Enums.Monitor.MEMORY);
         }
         if (!workbooks.isEmpty()) {
-            log.info("Producing of tasks was finished");
+            log.info("#701.040 Producing of tasks was finished");
         }
     }
 
@@ -161,21 +145,21 @@ public class PlanService {
 
     public PlanApiData.WorkbookResult getWorkbookExtended(Long workbookId) {
         if (workbookId==null) {
-            return new PlanApiData.WorkbookResult("#560.85 workbookId is null");
+            return new PlanApiData.WorkbookResult("#701.050 workbookId is null");
         }
         final WorkbookImpl workbook = workbookRepository.findById(workbookId).orElse(null);
         if (workbook == null) {
-            return new PlanApiData.WorkbookResult("#560.87 workbook wasn't found, workbookId: " + workbookId);
+            return new PlanApiData.WorkbookResult("#701.060 workbook wasn't found, workbookId: " + workbookId);
         }
         PlanImpl plan = planCache.findById(workbook.getPlanId());
         if (plan == null) {
-            return new PlanApiData.WorkbookResult("#560.89 plan wasn't found, planId: " + workbook.getPlanId());
+            return new PlanApiData.WorkbookResult("#701.070 plan wasn't found, planId: " + workbook.getPlanId());
         }
 
         if (!plan.getId().equals(workbook.getPlanId())) {
             workbook.setValid(false);
             workbookRepository.saveAndFlush(workbook);
-            return new PlanApiData.WorkbookResult("#560.73 planId doesn't match to workbook.planId, planId: " + workbook.getPlanId()+", workbook.planId: " + workbook.getPlanId());
+            return new PlanApiData.WorkbookResult("#701.080 planId doesn't match to workbook.planId, planId: " + workbook.getPlanId()+", workbook.planId: " + workbook.getPlanId());
         }
 
         //noinspection UnnecessaryLocalVariable
@@ -188,7 +172,7 @@ public class PlanService {
         try {
             planValidation.status = validate(plan);
         } catch (YAMLException e) {
-            planValidation.addErrorMessage("#560.34 Error while parsing yaml config, " + e.toString());
+            planValidation.addErrorMessage("#701.090 Error while parsing yaml config, " + e.toString());
             planValidation.status = EnumsApi.PlanValidateStatus.YAML_PARSING_ERROR;
         }
         setValidTo(plan, planValidation.status == EnumsApi.PlanValidateStatus.OK );
@@ -196,7 +180,7 @@ public class PlanService {
             planValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
         else {
-            final String es = "#561.01 Validation error: " + planValidation.status;
+            final String es = "#701.100 Validation error: " + planValidation.status;
             log.error(es);
             planValidation.addErrorMessage(es);
         }
@@ -212,7 +196,7 @@ public class PlanService {
         final Workbook workbook = result.workbook;
         final Plan plan = result.plan;
         if (plan ==null || workbook ==null) {
-            throw new IllegalStateException("Error: (result.plan==null || result.workbook==null)");
+            throw new IllegalStateException("#701.110 Error: (result.plan==null || result.workbook==null)");
         }
 
         workbook.setExecState(execState.code);
@@ -224,10 +208,9 @@ public class PlanService {
 
     private final static Object syncObj = new Object();
 
-    // TODO 2019.05.25 not so good but just workaround for ObjectOptimisticLockingFailureException
     private void setValidTo(Plan plan, boolean valid) {
         synchronized (syncObj) {
-            Plan p = planCache.findById(plan.getId());
+            Plan p = planRepository.findByIdForUpdate(plan.getId());
             if (p!=null && p.isValid()!=valid) {
                 p.setValid(true);
                 saveInternal(p);
@@ -237,7 +220,7 @@ public class PlanService {
 
     private void setLockedTo(Plan plan, boolean locked) {
         synchronized (syncObj) {
-            Plan p = planCache.findById(plan.getId());
+            Plan p = planRepository.findByIdForUpdate(plan.getId());
             if (p!=null && p.isLocked()!=locked) {
                 p.setLocked(locked);
                 saveInternal(p);
@@ -250,7 +233,7 @@ public class PlanService {
             planCache.save((PlanImpl)plan);
         }
         else {
-            throw new NotImplementedException("Need to implement");
+            throw new NotImplementedException("#701.120 Need to implement");
         }
     }
 
@@ -259,7 +242,7 @@ public class PlanService {
             return workbookRepository.saveAndFlush((WorkbookImpl)workbook);
         }
         else {
-            throw new NotImplementedException("Need to implement");
+            throw new NotImplementedException("#701.130 Need to implement");
         }
     }
 
@@ -272,7 +255,7 @@ public class PlanService {
         for (Workbook workbook : result.instances) {
             Plan plan = planCache.findById(workbook.getPlanId());
             if (plan==null) {
-                log.warn("#560.51 Found workbook with wrong planId. planId: {}", workbook.getPlanId());
+                log.warn("#701.140 Found workbook with wrong planId. planId: {}", workbook.getPlanId());
                 continue;
             }
             result.plans.put(workbook.getId(), plan);
@@ -288,17 +271,17 @@ public class PlanService {
         }
         long mills = System.currentTimeMillis();
         result.planValidateStatus = validate(plan);
-        log.info("Plan was validated for "+(System.currentTimeMillis() - mills) + " ms.");
+        log.info("#701.150 Plan was validated for "+(System.currentTimeMillis() - mills) + " ms.");
         if (result.planValidateStatus != EnumsApi.PlanValidateStatus.OK &&
                 result.planValidateStatus != EnumsApi.PlanValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
-            log.error("#701.07 Can't produce tasks, error: {}", result.planValidateStatus);
+            log.error("#701.160 Can't produce tasks, error: {}", result.planValidateStatus);
             toStopped(isPersist, workbook.getId());
             return result;
         }
         Monitoring.log("##022", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
         result = produceTasks(isPersist, plan, workbook);
-        log.info("PlanService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
+        log.info("#701.170 PlanService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 
         return result;
@@ -479,7 +462,7 @@ public class PlanService {
         InputResourceParam resourceParams = InputResourceParamUtils.to(fi.getInputResourceParam());
         List<SimpleCodeAndStorageUrl> initialInputResourceCodes;
         initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllPoolCodes());
-        log.info("Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
+        log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
 
         ResourcePools pools = new ResourcePools(initialInputResourceCodes);
         if (pools.status!= EnumsApi.PlanProducingStatus.OK) {
@@ -497,7 +480,7 @@ public class PlanService {
                     }
                 }
                 if (newKey==null) {
-                    log.error("#701.09 Can't find key for pool code {}", key );
+                    log.error("#701.190 Can't find key for pool code {}", key );
                     result.planProducingStatus = EnumsApi.PlanProducingStatus.ERROR;
                     return;
                 }
@@ -532,7 +515,7 @@ public class PlanService {
                     Monitoring.log("##029", Enums.Monitor.MEMORY);
                     break;
                 default:
-                    throw new IllegalStateException("#701.11 Unknown process type");
+                    throw new IllegalStateException("#701.200 Unknown process type");
             }
             result.numberOfTasks += produceTaskResult.numberOfTasks;
             if (produceTaskResult.status != EnumsApi.PlanProducingStatus.OK) {
@@ -559,7 +542,7 @@ public class PlanService {
         Long id = fi.getId();
         result.workbook = workbookRepository.findById(id).orElse(null);
         if (result.workbook==null) {
-            String es = "#701.16 Can't change exec state to PRODUCED for workbook #" + id;
+            String es = "#701.210 Can't change exec state to PRODUCED for workbook #" + id;
             log.error(es);
             throw new IllegalStateException(es);
         }
@@ -583,7 +566,7 @@ public class PlanService {
         if (forChecking.isEmpty()) {
             Long count = taskRepository.countWithConcreteOrder(workbook.getId(), workbook.getProducingOrder() + 1);
             if (count==null) {
-                throw new IllegalStateException("#701.21 count of records is null");
+                throw new IllegalStateException("#701.220 count of records is null");
             }
             if (count==0) {
                 log.info("Workbook #{} was finished", workbook.getId());
@@ -594,7 +577,7 @@ public class PlanService {
 
                 Long experimentId = experimentRepository.findIdByWorkbookId(instance.getId());
                 if (experimentId==null) {
-                    log.info("#701.23 Can't store an experiment to atlas, the workbook "+instance.getId()+" doesn't contain an experiment" );
+                    log.info("#701.230 Can't store an experiment to atlas, the workbook "+instance.getId()+" doesn't contain an experiment" );
                     return instance;
                 }
                 atlasService.toAtlas(instance.getId(), experimentId);

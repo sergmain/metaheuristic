@@ -31,7 +31,7 @@ import java.util.List;
  * Time: 12:10 AM
  */
 public class TaskParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<TaskParamsYamlV1, TaskParamsYamlV2, TaskParamsYamlUtilsV2> {
+        extends AbstractParamsYamlUtils<TaskParamsYamlV1, TaskParamsYamlV2, TaskParamsYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -56,8 +56,20 @@ public class TaskParamsYamlUtilsV1
     }
 
     @Override
+    public Void downgradeTo(Void yaml) {
+        // there isn't any prev version
+        return null;
+    }
+
+    @Override
     public TaskParamsYamlUtilsV2 nextUtil() {
         return (TaskParamsYamlUtilsV2)TaskParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    }
+
+    @Override
+    public Void prevUtil() {
+        // there isn't any prev version
+        return null;
     }
 
     public String toString(TaskParamsYamlV1 planYaml) {

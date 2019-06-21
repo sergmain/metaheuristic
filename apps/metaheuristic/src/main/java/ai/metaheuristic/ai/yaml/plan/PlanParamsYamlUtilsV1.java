@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 public class PlanParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<PlanParamsYamlV1, PlanParamsYamlV2, PlanParamsYamlUtilsV2> {
+        extends AbstractParamsYamlUtils<PlanParamsYamlV1, PlanParamsYamlV2, PlanParamsYamlUtilsV2, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -64,8 +64,18 @@ public class PlanParamsYamlUtilsV1
     }
 
     @Override
+    public Void downgradeTo(Void yaml) {
+        return null;
+    }
+
+    @Override
     public PlanParamsYamlUtilsV2 nextUtil() {
         return (PlanParamsYamlUtilsV2)PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    }
+
+    @Override
+    public Void prevUtil() {
+        return null;
     }
 
     public String toString(PlanParamsYamlV1 planYaml) {

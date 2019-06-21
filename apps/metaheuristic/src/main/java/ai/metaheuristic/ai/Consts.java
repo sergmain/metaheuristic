@@ -94,4 +94,6 @@ public class Consts {
     public static final String PLANS_CACHE = "plans";
     public static final String SNIPPETS_CACHE = "snippets";
     public static final String MAIN_DOCUMENT_POOL_CODE_FOR_BATCH = "mainDocument";
+
+    public static final String META_TASK_PARAMS_VERSION = "task-params-version";
 }

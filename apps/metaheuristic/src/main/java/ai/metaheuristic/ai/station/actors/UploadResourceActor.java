@@ -155,13 +155,12 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                     case FILENAME_IS_BLANK:
                     case TASK_WAS_RESET:
                     case TASK_NOT_FOUND:
-//                        stationTaskService.setCompleted(task.launchpad.url, task.taskId);
-//                        log.error("#311.01 server return status {}, task was set to 'completed'", status);
+                    case UNRECOVERABLE_ERROR:
                         stationTaskService.delete(task.launchpad.url, task.taskId);
                         log.error("#311.01 server return status {}, this task will be deleted.", status);
                         break;
-                    case PROBLEM_WITH_OPTIMISTIC_LOCKING:
-                        log.warn("#311.05 problem with optimistic locking at server side, {}", status);
+                    case PROBLEM_WITH_LOCKING:
+                        log.warn("#311.05 problem with locking in DB at server side, {}", status);
                         repeat.add(task);
                         break;
                     case GENERAL_ERROR:

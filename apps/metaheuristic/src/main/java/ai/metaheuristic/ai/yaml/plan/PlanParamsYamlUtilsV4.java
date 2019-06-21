@@ -26,7 +26,6 @@ import ai.metaheuristic.api.v1.launchpad.process.Process;
 import ai.metaheuristic.api.v1.launchpad.process.ProcessV4;
 import ai.metaheuristic.api.v1.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.yaml.YamlUtils;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -39,7 +38,7 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 public class PlanParamsYamlUtilsV4
-        extends AbstractParamsYamlUtils<PlanParamsYamlV4, PlanParamsYaml, Void> {
+        extends AbstractParamsYamlUtils<PlanParamsYamlV4, PlanParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -71,7 +70,19 @@ public class PlanParamsYamlUtilsV4
     }
 
     @Override
+    public Void downgradeTo(Void yaml) {
+        // not supported
+        return null;
+    }
+
+    @Override
     public Void nextUtil() {
+        return null;
+    }
+
+    @Override
+    public Void prevUtil() {
+        // not supported
         return null;
     }
 

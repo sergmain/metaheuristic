@@ -16,8 +16,10 @@
 
 package ai.metaheuristic.ai.yaml.task;
 
+import ai.metaheuristic.ai.launchpad.experiment.DowngradeNotSupportedException;
 import ai.metaheuristic.ai.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.v1.data.task.TaskParamsYamlV1;
 import ai.metaheuristic.api.v1.data.task.TaskParamsYamlV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -29,7 +31,7 @@ import org.yaml.snakeyaml.Yaml;
  * Time: 12:10 AM
  */
 public class TaskParamsYamlUtilsV2
-        extends AbstractParamsYamlUtils<TaskParamsYamlV2, TaskParamsYaml, Void> {
+        extends AbstractParamsYamlUtils<TaskParamsYamlV2, TaskParamsYaml, Void, TaskParamsYamlV1, TaskParamsYamlUtilsV1, TaskParamsYaml> {
 
     @Override
     public int getVersion() {
@@ -50,7 +52,31 @@ public class TaskParamsYamlUtilsV2
     }
 
     @Override
+    public TaskParamsYamlV1 downgradeTo(TaskParamsYaml yaml) {
+        TaskParamsYamlV1 t = new TaskParamsYamlV1();
+        BeanUtils.copyProperties(yaml.taskYaml, t);
+        if (yaml.taskYaml.preSnippets!=null) {
+            if (yaml.taskYaml.preSnippets.size()>1) {
+                throw new DowngradeNotSupportedException("Too many preSnippets");
+            }
+            t.preSnippet = yaml.taskYaml.preSnippets.get(0);
+        }
+        if (yaml.taskYaml.postSnippets!=null) {
+            if (yaml.taskYaml.postSnippets.size()>1) {
+                throw new DowngradeNotSupportedException("Too many postSnippets");
+            }
+            t.postSnippet = yaml.taskYaml.postSnippets.get(0);
+        }
+        return t;
+    }
+
+    @Override
     public Void nextUtil() {
+        return null;
+    }
+
+    @Override
+    public TaskParamsYamlUtilsV1 prevUtil() {
         return null;
     }
 
