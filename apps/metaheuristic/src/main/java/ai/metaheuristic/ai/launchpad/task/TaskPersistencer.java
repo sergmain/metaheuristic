@@ -179,7 +179,7 @@ public class TaskPersistencer {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
                     //noinspection UnnecessaryLocalVariable
-                    Task t = prepareAndSaveTask(result, snippetExec.exec.isOk ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR);
+                    Task t = prepareAndSaveTask(result, snippetExec.allSnippetsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR);
                     return t;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.error("#307.29 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());

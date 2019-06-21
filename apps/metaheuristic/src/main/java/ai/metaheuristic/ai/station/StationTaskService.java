@@ -291,43 +291,31 @@ public class StationTaskService {
         }
     }
 
-    void storeExecResult(String launchpadUrl, Long taskId, long startedOn, SnippetApiData.SnippetConfig snippet, SnippetApiData.SnippetExecResult snippetExecResult, File artifactDir) {
-        log.info("storeExecResult(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, taskId, snippet.getCode());
-        StationTask taskTemp = findById(launchpadUrl, taskId);
-        if (taskTemp == null) {
-            log.error("#713.49 StationRestTask wasn't found for Id " + taskId);
-        } else {
-            // store metrics after predict only
-            if (snippet.isMetrics()) {
-                File metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
-                Metrics metrics = new Metrics();
-                if (metricsFile.exists()) {
-                    try {
-                        String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
-                        metrics.setStatus(Metrics.Status.Ok);
-                        metrics.setMetrics(execMetrics);
-                    }
-                    catch (IOException e) {
-                        log.error("#713.53 Error reading metrics file {}", metricsFile.getAbsolutePath());
-                        taskTemp.setMetrics("system-error: " + e.toString());
-                        metrics.setStatus(Metrics.Status.Error);
-                        metrics.setError(e.toString());
-                    }
-                } else {
-                    metrics.setStatus(Metrics.Status.NotFound);
+    void storeMetrics(String launchpadUrl, StationTask task, SnippetApiData.SnippetConfig snippet, File artifactDir) {
+        Long taskId = task.getTaskId();
+        log.info("storeMetrics(launchpadUrl: {}, taskId: {}, snippet code: {})", launchpadUrl, taskId, snippet.getCode());
+        // store metrics after predict only
+        if (snippet.isMetrics()) {
+            File metricsFile = new File(artifactDir, Consts.METRICS_FILE_NAME);
+            Metrics metrics = new Metrics();
+            if (metricsFile.exists()) {
+                try {
+                    String execMetrics = FileUtils.readFileToString(metricsFile, StandardCharsets.UTF_8);
+                    metrics.setStatus(Metrics.Status.Ok);
+                    metrics.setMetrics(execMetrics);
                 }
-                taskTemp.setMetrics(MetricsUtils.toString(metrics));
+                catch (IOException e) {
+                    log.error("#713.53 Error reading metrics file {}", metricsFile.getAbsolutePath());
+                    task.setMetrics("system-error: " + e.toString());
+                    metrics.setStatus(Metrics.Status.Error);
+                    metrics.setError(e.toString());
+                }
+            } else {
+                metrics.setStatus(Metrics.Status.NotFound);
             }
-            SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(taskTemp.getSnippetExecResult());
-            if (snippetExec==null) {
-                snippetExec = new SnippetApiData.SnippetExec();
-            }
-            snippetExec.setExec(snippetExecResult);
-            String yaml = SnippetExecUtils.toString(snippetExec);
-            taskTemp.setSnippetExecResult(yaml);
-            taskTemp.setLaunchedOn(startedOn);
-            save(taskTemp);
+            task.setMetrics(MetricsUtils.toString(metrics));
         }
+        save(task);
     }
 
     public List<StationTask> findAllByCompletedIsFalse(String launchpadUrl) {

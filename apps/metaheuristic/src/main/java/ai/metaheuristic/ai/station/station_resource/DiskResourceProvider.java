@@ -112,7 +112,8 @@ public class DiskResourceProvider implements ResourceProvider {
             log.error(es);
             return new SnippetApiData.SnippetExecResult(snippet.code, false, -1, es);
         }
-        return null;    }
+        return null;
+    }
 
     @Override
     public File getOutputResourceFile(

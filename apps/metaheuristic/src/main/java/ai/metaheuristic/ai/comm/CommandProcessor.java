@@ -102,6 +102,7 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
+    // processing on launchpad side
     private Command[] checkForMissingOutputResources(Protocol.CheckForMissingOutputResources command) {
         final long stationId = Long.parseLong(command.getStationId());
         List<Long> ids = launchpadService.getTaskService().resourceReceivingChecker(stationId);
