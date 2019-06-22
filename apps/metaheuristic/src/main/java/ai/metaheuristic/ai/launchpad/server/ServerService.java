@@ -34,6 +34,7 @@ import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -243,6 +244,10 @@ public class ServerService {
             log.error("#442.035 Error parsing current status of station:\n{}", station.status);
             log.error("#442.036 Error ", e);
             // skip any command from this station
+            return Protocol.NOP_ARRAY;
+        }
+        if (ss.taskParamsVersion < TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
+            // this station is blacklisted. ignore it
             return Protocol.NOP_ARRAY;
         }
         if (StringUtils.isBlank(sessionId)) {
