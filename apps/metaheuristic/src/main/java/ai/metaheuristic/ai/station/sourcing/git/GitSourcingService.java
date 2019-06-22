@@ -60,12 +60,12 @@ public class GitSourcingService {
     public static class GitExecResult {
         public File snippetDir;
         public SnippetApiData.SnippetExecResult snippetExecResult;
-        public boolean isOk;
+        public boolean ok;
         public String error;
 
-        public GitExecResult(SnippetApiData.SnippetExecResult snippetExecResult, boolean isOk, String error) {
+        public GitExecResult(SnippetApiData.SnippetExecResult snippetExecResult, boolean ok, String error) {
             this.snippetExecResult = snippetExecResult;
-            this.isOk = isOk;
+            this.ok = ok;
             this.error = error;
         }
     }
@@ -86,15 +86,19 @@ public class GitSourcingService {
 
     public GitStatusInfo getGitStatus() {
         GitExecResult result = execGitCmd(GIT_VERSION_CMD, 30L);
-        if (!result.isOk) {
-            log.warn("result.isError,\nGitExecResult: {}\nSnippetApiData.SnippetExecResult: {}", result, result.snippetExecResult);
+        if (!result.ok) {
+            log.warn("#027.010 Error of getting git status");
+            log.warn("\tresult.ok: {}",  result.ok);
+            log.warn("\tresult.error: {}",  result.error);
+            log.warn("\tresult.snippetDir: {}",  result.snippetDir!=null ? result.snippetDir.getPath() : null);
+            log.warn("\tresult.snippetExecResult: {}",  result.snippetExecResult);
             return new GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
         }
 
         if (result.snippetExecResult.exitCode!=0) {
             return new GitStatusInfo(
                     Enums.GitStatus.not_found, null,
-                    "Console: " + result.snippetExecResult.console);
+                    "#027.013 Console: " + result.snippetExecResult.console);
         }
         return new GitStatusInfo(Enums.GitStatus.installed, getGitVersion(result.snippetExecResult.console.toLowerCase()), null);
     }
@@ -151,7 +155,7 @@ public class GitSourcingService {
         if (!repoDir.exists()) {
             GitExecResult result = execClone(snippetDir, snippet);
             log.info("#027.080 Result of cloning repo: {}", result.toString());
-            if (!result.isOk || !result.snippetExecResult.isOk()) {
+            if (!result.ok || !result.snippetExecResult.isOk()) {
                 result = tryToRepairRepo(snippetDir, snippet);
                 log.info("#027.090 Result of repairing of repo: {}", result.toString());
                 return result;
@@ -159,7 +163,7 @@ public class GitSourcingService {
         }
         GitExecResult result = execRevParse(repoDir);
         log.info("#027.100 Result of execRevParse: {}", result.toString());
-        if (!result.isOk) {
+        if (!result.ok) {
             return result;
         }
         if (!result.snippetExecResult.isOk) {
@@ -168,7 +172,7 @@ public class GitSourcingService {
         if (!"true".equals(result.snippetExecResult.console.strip())) {
             result = tryToRepairRepo(repoDir, snippet);
             log.info("#027.110 Result of tryToRepairRepo: {}", result.toString());
-            if (!result.isOk) {
+            if (!result.ok) {
                 return result;
             }
             if (!result.snippetExecResult.isOk) {
@@ -178,7 +182,7 @@ public class GitSourcingService {
 
         result = execResetHardHead(repoDir);
         log.info("#027.120 Result of execResetHardHead: {}", result.toString());
-        if (!result.isOk) {
+        if (!result.ok) {
             return result;
         }
         if (!result.snippetExecResult.isOk) {
@@ -187,7 +191,7 @@ public class GitSourcingService {
 
         result = execCleanDF(repoDir);
         log.info("#027.130 Result of execCleanDF: {}", result.toString());
-        if (!result.isOk) {
+        if (!result.ok) {
             return result;
         }
         if (!result.snippetExecResult.isOk) {
@@ -196,7 +200,7 @@ public class GitSourcingService {
 
         result = execPullOrigin(repoDir, snippet);
         log.info("#027.140 Result of execPullOrigin: {}", result.toString());
-        if (!result.isOk) {
+        if (!result.ok) {
             return result;
         }
         if (!result.snippetExecResult.isOk) {
@@ -205,7 +209,7 @@ public class GitSourcingService {
 
         result = execCheckoutRevision(repoDir, snippet);
         log.info("#027.150 Result of execCheckoutRevision: {}", result.toString());
-        if (!result.isOk) {
+        if (!result.ok) {
             return result;
         }
         if (!result.snippetExecResult.isOk) {

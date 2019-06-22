@@ -451,7 +451,7 @@ public class TaskProcessor {
             final File snippetRootDir = stationTaskService.prepareSnippetDir(launchpadCode);
             log.info("Root dir for snippet: " + snippetRootDir);
             GitSourcingService.GitExecResult result = gitSourcingService.prepareSnippet(snippetRootDir, snippetPrepareResult.snippet);
-            if (!result.isOk) {
+            if (!result.ok) {
                 log.warn("Snippet {} has a permanent error, {}", snippetPrepareResult.snippet.code, result.error);
                 snippetPrepareResult.snippetExecResult = new SnippetApiData.SnippetExecResult(snippet.code, false, -1, result.error);
                 snippetPrepareResult.isLoaded = false;
