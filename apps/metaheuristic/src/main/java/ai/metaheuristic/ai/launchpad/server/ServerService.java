@@ -200,7 +200,7 @@ public class ServerService {
         try {
             Command[] cmds = checkStationId(data.getStationId(), data.getSessionId(), remoteAddress);
             if (cmds!=null) {
-                log.debug("Cmds after checking stationId isn't null: {}", (Object) cmds);
+                log.debug("Cmds after checking stationId isn't null: {}", (Object[]) cmds);
                 return new ExchangeData(cmds);
             }
 
@@ -208,11 +208,15 @@ public class ServerService {
             commandSetter.setCommandInTransaction(resultData);
 
             List<Command> commands = data.getCommands();
+            log.debug("Start processing commands");
             for (Command command : commands) {
+                log.debug("\tcommand: {}", command);
                 if (data.getStationId()!=null && command instanceof Protocol.RequestStationId) {
                     continue;
                 }
-                resultData.setCommands(commandProcessor.process(command));
+                final Command[] process = commandProcessor.process(command);
+                log.debug("\tresult of precessing of command: {}", (Object[]) process);
+                resultData.setCommands(process);
             }
             addLaunchpadInfo(resultData);
 
