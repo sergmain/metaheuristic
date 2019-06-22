@@ -54,6 +54,7 @@ public class GitSourcingService {
         this.gitStatusInfo = getGitStatus();
     }
 
+    // TODO 2019-06-22 need to investigate why it isn't working with @Data
 //    @Data
     @AllArgsConstructor
     @ToString
