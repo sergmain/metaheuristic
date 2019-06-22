@@ -162,6 +162,7 @@ public class LaunchpadRequestor {
                 data.setCommands(cmds);
             }
 
+            final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;
             try {
                 HttpHeaders headers = new HttpHeaders();
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -175,7 +176,6 @@ public class LaunchpadRequestor {
 
                 HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
                 Monitoring.log("##015", Enums.Monitor.MEMORY);
-                final String url = serverRestUrl + '/' + UUID.randomUUID().toString().substring(0, 8) + '-' + stationId;
 
                 ResponseEntity<ExchangeData> response = restTemplate.exchange(url, HttpMethod.POST, request, ExchangeData.class);
                 Monitoring.log("##016", Enums.Monitor.MEMORY);
@@ -205,12 +205,12 @@ public class LaunchpadRequestor {
             } catch (ResourceAccessException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof SocketException) {
-                    log.error("#775.22 Connection error: {}", cause.toString());
+                    log.error("#775.22 Connection error: url: {}, err: {}", url, cause.toString());
                 } else {
-                    log.error("#775.27 Error", e);
+                    log.error("#775.27 Error, url: " + url, e);
                 }
             } catch (RestClientException e) {
-                log.error("#775.31 Error accessing url: {}, error: {}", serverRestUrl, e.getMessage());
+                log.error("#775.31 Error accessing url: {}, error: {}", url, e.getMessage());
                 if (e.getMessage() == null || !e.getMessage().contains("503")) {
                     log.error("#775.35 Stacktrace", e);
                 }

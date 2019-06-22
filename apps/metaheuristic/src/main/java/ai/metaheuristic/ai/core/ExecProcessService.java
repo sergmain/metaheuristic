@@ -140,6 +140,7 @@ public class ExecProcessService {
         }
 
         log.info("Any errors of execution? {}", (exitCode == 0 ? "No" : "Yes"));
+        log.debug("'\texitCode: {}", exitCode);
         log.debug("'\tdestroyed with timeout: {}", isTerminated.get());
         log.debug("'\tcmd: {}", cmd);
         log.debug("'\texecDir: {}", execDir.getAbsolutePath());
