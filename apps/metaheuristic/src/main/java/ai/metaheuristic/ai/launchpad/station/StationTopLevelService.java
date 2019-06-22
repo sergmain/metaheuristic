@@ -118,6 +118,7 @@ public class StationTopLevelService {
     public void storeStationStatus(Protocol.ReportStationStatus command) {
         final Long stationId = Long.valueOf(command.getStationId());
         final Object obj = syncMap.computeIfAbsent(stationId, o -> new Object());
+        log.debug("Before entering in sync block");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
@@ -131,6 +132,7 @@ public class StationTopLevelService {
                     station.status = stationStatus;
                     station.setUpdatedOn(System.currentTimeMillis());
                     try {
+                        log.debug("Save new station status, station: {}", station);
                         stationCache.save(station);
                     } catch (ObjectOptimisticLockingFailureException e) {
                         log.warn("#807.105 ObjectOptimisticLockingFailureException was encountered\n" +
@@ -140,11 +142,15 @@ public class StationTopLevelService {
                         stationCache.clearCache();
                     }
                 }
+                else {
+                    log.info("Station status is equal to stored in db, new: {}, db: {}", stationStatus, station.status);
+                }
             }
             finally {
                 syncMap.remove(stationId);
             }
         }
+        log.debug("After leaving sync block");
     }
 
 

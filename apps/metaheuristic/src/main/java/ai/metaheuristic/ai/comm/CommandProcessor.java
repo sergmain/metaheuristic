@@ -160,6 +160,7 @@ public class CommandProcessor {
         return new Command[]{cmd1};
     }
 
+    // processing on launchpad side
     private Command[] processReportStationStatus(Protocol.ReportStationStatus command) {
         checkStationId(command);
         launchpadService.getStationTopLevelService().storeStationStatus(command);
