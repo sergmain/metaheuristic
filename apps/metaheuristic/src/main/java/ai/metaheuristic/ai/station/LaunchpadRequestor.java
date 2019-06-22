@@ -177,9 +177,11 @@ public class LaunchpadRequestor {
                 HttpEntity<ExchangeData> request = new HttpEntity<>(data, headers);
                 Monitoring.log("##015", Enums.Monitor.MEMORY);
 
+                log.debug("Start to request a launchpad at {}", url);
                 ResponseEntity<ExchangeData> response = restTemplate.exchange(url, HttpMethod.POST, request, ExchangeData.class);
                 Monitoring.log("##016", Enums.Monitor.MEMORY);
                 ExchangeData result = response.getBody();
+                log.debug("ExchangeData from launchpad: {}", data);
                 if (result == null) {
                     log.warn("#775.050 Launchpad returned null as a result");
                     return;
