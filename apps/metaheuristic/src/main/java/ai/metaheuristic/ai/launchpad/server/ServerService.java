@@ -200,6 +200,7 @@ public class ServerService {
         try {
             Command[] cmds = checkStationId(data.getStationId(), data.getSessionId(), remoteAddress);
             if (cmds!=null) {
+                log.debug("Cmds after checking stationId isn't null: {}", (Object) cmds);
                 return new ExchangeData(cmds);
             }
 
