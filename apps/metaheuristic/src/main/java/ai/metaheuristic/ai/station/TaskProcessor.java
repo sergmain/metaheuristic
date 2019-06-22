@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -197,11 +198,6 @@ public class TaskProcessor {
                 continue;
             }
 
-            final File paramFile = prepareParamsFileForTask(taskDir, taskParamYaml);
-            if (paramFile == null) {
-                continue;
-            }
-
             boolean isNotReady = false;
             final SnippetPrepareResult[] results = new SnippetPrepareResult[ totalCountOfSnippets(taskParamYaml.taskYaml) ];
             int idx = 0;
@@ -236,6 +232,10 @@ public class TaskProcessor {
                 continue;
             }
 
+            if (!prepareParamsFileForTask(taskDir, taskParamYaml, results)) {
+                continue;
+            }
+
             // at this point all required resources have to be prepared
 
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
@@ -253,7 +253,7 @@ public class TaskProcessor {
                             "Illegal State, result of preparing of snippet "+preSnippetConfig.code+" is null");
                 }
                 else {
-                    execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, paramFile, result);
+                    execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
                 }
                 preSnippetExecResult.add(execResult);
                 if (!execResult.isOk) {
@@ -273,7 +273,7 @@ public class TaskProcessor {
                 }
                 if (isOk) {
                     SnippetApiData.SnippetConfig mainSnippetConfig = result.snippet;
-                    snippetExecResult = execSnippet(task, taskDir, taskParamYaml, systemDir, paramFile, result);
+                    snippetExecResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
                     if (!snippetExecResult.isOk) {
                         isOk = false;
                     }
@@ -287,7 +287,7 @@ public class TaskProcessor {
                                         "Illegal State, result of preparing of snippet "+postSnippetConfig.code+" is null");
                             }
                             else {
-                                execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, paramFile, result);
+                                execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
                             }
                             postSnippetExecResult.add(execResult);
                             if (!execResult.isOk) {
@@ -316,16 +316,37 @@ public class TaskProcessor {
         }
     }
 
-    public File prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml) {
-        taskParamYaml.taskYaml.workingPath = taskDir.getAbsolutePath();
-        final String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml);
-        // persist params.yaml file
-        final File paramFile = prepareParamFile(taskDir, params);
-        if (paramFile == null) {
-            log.warn("#100.20 param file wasn't created, task dir: {}" , taskDir.getAbsolutePath());
-            return null;
+    public boolean prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml, SnippetPrepareResult[] results) {
+
+        File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
+        if (artifactDir == null) {
+            return false;
         }
-        return paramFile;
+
+        Set<Integer> versions = Stream.of(results)
+                .map(o-> o.snippet.getTaskParamsVersion())
+                .collect(Collectors.toSet());
+
+        taskParamYaml.taskYaml.workingPath = taskDir.getAbsolutePath();
+        for (Integer version : versions) {
+
+            final String params = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(taskParamYaml, version);
+
+            // persist params.yaml file
+            File paramFile = new File(artifactDir, String.format(Consts.PARAMS_YAML_MASK, version));
+            if (paramFile.exists()) {
+                //noinspection ResultOfMethodCallIgnored
+                paramFile.delete();
+            }
+
+            try {
+                FileUtils.writeStringToFile(paramFile, params, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                log.error("Error with writing to " + paramFile.getAbsolutePath() + " file", e);
+                return false;
+            }
+        }
+        return true;
     }
 
     private int totalCountOfSnippets(TaskParamsYaml.TaskYaml taskYaml) {
@@ -339,7 +360,10 @@ public class TaskProcessor {
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
     public SnippetApiData.SnippetExecResult execSnippet(
-            StationTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, File paramFile, SnippetPrepareResult snippetPrepareResult) {
+            StationTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, SnippetPrepareResult snippetPrepareResult) {
+
+        File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + String.format(Consts.PARAMS_YAML_MASK, snippetPrepareResult.snippet.getTaskParamsVersion()));
+
         List<String> cmd;
         Interpreter interpreter=null;
         if (StringUtils.isNotBlank(snippetPrepareResult.snippet.env)) {
@@ -438,26 +462,6 @@ public class TaskProcessor {
             log.info("Snippet asset file: {}, exist: {}", snippetPrepareResult.snippetAssetFile.file.getAbsolutePath(), snippetPrepareResult.snippetAssetFile.file.exists() );
         }
         return snippetPrepareResult;
-    }
-
-    private File prepareParamFile(File taskDir, String params) {
-        File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
-        if (artifactDir == null) {
-            return null;
-        }
-
-        File paramFile = new File(artifactDir, Consts.PARAMS_YAML);
-        if (paramFile.exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            paramFile.delete();
-        }
-        try {
-            FileUtils.writeStringToFile(paramFile, params, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            log.error("Error with writing to params.yaml file", e);
-            return null;
-        }
-        return paramFile;
     }
 
     public void processWorkbookStatus(String launchpadUrl, List<Protocol.WorkbookStatus.SimpleStatus> statuses) {

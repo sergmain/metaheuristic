@@ -61,7 +61,8 @@ public class SimpleApp implements CommandLineRunner {
         System.out.println("cfg: " + cfg);
 
         //noinspection unchecked
-        taskYaml = (Map)cfg.get("taskYaml");
+//        taskYaml = (Map)cfg.get("taskYaml");
+        taskYaml = cfg;
         System.out.println("taskYaml = " + taskYaml);
 
 

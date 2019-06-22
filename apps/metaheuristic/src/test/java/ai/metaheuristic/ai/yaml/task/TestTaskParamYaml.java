@@ -22,6 +22,7 @@ import ai.metaheuristic.commons.CommonConsts;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -90,7 +91,8 @@ public class TestTaskParamYaml {
                 new SnippetApiData.SnippetConfig.SnippetInfo(),
                 null,
                 null,
-                false
+                false,
+                new ArrayList<>()
         ));
 
         String s = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(seq);

@@ -73,7 +73,7 @@ public class Consts {
     public static final String METRICS_FILE_NAME = "metrics.yaml";
     public static final String SYSTEM_CONSOLE_OUTPUT_FILE_NAME = "system-console.log";
 
-    public static final String PARAMS_YAML = "params.yaml";
+    public static final String PARAMS_YAML_MASK = "params-v%d.yaml";
     public static final String TASK_YAML = "task.yaml";
 
     public static final String WORKBOOK_INPUT_TYPE = "workbook-input-type";
@@ -95,5 +95,4 @@ public class Consts {
     public static final String SNIPPETS_CACHE = "snippets";
     public static final String MAIN_DOCUMENT_POOL_CODE_FOR_BATCH = "mainDocument";
 
-    public static final String META_TASK_PARAMS_VERSION = "task-params-version";
 }

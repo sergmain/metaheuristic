@@ -23,6 +23,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -32,6 +33,8 @@ import java.util.Map;
  * Time: 2:14 AM
  */
 public class SnippetApiData {
+
+    public static final String META_TASK_PARAMS_VERSION = "task-params-version";
 
     @Data
     @AllArgsConstructor
@@ -118,6 +121,23 @@ public class SnippetApiData {
         public String checksum;
         public GitInfo git;
         public boolean skipParams = false;
+        public List<Meta> metas = new ArrayList<>();
 
+        public Meta getMeta(String key) {
+            if (metas==null) {
+                return null;
+            }
+            for (Meta meta : metas) {
+                if (meta.key.equals(key)) {
+                    return meta;
+                }
+            }
+            return null;
+        }
+
+        public int getTaskParamsVersion() {
+            final Meta meta = getMeta(META_TASK_PARAMS_VERSION);
+            return (meta!=null) ? Integer.valueOf(meta.value) : 1;
+        }
     }
 }

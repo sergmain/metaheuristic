@@ -15,7 +15,6 @@
  */
 package ai.metaheuristic.ai.station;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Command;
@@ -39,16 +38,13 @@ import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -129,8 +125,16 @@ public class StationService {
         if (launchpadUrl==null) {
             throw new IllegalStateException("#747.07 launchpadUrl is null");
         }
+        StationTask task = stationTaskService.findById(launchpadUrl, taskId);
+        if (task==null) {
+            return Enums.ResendTaskOutputResourceStatus.TASK_NOT_FOUND;
+        }
+        final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
         File taskDir = stationTaskService.prepareTaskDir(metadataService.launchpadUrlAsCode(launchpadUrl), taskId);
-        File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR+File.separatorChar+Consts.PARAMS_YAML);
+
+/*
+        // TODO 2019.06.21 if everythig will work fine, delete this commented part
+        File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + String.format(Consts.PARAMS_YAML_MASK, snippetPrepareResult.snippet.getTaskParamsVersion()));
         if (!paramFile.isFile() || !paramFile.exists()) {
             return Enums.ResendTaskOutputResourceStatus.TASK_IS_BROKEN;
         }
@@ -142,6 +146,7 @@ public class StationService {
             return Enums.ResendTaskOutputResourceStatus.TASK_PARAM_FILE_NOT_FOUND;
         }
         final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(params);
+*/
         final DataStorageParams dataStorageParams = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
         ResourceProvider resourceProvider;
         try {

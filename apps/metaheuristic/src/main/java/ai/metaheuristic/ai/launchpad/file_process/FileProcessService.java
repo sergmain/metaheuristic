@@ -133,15 +133,7 @@ public class FileProcessService {
         yaml.taskYaml.clean = plan.isClean();
         yaml.taskYaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
-        final Meta meta = process.getMeta(Consts.META_TASK_PARAMS_VERSION);
-        String taskParams;
-        if (meta!=null) {
-            int version = Integer.parseInt(meta.value);
-            taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toStringAsVersion(yaml, version);
-        }
-        else {
-            taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);
-        }
+        String taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);
 
         TaskImpl task = new TaskImpl();
         task.setWorkbookId(workbook.getId());
