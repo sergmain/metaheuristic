@@ -217,7 +217,7 @@ public class GitSourcingService {
         }
         log.info("#027.160 repoDir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists());
 
-        return new GitExecResult(repoDir, new SnippetApiData.SnippetExecResult(snippet.code, true, 0, "" ), false, null);
+        return new GitExecResult(repoDir, new SnippetApiData.SnippetExecResult(snippet.code, true, 0, "" ), true, null);
     }
 
     public GitExecResult tryToRepairRepo(File snippetDir, SnippetApiData.SnippetConfig snippet) {
