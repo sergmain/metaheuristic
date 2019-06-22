@@ -54,7 +54,7 @@ public class GitSourcingService {
         this.gitStatusInfo = getGitStatus();
     }
 
-    @Data
+//    @Data
     @AllArgsConstructor
     @ToString
     public static class GitExecResult {
