@@ -193,12 +193,6 @@ public class Protocol {
             this.status = status;
         }
 
-        @Transient
-        @Deprecated(forRemoval = true)
-        public boolean isOkToReport() {
-            return status.env!=null || StringUtils.isNotBlank(status.schedule);
-        }
-
         public ReportStationStatus() {
             this.setType(Type.ReportStationStatus);
         }

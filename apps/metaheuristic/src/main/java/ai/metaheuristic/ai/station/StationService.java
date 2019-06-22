@@ -17,7 +17,6 @@ package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.comm.Command;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.exceptions.ResourceProviderException;
 import ai.metaheuristic.ai.resource.AssetFile;
@@ -75,8 +74,9 @@ public class StationService {
         this.gitSourcingService = gitSourcingService;
     }
 
-    Command produceReportStationStatus(String launchpadUrl, LaunchpadSchedule schedule) {
+    Protocol.ReportStationStatus produceReportStationStatus(String launchpadUrl, LaunchpadSchedule schedule) {
 
+        // TODO 2019-06-22 why sessionCreatedOn is System.currentTimeMillis()?
         StationStatus status = new StationStatus(
                 envService.getEnvYaml(),
                 gitSourcingService.gitStatusInfo,

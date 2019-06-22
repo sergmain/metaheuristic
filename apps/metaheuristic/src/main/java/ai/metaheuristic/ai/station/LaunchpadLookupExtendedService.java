@@ -45,15 +45,15 @@ public class LaunchpadLookupExtendedService {
 
     public Map<String, LaunchpadLookupExtended> lookupExtendedMap = null;
 
-    public LaunchpadLookupExtendedService(Globals globals) {
-        this.globals = globals;
-    }
-
     @Data
     public static class LaunchpadLookupExtended {
         public LaunchpadLookupConfig.LaunchpadLookup launchpadLookup;
         public LaunchpadSchedule schedule;
         public LaunchpadConfig config;
+    }
+
+    public LaunchpadLookupExtendedService(Globals globals) {
+        this.globals = globals;
     }
 
     @PostConstruct

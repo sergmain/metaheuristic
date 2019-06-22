@@ -99,13 +99,7 @@ public class LaunchpadRequestor {
 
     private long lastRequestForMissingResources = 0;
 
-    /**
-     * this scheduler is being run at the station side
-     * <p>
-     * long fixedDelay()
-     * Execute the annotated method with a fixed period in milliseconds between the end of the last invocation and the start of the next.
-     */
-    public void fixedDelay() {
+    public void proceedWithRequest() {
         if (globals.isUnitTesting) {
             return;
         }
