@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.station.StationServicesHolder;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -235,12 +236,13 @@ public class CommandProcessor {
         final Station st = new Station();
         StationStatus ss = new StationStatus(null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown),
-                "", sessionId, System.currentTimeMillis(), "", "", null, false);
+                "", sessionId, System.currentTimeMillis(), "", "", null, false,
+                1);
 
         st.status = StationStatusUtils.toString(ss);
         launchpadService.getStationCache().save(st);
 
-        // TODO 2019.05.19 why we send stationId as a String?
+        // TODO 2019.05.19 why do we send stationId as a String?
         return Protocol.asArray(new Protocol.AssignedStationId(Long.toString(st.getId()), sessionId));
     }
 

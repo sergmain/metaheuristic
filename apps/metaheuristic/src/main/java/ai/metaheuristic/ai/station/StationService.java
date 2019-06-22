@@ -83,7 +83,8 @@ public class StationService {
                 schedule.asString,
                 metadataService.getSessionId(launchpadUrl),
                 System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, globals.logFile!=null && globals.logFile.exists());
+                "[unknown]", "[unknown]", null, globals.logFile!=null && globals.logFile.exists(),
+                TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion());
 
         try {
             InetAddress inetAddress = InetAddress.getLocalHost();

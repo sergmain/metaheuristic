@@ -63,10 +63,10 @@
         <thead>
         <tr>
             <th>Id</th>
-            <th>IP, Host name</th>
+            <th><div class="no-wrap">IP</div><div class="no-wrap">Host name</div></th>
             <th>Description</th>
             <th>Status of station</th>
-            <th>Is active</th>
+            <th><div class="no-wrap">Is active</div><div class="no-wrap">Is blacklisted</div></th>
             <th>Last seen</th>
             <th colspan="2">&nbsp;</th>
         </tr>
@@ -77,7 +77,7 @@
             <td><div th:text="${r.ip}" class="no-wrap">IP</div><div th:text="${r.host}" class="no-wrap">Host name</div></td>
             <td th:text="${r.station.description}">Sample Description</td>
             <td><pre style="display: none;" id="station-status" th:if="${r.station.status}!=null" th:text="${r.station.status}">Status of station </pre></td>
-            <td th:text="${r.active ? 'Yes' : 'No'}">Is active</td>
+            <td><div th:text="${r.active ? 'Yes' : 'No'}" class="no-wrap">Is active</div><div th:text="${r.blacklisted ? 'Yes' : 'No'}" class="no-wrap">Is blacklisted</div></td>
             <td th:text="${#dates.format(r.lastSeen, 'dd-MMM-yy HH:mm')}">Last seen</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-edit/' + r.station.id}">Edit</a></td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-delete/' + r.station.id}">Delete</a></td>

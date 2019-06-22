@@ -38,6 +38,7 @@ public class StationData {
     public static class StationStatus {
         public Station station;
         public boolean active;
+        public boolean blacklisted;
         public long lastSeen;
         public String ip;
         public String host;

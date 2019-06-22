@@ -263,28 +263,18 @@ public class ServerService {
             }
         }
         else {
-            return updateSession(station, ss, true);
+            return updateSession(station, ss);
         }
     }
 
-    private Command[] updateSession(Station station, StationStatus ss, boolean isOneMoreTry) {
+    private Command[] updateSession(Station station, StationStatus ss) {
         if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_UPDATE_TIMEOUT) {
             // the same station, with the same sessionId
             // so we need just to refresh sessionId
             ss.sessionCreatedOn = System.currentTimeMillis();
             station.status = StationStatusUtils.toString(ss);
             try {
-//                try {
-                    stationCache.save(station);
-//                } catch (Throwable e) {
-//                    if (isOneMoreTry) {
-//                        log.info("#442.040 station was updated, lets try one more time");
-//                        Station s = stationCache.findById(station.id);
-//                        StationStatus stationStatus = StationStatusUtils.to(s.status);
-//                        return updateSession(s, stationStatus, false);
-//                    }
-//                    return null;
-//                }
+                stationCache.save(station);
             } catch (ObjectOptimisticLockingFailureException e) {
                 log.error("#442.040 Error saving station. old : {}, new: {}", stationCache.findById(station.id), station);
                 log.error("#442.045 Error");
@@ -307,7 +297,7 @@ public class ServerService {
         return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
     }
 
-    public Command[] reassignStationId(String remoteAddress, String description) {
+    private Command[] reassignStationId(String remoteAddress, String description) {
         Station s = new Station();
         s.setIp(remoteAddress);
         s.setDescription(description);
@@ -316,7 +306,7 @@ public class ServerService {
         StationStatus ss = new StationStatus(null,
                 new GitSourcingService.GitStatusInfo(Enums.GitStatus.unknown), "",
                 sessionId, System.currentTimeMillis(),
-                "[unknown]", "[unknown]", null, false);
+                "[unknown]", "[unknown]", null, false, 1);
 
         s.status = StationStatusUtils.toString(ss);
         stationCache.save(s);

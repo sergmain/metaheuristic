@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.EnumsApi;
 import ai.metaheuristic.api.v1.data.SnippetApiData;
 import ai.metaheuristic.api.v1.launchpad.Workbook;
@@ -123,7 +124,8 @@ public abstract class PreparingExperiment {
             StationStatus ss = new StationStatus(envYaml,
                     new GitSourcingService.GitStatusInfo(Enums.GitStatus.not_found), "",
                     ""+ UUID.randomUUID().toString(), System.currentTimeMillis(),
-                    "[unknown]", "[unknown]", null, false);
+                    "[unknown]", "[unknown]", null, false,
+                    TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion());
             station.setStatus(StationStatusUtils.toString(ss));
 
             station.setDescription("Test station. Must be deleted automatically");

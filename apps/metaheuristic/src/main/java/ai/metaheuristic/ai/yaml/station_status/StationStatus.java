@@ -38,7 +38,7 @@ public class StationStatus {
 
 //    public String stationUUID;
 
-    // TODO 2019-05-28, multi-timezoned deployment isn't supported right now
+    // TODO 2019-05-28, a multi-time-zoned deployment isn't supported right now
     // it'll work but in some cases behaviour can be different
     // need to change to UTC, Coordinated Universal Time
     public long sessionCreatedOn;
@@ -46,6 +46,7 @@ public class StationStatus {
     public String host;
     public List<String> errors = null;
     public boolean logDownloadable;
+    public int taskParamsVersion;
 
     public void addError(String error) {
         if (errors==null) {

@@ -85,6 +85,7 @@ public class BaseYamlUtils<T > {
             currPlanParamsYaml = yamlUtils.upgradeTo(currPlanParamsYaml);
         } while ((yamlUtils=(AbstractParamsYamlUtils)yamlUtils.nextUtil())!=null);
 
+        //noinspection unchecked,UnnecessaryLocalVariable
         T p = (T)currPlanParamsYaml;
 
         return p;

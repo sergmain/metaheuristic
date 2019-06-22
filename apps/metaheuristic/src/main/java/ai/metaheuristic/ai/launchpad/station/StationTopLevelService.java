@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.v1.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.StationData;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
@@ -75,7 +76,9 @@ public class StationTopLevelService {
             StationStatus status = StationStatusUtils.to(station.status);
 
             ss.add(new StationData.StationStatus(
-                    station, System.currentTimeMillis() - station.updatedOn < STATION_TIMEOUT, station.updatedOn,
+                    station, System.currentTimeMillis() - station.updatedOn < STATION_TIMEOUT,
+                    status.taskParamsVersion < TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion(),
+                    station.updatedOn,
                     (StringUtils.isNotBlank(status.ip) ? status.ip : "[unknown]"),
                     (StringUtils.isNotBlank(status.host) ? status.host : "[unknown]")
             ));
