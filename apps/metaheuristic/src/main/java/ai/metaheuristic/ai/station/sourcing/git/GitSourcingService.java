@@ -87,7 +87,8 @@ public class GitSourcingService {
     public GitStatusInfo getGitStatus() {
         GitExecResult result = execGitCmd(GIT_VERSION_CMD, 30L);
         if (result.isError) {
-            return new GitStatusInfo(Enums.GitStatus.error, null, "Error: " + result.error);
+            log.warn("result.isError,\nGitExecResult: {}\nSnippetApiData.SnippetExecResult: {}", result, result.snippetExecResult);
+            return new GitStatusInfo(Enums.GitStatus.error, null, "#027.010 Error: " + result.error);
         }
 
         if (result.snippetExecResult.exitCode!=0) {
@@ -108,8 +109,8 @@ public class GitSourcingService {
             log.info("snippetExecResult: {}" , snippetExecResult);
             return new GitExecResult(snippetExecResult, snippetExecResult.isOk, snippetExecResult.console);
         } catch (InterruptedException | IOException e) {
-            log.error("Error", e);
-            return new GitExecResult(null, true, "Error: " + e.getMessage());
+            log.error("#027.020 Error", e);
+            return new GitExecResult(null, true, "#027.020 Error: " + e.getMessage());
         }
     }
 
@@ -119,7 +120,7 @@ public class GitSourcingService {
         log.info("Target dir: {}, exist: {}", trgDir.getAbsolutePath(), trgDir.exists() );
         if (!trgDir.exists() && !trgDir.mkdirs()) {
             assetFile.isError = true;
-            log.error("#027.05 Can't create snippet dir: {}", trgDir.getAbsolutePath());
+            log.error("#027.030 Can't create snippet dir: {}", trgDir.getAbsolutePath());
             return assetFile;
         }
         final String resId = snippetCode.replace(':', '_');
@@ -127,7 +128,7 @@ public class GitSourcingService {
         log.info("Resource dir: {}, exist: {}", resDir.getAbsolutePath(), resDir.exists() );
         if (!resDir.exists() && !resDir.mkdirs()) {
             assetFile.isError = true;
-            log.error("#027.08 Can't create resource dir: {}", resDir.getAbsolutePath());
+            log.error("#027.040 Can't create resource dir: {}", resDir.getAbsolutePath());
             return assetFile;
         }
         assetFile.file = resDir;
@@ -136,28 +137,28 @@ public class GitSourcingService {
 
     public GitExecResult prepareSnippet(final File snippetRootDir, SnippetApiData.SnippetConfig snippet) {
 
-        log.info("#027.15 Start preparing snippet dir");
+        log.info("#027.050 Start preparing snippet dir");
         AssetFile assetFile = prepareSnippetDir(snippetRootDir, snippet.code);
-        log.info("#027.18 assetFile.isError: {}" , assetFile.isError);
+        log.info("#027.060 assetFile.isError: {}" , assetFile.isError);
         if (assetFile.isError) {
-            return new GitExecResult(null,true, "Can't create dir for snippet " + snippet.code);
+            return new GitExecResult(null,true, "#027.060 Can't create dir for snippet " + snippet.code);
         }
 
         File snippetDir = assetFile.file;
         File repoDir = new File(snippetDir, "git");
-        log.info("#027.22 Target dir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists() );
+        log.info("#027.070 Target dir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists() );
 
         if (!repoDir.exists()) {
             GitExecResult result = execClone(snippetDir, snippet);
-            log.info("#027.25 Result of cloning repo: {}", result.toString());
+            log.info("#027.080 Result of cloning repo: {}", result.toString());
             if (result.isError || !result.snippetExecResult.isOk()) {
                 result = tryToRepairRepo(snippetDir, snippet);
-                log.info("#027.28 Result of repairing of repo: {}", result.toString());
+                log.info("#027.090 Result of repairing of repo: {}", result.toString());
                 return result;
             }
         }
         GitExecResult result = execRevParse(repoDir);
-        log.info("#027.31 Result of execRevParse: {}", result.toString());
+        log.info("#027.100 Result of execRevParse: {}", result.toString());
         if (result.isError) {
             return result;
         }
@@ -166,7 +167,7 @@ public class GitSourcingService {
         }
         if (!"true".equals(result.snippetExecResult.console.strip())) {
             result = tryToRepairRepo(repoDir, snippet);
-            log.info("#027.34 Result of tryToRepairRepo: {}", result.toString());
+            log.info("#027.110 Result of tryToRepairRepo: {}", result.toString());
             if (result.isError) {
                 return result;
             }
@@ -176,7 +177,7 @@ public class GitSourcingService {
         }
 
         result = execResetHardHead(repoDir);
-        log.info("#027.35 Result of execResetHardHead: {}", result.toString());
+        log.info("#027.120 Result of execResetHardHead: {}", result.toString());
         if (result.isError) {
             return result;
         }
@@ -185,7 +186,7 @@ public class GitSourcingService {
         }
 
         result = execCleanDF(repoDir);
-        log.info("#027.36 Result of execCleanDF: {}", result.toString());
+        log.info("#027.130 Result of execCleanDF: {}", result.toString());
         if (result.isError) {
             return result;
         }
@@ -194,7 +195,7 @@ public class GitSourcingService {
         }
 
         result = execPullOrigin(repoDir, snippet);
-        log.info("#027.38 Result of execPullOrigin: {}", result.toString());
+        log.info("#027.140 Result of execPullOrigin: {}", result.toString());
         if (result.isError) {
             return result;
         }
@@ -203,14 +204,14 @@ public class GitSourcingService {
         }
 
         result = execCheckoutRevision(repoDir, snippet);
-        log.info("#027.42 Result of execCheckoutRevision: {}", result.toString());
+        log.info("#027.150 Result of execCheckoutRevision: {}", result.toString());
         if (result.isError) {
             return result;
         }
         if (!result.snippetExecResult.isOk) {
             return new GitExecResult(null,true, result.snippetExecResult.console);
         }
-        log.info("#027.50 repoDir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists());
+        log.info("#027.160 repoDir: {}, exist: {}", repoDir.getAbsolutePath(), repoDir.exists());
 
         return new GitExecResult(repoDir, new SnippetApiData.SnippetExecResult(snippet.code, true, 0, "" ), false, null);
     }
@@ -222,7 +223,7 @@ public class GitSourcingService {
         if (repoDir.exists()) {
             return new GitExecResult(null,
                     true,
-                    "Snippet "+snippet.code+", can't prepare repo dir: " + repoDir.getAbsolutePath());
+                    "#027.170 Snippet "+snippet.code+", can't prepare repo dir: " + repoDir.getAbsolutePath());
         }
         result = execClone(snippetDir, snippet);
         return result;
