@@ -172,6 +172,7 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
+    // processing on launchpad side
     private Command[] processRequestTask(Protocol.RequestTask command) {
         checkStationId(command);
         Protocol.AssignedTask r = assignTaskToStation(command.getStationId(), command.isAcceptOnlySigned());

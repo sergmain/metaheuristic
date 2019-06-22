@@ -251,10 +251,6 @@ public class ServerService {
             // skip any command from this station
             return Protocol.NOP_ARRAY;
         }
-        if (ss.taskParamsVersion < TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
-            // this station is blacklisted. ignore it
-            return Protocol.NOP_ARRAY;
-        }
         if (StringUtils.isBlank(sessionId)) {
             // the same station but with different and expired sessionId
             // so we can continue to use this stationId with new sessionId

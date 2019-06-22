@@ -161,6 +161,24 @@ public class TaskService {
 
     public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long workbookId) {
 
+        final Station station = stationCache.findById(stationId);
+        if (station == null) {
+            log.error("#317.47 Station wasn't found for id: {}", stationId);
+            return EMPTY_RESULT;
+        }
+        StationStatus ss;
+        try {
+            ss = StationStatusUtils.to(station.status);
+        } catch (Throwable e) {
+            log.error("#317.32 Error parsing current status of station:\n{}", station.status);
+            log.error("#317.33 Error ", e);
+            return EMPTY_RESULT;
+        }
+        if (ss.taskParamsVersion < TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
+            // this station is blacklisted. ignore it
+            return EMPTY_RESULT;
+        }
+
         List<Long> anyTaskId = taskRepository.findAnyActiveForStationId(Consts.PAGE_REQUEST_1_REC, stationId);
         if (!anyTaskId.isEmpty()) {
             // this station already has active task
@@ -184,12 +202,6 @@ public class TaskService {
                 return EMPTY_RESULT;
             }
             workbooks = Collections.singletonList(workbook);
-        }
-
-        Station station = stationCache.findById(stationId);
-        if (station==null) {
-            log.error("#317.47 Station wasn't found for id: {}", stationId);
-            return EMPTY_RESULT;
         }
 
         for (Workbook workbook : workbooks) {
