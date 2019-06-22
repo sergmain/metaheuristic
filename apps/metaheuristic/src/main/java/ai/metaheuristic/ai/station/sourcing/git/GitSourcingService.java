@@ -105,6 +105,7 @@ public class GitSourcingService {
             SnippetApiData.SnippetExecResult snippetExecResult = execProcessService.execCommand(
                     gitVersionCmd, new File("."), consoleLogFile, timeout, "git-command-exec" );
 
+            log.info("snippetExecResult: {}" , snippetExecResult);
             return new GitExecResult(snippetExecResult, snippetExecResult.isOk, snippetExecResult.console);
         } catch (InterruptedException | IOException e) {
             log.error("Error", e);

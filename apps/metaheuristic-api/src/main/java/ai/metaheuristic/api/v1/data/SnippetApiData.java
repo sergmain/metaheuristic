@@ -39,6 +39,7 @@ public class SnippetApiData {
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
+    @ToString(exclude = {"console"})
     public static class SnippetExecResult {
         public String snippetCode;
         public boolean isOk;
