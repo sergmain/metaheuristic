@@ -16,13 +16,13 @@
 
 package ai.metaheuristic.ai.launchpad.file_process;
 
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.launchpad.process.Process;
-import ai.metaheuristic.api.v1.launchpad.Plan;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.launchpad.process.Process;
+import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
-import ai.metaheuristic.api.v1.launchpad.process.SnippetDefForPlan;
+import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

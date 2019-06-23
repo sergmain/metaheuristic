@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.station;
 
 import ai.metaheuristic.ai.comm.Protocol;
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.EnumsApi;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 

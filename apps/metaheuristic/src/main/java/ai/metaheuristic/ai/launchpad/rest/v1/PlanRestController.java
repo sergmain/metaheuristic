@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.ai.launchpad.rest.v1;
 
-import ai.metaheuristic.api.v1.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.api.v1.data.plan.PlanApiData;
-import ai.metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;

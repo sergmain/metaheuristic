@@ -17,10 +17,10 @@
 package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.utils.SimpleSelectOption;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.BaseDataClass;
-import ai.metaheuristic.api.v1.data.task.TaskApiData;
-import ai.metaheuristic.api.v1.launchpad.Workbook;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.api.launchpad.Workbook;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

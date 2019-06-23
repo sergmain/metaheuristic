@@ -18,10 +18,10 @@ package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.OperationStatusRest;
-import ai.metaheuristic.api.v1.data.plan.PlanApiData;
-import ai.metaheuristic.api.v1.launchpad.Plan;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.launchpad.Plan;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;

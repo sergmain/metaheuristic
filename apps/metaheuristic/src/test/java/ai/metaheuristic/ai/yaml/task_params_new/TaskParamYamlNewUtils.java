@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.task_params_new;
 
-import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;

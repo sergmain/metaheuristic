@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.launchpad_resource;
 
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

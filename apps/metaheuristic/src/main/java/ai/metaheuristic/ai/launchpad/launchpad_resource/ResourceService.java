@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.launchpad_resource;
 
 import ai.metaheuristic.ai.exceptions.StoreNewFileException;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;

@@ -27,7 +27,7 @@ import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.utils.checksum.CheckSumAndSignatureStatus;
 import ai.metaheuristic.ai.utils.checksum.ChecksumWithSignatureService;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.Checksum;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;

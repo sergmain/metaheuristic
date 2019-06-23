@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.launchpad_resource;
 
-import ai.metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.ResourceData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;

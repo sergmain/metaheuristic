@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.batch.process_resource;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.extern.slf4j.Slf4j;

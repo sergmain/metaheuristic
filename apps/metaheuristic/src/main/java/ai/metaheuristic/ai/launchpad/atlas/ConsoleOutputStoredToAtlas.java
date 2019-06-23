@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.atlas;
 
-import ai.metaheuristic.api.v1.data.BaseDataClass;
+import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;

@@ -29,16 +29,16 @@ import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.plan.TaskCollector;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.InputResourceParam;
-import ai.metaheuristic.api.v1.data.Meta;
-import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import ai.metaheuristic.api.v1.launchpad.Plan;
-import ai.metaheuristic.api.v1.launchpad.Workbook;
-import ai.metaheuristic.api.v1.launchpad.process.Process;
-import ai.metaheuristic.api.v1.launchpad.process.SnippetDefForPlan;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.InputResourceParam;
+import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.process.Process;
+import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -49,7 +49,7 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import java.io.ByteArrayInputStream;
 import java.util.*;
 
-import static ai.metaheuristic.api.v1.data.plan.PlanApiData.TaskProducingResultComplex;
+import static ai.metaheuristic.api.data.plan.PlanApiData.TaskProducingResultComplex;
 import static org.junit.Assert.*;
 
 @Slf4j

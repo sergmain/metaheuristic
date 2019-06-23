@@ -17,9 +17,9 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.api.v1.data.Meta;
-import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.v1.launchpad.process.Process;
+import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.launchpad.process.Process;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,7 +28,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Arrays;
 
-import static ai.metaheuristic.api.v1.data.plan.PlanParamsYaml.PlanYaml;
+import static ai.metaheuristic.api.data.plan.PlanParamsYaml.PlanYaml;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 

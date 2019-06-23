@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.api.v1.data.task.TaskWIthType;
-import ai.metaheuristic.api.v1.launchpad.Task;
+import ai.metaheuristic.api.data.task.TaskWIthType;
+import ai.metaheuristic.api.launchpad.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

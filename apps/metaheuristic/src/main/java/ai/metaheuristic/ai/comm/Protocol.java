@@ -19,14 +19,12 @@ package ai.metaheuristic.ai.comm;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 
-import javax.persistence.Transient;
 import java.util.ArrayList;
 import java.util.List;
 

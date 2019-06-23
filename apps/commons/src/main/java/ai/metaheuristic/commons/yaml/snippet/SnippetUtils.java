@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.snippet;
 
-import ai.metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.utils.StrUtils;
 import org.apache.commons.lang3.StringUtils;
 

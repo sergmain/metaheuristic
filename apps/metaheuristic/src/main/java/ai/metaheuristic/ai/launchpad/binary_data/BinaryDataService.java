@@ -19,12 +19,12 @@ package ai.metaheuristic.ai.launchpad.binary_data;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
-import ai.metaheuristic.api.v1.launchpad.BinaryData;
+import ai.metaheuristic.api.launchpad.BinaryData;
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
 import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -46,7 +46,7 @@ import java.sql.Timestamp;
 import java.util.List;
 import java.util.Optional;
 
-import static ai.metaheuristic.api.v1.EnumsApi.*;
+import static ai.metaheuristic.api.EnumsApi.*;
 
 @Service
 @Transactional

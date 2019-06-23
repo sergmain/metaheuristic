@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.launchpad.snippet;
 
-import ai.metaheuristic.api.v1.launchpad.process.SnippetDefForPlan;
+import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
@@ -30,8 +30,8 @@ import ai.metaheuristic.ai.launchpad.repositories.ExperimentSnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.snippet.SnippetCode;
 import ai.metaheuristic.ai.utils.SimpleSelectOption;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
 import lombok.extern.slf4j.Slf4j;

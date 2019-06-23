@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.beans;
 
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.launchpad.BinaryData;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.launchpad.BinaryData;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;

@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.launchpad.repositories;
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
-import ai.metaheuristic.api.v1.launchpad.BinaryData;
+import ai.metaheuristic.api.launchpad.BinaryData;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

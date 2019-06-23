@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.launchpad_resource;
 
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.Checksum;
 
 import java.io.File;

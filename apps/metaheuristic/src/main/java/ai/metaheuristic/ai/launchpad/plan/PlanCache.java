@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.v1.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import lombok.extern.slf4j.Slf4j;

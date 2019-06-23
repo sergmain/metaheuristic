@@ -21,10 +21,10 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import ai.metaheuristic.api.v1.launchpad.Plan;
-import ai.metaheuristic.api.v1.launchpad.process.Process;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
@@ -35,15 +35,15 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessValidator;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessValidator;
-import ai.metaheuristic.api.v1.data.plan.PlanApiData;
-import ai.metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.repositories.*;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.api.v1.data.InputResourceParam;
+import ai.metaheuristic.api.data.InputResourceParam;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.launchpad.Task;
-import ai.metaheuristic.api.v1.launchpad.Workbook;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.launchpad.Workbook;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +60,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.v1.EnumsApi.PlanValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
+import static ai.metaheuristic.api.EnumsApi.PlanValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
 
 @Service
 @Slf4j

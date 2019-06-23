@@ -17,8 +17,8 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import org.junit.Test;
 

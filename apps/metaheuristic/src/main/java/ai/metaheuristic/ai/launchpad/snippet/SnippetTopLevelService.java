@@ -18,11 +18,11 @@ package ai.metaheuristic.ai.launchpad.snippet;
 
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.SnippetData;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.extern.slf4j.Slf4j;

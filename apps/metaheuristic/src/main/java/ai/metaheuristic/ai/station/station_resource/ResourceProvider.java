@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.station.LaunchpadLookupExtendedService;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
-import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
+import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 
 import java.io.File;
 import java.util.List;

@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.station;
 
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.api.v1.data.OperationStatusRest;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.StationData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import org.springframework.context.annotation.Profile;

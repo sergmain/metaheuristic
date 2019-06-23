@@ -6,7 +6,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Station</h1>
 
-        <!--/*@thymesVar id="resource" type="ai.metaheuristic.api.v1.launchpad.BinaryData"*/-->
+        <!--/*@thymesVar id="resource" type="ai.metaheuristic.api.launchpad.BinaryData"*/-->
         <form class="form-horizontal" th:object="${resource}">
             <div class="form-group">
                 <label class="col-sm-2 control-label">Id:</label>

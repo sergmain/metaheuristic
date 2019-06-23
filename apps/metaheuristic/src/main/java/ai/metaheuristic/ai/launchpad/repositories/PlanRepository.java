@@ -17,8 +17,7 @@
 package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.api.v1.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.Plan;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

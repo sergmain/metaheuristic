@@ -6,7 +6,7 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Delete workbook</h1>
 
-        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.v1.data.plan.PlanApiData.WorkbookResult"*/-->
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.plan.PlanApiData.WorkbookResult"*/-->
         <p>Code of plan:</p>
         <pre style="width:50%" th:text="${result.plan.code}"></pre>
 

@@ -17,14 +17,14 @@
 package ai.metaheuristic.ai.yaml.plan;
 
 import ai.metaheuristic.ai.yaml.versioning.AbstractParamsYamlUtils;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.plan.PlanApiData;
-import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.v1.data.plan.PlanParamsYamlV4;
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import ai.metaheuristic.api.v1.launchpad.process.Process;
-import ai.metaheuristic.api.v1.launchpad.process.ProcessV4;
-import ai.metaheuristic.api.v1.launchpad.process.SnippetDefForPlan;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.plan.PlanParamsYamlV4;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.launchpad.process.Process;
+import ai.metaheuristic.api.launchpad.process.ProcessV4;
+import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;

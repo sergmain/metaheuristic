@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.utils;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.v1.data.BaseDataClass;
+import ai.metaheuristic.api.data.BaseDataClass;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.ui.Model;

@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.batch.beans;
 
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.Data;
 
 import java.util.List;

@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.yaml.task;
 
 import ai.metaheuristic.ai.yaml.versioning.BaseYamlUtils;
-import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 
 import java.util.Map;
 

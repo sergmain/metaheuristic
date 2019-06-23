@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.task;
 
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.Data;
 
 @Data

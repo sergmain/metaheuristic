@@ -15,9 +15,9 @@
  */
 package ai.metaheuristic.ai.yaml.task;
 
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.SnippetApiData;
-import ai.metaheuristic.api.v1.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.CommonConsts;
 import org.junit.Assert;
 import org.junit.Test;

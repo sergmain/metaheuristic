@@ -17,15 +17,13 @@
 package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
-import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.api.v1.data.BaseDataClass;
-import ai.metaheuristic.api.v1.launchpad.Plan;
+import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.launchpad.Plan;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Slice;
 
 import java.util.List;
 

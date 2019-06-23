@@ -17,11 +17,11 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.Meta;
-import ai.metaheuristic.api.v1.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
-import ai.metaheuristic.api.v1.launchpad.process.Process;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.launchpad.process.Process;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Test;

@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.utils.checksum;
 
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SecUtils;
 import lombok.AllArgsConstructor;

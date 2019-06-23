@@ -17,10 +17,9 @@
 package ai.metaheuristic.ai.repo;
 
 import ai.metaheuristic.ai.launchpad.beans.BinaryDataImpl;
-import ai.metaheuristic.ai.launchpad.repositories.BinaryDataRepository;
-import ai.metaheuristic.api.v1.launchpad.BinaryData;
+import ai.metaheuristic.api.launchpad.BinaryData;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.EnumsApi;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;

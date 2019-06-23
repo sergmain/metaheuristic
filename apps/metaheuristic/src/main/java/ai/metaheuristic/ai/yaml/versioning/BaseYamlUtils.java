@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.versioning;
 
-import ai.metaheuristic.api.v1.data.BaseParams;
-import ai.metaheuristic.api.v1.data.YamlVersion;
+import ai.metaheuristic.api.data.BaseParams;
+import ai.metaheuristic.api.data.YamlVersion;
 
 import java.util.Map;
 

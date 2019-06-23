@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.resource;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.api.v1.EnumsApi;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;

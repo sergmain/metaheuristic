@@ -15,8 +15,8 @@
  */
 package ai.metaheuristic.apps.package_snippet;
 
-import ai.metaheuristic.api.v1.EnumsApi;
-import ai.metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.utils.SecUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;

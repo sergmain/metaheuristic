@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.versioning;
 
-import ai.metaheuristic.api.v1.data.YamlVersion;
+import ai.metaheuristic.api.data.YamlVersion;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.nodes.Tag;

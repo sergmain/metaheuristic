@@ -18,9 +18,9 @@ package ai.metaheuristic.ai.launchpad.atlas;
 
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.utils.CollectionUtils;
-import ai.metaheuristic.api.v1.launchpad.Plan;
-import ai.metaheuristic.api.v1.launchpad.Task;
-import ai.metaheuristic.api.v1.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.launchpad.Workbook;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;

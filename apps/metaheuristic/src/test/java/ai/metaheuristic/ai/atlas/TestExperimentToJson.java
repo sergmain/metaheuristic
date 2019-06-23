@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.launchpad.atlas.ExperimentStoredToAtlas;
 import ai.metaheuristic.ai.launchpad.data.ExperimentData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
-import ai.metaheuristic.api.v1.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.plan.PlanApiData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

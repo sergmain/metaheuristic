@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.data;
 
-import ai.metaheuristic.api.v1.data.BaseDataClass;
-import ai.metaheuristic.api.v1.launchpad.BinaryData;
+import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.launchpad.BinaryData;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.SimpleResource;
 import lombok.AllArgsConstructor;
 import lombok.Data;

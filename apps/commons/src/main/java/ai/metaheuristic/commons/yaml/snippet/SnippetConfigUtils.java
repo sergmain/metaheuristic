@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.commons.yaml.snippet;
 
-import ai.metaheuristic.api.v1.data.SnippetApiData;
+import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.yaml.snakeyaml.Yaml;

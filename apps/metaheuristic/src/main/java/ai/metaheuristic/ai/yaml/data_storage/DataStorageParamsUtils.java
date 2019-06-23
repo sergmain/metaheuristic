@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.data_storage;
 
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import org.yaml.snakeyaml.Yaml;
 

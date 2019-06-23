@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.launchpad.binary_data;
 
-import ai.metaheuristic.api.v1.data_storage.DataStorageParams;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.ai.yaml.data_storage.DataStorageParamsUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
