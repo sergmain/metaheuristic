@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.launchpad.beans.ExperimentSnippet;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
-import ai.metaheuristic.ai.utils.SimpleSelectOption;
+import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.BaseDataClass;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

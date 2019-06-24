@@ -16,16 +16,14 @@
 
 package ai.metaheuristic.ai.launchpad.rest.v1;
 
-import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
-
-import static ai.metaheuristic.ai.launchpad.data.ExperimentData.*;
 
 @RestController
 @RequestMapping("/rest/v1/launchpad/experiment")
@@ -42,55 +40,55 @@ public class ExperimentRestController {
     }
 
     @GetMapping("/experiments")
-    public ExperimentsResult getExperiments(@PageableDefault(size = 5) Pageable pageable) {
+    public ExperimentApiData.ExperimentsResult getExperiments(@PageableDefault(size = 5) Pageable pageable) {
         return experimentTopLevelService.getExperiments(pageable);
     }
 
     @GetMapping(value = "/experiment/{id}")
-    public ExperimentResult getExperiment(@PathVariable Long id) {
+    public ExperimentApiData.ExperimentResult getExperiment(@PathVariable Long id) {
         return experimentTopLevelService.getExperiment(id);
     }
 
     @PostMapping("/experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
     public @ResponseBody
-    PlotData getPlotData(
+    ExperimentApiData.PlotData getPlotData(
             @PathVariable Long experimentId, @PathVariable Long featureId,
             @PathVariable String[] params, @PathVariable String[] paramsAxis) {
         return experimentTopLevelService.getPlotData(experimentId, featureId, params, paramsAxis);
     }
 
     @PostMapping("/experiment-feature-progress-console-part/{taskId}")
-    public ConsoleResult getTasksConsolePart(@PathVariable(name="taskId") Long taskId) {
+    public ExperimentApiData.ConsoleResult getTasksConsolePart(@PathVariable(name="taskId") Long taskId) {
         return experimentTopLevelService.getTasksConsolePart(taskId);
     }
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
-    public ExperimentFeatureExtendedResult getFeatureProgressPart(@PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
+    public ExperimentApiData.ExperimentFeatureExtendedResult getFeatureProgressPart(@PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
         return experimentTopLevelService.getFeatureProgressPart(experimentId, featureId, params, pageable);
     }
 
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
-    public ExperimentFeatureExtendedResult getFeatures(@PathVariable Long experimentId, @PathVariable Long featureId) {
+    public ExperimentApiData.ExperimentFeatureExtendedResult getFeatures(@PathVariable Long experimentId, @PathVariable Long featureId) {
         return experimentTopLevelService.getExperimentFeatureExtended(experimentId, featureId);
     }
 
     @GetMapping(value = "/experiment-info/{id}")
-    public ExperimentInfoExtendedResult info(@PathVariable Long id) {
+    public ExperimentApiData.ExperimentInfoExtendedResult info(@PathVariable Long id) {
         return experimentTopLevelService.getExperimentInfo(id);
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
-    public ExperimentsEditResult edit(@PathVariable Long id) {
+    public ExperimentApiData.ExperimentsEditResult edit(@PathVariable Long id) {
         return experimentTopLevelService.editExperiment(id);
     }
 
     @PostMapping("/experiment-add-commit")
-    public OperationStatusRest addFormCommit(@RequestBody Experiment experiment) {
+    public OperationStatusRest addFormCommit(@RequestBody ExperimentApiData.ExperimentData experiment) {
         return experimentTopLevelService.addExperimentCommit(experiment);
     }
 
     @PostMapping("/experiment-edit-commit")
-    public OperationStatusRest editFormCommit(@RequestBody SimpleExperiment simpleExperiment) {
+    public OperationStatusRest editFormCommit(@RequestBody ExperimentApiData.SimpleExperiment simpleExperiment) {
         return experimentTopLevelService.editExperimentCommit(simpleExperiment);
     }
 

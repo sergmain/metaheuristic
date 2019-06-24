@@ -26,11 +26,13 @@ import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
+import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
@@ -199,11 +201,15 @@ public abstract class PreparingExperiment {
 
             // Prepare experiment
             experiment = new Experiment();
-            experiment.setName("Test experiment.");
-            experiment.setDescription("Test experiment. Must be deleted automatically.");
             experiment.setCode(TEST_EXPERIMENT_CODE_01);
-            experiment.setSeed(42);
             experiment.setAllTaskProduced(false);
+
+            ExperimentParamsYaml epy = new ExperimentParamsYaml();
+            epy.setName("Test experiment.");
+            epy.setDescription("Test experiment. Must be deleted automatically.");
+            epy.setSeed(42);
+
+            experiment.params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
 
             // set hyper params for experiment
             ExperimentHyperParams ehp1 = new ExperimentHyperParams();

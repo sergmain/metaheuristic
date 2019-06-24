@@ -68,13 +68,20 @@ public class ExperimentProcessService {
         Map<String, DataStorageParams> inputStorageUrls = pools.inputStorageUrls;
 
         Long experimentId = experimentRepository.findIdByCode(process.code);
-        Experiment e = experimentCache.findById(experimentId);
+        Experiment e;
+        if (isPersist) {
+            e = experimentRepository.findByIdForUpdate(experimentId);
+        }
+        else {
+            e = experimentCache.findById(experimentId);
+        }
         PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
         if (e==null) {
             result.status = EnumsApi.PlanProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
             return result;
         }
 
+        // TODO 2019-06-23 workbookId is setted even it isn't persistent mode. Need to check fro side-effects
         e.setWorkbookId(workbook.getId());
         if (isPersist) {
             e = experimentCache.save(e);

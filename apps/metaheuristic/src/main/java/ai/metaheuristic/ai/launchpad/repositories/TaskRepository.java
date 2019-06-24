@@ -118,7 +118,7 @@ public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
 
     // !!! class must not be inner class
     @Transactional(readOnly = true)
-    @Query("SELECT new ai.metaheuristic.api.v1.data.task.TaskWIthType(t, tef.taskType) FROM TaskImpl t, ExperimentTaskFeature tef " +
+    @Query("SELECT new ai.metaheuristic.api.data.task.TaskWIthType(t, tef.taskType) FROM TaskImpl t, ExperimentTaskFeature tef " +
             "where t.id=tef.taskId and tef.featureId=:featureId order by t.id asc ")
     Slice<TaskWIthType> findPredictTasks(Pageable pageable, Long featureId);
 

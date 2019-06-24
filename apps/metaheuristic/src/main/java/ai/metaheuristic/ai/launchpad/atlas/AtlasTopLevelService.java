@@ -20,7 +20,8 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
-import ai.metaheuristic.ai.launchpad.data.ExperimentData;
+import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -376,12 +377,12 @@ public class AtlasTopLevelService {
         AtlasData.HyperParamResult hyperParamResult = new AtlasData.HyperParamResult();
         for (ExperimentHyperParams hyperParam : estb.getHyperParams()) {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
-            ExperimentData.HyperParamList list = new ExperimentData.HyperParamList(hyperParam.getKey());
+            ExperimentApiData.HyperParamList list = new ExperimentApiData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
-                list.getList().add( new ExperimentData.HyperParamElement(value, false));
+                list.getList().add( new ExperimentApiData.HyperParamElement(value, false));
             }
             if (list.getList().isEmpty()) {
-                list.getList().add( new ExperimentData.HyperParamElement("<Error value>", false));
+                list.getList().add( new ExperimentApiData.HyperParamElement("<Error value>", false));
             }
             hyperParamResult.getElements().add(list);
         }
@@ -423,7 +424,7 @@ public class AtlasTopLevelService {
             }
             elements.add(element);
         }
-        elements.sort(AtlasData.MetricElement::compare);
+        elements.sort(ExperimentService::compareMetricElement);
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 

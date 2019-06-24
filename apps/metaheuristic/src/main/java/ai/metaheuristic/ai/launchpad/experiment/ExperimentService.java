@@ -25,12 +25,16 @@ import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
+import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
 import ai.metaheuristic.ai.yaml.metrics.MetricValues;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.experiment.BaseMetricElement;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
@@ -44,7 +48,9 @@ import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ApplicationEventMulticaster;
@@ -62,8 +68,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.launchpad.data.ExperimentData.*;
-
 @Service
 @EnableTransactionManagement
 @Slf4j
@@ -74,16 +78,17 @@ public class ExperimentService {
 
     private final ParamsSetter paramsSetter;
     private final MetricsMaxValueCollector metricsMaxValueCollector;
-    private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
-    private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
     private final TaskPersistencer taskPersistencer;
-    private final ExperimentFeatureRepository experimentFeatureRepository;
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
-    private final ExperimentRepository experimentRepository;
-    private final ExperimentTaskFeatureRepository experimentTaskFeatureRepository;
     private final WorkbookRepository workbookRepository;
+
+    private final ExperimentCache experimentCache;
+    private final ExperimentRepository experimentRepository;
+    private final ExperimentFeatureRepository experimentFeatureRepository;
+    private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
+    private final ExperimentTaskFeatureRepository experimentTaskFeatureRepository;
 
     @Autowired
     public ExperimentService(ApplicationEventMulticaster eventMulticaster, MetricsMaxValueCollector metricsMaxValueCollector, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetService snippetService, WorkbookRepository workbookRepository, ExperimentRepository experimentRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter, SnippetRepository snippetRepository) {
@@ -100,6 +105,64 @@ public class ExperimentService {
         this.paramsSetter = paramsSetter;
         this.workbookRepository = workbookRepository;
         this.snippetRepository = snippetRepository;
+    }
+
+    public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
+        for (int i = 0; i < Math.min(o1.getValues().size(), o2.getValues().size()); i++) {
+            final BigDecimal holder1 = o1.getValues().get(i);
+            if (holder1 == null) {
+                return -1;
+            }
+            final BigDecimal holder2 = o2.getValues().get(i);
+            if (holder2 == null) {
+                return -1;
+            }
+            int c = ObjectUtils.compare(holder1, holder2);
+            if (c != 0) {
+                return c;
+            }
+        }
+        return Integer.compare(o1.getValues().size(), o2.getValues().size());
+    }
+
+    public static ExperimentApiData.ExperimentData asExperimentData(Experiment e) {
+        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.getParams());
+
+        ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
+        BeanUtils.copyProperties(e, ed);
+        ed.name = params.name;
+        ed.description = params.description;
+        ed.hyperParamsAsMap = e.getHyperParamsAsMap();
+
+        ed.hyperParams = e.getHyperParams()==null ? new ArrayList<>()
+                : e.getHyperParams()
+                .stream()
+                .map(o->new ExperimentParamsYaml.HyperParam(o.getKey(), o.getValues()))
+                .collect(Collectors.toList());
+
+        return ed;
+    }
+
+    public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(ExperimentFeature experimentFeature) {
+        final ExperimentApiData.ExperimentFeatureData featureData = new ExperimentApiData.ExperimentFeatureData();
+        BeanUtils.copyProperties(experimentFeature, featureData);
+        featureData.execStatusAsString = execStatusAsString(featureData.execStatus);
+        return featureData;
+    }
+
+    private static String execStatusAsString(int execStatus) {
+        switch(execStatus) {
+            case 0:
+                return "Unknown";
+            case 1:
+                return "Ok";
+            case 2:
+                return "All are errors";
+            case 3:
+                return "No sequenses";
+            default:
+                return "Status is wrong";
+        }
     }
 
     private static class ParamFilter {
@@ -128,12 +191,12 @@ public class ExperimentService {
         snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
     }
 
-    public PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
+    public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
         Experiment experiment= experimentCache.findById(experimentId);
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
 
         //noinspection UnnecessaryLocalVariable
-        PlotData data = findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
+        ExperimentApiData.PlotData data = findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
         return data;
     }
 
@@ -176,9 +239,9 @@ public class ExperimentService {
         }
     }
 
-    private PlotData findExperimentTaskForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
+    private ExperimentApiData.PlotData findExperimentTaskForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
         if (experiment == null || feature == null) {
-            return EMPTY_PLOT_DATA;
+            return ExperimentApiData.EMPTY_PLOT_DATA;
         } else {
             List<Task> selected;
             if (isEmpty(params)) {
@@ -191,8 +254,8 @@ public class ExperimentService {
     }
 
     @SuppressWarnings("Duplicates")
-    private PlotData collectDataForPlotting(Experiment experiment, List<Task> selected, String[] paramsAxis) {
-        final PlotData data = new PlotData();
+    private ExperimentApiData.PlotData collectDataForPlotting(Experiment experiment, List<Task> selected, String[] paramsAxis) {
+        final ExperimentApiData.PlotData data = new ExperimentApiData.PlotData();
         final List<String> paramCleared = new ArrayList<>();
         for (String param : paramsAxis) {
             if (StringUtils.isBlank(param)) {
@@ -312,25 +375,25 @@ public class ExperimentService {
         return true;
     }
 
-    public ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
+    public ExperimentApiData.ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
 
         tasksResult.items = taskRepository.findPredictTasks(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
 
-        HyperParamResult hyperParamResult = new HyperParamResult();
+        ExperimentApiData.HyperParamResult hyperParamResult = new ExperimentApiData.HyperParamResult();
         for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
-            HyperParamList list = new HyperParamList(hyperParam.getKey());
+            ExperimentApiData.HyperParamList list = new ExperimentApiData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
-                list.getList().add( new HyperParamElement(value, false));
+                list.getList().add( new ExperimentApiData.HyperParamElement(value, false));
             }
             if (list.getList().isEmpty()) {
-                list.getList().add( new HyperParamElement("<Error value>", false));
+                list.getList().add( new ExperimentApiData.HyperParamElement("<Error value>", false));
             }
             hyperParamResult.getElements().add(list);
         }
 
-        MetricsResult metricsResult = new MetricsResult();
+        ExperimentApiData.MetricsResult metricsResult = new ExperimentApiData.MetricsResult();
         List<Map<String, BigDecimal>> values = new ArrayList<>();
 
         List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndFeatureId(experimentFeature.getId());
@@ -345,25 +408,25 @@ public class ExperimentService {
             values.add(metricValues.values);
         }
 
-        List<MetricElement> elements = new ArrayList<>();
+        List<ExperimentApiData.MetricElement> elements = new ArrayList<>();
         for (Map<String, BigDecimal> value : values) {
-            MetricElement element = new MetricElement();
+            ExperimentApiData.MetricElement element = new ExperimentApiData.MetricElement();
             for (String metricName : metricsResult.metricNames) {
                 element.values.add(value.get(metricName));
             }
             elements.add(element);
         }
-        elements.sort(MetricElement::compare);
+        elements.sort(ExperimentService::compareMetricElement);
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
-        ExperimentFeatureExtendedResult result = new ExperimentFeatureExtendedResult();
+        ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
         result.hyperParamResult = hyperParamResult;
         result.tasksResult = tasksResult;
-        result.experiment = experiment;
-        result.experimentFeature = experimentFeature;
-        result.consoleResult = new ConsoleResult();
+        result.experiment = asExperimentData(experiment);
+        result.experimentFeature = asExperimentFeatureData(experimentFeature);
+        result.consoleResult = new ExperimentApiData.ConsoleResult();
 
         return result;
     }
@@ -419,7 +482,10 @@ public class ExperimentService {
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
         SnippetService.sortSnippetsByType(experimentSnippets);
 
-        final Map<String, String> map = toMap(experiment.getHyperParams(), experiment.getSeed());
+        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
+
+
+        final Map<String, String> map = toMap(experiment.getHyperParams(), params.seed);
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
         final List<Object[]> features = experimentFeatureRepository.getAsExperimentFeatureSimpleByExperimentId(experiment.getId());
@@ -598,7 +664,7 @@ public class ExperimentService {
             log.warn("#179.33 ! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", experiment.getNumberOfTask(), totalVariants);
         }
         if (isPersist) {
-            Experiment experimentTemp = experimentCache.findById(experiment.getId());
+            Experiment experimentTemp = experimentRepository.findByIdForUpdate(experiment.getId());
             if (experimentTemp == null) {
                 log.warn("#179.36 Experiment for id {} doesn't exist anymore", experiment.getId());
                 return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;

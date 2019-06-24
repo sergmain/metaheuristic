@@ -21,16 +21,17 @@ import ai.metaheuristic.ai.launchpad.atlas.ExperimentStoredToAtlas;
 import ai.metaheuristic.ai.launchpad.beans.Atlas;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.ExperimentFeature;
+import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.experiment.BaseMetricElement;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.launchpad.Workbook;
-import ai.metaheuristic.ai.utils.SimpleSelectOption;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.data.domain.Slice;
 
 import java.math.BigDecimal;
@@ -101,32 +102,14 @@ public class AtlasData {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class MetricElement {
+    public static class MetricElement implements BaseMetricElement {
         public final List<BigDecimal> values = new ArrayList<>();
         public String params;
-
-        @SuppressWarnings("Duplicates")
-        public static int compare(MetricElement o2, MetricElement o1) {
-            for (int i = 0; i < Math.min(o1.values.size(), o2.values.size()); i++) {
-                final BigDecimal holder1 = o1.values.get(i);
-                if (holder1 == null) {
-                    return -1;
-                }
-                final BigDecimal holder2 = o2.values.get(i);
-                if (holder2 == null) {
-                    return -1;
-                }
-                int c = ObjectUtils.compare(holder1, holder2);
-                if (c != 0) {
-                    return c;
-                }
-            }
-            return Integer.compare(o1.values.size(), o2.values.size());        }
     }
 
     @Data
     public static class HyperParamResult {
-        public final List<ExperimentData.HyperParamList> elements = new ArrayList<>();
+        public final List<ExperimentApiData.HyperParamList> elements = new ArrayList<>();
     }
 
     @Data

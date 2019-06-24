@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -54,17 +53,11 @@ public class Experiment implements Serializable {
     @Column(name = "WORKBOOK_ID")
     public Long workbookId;
 
-    @Column(name = "NAME")
-    private String name;
-
-    @Column(name = "DESCRIPTION")
-    private String description;
-
     @Column(name = "CODE")
-    private String code;
+    public String code;
 
-    @Column(name = "SEED")
-    private int seed;
+    @Column(name = "PARAMS")
+    public String params;
 
     @Column(name = "IS_ALL_TASK_PRODUCED")
     private boolean isAllTaskProduced;
@@ -83,12 +76,6 @@ public class Experiment implements Serializable {
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(mappedBy = "experiment", cascade = CascadeType.ALL)
     public  List<ExperimentHyperParams> hyperParams;
-
-    public void strip() {
-        name = StringUtils.strip(name);
-        description = StringUtils.strip(description);
-        code = StringUtils.strip(code);
-    }
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public Map<String, Map<String, Integer>> getHyperParamsAsMap() {

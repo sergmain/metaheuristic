@@ -13,14 +13,40 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.utils;
 
-import lombok.AllArgsConstructor;
+package ai.metaheuristic.api.data.experiment;
+
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * @author Serge
+ * Date: 6/22/2019
+ * Time: 10:03 PM
+ */
 @Data
-@AllArgsConstructor
-public class SimpleSelectOption {
-    String value;
-    String desc;
+@NoArgsConstructor
+public class ExperimentParamsYamlV1 {
+
+    @Data
+    public static class HyperParamV1 {
+        public String key;
+        public String values;
+    }
+
+    public String name;
+    public String description;
+    public String code;
+
+    public int seed = 42;
+    public List<HyperParamV1> hyperParams = new ArrayList<>();
+
+    public String fitSnippet;
+    public String predictSnippet;
+
+
 }

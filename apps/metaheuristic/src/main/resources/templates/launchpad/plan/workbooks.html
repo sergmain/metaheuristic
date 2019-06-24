@@ -53,21 +53,21 @@
             <td th:text="${#dates.format(i.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
             <td th:text="${result.plans.get(i.id).valid}">Is plan valid</td>
             <td th:text="${i.valid}">Is workbook valid</td>
-            <td th:text="${T(ai.metaheuristic.api.v1.EnumsApi.WorkbookExecState).from(i.execState)}">Exec state</td>
+            <td th:text="${T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).from(i.execState)}">Exec state</td>
             <td th:text="${#dates.format(i.completedOn, 'dd-MMM-yy HH:mm')}">Completed on</td>
             <td>
                 <a class="pure-button pure-button-primary"
-                   th:if="${i.execState==T(ai.metaheuristic.api.v1.EnumsApi.WorkbookExecState).NONE.code and
+                   th:if="${i.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).NONE.code and
                    i.valid and
                    result.plans.get(i.id).valid
                    }"
                    th:href="${'/launchpad/plan/workbook-target-exec-state/'+i.planId+'/producing/' + i.id}">Produce</a>
                 <a class="pure-button pure-button-primary"
-                   th:if="${i.execState==T(ai.metaheuristic.api.v1.EnumsApi.WorkbookExecState).PRODUCED.code or
-                   i.execState==T(ai.metaheuristic.api.v1.EnumsApi.WorkbookExecState).STOPPED.code}"
+                   th:if="${i.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).PRODUCED.code or
+                   i.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).STOPPED.code}"
                    th:href="${'/launchpad/plan/workbook-target-exec-state/'+i.planId+'/started/' + i.id}">Start</a>
                 <a class="pure-button pure-button-primary"
-                   th:if="${i.execState==T(ai.metaheuristic.api.v1.EnumsApi.WorkbookExecState).STARTED.code}"
+                   th:if="${i.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).STARTED.code}"
                    th:href="${'/launchpad/plan/workbook-target-exec-state/'+i.planId+'/stopped/' + i.id}">Stop</a>
             </td>
             <td><a class="pure-button pure-button-primary"

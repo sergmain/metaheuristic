@@ -14,41 +14,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data.experiment;
+package ai.metaheuristic.ai.yaml.experiment;
 
-import ai.metaheuristic.api.data.BaseParams;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import ai.metaheuristic.ai.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Map;
 
 /**
  * @author Serge
  * Date: 6/22/2019
- * Time: 10:03 PM
+ * Time: 11:36 PM
  */
-@Data
-@NoArgsConstructor
-public class ExperimentParamsYaml implements BaseParams {
+public class ExperimentParamsYamlUtils {
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class HyperParam {
-        public String key;
-        public String values;
-    }
+    private static final ExperimentParamsYamlUtilsV1 YAML_UTILS_V_1 = new ExperimentParamsYamlUtilsV1();
+    private static final ExperimentParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    public String name;
-    public String description;
-    public String code;
+    public static final BaseYamlUtils<ExperimentParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, YAML_UTILS_V_1
+            ),
+            DEFAULT_UTILS
+    );
 
-    public int seed = 42;
-    public List<HyperParam> hyperParams = new ArrayList<>();
-
-    public String fitSnippet;
-    public String predictSnippet;
 
 }

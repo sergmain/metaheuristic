@@ -38,6 +38,9 @@ import java.util.List;
 @Profile("launchpad")
 public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
 
+    @Query(value="select e from Experiment e where e.id=:id")
+    Experiment findByIdForUpdate(Long id);
+
     @Transactional(readOnly = true)
     Page<Experiment> findAll(Pageable pageable);
 

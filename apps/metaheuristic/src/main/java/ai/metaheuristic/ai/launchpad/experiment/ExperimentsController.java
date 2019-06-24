@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.data.ExperimentData;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +58,7 @@ public class ExperimentsController {
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
                        @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                        @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
-        ExperimentData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
+        ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
         ControllerUtils.addMessagesToModel(model, experiments);
         model.addAttribute("result", experiments);
         return "launchpad/experiments";
@@ -67,14 +67,14 @@ public class ExperimentsController {
     // for AJAX
     @PostMapping("/experiments-part")
     public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable) {
-        ExperimentData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
+        ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
         model.addAttribute("result", experiments);
         return "launchpad/experiments :: table";
     }
 
     @PostMapping("/experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
     public @ResponseBody
-    ExperimentData.PlotData getPlotData(
+    ExperimentApiData.PlotData getPlotData(
             @PathVariable Long experimentId, @PathVariable Long featureId,
             @PathVariable String[] params, @PathVariable String[] paramsAxis) {
         return experimentTopLevelService.getPlotData(experimentId, featureId, params, paramsAxis);
@@ -82,14 +82,14 @@ public class ExperimentsController {
 
     @PostMapping("/experiment-feature-progress-console-part/{taskId}")
     public String getTasksConsolePart(Model model, @PathVariable(name="taskId") Long taskId) {
-        ExperimentData.ConsoleResult result = experimentTopLevelService.getTasksConsolePart(taskId);
+        ExperimentApiData.ConsoleResult result = experimentTopLevelService.getTasksConsolePart(taskId);
         model.addAttribute("consoleResult", result);
         return "launchpad/experiment-feature-progress :: fragment-console-table";
     }
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
     public String getFeatureProgressPart(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
-        ExperimentData.ExperimentFeatureExtendedResult experimentProgressResult =
+        ExperimentApiData.ExperimentFeatureExtendedResult experimentProgressResult =
                 experimentTopLevelService.getFeatureProgressPart(experimentId, featureId, params, pageable);
 
         model.addAttribute("result", experimentProgressResult.tasksResult);
@@ -102,7 +102,7 @@ public class ExperimentsController {
 
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
     public String getFeatures(Model model, @PathVariable Long experimentId, @PathVariable Long featureId, final RedirectAttributes redirectAttributes ) {
-        ExperimentData.ExperimentFeatureExtendedResult experimentProgressResult =
+        ExperimentApiData.ExperimentFeatureExtendedResult experimentProgressResult =
             experimentTopLevelService.getExperimentFeatureExtended(experimentId, featureId);
         if (experimentProgressResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", experimentProgressResult.errorMessages);
@@ -119,14 +119,14 @@ public class ExperimentsController {
     }
 
     @GetMapping(value = "/experiment-add")
-    public String add(@ModelAttribute("experiment") Experiment experiment) {
+    public String add(@ModelAttribute("experiment") ExperimentApiData.ExperimentData experiment) {
         experiment.setSeed(1);
         return "launchpad/experiment-add-form";
     }
 
     @GetMapping(value = "/experiment-info/{id}")
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
-        ExperimentData.ExperimentInfoExtendedResult result =
+        ExperimentApiData.ExperimentInfoExtendedResult result =
                 experimentTopLevelService.getExperimentInfo(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
@@ -137,6 +137,7 @@ public class ExperimentsController {
             model.addAttribute("infoMessages", result.infoMessages);
         }
 
+
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("experimentResult", result.experimentInfo);
         return "launchpad/experiment-info";
@@ -144,7 +145,7 @@ public class ExperimentsController {
 
     @GetMapping(value = "/experiment-edit/{id}")
     public String edit(@PathVariable Long id, Model model, @ModelAttribute("errorMessage") final String errorMessage, final RedirectAttributes redirectAttributes) {
-        ExperimentData.ExperimentsEditResult r = experimentTopLevelService.editExperiment(id);
+        ExperimentApiData.ExperimentsEditResult r = experimentTopLevelService.editExperiment(id);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
             return "redirect:/launchpad/experiments";
@@ -157,7 +158,7 @@ public class ExperimentsController {
     }
 
     @PostMapping("/experiment-add-form-commit")
-    public String addFormCommit(Experiment experiment, final RedirectAttributes redirectAttributes) {
+    public String addFormCommit(ExperimentApiData.ExperimentData experiment, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.addExperimentCommit(experiment);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
@@ -167,7 +168,7 @@ public class ExperimentsController {
     }
 
     @PostMapping("/experiment-edit-form-commit")
-    public String editFormCommit(ExperimentData.SimpleExperiment simpleExperiment, final RedirectAttributes redirectAttributes) {
+    public String editFormCommit(ExperimentApiData.SimpleExperiment simpleExperiment, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.editExperimentCommit(simpleExperiment);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
@@ -232,7 +233,7 @@ public class ExperimentsController {
 
     @GetMapping("/experiment-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        ExperimentData.ExperimentResult result = experimentTopLevelService.getExperiment(id);
+        ExperimentApiData.ExperimentResult result = experimentTopLevelService.getExperiment(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return "redirect:/launchpad/experiments";

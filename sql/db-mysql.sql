@@ -84,6 +84,7 @@ CREATE TABLE mh_experiment (
   DESCRIPTION VARCHAR(250)  NOT NULL,
   CODE        VARCHAR(50)   NOT NULL,
   SEED          INT(10),
+  PARAMS          MEDIUMTEXT not null,
   NUMBER_OF_TASK          INT(10) not null default 0,
   IS_ALL_TASK_PRODUCED   tinyint(1) not null default 0,
   IS_FEATURE_PRODUCED   tinyint(1) not null default 0,
@@ -123,17 +124,6 @@ CREATE TABLE mh_experiment_feature (
 
 CREATE UNIQUE INDEX mh_experiment_feature_unq_idx
   ON mh_experiment_feature (EXPERIMENT_ID, CHECKSUM_ID_CODES);
-
-CREATE TABLE mh_experiment_snippet (
-  ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-  EXPERIMENT_ID          NUMERIC(10, 0) NOT NULL,
-  VERSION     NUMERIC(5, 0)  NOT NULL,
-  SNIPPET_CODE   VARCHAR(100) NOT NULL,
-  SNIPPET_TYPE   VARCHAR(20) not null
-);
-
-CREATE INDEX mh_experiment_snippet_experiment_id_idx
-  ON mh_experiment_snippet (EXPERIMENT_ID);
 
 CREATE TABLE mh_task (
   ID            INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,

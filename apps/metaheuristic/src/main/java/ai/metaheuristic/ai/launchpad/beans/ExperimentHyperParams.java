@@ -30,7 +30,6 @@ import java.io.Serializable;
 @EqualsAndHashCode(exclude = {"experiment", "variants"})
 @ToString(exclude = {"experiment"})
 @NoArgsConstructor
-//@JsonIgnoreProperties( { "applications" })
 public class ExperimentHyperParams implements Serializable {
     private static final long serialVersionUID = -2816493662535597212L;
 

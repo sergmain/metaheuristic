@@ -18,28 +18,30 @@ package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.*;
-import ai.metaheuristic.ai.launchpad.data.ExperimentData;
-import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.ai.launchpad.repositories.*;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.snippet.SnippetCode;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.launchpad.Workbook;
-import ai.metaheuristic.commons.utils.StrUtils;
+import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.CommonConsts;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import ai.metaheuristic.commons.utils.StrUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 
@@ -48,88 +50,68 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.ai.launchpad.data.ExperimentData.*;
-
-@SuppressWarnings("Duplicates")
+@SuppressWarnings("WeakerAccess")
 @Service
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class ExperimentTopLevelService {
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class SimpleExperiment {
-        public String name;
-        public String description;
-        public String code;
-        public int seed;
-        public long id;
-
-        public static ExperimentData.SimpleExperiment to(Experiment e) {
-            return new ExperimentData.SimpleExperiment(e.getName(), e.getDescription(), e.getCode(), e.getSeed(), e.getId());
-        }
-    }
-
     private final Globals globals;
-
     private final SnippetRepository snippetRepository;
-
     private final SnippetService snippetService;
-    private final ExperimentRepository experimentRepository;
-
-    private final ExperimentCache experimentCache;
-    private final ExperimentService experimentService;
-    private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
-    private final ExperimentSnippetRepository experimentSnippetRepository;
-    private final ExperimentFeatureRepository experimentFeatureRepository;
     private final TaskRepository taskRepository;
     private final WorkbookRepository workbookRepository;
     private final TaskPersistencer taskPersistencer;
 
-    public ExperimentTopLevelService(Globals globals, SnippetRepository snippetRepository, ExperimentRepository experimentRepository, ExperimentHyperParamsRepository experimentHyperParamsRepository, SnippetService snippetService, ExperimentCache experimentCache, ExperimentService experimentService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentFeatureRepository experimentFeatureRepository, TaskRepository taskRepository, WorkbookRepository workbookRepository, TaskPersistencer taskPersistencer) {
-        this.globals = globals;
-        this.snippetRepository = snippetRepository;
-        this.experimentRepository = experimentRepository;
-        this.experimentHyperParamsRepository = experimentHyperParamsRepository;
-        this.snippetService = snippetService;
-        this.experimentCache = experimentCache;
-        this.experimentService = experimentService;
-        this.experimentSnippetRepository = experimentSnippetRepository;
-        this.experimentFeatureRepository = experimentFeatureRepository;
-        this.taskRepository = taskRepository;
-        this.workbookRepository = workbookRepository;
-        this.taskPersistencer = taskPersistencer;
+    private final ExperimentCache experimentCache;
+    private final ExperimentService experimentService;
+    private final ExperimentRepository experimentRepository;
+    private final ExperimentHyperParamsRepository experimentHyperParamsRepository;
+    private final ExperimentSnippetRepository experimentSnippetRepository;
+    private final ExperimentFeatureRepository experimentFeatureRepository;
+
+    public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
+        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.getParams());
+        return new ExperimentApiData.SimpleExperiment(params.getName(), params.getDescription(), params.getCode(), params.getSeed(), e.getId());
     }
 
-    public ExperimentsResult getExperiments(Pageable pageable) {
+    public static ExperimentApiData.ExperimentResult asExperimentResult(Experiment e) {
+        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(e));
+    }
+
+    public ExperimentApiData.ExperimentsResult getExperiments(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.experimentRowsLimit, pageable);
-        ExperimentsResult result = new ExperimentsResult();
-        result.items = experimentRepository.findAllByOrderByIdDesc(pageable);
+        ExperimentApiData.ExperimentsResult result = new ExperimentApiData.ExperimentsResult();
+        final Slice<Experiment> experiments = experimentRepository.findAllByOrderByIdDesc(pageable);
+
+        List<ExperimentApiData.ExperimentResult> experimentResults =
+                experiments.stream().map(ExperimentTopLevelService::asExperimentResult).collect(Collectors.toList());
+
+        result.items = new PageImpl<>(experimentResults, pageable, experimentResults.size() + (experiments.hasNext() ? 1 : 0) );
         return result;
     }
 
-    public ExperimentResult getExperiment(long experimentId) {
+    public ExperimentApiData.ExperimentResult getExperiment(long experimentId) {
         Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
         if (experiment == null) {
-            return new ExperimentResult("#285.01 experiment wasn't found, experimentId: " + experimentId );
+            return new ExperimentApiData.ExperimentResult("#285.01 experiment wasn't found, experimentId: " + experimentId );
         }
-        return new ExperimentResult(experiment);
+        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment));
     }
 
-    public PlotData getPlotData(Long experimentId, Long featureId,
-                                String[] params, String[] paramsAxis) {
+    public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
         return experimentService.getPlotData(experimentId, featureId, params, paramsAxis);
     }
 
-    public ConsoleResult getTasksConsolePart(Long taskId) {
-        ConsoleResult result = new ConsoleResult ();
+    public ExperimentApiData.ConsoleResult getTasksConsolePart(Long taskId) {
+        ExperimentApiData.ConsoleResult result = new ExperimentApiData.ConsoleResult();
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task!=null) {
             SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResults());
             if (snippetExec!=null) {
                 final SnippetApiData.SnippetExecResult execSnippetExecResult = snippetExec.getExec();
-                result.items.add(new ConsoleResult.SimpleConsoleOutput(
+                result.items.add(new ExperimentApiData.ConsoleResult.SimpleConsoleOutput(
                         execSnippetExecResult.snippetCode, execSnippetExecResult.exitCode, execSnippetExecResult.isOk, execSnippetExecResult.console));
             }
             else {
@@ -139,46 +121,46 @@ public class ExperimentTopLevelService {
         return result;
     }
 
-    public ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentId, Long featureId, String[] params, Pageable pageable) {
+    public ExperimentApiData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentId, Long featureId, String[] params, Pageable pageable) {
         Experiment experiment= experimentCache.findById(experimentId);
         ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
 
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
         tasksResult.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
-        ExperimentFeatureExtendedResult result = new ExperimentFeatureExtendedResult();
+        ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.tasksResult = tasksResult;
-        result.experiment = experiment;
-        result.experimentFeature = feature;
-        result.consoleResult = new ConsoleResult();
+        result.experiment = ExperimentService.asExperimentData(experiment);
+        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature);
+        result.consoleResult = new ExperimentApiData.ConsoleResult();
         return result;
     }
 
-    public ExperimentFeatureExtendedResult getExperimentFeatureExtended(Long experimentId, Long featureId) {
+    public ExperimentApiData.ExperimentFeatureExtendedResult getExperimentFeatureExtended(Long experimentId, Long featureId) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            return new ExperimentFeatureExtendedResult("#285.15 experiment wasn't found, experimentId: " + experimentId);
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.15 experiment wasn't found, experimentId: " + experimentId);
         }
 
         ExperimentFeature experimentFeature = experimentFeatureRepository.findById(featureId).orElse(null);
         if (experimentFeature == null) {
-            return new ExperimentFeatureExtendedResult("#285.19 feature wasn't found, experimentFeatureId: " + featureId);
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.19 feature wasn't found, experimentFeatureId: " + featureId);
         }
 
         return experimentService.prepareExperimentFeatures(experiment, experimentFeature);
     }
 
-    public ExperimentInfoExtendedResult getExperimentInfo(Long id) {
+    public ExperimentApiData.ExperimentInfoExtendedResult getExperimentInfo(Long id) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new ExperimentInfoExtendedResult("#285.22 experiment wasn't found, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.22 experiment wasn't found, experimentId: " + id);
         }
         if (experiment.getWorkbookId() == null) {
-            return new ExperimentInfoExtendedResult("#285.25 experiment wasn't startet yet, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.25 experiment wasn't startet yet, experimentId: " + id);
         }
         Workbook workbook = workbookRepository.findById(experiment.getWorkbookId()).orElse(null);
         if (workbook == null) {
-            return new ExperimentInfoExtendedResult("#285.29 experiment has broken ref to workbook, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.29 experiment has broken ref to workbook, experimentId: " + id);
         }
 
         for (ExperimentHyperParams hyperParams : experiment.getHyperParams()) {
@@ -189,31 +171,35 @@ public class ExperimentTopLevelService {
             hyperParams.setVariants( variants.status ?variants.count : 0 );
         }
 
-        ExperimentInfoExtendedResult result = new ExperimentInfoExtendedResult();
+        ExperimentApiData.ExperimentInfoExtendedResult result = new ExperimentApiData.ExperimentInfoExtendedResult();
         if (experiment.getWorkbookId()==null) {
             result.addInfoMessage("Launch is disabled, dataset isn't assigned");
         }
 
-        ExperimentInfoResult experimentInfoResult = new ExperimentInfoResult();
-        experimentInfoResult.features = experimentFeatureRepository.findByExperimentIdOrderByMaxValueDesc(experiment.getId());
+        ExperimentApiData.ExperimentInfoResult experimentInfoResult = new ExperimentApiData.ExperimentInfoResult();
+        final List<ExperimentFeature> experimentFeatures = experimentFeatureRepository.findByExperimentIdOrderByMaxValueDesc(experiment.getId());
+        experimentInfoResult.features = experimentFeatures.stream().map(ExperimentService::asExperimentFeatureData).collect(Collectors.toList());
         experimentInfoResult.workbook = workbook;
         experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.getExecState());
-
-        result.experiment = experiment;
+        result.experiment = ExperimentService.asExperimentData(experiment);
         result.experimentInfo = experimentInfoResult;
         return result;
     }
 
-    public ExperimentsEditResult editExperiment(@PathVariable Long id) {
+
+    public ExperimentApiData.ExperimentsEditResult editExperiment(@PathVariable Long id) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new ExperimentsEditResult("#285.33 experiment wasn't found, experimentId: " + id);
+            return new ExperimentApiData.ExperimentsEditResult("#285.33 experiment wasn't found, experimentId: " + id);
         }
         Iterable<Snippet> snippets = snippetRepository.findAll();
-        ExperimentData.SnippetResult snippetResult = new ExperimentData.SnippetResult();
+        ExperimentApiData.SnippetResult snippetResult = new ExperimentApiData.SnippetResult();
 
         List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-        snippetResult.snippets = experimentSnippets;
+        snippetResult.snippets = experimentSnippets.stream().map(es->
+                new ExperimentApiData.ExperimentSnippetResult(
+                        es.getId(), es.getVersion(), es.getSnippetCode(), es.type, es.getExperimentId())).collect(Collectors.toList());
+
         final List<String> types = Arrays.asList(CommonConsts.FIT_TYPE, CommonConsts.PREDICT_TYPE);
         snippetResult.selectOptions = snippetService.getSelectOptions(snippets,
                 snippetResult.snippets.stream().map(o -> new SnippetCode(o.getId(), o.getSnippetCode())).collect(Collectors.toList()),
@@ -231,52 +217,74 @@ public class ExperimentTopLevelService {
                 });
 
         snippetResult.sortSnippetsByOrder();
-        ExperimentsEditResult result = new ExperimentsEditResult();
-        result.hyperParams = HyperParamsResult.getInstance(experiment);
-        result.simpleExperiment = SimpleExperiment.to(experiment);
+        ExperimentApiData.ExperimentsEditResult result = new ExperimentApiData.ExperimentsEditResult();
+
+        ExperimentApiData.HyperParamsResult r = new ExperimentApiData.HyperParamsResult();
+        r.items = experiment.getHyperParams().stream().map(ExperimentTopLevelService::asHyperParamData).collect(Collectors.toList());
+        result.hyperParams = r;
+        result.simpleExperiment = asSimpleExperiment(experiment);
         result.snippetResult = snippetResult;
         return result;
     }
 
-    public OperationStatusRest addExperimentCommit(Experiment experiment) {
-        if (experiment.getSeed()==0) {
-            experiment.setSeed(1);
-        }
-        experiment.setCreatedOn(System.currentTimeMillis());
-        return processCommit(experiment);
+    @SuppressWarnings("Duplicates")
+    public OperationStatusRest addExperimentCommit(ExperimentApiData.ExperimentData experiment) {
+
+        Experiment e = new Experiment();
+        ExperimentParamsYaml params = new ExperimentParamsYaml();
+
+        params.name = StringUtils.strip(experiment.getName());
+        params.description = StringUtils.strip(experiment.getDescription());
+        params.setSeed(experiment.getSeed()==0 ? 1 : experiment.getSeed());
+        e.code = StringUtils.strip(experiment.getCode());
+        e.setCreatedOn(System.currentTimeMillis());
+
+        experimentCache.save(e);
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest editExperimentCommit(ExperimentData.SimpleExperiment simpleExperiment) {
-        Experiment experiment = experimentCache.findById(simpleExperiment.id);
-        if (experiment == null) {
+    public static ExperimentApiData.HyperParamData asHyperParamData(ExperimentHyperParams ehp) {
+        return new ExperimentApiData.HyperParamData(ehp.getId(), ehp.getVersion(), ehp.getKey(), ehp.getValues(), ehp.getVariants());
+    }
+
+    @SuppressWarnings("Duplicates")
+    public OperationStatusRest editExperimentCommit(ExperimentApiData.SimpleExperiment simpleExperiment) {
+        OperationStatusRest op = validate(simpleExperiment);
+        if (op!=null) {
+            return op;
+        }
+
+        Experiment e = experimentRepository.findByIdForUpdate(simpleExperiment.id);
+        if (e == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.37 experiment wasn't found, experimentId: " + simpleExperiment.id);
         }
-        experiment.setName(simpleExperiment.getName());
-        experiment.setDescription(simpleExperiment.getDescription());
-        experiment.setSeed(simpleExperiment.getSeed());
-        experiment.setCode(simpleExperiment.getCode());
-        experiment.setCreatedOn(System.currentTimeMillis());
+        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.getParams());
 
-        return processCommit(experiment);
+        params.name = StringUtils.strip(simpleExperiment.getName());
+        params.description = StringUtils.strip(simpleExperiment.getDescription());
+        params.setSeed(simpleExperiment.getSeed()==0 ? 1 : simpleExperiment.getSeed());
+        e.code = StringUtils.strip(simpleExperiment.getCode());
+        e.setCreatedOn(System.currentTimeMillis());
+
+        experimentCache.save(e);
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    private OperationStatusRest processCommit(Experiment experiment) {
-        if (StringUtils.isBlank(experiment.getName())) {
+    private OperationStatusRest validate(ExperimentApiData.SimpleExperiment se) {
+        if (StringUtils.isBlank(se.getName())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.40 Name of experiment is blank.");
         }
-        if (StringUtils.isBlank(experiment.getCode())) {
+        if (StringUtils.isBlank(se.getCode())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.41 Code of experiment is blank.");
         }
-        if (StringUtils.isBlank(experiment.getDescription())) {
+        if (StringUtils.isBlank(se.getDescription())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.42 Description of experiment is blank.");
         }
-        experiment.strip();
-        experimentCache.save(experiment);
-        return OperationStatusRest.OPERATION_STATUS_OK;
+        return null;
     }
 
     public OperationStatusRest metadataAddCommit(Long experimentId, String key, String value) {
@@ -358,8 +366,6 @@ public class ExperimentTopLevelService {
 
         List<ExperimentSnippet> list = new ArrayList<>(experimentSnippets);
         list.add(ts);
-
-        ExperimentService.sortSnippetsByType(list);
 
         experimentSnippetRepository.saveAll(list);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -448,9 +454,7 @@ public class ExperimentTopLevelService {
         }
         final Experiment e = new Experiment();
         e.setCode(StrUtils.incCopyNumber(experiment.getCode()));
-        e.setName(StrUtils.incCopyNumber(experiment.getName()));
-        e.setDescription(experiment.getDescription());
-        e.setSeed(experiment.getSeed());
+        e.setParams( e.getParams() );
         e.setCreatedOn(System.currentTimeMillis());
         e.setHyperParams(
                 experiment.getHyperParams()

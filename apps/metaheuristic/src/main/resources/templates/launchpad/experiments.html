@@ -38,7 +38,7 @@
         </thead>
 
         <tbody>
-        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.ExperimentData$ExperimentsResult"*/-->
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.ExperimentsResult"*/-->
         <div th:remove="tag" th:each="r : ${result.items}" >
             <tr>
                 <td th:text="${r.description}">description</td>

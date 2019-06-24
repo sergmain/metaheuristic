@@ -14,44 +14,68 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.data;
+package ai.metaheuristic.api.data.experiment;
 
-import ai.metaheuristic.ai.utils.SimpleSelectOption;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.launchpad.Workbook;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.beans.ExperimentFeature;
-import ai.metaheuristic.ai.launchpad.beans.ExperimentHyperParams;
-import ai.metaheuristic.ai.launchpad.beans.ExperimentSnippet;
-import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.data.domain.Slice;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 
-public class ExperimentData {
+/**
+ * @author Serge
+ * Date: 6/23/2019
+ * Time: 11:55 AM
+ */
+public class ExperimentApiData {
 
     public static final PlotData EMPTY_PLOT_DATA = new PlotData();
 
     @Data
     @NoArgsConstructor
+    public static class ExperimentData {
+        public Long id;
+        public Integer version;
+        public Long workbookId;
+        public String code;
+        public String name;
+        public String description;
+        public int seed;
+        public boolean isAllTaskProduced;
+        public boolean isFeatureProduced;
+        public long createdOn;
+        public int numberOfTask;
+        public List<ExperimentParamsYaml.HyperParam> hyperParams;
+        public Map<String, Map<String, Integer>> hyperParamsAsMap;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class HyperParamData {
+        public Long id;
+        public Integer version;
+        public String key;
+        public String values;
+        public int variants;
+    }
+
+    @Data
+    @NoArgsConstructor
     @AllArgsConstructor
     public static class HyperParamsResult {
-        public List<ExperimentHyperParams> items = new ArrayList<>();
-
-        public static HyperParamsResult getInstance(Experiment experiment) {
-            HyperParamsResult r = new HyperParamsResult();
-            r.items.addAll(experiment.getHyperParams());
-            return r;
-        }
+        public List<HyperParamData> items = new ArrayList<>();
     }
 
     @Data
@@ -60,8 +84,8 @@ public class ExperimentData {
     @EqualsAndHashCode(callSuper = false)
     public static class ExperimentsEditResult extends BaseDataClass {
         public HyperParamsResult hyperParams;
-        public SimpleExperiment simpleExperiment;
-        public SnippetResult snippetResult;
+        public ExperimentApiData.SimpleExperiment simpleExperiment;
+        public ExperimentApiData.SnippetResult snippetResult;
 
         public ExperimentsEditResult(String errorMessage) {
             addErrorMessage(errorMessage);
@@ -73,32 +97,15 @@ public class ExperimentData {
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class ExperimentsResult extends BaseDataClass {
-        public Slice<Experiment> items;
+        public Slice<ExperimentResult> items;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class MetricElement {
+    public static class MetricElement implements BaseMetricElement {
         public final List<BigDecimal> values = new ArrayList<>();
         public String params;
-
-        public static int compare(MetricElement o2, MetricElement o1) {
-            for (int i = 0; i < Math.min(o1.values.size(), o2.values.size()); i++) {
-                final BigDecimal holder1 = o1.values.get(i);
-                if (holder1 == null) {
-                    return -1;
-                }
-                final BigDecimal holder2 = o2.values.get(i);
-                if (holder2 == null) {
-                    return -1;
-                }
-                int c = ObjectUtils.compare(holder1, holder2);
-                if (c != 0) {
-                    return c;
-                }
-            }
-            return Integer.compare(o1.values.size(), o2.values.size());        }
     }
 
     @Data
@@ -109,7 +116,21 @@ public class ExperimentData {
 
     @Data
     public static class HyperParamResult {
-        public final List<HyperParamList> elements = new ArrayList<>();
+        public final List<ExperimentApiData.HyperParamList> elements = new ArrayList<>();
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExperimentFeatureData {
+        public Long id;
+        public Integer version;
+        public String resourceCodes;
+        public String checksumIdCodes;
+        public int execStatus;
+        public String execStatusAsString;
+        public Long experimentId;
+        public Double maxValue;
+
     }
 
     @Data
@@ -119,9 +140,9 @@ public class ExperimentData {
         public MetricsResult metricsResult;
         public HyperParamResult hyperParamResult;
         public TaskApiData.TasksResult tasksResult;
-        public Experiment experiment;
-        public ExperimentFeature experimentFeature;
-        public ExperimentData.ConsoleResult consoleResult;
+        public ExperimentData experiment;
+        public ExperimentFeatureData experimentFeature;
+        public ExperimentApiData.ConsoleResult consoleResult;
 
         public ExperimentFeatureExtendedResult(String errorMessage) {
             addErrorMessage(errorMessage);
@@ -132,13 +153,13 @@ public class ExperimentData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ExperimentResult extends BaseDataClass {
-        public Experiment experiment;
+        public ExperimentData experiment;
 
         public ExperimentResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ExperimentResult(Experiment experiment) {
+        public ExperimentResult(ExperimentData experiment) {
             this.experiment = experiment;
         }
     }
@@ -147,14 +168,14 @@ public class ExperimentData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ExperimentInfo extends BaseDataClass {
-        public Experiment experiment;
-        public ExperimentExtendedResult experimentResult;
+        public ExperimentData experiment;
+        public ExperimentApiData.ExperimentExtendedResult experimentResult;
 
         public ExperimentInfo(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ExperimentInfo(Experiment experiment, ExperimentExtendedResult experimentResult) {
+        public ExperimentInfo(ExperimentData experiment, ExperimentApiData.ExperimentExtendedResult experimentResult) {
             this.experiment = experiment;
             this.experimentResult = experimentResult;
         }
@@ -177,7 +198,7 @@ public class ExperimentData {
     @Data
     public static class ExperimentExtendedResult {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
-        public List<ExperimentFeature> features;
+        public List<ExperimentFeatureData> features;
         public Workbook workbook;
         public EnumsApi.WorkbookExecState workbookExecState;
     }
@@ -187,8 +208,8 @@ public class ExperimentData {
     @NoArgsConstructor
     public static class ExperimentFeatureProgress extends BaseDataClass {
         public TaskApiData.TasksResult tasksResult;
-        public Experiment experiment;
-        public ExperimentFeature experimentFeature;
+        public ExperimentData experiment;
+        public ExperimentFeatureData experimentFeature;
         public ExperimentExtendedResult experimentResult;
         public ConsoleResult consoleResult;
 
@@ -196,7 +217,7 @@ public class ExperimentData {
             addErrorMessage(errorMessage);
         }
 
-        public ExperimentFeatureProgress(Experiment experiment, ExperimentExtendedResult experimentResult) {
+        public ExperimentFeatureProgress(ExperimentData experiment, ExperimentExtendedResult experimentResult) {
             this.experiment = experiment;
             this.experimentResult = experimentResult;
         }
@@ -232,7 +253,7 @@ public class ExperimentData {
     @Data
     public static class ExperimentInfoResult {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
-        public List<ExperimentFeature> features;
+        public List<ExperimentFeatureData> features;
         public Workbook workbook;
         public EnumsApi.WorkbookExecState workbookExecState;
     }
@@ -241,7 +262,7 @@ public class ExperimentData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ExperimentInfoExtendedResult extends BaseDataClass {
-        public Experiment experiment;
+        public ExperimentData experiment;
         public ExperimentInfoResult experimentInfo;
 
         public ExperimentInfoExtendedResult(String errorMessage) {
@@ -250,12 +271,22 @@ public class ExperimentData {
     }
 
     @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExperimentSnippetResult  {
+        public Long id;
+        public Integer version;
+        public String snippetCode;
+        public String type;
+        public long experimentId;
+    }
+    @Data
     public static class SnippetResult {
         public List<SimpleSelectOption> selectOptions = new ArrayList<>();
-        public List<ExperimentSnippet> snippets = new ArrayList<>();
+        public List<ExperimentSnippetResult> snippets = new ArrayList<>();
 
         public void sortSnippetsByOrder() {
-//            snippets.sort(Comparator.comparingInt(ExperimentSnippet::getOrder));
+//            snippets.sort(Comparator.comparingInt(ExperimentSnippetResult::getOrder));
         }
     }
 
@@ -268,9 +299,5 @@ public class ExperimentData {
         public String code;
         public int seed;
         public long id;
-
-        public static SimpleExperiment to(Experiment e) {
-            return new SimpleExperiment(e.getName(), e.getDescription(), e.getCode(), e.getSeed(), e.getId());
-        }
     }
 }

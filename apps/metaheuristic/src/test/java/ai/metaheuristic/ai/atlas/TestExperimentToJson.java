@@ -19,7 +19,7 @@ package ai.metaheuristic.ai.atlas;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.atlas.ExperimentStoredToAtlas;
-import ai.metaheuristic.ai.launchpad.data.ExperimentData;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.data.plan.PlanApiData;
@@ -64,7 +64,7 @@ public class TestExperimentToJson extends PreparingPlan {
     public void toJson() throws JsonProcessingException {
 
         long experimentId = experiment.getId();
-        ExperimentData.ExperimentInfoExtendedResult result =
+        ExperimentApiData.ExperimentInfoExtendedResult result =
                 experimentTopLevelService.getExperimentInfo(experimentId);
 
         String json = mapper.writeValueAsString(result);

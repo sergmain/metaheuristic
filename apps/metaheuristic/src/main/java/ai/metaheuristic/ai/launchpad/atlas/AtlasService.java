@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
+import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentCache;
@@ -29,6 +30,7 @@ import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.*;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.launchpad.BinaryData;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
@@ -84,7 +86,6 @@ public class AtlasService {
         public ExperimentStoredToAtlas experimentStoredToAtlas;
         public Enums.StoringStatus status;
 
-        @SuppressWarnings("WeakerAccess")
         public StoredToAtlasWithStatus(Enums.StoringStatus status, String errorMessage) {
             this.status = status;
             this.errorMessages = Collections.singletonList(errorMessage);
@@ -133,8 +134,11 @@ public class AtlasService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "General error while storing experiment, " + e.toString());
         }
-        b.name = stored.experimentStoredToAtlas.experiment.getName();
-        b.description = stored.experimentStoredToAtlas.experiment.getDescription();
+        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(stored.experimentStoredToAtlas.experiment.getParams());
+
+
+        b.name = params.getName();
+        b.description = params.getDescription();
         b.code = stored.experimentStoredToAtlas.experiment.getCode();
         b.createdOn = stored.experimentStoredToAtlas.experiment.getCreatedOn();
         atlasRepository.saveAndFlush(b);
@@ -162,7 +166,6 @@ public class AtlasService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    @SuppressWarnings("WeakerAccess")
     public static String getPoolCodeForExperiment(long workbookId, long experimentId) {
         return String.format("stored-experiment-%d-%d",workbookId, experimentId);
     }
@@ -199,13 +202,14 @@ public class AtlasService {
         return result;
     }
 
+    // TODO 2019-06-23 change to yaml format
     public ExperimentStoredToAtlas fromJson(String json) throws IOException {
         //noinspection UnnecessaryLocalVariable
         ExperimentStoredToAtlas estb1 = mapper.readValue(json, ExperimentStoredToAtlas.class);
         return estb1;
     }
 
-
+    // TODO 2019-06-23 change to yaml format
     public String toJson(ExperimentStoredToAtlas stored) throws JsonProcessingException {
         //noinspection UnnecessaryLocalVariable
         String json = mapper.writeValueAsString(stored);

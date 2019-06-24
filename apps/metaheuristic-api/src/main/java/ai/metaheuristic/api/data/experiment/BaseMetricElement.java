@@ -16,39 +16,14 @@
 
 package ai.metaheuristic.api.data.experiment;
 
-import ai.metaheuristic.api.data.BaseParams;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
  * @author Serge
- * Date: 6/22/2019
- * Time: 10:03 PM
+ * Date: 6/23/2019
+ * Time: 12:50 PM
  */
-@Data
-@NoArgsConstructor
-public class ExperimentParamsYaml implements BaseParams {
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class HyperParam {
-        public String key;
-        public String values;
-    }
-
-    public String name;
-    public String description;
-    public String code;
-
-    public int seed = 42;
-    public List<HyperParam> hyperParams = new ArrayList<>();
-
-    public String fitSnippet;
-    public String predictSnippet;
-
+public interface BaseMetricElement {
+    List<BigDecimal> getValues();
 }
