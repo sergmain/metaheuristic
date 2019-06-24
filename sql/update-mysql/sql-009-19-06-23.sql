@@ -1,23 +1,23 @@
-alter table mh_experiment
-    add   PARAMS          MEDIUMTEXT not null;
-
-delete from mh_experiment_task_feature;
-
-delete from mh_experiment_hyper_params;
-
-delete from mh_experiment_feature;
-
-delete from mh_experiment;
-
 delete from mh_atlas;
 
 drop table mh_experiment_snippet;
 
-alter table mh_experiment
-    drop column NAME;
+drop table mh_experiment_task_feature;
 
-alter table mh_experiment
-    drop column DESCRIPTION;
+drop table mh_experiment_hyper_params;
 
-alter table mh_experiment
-    drop column SEED;
+drop table mh_experiment_feature;
+
+drop table mh_experiment;
+
+CREATE TABLE mh_experiment
+(
+    ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
+    VERSION     NUMERIC(5, 0)  NOT NULL,
+    WORKBOOK_ID  NUMERIC(10, 0),
+    CODE        VARCHAR(50)   NOT NULL,
+    PARAMS          MEDIUMTEXT not null
+);
+
+CREATE UNIQUE INDEX mh_experiment_code_unq_idx
+    ON mh_experiment (CODE);

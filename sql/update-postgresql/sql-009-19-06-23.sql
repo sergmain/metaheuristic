@@ -1,26 +1,22 @@
-alter table mh_experiment
-    add PARAMS        TEXT not null;
-
-delete from mh_experiment_task_feature;
-
-delete from mh_experiment_hyper_params;
-
-delete from mh_experiment_feature;
-
-delete from mh_experiment;
-
 delete from mh_atlas;
 
-drop table mh_experiment_snippet;
+drop table mh_experiment_task_feature;
 
-alter table mh_experiment
-    drop column name;
+drop table mh_experiment_hyper_params;
 
-alter table mh_experiment
-    drop column description;
+drop table mh_experiment_feature;
 
-alter table mh_experiment
-    drop column seed;
+drop table mh_experiment;
 
+CREATE TABLE MH_EXPERIMENT
+(
+    ID          SERIAL PRIMARY KEY,
+    VERSION     NUMERIC(5, 0)  NOT NULL,
+    WORKBOOK_ID  NUMERIC(10, 0),
+    CODE        VARCHAR(50)   NOT NULL,
+    PARAMS        TEXT not null
+);
 
+CREATE UNIQUE INDEX MH_EXPERIMENT_CODE_UNQ_IDX
+    ON MH_EXPERIMENT (CODE);
 

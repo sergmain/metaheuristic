@@ -130,9 +130,9 @@ public class ExperimentService {
 
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
         BeanUtils.copyProperties(e, ed);
-        ed.name = params.name;
-        ed.description = params.description;
-        ed.hyperParamsAsMap = e.getHyperParamsAsMap();
+        ed.name = params.yaml.name;
+        ed.description = params.yaml.description;
+        ed.hyperParamsAsMap = getHyperParamsAsMap(e.getHyperParams());
 
         ed.hyperParams = e.getHyperParams()==null ? new ArrayList<>()
                 : e.getHyperParams()
@@ -165,6 +165,26 @@ public class ExperimentService {
         }
     }
 
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentHyperParams> experimentHyperParams) {
+        return getHyperParamsAsMap(experimentHyperParams, true);
+    }
+
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentHyperParams> experimentHyperParams, boolean isFull) {
+        final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
+        for (ExperimentHyperParams hyperParam : experimentHyperParams) {
+            ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
+            Map<String, Integer> map = new LinkedHashMap<>();
+            paramByIndex.put(hyperParam.getKey(), map);
+            for (int i = 0; i <ofVariants.values.size(); i++) {
+                String value = ofVariants.values.get(i);
+
+
+                map.put(isFull ? hyperParam.getKey()+'-'+value : value , i);
+            }
+        }
+        return paramByIndex;
+    }
+
     private static class ParamFilter {
         String key;
         int idx;
@@ -185,10 +205,6 @@ public class ExperimentService {
             }
         }
         return true;
-    }
-
-    public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
-        snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
     }
 
     public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
@@ -268,7 +284,7 @@ public class ExperimentService {
         if (paramCleared.size()!=2) {
             throw new IllegalStateException("#179.15 Wrong number of params for axes. Expected: 2, actual: " + paramCleared.size());
         }
-        Map<String, Map<String, Integer>> map = experiment.getHyperParamsAsMap(false);
+        Map<String, Map<String, Integer>> map = getHyperParamsAsMap(experiment, false);
         data.x.addAll(map.get(paramCleared.get(0)).keySet());
         data.y.addAll(map.get(paramCleared.get(1)).keySet());
 
@@ -326,7 +342,7 @@ public class ExperimentService {
             paramSet.add(param);
             paramFilterKeys.add(ParamFilter.of(param).key);
         }
-        final Map<String, Map<String, Integer>> paramByIndex = experiment.getHyperParamsAsMap();
+        final Map<String, Map<String, Integer>> paramByIndex = getHyperParamsAsMap(experiment);
 
         List<Task> list = taskRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
 

@@ -168,7 +168,7 @@ public class ExperimentTopLevelService {
                 continue;
             }
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParams.getValues());
-            hyperParams.setVariants( variants.status ?variants.count : 0 );
+            hyperParams.setVariants( variants.status ? variants.count : 0 );
         }
 
         ExperimentApiData.ExperimentInfoExtendedResult result = new ExperimentApiData.ExperimentInfoExtendedResult();

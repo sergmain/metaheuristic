@@ -267,7 +267,7 @@ public class AtlasTopLevelService {
             paramSet.add(param);
             paramFilterKeys.add(ParamFilter.of(param).key);
         }
-        final Map<String, Map<String, Integer>> paramByIndex = experiment.getHyperParamsAsMap();
+        final Map<String, Map<String, Integer>> paramByIndex = ExperimentService.getHyperParamsAsMap(experiment);
 
         List<Task> selected = new ArrayList<>();
         for (Task task : tasks) {

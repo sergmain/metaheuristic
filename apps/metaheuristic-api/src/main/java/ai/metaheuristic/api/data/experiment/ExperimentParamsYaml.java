@@ -21,6 +21,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,14 +42,82 @@ public class ExperimentParamsYaml implements BaseParams {
         public String values;
     }
 
-    public String name;
-    public String description;
-    public String code;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExperimentYaml {
+        public String name;
+        public String description;
+        public String code;
 
-    public int seed = 42;
-    public List<HyperParam> hyperParams = new ArrayList<>();
+        public int seed = 42;
+        public List<HyperParam> hyperParams = new ArrayList<>();
 
-    public String fitSnippet;
-    public String predictSnippet;
+        public String fitSnippet;
+        public String predictSnippet;
+    }
+
+    public class ExperimentFeature implements Serializable {
+        private static final long serialVersionUID = -7943373261306370650L;
+
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        public Long id;
+
+        @Version
+        public Integer version;
+
+        @Column(name = "RESOURCE_CODES")
+        public String resourceCodes;
+
+        @Column(name = "CHECKSUM_ID_CODES")
+        public String checksumIdCodes;
+
+        @Column(name = "EXEC_STATUS")
+        public int execStatus;
+
+        @Column(name = "EXPERIMENT_ID")
+        public Long experimentId;
+
+        @Column(name = "MAX_VALUE")
+        public Double maxValue;
+
+        public String execStatusAsString() {
+            switch(execStatus) {
+                case 0:
+                    return "Unknown";
+                case 1:
+                    return "Ok";
+                case 2:
+                    return "All are errors";
+                case 3:
+                    return "No sequenses";
+                default:
+                    return "Status is wrong";
+            }
+        }
+    }
+
+    public class ExperimentTaskFeature implements Serializable {
+        public Long id;
+        private Integer version;
+        public Long workbookId;
+        public Long taskId;
+        public Long featureId;
+        public int taskType;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExperimentProcessing {
+        public boolean isAllTaskProduced;
+        public boolean isFeatureProduced;
+        public long createdOn;
+        public int numberOfTask;
+    }
+
+    public ExperimentYaml yaml;
+    public ExperimentProcessing processing;
 
 }

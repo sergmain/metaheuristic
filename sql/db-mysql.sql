@@ -80,50 +80,12 @@ CREATE TABLE mh_experiment (
   ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
   VERSION     NUMERIC(5, 0)  NOT NULL,
   WORKBOOK_ID  NUMERIC(10, 0),
-  NAME        VARCHAR(50)   NOT NULL,
-  DESCRIPTION VARCHAR(250)  NOT NULL,
   CODE        VARCHAR(50)   NOT NULL,
-  SEED          INT(10),
-  PARAMS          MEDIUMTEXT not null,
-  NUMBER_OF_TASK          INT(10) not null default 0,
-  IS_ALL_TASK_PRODUCED   tinyint(1) not null default 0,
-  IS_FEATURE_PRODUCED   tinyint(1) not null default 0,
-  CREATED_ON   bigint not null
+  PARAMS          MEDIUMTEXT not null
 );
 
 CREATE UNIQUE INDEX mh_experiment_code_unq_idx
   ON mh_experiment (CODE);
-
-CREATE TABLE mh_experiment_hyper_params (
-  ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-  EXPERIMENT_ID          NUMERIC(10, 0) NOT NULL,
-  VERSION     NUMERIC(5, 0)  NOT NULL,
-  HYPER_PARAM_KEY    VARCHAR(50),
-  HYPER_PARAM_VALUES  VARCHAR(250)
-);
-
-CREATE TABLE mh_experiment_task (
-  ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-  VERSION     NUMERIC(5, 0)  NOT NULL,
-  WORKBOOK_ID          NUMERIC(10, 0) NOT NULL,
-  FIT_TASK_ID          NUMERIC(10, 0) NOT NULL,
-  PREDICT_TASK_ID          NUMERIC(10, 0) NOT NULL,
-  FIT_EXEC_STATE        tinyint(1) not null default 0,
-  PREDICT_EXEC_STATE        tinyint(1) not null default 0
-);
-
-CREATE TABLE mh_experiment_feature (
-  ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-  EXPERIMENT_ID          NUMERIC(10, 0) NOT NULL,
-  VERSION     NUMERIC(5, 0)  NOT NULL,
-  RESOURCE_CODES   VARCHAR(2048) not null,
-  CHECKSUM_ID_CODES   VARCHAR(100) not null,
-  EXEC_STATUS  tinyint(1) not null default 0,
-  MAX_VALUE NUMERIC(10,4)
-);
-
-CREATE UNIQUE INDEX mh_experiment_feature_unq_idx
-  ON mh_experiment_feature (EXPERIMENT_ID, CHECKSUM_ID_CODES);
 
 CREATE TABLE mh_task (
   ID            INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -148,18 +110,6 @@ CREATE INDEX mh_task_workbook_id_idx
 
 CREATE INDEX mh_task_workbook_id_task_order_idx
     ON mh_task (WORKBOOK_ID, TASK_ORDER);
-
-CREATE TABLE mh_experiment_task_feature (
-  ID            INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
-  VERSION       NUMERIC(5, 0)  NOT NULL,
-  WORKBOOK_ID       NUMERIC(10, 0)   NOT NULL,
-  TASK_ID       NUMERIC(10, 0)   NOT NULL,
-  FEATURE_ID    NUMERIC(10, 0)   NOT NULL,
-  TASK_TYPE    tinyint(1) not null
-);
-
-CREATE INDEX mh_experiment_task_feature_workbook_id_idx
-  ON mh_experiment_task_feature (WORKBOOK_ID);
 
 CREATE TABLE mh_snippet (
   ID          INT(10) NOT NULL AUTO_INCREMENT  PRIMARY KEY,
@@ -204,8 +154,6 @@ CREATE TABLE mh_atlas
   CREATED_ON    bigint not null,
   EXPERIMENT    TEXT NOT NULL
 );
-
--- ==================== Pilot part ==========================
 
 create table mh_batch
 (
