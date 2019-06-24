@@ -17,25 +17,24 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.beans.ExperimentSnippet;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
-import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
+import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 @Profile("launchpad")
@@ -105,8 +104,9 @@ public class ExperimentProcessValidator implements ProcessValidator {
                 return EnumsApi.PlanValidateStatus.WORKBOOK_DOESNT_EXIST_ERROR;
             }
         }
-        List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(e.getId());
-        if (experimentSnippets==null || experimentSnippets.size()<2) {
+        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.params);
+
+        if (StringUtils.isBlank(epy.yaml.fitSnippet) || StringUtils.isBlank(epy.yaml.predictSnippet)) {
             return EnumsApi.PlanValidateStatus.EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR;
         }
 

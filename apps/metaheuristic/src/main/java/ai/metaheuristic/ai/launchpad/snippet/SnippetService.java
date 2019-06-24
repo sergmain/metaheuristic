@@ -22,11 +22,9 @@ import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetUtils;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.beans.ExperimentSnippet;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
-import ai.metaheuristic.ai.launchpad.repositories.ExperimentSnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.snippet.SnippetCode;
 import ai.metaheuristic.api.data.SimpleSelectOption;
@@ -34,6 +32,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -48,25 +47,13 @@ import java.util.*;
 @Service
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class SnippetService {
 
     private final Globals globals;
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
-    private final ExperimentSnippetRepository experimentSnippetRepository;
     private final BinaryDataService binaryDataService;
-
-    public SnippetService(Globals globals, SnippetRepository snippetRepository, SnippetCache snippetCache, ExperimentSnippetRepository experimentSnippetRepository, BinaryDataService binaryDataService) {
-        this.globals = globals;
-        this.snippetRepository = snippetRepository;
-        this.snippetCache = snippetCache;
-        this.experimentSnippetRepository = experimentSnippetRepository;
-        this.binaryDataService = binaryDataService;
-    }
-
-    @PostConstruct
-    public void init() {
-    }
 
     public List<ExperimentSnippet> getTaskSnippetsForExperiment(Long experimentId) {
         List<ExperimentSnippet> experimentSnippets = experimentSnippetRepository.findByExperimentId(experimentId);

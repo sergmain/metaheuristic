@@ -60,26 +60,11 @@ public class ExperimentParamsYaml implements BaseParams {
     public class ExperimentFeature implements Serializable {
         private static final long serialVersionUID = -7943373261306370650L;
 
-        @Id
-        @GeneratedValue(strategy = GenerationType.IDENTITY)
         public Long id;
-
-        @Version
-        public Integer version;
-
-        @Column(name = "RESOURCE_CODES")
         public String resourceCodes;
-
-        @Column(name = "CHECKSUM_ID_CODES")
         public String checksumIdCodes;
-
-        @Column(name = "EXEC_STATUS")
         public int execStatus;
-
-        @Column(name = "EXPERIMENT_ID")
         public Long experimentId;
-
-        @Column(name = "MAX_VALUE")
         public Double maxValue;
 
         public String execStatusAsString() {
