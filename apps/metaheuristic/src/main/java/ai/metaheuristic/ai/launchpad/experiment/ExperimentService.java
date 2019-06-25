@@ -18,7 +18,9 @@ package ai.metaheuristic.ai.launchpad.experiment;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.launchpad.beans.*;
+import ai.metaheuristic.ai.launchpad.beans.Experiment;
+import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.plan.WorkbookService;
 import ai.metaheuristic.ai.launchpad.repositories.*;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
@@ -47,11 +49,11 @@ import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.context.event.ApplicationEventMulticaster;
 import org.springframework.data.domain.Page;
@@ -68,10 +70,13 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
+
 @Service
 @EnableTransactionManagement
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class ExperimentService {
 
     private final ApplicationEventMulticaster eventMulticaster;
@@ -87,25 +92,6 @@ public class ExperimentService {
     private final ExperimentCache experimentCache;
     private final ExperimentRepository experimentRepository;
     private final ExperimentFeatureRepository experimentFeatureRepository;
-    private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
-    private final ExperimentTaskFeatureRepository experimentTaskFeatureRepository;
-
-    @Autowired
-    public ExperimentService(ApplicationEventMulticaster eventMulticaster, MetricsMaxValueCollector metricsMaxValueCollector, ExperimentCache experimentCache, TaskRepository taskRepository, ExperimentTaskFeatureRepository taskExperimentFeatureRepository, TaskPersistencer taskPersistencer, ExperimentFeatureRepository experimentFeatureRepository, SnippetService snippetService, WorkbookRepository workbookRepository, ExperimentRepository experimentRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, ParamsSetter paramsSetter, SnippetRepository snippetRepository) {
-        this.eventMulticaster = eventMulticaster;
-        this.metricsMaxValueCollector = metricsMaxValueCollector;
-        this.experimentCache = experimentCache;
-        this.taskRepository = taskRepository;
-        this.taskExperimentFeatureRepository = taskExperimentFeatureRepository;
-        this.taskPersistencer = taskPersistencer;
-        this.experimentFeatureRepository = experimentFeatureRepository;
-        this.snippetService = snippetService;
-        this.experimentRepository = experimentRepository;
-        this.experimentTaskFeatureRepository = experimentTaskFeatureRepository;
-        this.paramsSetter = paramsSetter;
-        this.workbookRepository = workbookRepository;
-        this.snippetRepository = snippetRepository;
-    }
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
         for (int i = 0; i < Math.min(o1.getValues().size(), o2.getValues().size()); i++) {
@@ -132,13 +118,8 @@ public class ExperimentService {
         BeanUtils.copyProperties(e, ed);
         ed.name = params.yaml.name;
         ed.description = params.yaml.description;
-        ed.hyperParamsAsMap = getHyperParamsAsMap(e.getHyperParams());
-
-        ed.hyperParams = e.getHyperParams()==null ? new ArrayList<>()
-                : e.getHyperParams()
-                .stream()
-                .map(o->new ExperimentParamsYaml.HyperParam(o.getKey(), o.getValues()))
-                .collect(Collectors.toList());
+        ed.hyperParams = params.yaml.hyperParams==null ? new ArrayList<>() : params.yaml.hyperParams;
+        ed.hyperParamsAsMap = getHyperParamsAsMap(ed.hyperParams);
 
         return ed;
     }
@@ -165,13 +146,21 @@ public class ExperimentService {
         }
     }
 
-    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentHyperParams> experimentHyperParams) {
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment) {
+        return getHyperParamsAsMap(experiment.getExperimentParamsYaml().yaml.hyperParams, true);
+    }
+
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment, boolean isFull) {
+        return getHyperParamsAsMap(experiment.getExperimentParamsYaml().yaml.hyperParams, isFull);
+    }
+
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<HyperParam> experimentHyperParams) {
         return getHyperParamsAsMap(experimentHyperParams, true);
     }
 
-    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<ExperimentHyperParams> experimentHyperParams, boolean isFull) {
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<HyperParam> experimentHyperParams, boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
-        for (ExperimentHyperParams hyperParam : experimentHyperParams) {
+        for (HyperParam hyperParam : experimentHyperParams) {
             ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
             Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);
@@ -209,7 +198,11 @@ public class ExperimentService {
 
     public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
         Experiment experiment= experimentCache.findById(experimentId);
-        ExperimentFeature feature = experimentFeatureRepository.findById(featureId).orElse(null);
+//        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+
+        ExperimentFeature feature =
+                epy.processing.features.stream().filter(o->o.id.equals(featureId)).findFirst().orElse(null);
 
         //noinspection UnnecessaryLocalVariable
         ExperimentApiData.PlotData data = findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
@@ -217,24 +210,29 @@ public class ExperimentService {
     }
 
     public void updateMaxValueForExperimentFeatures(Long workbookId) {
-        Long experimentId = experimentRepository.findIdByWorkbookId(workbookId);
-        if (experimentId==null) {
+        Experiment experiment = experimentRepository.findIdByWorkbookIdForUpdate(workbookId);
+        if (experiment==null) {
             return;
         }
-        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experimentId);
+//        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+
+        List<ExperimentFeature> features = epy.processing.features;
         log.info("Start calculatingMaxValueOfMetrics");
         for (ExperimentFeature feature : features) {
             double value = metricsMaxValueCollector.calcMaxValueForMetrics(feature.getId());
             log.info("\tFeature #{}, max value: {}", feature.getId(), value);
             feature.setMaxValue(value);
-            experimentFeatureRepository.saveAndFlush(feature);
         }
+        experiment.params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
+        experimentCache.save(experiment);
     }
 
     public Slice<TaskWIthType> findTasks(Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
         if (experiment == null || feature == null) {
             return Page.empty();
-        } else {
+        }
+        else {
             Slice<TaskWIthType> slice;
             if (isEmpty(params)) {
                 slice = taskRepository.findPredictTasks(pageable, feature.getId());
@@ -243,12 +241,15 @@ public class ExperimentService {
                 List<Task> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
                 List<TaskWIthType> list = new ArrayList<>();
                 for (Task task : subList) {
-                    list.add(new TaskWIthType(task, 0));
+                    list.add(new TaskWIthType(task, EnumsApi.ExperimentTaskType.UNKNOWN.value));
                 }
                 slice = new PageImpl<>(list, pageable, selected.size());
                 for (TaskWIthType taskWIthType : slice) {
-                    ExperimentTaskFeature etf = experimentTaskFeatureRepository.findByTaskId(taskWIthType.task.getId());
-                    taskWIthType.type = EnumsApi.ExperimentTaskType.from( etf.getTaskType() ).value;
+                    experiment.getExperimentParamsYaml().processing.taskFeatures
+                            .stream()
+                            .filter(t -> t.id.equals(taskWIthType.task.getId()))
+                            .findFirst()
+                            .ifPresent(etf -> taskWIthType.type = EnumsApi.ExperimentTaskType.from(etf.getTaskType()).value);
                 }
             }
             return slice;
@@ -330,7 +331,6 @@ public class ExperimentService {
         return data;
     }
 
-
     @SuppressWarnings("Duplicates")
     private List<Task> findTaskWithFilter(Experiment experiment, long featureId, String[] params) {
         final Set<String> paramSet = new HashSet<>();
@@ -391,13 +391,14 @@ public class ExperimentService {
         return true;
     }
 
+    @SuppressWarnings("Duplicates")
     public ExperimentApiData.ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
 
         tasksResult.items = taskRepository.findPredictTasks(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
 
         ExperimentApiData.HyperParamResult hyperParamResult = new ExperimentApiData.HyperParamResult();
-        for (ExperimentHyperParams hyperParam : experiment.getHyperParams()) {
+        for (HyperParam hyperParam : experiment.getExperimentParamsYaml().yaml.hyperParams) {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
             ExperimentApiData.HyperParamList list = new ExperimentApiData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
@@ -447,39 +448,36 @@ public class ExperimentService {
         return result;
     }
 
-    private static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams, int seed) {
-        List<ExperimentHyperParams> params = new ArrayList<>();
-        ExperimentHyperParams p1 = new ExperimentHyperParams();
+    private static Map<String, String> toMap(List<HyperParam> experimentHyperParams, int seed) {
+        List<HyperParam> params = new ArrayList<>();
+        HyperParam p1 = new HyperParam();
         p1.setKey(Consts.SEED);
         p1.setValues(Integer.toString(seed));
         params.add(p1);
 
-        for (ExperimentHyperParams param : experimentHyperParams) {
+        for (HyperParam param : experimentHyperParams) {
             //noinspection UseBulkOperation
             params.add(param);
         }
         return toMap(params);
     }
 
-    private static Map<String, String> toMap(List<ExperimentHyperParams> experimentHyperParams) {
-        return experimentHyperParams.stream().collect(Collectors.toMap(ExperimentHyperParams::getKey, ExperimentHyperParams::getValues, (a, b) -> b, HashMap::new));
+    private static Map<String, String> toMap(List<HyperParam> experimentHyperParams) {
+        return experimentHyperParams.stream().collect(Collectors.toMap(HyperParam::getKey, HyperParam::getValues, (a, b) -> b, HashMap::new));
     }
 
     public void resetExperiment(long workbookId) {
 
-        Long experimentId = experimentRepository.findIdByWorkbookId(workbookId);
-        if (experimentId==null) {
+        Experiment e = experimentRepository.findIdByWorkbookIdForUpdate(workbookId);
+        if (e==null) {
             return;
         }
-        experimentFeatureRepository.deleteByExperimentId(experimentId);
 
-        Experiment e = experimentCache.findById(experimentId);
-
+        ExperimentParamsYaml epy = e.getExperimentParamsYaml();
+        epy.processing = new ExperimentProcessing();
+        e.updateParams(epy);
         e.setWorkbookId(null);
-        e.setAllTaskProduced(false);
-        e.setFeatureProduced(false);
-        e.setAllTaskProduced(false);
-        e.setNumberOfTask(0);
+
         //noinspection UnusedAssignment
         e = experimentCache.save(e);
     }
@@ -495,16 +493,20 @@ public class ExperimentService {
                     "actual: " + process.type);
         }
 
-        List<ExperimentSnippet> experimentSnippets = snippetService.getTaskSnippetsForExperiment(experiment.getId());
-        SnippetService.sortSnippetsByType(experimentSnippets);
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+        if (StringUtils.isBlank(epy.yaml.fitSnippet)|| StringUtils.isBlank(epy.yaml.predictSnippet)) {
+            throw new IllegalStateException("(StringUtils.isBlank(epy.yaml.fitSnippet)|| StringUtils.isBlank(epy.yaml.predictSnippet))" +
+                    ", "+epy.yaml.fitSnippet +", " + epy.yaml.predictSnippet);
+        }
+        List<String> experimentSnippets = List.of(epy.yaml.fitSnippet, epy.yaml.predictSnippet);
 
-        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
-
-
-        final Map<String, String> map = toMap(experiment.getHyperParams(), params.seed);
+        final Map<String, String> map = toMap(epy.yaml.getHyperParams(), epy.yaml.seed);
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
-        final List<Object[]> features = experimentFeatureRepository.getAsExperimentFeatureSimpleByExperimentId(experiment.getId());
+//        @Query("SELECT f.id, f.resourceCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
+//        List<Object[]> getAsExperimentFeatureSimpleByExperimentId(Long experimentId);
+        final List<ExperimentFeature> features = epy.processing.features;
+
         final Map<String, Snippet> localCache = new HashMap<>();
         final IntHolder size = new IntHolder();
         final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, workbook, experiment, size);
@@ -513,7 +515,7 @@ public class ExperimentService {
         // feature has real value only when isPersist==true
         int totalVariants = features.size() * allHyperParams.size() * 2;
 
-        numberOfTasks.value = allHyperParams.size() * experimentSnippets.size();
+        numberOfTasks.value = allHyperParams.size() * 2;
 
         log.debug("total size of tasks' params is {} bytes", size.value);
         final AtomicBoolean boolHolder = new AtomicBoolean();
@@ -533,8 +535,8 @@ public class ExperimentService {
                 return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
             }
 
-            for (Object[] feature : features) {
-                ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants((String) feature[1]);
+            for (ExperimentFeature feature : features) {
+                ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(feature.resourceCodes);
                 if (!numberOfVariants.status) {
                     log.warn("#179.25 empty list of feature, feature: {}", feature);
                     continue;
@@ -546,7 +548,7 @@ public class ExperimentService {
                     int orderAdd = 0;
                     Task prevTask;
                     Task task = null;
-                    for (ExperimentSnippet experimentSnippet : experimentSnippets) {
+                    for (String snippetCode : experimentSnippets) {
                         if (boolHolder.get()) {
                             return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
                         }
@@ -587,15 +589,15 @@ public class ExperimentService {
                                 yaml.taskYaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
                             }
                         }
-                        Snippet snippet = localCache.get(experimentSnippet.getSnippetCode());
+                        Snippet snippet = localCache.get(snippetCode);
                         if (snippet == null) {
-                            snippet = snippetRepository.findByCode(experimentSnippet.getSnippetCode());
+                            snippet = snippetRepository.findByCode(snippetCode);
                             if (snippet != null) {
-                                localCache.put(experimentSnippet.getSnippetCode(), snippet);
+                                localCache.put(snippetCode, snippet);
                             }
                         }
                         if (snippet == null) {
-                            log.warn("#179.27 Snippet wasn't found for code: {}", experimentSnippet.getSnippetCode());
+                            log.warn("#179.27 Snippet wasn't found for code: {}", snippetCode);
                             continue;
                         }
 
@@ -629,10 +631,10 @@ public class ExperimentService {
                         ExperimentTaskFeature tef = new ExperimentTaskFeature();
                         tef.setWorkbookId(workbook.getId());
                         tef.setTaskId(task.getId());
-                        tef.setFeatureId((Long) feature[0]);
+                        tef.setFeatureId(feature.id);
                         tef.setTaskType(type.value);
                         if (isPersist) {
-                            taskExperimentFeatureRepository.saveAndFlush(tef);
+                            epy.processing.taskFeatures.add(tef);
                         }
 
                         yaml.taskYaml.snippet = SnippetConfigUtils.to(snippet.params);
@@ -676,8 +678,8 @@ public class ExperimentService {
             eventMulticaster.removeApplicationListener(listener);
         }
 
-        if (experiment.getNumberOfTask() != totalVariants && experiment.getNumberOfTask() != 0) {
-            log.warn("#179.33 ! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", experiment.getNumberOfTask(), totalVariants);
+        if (epy.processing.getNumberOfTask() != totalVariants && epy.processing.getNumberOfTask() != 0) {
+            log.warn("#179.33 ! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", epy.processing.getNumberOfTask(), totalVariants);
         }
         if (isPersist) {
             Experiment experimentTemp = experimentRepository.findByIdForUpdate(experiment.getId());
@@ -685,8 +687,10 @@ public class ExperimentService {
                 log.warn("#179.36 Experiment for id {} doesn't exist anymore", experiment.getId());
                 return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
             }
-            experimentTemp.setNumberOfTask(totalVariants);
-            experimentTemp.setAllTaskProduced(true);
+            epy.processing.setNumberOfTask(totalVariants);
+            epy.processing.setAllTaskProduced(true);
+            experimentTemp.updateParams(epy);
+
             //noinspection UnusedAssignment
             experimentTemp = experimentCache.save(experimentTemp);
         }
@@ -697,8 +701,11 @@ public class ExperimentService {
         return "task-"+task.getId()+"-"+ Consts.ML_MODEL_BIN;
     }
 
-    public void produceFeaturePermutations(boolean isPersist, final Long experimentId, List<String> inputResourceCodes, IntHolder total) {
-        final List<String> list = experimentFeatureRepository.getChecksumIdCodesByExperimentId(experimentId);
+    public void produceFeaturePermutations(boolean isPersist, final Experiment experiment, List<String> inputResourceCodes, IntHolder total) {
+//        @Query("SELECT f.checksumIdCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
+//        List<String> getChecksumIdCodesByExperimentId(long experimentId);
+        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+        final List<String> list = epy.processing.features.stream().map(o->o.checksumIdCodes).collect(Collectors.toList());
 
         final Permutation<String> permutation = new Permutation<>();
         Monitoring.log("##040", Enums.Monitor.MEMORY);
@@ -723,11 +730,11 @@ public class ExperimentService {
                         }
 
                         ExperimentFeature feature = new ExperimentFeature();
-                        feature.setExperimentId(experimentId);
+                        feature.setExperimentId(experiment.id);
                         feature.setResourceCodes(listAsStr);
                         feature.setChecksumIdCodes(checksumIdCodes);
                         if (isPersist) {
-                            experimentFeatureRepository.saveAndFlush(feature);
+                            epy.processing.features.add(feature);
                         }
                         //noinspection UnusedAssignment
                         feature = null;
@@ -736,13 +743,10 @@ public class ExperimentService {
                     }
             );
         }
-        Experiment e = experimentCache.findById(experimentId);
-        if (e==null) {
-            throw new IllegalStateException("#179.39 Experiment wasn't found for id " + experimentId);
-        }
-        e.setFeatureProduced(true);
+        epy.processing.setFeatureProduced(true);
         if (isPersist) {
-            experimentCache.save(e);
+            experiment.updateParams(epy);
+            experimentCache.save(experiment);
         }
     }
 }

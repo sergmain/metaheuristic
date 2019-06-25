@@ -21,7 +21,6 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,7 +35,6 @@ public class ExperimentParamsYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    @AllArgsConstructor
     public static class HyperParam {
         public String key;
         public String values;
@@ -57,8 +55,9 @@ public class ExperimentParamsYaml implements BaseParams {
         public String predictSnippet;
     }
 
-    public class ExperimentFeature implements Serializable {
-        private static final long serialVersionUID = -7943373261306370650L;
+    @Data
+    @NoArgsConstructor
+    public static class ExperimentFeature {
 
         public Long id;
         public String resourceCodes;
@@ -83,9 +82,10 @@ public class ExperimentParamsYaml implements BaseParams {
         }
     }
 
-    public class ExperimentTaskFeature implements Serializable {
+    @Data
+    @NoArgsConstructor
+    public static class ExperimentTaskFeature {
         public Long id;
-        private Integer version;
         public Long workbookId;
         public Long taskId;
         public Long featureId;
@@ -96,13 +96,18 @@ public class ExperimentParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class ExperimentProcessing {
-        public boolean isAllTaskProduced;
-        public boolean isFeatureProduced;
+        public boolean isAllTaskProduced = false;
+        public boolean isFeatureProduced = false;
+
         public long createdOn;
-        public int numberOfTask;
+        public int numberOfTask = 0;
+
+        public List<ExperimentFeature> features = new ArrayList<>();
+        public List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
     }
 
     public ExperimentYaml yaml;
     public ExperimentProcessing processing;
+
 
 }

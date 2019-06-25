@@ -80,10 +80,6 @@ public class SnippetService {
         return snippetConfig;
     }
 
-    public static void sortSnippetsByType(List<ExperimentSnippet> snippets) {
-        snippets.sort(Comparator.comparing(ExperimentSnippet::getType));
-    }
-
     public boolean hasFit(List<ExperimentSnippet> experimentSnippets) {
         if (experimentSnippets ==null || experimentSnippets.isEmpty()) {
             return false;

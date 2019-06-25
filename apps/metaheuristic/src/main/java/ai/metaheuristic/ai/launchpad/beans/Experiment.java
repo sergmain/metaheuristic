@@ -16,6 +16,9 @@
 
 package ai.metaheuristic.ai.launchpad.beans;
 
+import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -53,5 +56,28 @@ public class Experiment implements Serializable {
 
     @Column(name = "PARAMS")
     public String params;
+
+    @Transient
+    private ExperimentParamsYaml epy = null;
+
+    @JsonIgnore
+    public ExperimentParamsYaml getExperimentParamsYaml() {
+
+        if (epy==null) {
+            synchronized (this) {
+                if (epy==null) {
+                    //noinspection UnnecessaryLocalVariable
+                    ExperimentParamsYaml temp = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    epy = temp;
+                }
+            }
+        }
+        return epy;
+    }
+
+    public void updateParams(ExperimentParamsYaml epy) {
+        params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
+    }
+
 
 }
