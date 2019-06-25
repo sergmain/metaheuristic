@@ -216,17 +216,16 @@ public class ExperimentService {
         if (experiment==null) {
             return;
         }
-//        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         List<ExperimentFeature> features = epy.processing.features;
         log.info("Start calculatingMaxValueOfMetrics");
         for (ExperimentFeature feature : features) {
-            double value = metricsMaxValueCollector.calcMaxValueForMetrics(feature.getId());
+            double value = metricsMaxValueCollector.calcMaxValueForMetrics(epy, feature.getId());
             log.info("\tFeature #{}, max value: {}", feature.getId(), value);
             feature.setMaxValue(value);
         }
-        experiment.params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
+        experiment.updateParams(epy);
         experimentCache.save(experiment);
     }
 
@@ -237,7 +236,7 @@ public class ExperimentService {
         else {
             Slice<TaskWIthType> slice;
             if (isEmpty(params)) {
-                slice = taskRepository.findPredictTasks(pageable, feature.getId());
+                slice = findPredictTasks(pageable, experiment, feature.getId());
             } else {
                 List<Task> selected = findTaskWithFilter(experiment, feature.getId(), params);
                 List<Task> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
@@ -258,13 +257,46 @@ public class ExperimentService {
         }
     }
 
+    private Slice<TaskWIthType> findPredictTasks(Pageable pageable, Experiment experiment, Long featureId) {
+//        @Query("SELECT new ai.metaheuristic.api.data.task.TaskWIthType(t, tef.taskType) FROM TaskImpl t, ExperimentTaskFeature tef " +
+//                "where t.id=tef.taskId and tef.featureId=:featureId order by t.id asc ")
+//        Slice<TaskWIthType> findPredictTasks(Pageable pageable, Long featureId);
+
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+
+        long total = epy.processing.taskFeatures
+                .stream()
+                .filter(o-> o.featureId.equals(featureId)).count();
+
+        List<ExperimentTaskFeature> etfs = epy.processing.taskFeatures
+                .stream()
+                .filter(o-> o.featureId.equals(featureId))
+                .sorted(Comparator.comparing(o -> o.id))
+                .skip(pageable.getOffset())
+                .limit(pageable.getPageSize())
+                .collect(Collectors.toList());
+
+        List<Long> ids = etfs.stream().mapToLong(ExperimentTaskFeature::getId).boxed().collect(Collectors.toList());
+
+        List<TaskImpl> tasks = taskRepository.findTasksByIds(pageable, ids);
+        List<TaskWIthType> list = new ArrayList<>();
+        for (TaskImpl task : tasks) {
+            ExperimentTaskFeature tf = etfs.stream().filter(o->o.taskId.equals(task.id)).findFirst().orElse(null);
+            list.add( new TaskWIthType(task, tf!=null ? tf.taskType : EnumsApi.ExperimentTaskType.UNKNOWN.value));
+        }
+
+        //noinspection UnnecessaryLocalVariable
+        PageImpl<TaskWIthType> page = new PageImpl<>(list, pageable, total);
+        return page;
+    }
+
     private ExperimentApiData.PlotData findExperimentTaskForPlot(Experiment experiment, ExperimentFeature feature, String[] params, String[] paramsAxis) {
         if (experiment == null || feature == null) {
             return ExperimentApiData.EMPTY_PLOT_DATA;
         } else {
             List<Task> selected;
             if (isEmpty(params)) {
-                selected = taskRepository.findByIsCompletedIsTrueAndFeatureId(feature.getId());
+                selected = findByIsCompletedIsTrueAndFeatureId(experiment.getExperimentParamsYaml(), feature.id);
             } else {
                 selected = findTaskWithFilter(experiment, feature.getId(), params);
             }
@@ -346,7 +378,7 @@ public class ExperimentService {
         }
         final Map<String, Map<String, Integer>> paramByIndex = getHyperParamsAsMap(experiment);
 
-        List<Task> list = taskRepository.findByIsCompletedIsTrueAndFeatureId(featureId);
+        List<Task> list = findByIsCompletedIsTrueAndFeatureId(experiment.getExperimentParamsYaml(), featureId);
 
         List<Task> selected = new ArrayList<>();
         for (Task task : list) {
@@ -397,7 +429,7 @@ public class ExperimentService {
     public ExperimentApiData.ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
 
-        tasksResult.items = taskRepository.findPredictTasks(Consts.PAGE_REQUEST_10_REC, experimentFeature.getId());
+        tasksResult.items = findPredictTasks(Consts.PAGE_REQUEST_10_REC, experiment, experimentFeature.getId());
 
         ExperimentApiData.HyperParamResult hyperParamResult = new ExperimentApiData.HyperParamResult();
         for (HyperParam hyperParam : experiment.getExperimentParamsYaml().yaml.hyperParams) {
@@ -415,7 +447,7 @@ public class ExperimentService {
         ExperimentApiData.MetricsResult metricsResult = new ExperimentApiData.MetricsResult();
         List<Map<String, BigDecimal>> values = new ArrayList<>();
 
-        List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndFeatureId(experimentFeature.getId());
+        List<Task> tasks = findByIsCompletedIsTrueAndFeatureId(experiment.getExperimentParamsYaml(), experimentFeature.id);
         for (Task seq : tasks) {
             MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.getMetrics()) );
             if (metricValues==null) {
@@ -448,6 +480,19 @@ public class ExperimentService {
         result.consoleResult = new ExperimentApiData.ConsoleResult();
 
         return result;
+    }
+
+    public List<Task> findByIsCompletedIsTrueAndFeatureId(ExperimentParamsYaml epy, Long featureId) {
+        // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS
+//        @Query("SELECT t FROM TaskImpl t, ExperimentTaskFeature tef " +
+//                "where t.id=tef.taskId and tef.featureId=:featureId and " +
+//                " t.execState > 1")
+//        List<Task> findByIsCompletedIsTrueAndIds(Long featureId);
+
+        List<Long> ids = epy.getTaskFeatureIds(featureId);
+
+        List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndIds(ids);
+        return tasks;
     }
 
     private static Map<String, String> toMap(List<HyperParam> experimentHyperParams, int seed) {
@@ -517,7 +562,7 @@ public class ExperimentService {
         // feature has real value only when isPersist==true
         int totalVariants = features.size() * allHyperParams.size() * 2;
 
-        numberOfTasks.value = allHyperParams.size() * 2;
+        numberOfTasks.value = 0;
 
         log.debug("total size of tasks' params is {} bytes", size.value);
         final AtomicBoolean boolHolder = new AtomicBoolean();

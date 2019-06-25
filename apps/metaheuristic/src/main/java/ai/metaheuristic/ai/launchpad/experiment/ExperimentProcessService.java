@@ -146,7 +146,7 @@ public class ExperimentProcessService {
         }
 
         result.status = status;
-        result.numberOfTasks = numberOfFeatures * intHolder.value;
+        result.numberOfTasks = intHolder.value;
         return result;
     }
 }

@@ -36,10 +36,9 @@ import java.util.stream.Stream;
 @Profile("launchpad")
 public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
 
-    @Transactional
-    @Query(value="select t.id, t.metrics from TaskImpl t, ExperimentTaskFeature f " +
-            "where t.id=f.taskId and f.featureId=:experimentFeatureId ")
-    Stream<Object[]> findMetricsByExperimentFeatureId(long experimentFeatureId);
+    @Transactional(readOnly = true)
+    @Query(value="select t.id, t.metrics from TaskImpl t where t.id in :ids ")
+    List<Object[]> findMetricsByIds(List<Long> ids);
 
     @Transactional(readOnly = true)
     Page<TaskImpl> findAll(Pageable pageable);
@@ -110,24 +109,20 @@ public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
 
     @Transactional(readOnly = true)
     // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS
-    @Query("SELECT t FROM TaskImpl t, ExperimentTaskFeature tef " +
-            "where t.id=tef.taskId and tef.featureId=:featureId and " +
-            " t.execState > 1")
-    List<Task> findByIsCompletedIsTrueAndFeatureId(Long featureId);
-
+    @Query("SELECT t FROM TaskImpl t where t.id in :ids and t.execState > 1 ")
+    List<Task> findByIsCompletedIsTrueAndIds(List<Long> ids);
 
     // !!! class must not be inner class
     @Transactional(readOnly = true)
-    @Query("SELECT new ai.metaheuristic.api.data.task.TaskWIthType(t, tef.taskType) FROM TaskImpl t, ExperimentTaskFeature tef " +
-            "where t.id=tef.taskId and tef.featureId=:featureId order by t.id asc ")
-    Slice<TaskWIthType> findPredictTasks(Pageable pageable, Long featureId);
+    @Query("SELECT t FROM TaskImpl t where t.id in :ids order by t.id asc ")
+    List<TaskImpl> findTasksByIds(Pageable pageable, List<Long> ids);
 
 
     @Transactional(readOnly = true)
     @Query(nativeQuery = true, value = "select z.* "+
             "from ( "+
             "           SELECT count(*) count, t.TASK_ORDER "+
-            "           FROM MH_TASK t\n"+
+            "           FROM MH_TASK t  \n"+
             "           where t.WORKBOOK_ID =:workbookId "+
             "           group by t.TASK_ORDER "+
             "     ) z "+

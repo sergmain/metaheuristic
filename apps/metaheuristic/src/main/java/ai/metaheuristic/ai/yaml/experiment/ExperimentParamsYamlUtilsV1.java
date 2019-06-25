@@ -17,10 +17,14 @@
 package ai.metaheuristic.ai.yaml.experiment;
 
 import ai.metaheuristic.ai.yaml.versioning.AbstractParamsYamlUtils;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYamlV1;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
+
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -28,7 +32,7 @@ import org.yaml.snakeyaml.Yaml;
  * Time: 11:36 PM
  */
 public class ExperimentParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<ExperimentParamsYamlV1, Void, Void, Void, Void, Void> {
+        extends AbstractParamsYamlUtils<ExperimentParamsYamlV1, ExperimentParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -40,8 +44,34 @@ public class ExperimentParamsYamlUtilsV1
     }
 
     @Override
-    public Void upgradeTo(ExperimentParamsYamlV1 yaml) {
-        return null;
+    public ExperimentParamsYaml upgradeTo(ExperimentParamsYamlV1 src) {
+        ExperimentParamsYaml trg = new ExperimentParamsYaml();
+        BeanUtils.copyProperties(src.yaml, trg.yaml, "hyperParams");
+        trg.yaml.hyperParams = src.yaml.hyperParams
+                .stream()
+                .map(o->new ExperimentParamsYaml.HyperParam(o.key, o.values, o.variants))
+                .collect(Collectors.toList());
+
+        BeanUtils.copyProperties(src.processing, trg.processing, "taskFeatures", "features");
+        trg.processing.features = src.processing.features
+                .stream()
+                .map(o->{
+                    ExperimentParamsYaml.ExperimentFeature f = new ExperimentParamsYaml.ExperimentFeature();
+                    BeanUtils.copyProperties(o, f);
+                    return f;
+                })
+                .collect(Collectors.toList());
+
+        trg.processing.taskFeatures = src.processing.taskFeatures
+                .stream()
+                .map(o->{
+                    ExperimentParamsYaml.ExperimentTaskFeature f = new ExperimentParamsYaml.ExperimentTaskFeature();
+                    BeanUtils.copyProperties(o, f);
+                    return f;
+                })
+                .collect(Collectors.toList());
+
+        return trg;
     }
 
     @Override
@@ -69,6 +99,7 @@ public class ExperimentParamsYamlUtilsV1
     }
 
     public ExperimentParamsYamlV1 to(String s) {
+        //noinspection UnnecessaryLocalVariable
         final ExperimentParamsYamlV1 p = getYaml().load(s);
         return p;
     }

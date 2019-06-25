@@ -143,6 +143,9 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.15 experiment wasn't found, experimentId: " + experimentId);
         }
+        if (experiment.workbookId==null) {
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.17 workbookId is null");
+        }
 
         ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
         if (feature == null) {

@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Serge
@@ -68,21 +69,6 @@ public class ExperimentParamsYaml implements BaseParams {
         public int execStatus;
         public Long experimentId;
         public Double maxValue;
-
-        public String execStatusAsString() {
-            switch (execStatus) {
-                case 0:
-                    return "Unknown";
-                case 1:
-                    return "Ok";
-                case 2:
-                    return "All are errors";
-                case 3:
-                    return "No sequenses";
-                default:
-                    return "Status is wrong";
-            }
-        }
     }
 
     @Data
@@ -109,7 +95,7 @@ public class ExperimentParamsYaml implements BaseParams {
         public List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
     }
 
-    public ExperimentYaml yaml;
+    public ExperimentYaml yaml = new ExperimentYaml();
     public ExperimentProcessing processing = new ExperimentProcessing();
 
 
@@ -134,4 +120,23 @@ public class ExperimentParamsYaml implements BaseParams {
 
         return feature;
     }
+
+    @JsonIgnore
+    public List<ExperimentParamsYaml.ExperimentTaskFeature> getTaskFeatures(Long featureId) {
+        //noinspection UnnecessaryLocalVariable
+        List<ExperimentParamsYaml.ExperimentTaskFeature> taskFeatures = processing.taskFeatures
+                .stream().filter(o -> o.id.equals(featureId)).collect(Collectors.toList());
+
+        return taskFeatures;
+    }
+
+    @JsonIgnore
+    public List<Long> getTaskFeatureIds(Long featureId) {
+        //noinspection UnnecessaryLocalVariable
+        List<Long> ids = processing.taskFeatures
+                .stream().filter(o -> o.id.equals(featureId)).mapToLong(o->o.id).boxed().collect(Collectors.toList());
+        return ids;
+    }
+
+
 }

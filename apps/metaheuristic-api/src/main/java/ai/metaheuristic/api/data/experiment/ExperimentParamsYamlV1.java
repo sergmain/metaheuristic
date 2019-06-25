@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.api.data.experiment;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,17 +36,61 @@ public class ExperimentParamsYamlV1 {
     public static class HyperParamV1 {
         public String key;
         public String values;
+        public int variants;
     }
 
-    public String name;
-    public String description;
-    public String code;
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExperimentYamlV1 {
+        public String name;
+        public String description;
+        public String code;
 
-    public int seed = 42;
-    public List<HyperParamV1> hyperParams = new ArrayList<>();
+        public int seed = 42;
+        public List<HyperParamV1> hyperParams = new ArrayList<>();
 
-    public String fitSnippet;
-    public String predictSnippet;
+        public String fitSnippet;
+        public String predictSnippet;
+    }
 
+    @Data
+    @NoArgsConstructor
+    public static class ExperimentFeatureV1 {
+
+        public Long id;
+        public String resourceCodes;
+        public String checksumIdCodes;
+        public int execStatus;
+        public Long experimentId;
+        public Double maxValue;
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class ExperimentTaskFeatureV1 {
+        public Long id;
+        public Long workbookId;
+        public Long taskId;
+        public Long featureId;
+        public int taskType;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class ExperimentProcessingV1 {
+        public boolean isAllTaskProduced = false;
+        public boolean isFeatureProduced = false;
+
+        public long createdOn;
+        public int numberOfTask = 0;
+
+        public List<ExperimentFeatureV1> features = new ArrayList<>();
+        public List<ExperimentTaskFeatureV1> taskFeatures = new ArrayList<>();
+    }
+
+    public ExperimentYamlV1 yaml = new ExperimentYamlV1();
+    public ExperimentProcessingV1 processing = new ExperimentProcessingV1();
 
 }

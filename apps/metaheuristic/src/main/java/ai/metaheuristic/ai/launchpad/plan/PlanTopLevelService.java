@@ -84,11 +84,13 @@ public class PlanTopLevelService {
                     }
                 })
                 .skip(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .peek(o-> o.setParams(null))
                 .collect(Collectors.toList());
 
         PlanApiData.PlansResult plansResultRest = new PlanApiData.PlansResult();
-        plansResultRest.items = new PageImpl<>(plans.subList(0, plans.size()<pageable.getPageSize()?plans.size():pageable.getPageSize()), pageable, count.get());
+//        plansResultRest.items = new PageImpl<>(plans.subList(0, plans.size()<pageable.getPageSize()?plans.size():pageable.getPageSize()), pageable, count.get());
+        plansResultRest.items = new PageImpl<>(plans, pageable, count.get());
 
         return plansResultRest;
     }

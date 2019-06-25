@@ -188,7 +188,7 @@ public class AtlasTopLevelService {
                 .filter(taskFeature -> taskFeature.featureId.equals(feature.getId()))
                 .collect(Collectors.toMap(o -> o.taskId, o -> o.taskType));
 
-//                selected = taskRepository.findByIsCompletedIsTrueAndFeatureId(feature.getId());
+//                selected = taskRepository.findByIsCompletedIsTrueAndIds(feature.getId());
         List<Task> selected = estb1.tasks.stream()
                 .filter(o -> taskToTaskType.containsKey(o.id) && o.execState > 1)
                 .collect(Collectors.toList());
@@ -407,7 +407,7 @@ public class AtlasTopLevelService {
 
                 });
 
-//        List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndFeatureId(experimentFeature.getId());
+//        List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndIds(experimentFeature.getId());
 //        for (Task seq : tasks) {
 //            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.metrics) );
 //            if (metricValues==null) {
