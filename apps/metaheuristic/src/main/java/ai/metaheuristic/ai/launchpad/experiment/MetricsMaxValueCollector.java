@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.yaml.metrics.MetricValues;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,6 +43,10 @@ public class MetricsMaxValueCollector {
 
     @Transactional
     public double calcMaxValueForMetrics(long featureId) {
+
+//        @Query(value="select t.id, t.metrics from TaskImpl t, ExperimentTaskFeature f " +
+//                "where t.id=f.taskId and f.featureId=:experimentFeatureId ")
+//        Stream<Object[]> findMetricsByExperimentFeatureId(long experimentFeatureId);
 
         try (Stream<Object[]> stream = taskRepository.findMetricsByExperimentFeatureId(featureId) ) {
             //noinspection UnnecessaryLocalVariable
