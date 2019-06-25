@@ -130,7 +130,7 @@ public class ExperimentProcessService {
 
         long mills = System.currentTimeMillis();
         IntHolder intHolder = new IntHolder();
-        experimentService.produceFeaturePermutations(isPersist, e.getId(), features, intHolder);
+        experimentService.produceFeaturePermutations(isPersist, e, features, intHolder);
         int numberOfFeatures = intHolder.value;
         log.info("produceFeaturePermutations() was done for " + (System.currentTimeMillis() - mills) + " ms.");
 

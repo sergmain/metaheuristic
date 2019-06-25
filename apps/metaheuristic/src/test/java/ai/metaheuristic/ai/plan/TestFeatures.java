@@ -16,8 +16,8 @@
 
 package ai.metaheuristic.ai.plan;
 
-import ai.metaheuristic.ai.launchpad.beans.ExperimentFeature;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -25,8 +25,6 @@ import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -52,10 +50,10 @@ public class TestFeatures extends PreparingPlan {
 
         mills = System.currentTimeMillis();
         log.info("Start experimentFeatureRepository.findByExperimentId()");
-        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
+        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         log.info("experimentFeatureRepository.findByExperimentId() was finished for {}", System.currentTimeMillis() - mills);
 
-        assertNotNull(features);
-        assertEquals(7, features.size());
+        assertNotNull(epy.processing.features);
+        assertEquals(7, epy.processing.features.size());
     }
 }

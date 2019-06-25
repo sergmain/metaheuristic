@@ -17,16 +17,19 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.beans.*;
+import ai.metaheuristic.ai.launchpad.beans.Experiment;
+import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentCache;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
-import ai.metaheuristic.ai.launchpad.repositories.*;
+import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
-import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
@@ -42,10 +45,10 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.ByteArrayInputStream;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.HyperParam;
 import static org.junit.Assert.assertTrue;
 
 @Slf4j
@@ -65,9 +68,6 @@ public abstract class PreparingExperiment {
     protected ExperimentRepository experimentRepository;
 
     @Autowired
-    protected ExperimentFeatureRepository experimentFeatureRepository;
-
-    @Autowired
     protected StationCache stationCache;
 
     @Autowired
@@ -75,9 +75,6 @@ public abstract class PreparingExperiment {
 
     @Autowired
     protected SnippetRepository snippetRepository;
-
-    @Autowired
-    protected ExperimentSnippetRepository experimentSnippetRepository;
 
     @Autowired
     protected TaskRepository taskRepository;
@@ -202,53 +199,38 @@ public abstract class PreparingExperiment {
             // Prepare experiment
             experiment = new Experiment();
             experiment.setCode(TEST_EXPERIMENT_CODE_01);
-            experiment.setAllTaskProduced(false);
 
             ExperimentParamsYaml epy = new ExperimentParamsYaml();
-            epy.setName("Test experiment.");
-            epy.setDescription("Test experiment. Must be deleted automatically.");
-            epy.setSeed(42);
-
-            experiment.params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
+            epy.yaml.setName("Test experiment.");
+            epy.yaml.setDescription("Test experiment. Must be deleted automatically.");
+            epy.yaml.setSeed(42);
+            epy.processing.setAllTaskProduced(false);
 
             // set hyper params for experiment
-            ExperimentHyperParams ehp1 = new ExperimentHyperParams();
+            HyperParam ehp1 = new HyperParam();
             ehp1.setKey("RNN");
             ehp1.setValues("[LSTM, GRU, SimpleRNN]");
-            ehp1.setExperiment(experiment);
 
-            ExperimentHyperParams ehp2 = new ExperimentHyperParams();
+            HyperParam ehp2 = new HyperParam();
             ehp2.setKey("batches");
             ehp2.setValues("[20, 40]");
-            ehp2.setExperiment(experiment);
 
-            ExperimentHyperParams ehp3 = new ExperimentHyperParams();
+            HyperParam ehp3 = new HyperParam();
             ehp3.setKey("aaa");
             ehp3.setValues("[7, 13]");
-            ehp3.setExperiment(experiment);
 
-            experiment.setHyperParams(List.of(ehp1, ehp2, ehp3));
+            epy.yaml.setHyperParams(List.of(ehp1, ehp2, ehp3));
+
+            // set snippets for experiment
+            epy.yaml.fitSnippet = fitSnippet.getCode();
+            epy.yaml.predictSnippet = predictSnippet.getCode();
+
+            experiment.updateParams(epy);
 
             mills = System.currentTimeMillis();
             log.info("Start experimentRepository.save()");
-            experimentRepository.saveAndFlush(experiment);
+            experimentRepository.save(experiment);
             log.info("experimentRepository.save() was finished for {}", System.currentTimeMillis() - mills);
-
-            // set snippets for experiment
-            ExperimentSnippet es1 = new ExperimentSnippet();
-            es1.setExperimentId(experiment.getId());
-            es1.setType(CommonConsts.FIT_TYPE);
-            es1.setSnippetCode(fitSnippet.getCode());
-
-            ExperimentSnippet es2 = new ExperimentSnippet();
-            es2.setExperimentId(experiment.getId());
-            es2.setType(CommonConsts.PREDICT_TYPE);
-            es2.setSnippetCode(predictSnippet.getCode());
-
-            mills = System.currentTimeMillis();
-            log.info("Start taskSnippetRepository.saveAll()");
-            experimentSnippetRepository.saveAll(Arrays.asList(es1, es2));
-            log.info("taskSnippetRepository.saveAll() was finished for {}", System.currentTimeMillis() - mills);
 
             System.out.println("Was inited correctly");
         }
@@ -264,17 +246,7 @@ public abstract class PreparingExperiment {
         log.info("Start after()");
         if (experiment != null && experiment.getId() != null) {
             try {
-                experimentFeatureRepository.deleteByExperimentId(experiment.getId());
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
-            try {
                 experimentRepository.deleteById(experiment.getId());
-            } catch (Throwable throwable) {
-                throwable.printStackTrace();
-            }
-            try {
-                experimentSnippetRepository.deleteByExperimentId(experiment.getId());
             } catch (Throwable throwable) {
                 throwable.printStackTrace();
             }

@@ -16,9 +16,7 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.launchpad.beans.ExperimentSnippet;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
-import ai.metaheuristic.commons.CommonConsts;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -31,14 +29,6 @@ public class ExperimentUtils {
 
     private static final String RANGE = "range";
     private static final NumberOfVariants ZERO_VARIANT = new NumberOfVariants(true, null, 0);
-
-    public static void sortExperimentSnippets(List<ExperimentSnippet> experimentSnippets) {
-        experimentSnippets.sort((o1, o2) -> {
-                    if (o1.getType().equals(o2.getType())) return 0;
-                    return CommonConsts.FIT_TYPE.equals(o1.getType().toLowerCase()) ? -1 : 1;
-                }
-        );
-    }
 
     @Data
     @AllArgsConstructor

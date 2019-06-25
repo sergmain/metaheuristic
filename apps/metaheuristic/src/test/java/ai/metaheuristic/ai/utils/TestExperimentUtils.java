@@ -16,8 +16,9 @@
 
 package ai.metaheuristic.ai.utils;
 
-import ai.metaheuristic.ai.launchpad.beans.ExperimentSnippet;
+import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.commons.CommonConsts;
 import org.junit.Test;
 
@@ -49,16 +50,16 @@ public class TestExperimentUtils {
 
     @Test
     public void testSorting() {
-        ExperimentSnippet es1 = new ExperimentSnippet();
-        es1.setSnippetCode("snippet-1:1");
+        Snippet es1 = new Snippet();
+        es1.setCode("snippet-1:1");
         es1.setType(CommonConsts.PREDICT_TYPE);
 
-        ExperimentSnippet es2 = new ExperimentSnippet();
-        es2.setSnippetCode("snippet-2:1");
+        Snippet es2 = new Snippet();
+        es2.setCode("snippet-2:1");
         es2.setType(CommonConsts.FIT_TYPE);
 
-        List<ExperimentSnippet>experimentSnippets = Arrays.asList( es1, es2 );
-        ExperimentUtils.sortExperimentSnippets(experimentSnippets);
+        List<Snippet>experimentSnippets = Arrays.asList( es1, es2 );
+        SnippetService.sortExperimentSnippets(experimentSnippets);
         assertEquals(CommonConsts.FIT_TYPE, experimentSnippets.get(0).getType());
         assertEquals(CommonConsts.PREDICT_TYPE, experimentSnippets.get(1).getType());
     }

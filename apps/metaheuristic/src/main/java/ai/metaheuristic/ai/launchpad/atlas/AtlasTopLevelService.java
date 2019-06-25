@@ -17,11 +17,11 @@
 package ai.metaheuristic.ai.launchpad.atlas;
 
 import ai.metaheuristic.ai.Consts;
-import ai.metaheuristic.ai.launchpad.beans.*;
+import ai.metaheuristic.ai.launchpad.beans.Atlas;
+import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
-import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
@@ -52,6 +53,8 @@ import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
 
 @SuppressWarnings("Duplicates")
 @Slf4j
@@ -113,7 +116,7 @@ public class AtlasTopLevelService {
             return new AtlasData.ExperimentInfoExtended("#280.16 experiment has broken ref to workbook, experimentId: " + id);
         }
 
-        for (ExperimentHyperParams hyperParams : estb1.getHyperParams()) {
+        for (HyperParam hyperParams : estb1.experiment.getExperimentParamsYaml().yaml.getHyperParams()) {
             if (StringUtils.isBlank(hyperParams.getValues())) {
                 continue;
             }
@@ -128,7 +131,7 @@ public class AtlasTopLevelService {
         result.atlas = atlas;
 
         AtlasData.ExperimentInfo experimentInfoResult = new AtlasData.ExperimentInfo();
-        experimentInfoResult.features = estb1.features;
+        experimentInfoResult.features = estb1.experiment.getExperimentParamsYaml().processing.features;
         experimentInfoResult.workbook = workbook;
         experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.getExecState());
 
@@ -180,7 +183,7 @@ public class AtlasTopLevelService {
     }
 
     public List<Task> getTasksForFeatureIdAndParams(ExperimentStoredToAtlas estb1, ExperimentFeature feature, String[] params) {
-        final Map<Long, Integer> taskToTaskType = estb1.taskFeatures
+        final Map<Long, Integer> taskToTaskType = estb1.experiment.getExperimentParamsYaml().processing.taskFeatures
                 .stream()
                 .filter(taskFeature -> taskFeature.featureId.equals(feature.getId()))
                 .collect(Collectors.toMap(o -> o.taskId, o -> o.taskType));
@@ -356,7 +359,7 @@ public class AtlasTopLevelService {
 
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
 
-        final Map<Long, Integer> taskToTaskType = estb.taskFeatures
+        final Map<Long, Integer> taskToTaskType = estb.experiment.getExperimentParamsYaml().processing.taskFeatures
                 .stream()
                 .filter(taskFeature -> taskFeature.featureId.equals(experimentFeature.id))
                 .collect(Collectors.toMap(o -> o.taskId, o -> o.taskType));
@@ -375,7 +378,7 @@ public class AtlasTopLevelService {
         );
 
         AtlasData.HyperParamResult hyperParamResult = new AtlasData.HyperParamResult();
-        for (ExperimentHyperParams hyperParam : estb.getHyperParams()) {
+        for (HyperParam hyperParam : estb.experiment.getExperimentParamsYaml().yaml.getHyperParams()) {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
             ExperimentApiData.HyperParamList list = new ExperimentApiData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {

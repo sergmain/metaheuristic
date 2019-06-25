@@ -17,6 +17,7 @@
 package ai.metaheuristic.api.data.experiment;
 
 import ai.metaheuristic.api.data.BaseParams;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -35,9 +36,11 @@ public class ExperimentParamsYaml implements BaseParams {
 
     @Data
     @NoArgsConstructor
+    @AllArgsConstructor
     public static class HyperParam {
         public String key;
         public String values;
+        public int variants;
     }
 
     @Data
@@ -67,7 +70,7 @@ public class ExperimentParamsYaml implements BaseParams {
         public Double maxValue;
 
         public String execStatusAsString() {
-            switch(execStatus) {
+            switch (execStatus) {
                 case 0:
                     return "Unknown";
                 case 1:
@@ -107,7 +110,28 @@ public class ExperimentParamsYaml implements BaseParams {
     }
 
     public ExperimentYaml yaml;
-    public ExperimentProcessing processing;
+    public ExperimentProcessing processing = new ExperimentProcessing();
 
 
+    @JsonIgnore
+    public List<String> getSnippetCodes() {
+        final List<String> snippetCodes = new ArrayList<>();
+
+        if (yaml.fitSnippet != null && !yaml.fitSnippet.isBlank()) {
+            snippetCodes.add(yaml.fitSnippet);
+        }
+        if (yaml.predictSnippet != null && !yaml.predictSnippet.isBlank()) {
+            snippetCodes.add(yaml.predictSnippet);
+        }
+        return snippetCodes;
+    }
+
+    @JsonIgnore
+    public ExperimentParamsYaml.ExperimentFeature getFeature(Long featureId) {
+        //noinspection UnnecessaryLocalVariable
+        ExperimentParamsYaml.ExperimentFeature feature = processing.features
+                .stream().filter(o -> o.id.equals(featureId)).findFirst().orElse(null);
+
+        return feature;
+    }
 }

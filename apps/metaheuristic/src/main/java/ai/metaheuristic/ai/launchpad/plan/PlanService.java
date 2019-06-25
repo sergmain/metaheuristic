@@ -83,7 +83,6 @@ public class PlanService {
     private final ExperimentRepository experimentRepository;
     private final ExperimentProcessValidator experimentProcessValidator;
     private final FileProcessValidator fileProcessValidator;
-    private final ExperimentTaskFeatureRepository taskExperimentFeatureRepository;
     private final WorkbookService workbookService;
 
     public Workbook toStarted(Workbook workbook) {
@@ -132,7 +131,6 @@ public class PlanService {
     public void deleteWorkbook(Long workbookId, long planId) {
         experimentService.resetExperiment(workbookId);
         workbookService.deleteById(workbookId);
-        taskExperimentFeatureRepository.deleteByWorkbookId(workbookId);
         binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
         Workbook workbook = workbookRepository.findFirstByPlanId(planId);
         if (workbook==null) {

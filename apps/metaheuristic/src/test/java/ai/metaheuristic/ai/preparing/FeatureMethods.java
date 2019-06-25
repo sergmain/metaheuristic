@@ -18,8 +18,8 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
-import ai.metaheuristic.ai.launchpad.beans.ExperimentFeature;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.launchpad.Task;
@@ -37,6 +37,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.ArrayList;
 import java.util.List;
 
+import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
 import static org.junit.Assert.*;
 
 @Slf4j
@@ -52,13 +53,7 @@ public abstract class FeatureMethods extends PreparingPlan {
     protected ExperimentRepository experimentRepository;
 
     @Autowired
-    protected ExperimentFeatureRepository experimentFeatureRepository;
-
-    @Autowired
     protected SnippetCache snippetCache;
-
-    @Autowired
-    protected ExperimentSnippetRepository experimentSnippetRepository;
 
     @Autowired
     protected TaskRepository taskRepository;
@@ -110,18 +105,6 @@ public abstract class FeatureMethods extends PreparingPlan {
 
         experiment = experimentCache.findById(experiment.getId());
         assertNotNull(experiment.getWorkbookId());
-    }
-
-    protected void checkForCorrectFinishing_withEmpty(ExperimentFeature sequences1Feature) {
-        assertEquals(sequences1Feature.experimentId, experiment.getId());
-        TaskService.TasksAndAssignToStationResult sequences2 = taskService.getTaskAndAssignToStation(
-                station.getId(), false, experiment.getWorkbookId());
-        assertNotNull(sequences2);
-        assertNotNull(sequences2.getSimpleTask());
-
-        ExperimentFeature feature = experimentFeatureRepository.findById(sequences1Feature.getId()).orElse(null);
-        assertNotNull(feature);
-        assertEquals(Enums.FeatureExecStatus.error.code, feature.execStatus);
     }
 
     protected Protocol.AssignedTask.Task getTaskAndAssignToStation_mustBeNewTask() {

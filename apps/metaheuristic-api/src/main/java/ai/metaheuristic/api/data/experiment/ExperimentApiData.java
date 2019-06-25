@@ -64,8 +64,6 @@ public class ExperimentApiData {
     @NoArgsConstructor
     @AllArgsConstructor
     public static class HyperParamData {
-        public Long id;
-        public Integer version;
         public String key;
         public String values;
         public int variants;

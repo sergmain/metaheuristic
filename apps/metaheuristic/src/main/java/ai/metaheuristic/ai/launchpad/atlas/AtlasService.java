@@ -41,6 +41,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
@@ -57,6 +58,7 @@ import java.util.List;
 @Slf4j
 @Service
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class AtlasService {
 
     private static ObjectMapper mapper;
@@ -72,9 +74,6 @@ public class AtlasService {
     private final PlanCache planCache;
     private final WorkbookRepository workbookRepository;
     private final ExperimentCache experimentCache;
-    private final ExperimentFeatureRepository experimentFeatureRepository;
-    private final ExperimentSnippetRepository experimentSnippetRepository;
-    private final ExperimentTaskFeatureRepository experimentTaskFeatureRepository;
     private final TaskRepository taskRepository;
     private final ConsoleFormAtlasService consoleFormAtlasService;
     private final AtlasRepository atlasRepository;
@@ -90,21 +89,6 @@ public class AtlasService {
             this.status = status;
             this.errorMessages = Collections.singletonList(errorMessage);
         }
-    }
-
-    @Autowired
-    public AtlasService(Globals globals, PlanCache planCache, WorkbookRepository workbookRepository, ExperimentCache experimentCache, ExperimentFeatureRepository experimentFeatureRepository, BinaryDataService binaryDataService, ExperimentSnippetRepository experimentSnippetRepository, ExperimentTaskFeatureRepository experimentTaskFeatureRepository, TaskRepository taskRepository, ConsoleFormAtlasService consoleFormAtlasService, AtlasRepository atlasRepository) {
-        this.globals = globals;
-        this.planCache = planCache;
-        this.workbookRepository = workbookRepository;
-        this.experimentCache = experimentCache;
-        this.experimentFeatureRepository = experimentFeatureRepository;
-        this.binaryDataService = binaryDataService;
-        this.experimentSnippetRepository = experimentSnippetRepository;
-        this.experimentTaskFeatureRepository = experimentTaskFeatureRepository;
-        this.taskRepository = taskRepository;
-        this.consoleFormAtlasService = consoleFormAtlasService;
-        this.atlasRepository = atlasRepository;
     }
 
     public AtlasData.AtlasSimpleExperiments getAtlasExperiments(Pageable pageable) {
@@ -137,14 +121,13 @@ public class AtlasService {
         ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(stored.experimentStoredToAtlas.experiment.getParams());
 
 
-        b.name = params.getName();
-        b.description = params.getDescription();
+        b.name = params.yaml.getName();
+        b.description = params.yaml.getDescription();
         b.code = stored.experimentStoredToAtlas.experiment.getCode();
-        b.createdOn = stored.experimentStoredToAtlas.experiment.getCreatedOn();
-        atlasRepository.saveAndFlush(b);
+        b.createdOn = params.processing.createdOn;
+        atlasRepository.save(b);
 
-        ConsoleOutputStoredToAtlas filed = toConsoleOutputStoredToAtlas(
-                stored.experimentStoredToAtlas.workbook.id);
+        ConsoleOutputStoredToAtlas filed = toConsoleOutputStoredToAtlas(stored.experimentStoredToAtlas.workbook.id);
         if (filed.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, filed.errorMessages);
         }
@@ -189,24 +172,18 @@ public class AtlasService {
         }
         StoredToAtlasWithStatus result = new StoredToAtlasWithStatus();
 
-        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experimentId);
-        List<ExperimentSnippet> snippets = experimentSnippetRepository.findByExperimentId(experimentId);
-        List<ExperimentTaskFeature> taskFeatures = experimentTaskFeatureRepository.findByWorkbookId(workbook.getId());
         List<Task> tasks = taskRepository.findAllByWorkbookId(workbook.getId());
 
-        result.experimentStoredToAtlas = new ExperimentStoredToAtlas(
-                plan, workbook, experiment,
-                features, experiment.hyperParams, snippets, taskFeatures, tasks
-        );
+        result.experimentStoredToAtlas = new ExperimentStoredToAtlas( plan, workbook, experiment, tasks);
         result.status = Enums.StoringStatus.OK;
         return result;
     }
 
     // TODO 2019-06-23 change to yaml format
     public ExperimentStoredToAtlas fromJson(String json) throws IOException {
-        //noinspection UnnecessaryLocalVariable
-        ExperimentStoredToAtlas estb1 = mapper.readValue(json, ExperimentStoredToAtlas.class);
-        return estb1;
+        //noinspection UnnecessaryLocalVariable,SpellCheckingInspection
+        ExperimentStoredToAtlas estb = mapper.readValue(json, ExperimentStoredToAtlas.class);
+        return estb;
     }
 
     // TODO 2019-06-23 change to yaml format

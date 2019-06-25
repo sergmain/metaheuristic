@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.launchpad.process.Process;
@@ -85,8 +86,9 @@ public class TestPlanService extends PreparingPlan {
             }
             taskNumber += process.snippets.size();
         }
+        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
-        assertEquals(1 + 1 + 3 + 2 * 12 * 7, taskNumber + experiment.getNumberOfTask());
+        assertEquals(1 + 1 + 3 + 2 * 12 * 7, taskNumber + epy.processing.getNumberOfTask());
 
         // ======================
 

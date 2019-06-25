@@ -22,7 +22,10 @@ import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.plan.WorkbookService;
-import ai.metaheuristic.ai.launchpad.repositories.*;
+import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
@@ -91,7 +94,6 @@ public class ExperimentService {
 
     private final ExperimentCache experimentCache;
     private final ExperimentRepository experimentRepository;
-    private final ExperimentFeatureRepository experimentFeatureRepository;
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
         for (int i = 0; i < Math.min(o1.getValues().size(), o2.getValues().size()); i++) {
@@ -702,6 +704,14 @@ public class ExperimentService {
     }
 
     public void produceFeaturePermutations(boolean isPersist, final Experiment experiment, List<String> inputResourceCodes, IntHolder total) {
+        produceFeaturePermutations(experiment, inputResourceCodes, total);
+        if (isPersist) {
+            experimentCache.save(experiment);
+        }
+
+    }
+
+    public static void produceFeaturePermutations(final Experiment experiment, List<String> inputResourceCodes, IntHolder total) {
 //        @Query("SELECT f.checksumIdCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
 //        List<String> getChecksumIdCodesByExperimentId(long experimentId);
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
@@ -733,9 +743,7 @@ public class ExperimentService {
                         feature.setExperimentId(experiment.id);
                         feature.setResourceCodes(listAsStr);
                         feature.setChecksumIdCodes(checksumIdCodes);
-                        if (isPersist) {
-                            epy.processing.features.add(feature);
-                        }
+                        epy.processing.features.add(feature);
                         //noinspection UnusedAssignment
                         feature = null;
                         total.value++;
@@ -744,9 +752,6 @@ public class ExperimentService {
             );
         }
         epy.processing.setFeatureProduced(true);
-        if (isPersist) {
-            experiment.updateParams(epy);
-            experimentCache.save(experiment);
-        }
+        experiment.updateParams(epy);
     }
 }

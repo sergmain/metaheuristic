@@ -204,9 +204,10 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/"+id;
     }
 
-    @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{id}")
-    public String metadataDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = experimentTopLevelService.metadataDeleteCommit(experimentId, id);
+    @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
+    public String metadataDeleteCommit(@PathVariable long experimentId, @PathVariable String key, final RedirectAttributes redirectAttributes) {
+        if (true) throw new IllegalStateException("Need to change this in web and angular");
+        OperationStatusRest status = experimentTopLevelService.metadataDeleteCommit(experimentId, key);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
@@ -222,9 +223,10 @@ public class ExperimentsController {
         return "redirect:/launchpad/experiment-edit/" + experimentId;
     }
 
-    @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{id}")
-    public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest status = experimentTopLevelService.snippetDeleteCommit(experimentId, id);
+    @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{snippetCode}")
+    public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable String snippetCode, final RedirectAttributes redirectAttributes) {
+        if (true) throw new IllegalStateException("Need to change this in web and angular");
+        OperationStatusRest status = experimentTopLevelService.snippetDeleteCommit(experimentId, snippetCode);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }

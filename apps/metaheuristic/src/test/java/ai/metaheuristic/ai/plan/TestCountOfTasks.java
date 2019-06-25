@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.plan;
 
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
@@ -115,8 +116,9 @@ public class TestCountOfTasks extends PreparingPlan {
             }
             taskNumber += process.snippets.size();
         }
+        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
-        assertEquals( 1+1+3+ 2*12*7, taskNumber +  experiment.getNumberOfTask());
+        assertEquals( 1+1+3+ 2*12*7, taskNumber +  epy.processing.getNumberOfTask());
 
     }
 

@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.data;
 
-import ai.metaheuristic.ai.launchpad.beans.ExperimentSnippet;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.BaseDataClass;
@@ -38,7 +37,7 @@ public class SnippetData {
     @Data
     public static class SnippetResult {
         public List<SimpleSelectOption> selectOptions = new ArrayList<>();
-        public List<ExperimentSnippet> snippets = new ArrayList<>();
+        public List<String> snippets = new ArrayList<>();
 
     }
 

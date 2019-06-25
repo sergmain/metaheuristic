@@ -17,15 +17,14 @@
 package ai.metaheuristic.ai.launchpad.data;
 
 import ai.metaheuristic.ai.launchpad.atlas.AtlasSimple;
-import ai.metaheuristic.ai.launchpad.atlas.ExperimentStoredToAtlas;
 import ai.metaheuristic.ai.launchpad.beans.Atlas;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.beans.ExperimentFeature;
-import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.launchpad.Workbook;
 import lombok.AllArgsConstructor;
@@ -59,7 +58,7 @@ public class AtlasData {
     @Data
     public static class ExperimentInfo {
         public final List<SimpleSelectOption> allDatasetOptions = new ArrayList<>();
-        public List<ExperimentStoredToAtlas.ExperimentFeatureOnShelf> features;
+        public List<ExperimentParamsYaml.ExperimentFeature> features;
         public Workbook workbook;
         public EnumsApi.WorkbookExecState workbookExecState;
     }
@@ -139,7 +138,7 @@ public class AtlasData {
         public HyperParamResult hyperParamResult;
         public TaskApiData.TasksResult tasksResult;
         public Experiment experiment;
-        public ExperimentFeature experimentFeature;
+        public ExperimentParamsYaml.ExperimentFeature experimentFeature;
         public ConsoleResult consoleResult;
 
         public ExperimentFeatureExtendedResult(String errorMessage) {

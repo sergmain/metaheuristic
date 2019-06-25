@@ -16,11 +16,10 @@
 
 package ai.metaheuristic.ai.plan;
 
-import ai.metaheuristic.ai.launchpad.beans.ExperimentFeature;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
-import ai.metaheuristic.ai.launchpad.repositories.ExperimentFeatureRepository;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,24 +41,13 @@ public class TestProduceFeaturePermutations extends PreparingExperiment {
     @Autowired
     public ExperimentService experimentService;
 
-    @Autowired
-    public ExperimentFeatureRepository experimentFeatureRepository;
-
-    @After
-    public void after() {
-        try {
-            experimentFeatureRepository.deleteByExperimentId(experiment.getId());
-        } catch (Throwable th) {
-            th.printStackTrace();
-        }
-    }
-
     @Test
     public void testFeaturePermutation() {
-        experimentService.produceFeaturePermutations(true, experiment.getId(), List.of("aaa", "bbb", "ccc"), new IntHolder());
-        List<ExperimentFeature> features = experimentFeatureRepository.findByExperimentId(experiment.getId());
-        assertNotNull(features);
-        assertEquals(7, features.size());
+        experimentService.produceFeaturePermutations(true, experiment, List.of("aaa", "bbb", "ccc"), new IntHolder());
+        final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+
+        assertNotNull(epy.processing.features);
+        assertEquals(7, epy.processing.features.size());
 
         int i=0;
     }

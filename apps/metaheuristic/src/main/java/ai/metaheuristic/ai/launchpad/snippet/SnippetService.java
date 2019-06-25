@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.snippet.SnippetCode;
 import ai.metaheuristic.api.data.SimpleSelectOption;
@@ -39,7 +38,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -55,10 +53,26 @@ public class SnippetService {
     private final SnippetCache snippetCache;
     private final BinaryDataService binaryDataService;
 
-    public List<ExperimentSnippet> getTaskSnippetsForExperiment(Long experimentId) {
-        List<ExperimentSnippet> experimentSnippets = experimentSnippetRepository.findByExperimentId(experimentId);
-        ExperimentUtils.sortExperimentSnippets(experimentSnippets);
-        return experimentSnippets;
+    public static void sortExperimentSnippets(List<Snippet> snippets) {
+        snippets.sort((o1, o2) -> {
+                    if (o1.getType().equals(o2.getType())) {
+                        return 0;
+                    }
+                    return CommonConsts.FIT_TYPE.equals(o1.getType().toLowerCase()) ? -1 : 1;
+                }
+        );
+    }
+
+    public List<Snippet> getSnippetsForCodes(List<String> snippetCodes) {
+        List<Snippet> list = new ArrayList<>();
+        for (String snippetCode : snippetCodes) {
+            Snippet s = snippetRepository.findByCode(snippetCode);
+            if (s!=null) {
+                list.add(s);
+            }
+        }
+        sortExperimentSnippets(list);
+        return list;
     }
 
     public SnippetApiData.SnippetConfig getSnippetConfig(SnippetDefForPlan snippetDef) {
@@ -80,11 +94,11 @@ public class SnippetService {
         return snippetConfig;
     }
 
-    public boolean hasFit(List<ExperimentSnippet> experimentSnippets) {
+    public boolean hasFit(List<Snippet> experimentSnippets) {
         if (experimentSnippets ==null || experimentSnippets.isEmpty()) {
             return false;
         }
-        for (ExperimentSnippet snippet : experimentSnippets) {
+        for (Snippet snippet : experimentSnippets) {
             if (CommonConsts.FIT_TYPE.equals(snippet.getType())) {
                 return true;
             }
@@ -92,11 +106,11 @@ public class SnippetService {
         return false;
     }
 
-    public boolean hasPredict(List<ExperimentSnippet> experimentSnippets) {
+    public boolean hasPredict(List<Snippet> experimentSnippets) {
         if (experimentSnippets ==null || experimentSnippets.isEmpty()) {
             return false;
         }
-        for (ExperimentSnippet snippet : experimentSnippets) {
+        for (Snippet snippet : experimentSnippets) {
             if (CommonConsts.PREDICT_TYPE.equals(snippet.getType())) {
                 return true;
             }

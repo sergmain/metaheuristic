@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.atlas;
 
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
@@ -37,8 +38,8 @@ import java.util.*;
 public class ExperimentStoredToAtlas {
 
     @JsonIgnore
-    public ExperimentFeatureOnShelf getFeature(Long featureId) {
-        return features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
+    public ExperimentParamsYaml.ExperimentFeature getFeature(Long featureId) {
+        return experiment.getExperimentParamsYaml().processing.features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
     }
 
     @JsonIgnore
@@ -47,8 +48,8 @@ public class ExperimentStoredToAtlas {
     }
 
     @JsonIgnore
-    public ExperimentTaskFeatureOnShelf getExperimentTaskFeature(Long taskId) {
-        return taskFeatures
+    public ExperimentParamsYaml.ExperimentTaskFeature getExperimentTaskFeature(Long taskId) {
+        return experiment.getExperimentParamsYaml().processing.taskFeatures
                 .stream()
                 .filter(o -> o.taskId.equals(taskId))
                 .findFirst().orElse(null);
@@ -58,7 +59,7 @@ public class ExperimentStoredToAtlas {
     @JsonIgnore
     public Map<String, Map<String, Integer>> getHyperParamsAsMap(boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
-        for (ExperimentHyperParams hyperParam : getHyperParams()) {
+        for (ExperimentParamsYaml.HyperParam hyperParam : experiment.getExperimentParamsYaml().yaml.getHyperParams()) {
             ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
             Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);
@@ -111,50 +112,6 @@ public class ExperimentStoredToAtlas {
     @EqualsAndHashCode(callSuper = false)
     @JsonIgnoreProperties(value = {"version"})
     @ToString(callSuper = true)
-    public static class ExperimentFeatureOnShelf extends ExperimentFeature {
-        public ExperimentFeatureOnShelf(ExperimentFeature experimentFeature) {
-            BeanUtils.copyProperties(experimentFeature, this);
-        }
-    }
-
-    @Data
-    @NoArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    @JsonIgnoreProperties(value = {"version", "experiment"})
-    @ToString(callSuper = true)
-    public static class ExperimentHyperParamsOnShelf extends ExperimentHyperParams {
-        public ExperimentHyperParamsOnShelf(ExperimentHyperParams experimentHyperParams) {
-            BeanUtils.copyProperties(experimentHyperParams, this);
-        }
-    }
-
-    @Data
-    @NoArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    @JsonIgnoreProperties(value = {"version"})
-    @ToString(callSuper = true)
-    public static class ExperimentSnippetOnShelf extends ExperimentSnippet {
-        public ExperimentSnippetOnShelf(ExperimentSnippet experimentSnippet) {
-            BeanUtils.copyProperties(experimentSnippet, this);
-        }
-    }
-
-    @Data
-    @NoArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    @JsonIgnoreProperties(value = {"version"})
-    @ToString(callSuper = true)
-    public static class ExperimentTaskFeatureOnShelf extends ExperimentTaskFeature {
-        public ExperimentTaskFeatureOnShelf(ExperimentTaskFeature experimentTaskFeature) {
-            BeanUtils.copyProperties(experimentTaskFeature, this);
-        }
-    }
-
-    @Data
-    @NoArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    @JsonIgnoreProperties(value = {"version"})
-    @ToString(callSuper = true)
     public static class TaskOnShelf extends TaskImpl {
         public TaskOnShelf(Task task) {
             BeanUtils.copyProperties(task, this);
@@ -164,45 +121,17 @@ public class ExperimentStoredToAtlas {
     public PlanOnShelf plan;
     public WorkbookOnShelf workbook;
     public ExperimentOnShelf experiment;
-    public List<ExperimentFeatureOnShelf> features = new ArrayList<>();
-    public List<ExperimentHyperParamsOnShelf> hyperParams = new ArrayList<>();
-    public List<ExperimentSnippetOnShelf> snippets = new ArrayList<>();
-    public List<ExperimentTaskFeatureOnShelf> taskFeatures = new ArrayList<>();
     public List<TaskOnShelf> tasks = new ArrayList<>();
 
-    public ExperimentStoredToAtlas(
-            Plan plan, Workbook workbook, Experiment experiment,
-            List<ExperimentFeature> features, List<ExperimentHyperParams> hyperParams,
-            List<ExperimentSnippet> snippets, List<ExperimentTaskFeature> taskFeatures,
-            List<Task> tasks) {
+    public ExperimentStoredToAtlas(Plan plan, Workbook workbook, Experiment experiment,List<Task> tasks) {
 
         this.plan = new PlanOnShelf(plan);
         this.workbook = new WorkbookOnShelf(workbook);
         this.experiment = new ExperimentOnShelf(experiment);
 
-        if (CollectionUtils.isNotEmpty(features)) {
-            for (ExperimentFeature feature : features) {
-                this.features.add( new ExperimentFeatureOnShelf(feature));
-            }
-        }
-        if (CollectionUtils.isNotEmpty(hyperParams)) {
-            for (ExperimentHyperParams params : hyperParams) {
-                this.hyperParams.add( new ExperimentHyperParamsOnShelf(params));
-            }
-        }
-        if (CollectionUtils.isNotEmpty(snippets)) {
-            for (ExperimentSnippet snippet : snippets) {
-                this.snippets.add( new ExperimentSnippetOnShelf(snippet));
-            }
-        }
         if (CollectionUtils.isNotEmpty(tasks)) {
             for (Task task : tasks) {
                 this.tasks.add( new TaskOnShelf(task));
-            }
-        }
-        if (CollectionUtils.isNotEmpty(taskFeatures)) {
-            for (ExperimentTaskFeature taskFeature : taskFeatures) {
-                this.taskFeatures.add( new ExperimentTaskFeatureOnShelf(taskFeature));
             }
         }
     }
