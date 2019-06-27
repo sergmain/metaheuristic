@@ -50,15 +50,15 @@ public class PlanParamsYamlUtilsV5
     }
 
     @Override
-    public PlanParamsYaml upgradeTo(PlanParamsYamlV5 pV4) {
+    public PlanParamsYaml upgradeTo(PlanParamsYamlV5 pV5) {
         PlanParamsYaml p = new PlanParamsYaml();
-        p.internalParams = pV4.internalParams;
+        p.internalParams = pV5.internalParams;
         p.planYaml = new PlanParamsYaml.PlanYaml();
-        if (pV4.planYaml.metas!=null){
-            p.planYaml.metas = new ArrayList<>(pV4.planYaml.metas);
+        if (pV5.planYaml.metas!=null){
+            p.planYaml.metas = new ArrayList<>(pV5.planYaml.metas);
         }
-        p.planYaml.clean = pV4.planYaml.clean;
-        p.planYaml.processes = pV4.planYaml.processes.stream().map( o-> {
+        p.planYaml.clean = pV5.planYaml.clean;
+        p.planYaml.processes = pV5.planYaml.processes.stream().map( o-> {
             Process pr = new Process();
             BeanUtils.copyProperties(o, pr, "snippets", "preSnippets", "postSnippets");
             pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new SnippetDefForPlan(d.code, d.params,d.paramsAsFile)).collect(Collectors.toList()) : null;
@@ -66,7 +66,7 @@ public class PlanParamsYamlUtilsV5
             pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new SnippetDefForPlan(d.code, d.params,d.paramsAsFile)).collect(Collectors.toList()) : null;
             return pr;
         }).collect(Collectors.toList());
-        p.planYaml.planCode = pV4.planYaml.planCode;
+        p.planYaml.planCode = pV5.planYaml.planCode;
         p.checkIntegrity();
         return p;
     }

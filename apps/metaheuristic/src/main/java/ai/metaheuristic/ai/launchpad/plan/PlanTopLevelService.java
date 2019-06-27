@@ -29,18 +29,30 @@ import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.ai.Consts.YAML_EXT;
+import static ai.metaheuristic.ai.Consts.YML_EXT;
 
 @Slf4j
 @Profile("launchpad")
@@ -61,7 +73,6 @@ public class PlanTopLevelService {
         this.workbookRepository = workbookRepository;
     }
 
-    @SuppressWarnings("Duplicates")
     public PlanApiData.PlansResult getPlans(Pageable pageable, boolean isArchive) {
         pageable = ControllerUtils.fixPageSize(globals.planRowsLimit, pageable);
         List<Plan> plans = planRepository.findAllByOrderByIdDesc();
@@ -89,7 +100,6 @@ public class PlanTopLevelService {
                 .collect(Collectors.toList());
 
         PlanApiData.PlansResult plansResultRest = new PlanApiData.PlansResult();
-//        plansResultRest.items = new PageImpl<>(plans.subList(0, plans.size()<pageable.getPageSize()?plans.size():pageable.getPageSize()), pageable, count.get());
         plansResultRest.items = new PageImpl<>(plans, pageable, count.get());
 
         return plansResultRest;
@@ -141,6 +151,7 @@ public class PlanTopLevelService {
         }
 
         PlanImpl plan = new PlanImpl();
+        plan.createdOn = System.currentTimeMillis();
         plan.code = ppy.planYaml.planCode;
         plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
 
@@ -215,6 +226,60 @@ public class PlanTopLevelService {
 
         planCache.save(plan);
         return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public OperationStatusRest uploadPlan(MultipartFile file) {
+
+        String originFilename = file.getOriginalFilename();
+        if (originFilename == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.120 name of uploaded file is null");
+        }
+        String ext = StrUtils.getExtension(originFilename);
+        if (ext==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.130 file without extension, bad filename: " + originFilename);
+        }
+        if (!StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.140 only '.yml' and '.yaml' files are supported, filename: " + originFilename);
+        }
+
+        final String location = System.getProperty("java.io.tmpdir");
+
+        try {
+            File tempDir = DirUtils.createTempDir("mh-plan-upload-");
+            if (tempDir==null || tempDir.isFile()) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        "#560.150 can't create temporary directory in " + location);
+            }
+            final File planFile = new File(tempDir, "plans" + ext);
+            log.debug("Start storing an uploaded snippet to disk");
+            try(OutputStream os = new FileOutputStream(planFile)) {
+                IOUtils.copy(file.getInputStream(), os, 64000);
+            }
+            log.debug("Start loading plan into db");
+            String yaml = FileUtils.readFileToString(planFile, StandardCharsets.UTF_8);
+            PlanApiData.PlanResult result = addPlan(yaml);
+
+            if (result.isErrorMessages()) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages, result.infoMessages);
+            }
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+        catch (Throwable e) {
+            log.error("Error", e);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.05 can't load plans, Error: " + e.toString());
+        }
+    }
+
+    private List<String> toErrorMessages(List<PlanApiData.PlanStatus > statuses) {
+        return statuses.stream().filter(o->!o.isOk).map(o->o.error).collect(Collectors.toList());
+    }
+
+    private boolean isError(List<PlanApiData.PlanStatus > statuses) {
+        return statuses.stream().filter(o->!o.isOk).findFirst().orElse(null)!=null;
     }
 
     // ============= Workbooks =============
@@ -355,7 +420,7 @@ public class PlanTopLevelService {
         Workbook workbook = workbookRepository.findById(workbookId).orElse(null);
         if (workbook == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.057 workbook wasn't found, workbookId: " + workbookId);
+                    "#560.110 workbook wasn't found, workbookId: " + workbookId);
         }
         planService.changeValidStatus(workbook, state);
         return OperationStatusRest.OPERATION_STATUS_OK;

@@ -20,7 +20,6 @@ import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.launchpad.Plan;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +27,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
@@ -67,7 +67,8 @@ public class PlanController {
     }
 
     @GetMapping(value = "/plan-add")
-    public String add(@ModelAttribute("plan") Plan plan) {
+    public String add(Model model) {
+        model.addAttribute("planYamlAsStr", "");
         return "launchpad/plan/plan-add";
     }
 
@@ -96,6 +97,15 @@ public class PlanController {
         model.addAttribute("infoMessages", planResultRest.infoMessages);
         model.addAttribute("errorMessage", planResultRest.errorMessages);
         return "launchpad/plan/plan-edit";
+    }
+
+    @PostMapping(value = "/plan-upload-from-file")
+    public String uploadSnippet(final MultipartFile file, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = planTopLevelService.uploadPlan(file);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+        }
+        return REDIRECT_LAUNCHPAD_PLAN_PLANS;
     }
 
     @PostMapping("/plan-add-commit")

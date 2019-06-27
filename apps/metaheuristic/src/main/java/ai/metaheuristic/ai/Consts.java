@@ -92,4 +92,8 @@ public class Consts {
     public static final String SNIPPETS_CACHE = "snippets";
     public static final String MAIN_DOCUMENT_POOL_CODE_FOR_BATCH = "mainDocument";
 
+    public static final String YAML_EXT = ".yaml";
+    public static final String YML_EXT = ".yml";
+    public static final String ZIP_EXT = ".zip";
+    public static final String RAR_EXT = ".rar";
 }

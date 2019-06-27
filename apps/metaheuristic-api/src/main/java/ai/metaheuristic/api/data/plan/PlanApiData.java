@@ -32,6 +32,14 @@ import java.util.*;
 public class PlanApiData {
 
     @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    public static class PlanStatus {
+        public boolean isOk;
+        public String error;
+    }
+
+    @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     @AllArgsConstructor

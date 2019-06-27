@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/rest/v1/launchpad/plan")
@@ -77,6 +78,11 @@ public class PlanRestController {
     @PostMapping("/plan-archive-commit")
     public OperationStatusRest archiveCommit(Long id) {
         return planTopLevelService.archivePlanById(id);
+    }
+
+    @PostMapping(value = "/plan-upload-from-file")
+    public OperationStatusRest uploadSnippet(final MultipartFile file) {
+        return planTopLevelService.uploadPlan(file);
     }
 
     // ============= Workbooks =============

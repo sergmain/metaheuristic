@@ -20,9 +20,13 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.env.EnvYamlUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.PostConstruct;
@@ -33,6 +37,8 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static ai.metaheuristic.ai.Consts.*;
 
 @Service
 @Slf4j
@@ -106,7 +112,11 @@ public class EnvService {
                 Files.list(globals.stationEnvHotDeployDir.toPath())
                         .filter(o -> {
                             File f = o.toFile();
-                            return f.getName().endsWith(".yaml");
+                            String ext = StrUtils.getExtension(f.getName());
+                            if (ext==null) {
+                                return false;
+                            }
+                            return StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT);
                         })
                         .forEach(dataFile -> {
                             File file = dataFile.toFile();

@@ -160,6 +160,7 @@ public class SnippetService {
      *
      * @param srcDir File
      */
+    @SuppressWarnings("Duplicates")
     List<SnippetApiData.SnippetConfigStatus> loadSnippetsFromDir(File srcDir) throws IOException {
         File yamlConfigFile = new File(srcDir, "snippets.yaml");
         if (!yamlConfigFile.exists()) {

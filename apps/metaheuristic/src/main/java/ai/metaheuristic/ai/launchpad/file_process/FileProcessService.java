@@ -23,9 +23,9 @@ import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
@@ -51,7 +51,7 @@ public class FileProcessService {
 
     @SuppressWarnings("Duplicates")
     public PlanService.ProduceTaskResult produceTasks(
-            boolean isPersist, Plan plan, Workbook workbook,
+            boolean isPersist, Long planId, PlanParamsYaml planParams, Workbook workbook,
             Process process, PlanService.ResourcePools pools) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
@@ -63,22 +63,22 @@ public class FileProcessService {
         if (process.parallelExec) {
             for (SnippetDefForPlan snDef : process.snippets) {
                 String resourceName = StrUtils.normalizeSnippetCode(snDef.code);
-                String outputResourceCode = PlanUtils.getResourceCode(plan.getId(), workbook.getId(), process.code, resourceName, process.order);
+                String outputResourceCode = PlanUtils.getResourceCode(planId, workbook.getId(), process.code, resourceName, process.order);
                 result.outputResourceCodes.add(outputResourceCode);
                 inputStorageUrls.put(outputResourceCode, process.outputParams);
                 if (isPersist) {
-                    createTaskInternal(plan, workbook, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
+                    createTaskInternal(planParams, workbook, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
                 }
             }
         }
         else {
             SnippetDefForPlan snDef = process.snippets.get(0);
             String resourceName = StrUtils.normalizeSnippetCode(snDef.code);
-            String outputResourceCode = PlanUtils.getResourceCode(plan.getId(), workbook.getId(), process.code, resourceName, process.order);
+            String outputResourceCode = PlanUtils.getResourceCode(planId, workbook.getId(), process.code, resourceName, process.order);
             result.outputResourceCodes.add(outputResourceCode);
             inputStorageUrls.put(outputResourceCode, process.outputParams);
             if (isPersist) {
-                createTaskInternal(plan, workbook, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
+                createTaskInternal(planParams, workbook, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
             }
         }
         result.status = EnumsApi.PlanProducingStatus.OK;
@@ -88,7 +88,7 @@ public class FileProcessService {
 
     @SuppressWarnings("Duplicates")
     private void createTaskInternal(
-            Plan plan, Workbook workbook, Process process,
+            PlanParamsYaml planParams, Workbook workbook, Process process,
             String outputResourceCode,
             SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls) {
         if (process.type!= EnumsApi.ProcessType.FILE_PROCESSING) {
@@ -128,7 +128,7 @@ public class FileProcessService {
                 yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(postSnippet));
             }
         }
-        yaml.taskYaml.clean = plan.isClean();
+        yaml.taskYaml.clean = planParams.planYaml.clean;
         yaml.taskYaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
         String taskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);

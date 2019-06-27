@@ -7,13 +7,9 @@
         <h1 class="widget-header">Edit the plan</h1>
 
         <!--/*@thymesVar id="plan" type="ai.metaheuristic.ai.launchpad.beans.PlanImpl"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${plan}" method="post" action="#" th:method="POST" th:action="@{/launchpad/plan/plan-edit-commit}" accept-charset="UTF-8" id="station-form" name="f">
-            <input type="hidden" th:field="*{id}"/>
-            <input type="hidden" th:field="*{version}"/>
+        <form class="pure-form pure-form-stacked" method="post" action="#" th:method="POST" th:action="@{/launchpad/plan/plan-edit-commit}" accept-charset="UTF-8" id="station-form" name="f">
+            <input type="hidden" name="planId" th:value="${plan.id}"/>
             <fieldset>
-                <label for="code">Code of plan</label>
-                <input name="code" id="code" type="text" placeholder="code" th:field="*{code}">
-                <span class="pure-form-message">This is a required field.</span>
 
                 <label for="planYamlAsStr">Parameters of plan</label>
                 <textarea name="planYamlAsStr" id="planYamlAsStr" placeholder="Parameters of plan" cols="70" rows="15"

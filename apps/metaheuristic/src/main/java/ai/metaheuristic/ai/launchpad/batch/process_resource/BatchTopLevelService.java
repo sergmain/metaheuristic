@@ -82,7 +82,7 @@ public class BatchTopLevelService {
     private static final String CONFIG_FILE = "config.yaml";
     private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[/\\\\A-Za-z0-9._-]*$";
     private static final Pattern zipCharsPattern = Pattern.compile(ALLOWED_CHARS_IN_ZIP_REGEXP);
-    private static final Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml");
+    private static final Set<String> EXCLUDE_EXT = Set.of(".zip", ".yaml", ".yml");
 
     private final Globals globals;
     private final PlanCache planCache;

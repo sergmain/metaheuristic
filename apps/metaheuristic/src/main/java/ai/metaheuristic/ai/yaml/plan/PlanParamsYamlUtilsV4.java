@@ -70,7 +70,7 @@ public class PlanParamsYamlUtilsV4
             pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new SnippetDefForPlanV5(d.code, d.params,d.paramsAsFile)).collect(Collectors.toList()) : null;
             return pr;
         }).collect(Collectors.toList());
-        p.planYaml.planCode = "plan-" + DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDate.now());
+        p.planYaml.planCode = "plan-" + DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDate.now())+"-" + System.currentTimeMillis();
         return p;
     }
 

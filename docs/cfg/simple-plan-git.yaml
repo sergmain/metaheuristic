@@ -1,7 +1,12 @@
-processes:
-  - code: simple-plan-git
-    collectResources: false
-    name: Simple plan, deploy from git
-    type: FILE_PROCESSING
-    snippetCodes:
-      - simple-snippet-git:1.0
+planYaml:
+  planCode: simple-plan-git
+  processes:
+    - code: simple-plan-git
+      name: Simple plan, deploy from git
+      outputParams:
+        sourcing: launchpad
+      snippets:
+        - code: simple-snippet-git:1.0
+      timeoutBeforeTerminate: 600
+      type: FILE_PROCESSING
+version: 5

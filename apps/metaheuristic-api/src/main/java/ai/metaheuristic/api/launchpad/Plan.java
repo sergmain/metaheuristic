@@ -36,8 +36,6 @@ public interface Plan {
 
     boolean isValid();
 
-    boolean isClean();
-
     void setId(Long id);
 
     void setVersion(Integer version);
@@ -52,5 +50,4 @@ public interface Plan {
 
     void setValid(boolean valid);
 
-    void setClean(boolean clean);
 }

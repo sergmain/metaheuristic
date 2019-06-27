@@ -20,7 +20,9 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
+import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Plan;
@@ -44,10 +46,16 @@ import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetUtils;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -57,6 +65,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -494,7 +504,6 @@ public class PlanService {
         PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
         result.planYaml = planParams.planYaml;
 
-        plan.setClean( result.planYaml.clean );
         int idx = Consts.TASK_ORDER_START_VALUE;
         result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
         for (Process process : result.planYaml.getProcesses()) {
@@ -504,12 +513,12 @@ public class PlanService {
             switch(process.type) {
                 case FILE_PROCESSING:
                     Monitoring.log("##026", Enums.Monitor.MEMORY);
-                    produceTaskResult = fileProcessService.produceTasks(isPersist, plan, fi, process, pools);
+                    produceTaskResult = fileProcessService.produceTasks(isPersist, plan.getId(), planParams, fi, process, pools);
                     Monitoring.log("##027", Enums.Monitor.MEMORY);
                     break;
                 case EXPERIMENT:
                     Monitoring.log("##028", Enums.Monitor.MEMORY);
-                    produceTaskResult = experimentProcessService.produceTasks(isPersist, plan, fi, process, pools);
+                    produceTaskResult = experimentProcessService.produceTasks(isPersist, plan.getId(), planParams, fi, process, pools);
                     Monitoring.log("##029", Enums.Monitor.MEMORY);
                     break;
                 default:

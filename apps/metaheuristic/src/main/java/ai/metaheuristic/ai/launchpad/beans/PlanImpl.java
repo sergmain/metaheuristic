@@ -49,7 +49,4 @@ public class PlanImpl implements Serializable, Plan {
     @Column(name = "IS_VALID")
     public boolean valid;
 
-    @Transient
-    public boolean clean;
-
 }

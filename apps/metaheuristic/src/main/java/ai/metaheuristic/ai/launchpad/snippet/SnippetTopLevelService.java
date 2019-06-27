@@ -18,13 +18,15 @@ package ai.metaheuristic.ai.launchpad.snippet;
 
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.SnippetData;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,24 +41,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.ai.Consts.*;
+
 @Service
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class SnippetTopLevelService {
 
-    private static final String YAML_EXT = ".yaml";
-    private static final String ZIP_EXT = ".zip";
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
     private final SnippetService snippetService;
     private final BinaryDataService binaryDataService;
-
-    public SnippetTopLevelService(SnippetRepository snippetRepository, SnippetCache snippetCache, SnippetService snippetService, BinaryDataService binaryDataService) {
-        this.snippetRepository = snippetRepository;
-        this.snippetCache = snippetCache;
-        this.snippetService = snippetService;
-        this.binaryDataService = binaryDataService;
-    }
 
     public SnippetData.SnippetsResult getSnippets() {
         SnippetData.SnippetsResult result = new SnippetData.SnippetsResult();
@@ -83,15 +79,14 @@ public class SnippetTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#422.01 name of uploaded file is null");
         }
-        int idx;
-        if ((idx = originFilename.lastIndexOf('.')) == -1) {
+        String ext = StrUtils.getExtension(originFilename);
+        if (ext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.02 '.' wasn't found, bad filename: " + originFilename);
+                    "#422.02 file without extension, bad filename: " + originFilename);
         }
-        String ext = originFilename.substring(idx).toLowerCase();
-        if (!StringUtils.equalsAny(ext, ZIP_EXT, YAML_EXT)) {
+        if (!StringUtils.equalsAny(ext.toLowerCase(), ZIP_EXT, YAML_EXT, YML_EXT)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#422.03 only '.zip' and '.yaml' files are supported, filename: " + originFilename);
+                    "#422.03 only '.zip', '.rar', '.yml' and '.yaml' files are supported, filename: " + originFilename);
         }
 
         final String location = System.getProperty("java.io.tmpdir");

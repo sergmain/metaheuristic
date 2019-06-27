@@ -36,15 +36,14 @@ import ai.metaheuristic.ai.yaml.metrics.MetricValues;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
@@ -531,7 +530,7 @@ public class ExperimentService {
 
     @SuppressWarnings("Duplicates")
     public EnumsApi.PlanProducingStatus produceTasks(
-            boolean isPersist, Plan plan, Workbook workbook, Process process,
+            boolean isPersist, PlanParamsYaml planParams, Workbook workbook, Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
             Map<String, DataStorageParams> inputStorageUrls, IntHolder numberOfTasks) {
         if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
@@ -626,15 +625,15 @@ public class ExperimentService {
                             // if ("feature".equals(entry.getKey())) {
                             //     log.info("Output type is the same as workbook inputResourceParam:\n"+ workbook.inputResourceParam );
                             // }
-                            Meta meta = process.getMetas()
+                            process.getMetas()
                                     .stream()
                                     .filter(o -> o.value.equals(entry.getKey()))
                                     .findFirst()
-                                    .orElse(null);
+                                    .ifPresent(meta -> yaml.taskYaml.inputResourceCodes
+                                            .computeIfAbsent(meta.getKey(), k -> new ArrayList<>())
+                                            .addAll(entry.getValue())
+                                    );
 
-                            if (meta != null) {
-                                yaml.taskYaml.inputResourceCodes.computeIfAbsent(meta.getKey(), k -> new ArrayList<>()).addAll(entry.getValue());
-                            }
                         }
                         Snippet snippet = localCache.get(snippetCode);
                         if (snippet == null) {
@@ -697,7 +696,7 @@ public class ExperimentService {
                                 yaml.taskYaml.postSnippets.add(snippetService.getSnippetConfig(snDef));
                             }
                         }
-                        yaml.taskYaml.clean = plan.isClean();
+                        yaml.taskYaml.clean = planParams.planYaml.clean;
 
                         String currTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);
 

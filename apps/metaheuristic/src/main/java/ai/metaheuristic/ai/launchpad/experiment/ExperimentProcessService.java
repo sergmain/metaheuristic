@@ -18,21 +18,21 @@ package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
-import ai.metaheuristic.api.data.InputResourceParam;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.InputResourceParam;
+import ai.metaheuristic.api.data.Meta;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.process.Process;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -61,7 +61,7 @@ public class ExperimentProcessService {
     }
 
     public PlanService.ProduceTaskResult produceTasks(
-            boolean isPersist, Plan plan, Workbook workbook,
+            boolean isPersist, Long planId, PlanParamsYaml planParams, Workbook workbook,
             Process process, PlanService.ResourcePools pools) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
@@ -137,7 +137,7 @@ public class ExperimentProcessService {
         Monitoring.log("##051", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
         EnumsApi.PlanProducingStatus status = experimentService.produceTasks(
-                isPersist, plan, workbook, process, e, collectedInputs, inputStorageUrls, intHolder);
+                isPersist, planParams, workbook, process, e, collectedInputs, inputStorageUrls, intHolder);
 
         log.info("experimentService.produceTasks() was done for " + (System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##071", Enums.Monitor.MEMORY);
