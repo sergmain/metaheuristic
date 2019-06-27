@@ -28,12 +28,12 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class SnippetDefForPlanV4 {
+public class SnippetDefForPlanV5 {
     public String code;
     public String params;
     public boolean paramsAsFile;
 
-    public SnippetDefForPlanV4(String code) {
+    public SnippetDefForPlanV5(String code) {
         this.code = code;
     }
 }

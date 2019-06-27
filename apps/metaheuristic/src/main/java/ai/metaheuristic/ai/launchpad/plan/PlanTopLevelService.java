@@ -120,38 +120,65 @@ public class PlanTopLevelService {
         return result;
     }
 
-    public PlanApiData.PlanResult addPlan(PlanImpl plan, String planYamlAsStr) {
-        return processPlanCommit(plan, planYamlAsStr);
-    }
-
-    public PlanApiData.PlanResult updatePlan(Plan planModel, String planYamlAsStr) {
-        PlanImpl plan = planCache.findById(planModel.getId());
-        if (plan == null) {
-            return new PlanApiData.PlanResult(
-                    "#560.010 plan wasn't found, planId: " + planModel.getId(),
-                    EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
-        }
-        plan.setCode(planModel.getCode());
-
-        return processPlanCommit(plan, planYamlAsStr);
-    }
-
-    private PlanApiData.PlanResult processPlanCommit(PlanImpl plan, String planYamlAsStr) {
+    @SuppressWarnings("Duplicates")
+    public PlanApiData.PlanResult addPlan(String planYamlAsStr) {
         if (StringUtils.isBlank(planYamlAsStr)) {
             return new PlanApiData.PlanResult("#560.017 plan yaml is empty");
         }
-        if (StringUtils.isBlank(plan.code)) {
+
+        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsStr);
+
+        final String code = ppy.planYaml.planCode;
+        if (StringUtils.isBlank(code)) {
             return new PlanApiData.PlanResult("#560.020 code of plan is empty");
         }
-        if (StringUtils.isBlank(plan.code)) {
+        if (StringUtils.isBlank(code)) {
             return new PlanApiData.PlanResult("#560.030 plan is empty");
         }
-        Plan f = planRepository.findByCode(plan.code);
-        if (f!=null && !f.getId().equals(plan.getId())) {
-            return new PlanApiData.PlanResult("#560.033 plan with such code already exists, code: " + plan.code);
+        Plan f = planRepository.findByCode(code);
+        if (f!=null) {
+            return new PlanApiData.PlanResult("#560.033 plan with such code already exists, code: " + code);
+        }
+
+        PlanImpl plan = new PlanImpl();
+        plan.code = ppy.planYaml.planCode;
+        plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
+
+        plan = planCache.save(plan);
+
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy) );
+        PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
+        result.infoMessages = planValidation.infoMessages;
+        result.errorMessages = planValidation.errorMessages;
+        return result;
+    }
+
+    @SuppressWarnings("Duplicates")
+    public PlanApiData.PlanResult updatePlan(Long planId, String planYamlAsStr) {
+        PlanImpl plan = planCache.findById(planId);
+        if (plan == null) {
+            return new PlanApiData.PlanResult(
+                    "#560.010 plan wasn't found, planId: " + planId,
+                    EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
+        }
+        if (StringUtils.isBlank(planYamlAsStr)) {
+            return new PlanApiData.PlanResult("#560.017 plan yaml is empty");
         }
 
         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsStr);
+
+        final String code = ppy.planYaml.planCode;
+        if (StringUtils.isBlank(code)) {
+            return new PlanApiData.PlanResult("#560.020 code of plan is empty");
+        }
+        if (StringUtils.isBlank(code)) {
+            return new PlanApiData.PlanResult("#560.030 plan is empty");
+        }
+        Plan f = planRepository.findByCode(code);
+        if (f!=null && !f.getId().equals(plan.getId())) {
+            return new PlanApiData.PlanResult("#560.033 plan with such code already exists, code: " + code);
+        }
+        plan.code = code;
         plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
 
         plan = planCache.save(plan);

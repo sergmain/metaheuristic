@@ -16,7 +16,6 @@
 
 package ai.metaheuristic.ai.launchpad.plan;
 
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -100,8 +99,8 @@ public class PlanController {
     }
 
     @PostMapping("/plan-add-commit")
-    public String addFormCommit(Model model, PlanImpl plan, String planYamlAsStr, final RedirectAttributes redirectAttributes) {
-        PlanApiData.PlanResult planResultRest = planTopLevelService.addPlan(plan, planYamlAsStr);
+    public String addFormCommit(String planYamlAsStr, final RedirectAttributes redirectAttributes) {
+        PlanApiData.PlanResult planResultRest = planTopLevelService.addPlan(planYamlAsStr);
         if (planResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
         }
@@ -112,8 +111,8 @@ public class PlanController {
     }
 
     @PostMapping("/plan-edit-commit")
-    public String editFormCommit(Model model, Plan plan, String planYamlAsStr, final RedirectAttributes redirectAttributes) {
-        PlanApiData.PlanResult planResultRest = planTopLevelService.updatePlan(plan, planYamlAsStr);
+    public String editFormCommit(Model model, Long planId, String planYamlAsStr, final RedirectAttributes redirectAttributes) {
+        PlanApiData.PlanResult planResultRest = planTopLevelService.updatePlan(planId, planYamlAsStr);
         if (planResultRest.isErrorMessages()) {
             model.addAttribute("errorMessage", planResultRest.errorMessages);
             return "redirect:/launchpad/plan/plan-edit/"+planResultRest.plan.getId();

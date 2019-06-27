@@ -1,0 +1,7 @@
+processes:
+  - code: simple-plan-git
+    collectResources: false
+    name: Simple plan, deploy from git
+    type: FILE_PROCESSING
+    snippetCodes:
+      - simple-snippet-git:1.0
