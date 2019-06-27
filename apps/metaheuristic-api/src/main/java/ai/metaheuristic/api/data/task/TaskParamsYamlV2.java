@@ -33,6 +33,11 @@ import java.util.Map;
 @Data
 public class TaskParamsYamlV2 implements BaseParams {
 
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
+
     @Data
     public static class TaskYamlV2 {
         public Map<String, List<String>> inputResourceCodes = new HashMap<>();

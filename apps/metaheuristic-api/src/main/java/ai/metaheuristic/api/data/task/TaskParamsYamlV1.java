@@ -55,4 +55,9 @@ public class TaskParamsYamlV1 implements BaseParams {
     // TODO as a result we'll support only direct access to files
     public Map<String, List<String>> inputResourceAbsolutePaths = new HashMap<>();
     public String outputResourceAbsolutePath;
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
 }

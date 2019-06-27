@@ -32,6 +32,11 @@ import java.util.List;
 @Data
 public class PlanParamsYamlV4 implements BaseParams {
 
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
+
     @Data
     public static class PlanYamlV4 {
         public List<ProcessV4> processes = new ArrayList<>();

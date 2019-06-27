@@ -35,6 +35,11 @@ import java.util.stream.Collectors;
 @NoArgsConstructor
 public class ExperimentParamsYaml implements BaseParams {
 
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
+
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

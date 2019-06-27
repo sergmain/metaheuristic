@@ -67,6 +67,7 @@ public class PlanParamsYamlUtilsV5
             return pr;
         }).collect(Collectors.toList());
         p.planYaml.planCode = pV4.planYaml.planCode;
+        p.checkIntegrity();
         return p;
     }
 

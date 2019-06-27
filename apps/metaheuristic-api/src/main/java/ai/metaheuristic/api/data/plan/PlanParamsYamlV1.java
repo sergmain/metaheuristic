@@ -46,4 +46,9 @@ public class PlanParamsYamlV1 implements BaseParams {
         }
         return null;
     }
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
 }

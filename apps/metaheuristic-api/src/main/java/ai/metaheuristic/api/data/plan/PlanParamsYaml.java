@@ -19,6 +19,7 @@ package ai.metaheuristic.api.data.plan;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.launchpad.process.Process;
+import ai.metaheuristic.api.launchpad.process.ProcessV5;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -31,6 +32,24 @@ import java.util.List;
  */
 @Data
 public class PlanParamsYaml implements BaseParams {
+
+    @Override
+    public boolean checkIntegrity() {
+        final boolean b = planYaml != null && planYaml.planCode != null && !planYaml.planCode.isBlank() &&
+                planYaml.processes != null;
+        if (!b) {
+            throw new IllegalArgumentException(
+                    "(boolean b = planYaml != null && planYaml.planCode != null && " +
+                            "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
+        }
+        for (Process process : planYaml.processes) {
+            if (process.snippets==null || process.snippets.size()==0) {
+                throw new IllegalArgumentException("(process.snippets==null || process.snippets.size()==0) ");
+            }
+        }
+
+        return true;
+    }
 
     @Data
     public static class PlanYaml {

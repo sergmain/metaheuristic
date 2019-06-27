@@ -35,6 +35,11 @@ import java.util.Map;
 @EqualsAndHashCode
 public class TaskParamsYaml implements BaseParams {
 
+    @Override
+    public boolean checkIntegrity() {
+        return true;
+    }
+
     @Data
     public static class TaskYaml {
         public Map<String, List<String>> inputResourceCodes = new HashMap<>();

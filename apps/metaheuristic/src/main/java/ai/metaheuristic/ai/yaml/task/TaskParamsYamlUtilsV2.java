@@ -47,6 +47,7 @@ public class TaskParamsYamlUtilsV2
         TaskParamsYaml t = new TaskParamsYaml();
         t.taskYaml = new TaskParamsYaml.TaskYaml();
         BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml);
+        t.checkIntegrity();
 
         return t;
     }
