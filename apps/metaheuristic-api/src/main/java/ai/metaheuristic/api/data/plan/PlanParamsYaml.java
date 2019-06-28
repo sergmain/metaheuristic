@@ -16,10 +16,10 @@
 
 package ai.metaheuristic.api.data.plan;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.launchpad.process.Process;
-import ai.metaheuristic.api.launchpad.process.ProcessV5;
 import lombok.Data;
 
 import java.util.ArrayList;
@@ -43,7 +43,7 @@ public class PlanParamsYaml implements BaseParams {
                             "!planYaml.planCode.isBlank() && planYaml.processes != null) ");
         }
         for (Process process : planYaml.processes) {
-            if (process.snippets==null || process.snippets.size()==0) {
+            if (process.type== EnumsApi.ProcessType.FILE_PROCESSING && (process.snippets==null || process.snippets.size()==0)) {
                 throw new IllegalArgumentException("(process.snippets==null || process.snippets.size()==0) ");
             }
         }

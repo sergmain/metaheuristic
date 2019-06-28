@@ -41,6 +41,7 @@ public class TestProcessMeta {
     @Test
     public void testProcessMeta() {
         PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
+        planYaml.planCode = "test-process-for-meta";
         {
             Process p = new Process();
             p.type = EnumsApi.ProcessType.EXPERIMENT;

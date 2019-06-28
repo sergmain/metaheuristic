@@ -50,6 +50,7 @@ public class TestProcess {
         );
         PlanParamsYaml planParamsYaml = new PlanParamsYaml();
         PlanYaml planYaml = new PlanYaml();
+        planYaml.planCode = "test-process-for-meta";
         planYaml.processes.add(p);
         planParamsYaml.planYaml = planYaml;
 

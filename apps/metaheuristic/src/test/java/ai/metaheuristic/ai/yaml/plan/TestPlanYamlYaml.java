@@ -112,6 +112,7 @@ public class TestPlanYamlYaml {
         }
 
         PlanParamsYaml planParamsYaml = new PlanParamsYaml();
+        planYaml.planCode = "test-processes";
         planParamsYaml.planYaml = planYaml;
 
         String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);

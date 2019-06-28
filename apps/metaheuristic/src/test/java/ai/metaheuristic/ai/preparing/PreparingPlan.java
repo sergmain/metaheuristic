@@ -147,6 +147,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
             planYaml.processes.add(p);
         }
+        planYaml.planCode = "test-plan-code";
 
         planParamsYaml = new PlanParamsYaml();
         planParamsYaml.planYaml = planYaml;
