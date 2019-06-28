@@ -2,4 +2,4 @@
 layout: default
 ---
 
-Project Aiai
+Project Metaheuristic

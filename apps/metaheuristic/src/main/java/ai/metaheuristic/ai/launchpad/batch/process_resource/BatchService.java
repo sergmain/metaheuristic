@@ -481,7 +481,7 @@ public class BatchService {
     private String getStatusForError(Long batchId, Workbook wb, String mainDocument, Task task, SnippetApiData.SnippetExec snippetExec, String stationIpAndHost) {
 
         final String header =
-                "#990.210 " + mainDocument + ", Task was completed with error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                "#990.210 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                 "taskId: " + task.getId() + "\n" +
                 "stationId: " + task.getStationId() + "\n" +
                 stationIpAndHost + "\n\n";
@@ -614,7 +614,7 @@ public class BatchService {
                     isOk = true;
                     continue;
                 case ERROR:
-                    bs.add("#990.330 " + mainDocument + ", Task was completed with error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
+                    bs.add("#990.330 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + "\n" +
                             "stationId: " + task.getStationId() + "\n" +
                             stationIpAndHost + "\n" +

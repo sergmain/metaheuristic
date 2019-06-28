@@ -1,0 +1,1 @@
+curl -u q=1:123 -F "file=@snippets-simple-metrics.yaml"  http://localhost:8080/rest/v1/launchpad/snippet/snippet-upload-from-file

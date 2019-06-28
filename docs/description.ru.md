@@ -7,7 +7,7 @@ layout: default
 1. Сущности, общая концепция
 
 1.1 Общая концепция
-логически Aiai состоит из 2-ух верхнеуровневых модулей:
+логически Metaheuristic состоит из 2-ух верхнеуровневых модулей:
 - launchpad - стартовая площадка
 - station - станция
 
@@ -66,23 +66,23 @@ layout: default
 3.1. Директории
 - для конфигурации стартовой площадки надо выбрать и создать рабочий директорий,
 в котором стартовая площадка будет создавать свои артифакты
-- выбрать директорий, в котором будет запускаться собственно Aiai. Рекомендуемая схема директориев:
-\aiai - главный директорий для aiai
-\aiai\config - директорий, в котором будет находиться application.properties конфиг файл
-\aiai\git - в данный директорий будет делаться clone из git
-\aiai\launchpad - директорий для стартовой площадки
-\aiai\station - директорий для станции
+- выбрать директорий, в котором будет запускаться собственно Metaheuristic. Рекомендуемая схема директориев:
+\mh - главный директорий для Metaheuristic
+\mh\config - директорий, в котором будет находиться application.properties конфиг файл
+\mh\git - в данный директорий будет делаться clone из git
+\mh\launchpad - директорий для стартовой площадки
+\mh\station - директорий для станции
 
 3.2 git
-перейти в \aiai  (или другой директорий, который выбран, как основной)
+перейти в \mh  (или другой директорий, который выбран, как основной)
 выполнить команду
-git clone https://github.com/sergmain/aiai.git git
+git clone https://github.com/sergmain/metaheuristic.git git
 
 3.3 Сборка
 для сборки проекта требуется java 11. 
 Скачать текущий релиз JDK11 надо по ссылке https://jdk.java.net/11/
 
-в директории \aiai\git запустить
+в директории \mh\git запустить
 mvn-all.bat
 
 3.4 Database
@@ -95,13 +95,13 @@ Postgresql  - sql/db-postgresql.sql
 
 3.5 application.properties
 за основу можно взять файл, который доступен по url -
-https://github.com/sergmain/aiai/blob/master/apps/aiai/src/main/resources/application.properties
+https://raw.githubusercontent.com/sergmain/metaheuristic/master/apps/metaheuristic/src/main/resources/application.properties
 
 при этом заменив значения, которые берутся из окружения, на конкретные значения
 
 3.5.1 общие значения для стартовой площадки и станции
-aiai.thread-number=3
-определяет количество потоков, которые будет использоваться для паралельной работы aiai
+mh.thread-number=3
+определяет количество потоков, которые будет использоваться для паралельной работы Metaheuristic
 делать количество потоков больше, чем количестов виртуальных ядер (ядер с учетом гипер-трединга) смысла нет.
 
 
@@ -112,8 +112,8 @@ aiai.thread-number=3
 spring.profiles.active=launchpad
 
 для mysql
-spring.datasource.url = jdbc:mysql://localhost:3306/aiai?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&autoReconnect=true&failOverReadOnly=false&maxReconnects=10&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=America/Los_Angeles&sslMode=DISABLED
-spring.datasource.username = aiai
+spring.datasource.url = jdbc:mysql://localhost:3306/mh?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&autoReconnect=true&failOverReadOnly=false&maxReconnects=10&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=America/Los_Angeles&sslMode=DISABLED
+spring.datasource.username = mh
 spring.datasource.password = qwe321
 spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
 spring.jpa.properties.hibernate.dialect = org.hibernate.dialect.MySQL57Dialect
@@ -134,51 +134,46 @@ spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQL95Dialec
 
 ```
 ======================
-aiai.launchpad.enabled=true
-aiai.launchpad.dir=./launchpad
-aiai.launchpad.is-replace-snapshot=true
+mh.launchpad.enabled=true
+mh.launchpad.dir=./launchpad
+mh.launchpad.is-replace-snapshot=true
 
-aiai.launchpad.is-ssl-required=false
-aiai.launchpad.secure-rest-url=true
+mh.launchpad.is-ssl-required=false
 
 
 # password - 123
-aiai.launchpad.master-password=$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu
-aiai.launchpad.master-username=q
-aiai.launchpad.master-token=1
+mh.launchpad.master-password=$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu
+mh.launchpad.master-username=q
+mh.launchpad.master-token=1
 
-aiai.launchpad.rest-password=$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu
-aiai.launchpad.rest-username=q1
-aiai.launchpad.rest-token=11
+mh.launchpad.rest-password=$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu
+mh.launchpad.rest-username=q1
+mh.launchpad.rest-token=11
 
-aiai.launchpad.public-key= <!!! insert real public key here !!!> 
+mh.launchpad.public-key= <!!! insert real public key here !!!> 
 
 =========================
 ```
 
-aiai.launchpad.is-replace-snapshot - можно ли перезаписывать snapshot-спипеты новыми версиями
+mh.launchpad.is-replace-snapshot - можно ли перезаписывать snapshot-спипеты новыми версиями
 
-aiai.launchpad.is-ssl-required - все взаимодействия со стартовой площадкой только через SSL
+mh.launchpad.is-ssl-required - все взаимодействия со стартовой площадкой только через SSL
 по умолчанию использование SSL для всех http запросов включено.
-Для контороля SSL используется параметр aiai.is-ssl-required
+Для контороля SSL используется параметр mh.is-ssl-required
 Например:
-aiai.launchpad.is-ssl-required=false
+mh.launchpad.is-ssl-required=false
 
-Отключать SSL рекомендуется только, если aiai  (как стартовая площадка, так и станция) запускается
+Отключать SSL рекомендуется только, если Metaheuristic  (как стартовая площадка, так и станция) запускается
 на localhost или когда станции и стартовая площадка распологаются в одной DMZ
 
 
-aiai.launchpad.secure-rest-url - нужен ли пароль/логин для защиты rest урл
-
-aiai.launchpad.master-* - данные для аутенсификации для web интерфейса
-aiai.launchpad.rest-* - данные для аутенсификации дл rest урл
+mh.launchpad.master-* - данные для аутенсификации для web и rest 
 
 
-для aiai.launchpad.public-key необходимо использовать приложение из apps/gen-keys
+для mh.launchpad.public-key необходимо использовать приложение из apps/gen-keys
 
 для
-aiai.launchpad.rest-password
-aiai.launchpad.master-password
+mh.launchpad.master-password
 необходимо использовать приложение из apps/gen-passwords
 
 -username и -token выбираются самостоятельно, но не могут включать в себя символ '=' (символ равно)
@@ -187,14 +182,14 @@ aiai.launchpad.master-password
 3.7.1 application.properties для станции
 spring.profiles.active=station
 
-aiai.station.enabled=true
-aiai.station.dir=./station
+mh.station.enabled=true
+mh.station.dir=./station
 
 
 3.7.2 Конфигурация launchpad.yaml
 Для конфигурации стартовых площадок, с которыми будет взаимодействовать конкретная станция используется
 конфиг файл launchpad.yaml. Данный файл должен располагаться в директории который является главным для станции,
-в данном руковосдстве это \aiai\station
+в данном руковосдстве это \mh\station
 формат файла:
 launchpads:
   - signatureRequired: false
@@ -236,7 +231,7 @@ acceptOnlySignedSnippets: принимать только подписанные
 
 
 3.8 Конфигурация spring.profiles.active
-в настоящее время в aiai поддерживается 2 профиля - launchpad и station
+в настоящее время в Metaheuristic поддерживается 2 профиля - launchpad и station
 эти профили можно использовать как по отдельности, так и комбинировать. В любом случаев,
 в файле application.properties должна быть только ОДНА строка spring.profiles.active=
 Например:
@@ -273,7 +268,7 @@ java -jar apps/gen-keys/target/gen-keys.jar
 
 5. apps/gen-passwords
 
-для преобразования паролей в формат aiai (bcrypt, 10 циклов) запустить
+для преобразования паролей в формат Metaheuristic (bcrypt, 10 циклов) запустить
 
 java -jar apps/gen-passwords/target/gen-passwords.jar <master password> <rest password>
 
@@ -281,23 +276,20 @@ java -jar apps/gen-passwords/target/gen-passwords.jar <master password> <rest pa
 <rest password> - пароль для доступа к rest-api
 
 результат работы поместить в соответствующие параметры:
-master password --> aiai.launchpad.master-password
-master token --> aiai.launchpad.master-token
-
-rest password --> aiai.launchpad.rest-password
-rest token --> aiai.launchpad.rest-token
+master password --> mh.launchpad.master-password
+master token --> mh.launchpad.master-token
 
 токены могут быть изменены по желанию,
 но не должны быть пустыми и включать в себя символ '=' (символ равно)
 
 6. Запуск
-для запуска aiai (как стартовой плошадки, так и станции) необходимо
-из директория \aiai запустить команду
+для запуска Metaheuristic (как стартовой плошадки, так и станции) необходимо
+из директория \mh запустить команду
 
-java -jar git/apps/aiai/target/aiai.jar
+java -jar git/apps/metaheuristic/target/metaheuristic.jar
 
 6.1 обновление кодовой базы
-для того чтобы забрать последние изменения в проекте необходимо перейти в \aiai\git
+для того чтобы забрать последние изменения в проекте необходимо перейти в \mh\git
 и выполнить команды:
 
 git pull origin master
@@ -306,12 +298,12 @@ mvn-all.bat
 7. Управление стартовой площадкой
 после того, как все параметры были прописаны, можно запустить стартовую площадку
 по адресу на котором она была запущена
-логин - aiai.master-username=aiai.master-token
-пароль - aiai.launchpad.master-password
+логин - mh.master-username=,j.master-token
+пароль - mh.launchpad.master-password
 
 т.е если
-aiai.master-username=yyy
-aiai.master-token=xxx
+mh.master-username=yyy
+mh.master-token=xxx
 
 то логин будет - yyy=xxx
 
@@ -390,10 +382,10 @@ package-snippet описан в п.10
 - в данном временном директории создать файл snippets.yaml и заполнить его настройками согласно п.9.3
 - из временного директория запустить 
 
-java -jar \aiai\git\apps/package-snippet/target/package-snippet.jar snippet.zip <path to private key file>
+java -jar \mh\git\apps/package-snippet/target/package-snippet.jar snippet.zip <path to private key file>
 
 - для корректного запуска <path to private key file> должен указывать на созданный ранее частный ключ, например:
- \aiai\git\private-key.txt
+ \mh\git\private-key.txt
 
 первый параметр (в примере это snippet.zip) указывает название архива в который будет запакован снипет
 если второй параметр определен, то снипет будет подписан.
@@ -411,7 +403,7 @@ http://localhost:8080/launchpad/snippets
 12. окружение станции
 12.1 env.yaml
 для того, чтобы снипеты запускались на стороне станции необходимо сконфигурировать
-исполняемое окуржение. для этого необходимо создать файл \aiai\station\env.yaml
+исполняемое окуржение. для этого необходимо создать файл \mh\station\env.yaml
 
 конфиг:
 envs:
@@ -448,7 +440,7 @@ http://localhost:8080/launchpad/plan/plans
 
 и затем нажать кнопку 'Workbooks'
 
-Создать новую реализацию потока:
+Создать Workbook:
 Input pool code for this plan - simple-resource-pool
 
 
@@ -462,9 +454,9 @@ Input pool code for this plan - simple-resource-pool
 
 Запустить поток на выполнение нажатием кнопки "Start"
 
-в директории \aiai\station\task
+в директории \mh\station\task
 должен появиться директорий 0 и в нем директорий с номером задачи.
-в директории \aiai\station\task\0\xxx\system после выполнения задачи
+в директории \mh\station\task\0\xxx\system после выполнения задачи
 будет содан файл system-console.log в котором будет выведно содержимое файла,
 который мы загрузили как ресурс.
 
