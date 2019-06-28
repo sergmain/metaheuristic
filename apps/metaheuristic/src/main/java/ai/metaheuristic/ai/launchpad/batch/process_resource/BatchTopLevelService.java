@@ -204,6 +204,7 @@ public class BatchTopLevelService {
                 try {
                     if (originFilename.endsWith(".zip")) {
 
+/*
                         List<String> errors = ZipUtils.validate(dataFile, VALIDATE_ZIP_FUNCTION);
                         if (!errors.isEmpty()) {
                             StringBuilder err = new StringBuilder("#995.090 Zip archive contains wrong chars in name(s):\n");
@@ -213,15 +214,16 @@ public class BatchTopLevelService {
                             batchService.changeStateToError(batch.id, err.toString());
                             return;
                         }
+*/
 
                         log.debug("Start unzipping archive");
-                        ZipUtils.unzipFolder(dataFile, tempDir);
+                        Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true);
                         log.debug("Start loading file data to db");
-                        loadFilesFromDirAfterZip(batch, tempDir, plan);
+                        loadFilesFromDirAfterZip(batch, tempDir, plan, mapping);
                     }
                     else {
                         log.debug("Start loading file data to db");
-                        loadFilesFromDirAfterZip(batch, tempDir,  plan);
+                        loadFilesFromDirAfterZip(batch, tempDir,  plan, Collections.emptyMap());
                     }
                 }
                 catch(UnzipArchiveException e) {
@@ -267,7 +269,7 @@ public class BatchTopLevelService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
     }
 
-    private void loadFilesFromDirAfterZip(Batch batch, File srcDir, Plan plan) throws IOException {
+    private void loadFilesFromDirAfterZip(Batch batch, File srcDir, Plan plan, Map<String, String> mapping) throws IOException {
 
         List<Path> paths = Files.list(srcDir.toPath())
                 .filter(o -> {

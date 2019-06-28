@@ -57,6 +57,7 @@ import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -514,9 +515,13 @@ public class BatchService {
                 "console:\n" + (StringUtils.isNotBlank(execResult.console) ? execResult.console : "<output to console is blank>") + "\n\n";
     }
 
-    @SuppressWarnings("Duplicates")
     public BatchStatus prepareStatusAndData(Long batchId, File zipDir, boolean fullConsole, boolean storeToDisk) {
         final BatchStatus bs = new BatchStatus();
+        if (zipDir == null) {
+            bs.add("#990.268 zipDir is null", '\n');
+            bs.ok = false;
+            return bs;
+        }
 
         Batch batch = batchCache.findById(batchId);
         if (batch == null) {
@@ -654,14 +659,25 @@ public class BatchService {
                 continue;
             }
 
-            File mainDocFile = zipDir!=null ? new File(zipDir, mainDocument) : new File(mainDocument);
+            File tempFile;
+            try {
+                tempFile = File.createTempFile("doc-", ".xml", zipDir);
+            } catch (IOException e) {
+                String msg = "#990.370 Error create a temp file in "+zipDir.getAbsolutePath();
+                log.error(msg);
+                bs.add(msg,'\n');
+                isOk = false;
+                continue;
+            }
+
+            bs.renameTo.put(tempFile.getName(), mainDocument);
 
             if (storeToDisk) {
                 try {
-                    binaryDataService.storeToFile(taskParamYaml.taskYaml.outputResourceCode, mainDocFile);
+                    binaryDataService.storeToFile(taskParamYaml.taskYaml.outputResourceCode, tempFile);
                 } catch (BinaryDataNotFoundException e) {
                     String msg = "#990.370 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.taskYaml.outputResourceCode +
-                            ", file: " + mainDocFile.getPath();
+                            ", file: " + tempFile.getPath();
                     log.error(msg);
                     bs.add(msg,'\n');
                     isOk = false;
@@ -670,7 +686,7 @@ public class BatchService {
             }
 
             if (!fullConsole) {
-                String msg = "#990.380 status - Ok, doc: " + mainDocFile.getName() + ", batchId: " + batchId + ", workbookId: " + workbookId +
+                String msg = "#990.380 status - Ok, doc: " + tempFile.getName() + ", batchId: " + batchId + ", workbookId: " + workbookId +
                         ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
                 bs.add(msg,'\n');
                 isOk = true;

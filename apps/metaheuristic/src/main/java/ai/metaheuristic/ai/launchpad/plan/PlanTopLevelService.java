@@ -96,7 +96,11 @@ public class PlanTopLevelService {
                 })
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .peek(o-> o.setParams(null))
+                .peek(o-> {
+//                    PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
+//                    o.setCode(ppy.planYaml.planCode);
+                    o.setParams(null);
+                })
                 .collect(Collectors.toList());
 
         PlanApiData.PlansResult plansResultRest = new PlanApiData.PlansResult();

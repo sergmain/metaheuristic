@@ -21,6 +21,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * @author Serge
  * Date: 5/30/2019
@@ -33,6 +36,10 @@ public class BatchStatus {
 
     @JsonIgnore
     private final StringBuilder sb = new StringBuilder();
+
+    @JsonIgnore
+    public final Map<String, String> renameTo = new HashMap<>();
+
     public boolean ok = false;
     //        public BatchParams batchParams;
     public String status;

@@ -25,9 +25,7 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.io.FileUtils;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Enumeration;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -41,6 +39,10 @@ import java.util.function.Function;
 @Slf4j
 public class ZipUtils {
 
+    public static void createZip(File directory, File zipFile)  {
+        createZip(directory, zipFile, Collections.emptyMap());
+    }
+
     /**
      * Creates a zip file at the specified path with the contents of the specified directory.
      * NB:
@@ -49,13 +51,13 @@ public class ZipUtils {
      * @param zipFile zip file
      * @throws ZipArchiveException If anything goes wrong
      */
-    public static void createZip(File directory, File zipFile)  {
+    public static void createZip(File directory, File zipFile, Map<String, String> renameTo)  {
 
         try {
             try (FileOutputStream fOut = new FileOutputStream(zipFile);
                  BufferedOutputStream bOut = new BufferedOutputStream(fOut);
                  ZipArchiveOutputStream tOut = new ZipArchiveOutputStream(bOut) ) {
-                addFileToZip(tOut, directory, "");
+                addFileToZip(tOut, directory, "", renameTo);
             }
         } catch (Throwable th) {
             log.error("Zipping error", th);
@@ -72,8 +74,11 @@ public class ZipUtils {
      * @param base The base prefix to for the name of the zip file entry
      *
      */
-    private static void addFileToZip(ZipArchiveOutputStream zOut, File f, String base) throws IOException {
+    private static void addFileToZip(ZipArchiveOutputStream zOut, File f, String base, Map<String, String> renameMapping) throws IOException {
         String entryName = base + f.getName();
+        if (renameMapping.containsKey(entryName)) {
+            entryName = renameMapping.get(entryName);
+        }
         ZipArchiveEntry zipEntry = new ZipArchiveEntry(f, entryName);
 
         zOut.putArchiveEntry(zipEntry);
@@ -89,10 +94,31 @@ public class ZipUtils {
 
             if (children != null) {
                 for (File child : children) {
-                    addFileToZip(zOut, child.getAbsoluteFile(), entryName + "/");
+                    addFileToZip(zOut, child.getAbsoluteFile(), entryName + "/", renameMapping);
                 }
             }
         }
+    }
+
+    public static File createTargetFile(File zipDestinationFolder, String name) {
+        File destinationFile = new File(zipDestinationFolder, name);
+        if (name.endsWith(File.separator)) {
+            if (!destinationFile.isDirectory() && !destinationFile.mkdirs()) {
+                throw new RuntimeException("Error creating temp directory:" + destinationFile.getPath());
+            }
+            return destinationFile;
+        }
+        // TODO 2019-06-27 what is that?
+        else if (name.indexOf(File.separatorChar) != -1) {
+            // Create the the parent directory if it doesn't exist
+            File parentFolder = destinationFile.getParentFile();
+            if (!parentFolder.isDirectory()) {
+                if (!parentFolder.mkdirs()) {
+                    throw new RuntimeException("Error creating temp directory:" + parentFolder.getPath());
+                }
+            }
+        }
+        return destinationFile;
     }
 
     public static class MyZipFile extends ZipFile implements Cloneable, AutoCloseable {
@@ -129,6 +155,10 @@ public class ZipUtils {
         return errors;
     }
 
+    public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder) {
+        return unzipFolder(archiveFile, zipDestinationFolder, false);
+    }
+
     /**
      * Unzips a zip file into the given destination directory.
      *
@@ -136,7 +166,7 @@ public class ZipUtils {
      * skipped when unarchiving.
      *
      */
-    public static void unzipFolder(File archiveFile, File zipDestinationFolder) {
+    public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder, boolean useMapping) {
 
         log.debug("Start unzipping archive file");
         log.debug("'\tzip archive file: {}", archiveFile.getAbsolutePath());
@@ -146,7 +176,10 @@ public class ZipUtils {
         log.debug("'\ttarget dir: {}", zipDestinationFolder.getAbsolutePath());
         log.debug("'\t\texists: {}", zipDestinationFolder.exists());
         log.debug("'\t\tis writable: {}", zipDestinationFolder.canWrite());
+
         try (MyZipFile zipFile = new MyZipFile(archiveFile)) {
+
+            Map<String, String> mapping = new HashMap<>();
 
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
             while (entries.hasMoreElements()) {
@@ -166,9 +199,28 @@ public class ZipUtils {
                     }
                 }
                 else {
-                    File destinationFile = DirUtils.createTargetFile(zipDestinationFolder, name);
+                    String resultName;
+                    if (useMapping) {
+                        File f = new File(name);
+                        final File parentFile = f.getParentFile();
+                        if (parentFile !=null) {
+                            File trgDir = new File(zipDestinationFolder, parentFile.getPath());
+                            trgDir.mkdirs();
+                            File d = File.createTempFile("doc-", ".bin", trgDir);
+                            resultName = new File(parentFile, d.getName()).getPath();
+                        }
+                        else {
+                            File d = File.createTempFile("doc-", ".bin");
+                            resultName = d.getName();
+                        }
+                        mapping.put(resultName, name);
+                    }
+                    else {
+                        resultName = name;
+                    }
+                    File destinationFile = createTargetFile(zipDestinationFolder, resultName);
                     if (destinationFile==null) {
-                        throw new RuntimeException("Creation of target file was failed, target dir: " + zipDestinationFolder+", entity: " + name);
+                        throw new RuntimeException("Creation of target file was failed, target dir: " + zipDestinationFolder+", entity: " + resultName);
                     }
                     if (!destinationFile.getParentFile().exists()) {
                         destinationFile.getParentFile().mkdirs();
@@ -177,6 +229,7 @@ public class ZipUtils {
                     FileUtils.copyInputStreamToFile(zipFile.getInputStream(zipEntry), destinationFile);
                 }
             }
+            return mapping;
         }
         catch (Throwable th) {
             log.error("Unzipping error", th);

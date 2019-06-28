@@ -150,7 +150,7 @@ public class BatchController {
         File statusFile = new File(zipDir, "status.txt");
         FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);
         File zipFile = new File(resultDir, RESULT_ZIP);
-        ZipUtils.createZip(zipDir, zipFile);
+        ZipUtils.createZip(zipDir, zipFile, status.renameTo);
 
 
         HttpHeaders httpHeaders = new HttpHeaders();
