@@ -21,13 +21,13 @@ package ai.metaheuristic.ai.exceptions;
  * Date: 5/3/2019
  * Time: 1:57 PM
  */
-public class PilotResourceProcessingException extends RuntimeException {
+public class BatchResourceProcessingException extends RuntimeException {
 
-    public PilotResourceProcessingException(String message) {
+    public BatchResourceProcessingException(String message) {
         super(message);
     }
 
-    public PilotResourceProcessingException(String message, Throwable cause) {
+    public BatchResourceProcessingException(String message, Throwable cause) {
         super(message, cause);
     }
 }

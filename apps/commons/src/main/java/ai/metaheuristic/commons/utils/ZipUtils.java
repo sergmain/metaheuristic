@@ -156,7 +156,7 @@ public class ZipUtils {
     }
 
     public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder) {
-        return unzipFolder(archiveFile, zipDestinationFolder, false);
+        return unzipFolder(archiveFile, zipDestinationFolder, false, Collections.emptyList());
     }
 
     /**
@@ -166,7 +166,7 @@ public class ZipUtils {
      * skipped when unarchiving.
      *
      */
-    public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder, boolean useMapping) {
+    public static Map<String, String> unzipFolder(File archiveFile, File zipDestinationFolder, boolean useMapping, List<String> excludeFromMapping) {
 
         log.debug("Start unzipping archive file");
         log.debug("'\tzip archive file: {}", archiveFile.getAbsolutePath());
@@ -200,8 +200,8 @@ public class ZipUtils {
                 }
                 else {
                     String resultName;
-                    if (useMapping) {
-                        File f = new File(name);
+                    File f = new File(name);
+                    if (useMapping && !excludeFromMapping.contains(f.getName())) {
                         final File parentFile = f.getParentFile();
                         if (parentFile !=null) {
                             File trgDir = new File(zipDestinationFolder, parentFile.getPath());
