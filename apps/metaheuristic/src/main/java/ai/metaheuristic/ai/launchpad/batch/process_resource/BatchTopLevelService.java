@@ -44,6 +44,9 @@ import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -73,6 +76,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Profile("launchpad")
 @Service
+@RequiredArgsConstructor
 public class BatchTopLevelService {
 
     private static final String ATTACHMENTS_POOL_CODE = "attachments";
@@ -98,18 +102,11 @@ public class BatchTopLevelService {
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
 
-    public BatchTopLevelService(PlanCache planCache, PlanService planService, BinaryDataService binaryDataService, Globals globals, ResourceService resourceService, BatchRepository batchRepository, BatchService batchService, BatchCache batchCache, PlanRepository planRepository, WorkbookRepository workbookRepository, BatchWorkbookRepository batchWorkbookRepository) {
-        this.planCache = planCache;
-        this.planService = planService;
-        this.binaryDataService = binaryDataService;
-        this.globals = globals;
-        this.resourceService = resourceService;
-        this.batchRepository = batchRepository;
-        this.batchService = batchService;
-        this.batchCache = batchCache;
-        this.planRepository = planRepository;
-        this.workbookRepository = workbookRepository;
-        this.batchWorkbookRepository = batchWorkbookRepository;
+    @Data
+    @AllArgsConstructor
+    public static class FileWithMapping {
+        public File file;
+        public String originName;
     }
 
     public static boolean isZipEntityNameOk(String name) {
@@ -288,10 +285,13 @@ public class BatchTopLevelService {
             if (file.isDirectory()) {
                 try {
                     final File mainDocFile = getMainDocumentFile(file);
-                    final List<File> files = new ArrayList<>();
+                    final List<FileWithMapping> files = new ArrayList<>();
                     Files.list(dataFile)
                             .filter(o -> o.toFile().isFile())
-                            .forEach(f -> files.add(f.toFile()));
+                            .forEach(f -> {
+                                String actualFileName = mapping.get(file.getName() + "/" + f.toFile().getName());
+                                files.add(new FileWithMapping(f.toFile(), actualFileName));
+                            });
 
                     createAndProcessTask(batch, plan, files, mainDocFile);
                 } catch (StoreNewFileWithRedirectException e) {
@@ -302,7 +302,9 @@ public class BatchTopLevelService {
                     throw new PilotResourceProcessingException(es);
                 }
             } else {
-                createAndProcessTask(batch, plan, Collections.singletonList(file), file);
+                String actualFileName = mapping.get(file.getName());
+                final List<FileWithMapping> files = Collections.singletonList(new FileWithMapping(file, actualFileName));
+                createAndProcessTask(batch, plan, files, file);
             }
         }
     }
@@ -345,21 +347,21 @@ public class BatchTopLevelService {
         return yaml;
     }
 
-    private void createAndProcessTask(Batch batch, Plan plan, List<File> dataFile, File mainDocFile) {
+    private void createAndProcessTask(Batch batch, Plan plan, List<FileWithMapping> dataFile, File mainDocFile) {
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
         String mainPoolCode = String.format("%d-%s-%d", plan.getId(), Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
         String attachPoolCode = String.format("%d-%s-%d", plan.getId(), ATTACHMENTS_POOL_CODE, nanoTime);
         boolean isMainDocPresent = false;
-        for (File file : dataFile) {
-            String originFilename = file.getName();
+        for (FileWithMapping fileWithMapping : dataFile) {
+            String originFilename = fileWithMapping.originName!=null ? fileWithMapping.originName : fileWithMapping.file.getName();
             if (EXCLUDE_EXT.contains(StrUtils.getExtension(originFilename))) {
                 continue;
             }
-            final String code = ResourceUtils.toResourceCode(originFilename);
+            final String code = ResourceUtils.toResourceCode(fileWithMapping.file.getName());
 
             String poolCode;
-            if (file.equals(mainDocFile)) {
+            if (fileWithMapping.file.equals(mainDocFile)) {
                 poolCode = mainPoolCode;
                 isMainDocPresent = true;
             }
@@ -368,7 +370,7 @@ public class BatchTopLevelService {
                 attachments.add(code);
             }
 
-            resourceService.storeInitialResource(file, code, poolCode, originFilename);
+            resourceService.storeInitialResource(fileWithMapping.file, code, poolCode, originFilename);
         }
 
         if (!isMainDocPresent) {

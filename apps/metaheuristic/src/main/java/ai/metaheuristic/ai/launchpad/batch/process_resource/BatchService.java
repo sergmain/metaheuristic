@@ -670,13 +670,14 @@ public class BatchService {
                 continue;
             }
 
-            bs.renameTo.put(tempFile.getName(), mainDocument);
+            // all documents are sored in zip folder
+            bs.renameTo.put("zip/" + tempFile.getName(), "zip/" + mainDocument);
 
             if (storeToDisk) {
                 try {
                     binaryDataService.storeToFile(taskParamYaml.taskYaml.outputResourceCode, tempFile);
                 } catch (BinaryDataNotFoundException e) {
-                    String msg = "#990.370 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.taskYaml.outputResourceCode +
+                    String msg = "#990.375 Error store data to temp file, data doesn't exist in db, code " + taskParamYaml.taskYaml.outputResourceCode +
                             ", file: " + tempFile.getPath();
                     log.error(msg);
                     bs.add(msg,'\n');
@@ -686,7 +687,7 @@ public class BatchService {
             }
 
             if (!fullConsole) {
-                String msg = "#990.380 status - Ok, doc: " + tempFile.getName() + ", batchId: " + batchId + ", workbookId: " + workbookId +
+                String msg = "#990.380 status - Ok, doc: " + mainDocument + ", batchId: " + batchId + ", workbookId: " + workbookId +
                         ", taskId: " + task.getId() + ", stationId: " + task.getStationId() + ", " + stationIpAndHost;
                 bs.add(msg,'\n');
                 isOk = true;

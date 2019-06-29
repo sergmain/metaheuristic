@@ -144,7 +144,7 @@ public class BatchController {
 
         File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
         File zipDir = new File(resultDir, "zip");
-
+        zipDir.mkdir();
         BatchStatus status = batchService.prepareStatusAndData(batchId, zipDir, false, true);
 
         File statusFile = new File(zipDir, "status.txt");
