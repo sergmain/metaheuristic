@@ -7,7 +7,7 @@ let urls = {
     plan: {
         get: id => `${base}/plan/${id}`,
         add: data => base + `/plan-add-commit/?${jsonToUrlParams(data)}`,
-        edit: () => base + '/plan-edit-commit/',
+        edit: data => base + `/plan-edit-commit/?${jsonToUrlParams(data)}`,
         validate: id => `${base}/plan-validate/${id}`,
         delete: data => base + '/plan-delete-commit?' + jsonToUrlParams(data)
     },

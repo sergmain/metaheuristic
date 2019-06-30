@@ -18,10 +18,10 @@ export class PlansService {
     plan: any = {
         get: (id: string): Observable < object > => this.http.get(urls.plan.get(id)),
         update: (id: number, params: string): Observable < object > => {
-            return this.http.post(urls.plan.edit(), {
-                id,
-                params
-            });
+            return this.http.post< PlanResponse.Response > (urls.plan.edit({
+                planId: id,
+                planYaml: params
+            }), null);
         },
 
         validate: (id: string | number): Observable < object > => {
