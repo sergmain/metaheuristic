@@ -8,10 +8,7 @@
 			ct-cols(align-items="baseline")
 
 				ct-col(size='6')
-					mat-form-field(appearance="outline") 
-						mat-label Code 
-						input(matInput '[(ngModel)]'="plan.code" value="")
-					mat-form-field(appearance="outline") 
+					mat-form-field(appearance="outline")
 						mat-label Parameters 
 						textarea(matInput '[(ngModel)]'="plan.params" value="" cdkTextareaAutosize cdkAutosizeMinRows="10")
 					.buttons.buttons--right 

@@ -29,7 +29,6 @@ export class AddPlanComponent implements OnInit {
     readonly states: any = LoadStates;
 
     currentState: LoadStates = LoadStates.show;
-    code: string = '';
     params: string = '';
     response: PlanResponse.Response;
 
@@ -50,7 +49,7 @@ export class AddPlanComponent implements OnInit {
         this.currentState = LoadStates.loading;
         this.response = null;
         const subscribe: Subscription = this.plansService.plan
-            .add(this.code, this.params)
+            .add(this.params)
             .subscribe((data: PlanResponse.Response) => {
                 this.currentState = LoadStates.show;
                 this.response = {

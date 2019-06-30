@@ -17,10 +17,9 @@ export class PlansService {
 
     plan: any = {
         get: (id: string): Observable < object > => this.http.get(urls.plan.get(id)),
-        update: (id: number, code: string, params: string): Observable < object > => {
+        update: (id: number, params: string): Observable < object > => {
             return this.http.post(urls.plan.edit(), {
                 id,
-                code,
                 params
             });
         },
@@ -37,11 +36,10 @@ export class PlansService {
             });
         },
 
-        add: (code: string, params: string): Observable < PlanResponse.Response > => {
-            return this.http.post < PlanResponse.Response > (urls.plan.add(), {
-                code,
-                params
-            });
+        add: (params: string): Observable < PlanResponse.Response > => {
+            return this.http.post < PlanResponse.Response > (urls.plan.add({
+                planYaml: params
+            }), null);
         }
     };
 

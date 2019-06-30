@@ -5,10 +5,7 @@
         ct-cols(align-items="baseline")
             ct-col(size='6')
                 .section__content
-                    mat-form-field(appearance="outline") 
-                        mat-label Code 
-                        input(matInput '[(ngModel)]'="code" autocomplete="off") 
-                    mat-form-field(appearance="outline") 
+                    mat-form-field(appearance="outline")
                         mat-label Parameters 
                         textarea('[(ngModel)]'="params" matInput cdkTextareaAutosize cdkAutosizeMinRows="10" value="" autocomplete="off")  
                     .buttons.buttons--right

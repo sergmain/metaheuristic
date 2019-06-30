@@ -10,10 +10,8 @@
     "lint": "ng lint",
     "e2e": "ng e2e",
     "postinstall": "node ./ng-add-pug-loader.js",
-    
     "review": "ng build --stats-json && webpack-bundle-analyzer dist/metaheuristic-app/stats.json",
     "review-prod": "ng build --prod=true --stats-json && webpack-bundle-analyzer dist/metaheuristic-app/stats.json"
-
   },
   "private": true,
   "dependencies": {
