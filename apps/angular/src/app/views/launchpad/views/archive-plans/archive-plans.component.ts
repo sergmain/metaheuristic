@@ -1,5 +1,5 @@
-import { Component, OnInit, ViewChild } from '@angular/core';
-import { PlansService } from '@app/services/plans/plans.service';
+import { Component, OnInit, ViewChild, } from '@angular/core';
+import { ArchivePlansService } from '@app/services/archive-plans/archive-plans.service';
 import { MatTableDataSource, MatButton } from '@angular/material';
 import { LoadStates } from '@app/enums/LoadStates';
 import { PlansResponse } from '@app/models';
@@ -9,17 +9,17 @@ import { MatDialog } from '@angular/material';
 import { ConfirmationDialogMethod } from '@app/views/app-dialog-confirmation/app-dialog-confirmation.component';
 
 @Component({
-    selector: 'plans-view',
-    templateUrl: './plans.component.pug',
-    styleUrls: ['./plans.component.scss']
+// tslint:disable-next-line: component-selector
+  selector: 'archive-plans',
+  templateUrl: './archive-plans.component.pug',
+  styleUrls: ['./archive-plans.component.scss']
 })
-// @ConfirmationDialogClass
-export class PlansComponent implements OnInit {
+export class ArchivePlansComponent implements OnInit {
     readonly states = LoadStates;
     currentStates = new Set();
     response: PlansResponse.Response;
     dataSource = new MatTableDataSource < PlansResponse.Plan > ([]);
-    columnsToDisplay = ['id', 'code', 'createdOn', 'valid', 'bts'];
+    columnsToDisplay = ['id', 'code', 'createdOn', 'valid',  'bts'];
     deletedPlans: (PlansResponse.Plan)[] = [];
 
     @ViewChild('nextTable') nextTable: MatButton;
@@ -28,7 +28,7 @@ export class PlansComponent implements OnInit {
 
     constructor(
         private dialog: MatDialog,
-        private planService: PlansService
+        private archivePlansService: ArchivePlansService
     ) {}
 
     ngOnInit() {
@@ -38,7 +38,7 @@ export class PlansComponent implements OnInit {
 
     updateTable(page: number) {
         this.currentStates.add(this.states.loading);
-        const subscribe: Subscription = this.planService.plans.get({
+        const subscribe: Subscription = this.archivePlansService.plans.get({
                 page
             })
             .subscribe(
@@ -64,7 +64,7 @@ export class PlansComponent implements OnInit {
     })
     delete(plan: PlansResponse.Plan) {
         this.deletedPlans.push(plan);
-        const subscribe: Subscription = this.planService.plan
+        const subscribe: Subscription = this.archivePlansService.plan
             .delete(plan.id)
             .subscribe(
                 () => {
@@ -77,13 +77,6 @@ export class PlansComponent implements OnInit {
             );
     }
 
-    @ConfirmationDialogMethod({
-        resolveTitle: 'Archive',
-        rejectTitle: 'Cancel'
-    })
-    archive(plan: PlansResponse.Plan) {
-        console.log('archive');
-    }
 
     next() {
         this.table.wait();

@@ -1,7 +1,7 @@
 import { environment } from 'environments/environment';
 import jsonToUrlParams from '@app/helpers/jsonToUrlParams'
 
-let base = environment.baseUrl + '/rest/v1/launchpad/experiment';
+let base = environment.baseUrl + 'launchpad/experiment';
 
 let urls = {
     experiments: {

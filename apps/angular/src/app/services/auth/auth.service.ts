@@ -5,12 +5,12 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { environment } from 'environments/environment';
 
 export interface AuthState {
-    auth: boolean
-};
+    auth: boolean;
+}
 
 export interface ThemeState {
-    dark: boolean
-};
+    dark: boolean;
+}
 
 @Injectable({
     providedIn: 'root'
@@ -36,22 +36,22 @@ export class AuthService {
     login(data) {
 
         const headers = new HttpHeaders({
-            "Authorization": 'Basic ' + btoa(data.username + ':' + data.password)
+            'Authorization': 'Basic ' + btoa(data.username + ':' + data.password)
         });
 
 
-        let url = environment.baseUrl + '/rest/v1/user';
+        let url = environment.baseUrl + 'user';
         this.http.post < Observable < boolean >> (url, {
             username: data.username,
             password: data.password
-        }, { headers: headers }).subscribe(isValid => {
+        }, { headers }).subscribe(isValid => {
             if (isValid) {
                 sessionStorage.setItem('token', btoa(data.username + ':' + data.password));
                 this.router.navigate(['']);
-                console.log("good")
+                console.log('good');
 
             } else {
-                console.log("Authentication failed.")
+                console.log('Authentication failed.');
             }
         });
     }
@@ -66,10 +66,10 @@ export class AuthService {
     }
 
     change() {
-        this.authState.auth = !this.authState.auth
+        this.authState.auth = !this.authState.auth;
     }
 
     toggleTheme() {
-        this.themeState.dark = !this.themeState.dark
+        this.themeState.dark = !this.themeState.dark;
     }
 }

@@ -53,3 +53,5 @@ button * {
     pointer-events: none;
     user-select: none;
 }
+
+@import "./override-mat-slyles/button.scss";

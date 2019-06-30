@@ -1,7 +1,7 @@
 import { environment } from 'environments/environment';
 import jsonToUrlParams from '@app/helpers/jsonToUrlParams';
 
-const base: string = environment.baseUrl + '/rest/v1/launchpad/account';
+const base: string = environment.baseUrl + 'launchpad/account';
 
 const urls: any = {
     accounts: {

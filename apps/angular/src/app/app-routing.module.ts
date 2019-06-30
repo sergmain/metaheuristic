@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
-import { AuthGuard } from '@app/guards/auth/auth.guard'
+import { AuthGuard } from '@app/guards/auth/auth.guard';
 import { AppComponent } from './app.component';
 
 import { AppViewComponent } from './views/app-view/app-view.component';
@@ -35,7 +35,11 @@ import {
     AddExperimentComponent,
     EditExperimentComponent,
     InfoExperimentComponent,
-    ProgressExperimentComponent
+    ProgressExperimentComponent,
+
+    BatchComponent,
+
+    AtlasComponent
 } from './views/launchpad';
 
 import {
@@ -55,7 +59,7 @@ export function launchpadRoute(p): any {
             { path: '', component: p.nav || NavLaunchpadComponent, outlet: 'nav' },
             { path: '', component: p.body || LaunchpadComponent, outlet: 'body' }
         ]
-    }
+    };
 }
 
 export function pilotRoute(p): any {
@@ -67,10 +71,10 @@ export function pilotRoute(p): any {
             { path: '', component: p.nav || NavPilotComponent, outlet: 'nav' },
             { path: '', component: p.body || PilotComponent, outlet: 'body' }
         ]
-    }
+    };
 }
 
-let routes: Routes = [
+const routes: Routes = [
 
     {
         path: '',
@@ -112,6 +116,10 @@ let routes: Routes = [
     launchpadRoute({ path: 'launchpad/accounts/add', body: AddAccountComponent }),
     launchpadRoute({ path: 'launchpad/accounts/edit/:id', body: EditAccountComponent }),
     launchpadRoute({ path: 'launchpad/accounts/edit-password/:id', body: EditPassAccountComponent }),
+
+    launchpadRoute({ path: 'launchpad/batch', body: BatchComponent }),
+
+    launchpadRoute({ path: 'launchpad/atlas', body: AtlasComponent }),
     // 
     // 
     // 

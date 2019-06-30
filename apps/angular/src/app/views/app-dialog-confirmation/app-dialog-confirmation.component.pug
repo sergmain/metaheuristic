@@ -2,6 +2,6 @@
     p Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis tempore impedit nihil blanditiis id dolore repellat voluptatibus soluta, ipsa dignissimos saepe! Atque aliquam magni rerum assumenda mollitia laudantium provident corrupti.
 .mat-dialog-actions
     .mat-dialog-action
-        button(mat-stroked-button color="basic" '(click)'='onNoClick()') Cancel
+        button(mat-stroked-button color="basic" '(click)'='onNoClick()') {{data.dialogData.rejectTitle}}
     .mat-dialog-action
-        button(mat-flat-button color="warn" '(click)'='onYesClick()') Remove
+        button(mat-flat-button color="warn" '(click)'='onYesClick()') {{data.dialogData.resolveTitle}}

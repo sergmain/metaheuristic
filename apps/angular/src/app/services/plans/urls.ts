@@ -1,9 +1,7 @@
-import {
-    environment
-} from 'environments/environment';
+import { environment } from 'environments/environment';
 import jsonToUrlParams from '@app/helpers/jsonToUrlParams';
 
-const base = environment.baseUrl + '/rest/v1/launchpad/plan';
+const base = environment.baseUrl + 'launchpad/plan';
 
 let urls = {
     plan: {

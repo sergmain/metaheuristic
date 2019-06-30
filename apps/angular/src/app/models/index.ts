@@ -12,6 +12,8 @@ export * from './ExperimentFeatureProgressResponse';
 export * from './ExperimentFeatureProgressConsolePartResponse';
 export * from './ExperimentFeaturePlotDataPartResponse';
 
+export * from './BatchesResponse';
+
 export * from './PlansResponse';
 export * from './WorkbooksResponse';
 export * from './WorkbookAddCommitResponse';
