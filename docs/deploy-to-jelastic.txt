@@ -1,5 +1,12 @@
 Create an environment topology:
 
+Load balanser =========
+- NGiNX 1.4.x
+- change redirection rule in ... as:
+
+
+
+
 Application server =====
 - SpringBoot, jdk - OpenJDK 11.0.2,
   min 2, max 4 cloudlets, Horizontal scaling - 1 node, statefull
@@ -40,6 +47,8 @@ Link github repo =======
 - after creating topology,
   add a link to git repository - https://github.com/sergmain/metaheuristic.git
   branch - master
+
+
 
 =====================
 If everything will be ok then you can use a configured credential to login into Metaheuristic :

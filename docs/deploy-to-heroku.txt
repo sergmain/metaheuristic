@@ -1,0 +1,7 @@
+set environment variable:
+
+name:
+MAVEN_CONFIG
+
+value:
+-f pom-heroku.xml
