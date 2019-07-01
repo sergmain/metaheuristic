@@ -40,6 +40,9 @@ public class MetadataUtils {
 
     public static Metadata to(InputStream is) {
         Metadata m = (Metadata) YamlUtils.to(is, getYaml());
+        if (m.launchpad==null) {
+            return m;
+        }
         for (Map.Entry<String, Metadata.LaunchpadInfo> entry : m.launchpad.entrySet()) {
             Metadata.LaunchpadInfo info = entry.getValue();
             if (info.value != null) {
