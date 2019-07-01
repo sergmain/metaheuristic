@@ -2,9 +2,8 @@ Create an environment topology:
 
 Load balanser =========
 - NGiNX 1.4.x
-- change redirection rule in ... as:
-
-
+- change redirection rule by adding to nginx-jelastic.conf the following line in the HTTP (80) server block:
+return 301 https://$host$request_uri;
 
 
 Application server =====
@@ -12,7 +11,7 @@ Application server =====
   min 2, max 4 cloudlets, Horizontal scaling - 1 node, statefull
   Variables:
   JDBC_DATABASE_PASSWORD = <pass-for-db>
-  JDBC_DATABASE_URL = jdbc:mysql://<ip-address>:3306/mh?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&autoReconnect=true&failOverReadOnly=false&maxReconnects=10&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=America/Los_Angeles&sslMode=DISABLED&allowPublicKeyRetrieval=true
+  JDBC_DATABASE_URL = jdbc:mysql://<ip-address>:3306/mh?useUnicode=true&characterEncoding=utf8&zeroDateTimeBehavior=CONVERT_TO_NULL&autoReconnect=true&failOverReadOnly=false&maxReconnects=10&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=America/Los_Angeles&allowPublicKeyRetrieval=true
   JDBC_DATABASE_USERNAME = mh
   MH_JDBC_DRIVER_CLASS_NAME = com.mysql.cj.jdbc.Driver
   MH_HIBERNATE_DIALECT = org.hibernate.dialect.MySQL57Dialect
@@ -30,6 +29,7 @@ SQL DB =================
   Preparing:
   -- create database mh
   -- run scrip https://github.com/sergmain/metaheuristic/blob/master/sql/db-mysql.sql in mh database
+  -- create user mh, grant all to it, use SSL required
   -- replace <pass-for-db> in app server's variable JDBC_DATABASE_PASSWORD
   -- replace <ip-address>: in app server's variable JDBC_DATABASE_URL
 

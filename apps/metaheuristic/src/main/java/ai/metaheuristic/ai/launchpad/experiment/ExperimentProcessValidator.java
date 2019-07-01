@@ -89,6 +89,9 @@ public class ExperimentProcessValidator implements ProcessValidator {
             }
         }
         Long experimentId = experimentRepository.findIdByCode(process.code);
+        if (experimentId==null) {
+            return EnumsApi.PlanValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;
+        }
         Experiment e = experimentCache.findById(experimentId);
         if (e==null) {
             return EnumsApi.PlanValidateStatus.EXPERIMENT_NOT_FOUND_ERROR;

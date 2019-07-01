@@ -1,0 +1,19 @@
+{
+  "spring.jpa.properties.hibernate.dialect": "org.hibernate.dialect.MySQL57Dialect",
+  "spring.jpa.hibernate.ddl-auto": "none",
+  "spring.datasource.driver-class-name": "com.mysql.cj.jdbc.Driver",
+  "spring.datasource.platform": "mysql",
+  "spring.datasource.continue-on-error": false,
+
+  "mh.thread-number": 4,
+  "mh.launchpad.is-ssl-required": true,
+  "mh.launchpad.master-password": "<password>",
+  "mh.launchpad.master-username": "<username>",
+  "mh.launchpad.master-token": "<token>",
+  "mh.launchpad.public-key": "<public-key>",
+  "mh.launchpad.enabled": true,
+  "mh.launchpad.dir": "./mh-launchpad",
+  "mh.launchpad.is-replace-snapshot": false,
+  "mh.launchpad.chunk-size": "1m",
+  "mh.station.enabled": false
+}

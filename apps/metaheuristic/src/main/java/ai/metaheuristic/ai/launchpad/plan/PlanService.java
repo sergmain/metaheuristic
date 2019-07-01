@@ -320,9 +320,14 @@ public class PlanService {
                 if (process.outputParams == null) {
                     return EnumsApi.PlanValidateStatus.PROCESS_PARAMS_EMPTY_ERROR;
                 }
+                if (StringUtils.isBlank(process.outputType)) {
+                    return EnumsApi.PlanValidateStatus.OUTPUT_TYPE_EMPTY_ERROR;
+                }
+/*
                 if (StringUtils.isBlank(process.outputParams.storageType)) {
                     return EnumsApi.PlanValidateStatus.OUTPUT_TYPE_EMPTY_ERROR;
                 }
+*/
             }
             lastProcess = process;
             if (StringUtils.containsWhitespace(process.code) || StringUtils.contains(process.code, ',') ){
@@ -533,7 +538,9 @@ public class PlanService {
                 pools.clean();
             }
             Monitoring.log("##030", Enums.Monitor.MEMORY);
-            pools.add(process.outputParams.storageType, produceTaskResult.outputResourceCodes);
+            if (process.outputType!=null) {
+                pools.add(process.outputType, produceTaskResult.outputResourceCodes);
+            }
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }
         toProduced(isPersist, result, fi);
