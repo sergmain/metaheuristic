@@ -21,6 +21,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Slf4j
@@ -41,7 +42,7 @@ public class MetadataUtils {
     public static Metadata to(InputStream is) {
         Metadata m = (Metadata) YamlUtils.to(is, getYaml());
         if (m.launchpad==null) {
-            return m;
+            m.launchpad = new LinkedHashMap<>();
         }
         for (Map.Entry<String, Metadata.LaunchpadInfo> entry : m.launchpad.entrySet()) {
             Metadata.LaunchpadInfo info = entry.getValue();
