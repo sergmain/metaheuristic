@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -140,7 +141,12 @@ public class PlanTopLevelService {
             return new PlanApiData.PlanResult("#560.017 plan yaml is empty");
         }
 
-        PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsStr);
+        PlanParamsYaml ppy;
+        try {
+            ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsStr);
+        } catch (WrongVersionOfYamlFileException e) {
+            return new PlanApiData.PlanResult("#560.017 Error parsing yaml: " + e.getMessage());
+        }
 
         final String code = ppy.planYaml.planCode;
         if (StringUtils.isBlank(code)) {

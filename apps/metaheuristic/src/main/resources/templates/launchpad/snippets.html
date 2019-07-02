@@ -6,6 +6,8 @@
     <script>
         'use strict';
 
+        let /*boolean*/ isShowStatus = false;
+
         /**
          * @param {int} id
          */
@@ -28,6 +30,25 @@
                 });
             });
             return true;
+        }
+
+        function switchStatus() {
+            $('pre').each(function () {
+                let $2 = $(this);
+                printLogMain('$(this).id: ' + $2.attr('id'));
+                printLogMain('$(this).content: ' + $2.content);
+
+                if (isShowStatus) {
+                    $2.hide();
+                }
+                else {
+                    $2.show();
+                }
+
+            });
+            isShowStatus = isShowStatus===false;
+
+            return false;
         }
 
     </script>
@@ -66,6 +87,13 @@
         };
     </script>
 
+    <div class="pure-controls">
+        <label for="show-status" class="pure-checkbox">
+            <input id="show-status" type="checkbox" onclick="switchStatus();"/>
+            Show current status of station
+        </label>
+    </div>
+
     <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.SnippetData$SnippetsResult"*/-->
     <table class="pure-table pure-table-bordered" id="table-ds-path-cols">
         <thead>
@@ -82,7 +110,7 @@
             <td th:text="${s.id}">#Id</td>
             <td th:text="${s.code}">Code</td>
             <td th:text="${s.type}">Type</td>
-            <td><pre th:if="${s.params}!=null" th:text="${s.params}">Params</pre></td>
+            <td><pre style="display: none;" th:if="${s.params}!=null" th:text="${s.params}">Params</pre></td>
             <td><a class="pure-button pure-button-primary" href="#"
                    th:data-id="${s.id}"
                    onclick="deleteSnippet( this.getAttribute('data-id') ); return false;"

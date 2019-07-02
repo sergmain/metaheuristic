@@ -201,9 +201,9 @@ public abstract class PreparingExperiment {
             experiment.setCode(TEST_EXPERIMENT_CODE_01);
 
             ExperimentParamsYaml epy = new ExperimentParamsYaml();
-            epy.yaml.setName("Test experiment.");
-            epy.yaml.setDescription("Test experiment. Must be deleted automatically.");
-            epy.yaml.setSeed(42);
+            epy.experimentYaml.setName("Test experiment.");
+            epy.experimentYaml.setDescription("Test experiment. Must be deleted automatically.");
+            epy.experimentYaml.setSeed(42);
             epy.processing.setAllTaskProduced(false);
 
             // set hyper params for experiment
@@ -219,11 +219,11 @@ public abstract class PreparingExperiment {
             ehp3.setKey("aaa");
             ehp3.setValues("[7, 13]");
 
-            epy.yaml.setHyperParams(List.of(ehp1, ehp2, ehp3));
+            epy.experimentYaml.setHyperParams(List.of(ehp1, ehp2, ehp3));
 
             // set snippets for experiment
-            epy.yaml.fitSnippet = fitSnippet.getCode();
-            epy.yaml.predictSnippet = predictSnippet.getCode();
+            epy.experimentYaml.fitSnippet = fitSnippet.getCode();
+            epy.experimentYaml.predictSnippet = predictSnippet.getCode();
 
             experiment.updateParams(epy);
 

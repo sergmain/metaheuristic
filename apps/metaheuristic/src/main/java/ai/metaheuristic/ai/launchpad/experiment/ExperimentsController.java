@@ -206,7 +206,6 @@ public class ExperimentsController {
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
     public String metadataDeleteCommit(@PathVariable long experimentId, @PathVariable String key, final RedirectAttributes redirectAttributes) {
-        if (true) throw new IllegalStateException("Need to change this in web and angular");
         OperationStatusRest status = experimentTopLevelService.metadataDeleteCommit(experimentId, key);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);

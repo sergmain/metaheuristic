@@ -41,8 +41,14 @@ public class MetadataUtils {
 
     public static Metadata to(InputStream is) {
         Metadata m = (Metadata) YamlUtils.to(is, getYaml());
+        if (m==null) {
+            return new Metadata();
+        }
         if (m.launchpad==null) {
             m.launchpad = new LinkedHashMap<>();
+        }
+        if (m.metadata==null) {
+            m.metadata = new LinkedHashMap<>();
         }
         for (Map.Entry<String, Metadata.LaunchpadInfo> entry : m.launchpad.entrySet()) {
             Metadata.LaunchpadInfo info = entry.getValue();

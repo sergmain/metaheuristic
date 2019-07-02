@@ -68,6 +68,10 @@ public class PlanParamsYamlUtilsV4
             pr.snippets = o.snippets!=null ? o.snippets.stream().map(d->new SnippetDefForPlanV5(d.code, d.params,d.paramsAsFile)).collect(Collectors.toList()) : null;
             pr.preSnippets = o.preSnippets!=null ? o.preSnippets.stream().map(d->new SnippetDefForPlanV5(d.code, d.params,d.paramsAsFile)).collect(Collectors.toList()) : null;
             pr.postSnippets = o.postSnippets!=null ? o.postSnippets.stream().map(d->new SnippetDefForPlanV5(d.code, d.params,d.paramsAsFile)).collect(Collectors.toList()) : null;
+            if (pr.outputParams==null) {
+                pr.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
+            }
+            pr.outputParams.storageType = o.outputType;
             return pr;
         }).collect(Collectors.toList());
         p.planYaml.planCode = "plan-" + DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDate.now())+"-" + System.currentTimeMillis();

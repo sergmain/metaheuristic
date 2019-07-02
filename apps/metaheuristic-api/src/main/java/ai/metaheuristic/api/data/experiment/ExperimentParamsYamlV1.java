@@ -36,7 +36,7 @@ public class ExperimentParamsYamlV1 {
     public static class HyperParamV1 {
         public String key;
         public String values;
-        public int variants;
+        public Integer variants;
     }
 
     @Data
@@ -90,7 +90,8 @@ public class ExperimentParamsYamlV1 {
         public List<ExperimentTaskFeatureV1> taskFeatures = new ArrayList<>();
     }
 
-    public ExperimentYamlV1 yaml = new ExperimentYamlV1();
+    public final int version=1;
+    public ExperimentYamlV1 experimentYaml = new ExperimentYamlV1();
     public ExperimentProcessingV1 processing = new ExperimentProcessingV1();
 
 }

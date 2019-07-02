@@ -16,8 +16,10 @@
 
 package ai.metaheuristic.ai.yaml.versioning;
 
+import ai.metaheuristic.ai.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.YamlVersion;
+import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Map;
 
@@ -71,24 +73,28 @@ public class BaseYamlUtils<T > {
     }
 
     public T to(String s) {
-        YamlVersion v = YamlForVersioning.getYamlForVersion().load(s);
-        AbstractParamsYamlUtils yamlUtils;
-        if (v.version==null) {
-            yamlUtils = getForVersion(1);
-        }
-        else {
-            yamlUtils = getForVersion(v.version);
-        }
-        Object currPlanParamsYaml = yamlUtils.to(s);
-        do {
-            //noinspection unchecked
-            currPlanParamsYaml = yamlUtils.upgradeTo(currPlanParamsYaml);
-        } while ((yamlUtils=(AbstractParamsYamlUtils)yamlUtils.nextUtil())!=null);
+        try {
+            YamlVersion v = YamlForVersioning.getYamlForVersion().load(s);
+            AbstractParamsYamlUtils yamlUtils;
+            if (v.version==null) {
+                yamlUtils = getForVersion(1);
+            }
+            else {
+                yamlUtils = getForVersion(v.version);
+            }
+            Object currPlanParamsYaml = yamlUtils.to(s);
+            do {
+                //noinspection unchecked
+                currPlanParamsYaml = yamlUtils.upgradeTo(currPlanParamsYaml);
+            } while ((yamlUtils=(AbstractParamsYamlUtils)yamlUtils.nextUtil())!=null);
 
-        //noinspection unchecked,UnnecessaryLocalVariable
-        T p = (T)currPlanParamsYaml;
+            //noinspection unchecked,UnnecessaryLocalVariable
+            T p = (T)currPlanParamsYaml;
 
-        return p;
+            return p;
+        } catch (YAMLException e) {
+            throw new WrongVersionOfYamlFileException("Error: " + e.getMessage(), e);
+        }
     }
 
 

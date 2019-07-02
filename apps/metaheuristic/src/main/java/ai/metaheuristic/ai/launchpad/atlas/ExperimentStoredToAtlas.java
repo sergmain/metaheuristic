@@ -59,7 +59,7 @@ public class ExperimentStoredToAtlas {
     @JsonIgnore
     public Map<String, Map<String, Integer>> getHyperParamsAsMap(boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
-        for (ExperimentParamsYaml.HyperParam hyperParam : experiment.getExperimentParamsYaml().yaml.getHyperParams()) {
+        for (ExperimentParamsYaml.HyperParam hyperParam : experiment.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
             ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
             Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);

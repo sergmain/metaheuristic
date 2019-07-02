@@ -20,42 +20,37 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.process.Process;
+import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
-import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessValidator;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessValidator;
-import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.ai.launchpad.repositories.*;
+import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.api.data.InputResourceParam;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.InputResourceParam;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
-import ai.metaheuristic.commons.utils.Checksum;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetUtils;
+import ai.metaheuristic.api.launchpad.process.Process;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -65,11 +60,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.api.EnumsApi.PlanValidateStatus.OK;
 import static ai.metaheuristic.api.EnumsApi.PlanValidateStatus.PROCESS_VALIDATOR_NOT_FOUND_ERROR;
 
 @Service
@@ -184,7 +178,10 @@ public class PlanService {
             planValidation.status = EnumsApi.PlanValidateStatus.YAML_PARSING_ERROR;
         }
         setValidTo(plan, planValidation.status == EnumsApi.PlanValidateStatus.OK );
-        if (plan.isValid()) {
+        if (plan.isValid() || planValidation.status==OK) {
+            if (plan.isValid() && planValidation.status!=OK) {
+                log.error("#701.097 Need to investigate: (plan.isValid() && planValidation.status!=OK)");
+            }
             planValidation.infoMessages = Collections.singletonList("Validation result: OK");
         }
         else {
@@ -320,14 +317,9 @@ public class PlanService {
                 if (process.outputParams == null) {
                     return EnumsApi.PlanValidateStatus.PROCESS_PARAMS_EMPTY_ERROR;
                 }
-                if (StringUtils.isBlank(process.outputType)) {
-                    return EnumsApi.PlanValidateStatus.OUTPUT_TYPE_EMPTY_ERROR;
-                }
-/*
                 if (StringUtils.isBlank(process.outputParams.storageType)) {
                     return EnumsApi.PlanValidateStatus.OUTPUT_TYPE_EMPTY_ERROR;
                 }
-*/
             }
             lastProcess = process;
             if (StringUtils.containsWhitespace(process.code) || StringUtils.contains(process.code, ',') ){
@@ -538,8 +530,8 @@ public class PlanService {
                 pools.clean();
             }
             Monitoring.log("##030", Enums.Monitor.MEMORY);
-            if (process.outputType!=null) {
-                pools.add(process.outputType, produceTaskResult.outputResourceCodes);
+            if (process.outputParams.storageType!=null) {
+                pools.add(process.outputParams.storageType, produceTaskResult.outputResourceCodes);
             }
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }

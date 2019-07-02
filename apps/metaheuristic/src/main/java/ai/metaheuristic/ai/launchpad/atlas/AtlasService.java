@@ -43,7 +43,6 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -121,8 +120,8 @@ public class AtlasService {
         ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(stored.experimentStoredToAtlas.experiment.getParams());
 
 
-        b.name = params.yaml.getName();
-        b.description = params.yaml.getDescription();
+        b.name = params.experimentYaml.getName();
+        b.description = params.experimentYaml.getDescription();
         b.code = stored.experimentStoredToAtlas.experiment.getCode();
         b.createdOn = params.processing.createdOn;
         atlasRepository.save(b);

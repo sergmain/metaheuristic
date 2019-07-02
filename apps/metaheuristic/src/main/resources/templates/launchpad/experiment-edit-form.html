@@ -153,16 +153,16 @@
             <div th:remove="tag" th:each="p : ${hyperParams.items}">
                 <tr>
                     <td th:text="${p.key}"
-                        th:data-id="${'meta-edit-' + p.id}"
+                        th:data-id="${'meta-edit-' + p.key}"
                         onclick="switchTr(this.getAttribute('data-id'));">Hyper param key</td>
                     <td th:text="${p.values}"
-                        th:data-id="${'meta-edit-' + p.id}"
+                        th:data-id="${'meta-edit-' + p.key}"
                         onclick="switchTr(this.getAttribute('data-id'));">Hyper param values</td>
-                    <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment-metadata-delete-commit/' + simpleExperiment.id+'/'+ p.id}">Delete</a></td>
+                    <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment-metadata-delete-commit/' + simpleExperiment.id+'/'+ p.key}">Delete</a></td>
                 </tr>
                 <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-metadata-edit-commit/'+simpleExperiment.id}" accept-charset="UTF-8" >
                     <input type="hidden" th:name="key" th:value="${p.key}"/>
-                    <tr style="display:none" th:id="${'meta-edit-' + p.id}">
+                    <tr style="display:none" th:id="${'meta-edit-' + p.key}">
                         <td>&nbsp;</td>
                         <td><input placeholder="Value" name="value" type="text" size="100" th:value="${p.values}"></td>
                         <td><button class="pure-button pure-button-primary table-nav-button" type="submit">Change</button></td>

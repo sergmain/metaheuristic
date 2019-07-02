@@ -117,9 +117,9 @@ public class ExperimentService {
 
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
         BeanUtils.copyProperties(e, ed);
-        ed.name = params.yaml.name;
-        ed.description = params.yaml.description;
-        ed.hyperParams = params.yaml.hyperParams==null ? new ArrayList<>() : params.yaml.hyperParams;
+        ed.name = params.experimentYaml.name;
+        ed.description = params.experimentYaml.description;
+        ed.hyperParams = params.experimentYaml.hyperParams==null ? new ArrayList<>() : params.experimentYaml.hyperParams;
         ed.hyperParamsAsMap = getHyperParamsAsMap(ed.hyperParams);
 
         return ed;
@@ -148,11 +148,11 @@ public class ExperimentService {
     }
 
     public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment) {
-        return getHyperParamsAsMap(experiment.getExperimentParamsYaml().yaml.hyperParams, true);
+        return getHyperParamsAsMap(experiment.getExperimentParamsYaml().experimentYaml.hyperParams, true);
     }
 
     public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment, boolean isFull) {
-        return getHyperParamsAsMap(experiment.getExperimentParamsYaml().yaml.hyperParams, isFull);
+        return getHyperParamsAsMap(experiment.getExperimentParamsYaml().experimentYaml.hyperParams, isFull);
     }
 
     public static Map<String, Map<String, Integer>> getHyperParamsAsMap(List<HyperParam> experimentHyperParams) {
@@ -431,7 +431,7 @@ public class ExperimentService {
         tasksResult.items = findPredictTasks(Consts.PAGE_REQUEST_10_REC, experiment, experimentFeature.getId());
 
         ExperimentApiData.HyperParamResult hyperParamResult = new ExperimentApiData.HyperParamResult();
-        for (HyperParam hyperParam : experiment.getExperimentParamsYaml().yaml.hyperParams) {
+        for (HyperParam hyperParam : experiment.getExperimentParamsYaml().experimentYaml.hyperParams) {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
             ExperimentApiData.HyperParamList list = new ExperimentApiData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
@@ -540,13 +540,13 @@ public class ExperimentService {
         }
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        if (StringUtils.isBlank(epy.yaml.fitSnippet)|| StringUtils.isBlank(epy.yaml.predictSnippet)) {
+        if (StringUtils.isBlank(epy.experimentYaml.fitSnippet)|| StringUtils.isBlank(epy.experimentYaml.predictSnippet)) {
             throw new IllegalStateException("(StringUtils.isBlank(epy.yaml.fitSnippet)|| StringUtils.isBlank(epy.yaml.predictSnippet))" +
-                    ", "+epy.yaml.fitSnippet +", " + epy.yaml.predictSnippet);
+                    ", "+epy.experimentYaml.fitSnippet +", " + epy.experimentYaml.predictSnippet);
         }
-        List<String> experimentSnippets = List.of(epy.yaml.fitSnippet, epy.yaml.predictSnippet);
+        List<String> experimentSnippets = List.of(epy.experimentYaml.fitSnippet, epy.experimentYaml.predictSnippet);
 
-        final Map<String, String> map = toMap(epy.yaml.getHyperParams(), epy.yaml.seed);
+        final Map<String, String> map = toMap(epy.experimentYaml.getHyperParams(), epy.experimentYaml.seed);
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
 
 //        @Query("SELECT f.id, f.resourceCodes FROM ExperimentFeature f where f.experimentId=:experimentId")

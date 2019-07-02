@@ -46,7 +46,7 @@ public class ExperimentParamsYaml implements BaseParams {
     public static class HyperParam {
         public String key;
         public String values;
-        public int variants;
+        public Integer variants;
     }
 
     @Data
@@ -100,7 +100,8 @@ public class ExperimentParamsYaml implements BaseParams {
         public List<ExperimentTaskFeature> taskFeatures = new ArrayList<>();
     }
 
-    public ExperimentYaml yaml = new ExperimentYaml();
+    public final int version=1;
+    public ExperimentYaml experimentYaml = new ExperimentYaml();
     public ExperimentProcessing processing = new ExperimentProcessing();
 
 
@@ -108,11 +109,11 @@ public class ExperimentParamsYaml implements BaseParams {
     public List<String> getSnippetCodes() {
         final List<String> snippetCodes = new ArrayList<>();
 
-        if (yaml.fitSnippet != null && !yaml.fitSnippet.isBlank()) {
-            snippetCodes.add(yaml.fitSnippet);
+        if (experimentYaml.fitSnippet != null && !experimentYaml.fitSnippet.isBlank()) {
+            snippetCodes.add(experimentYaml.fitSnippet);
         }
-        if (yaml.predictSnippet != null && !yaml.predictSnippet.isBlank()) {
-            snippetCodes.add(yaml.predictSnippet);
+        if (experimentYaml.predictSnippet != null && !experimentYaml.predictSnippet.isBlank()) {
+            snippetCodes.add(experimentYaml.predictSnippet);
         }
         return snippetCodes;
     }

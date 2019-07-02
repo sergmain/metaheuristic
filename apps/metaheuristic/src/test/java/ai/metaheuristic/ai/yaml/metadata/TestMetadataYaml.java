@@ -51,4 +51,30 @@ public class TestMetadataYaml {
             assertNull(map1.getValue().stationId);
         }
     }
+
+    @Test
+    public void testParsingEmptyFile() throws IOException {
+        try(InputStream is = TestMetadataYaml.class.getResourceAsStream("/yaml/metadata/metadata-empty.yaml")) {
+            Metadata m = MetadataUtils.to(is);
+            assertNotNull(m);
+            assertNotNull(m.metadata);
+            assertNotNull(m.launchpad);
+            assertEquals(0, m.getMetadata().size());
+            assertEquals(0, m.getLaunchpad().size());
+        }
+    }
+
+    @Test
+    public void testParsingZeroFile() throws IOException {
+        try(InputStream is = TestMetadataYaml.class.getResourceAsStream("/yaml/metadata/metadata-zero.yaml")) {
+            Metadata m = MetadataUtils.to(is);
+            assertNotNull(m);
+            assertNotNull(m.metadata);
+            assertNotNull(m.launchpad);
+            assertEquals(0, m.getMetadata().size());
+            assertEquals(0, m.getLaunchpad().size());
+        }
+    }
+
+
 }

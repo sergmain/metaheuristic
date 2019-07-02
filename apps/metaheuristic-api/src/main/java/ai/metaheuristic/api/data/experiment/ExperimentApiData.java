@@ -66,7 +66,7 @@ public class ExperimentApiData {
     public static class HyperParamData {
         public String key;
         public String values;
-        public int variants;
+        public Integer variants;
     }
 
     @Data

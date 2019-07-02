@@ -74,7 +74,7 @@ public class ExperimentTopLevelService {
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.getParams());
-        return new ExperimentApiData.SimpleExperiment(params.yaml.getName(), params.yaml.getDescription(), params.yaml.getCode(), params.yaml.getSeed(), e.getId());
+        return new ExperimentApiData.SimpleExperiment(params.experimentYaml.getName(), params.experimentYaml.getDescription(), params.experimentYaml.getCode(), params.experimentYaml.getSeed(), e.getId());
     }
 
     public static ExperimentApiData.ExperimentResult asExperimentResult(Experiment e) {
@@ -168,7 +168,7 @@ public class ExperimentTopLevelService {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.29 experiment has broken ref to workbook, experimentId: " + id);
         }
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        for (ExperimentParamsYaml.HyperParam hyperParams : epy.yaml.hyperParams) {
+        for (ExperimentParamsYaml.HyperParam hyperParams : epy.experimentYaml.hyperParams) {
             if (StringUtils.isBlank(hyperParams.getValues())) {
                 continue;
             }
@@ -226,34 +226,38 @@ public class ExperimentTopLevelService {
         ExperimentApiData.ExperimentsEditResult result = new ExperimentApiData.ExperimentsEditResult();
 
         ExperimentApiData.HyperParamsResult r = new ExperimentApiData.HyperParamsResult();
-        r.items = epy.yaml.getHyperParams().stream().map(ExperimentTopLevelService::asHyperParamData).collect(Collectors.toList());
+        r.items = epy.experimentYaml.getHyperParams().stream().map(ExperimentTopLevelService::asHyperParamData).collect(Collectors.toList());
         result.hyperParams = r;
         result.simpleExperiment = asSimpleExperiment(experiment);
         result.snippetResult = snippetResult;
         return result;
     }
 
-    @SuppressWarnings("Duplicates")
-    public OperationStatusRest addExperimentCommit(ExperimentApiData.ExperimentData experiment) {
+    public static ExperimentApiData.HyperParamData asHyperParamData(ExperimentParamsYaml.HyperParam ehp) {
+        return new ExperimentApiData.HyperParamData(ehp.getKey(), ehp.getValues(), ehp.getVariants());
+    }
 
-        Experiment e = new Experiment();
-        ExperimentParamsYaml params = new ExperimentParamsYaml();
-
-        params.yaml.name = StringUtils.strip(experiment.getName());
-        params.yaml.description = StringUtils.strip(experiment.getDescription());
-        params.yaml.setSeed(experiment.getSeed()==0 ? 1 : experiment.getSeed());
-        e.code = StringUtils.strip(experiment.getCode());
+    public OperationStatusRest updateParamsAndSave(Experiment e, ExperimentParamsYaml params, String name, String description, int seed) {
+        params.experimentYaml.name = StringUtils.strip(name);
+        params.experimentYaml.code = e.code;
+        params.experimentYaml.description = StringUtils.strip(description);
+        params.experimentYaml.setSeed(seed ==0 ? 1 : seed);
         params.processing.setCreatedOn(System.currentTimeMillis());
+
+        e.params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(params);
 
         experimentCache.save(e);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public static ExperimentApiData.HyperParamData asHyperParamData(ExperimentParamsYaml.HyperParam ehp) {
-        return new ExperimentApiData.HyperParamData(ehp.getKey(), ehp.getValues(), ehp.getVariants());
+    public OperationStatusRest addExperimentCommit(ExperimentApiData.ExperimentData experiment) {
+        Experiment e = new Experiment();
+        e.code = StringUtils.strip(experiment.getCode());
+
+        ExperimentParamsYaml params = new ExperimentParamsYaml();
+        return updateParamsAndSave(e, params, experiment.getName(), experiment.getDescription(), experiment.getSeed());
     }
 
-    @SuppressWarnings("Duplicates")
     public OperationStatusRest editExperimentCommit(ExperimentApiData.SimpleExperiment simpleExperiment) {
         OperationStatusRest op = validate(simpleExperiment);
         if (op!=null) {
@@ -265,16 +269,10 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.37 experiment wasn't found, experimentId: " + simpleExperiment.id);
         }
-        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.getParams());
-
-        params.yaml.name = StringUtils.strip(simpleExperiment.getName());
-        params.yaml.description = StringUtils.strip(simpleExperiment.getDescription());
-        params.yaml.setSeed(simpleExperiment.getSeed()==0 ? 1 : simpleExperiment.getSeed());
         e.code = StringUtils.strip(simpleExperiment.getCode());
-        params.processing.setCreatedOn(System.currentTimeMillis());
 
-        experimentCache.save(e);
-        return OperationStatusRest.OPERATION_STATUS_OK;
+        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.getParams());
+        return updateParamsAndSave(e, params, simpleExperiment.getName(), simpleExperiment.getDescription(), simpleExperiment.getSeed());
     }
 
     private OperationStatusRest validate(ExperimentApiData.SimpleExperiment se) {
@@ -305,7 +303,7 @@ public class ExperimentTopLevelService {
         ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
 
         String keyFinal = key.trim();
-        boolean isExist = epy.yaml.getHyperParams().stream().map(ExperimentParamsYaml.HyperParam::getKey).anyMatch(keyFinal::equals);
+        boolean isExist = epy.experimentYaml.getHyperParams().stream().map(ExperimentParamsYaml.HyperParam::getKey).anyMatch(keyFinal::equals);
         if (isExist) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.51 hyper parameter "+key+" already exist");
         }
@@ -313,7 +311,7 @@ public class ExperimentTopLevelService {
         ExperimentParamsYaml.HyperParam m = new ExperimentParamsYaml.HyperParam();
         m.setKey(keyFinal);
         m.setValues(value.trim());
-        epy.yaml.hyperParams.add(m);
+        epy.experimentYaml.hyperParams.add(m);
         experiment.updateParams(epy);
 
         experimentCache.save(experiment);
@@ -334,7 +332,7 @@ public class ExperimentTopLevelService {
 
         ExperimentParamsYaml.HyperParam m=null;
         String keyFinal = key.trim();
-        for (ExperimentParamsYaml.HyperParam hyperParam : epy.yaml.getHyperParams()) {
+        for (ExperimentParamsYaml.HyperParam hyperParam : epy.experimentYaml.getHyperParams()) {
             if (hyperParam.getKey().equals(keyFinal)) {
                 m = hyperParam;
                 break;
@@ -343,7 +341,7 @@ public class ExperimentTopLevelService {
         if (m==null) {
             m = new ExperimentParamsYaml.HyperParam();
             m.setKey(keyFinal);
-            epy.yaml.getHyperParams().add(m);
+            epy.experimentYaml.getHyperParams().add(m);
         }
         m.setValues(value.trim());
         experiment.updateParams(epy);
@@ -367,10 +365,10 @@ public class ExperimentTopLevelService {
         }
         switch(s.getType()){
             case "fit":
-                epy.yaml.fitSnippet = snippetCode;
+                epy.experimentYaml.fitSnippet = snippetCode;
                 break;
             case "predict":
-                epy.yaml.predictSnippet = snippetCode;
+                epy.experimentYaml.predictSnippet = snippetCode;
                 break;
             default:
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.59 snippet has non-supported type for an experiment: "+s.getType() );
@@ -388,10 +386,10 @@ public class ExperimentTopLevelService {
                     "#285.58 experiment wasn't found, id: "+experimentId );
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        for (int i = 0; i < epy.yaml.hyperParams.size(); i++) {
-            ExperimentParamsYaml.HyperParam hyperParam = epy.yaml.hyperParams.get(i);
+        for (int i = 0; i < epy.experimentYaml.hyperParams.size(); i++) {
+            ExperimentParamsYaml.HyperParam hyperParam = epy.experimentYaml.hyperParams.get(i);
             if (hyperParam.key.equals(key)) {
-                epy.yaml.hyperParams.remove(i);
+                epy.experimentYaml.hyperParams.remove(i);
                 break;
             }
         }
@@ -425,8 +423,8 @@ public class ExperimentTopLevelService {
     }
 
     private void add(ExperimentParamsYaml epy, String key, String value) {
-        ExperimentParamsYaml.HyperParam param = new ExperimentParamsYaml.HyperParam(key, value, 0);
-        List<ExperimentParamsYaml.HyperParam> params = epy.yaml.getHyperParams();
+        ExperimentParamsYaml.HyperParam param = new ExperimentParamsYaml.HyperParam(key, value, null);
+        List<ExperimentParamsYaml.HyperParam> params = epy.experimentYaml.getHyperParams();
         for (ExperimentParamsYaml.HyperParam p1 : params) {
             if (p1.getKey().equals(param.getKey())) {
                 p1.setValues(param.getValues());
@@ -447,11 +445,11 @@ public class ExperimentTopLevelService {
         }
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        if (Objects.equals(epy.yaml.fitSnippet, snippetCode)) {
-            epy.yaml.fitSnippet = null;
+        if (Objects.equals(epy.experimentYaml.fitSnippet, snippetCode)) {
+            epy.experimentYaml.fitSnippet = null;
         }
-        else if (Objects.equals(epy.yaml.predictSnippet, snippetCode)) {
-            epy.yaml.predictSnippet = null;
+        else if (Objects.equals(epy.experimentYaml.predictSnippet, snippetCode)) {
+            epy.experimentYaml.predictSnippet = null;
         }
         experiment.updateParams(epy);
         experimentCache.save(experiment);

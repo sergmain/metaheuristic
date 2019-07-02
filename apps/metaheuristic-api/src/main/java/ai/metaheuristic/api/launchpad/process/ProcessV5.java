@@ -50,6 +50,7 @@ public class ProcessV5 {
     public String outputResourceCode;
     public List<Meta> metas = new ArrayList<>();
     public int order;
+    @Deprecated(forRemoval = true)
     public String outputType;
 
     public Meta getMeta(String key) {

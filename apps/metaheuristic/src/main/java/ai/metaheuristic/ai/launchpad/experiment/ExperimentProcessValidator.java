@@ -109,7 +109,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
         }
         ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.params);
 
-        if (StringUtils.isBlank(epy.yaml.fitSnippet) || StringUtils.isBlank(epy.yaml.predictSnippet)) {
+        if (StringUtils.isBlank(epy.experimentYaml.fitSnippet) || StringUtils.isBlank(epy.experimentYaml.predictSnippet)) {
             return EnumsApi.PlanValidateStatus.EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR;
         }
 

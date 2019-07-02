@@ -116,7 +116,7 @@ public class AtlasTopLevelService {
             return new AtlasData.ExperimentInfoExtended("#280.16 experiment has broken ref to workbook, experimentId: " + id);
         }
 
-        for (HyperParam hyperParams : estb1.experiment.getExperimentParamsYaml().yaml.getHyperParams()) {
+        for (HyperParam hyperParams : estb1.experiment.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
             if (StringUtils.isBlank(hyperParams.getValues())) {
                 continue;
             }
@@ -378,7 +378,7 @@ public class AtlasTopLevelService {
         );
 
         AtlasData.HyperParamResult hyperParamResult = new AtlasData.HyperParamResult();
-        for (HyperParam hyperParam : estb.experiment.getExperimentParamsYaml().yaml.getHyperParams()) {
+        for (HyperParam hyperParam : estb.experiment.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
             ExperimentApiData.HyperParamList list = new ExperimentApiData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
