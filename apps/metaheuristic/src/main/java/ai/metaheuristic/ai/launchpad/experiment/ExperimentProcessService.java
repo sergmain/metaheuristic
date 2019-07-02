@@ -81,7 +81,7 @@ public class ExperimentProcessService {
             return result;
         }
 
-        // TODO 2019-06-23 workbookId is setted even it isn't in persistent mode. Need to check fro side-effects
+        // TODO 2019-06-23 workbookId is set even it isn't in persistent mode. Need to check fro side-effects
         e.setWorkbookId(workbook.getId());
         if (isPersist) {
             e = experimentCache.save(e);

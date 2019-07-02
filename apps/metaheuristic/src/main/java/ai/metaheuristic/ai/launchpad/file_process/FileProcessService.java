@@ -61,9 +61,10 @@ public class FileProcessService {
 
         result.outputResourceCodes = new ArrayList<>();
         if (process.parallelExec) {
-            for (SnippetDefForPlan snDef : process.snippets) {
+            for (int i = 0; i < process.snippets.size(); i++) {
+                SnippetDefForPlan snDef = process.snippets.get(i);
                 String resourceName = StrUtils.normalizeSnippetCode(snDef.code);
-                String outputResourceCode = PlanUtils.getResourceCode(planId, workbook.getId(), process.code, resourceName, process.order);
+                String outputResourceCode = PlanUtils.getResourceCode(planId, workbook.getId(), process.code, resourceName, process.order, i);
                 result.outputResourceCodes.add(outputResourceCode);
                 inputStorageUrls.put(outputResourceCode, process.outputParams);
                 if (isPersist) {
@@ -74,7 +75,7 @@ public class FileProcessService {
         else {
             SnippetDefForPlan snDef = process.snippets.get(0);
             String resourceName = StrUtils.normalizeSnippetCode(snDef.code);
-            String outputResourceCode = PlanUtils.getResourceCode(planId, workbook.getId(), process.code, resourceName, process.order);
+            String outputResourceCode = PlanUtils.getResourceCode(planId, workbook.getId(), process.code, resourceName, process.order, 0);
             result.outputResourceCodes.add(outputResourceCode);
             inputStorageUrls.put(outputResourceCode, process.outputParams);
             if (isPersist) {

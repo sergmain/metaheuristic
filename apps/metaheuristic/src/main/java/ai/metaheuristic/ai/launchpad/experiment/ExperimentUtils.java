@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.matcher.StringMatcherFactory;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ExperimentUtils {
 
@@ -60,6 +61,20 @@ public class ExperimentUtils {
             instance.values.add(value);
             return instance;
         }
+    }
+
+    public static int calcTotalVariants(Map<String, String> experimentMetadatas) {
+        if (experimentMetadatas==null || experimentMetadatas.isEmpty()) {
+            return 0;
+        }
+
+        final AtomicInteger total = new AtomicInteger(1);
+
+        experimentMetadatas.forEach((key, value) -> {
+            NumberOfVariants ofVariants = getNumberOfVariants(value);
+            total.set(total.intValue() * ofVariants.count);
+        });
+        return total.get();
     }
 
     public static List<HyperParams> getAllHyperParams(Map<String, String> experimentMetadatas) {

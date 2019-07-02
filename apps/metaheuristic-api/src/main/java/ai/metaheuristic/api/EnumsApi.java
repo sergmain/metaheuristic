@@ -160,6 +160,7 @@ public class EnumsApi {
         PLAN_NOT_FOUND_ERROR,
         WRONG_FORMAT_OF_SNIPPET_CODE,
         ERROR,
+        TOO_MANY_TASKS_PER_PLAN_ERROR
     }
 
     public enum BinaryDataType { UNKNOWN(0), DATA(1), SNIPPET(2), TEST(3), CONSOLE(4), BATCH(5);

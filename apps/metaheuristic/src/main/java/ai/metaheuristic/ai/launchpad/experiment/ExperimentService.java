@@ -17,7 +17,9 @@ package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
+import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
@@ -71,6 +73,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.api.EnumsApi.PlanProducingStatus.TOO_MANY_TASKS_PER_PLAN_ERROR;
 import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
 
 @Service
@@ -80,6 +83,7 @@ import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
 @RequiredArgsConstructor
 public class ExperimentService {
 
+    private final Globals globals;
     private final ApplicationEventMulticaster eventMulticaster;
 
     private final ParamsSetter paramsSetter;
@@ -534,7 +538,7 @@ public class ExperimentService {
             Experiment experiment, Map<String, List<String>> collectedInputs,
             Map<String, DataStorageParams> inputStorageUrls, IntHolder numberOfTasks) {
         if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
-            throw new IllegalStateException("#179.19 Wrong type of process, " +
+            throw new IllegalStateException("#179.190 Wrong type of process, " +
                     "expected: "+ EnumsApi.ProcessType.EXPERIMENT+", " +
                     "actual: " + process.type);
         }
@@ -547,19 +551,26 @@ public class ExperimentService {
         List<String> experimentSnippets = List.of(epy.experimentYaml.fitSnippet, epy.experimentYaml.predictSnippet);
 
         final Map<String, String> map = toMap(epy.experimentYaml.getHyperParams(), epy.experimentYaml.seed);
-        final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+        final int calcTotalVariants = ExperimentUtils.calcTotalVariants(map);
 
 //        @Query("SELECT f.id, f.resourceCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
 //        List<Object[]> getAsExperimentFeatureSimpleByExperimentId(Long experimentId);
         final List<ExperimentFeature> features = epy.processing.features;
 
+        // there is 2 because we have 2 types of snippets - fit and predict
+        // feature has real value only when isPersist==true
+        int totalVariants = features.size() * calcTotalVariants * 2;
+
+        if (totalVariants > globals.maxTasksPerPlan) {
+            log.error("#179.200 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
+                                "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + calcTotalVariants);
+            return TOO_MANY_TASKS_PER_PLAN_ERROR;
+        }
+        final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
+
         final Map<String, Snippet> localCache = new HashMap<>();
         final IntHolder size = new IntHolder();
         final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, workbook, experiment, size);
-
-        // there is 2 because we have 2 types of snippets - fit and predict
-        // feature has real value only when isPersist==true
-        int totalVariants = features.size() * allHyperParams.size() * 2;
 
         numberOfTasks.value = 0;
 

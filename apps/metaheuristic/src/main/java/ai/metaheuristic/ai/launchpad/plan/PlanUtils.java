@@ -18,11 +18,7 @@ package ai.metaheuristic.ai.launchpad.plan;
 
 public class PlanUtils {
 
-    public static String getResourcePoolCode(String planCode, long planId, String processCode, int idx) {
-        return String.format("%s-%d-%d-%s", planCode, planId, idx, processCode);
-    }
-
-    public static String getResourceCode(long planId, long workbookId, String processCode, String snippetName, int idx) {
-        return String.format("%d-%d-%d-%s-%s", planId, workbookId, idx, snippetName, processCode);
+    public static String getResourceCode(long planId, long workbookId, String processCode, String snippetName, int processOrder, int snippetIdx) {
+        return String.format("%d-%d-%d-%s-%s-%d", planId, workbookId, processOrder, snippetName, processCode, snippetIdx);
     }
 }
