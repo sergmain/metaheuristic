@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
-import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
 import ai.metaheuristic.ai.yaml.metrics.MetricValues;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
@@ -113,7 +112,7 @@ public class ExperimentService {
     }
 
     public static ExperimentApiData.ExperimentData asExperimentData(Experiment e) {
-        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.getParams());
+        ExperimentParamsYaml params = e.getExperimentParamsYaml();
 
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
         BeanUtils.copyProperties(e, ed);
@@ -121,6 +120,7 @@ public class ExperimentService {
         ed.description = params.experimentYaml.description;
         ed.hyperParams = params.experimentYaml.hyperParams==null ? new ArrayList<>() : params.experimentYaml.hyperParams;
         ed.hyperParamsAsMap = getHyperParamsAsMap(ed.hyperParams);
+        ed.createdOn = params.createdOn;
 
         return ed;
     }

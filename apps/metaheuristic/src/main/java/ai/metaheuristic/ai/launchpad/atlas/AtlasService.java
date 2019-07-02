@@ -117,7 +117,7 @@ public class AtlasService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "General error while storing experiment, " + e.toString());
         }
-        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(stored.experimentStoredToAtlas.experiment.getParams());
+        ExperimentParamsYaml params = stored.experimentStoredToAtlas.experiment.getExperimentParamsYaml();
 
 
         b.name = params.experimentYaml.getName();

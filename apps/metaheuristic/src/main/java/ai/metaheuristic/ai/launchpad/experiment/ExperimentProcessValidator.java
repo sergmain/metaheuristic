@@ -107,7 +107,7 @@ public class ExperimentProcessValidator implements ProcessValidator {
                 return EnumsApi.PlanValidateStatus.WORKBOOK_DOESNT_EXIST_ERROR;
             }
         }
-        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.params);
+        ExperimentParamsYaml epy = e.getExperimentParamsYaml();
 
         if (StringUtils.isBlank(epy.experimentYaml.fitSnippet) || StringUtils.isBlank(epy.experimentYaml.predictSnippet)) {
             return EnumsApi.PlanValidateStatus.EXPERIMENT_HASNT_ALL_SNIPPETS_ERROR;

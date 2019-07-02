@@ -46,6 +46,7 @@ public class ExperimentParamsYamlUtilsV1
     @Override
     public ExperimentParamsYaml upgradeTo(ExperimentParamsYamlV1 src) {
         ExperimentParamsYaml trg = new ExperimentParamsYaml();
+        trg.createdOn = src.createdOn;
         BeanUtils.copyProperties(src.experimentYaml, trg.experimentYaml, "hyperParams");
         trg.experimentYaml.hyperParams = src.experimentYaml.hyperParams
                 .stream()

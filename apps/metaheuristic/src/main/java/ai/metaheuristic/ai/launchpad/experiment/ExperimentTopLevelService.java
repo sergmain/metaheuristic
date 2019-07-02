@@ -85,7 +85,7 @@ public class ExperimentTopLevelService {
     private final ExperimentRepository experimentRepository;
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
-        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.getParams());
+        ExperimentParamsYaml params = e.getExperimentParamsYaml();
         return new ExperimentApiData.SimpleExperiment(params.experimentYaml.getName(), params.experimentYaml.getDescription(), params.experimentYaml.getCode(), params.experimentYaml.getSeed(), e.getId());
     }
 
@@ -256,7 +256,7 @@ public class ExperimentTopLevelService {
         params.experimentYaml.setSeed(seed ==0 ? 1 : seed);
         params.processing.setCreatedOn(System.currentTimeMillis());
 
-        e.params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(params);
+        e.updateParams(params);
 
         experimentCache.save(e);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -283,7 +283,7 @@ public class ExperimentTopLevelService {
         }
         e.code = StringUtils.strip(simpleExperiment.getCode());
 
-        ExperimentParamsYaml params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(e.getParams());
+        ExperimentParamsYaml params = e.getExperimentParamsYaml();
         return updateParamsAndSave(e, params, simpleExperiment.getName(), simpleExperiment.getDescription(), simpleExperiment.getSeed());
     }
 
@@ -312,7 +312,7 @@ public class ExperimentTopLevelService {
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.160 hyper param's key and value must not be null, key: "+key+", value: " + value );
         }
-        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         String keyFinal = key.trim();
         boolean isExist = epy.experimentYaml.getHyperParams().stream().map(ExperimentParamsYaml.HyperParam::getKey).anyMatch(keyFinal::equals);
@@ -340,7 +340,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.190 hyper param's key and value must not be null, key: "+key+", value: " + value );
         }
-        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         ExperimentParamsYaml.HyperParam m=null;
         String keyFinal = key.trim();
@@ -484,7 +484,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.270 experiment wasn't found, experimentId: " + id);
         }
-        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.params);
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         epy.processing.createdOn = System.currentTimeMillis();
 
         final Experiment e = new Experiment();
@@ -574,6 +574,8 @@ public class ExperimentTopLevelService {
         if (StringUtils.isBlank(code)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.020 code of experiment is empty");
         }
+        ppy.createdOn = System.currentTimeMillis();
+
         Long experimentId = experimentRepository.findIdByCode(code);
         if (experimentId!=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.033 plan with such code already exists, code: " + code);
@@ -581,7 +583,7 @@ public class ExperimentTopLevelService {
 
         Experiment e = new Experiment();
         e.code = ppy.experimentYaml.code;
-        e.setParams(ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
+        e.updateParams(ppy);
 
         experimentCache.save(e);
 
