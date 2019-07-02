@@ -118,10 +118,10 @@ export class EditExperimentComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.loadExperimet();
+        this.loadExperiment();
     }
 
-    loadExperimet() {
+    loadExperiment() {
         const id = this.route.snapshot.paramMap.get('experimentId');
         let subscribe = this.experimentsService.experiment.edit(id)
             .subscribe(
@@ -181,7 +181,7 @@ export class EditExperimentComponent implements OnInit {
             .metadataEditCommit(experimentId, data)
             .subscribe((response: DefaultResponse) => {
                 this.editHyperParamsResponse = response;
-                this.loadExperimet();
+                this.loadExperiment();
                 subscribe.unsubscribe();
             });
     }
@@ -199,7 +199,7 @@ export class EditExperimentComponent implements OnInit {
             .subscribe(
                 (response: DefaultResponse) => {
                     this.addHyperParamsResponse = response;
-                    this.loadExperimet();
+                    this.loadExperiment();
                 },
                 () => {},
                 () => {
@@ -214,7 +214,7 @@ export class EditExperimentComponent implements OnInit {
             .metadataDeleteCommit(this.simpleExperiment.id, el.id)
             .subscribe(
                 () => {
-                    this.loadExperimet();
+                    this.loadExperiment();
                 },
                 () => {},
                 () => {
@@ -230,7 +230,7 @@ export class EditExperimentComponent implements OnInit {
             .metadataDefaultAddCommit(experimentId)
             .subscribe(
                 () => {
-                    this.loadExperimet();
+                    this.loadExperiment();
                 },
                 () => {},
                 () => {
@@ -251,11 +251,11 @@ export class EditExperimentComponent implements OnInit {
     snippetDeleteCommit(el) {
         this.snippetsBlock.wait();
         let subscribe = this.experimentsService.experiment
-            .snippetDeleteCommit(el.experimentId, el.id)
+            .snippetDeleteCommit(el.experimentId, el.snippetCode)
             .subscribe(
                 (response: DefaultResponse) => {
                     this.snippetDeleteCommitResponse = response;
-                    this.loadExperimet();
+                    this.loadExperiment();
                 },
                 () => {},
                 () => {
@@ -275,7 +275,7 @@ export class EditExperimentComponent implements OnInit {
             .subscribe(
                 (response: DefaultResponse) => {
                     this.snippetAddCommitResponse = response;
-                    this.loadExperimet();
+                    this.loadExperiment();
                 },
                 () => {},
                 () => {
