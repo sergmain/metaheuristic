@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
@@ -38,9 +39,12 @@ import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
@@ -48,11 +52,19 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import static ai.metaheuristic.ai.Consts.YAML_EXT;
+import static ai.metaheuristic.ai.Consts.YML_EXT;
 
 @SuppressWarnings("WeakerAccess")
 @Service
@@ -96,7 +108,7 @@ public class ExperimentTopLevelService {
     public ExperimentApiData.ExperimentResult getExperiment(long experimentId) {
         Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
         if (experiment == null) {
-            return new ExperimentApiData.ExperimentResult("#285.01 experiment wasn't found, experimentId: " + experimentId );
+            return new ExperimentApiData.ExperimentResult("#285.010 experiment wasn't found, experimentId: " + experimentId );
         }
         return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment));
     }
@@ -116,7 +128,7 @@ public class ExperimentTopLevelService {
                         execSnippetExecResult.snippetCode, execSnippetExecResult.exitCode, execSnippetExecResult.isOk, execSnippetExecResult.console));
             }
             else {
-                log.info("#285.10 snippetExec is null");
+                log.info("#285.020 snippetExec is null");
             }
         }
         return result;
@@ -141,15 +153,15 @@ public class ExperimentTopLevelService {
     public ExperimentApiData.ExperimentFeatureExtendedResult getExperimentFeatureExtended(Long experimentId, Long featureId) {
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.15 experiment wasn't found, experimentId: " + experimentId);
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.030 experiment wasn't found, experimentId: " + experimentId);
         }
         if (experiment.workbookId==null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.17 workbookId is null");
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.040 workbookId is null");
         }
 
         ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
         if (feature == null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.19 feature wasn't found, experimentFeatureId: " + featureId);
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.050 feature wasn't found, experimentFeatureId: " + featureId);
         }
 
         return experimentService.prepareExperimentFeatures(experiment, feature);
@@ -158,14 +170,14 @@ public class ExperimentTopLevelService {
     public ExperimentApiData.ExperimentInfoExtendedResult getExperimentInfo(Long id) {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.22 experiment wasn't found, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.060 experiment wasn't found, experimentId: " + id);
         }
         if (experiment.getWorkbookId() == null) {
-            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.25 experiment wasn't startet yet, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.070 experiment wasn't startet yet, experimentId: " + id);
         }
         Workbook workbook = workbookRepository.findById(experiment.getWorkbookId()).orElse(null);
         if (workbook == null) {
-            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.29 experiment has broken ref to workbook, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to workbook, experimentId: " + id);
         }
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         for (ExperimentParamsYaml.HyperParam hyperParams : epy.experimentYaml.hyperParams) {
@@ -178,7 +190,7 @@ public class ExperimentTopLevelService {
 
         ExperimentApiData.ExperimentInfoExtendedResult result = new ExperimentApiData.ExperimentInfoExtendedResult();
         if (experiment.getWorkbookId()==null) {
-            result.addInfoMessage("Launch is disabled, dataset isn't assigned");
+            result.addInfoMessage("#285.090 A launch is disabled, dataset isn't assigned");
         }
 
         ExperimentApiData.ExperimentInfoResult experimentInfoResult = new ExperimentApiData.ExperimentInfoResult();
@@ -194,7 +206,7 @@ public class ExperimentTopLevelService {
     public ExperimentApiData.ExperimentsEditResult editExperiment(@PathVariable Long id) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
-            return new ExperimentApiData.ExperimentsEditResult("#285.33 experiment wasn't found, experimentId: " + id);
+            return new ExperimentApiData.ExperimentsEditResult("#285.100 experiment wasn't found, experimentId: " + id);
         }
         Iterable<Snippet> snippets = snippetRepository.findAll();
         ExperimentApiData.SnippetResult snippetResult = new ExperimentApiData.SnippetResult();
@@ -267,7 +279,7 @@ public class ExperimentTopLevelService {
         Experiment e = experimentRepository.findByIdForUpdate(simpleExperiment.id);
         if (e == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.37 experiment wasn't found, experimentId: " + simpleExperiment.id);
+                    "#285.110 experiment wasn't found, experimentId: " + simpleExperiment.id);
         }
         e.code = StringUtils.strip(simpleExperiment.getCode());
 
@@ -278,15 +290,15 @@ public class ExperimentTopLevelService {
     private OperationStatusRest validate(ExperimentApiData.SimpleExperiment se) {
         if (StringUtils.isBlank(se.getName())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.40 Name of experiment is blank.");
+                    "#285.120 Name of experiment is blank.");
         }
         if (StringUtils.isBlank(se.getCode())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.41 Code of experiment is blank.");
+                    "#285.130 Code of experiment is blank.");
         }
         if (StringUtils.isBlank(se.getDescription())) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.42 Description of experiment is blank.");
+                    "#285.140 Description of experiment is blank.");
         }
         return null;
     }
@@ -295,17 +307,17 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.45 experiment wasn't found, experimentId: " + experimentId);
+                    "#285.150 experiment wasn't found, experimentId: " + experimentId);
         }
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.48 hyper param's key and value must not be null, key: "+key+", value: " + value );
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.160 hyper param's key and value must not be null, key: "+key+", value: " + value );
         }
         ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
 
         String keyFinal = key.trim();
         boolean isExist = epy.experimentYaml.getHyperParams().stream().map(ExperimentParamsYaml.HyperParam::getKey).anyMatch(keyFinal::equals);
         if (isExist) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.51 hyper parameter "+key+" already exist");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.170 hyper parameter "+key+" already exist");
         }
 
         ExperimentParamsYaml.HyperParam m = new ExperimentParamsYaml.HyperParam();
@@ -322,11 +334,11 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.53 experiment wasn't found, id: "+experimentId );
+                    "#285.180 experiment wasn't found, id: "+experimentId );
         }
         if (StringUtils.isBlank(key) || StringUtils.isBlank(value) ) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.55 hyper param's key and value must not be null, key: "+key+", value: " + value );
+                    "#285.190 hyper param's key and value must not be null, key: "+key+", value: " + value );
         }
         ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
 
@@ -354,13 +366,13 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentRepository.findByIdForUpdate(id);
         if (experiment == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.58 experiment wasn't found, id: "+id );
+                    "#285.200 experiment wasn't found, id: "+id );
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         Snippet s = snippetRepository.findByCode(snippetCode);
         if (s==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.59 snippet wasn't found, id: "+id );
+                    "#285.210 snippet wasn't found, id: "+id );
 
         }
         switch(s.getType()){
@@ -371,7 +383,7 @@ public class ExperimentTopLevelService {
                 epy.experimentYaml.predictSnippet = snippetCode;
                 break;
             default:
-                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.59 snippet has non-supported type for an experiment: "+s.getType() );
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.220 snippet has non-supported type for an experiment: "+s.getType() );
         }
         experiment.updateParams(epy);
 
@@ -383,7 +395,7 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.58 experiment wasn't found, id: "+experimentId );
+                    "#285.230 experiment wasn't found, id: "+experimentId );
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         for (int i = 0; i < epy.experimentYaml.hyperParams.size(); i++) {
@@ -403,7 +415,7 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.63 experiment wasn't found, id: "+experimentId );
+                    "#285.240 experiment wasn't found, id: "+experimentId );
         }
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
@@ -441,7 +453,7 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.63 experiment wasn't found, id: "+experimentId );
+                    "#285.250 experiment wasn't found, id: "+experimentId );
         }
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
@@ -460,7 +472,7 @@ public class ExperimentTopLevelService {
         Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.71 experiment wasn't found, experimentId: " + id);
+                    "#285.260 experiment wasn't found, experimentId: " + id);
         }
         experimentCache.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -470,7 +482,7 @@ public class ExperimentTopLevelService {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.73 experiment wasn't found, experimentId: " + id);
+                    "#285.270 experiment wasn't found, experimentId: " + id);
         }
         ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.params);
         epy.processing.createdOn = System.currentTimeMillis();
@@ -486,17 +498,94 @@ public class ExperimentTopLevelService {
         Task task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.75 Can't re-run task "+taskId+", task with such taskId wasn't found");
+                    "#285.280 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
         Workbook workbook = workbookRepository.findById(task.getWorkbookId()).orElse(null);
         if (workbook == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.84 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
+                    "#285.290 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
         }
 
         Task t = taskPersistencer.resetTask(taskId);
         return t!=null
                 ? OperationStatusRest.OPERATION_STATUS_OK
-                : new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Can't re-run task #"+taskId+", see log for more information");
+                : new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.300 Can't re-run task #"+taskId+", see log for more information");
     }
+
+    public OperationStatusRest uploadExperiment(MultipartFile file) {
+
+        String originFilename = file.getOriginalFilename();
+        if (originFilename == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.310 name of uploaded file is null");
+        }
+        String ext = StrUtils.getExtension(originFilename);
+        if (ext==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.320 file without extension, bad filename: " + originFilename);
+        }
+        if (!StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.330 only '.yml' and '.yaml' files are supported, filename: " + originFilename);
+        }
+
+        final String location = System.getProperty("java.io.tmpdir");
+
+        try {
+            File tempDir = DirUtils.createTempDir("mh-experiment-upload-");
+            if (tempDir==null || tempDir.isFile()) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        "#285.340 can't create temporary directory in " + location);
+            }
+            final File planFile = new File(tempDir, "experiment" + ext);
+            log.debug("Start storing an uploaded experiment to disk");
+            try(OutputStream os = new FileOutputStream(planFile)) {
+                IOUtils.copy(file.getInputStream(), os, 64000);
+            }
+            log.debug("Start loading experiment into db");
+            String yaml = FileUtils.readFileToString(planFile, StandardCharsets.UTF_8);
+            OperationStatusRest result = addExperiment(yaml);
+
+            if (result.isErrorMessages()) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages, result.infoMessages);
+            }
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+        catch (Throwable e) {
+            log.error("#285.350 Error", e);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.360 can't load plans, Error: " + e.toString());
+        }
+    }
+
+    public OperationStatusRest addExperiment(String experimentYamlAsStr) {
+        if (StringUtils.isBlank(experimentYamlAsStr)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.017 plan yaml is empty");
+        }
+
+        ExperimentParamsYaml ppy;
+        try {
+            ppy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experimentYamlAsStr);
+        } catch (WrongVersionOfYamlFileException e) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.017 Error parsing yaml: " + e.getMessage());
+        }
+
+        final String code = ppy.experimentYaml.code;
+        if (StringUtils.isBlank(code)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.020 code of experiment is empty");
+        }
+        Long experimentId = experimentRepository.findIdByCode(code);
+        if (experimentId!=null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.033 plan with such code already exists, code: " + code);
+        }
+
+        Experiment e = new Experiment();
+        e.code = ppy.experimentYaml.code;
+        e.setParams(ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
+
+        experimentCache.save(e);
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
 }

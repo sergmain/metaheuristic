@@ -100,7 +100,7 @@ public class PlanController {
     }
 
     @PostMapping(value = "/plan-upload-from-file")
-    public String uploadSnippet(final MultipartFile file, final RedirectAttributes redirectAttributes) {
+    public String uploadPlan(final MultipartFile file, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = planTopLevelService.uploadPlan(file);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);

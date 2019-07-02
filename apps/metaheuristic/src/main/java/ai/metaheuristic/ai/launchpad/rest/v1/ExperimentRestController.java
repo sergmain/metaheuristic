@@ -24,6 +24,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/rest/v1/launchpad/experiment")
@@ -120,7 +121,6 @@ public class ExperimentRestController {
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{snippetCode}")
     public OperationStatusRest snippetDeleteCommit(@PathVariable long experimentId, @PathVariable String snippetCode) {
-        if (true) throw new IllegalStateException("Need to change this in web and angular");
         return experimentTopLevelService.snippetDeleteCommit(experimentId, snippetCode);
     }
 
@@ -138,4 +138,11 @@ public class ExperimentRestController {
     public OperationStatusRest rerunTask(@PathVariable long taskId) {
         return experimentTopLevelService.rerunTask(taskId);
     }
+
+    @PostMapping(value = "/experiment-upload-from-file")
+    public OperationStatusRest uploadSnippet(final MultipartFile file) {
+        return experimentTopLevelService.uploadExperiment(file);
+    }
+
+
 }

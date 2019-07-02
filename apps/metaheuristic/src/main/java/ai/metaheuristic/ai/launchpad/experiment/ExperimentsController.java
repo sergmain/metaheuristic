@@ -28,6 +28,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.ArrayList;
@@ -44,6 +45,7 @@ import java.util.ArrayList;
 @Profile("launchpad")
 public class ExperimentsController {
 
+    public static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
     private final AtlasService atlasService;
     private final ExperimentCache experimentCache;
@@ -106,7 +108,7 @@ public class ExperimentsController {
             experimentTopLevelService.getExperimentFeatureExtended(experimentId, featureId);
         if (experimentProgressResult.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", experimentProgressResult.errorMessages);
-            return "redirect:/launchpad/experiments";
+            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
         model.addAttribute("metrics", experimentProgressResult.metricsResult);
         model.addAttribute("params", experimentProgressResult.hyperParamResult);
@@ -130,7 +132,7 @@ public class ExperimentsController {
                 experimentTopLevelService.getExperimentInfo(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
-            return "redirect:/launchpad/experiments";
+            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
 
         if (result.isInfoMessages()) {
@@ -148,13 +150,22 @@ public class ExperimentsController {
         ExperimentApiData.ExperimentsEditResult r = experimentTopLevelService.editExperiment(id);
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
-            return "redirect:/launchpad/experiments";
+            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
 
         model.addAttribute("hyperParams", r.hyperParams);
         model.addAttribute("simpleExperiment", r.simpleExperiment);
         model.addAttribute("snippetResult", r.snippetResult);
         return "launchpad/experiment-edit-form";
+    }
+
+    @PostMapping(value = "/experiment-upload-from-file")
+    public String uploadExperiment(final MultipartFile file, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = experimentTopLevelService.uploadExperiment(file);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+        }
+        return REDIRECT_LAUNCHPAD_EXPERIMENTS;
     }
 
     @PostMapping("/experiment-add-form-commit")
@@ -164,7 +175,7 @@ public class ExperimentsController {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
             return "launchpad/experiment-add-form";
         }
-        return "redirect:/launchpad/experiments";
+        return REDIRECT_LAUNCHPAD_EXPERIMENTS;
     }
 
     @PostMapping("/experiment-edit-form-commit")
@@ -199,7 +210,7 @@ public class ExperimentsController {
         OperationStatusRest status = experimentTopLevelService.snippetAddCommit(id, code);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
-            return "redirect:/launchpad/experiments";
+            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
         return "redirect:/launchpad/experiment-edit/"+id;
     }
@@ -224,7 +235,6 @@ public class ExperimentsController {
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{snippetCode}")
     public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable String snippetCode, final RedirectAttributes redirectAttributes) {
-        if (true) throw new IllegalStateException("Need to change this in web and angular");
         OperationStatusRest status = experimentTopLevelService.snippetDeleteCommit(experimentId, snippetCode);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
@@ -237,7 +247,7 @@ public class ExperimentsController {
         ExperimentApiData.ExperimentResult result = experimentTopLevelService.getExperiment(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
-            return "redirect:/launchpad/experiments";
+            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
         model.addAttribute("experiment", result.experiment);
         return "launchpad/experiment-delete";
@@ -249,7 +259,7 @@ public class ExperimentsController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiments";
+        return REDIRECT_LAUNCHPAD_EXPERIMENTS;
     }
 
     @PostMapping("/experiment-clone-commit")
@@ -258,7 +268,7 @@ public class ExperimentsController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiments";
+        return REDIRECT_LAUNCHPAD_EXPERIMENTS;
     }
 
     @PostMapping("/task-rerun/{taskId}")

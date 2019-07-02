@@ -152,9 +152,6 @@ public class PlanTopLevelService {
         if (StringUtils.isBlank(code)) {
             return new PlanApiData.PlanResult("#560.020 code of plan is empty");
         }
-        if (StringUtils.isBlank(code)) {
-            return new PlanApiData.PlanResult("#560.030 plan is empty");
-        }
         Plan f = planRepository.findByCode(code);
         if (f!=null) {
             return new PlanApiData.PlanResult("#560.033 plan with such code already exists, code: " + code);
@@ -264,7 +261,7 @@ public class PlanTopLevelService {
                         "#560.150 can't create temporary directory in " + location);
             }
             final File planFile = new File(tempDir, "plans" + ext);
-            log.debug("Start storing an uploaded snippet to disk");
+            log.debug("Start storing an uploaded plan to disk");
             try(OutputStream os = new FileOutputStream(planFile)) {
                 IOUtils.copy(file.getInputStream(), os, 64000);
             }
