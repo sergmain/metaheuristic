@@ -93,7 +93,6 @@ public class ExperimentParamsYaml implements BaseParams {
         public boolean isAllTaskProduced = false;
         public boolean isFeatureProduced = false;
 
-        public long createdOn;
         public int numberOfTask = 0;
 
         public List<ExperimentFeature> features = new ArrayList<>();

@@ -60,16 +60,16 @@
             <input type="hidden" th:field="*{id}"/>
             <fieldset>
 
+                <label for="code">Code</label>
+                <input name="code" id="code" type="text" placeholder="Code of experiment" size="100" th:field="*{code}">
+                <span class="pure-form-message">This is a required field.</span>
+
                 <label for="name">Name</label>
-                <input name="name" id="name" type="text" placeholder="name"  th:field="*{name}">
+                <input name="name" id="name" type="text" placeholder="name" size="100" th:field="*{name}">
                 <span class="pure-form-message">This is a required field.</span>
 
                 <label for="description">Description</label>
-                <textarea name="description" id="description" placeholder="description" cols="40" rows="5" th:field="*{description}" maxlength="250"></textarea>
-                <span class="pure-form-message">This is a required field.</span>
-
-                <label for="code">Code</label>
-                <input name="code" id="code" type="text" placeholder="Code of experiment"  th:field="*{code}">
+                <textarea name="description" id="description" placeholder="description" cols="100" rows="5" th:field="*{description}" maxlength="250"></textarea>
                 <span class="pure-form-message">This is a required field.</span>
 
                 <label for="seed">Seed</label>

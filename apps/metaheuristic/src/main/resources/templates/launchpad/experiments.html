@@ -41,7 +41,10 @@
         <!--/*@thymesVar id="result" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentsResult"*/-->
         <div th:remove="tag" th:each="r : ${result.items}" >
             <tr>
-                <td th:text="${r.experiment.description}">description</td>
+                <td>
+                    <div th:text="${'Code: ' + r.experiment.code}">Code</div>
+                    <div th:text="${'Desc: ' + r.experiment.description}">Description</div>
+                </td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:disabled="${r.experiment.workbookId!=null}" th:href="${'/launchpad/experiment-edit/' + r.experiment.id}">Edit</a></td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/experiment-delete/' + r.experiment.id}">Delete</a></td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:disabled="${r.experiment.workbookId==null}" th:href="${'/launchpad/experiment-info/' + r.experiment.id}">Info</a></td>

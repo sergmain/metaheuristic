@@ -83,7 +83,6 @@ public class ExperimentParamsYamlV1 {
         public boolean isAllTaskProduced = false;
         public boolean isFeatureProduced = false;
 
-        public long createdOn;
         public int numberOfTask = 0;
 
         public List<ExperimentFeatureV1> features = new ArrayList<>();

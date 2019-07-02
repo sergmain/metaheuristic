@@ -6,20 +6,21 @@
     <div sec:authorize="isAuthenticated()">
         <h1 class="widget-header">Delete Experiment</h1>
 
-        <!--/*@thymesVar id="experiment" type="ai.metaheuristic.ai.launchpad.beans.Experiment"*/-->
-        <form class="form-horizontal" th:object="${experiment}">
-            <div class="form-group">
-                <label class="col-sm-2 control-label">Name:</label>
-                <div class="col-sm-10">
-                    <input name="name" id="name" type="text" placeholder="Name" th:field="*{name}" th:disabled="true"/>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-sm-2 control-label">Description:</label>
-                <div class="col-sm-10">
-                    <input name="description" id="description" type="text" placeholder="Description" th:field="*{description}" th:disabled="true"/>
-                </div>
-            </div>
+        <!--/*@thymesVar id="experiment" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentData"*/-->
+        <form class="pure-form pure-form-stacked" th:object="${experiment}">
+            <fieldset>
+                <label for="code">Code</label>
+                <pre id="code" th:text="*{code}" ></pre>
+
+                <label for="name">Name</label>
+                <pre id="name" th:text="*{name}" ></pre>
+
+                <label for="description">Description</label>
+                <pre id="description" th:text="*{description}" ></pre>
+
+                <label for="planYamlAsStr">Parameters of experiment</label>
+                <pre id="planYamlAsStr" th:text="${params}" ></pre>
+            </fieldset>
         </form>
 
         <table>

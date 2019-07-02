@@ -123,7 +123,7 @@ public class AtlasService {
         b.name = params.experimentYaml.getName();
         b.description = params.experimentYaml.getDescription();
         b.code = stored.experimentStoredToAtlas.experiment.getCode();
-        b.createdOn = params.processing.createdOn;
+        b.createdOn = params.createdOn;
         atlasRepository.save(b);
 
         ConsoleOutputStoredToAtlas filed = toConsoleOutputStoredToAtlas(stored.experimentStoredToAtlas.workbook.id);

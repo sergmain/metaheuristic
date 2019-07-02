@@ -10,12 +10,10 @@
         <form class="pure-form pure-form-stacked" th:object="${plan}">
             <fieldset>
                 <label for="code">Code of plan</label>
-                <input name="code" id="code" type="text" placeholder="code" th:field="*{code}">
-                <span class="pure-form-message">This is a required field.</span>
+                <pre id="code" th:text="*{code}" ></pre>
 
                 <label for="planYamlAsStr">Parameters of plan</label>
                 <pre id="planYamlAsStr" th:text="${planYamlAsStr}" ></pre>
-                <span class="pure-form-message">This is a required field.</span>
             </fieldset>
         </form>
 

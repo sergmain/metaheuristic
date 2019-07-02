@@ -90,7 +90,7 @@ public class ExperimentTopLevelService {
     }
 
     public static ExperimentApiData.ExperimentResult asExperimentResult(Experiment e) {
-        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(e));
+        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(e), e.params);
     }
 
     public ExperimentApiData.ExperimentsResult getExperiments(Pageable pageable) {
@@ -110,7 +110,7 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentApiData.ExperimentResult("#285.010 experiment wasn't found, experimentId: " + experimentId );
         }
-        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment));
+        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment), experiment.params);
     }
 
     public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
@@ -254,7 +254,7 @@ public class ExperimentTopLevelService {
         params.experimentYaml.code = e.code;
         params.experimentYaml.description = StringUtils.strip(description);
         params.experimentYaml.setSeed(seed ==0 ? 1 : seed);
-        params.processing.setCreatedOn(System.currentTimeMillis());
+        params.createdOn = System.currentTimeMillis();
 
         e.updateParams(params);
 
@@ -484,11 +484,23 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.270 experiment wasn't found, experimentId: " + id);
         }
-        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
-        epy.processing.createdOn = System.currentTimeMillis();
+        // do not use experiment.getExperimentParamsYaml() because it's  caching ExperimentParamsYaml
+        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.params);
+
+        epy.createdOn = System.currentTimeMillis();
 
         final Experiment e = new Experiment();
-        e.setCode(StrUtils.incCopyNumber(experiment.getCode()));
+        String newCode = StrUtils.incCopyNumber(experiment.getCode());
+        int i = 0;
+        while ( experimentRepository.findIdByCode(newCode)!=null  ) {
+            newCode = StrUtils.incCopyNumber(newCode);
+            if (i++>100) {
+                return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                        "#285.273 Can't find new code for experiment with code: " + experiment.getCode());
+            }
+        }
+        epy.experimentYaml.code = newCode;
+        e.code = newCode;
         e.updateParams(epy);
         experimentCache.save(e);
         return OperationStatusRest.OPERATION_STATUS_OK;

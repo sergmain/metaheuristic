@@ -250,6 +250,7 @@ public class ExperimentsController {
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
         model.addAttribute("experiment", result.experiment);
+        model.addAttribute("params", result.params);
         return "launchpad/experiment-delete";
     }
 

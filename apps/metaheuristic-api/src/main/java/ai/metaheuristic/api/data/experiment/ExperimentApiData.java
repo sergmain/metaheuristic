@@ -152,13 +152,15 @@ public class ExperimentApiData {
     @NoArgsConstructor
     public static class ExperimentResult extends BaseDataClass {
         public ExperimentData experiment;
+        public String params;
 
         public ExperimentResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
 
-        public ExperimentResult(ExperimentData experiment) {
+        public ExperimentResult(ExperimentData experiment, String params) {
             this.experiment = experiment;
+            this.params = params;
         }
     }
 
