@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -43,18 +44,13 @@ import java.util.ArrayList;
 @RequestMapping("/launchpad")
 @Slf4j
 @Profile("launchpad")
-public class ExperimentsController {
+@RequiredArgsConstructor
+public class ExperimentController {
 
-    public static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiments";
+    private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
     private final AtlasService atlasService;
     private final ExperimentCache experimentCache;
-
-    public ExperimentsController(ExperimentTopLevelService experimentTopLevelService, AtlasService atlasService, ExperimentCache experimentCache) {
-        this.experimentTopLevelService = experimentTopLevelService;
-        this.atlasService = atlasService;
-        this.experimentCache = experimentCache;
-    }
 
     @GetMapping("/experiments")
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
@@ -94,6 +90,8 @@ public class ExperimentsController {
         ExperimentApiData.ExperimentFeatureExtendedResult experimentProgressResult =
                 experimentTopLevelService.getFeatureProgressPart(experimentId, featureId, params, pageable);
 
+//        model.addAttribute("metrics", experimentProgressResult.metricsResult);
+//        model.addAttribute("params", experimentProgressResult.hyperParamResult);
         model.addAttribute("result", experimentProgressResult.tasksResult);
         model.addAttribute("experiment", experimentProgressResult.experiment);
         model.addAttribute("feature", experimentProgressResult.experimentFeature);

@@ -125,7 +125,7 @@
             <tr th:each="f : ${experimentResult.features}" >
                 <td th:text="${f.id}">Feature Id</td>
                 <td th:text="${f.resourceCodes}">Ids</td>
-                <td th:text="${f.execStatusAsString()}">Exec status</td>
+                <td th:text="${f.execStatusAsString}">Exec status</td>
                 <td th:text="${f.maxValue!=null ? f.maxValue : 0 }">Max value</td>
                 <td><a class="pure-button table-nav-button-fill pure-button-primary"
                        th:href="${'/launchpad/atlas/atlas-experiment-feature-progress/'+ atlas.id + '/'+ experiment.id + '/' + f.id}">Info</a></td>

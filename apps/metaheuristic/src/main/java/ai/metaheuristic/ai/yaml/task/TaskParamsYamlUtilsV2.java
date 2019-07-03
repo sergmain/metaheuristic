@@ -56,13 +56,13 @@ public class TaskParamsYamlUtilsV2
     public TaskParamsYamlV1 downgradeTo(TaskParamsYaml yaml) {
         TaskParamsYamlV1 t = new TaskParamsYamlV1();
         BeanUtils.copyProperties(yaml.taskYaml, t);
-        if (yaml.taskYaml.preSnippets!=null) {
+        if (yaml.taskYaml.preSnippets!=null && yaml.taskYaml.preSnippets.size()>0) {
             if (yaml.taskYaml.preSnippets.size()>1) {
                 throw new DowngradeNotSupportedException("Too many preSnippets");
             }
             t.preSnippet = yaml.taskYaml.preSnippets.get(0);
         }
-        if (yaml.taskYaml.postSnippets!=null) {
+        if (yaml.taskYaml.postSnippets!=null && yaml.taskYaml.postSnippets.size()>0) {
             if (yaml.taskYaml.postSnippets.size()>1) {
                 throw new DowngradeNotSupportedException("Too many postSnippets");
             }

@@ -121,10 +121,12 @@ public class ExperimentService {
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
         BeanUtils.copyProperties(e, ed);
         ed.name = params.experimentYaml.name;
+        ed.seed = params.experimentYaml.seed;
         ed.description = params.experimentYaml.description;
         ed.hyperParams = params.experimentYaml.hyperParams==null ? new ArrayList<>() : params.experimentYaml.hyperParams;
         ed.hyperParamsAsMap = getHyperParamsAsMap(ed.hyperParams);
         ed.createdOn = params.createdOn;
+        ed.numberOfTask = params.processing.numberOfTask;
 
         return ed;
     }
@@ -136,7 +138,7 @@ public class ExperimentService {
         return featureData;
     }
 
-    private static String execStatusAsString(int execStatus) {
+    public static String execStatusAsString(int execStatus) {
         switch(execStatus) {
             case 0:
                 return "Unknown";
@@ -145,7 +147,7 @@ public class ExperimentService {
             case 2:
                 return "All are errors";
             case 3:
-                return "No sequenses";
+                return "No tasks";
             default:
                 return "Status is wrong";
         }
