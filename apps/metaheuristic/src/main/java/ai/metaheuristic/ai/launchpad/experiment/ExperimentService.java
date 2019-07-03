@@ -19,7 +19,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.exceptions.BatchResourceProcessingException;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
@@ -134,23 +133,8 @@ public class ExperimentService {
     public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(ExperimentFeature experimentFeature) {
         final ExperimentApiData.ExperimentFeatureData featureData = new ExperimentApiData.ExperimentFeatureData();
         BeanUtils.copyProperties(experimentFeature, featureData);
-        featureData.execStatusAsString = execStatusAsString(featureData.execStatus);
+        featureData.execStatusAsString = Enums.FeatureExecStatus.toState(featureData.execStatus).info;
         return featureData;
-    }
-
-    public static String execStatusAsString(int execStatus) {
-        switch(execStatus) {
-            case 0:
-                return "Unknown";
-            case 1:
-                return "Ok";
-            case 2:
-                return "All are errors";
-            case 3:
-                return "No tasks";
-            default:
-                return "Status is wrong";
-        }
     }
 
     public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment) {

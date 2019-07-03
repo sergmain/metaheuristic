@@ -61,6 +61,21 @@ public final class Enums {
             this.info = info;
         }
 
+        @SuppressWarnings("DuplicateBranchesInSwitch")
+        public static FeatureExecStatus toState(int code) {
+            switch (code) {
+                case 0:
+                    return unknown;
+                case 1:
+                    return ok;
+                case 2:
+                    return error;
+                case 3:
+                    return empty;
+                default:
+                    return unknown;
+            }
+        }
         public boolean equals(String type) {
             return this.toString().equals(type);
         }
@@ -99,6 +114,7 @@ public final class Enums {
                     return Unknown;
             }
         }
+
         BatchExecState(int code, String info) {
             this.code = code;
             this.info = info;
