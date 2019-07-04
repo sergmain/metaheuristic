@@ -31,6 +31,7 @@ import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
@@ -99,6 +100,7 @@ public class BatchTopLevelService {
     private final BatchCache batchCache;
     private final PlanRepository planRepository;
     private final WorkbookRepository workbookRepository;
+    private final WorkbookService workbookService;
     private final BatchWorkbookRepository batchWorkbookRepository;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
@@ -247,7 +249,7 @@ public class BatchTopLevelService {
             if (wb == null) {
                 continue;
             }
-            planService.deleteWorkbook(wb.getId(), wb.getPlanId());
+            workbookService.deleteWorkbook(wb.getId(), wb.getPlanId());
         }
         batchWorkbookRepository.deleteByBatchId(batch.id);
         batchCache.deleteById(batch.id);
@@ -376,7 +378,7 @@ public class BatchTopLevelService {
         }
 
         final String paramYaml = asInputResourceParams(mainPoolCode, attachPoolCode, attachments);
-        PlanApiData.TaskProducingResultComplex producingResult = planService.createWorkbook(plan.getId(), paramYaml);
+        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(plan.getId(), paramYaml);
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
             throw new BatchResourceProcessingException("#995.190 Error creating workbook: " + producingResult.planProducingStatus);
         }
@@ -404,15 +406,15 @@ public class BatchTopLevelService {
         }
 
         if (globals.maxTasksPerPlan < countTasks.numberOfTasks) {
-            planService.changeValidStatus(producingResult.workbook, false);
+            workbookService.changeValidStatus(producingResult.workbook, false);
             throw new BatchResourceProcessingException(
                     "#995.220 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                             "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + countTasks.numberOfTasks);
         }
-        planService.changeValidStatus(producingResult.workbook, true);
+        workbookService.changeValidStatus(producingResult.workbook, true);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.PRODUCING);
+        OperationStatusRest operationStatus = workbookService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.PRODUCING);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
@@ -421,7 +423,7 @@ public class BatchTopLevelService {
 
 
         batchService.changeStateToProcessing(batch.id);
-        operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.STARTED);
+        operationStatus = workbookService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());

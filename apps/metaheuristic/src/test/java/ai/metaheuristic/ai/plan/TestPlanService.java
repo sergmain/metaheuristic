@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -51,6 +52,9 @@ public class TestPlanService extends PreparingPlan {
     public TaskPersistencer taskPersistencer;
     @Autowired
     public TaskCollector taskCollector;
+
+    @Autowired
+    public WorkbookService workbookService;
 
     @Override
     public String getPlanYamlAsString() {
@@ -116,7 +120,7 @@ public class TestPlanService extends PreparingPlan {
             assertNull(assignToStation2.getSimpleTask());
 
             storeExecResult(simpleTask);
-            planService.markOrderAsProcessed();
+            workbookService.markOrderAsProcessed();
         }
         {
             TaskService.TasksAndAssignToStationResult assignToStation20 =
@@ -135,7 +139,7 @@ public class TestPlanService extends PreparingPlan {
             assertNull(assignToStation21.getSimpleTask());
 
             storeExecResult(simpleTask20);
-            planService.markOrderAsProcessed();
+            workbookService.markOrderAsProcessed();
         }
         {
             TaskService.TasksAndAssignToStationResult assignToStation30 =
@@ -155,7 +159,7 @@ public class TestPlanService extends PreparingPlan {
             assertNull(simpleTask31);
 
             storeExecResult(simpleTask30);
-            planService.markOrderAsProcessed();
+            workbookService.markOrderAsProcessed();
         }
         {
             TaskService.TasksAndAssignToStationResult assignToStation32 =
@@ -168,7 +172,7 @@ public class TestPlanService extends PreparingPlan {
             assertNotNull(task32);
             assertEquals(3, task32.getOrder());
             storeExecResult(simpleTask32);
-            planService.markOrderAsProcessed();
+            workbookService.markOrderAsProcessed();
         }
         int j;
         for ( j = 0; j < 1000; j++) {
@@ -183,7 +187,7 @@ public class TestPlanService extends PreparingPlan {
             Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
             assertNotNull(loopTask);
             taskPersistencer.setResultReceived(loopSimpleTask.getTaskId(), true);
-            planService.markOrderAsProcessed();
+            workbookService.markOrderAsProcessed();
             if (loopTask.getOrder()==4) {
                 break;
             }

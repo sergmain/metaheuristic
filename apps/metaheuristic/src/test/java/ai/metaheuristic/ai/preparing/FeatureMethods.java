@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -58,6 +59,8 @@ public abstract class FeatureMethods extends PreparingPlan {
 
     @Autowired
     protected TaskService taskService;
+    @Autowired
+    public WorkbookService workbookService;
 
     public boolean isCorrectInit = true;
 
@@ -74,14 +77,14 @@ public abstract class FeatureMethods extends PreparingPlan {
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        PlanApiData.TaskProducingResultComplex result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
+        PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
         workbook = result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
-        EnumsApi.PlanProducingStatus producingStatus = planService.toProducing(workbook);
+        EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook);
         assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 

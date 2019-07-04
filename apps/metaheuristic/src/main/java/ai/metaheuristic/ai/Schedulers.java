@@ -61,7 +61,7 @@ public class Schedulers {
             }
             log.info("Invoke PlanService.markOrderAsProcessed()");
             try {
-                launchpadService.getPlanService().markOrderAsProcessed();
+                launchpadService.getWorkbookService().markOrderAsProcessed();
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("Error while markOrderAsProcessed()",e);
                 // TODO 2019-06-11 or just log an error?

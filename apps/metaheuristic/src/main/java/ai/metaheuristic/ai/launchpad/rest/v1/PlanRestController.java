@@ -85,40 +85,6 @@ public class PlanRestController {
         return planTopLevelService.uploadPlan(file);
     }
 
-    // ============= Workbooks =============
-
-    @GetMapping("/workbooks/{id}")
-    public PlanApiData.WorkbooksResult workbooks(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
-        return planTopLevelService.getWorkbooksOrderByCreatedOnDesc(id, pageable);
-    }
-
-    @PostMapping("/workbook-add-commit")
-    public PlanApiData.WorkbookResult workbookAddCommit(Long planId, String poolCode, String inputResourceParams) {
-        //noinspection UnnecessaryLocalVariable
-        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams);
-        return workbookResult;
-    }
-
-    @PostMapping("/workbook-create")
-    public PlanApiData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam) {
-        return planTopLevelService.createWorkbook(planId, inputResourceParam);
-    }
-
-    @GetMapping(value = "/workbook/{planId}/{workbookId}")
-    public PlanApiData.WorkbookResult workbookEdit(@SuppressWarnings("unused") @PathVariable Long planId, @PathVariable Long workbookId) {
-        return planTopLevelService.getWorkbookExtended(workbookId);
-    }
-
-    @PostMapping("/workbook-delete-commit")
-    public OperationStatusRest workbookDeleteCommit(Long planId, Long workbookId) {
-        return planTopLevelService.deleteWorkbookById(workbookId);
-    }
-
-    @GetMapping("/workbook-target-exec-state/{planId}/{state}/{id}")
-    public OperationStatusRest workbookTargetExecState(@SuppressWarnings("unused") @PathVariable Long planId, @PathVariable String state, @PathVariable Long id) {
-        return planTopLevelService.changeWorkbookExecState(state, id);
-    }
-
     // ============= Service methods =============
 
     @GetMapping(value = "/emulate-producing-tasks/{workbookId}")
@@ -130,12 +96,6 @@ public class PlanRestController {
     public void createAllTasks() {
         planTopLevelService.createAllTasks();
     }
-
-    @GetMapping(value = "/change-valid-status/{workbookId}/{status}")
-    public OperationStatusRest changeValidStatus(@PathVariable Long workbookId, @PathVariable boolean status) {
-        return planTopLevelService.changeValidStatus(workbookId, status);
-    }
-
 
 
 }

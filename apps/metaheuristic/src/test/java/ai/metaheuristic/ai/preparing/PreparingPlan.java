@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.plan.TaskCollector;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
@@ -72,6 +73,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
     @Autowired
     public TaskCollector taskCollector;
+
+    @Autowired
+    public WorkbookService workbookService;
 
     @Autowired
     public TaskPersistencer taskPersistencer;
@@ -274,7 +278,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        TaskProducingResultComplex result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
+        TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
         workbook = result.workbook;
 
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
@@ -282,7 +286,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         assertEquals(EnumsApi.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
-        EnumsApi.PlanProducingStatus producingStatus = planService.toProducing(workbook);
+        EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook);
         assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 

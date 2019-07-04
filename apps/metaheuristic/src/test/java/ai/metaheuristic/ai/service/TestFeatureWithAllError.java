@@ -62,7 +62,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         noNewTask();
 
-        planService.markOrderAsProcessed();
+        workbookService.markOrderAsProcessed();
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToStation_mustBeNewTask()");
