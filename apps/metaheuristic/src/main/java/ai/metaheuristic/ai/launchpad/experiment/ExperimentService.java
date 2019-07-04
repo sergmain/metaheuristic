@@ -69,6 +69,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -760,6 +761,7 @@ public class ExperimentService {
 
         final Permutation<String> permutation = new Permutation<>();
         Monitoring.log("##040", Enums.Monitor.MEMORY);
+        AtomicInteger featureId = new AtomicInteger(1);
         for (int i = 0; i < inputResourceCodes.size(); i++) {
             Monitoring.log("##041", Enums.Monitor.MEMORY);
             permutation.printCombination(inputResourceCodes, i+1,
@@ -781,12 +783,11 @@ public class ExperimentService {
                         }
 
                         ExperimentFeature feature = new ExperimentFeature();
+                        feature.id = featureId.longValue();
                         feature.setExperimentId(experiment.id);
                         feature.setResourceCodes(listAsStr);
                         feature.setChecksumIdCodes(checksumIdCodes);
                         epy.processing.features.add(feature);
-                        //noinspection UnusedAssignment
-                        feature = null;
                         total.value++;
                         return true;
                     }
