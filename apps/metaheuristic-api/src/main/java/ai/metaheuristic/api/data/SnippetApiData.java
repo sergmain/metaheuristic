@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.data;
 
+import ai.metaheuristic.api.ConstsApi;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.sourcing.GitInfo;
 import lombok.AllArgsConstructor;
@@ -33,8 +34,6 @@ import java.util.Map;
  * Time: 2:14 AM
  */
 public class SnippetApiData {
-
-    public static final String META_TASK_PARAMS_VERSION = "task-params-version";
 
     @Data
     @AllArgsConstructor
@@ -137,7 +136,7 @@ public class SnippetApiData {
         }
 
         public int getTaskParamsVersion() {
-            final Meta meta = getMeta(META_TASK_PARAMS_VERSION);
+            final Meta meta = getMeta(ConstsApi.META_TASK_PARAMS_VERSION);
             return (meta!=null) ? Integer.valueOf(meta.value) : 1;
         }
     }

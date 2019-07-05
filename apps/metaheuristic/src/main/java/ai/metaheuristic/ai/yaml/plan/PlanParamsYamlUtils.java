@@ -22,6 +22,25 @@ import java.util.Map;
 
 public class PlanParamsYamlUtils {
 
+    // Map of minimum required version of TaskParamsYaml related to version of PlanParamsYamlV5
+    // key - version of PlanParamsYamlV5
+    // value - version of TaskParamsYaml
+    private static final Map<Integer, Integer> MIN_TASK_PARAMS_YAML_VERSION = Map.of(
+            1, 1,
+            2, 1,
+            3, 2,
+            4, 2,
+            5, 2
+    );
+
+    public static int getRequiredVertionOfTaskParamsYaml(int planParamsYamlVersion) {
+        Integer version = MIN_TASK_PARAMS_YAML_VERSION.get(planParamsYamlVersion);
+        if (version==null) {
+            throw new IllegalStateException("unknown version of PlanParamsYaml, version: " + planParamsYamlVersion);
+        }
+        return version;
+    }
+
     private static final PlanParamsYamlUtilsV1 YAML_UTILS_V_1 = new PlanParamsYamlUtilsV1();
     private static final PlanParamsYamlUtilsV2 YAML_UTILS_V_2 = new PlanParamsYamlUtilsV2();
     private static final PlanParamsYamlUtilsV3 YAML_UTILS_V_3 = new PlanParamsYamlUtilsV3();

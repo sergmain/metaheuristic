@@ -17,20 +17,16 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
-import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
-import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
-import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
-import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -39,24 +35,17 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("launchpad")
 @Slf4j
+@RequiredArgsConstructor
 public class ExperimentProcessValidator implements ProcessValidator {
 
-    private final SnippetRepository snippetRepository;
-    private final SnippetService snippetService;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
     private final WorkbookRepository workbookRepository;
 
-    public ExperimentProcessValidator(SnippetRepository snippetRepository, SnippetService snippetService, ExperimentRepository experimentRepository, ExperimentCache experimentCache, WorkbookRepository workbookRepository) {
-        this.snippetRepository = snippetRepository;
-        this.snippetService = snippetService;
-        this.experimentRepository = experimentRepository;
-        this.experimentCache = experimentCache;
-        this.workbookRepository = workbookRepository;
-    }
-
     // TODO experiment has to be stateless and have its own instances
     // TODO 2019.05.02 do we need an experiment to have its own instance still?
+    // TODO 2019.07.04 current thought is that we don't need stateless experiment
+    // TODO because each experiment has its own set of hyper parameters
 
     @Override
     public EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst) {
@@ -65,28 +54,6 @@ public class ExperimentProcessValidator implements ProcessValidator {
         }
         if (StringUtils.isBlank(process.code)) {
             return EnumsApi.PlanValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
-        }
-        if (process.preSnippets!=null) {
-            for (SnippetDefForPlan snDef : process.preSnippets) {
-                if (StringUtils.isNotBlank(snDef.code)) {
-                    Snippet snippet = snippetRepository.findByCode(snDef.code);
-                    if (snippet == null) {
-                        log.error("#177.09 Pre-snippet wasn't found for code: {}, process: {}", snDef.code, process);
-                        return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
-                    }
-                }
-            }
-        }
-        if (process.postSnippets!=null) {
-            for (SnippetDefForPlan snDef : process.postSnippets) {
-                if (StringUtils.isNotBlank(snDef.code)) {
-                    Snippet snippet = snippetRepository.findByCode(snDef.code);
-                    if (snippet == null) {
-                        log.error("#177.11 Post-snippet wasn't found for code: {}, process: {}", snDef.code, process);
-                        return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
-                    }
-                }
-            }
         }
         Long experimentId = experimentRepository.findIdByCode(process.code);
         if (experimentId==null) {

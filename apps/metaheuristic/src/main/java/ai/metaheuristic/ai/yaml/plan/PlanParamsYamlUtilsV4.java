@@ -27,6 +27,7 @@ import ai.metaheuristic.api.launchpad.process.ProcessV4;
 import ai.metaheuristic.api.launchpad.process.ProcessV5;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlanV5;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
@@ -74,7 +75,12 @@ public class PlanParamsYamlUtilsV4
             pr.outputParams.storageType = o.outputType;
             return pr;
         }).collect(Collectors.toList());
-        p.planYaml.planCode = "plan-" + DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDate.now())+"-" + System.currentTimeMillis();
+        String planCode = "p" + DateTimeFormatter.BASIC_ISO_DATE.format(LocalDate.now());
+        if (!p.planYaml.processes.isEmpty()) {
+            planCode += ("-" + p.planYaml.processes.get(0).code);
+        }
+
+        p.planYaml.planCode = StringUtils.truncate(planCode, 50);
         return p;
     }
 

@@ -29,6 +29,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -74,26 +76,27 @@ public class PlanTopLevelService {
             return result;
         }
 
-        if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams) ) {
+
+        if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams)) {
             result.addErrorMessage("#560.063 both inputResourcePoolCode of Workbook and inputResourceParams are empty");
             return result;
         }
 
-        if (StringUtils.isNotBlank(poolCode) && StringUtils.isNotBlank(inputResourceParams) ) {
+        if (StringUtils.isNotBlank(poolCode) && StringUtils.isNotBlank(inputResourceParams)) {
             result.addErrorMessage("#560.065 both inputResourcePoolCode of Workbook and inputResourceParams aren't empty");
             return result;
         }
 
         // validate the plan
         PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
-        if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
+        if (planValidation.status != EnumsApi.PlanValidateStatus.OK) {
             result.errorMessages = planValidation.errorMessages;
             return result;
         }
 
         PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(result.plan.getId(),
                 StringUtils.isNotBlank(inputResourceParams) ? inputResourceParams : PlanService.asInputResourceParams(poolCode));
-        if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
+        if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             result.addErrorMessage("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
             return result;
         }
@@ -107,7 +110,7 @@ public class PlanTopLevelService {
 
         // validate the plan + the workbook
         planValidation = planService.validateInternal(result.plan);
-        if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
+        if (planValidation.status != EnumsApi.PlanValidateStatus.OK) {
             result.errorMessages = planValidation.errorMessages;
             return result;
         }
@@ -123,7 +126,7 @@ public class PlanTopLevelService {
         if (globals.maxTasksPerPlan < countTasks.numberOfTasks) {
             workbookService.changeValidStatus(producingResult.workbook, false);
             result.addErrorMessage("#560.081 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
-                    "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + countTasks.numberOfTasks);
+                    "Allowed maximum number of tasks: " + globals.maxTasksPerPlan + ", tasks in this workbook:  " + countTasks.numberOfTasks);
             return result;
         }
         workbookService.changeValidStatus(producingResult.workbook, true);
@@ -146,17 +149,15 @@ public class PlanTopLevelService {
                         }
                         return b;
                     } catch (YAMLException e) {
-                        log.error("#560.300 Can't parse Plan params. It's broken or unknown version. Plan id: #{}", o.getId());
-                        log.error("#560.301 Params:\n{}", o.getParams());
-                        log.error("#560.302 Error: {}", e.toString());
+                        log.error("#560.020 Can't parse Plan params. It's broken or unknown version. Plan id: #{}", o.getId());
+                        log.error("#560.025 Params:\n{}", o.getParams());
+                        log.error("#560.030 Error: {}", e.toString());
                         return false;
                     }
                 })
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .peek(o-> {
-//                    PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
-//                    o.setCode(ppy.planYaml.planCode);
                     o.setParams(null);
                 })
                 .collect(Collectors.toList());
@@ -171,7 +172,7 @@ public class PlanTopLevelService {
         final PlanImpl plan = planCache.findById(id);
         if (plan == null) {
             return new PlanApiData.PlanResult(
-                    "#560.001 plan wasn't found, planId: " + id,
+                    "#560.050 plan wasn't found, planId: " + id,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
         return new PlanApiData.PlanResult(plan, plan.getParams());
@@ -180,7 +181,7 @@ public class PlanTopLevelService {
     public PlanApiData.PlanResult validatePlan(Long id) {
         final PlanImpl plan = planCache.findById(id);
         if (plan == null) {
-            return new PlanApiData.PlanResult("#560.002 plan wasn't found, planId: " + id,
+            return new PlanApiData.PlanResult("#560.070 plan wasn't found, planId: " + id,
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
 
@@ -195,33 +196,34 @@ public class PlanTopLevelService {
     @SuppressWarnings("Duplicates")
     public PlanApiData.PlanResult addPlan(String planYamlAsStr) {
         if (StringUtils.isBlank(planYamlAsStr)) {
-            return new PlanApiData.PlanResult("#560.017 plan yaml is empty");
+            return new PlanApiData.PlanResult("#560.090 plan yaml is empty");
         }
 
         PlanParamsYaml ppy;
         try {
             ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsStr);
         } catch (WrongVersionOfYamlFileException e) {
-            return new PlanApiData.PlanResult("#560.017 Error parsing yaml: " + e.getMessage());
+            return new PlanApiData.PlanResult("#560.110 Error parsing yaml: " + e.getMessage());
         }
 
         final String code = ppy.planYaml.planCode;
         if (StringUtils.isBlank(code)) {
-            return new PlanApiData.PlanResult("#560.020 code of plan is empty");
+            return new PlanApiData.PlanResult("#560.130 code of plan is empty");
         }
         Plan f = planRepository.findByCode(code);
         if (f!=null) {
-            return new PlanApiData.PlanResult("#560.033 plan with such code already exists, code: " + code);
+            return new PlanApiData.PlanResult("#560.150 plan with such code already exists, code: " + code);
         }
 
         PlanImpl plan = new PlanImpl();
         plan.createdOn = System.currentTimeMillis();
         plan.code = ppy.planYaml.planCode;
-        plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
+        // we have to preserve planParamsYaml for compatibility with old snippets
+        plan.setParams(planYamlAsStr);
 
         plan = planCache.save(plan);
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy) );
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.params );
         PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
@@ -237,28 +239,29 @@ public class PlanTopLevelService {
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR );
         }
         if (StringUtils.isBlank(planYamlAsStr)) {
-            return new PlanApiData.PlanResult("#560.017 plan yaml is empty");
+            return new PlanApiData.PlanResult("#560.170 plan yaml is empty");
         }
 
         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsStr);
 
         final String code = ppy.planYaml.planCode;
         if (StringUtils.isBlank(code)) {
-            return new PlanApiData.PlanResult("#560.020 code of plan is empty");
+            return new PlanApiData.PlanResult("#560.190 code of plan is empty");
         }
         if (StringUtils.isBlank(code)) {
-            return new PlanApiData.PlanResult("#560.030 plan is empty");
+            return new PlanApiData.PlanResult("#560.210 plan is empty");
         }
-        Plan f = planRepository.findByCode(code);
-        if (f!=null && !f.getId().equals(plan.getId())) {
-            return new PlanApiData.PlanResult("#560.033 plan with such code already exists, code: " + code);
+        Plan p = planRepository.findByCode(code);
+        if (p!=null && !p.getId().equals(plan.getId())) {
+            return new PlanApiData.PlanResult("#560.230 plan with such code already exists, code: " + code);
         }
         plan.code = code;
-        plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
+        // we have to preserve planParamsYaml for compatibility with old snippets
+        plan.setParams(planYamlAsStr);
 
         plan = planCache.save(plan);
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy) );
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.params );
         PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
@@ -269,7 +272,7 @@ public class PlanTopLevelService {
         Plan plan = planCache.findById(id);
         if (plan == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.050 plan wasn't found, planId: " + id);
+                    "#560.250 plan wasn't found, planId: " + id);
         }
         planCache.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -279,7 +282,7 @@ public class PlanTopLevelService {
         PlanImpl plan = planCache.findById(id);
         if (plan == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.055 plan wasn't found, planId: " + id);
+                    "#560.270 plan wasn't found, planId: " + id);
         }
         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.params);
         if (ppy.internalParams==null) {
@@ -297,16 +300,16 @@ public class PlanTopLevelService {
         String originFilename = file.getOriginalFilename();
         if (originFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.120 name of uploaded file is null");
+                    "#560.290 name of uploaded file is null");
         }
         String ext = StrUtils.getExtension(originFilename);
         if (ext==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.130 file without extension, bad filename: " + originFilename);
+                    "#560.310 file without extension, bad filename: " + originFilename);
         }
         if (!StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.140 only '.yml' and '.yaml' files are supported, filename: " + originFilename);
+                    "#560.330 only '.yml' and '.yaml' files are supported, filename: " + originFilename);
         }
 
         final String location = System.getProperty("java.io.tmpdir");
@@ -315,7 +318,7 @@ public class PlanTopLevelService {
             File tempDir = DirUtils.createTempDir("mh-plan-upload-");
             if (tempDir==null || tempDir.isFile()) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#560.150 can't create temporary directory in " + location);
+                        "#560.350 can't create temporary directory in " + location);
             }
             final File planFile = new File(tempDir, "plans" + ext);
             log.debug("Start storing an uploaded plan to disk");
@@ -334,7 +337,7 @@ public class PlanTopLevelService {
         catch (Throwable e) {
             log.error("Error", e);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.05 can't load plans, Error: " + e.toString());
+                    "#560.370 can't load plans, Error: " + e.toString());
         }
     }
 
@@ -353,7 +356,7 @@ public class PlanTopLevelService {
         PlanApiData.WorkbookResult workbook = workbookService.getWorkbookExtended(workbookId);
         if (workbook.isErrorMessages()) {
             return new PlanApiData.TaskProducingResult(
-                    List.of("#560.100 plan wasn't found, workbookId: " + workbookId),
+                    List.of("#560.590 plan wasn't found, workbookId: " + workbookId),
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR, null, null );
 
         }

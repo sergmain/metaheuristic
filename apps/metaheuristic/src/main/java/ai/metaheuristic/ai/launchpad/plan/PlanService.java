@@ -18,28 +18,35 @@ package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
+import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
+import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessValidator;
+import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessValidator;
-import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.launchpad.repositories.*;
+import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.InputResourceParam;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
+import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +54,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
@@ -62,17 +72,22 @@ import static ai.metaheuristic.api.EnumsApi.PlanValidateStatus.PROCESS_VALIDATOR
 @RequiredArgsConstructor
 public class PlanService {
 
+    private final Globals globals;
+    private final ExperimentService experimentService;
     private final BinaryDataService binaryDataService;
 
     private final ExperimentProcessService experimentProcessService;
     private final FileProcessService fileProcessService;
     private final WorkbookRepository workbookRepository;
-    private final WorkbookService workbookService;
+    private final TaskRepository taskRepository;
     private final PlanCache planCache;
     private final PlanRepository planRepository;
 
     private final ExperimentProcessValidator experimentProcessValidator;
     private final FileProcessValidator fileProcessValidator;
+    private final WorkbookService workbookService;
+    private final CommonProcessValidatorService commonProcessValidatorService;
+    private final SnippetRepository snippetRepository;
 
     public Workbook toStarted(Workbook workbook) {
         WorkbookImpl fi = workbookRepository.findById(workbook.getId()).orElse(null);
@@ -146,7 +161,7 @@ public class PlanService {
         synchronized (syncObj) {
             Plan p = planRepository.findByIdForUpdate(plan.getId());
             if (p!=null && p.isValid()!=valid) {
-                p.setValid(true);
+                p.setValid(valid);
                 saveInternal(p);
             }
         }
@@ -245,7 +260,12 @@ public class PlanService {
             else {
                 return PROCESS_VALIDATOR_NOT_FOUND_ERROR;
             }
-            EnumsApi.PlanValidateStatus status = processValidator.validate(plan, process, i==0);
+            EnumsApi.PlanValidateStatus status;
+            status = checkSnippets(plan, process);
+            if (status!=OK) {
+                return status;
+            }
+            status = processValidator.validate(plan, process, i==0);
             if (status!=null) {
                 return status;
             }
@@ -258,6 +278,55 @@ public class PlanService {
             return  EnumsApi.PlanValidateStatus.EXPERIMENT_MUST_BE_LAST_PROCESS_ERROR;
         }
         return EnumsApi.PlanValidateStatus.OK;
+    }
+
+    private EnumsApi.PlanValidateStatus checkSnippets(Plan plan, Process process) {
+        YamlVersion v = YamlForVersioning.getYamlForVersion().load(plan.getParams());
+
+        if (process.snippets!=null) {
+            for (SnippetDefForPlan snDef : process.snippets) {
+                EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
+                if (x != OK) {
+                    return x;
+                }
+            }
+        }
+        if (process.preSnippets!=null) {
+            for (SnippetDefForPlan snDef : process.preSnippets) {
+                EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
+                if (x != OK) {
+                    return x;
+                }
+            }
+        }
+        if (process.postSnippets!=null) {
+            for (SnippetDefForPlan snDef : process.postSnippets) {
+                EnumsApi.PlanValidateStatus x = checkRequiredVersionOfTaskParams(v.getActualVersion(), process, snDef);
+                if (x != OK) {
+                    return x;
+                }
+            }
+        }
+
+        return OK;
+    }
+
+    private EnumsApi.PlanValidateStatus checkRequiredVersionOfTaskParams(int planParamsVersion, Process process, SnippetDefForPlan snDef) {
+        if (StringUtils.isNotBlank(snDef.code)) {
+            Snippet snippet = snippetRepository.findByCode(snDef.code);
+            if (snippet == null) {
+                log.error("#177.030 Pre-snippet wasn't found for code: {}, process: {}", snDef.code, process);
+                return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+            }
+        }
+        else {
+            log.error("#177.060 Pre-snippet wasn't found for code: {}, process: {}", snDef.code, process);
+            return EnumsApi.PlanValidateStatus.SNIPPET_NOT_FOUND_ERROR;
+        }
+        if (!commonProcessValidatorService.checkRequiredVersion(planParamsVersion, snDef)) {
+            return EnumsApi.PlanValidateStatus.VERSION_OF_SNIPPET_IS_TOO_LOW_ERROR;
+        }
+        return OK;
     }
 
     @Data

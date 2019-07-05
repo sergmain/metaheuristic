@@ -15,6 +15,7 @@
  */
 package ai.metaheuristic.ai.launchpad.snippet;
 
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
@@ -52,6 +53,11 @@ public class SnippetService {
     private final SnippetRepository snippetRepository;
     private final SnippetCache snippetCache;
     private final BinaryDataService binaryDataService;
+
+    public boolean isSnippetVersionOk(int requiredVersion, SnippetDefForPlan snDef) {
+        SnippetApiData.SnippetConfig sc = getSnippetConfig(snDef);
+        return sc != null && (sc.skipParams || requiredVersion <= sc.getTaskParamsVersion());
+    }
 
     public static void sortExperimentSnippets(List<Snippet> snippets) {
         snippets.sort((o1, o2) -> {
