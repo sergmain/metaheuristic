@@ -65,7 +65,9 @@ public class Schedulers {
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("Error while markOrderAsProcessed()",e);
                 // TODO 2019-06-11 or just log an error?
-                System.exit(-1);
+//                System.exit(-1);
+                // TODO 2019-07-04 lets just output an error
+
             }
         }
 

@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.LaunchpadService;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
-import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.station.StationServicesHolder;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
@@ -186,8 +186,8 @@ public class CommandProcessor {
 
     private synchronized Protocol.AssignedTask assignTaskToStation(String stationId, boolean isAcceptOnlySigned) {
         Protocol.AssignedTask r = new Protocol.AssignedTask();
-        TaskService.TasksAndAssignToStationResult result =
-            launchpadService.getTaskService().getTaskAndAssignToStation(
+        WorkbookService.TasksAndAssignToStationResult result =
+            launchpadService.getWorkbookService().getTaskAndAssignToStation(
                     Long.parseLong(stationId), isAcceptOnlySigned, null);
 
         if (result.getSimpleTask()!=null) {

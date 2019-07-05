@@ -113,7 +113,7 @@ public abstract class FeatureMethods extends PreparingPlan {
 
         mills = System.currentTimeMillis();
         log.info("Start experimentService.getTaskAndAssignToStation()");
-        TaskService.TasksAndAssignToStationResult sequences = taskService.getTaskAndAssignToStation(
+        WorkbookService.TasksAndAssignToStationResult sequences = workbookService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getWorkbookId());
         log.info("experimentService.getTaskAndAssignToStation() was finished for {}", System.currentTimeMillis() - mills);
 

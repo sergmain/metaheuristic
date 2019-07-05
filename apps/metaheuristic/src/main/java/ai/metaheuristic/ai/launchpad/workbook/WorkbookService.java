@@ -17,9 +17,12 @@
 package ai.metaheuristic.ai.launchpad.workbook;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
@@ -30,18 +33,23 @@ import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.ai.yaml.station_status.StationStatus;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.InputResourceParam;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
-import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.ApplicationEvent;
@@ -49,12 +57,19 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.yaml.snakeyaml.error.YAMLException;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Service
@@ -62,6 +77,8 @@ import java.util.function.Consumer;
 @Slf4j
 @RequiredArgsConstructor
 public class WorkbookService implements ApplicationEventPublisherAware {
+
+    private static final TasksAndAssignToStationResult EMPTY_RESULT = new TasksAndAssignToStationResult(null);
 
     private final Globals globals;
     private final WorkbookRepository workbookRepository;
@@ -74,8 +91,17 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     private final ExperimentRepository experimentRepository;
     private final AtlasService atlasService;
     private final TaskPersistencer taskPersistencer;
+    private final StationCache stationCache;
 
     private ApplicationEventPublisher publisher;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TasksAndAssignToStationResult {
+        Protocol.AssignedTask.Task simpleTask;
+    }
+
 
     private void updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook) {
 
@@ -155,6 +181,25 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     }
 
     public Workbook markOrderAsProcessed(Workbook workbook) {
+
+        if (getCountUnfinishedTasks(workbook.getId())==0) {
+            log.info("Workbook #{} was finished", workbook.getId());
+            experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
+            workbook.setCompletedOn(System.currentTimeMillis());
+            workbook.setExecState(EnumsApi.WorkbookExecState.FINISHED.code);
+            Workbook instance = save(workbook);
+
+            Long experimentId = experimentRepository.findIdByWorkbookId(instance.getId());
+            if (experimentId==null) {
+                log.info("#701.230 Can't store an experiment to atlas, the workbook "+instance.getId()+" doesn't contain an experiment" );
+                return instance;
+            }
+            atlasService.toAtlas(instance.getId(), experimentId);
+            return instance;
+        }
+        return workbook;
+/*
+
         List<Long> anyTask = taskRepository.findAnyNotAssignedWithConcreteOrder(Consts.PAGE_REQUEST_1_REC, workbook.getId(), workbook.getProducingOrder() );
         if (!anyTask.isEmpty()) {
             return workbook;
@@ -189,6 +234,12 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         }
         workbook.setProducingOrder(workbook.getProducingOrder()+1);
         return save(workbook);
+*/
+    }
+
+    private int getCountUnfinishedTasks(Long workbookId) {
+        if (true) throw new NotImplementedException("Not yet");
+        return 0;
     }
 
     public OperationStatusRest workbookTargetExecState(Long workbookId, EnumsApi.WorkbookExecState execState) {
@@ -241,7 +292,6 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         fi.setExecState(EnumsApi.WorkbookExecState.NONE.code);
         fi.setCompletedOn(null);
         fi.setInputResourceParam(inputResourceParam);
-        fi.setProducingOrder(Consts.TASK_ORDER_START_VALUE);
         fi.setValid(true);
 
         workbookService.save(fi);
@@ -340,6 +390,146 @@ public class WorkbookService implements ApplicationEventPublisherAware {
             result.plans.put(workbook.getId(), plan);
         }
         return result;
+    }
+
+    public synchronized TasksAndAssignToStationResult getTaskAndAssignToStation(long stationId, boolean isAcceptOnlySigned, Long workbookId) {
+
+        final Station station = stationCache.findById(stationId);
+        if (station == null) {
+            log.error("#317.47 Station wasn't found for id: {}", stationId);
+            return EMPTY_RESULT;
+        }
+        StationStatus ss;
+        try {
+            ss = StationStatusUtils.to(station.status);
+        } catch (Throwable e) {
+            log.error("#317.32 Error parsing current status of station:\n{}", station.status);
+            log.error("#317.33 Error ", e);
+            return EMPTY_RESULT;
+        }
+        if (ss.taskParamsVersion < TaskParamsYamlUtils.BASE_YAML_UTILS.getDefault().getVersion()) {
+            // this station is blacklisted. ignore it
+            return EMPTY_RESULT;
+        }
+
+        List<Long> anyTaskId = taskRepository.findAnyActiveForStationId(Consts.PAGE_REQUEST_1_REC, stationId);
+        if (!anyTaskId.isEmpty()) {
+            // this station already has active task
+            log.info("#317.34 can't assign any new task to station #{} because this station has active task #{}", stationId, anyTaskId);
+            return EMPTY_RESULT;
+        }
+
+        List<Workbook> workbooks;
+        if (workbookId==null) {
+            workbooks = workbookRepository.findByExecStateOrderByCreatedOnAsc(
+                    EnumsApi.WorkbookExecState.STARTED.code);
+        }
+        else {
+            Workbook workbook = workbookRepository.findById(workbookId).orElse(null);
+            if (workbook==null) {
+                log.warn("#317.39 Workbook wasn't found for id: {}", workbookId);
+                return EMPTY_RESULT;
+            }
+            if (workbook.getExecState()!= EnumsApi.WorkbookExecState.STARTED.code) {
+                log.warn("#317.42 Workbook wasn't started. Current exec state: {}", EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
+                return EMPTY_RESULT;
+            }
+            workbooks = Collections.singletonList(workbook);
+        }
+
+        for (Workbook workbook : workbooks) {
+            TasksAndAssignToStationResult result = findUnassignedTaskAndAssign(workbook, station, isAcceptOnlySigned);
+            if (!result.equals(EMPTY_RESULT)) {
+                return result;
+            }
+        }
+        return EMPTY_RESULT;
+    }
+
+    private final Map<Long, LongHolder> bannedSince = new HashMap<>();
+
+    private TasksAndAssignToStationResult findUnassignedTaskAndAssign(Workbook workbook, Station station, boolean isAcceptOnlySigned) {
+
+        LongHolder longHolder = bannedSince.computeIfAbsent(station.getId(), o -> new LongHolder(0));
+        if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
+            return EMPTY_RESULT;
+        }
+
+        int page = 0;
+        Task resultTask = null;
+        Slice<Task> tasks;
+        while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), workbook.getId())).hasContent()) {
+            for (Task task : tasks) {
+                final TaskParamsYaml taskParamYaml;
+                try {
+                    taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                }
+                catch (YAMLException e) {
+                    log.error("Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
+                    taskPersistencer.finishTaskAsBroken(task.getId());
+                    continue;
+                }
+                catch (Exception e) {
+                    throw new RuntimeException("#317.59 Error", e);
+                }
+
+                StationStatus stationStatus = StationStatusUtils.to(station.status);
+                if (taskParamYaml.taskYaml.snippet.sourcing== EnumsApi.SnippetSourcing.git &&
+                        stationStatus.gitStatusInfo.status!= Enums.GitStatus.installed) {
+                    log.warn("#317.62 Can't assign task #{} to station #{} because this station doesn't correctly installed git, git status info: {}",
+                            station.getId(), task.getId(), stationStatus.gitStatusInfo
+                    );
+                    longHolder.value = System.currentTimeMillis();
+                    continue;
+                }
+
+                if (taskParamYaml.taskYaml.snippet.env!=null) {
+                    String interpreter = stationStatus.env.getEnvs().get(taskParamYaml.taskYaml.snippet.env);
+                    if (interpreter == null) {
+                        log.warn("#317.64 Can't assign task #{} to station #{} because this station doesn't have defined interpreter for snippet's env {}",
+                                station.getId(), task.getId(), taskParamYaml.taskYaml.snippet.env
+                        );
+                        longHolder.value = System.currentTimeMillis();
+                        continue;
+                    }
+                }
+
+                if (isAcceptOnlySigned) {
+                    if (!taskParamYaml.taskYaml.snippet.info.isSigned()) {
+                        log.warn("#317.69 Snippet with code {} wasn't signed", taskParamYaml.taskYaml.snippet.getCode());
+                        continue;
+                    }
+                    resultTask = task;
+                    break;
+                } else {
+                    resultTask = task;
+                    break;
+                }
+            }
+            if (resultTask!=null) {
+                break;
+            }
+        }
+        if (resultTask==null) {
+            return EMPTY_RESULT;
+        }
+
+        // normal way of operation
+        longHolder.value = 0;
+
+        Protocol.AssignedTask.Task assignedTask = new Protocol.AssignedTask.Task();
+        assignedTask.setTaskId(resultTask.getId());
+        assignedTask.setWorkbookId(workbook.getId());
+        assignedTask.setParams(resultTask.getParams());
+
+        resultTask.setAssignedOn(System.currentTimeMillis());
+        resultTask.setStationId(station.getId());
+        resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
+        resultTask.setResultResourceScheduledOn(0);
+
+        taskRepository.saveAndFlush((TaskImpl)resultTask);
+
+        return new TasksAndAssignToStationResult(assignedTask);
     }
 
 

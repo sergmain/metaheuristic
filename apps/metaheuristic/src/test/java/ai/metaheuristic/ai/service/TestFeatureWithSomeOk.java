@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.service;
 
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -46,7 +47,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         getTaskAndAssignToStation_mustBeNewTask();
 
         // this station already got sequences, so don't provide any new
-        TaskService.TasksAndAssignToStationResult sequences = taskService.getTaskAndAssignToStation(
+        WorkbookService.TasksAndAssignToStationResult sequences = workbookService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getWorkbookId());
         assertNotNull(sequences);
         // sequences is empty cos we still didn't finish those sequences
@@ -54,7 +55,7 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
 
         finishCurrentWithError(1);
 
-        TaskService.TasksAndAssignToStationResult sequences1 = taskService.getTaskAndAssignToStation(
+        WorkbookService.TasksAndAssignToStationResult sequences1 = workbookService.getTaskAndAssignToStation(
                 station.getId(), false, experiment.getWorkbookId());
         assertNotNull(sequences1);
 

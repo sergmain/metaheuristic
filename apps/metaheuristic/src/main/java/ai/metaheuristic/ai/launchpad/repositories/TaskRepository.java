@@ -75,8 +75,8 @@ public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
     Stream<Object[]> findByWorkbookId(Long workbookId);
 
     @Transactional
-    @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId and t.order =:taskOrder")
-    Slice<Task> findForAssigning(Pageable pageable, Long workbookId, int taskOrder);
+    @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId ")
+    Slice<Task> findForAssigning(Pageable pageable, Long workbookId);
 
     @Transactional(readOnly = true)
     @Query("SELECT max(t.order) as max_order FROM TaskImpl t where t.workbookId=:workbookId")

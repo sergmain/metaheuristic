@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.service;
 
 import ai.metaheuristic.ai.comm.Protocol;
-import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -80,12 +80,12 @@ public class TestFeatureWithAllError extends FeatureMethods {
     }
 
     public void noNewTask() {
-        TaskService.TasksAndAssignToStationResult task;
-        task = taskService.getTaskAndAssignToStation(station.getId(), false, experiment.getWorkbookId());
+        WorkbookService.TasksAndAssignToStationResult task;
+        task = workbookService.getTaskAndAssignToStation(station.getId(), false, experiment.getWorkbookId());
         assertNotNull(task);
         assertNull(task.getSimpleTask());
 
-        task = taskService.getTaskAndAssignToStation(station.getId() + 1, false, experiment.getWorkbookId());
+        task = workbookService.getTaskAndAssignToStation(station.getId() + 1, false, experiment.getWorkbookId());
         assertNotNull(task);
         assertNull(task.getSimpleTask());
     }
