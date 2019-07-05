@@ -81,7 +81,6 @@ public class PlanParamsYamlUtilsV4
         }
 
         p.planYaml.planCode = StringUtils.truncate(planCode, 50);
-//        p.planYaml.planCode = "plan-" + DateTimeFormatter.ISO_LOCAL_DATE.format(LocalDate.now())+"-" + System.currentTimeMillis();
         return p;
     }
 
