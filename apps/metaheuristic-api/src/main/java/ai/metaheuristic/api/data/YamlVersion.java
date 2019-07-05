@@ -26,4 +26,8 @@ import lombok.Data;
 @Data
 public class YamlVersion {
     public Integer version;
+
+    public int getActualVersion() {
+        return version!=null ? version : 1;
+    }
 }

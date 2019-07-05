@@ -65,6 +65,14 @@ public class TaskAssetPreparer {
             return;
         }
 
+        // delete all orphan tasks
+        stationTaskService.findAll().forEach(task -> {
+            if (EnumsApi.WorkbookExecState.DOESNT_EXIST == currentExecState.getState(task.launchpadUrl, task.workbookId)) {
+                stationTaskService.delete(task.launchpadUrl, task.taskId);
+                log.info("Deleted orphan task #{}", task.taskId);
+            }
+        });
+
         List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(false);
         if (tasks.size()>1) {
             log.warn("#951.01 There is more than one task: {}", tasks.stream().map(StationTask::getTaskId).collect(Collectors.toList()));

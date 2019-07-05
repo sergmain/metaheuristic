@@ -160,11 +160,13 @@ public class PlanTopLevelService {
         PlanImpl plan = new PlanImpl();
         plan.createdOn = System.currentTimeMillis();
         plan.code = ppy.planYaml.planCode;
-        plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
+        // we have to preserve planParamsYaml for compatibility with old snippets
+        plan.setParams(planYamlAsStr);
+//        plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
 
         plan = planCache.save(plan);
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy) );
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.params );
         PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
@@ -192,16 +194,18 @@ public class PlanTopLevelService {
         if (StringUtils.isBlank(code)) {
             return new PlanApiData.PlanResult("#560.030 plan is empty");
         }
-        Plan f = planRepository.findByCode(code);
-        if (f!=null && !f.getId().equals(plan.getId())) {
+        Plan p = planRepository.findByCode(code);
+        if (p!=null && !p.getId().equals(plan.getId())) {
             return new PlanApiData.PlanResult("#560.033 plan with such code already exists, code: " + code);
         }
         plan.code = code;
-        plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
+        // we have to preserve planParamsYaml for compatibility with old snippets
+        plan.setParams(planYamlAsStr);
+//        plan.setParams(PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy));
 
         plan = planCache.save(plan);
 
-        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy) );
+        PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.params );
         PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;

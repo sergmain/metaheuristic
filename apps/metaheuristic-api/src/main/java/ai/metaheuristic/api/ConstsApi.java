@@ -14,13 +14,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.plan;
+package ai.metaheuristic.api;
 
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.launchpad.process.Process;
-import ai.metaheuristic.api.launchpad.Plan;
-
-public interface ProcessValidator {
-    EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst);
+/**
+ * @author Serge
+ * Date: 7/5/2019
+ * Time: 1:45 AM
+ */
+public class ConstsApi {
+    public static final String META_TASK_PARAMS_VERSION = "task-params-version";
 }

@@ -92,9 +92,9 @@ public class StationTaskService {
                                 if (taskYamlFile.exists()) {
                                     try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
                                         StationTask task = StationTaskUtils.to(fis);
-                                        if (task.isDelivered()) {
-                                            return;
-                                        }
+//                                        if (task.isDelivered()) {
+//                                            return;
+//                                        }
                                         getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
 
                                         // fix state of task
@@ -478,6 +478,16 @@ public class StationTaskService {
         synchronized (StationSyncHolder.stationGlobalSync) {
             Collection<StationTask> values = getMapForLaunchpadUrl(launchpadUrl).values();
             return List.copyOf(values);
+        }
+    }
+
+    public List<StationTask> findAll() {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            List<StationTask> list = new ArrayList<>();
+            for (String launchpadUrl : map.keySet()) {
+                list.addAll( getMapForLaunchpadUrl(launchpadUrl).values());
+            }
+            return list;
         }
     }
 

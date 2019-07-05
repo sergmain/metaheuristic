@@ -14,32 +14,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.file_process;
+package ai.metaheuristic.ai.launchpad.plan;
 
-import ai.metaheuristic.ai.launchpad.plan.ProcessValidator;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.process.Process;
+import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-@Service
 @Slf4j
 @Profile("launchpad")
+@Service
 @RequiredArgsConstructor
-public class FileProcessValidator implements ProcessValidator {
+public class CommonProcessValidatorService {
 
-    @Override
-    public EnumsApi.PlanValidateStatus validate(Plan plan, Process process, boolean isFirst) {
-        if (process.getSnippets() == null || process.getSnippets().isEmpty()) {
-            return EnumsApi.PlanValidateStatus.SNIPPET_NOT_DEFINED_ERROR;
+    private final SnippetService snippetService;
+
+    public boolean checkRequiredVersion(int planParamsVersion, SnippetDefForPlan snDef) {
+        int taskParamsYamlVersion = PlanParamsYamlUtils.getRequiredVertionOfTaskParamsYaml(planParamsVersion);
+        boolean ok = snippetService.isSnippetVersionOk(taskParamsYamlVersion, snDef);
+        if (!ok) {
+            log.error("#175.030 Version of snippet {} is too low, required version: {}", snDef.code, taskParamsYamlVersion);
+            return false;
         }
-        if (!process.parallelExec && process.snippets.size()>1) {
-            return EnumsApi.PlanValidateStatus.TOO_MANY_SNIPPET_CODES_ERROR;
-        }
-        return null;
+        return true;
     }
-
 }
