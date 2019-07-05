@@ -265,6 +265,7 @@ public class PlanService {
         public EnumsApi.PlanProducingStatus status;
         public List<String> outputResourceCodes;
         public int numberOfTasks;
+        public List<Long> taskIds = new ArrayList<>();
     }
 
     @Data
@@ -311,14 +312,14 @@ public class PlanService {
         }
     }
 
-    public PlanApiData.TaskProducingResultComplex produceTasks(boolean isPersist, Plan plan, Workbook fi) {
+    public PlanApiData.TaskProducingResultComplex produceTasks(boolean isPersist, Plan plan, Workbook wb) {
 
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
         result.planValidateStatus = EnumsApi.PlanValidateStatus.OK;
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
-        InputResourceParam resourceParams = InputResourceParamUtils.to(fi.getInputResourceParam());
+        InputResourceParam resourceParams = InputResourceParamUtils.to(wb.getInputResourceParam());
         List<SimpleCodeAndStorageUrl> initialInputResourceCodes;
         initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllPoolCodes());
         log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
@@ -351,12 +352,13 @@ public class PlanService {
 
         Monitoring.log("##025", Enums.Monitor.MEMORY);
 
-        result.workbook = fi;
+        result.workbook = wb;
         PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
         result.planYaml = planParams.planYaml;
 
         int idx = Consts.TASK_ORDER_START_VALUE;
         result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
+        List<Long> parentTaskIds = new ArrayList<>();
         for (Process process : result.planYaml.getProcesses()) {
             process.order = idx++;
 
@@ -364,17 +366,21 @@ public class PlanService {
             switch(process.type) {
                 case FILE_PROCESSING:
                     Monitoring.log("##026", Enums.Monitor.MEMORY);
-                    produceTaskResult = fileProcessService.produceTasks(isPersist, plan.getId(), planParams, fi, process, pools);
+                    produceTaskResult = fileProcessService.produceTasks(isPersist, plan.getId(), planParams, wb, process, pools);
                     Monitoring.log("##027", Enums.Monitor.MEMORY);
                     break;
                 case EXPERIMENT:
                     Monitoring.log("##028", Enums.Monitor.MEMORY);
-                    produceTaskResult = experimentProcessService.produceTasks(isPersist, plan.getId(), planParams, fi, process, pools);
+                    produceTaskResult = experimentProcessService.produceTasks(isPersist, plan.getId(), planParams, wb, process, pools);
                     Monitoring.log("##029", Enums.Monitor.MEMORY);
                     break;
                 default:
                     throw new IllegalStateException("#701.200 Unknown process type");
             }
+            workbookService.addNewTasksToGraph(wb, parentTaskIds, produceTaskResult.taskIds);
+            parentTaskIds.clear();
+            parentTaskIds.addAll(produceTaskResult.taskIds);
+
             result.numberOfTasks += produceTaskResult.numberOfTasks;
             if (produceTaskResult.status != EnumsApi.PlanProducingStatus.OK) {
                 result.planProducingStatus = produceTaskResult.status;
@@ -389,7 +395,7 @@ public class PlanService {
             }
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }
-        workbookService.toProduced(isPersist, result, fi);
+        workbookService.toProduced(isPersist, result, wb);
 
         result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
         return result;

@@ -506,24 +506,6 @@ public class ExperimentTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public OperationStatusRest rerunTask(long taskId) {
-        Task task = taskRepository.findById(taskId).orElse(null);
-        if (task == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.280 Can't re-run task "+taskId+", task with such taskId wasn't found");
-        }
-        Workbook workbook = workbookRepository.findById(task.getWorkbookId()).orElse(null);
-        if (workbook == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.290 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
-        }
-
-        Task t = taskPersistencer.resetTask(taskId);
-        return t!=null
-                ? OperationStatusRest.OPERATION_STATUS_OK
-                : new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.300 Can't re-run task #"+taskId+", see log for more information");
-    }
-
     public OperationStatusRest uploadExperiment(MultipartFile file) {
 
         String originFilename = file.getOriginalFilename();

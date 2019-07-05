@@ -26,17 +26,20 @@ import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
@@ -51,6 +54,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class TaskService {
 
     private static final TasksAndAssignToStationResult EMPTY_RESULT = new TasksAndAssignToStationResult(null);
@@ -58,7 +62,15 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final WorkbookRepository workbookRepository;
+    private final WorkbookService workbookService;
     private final StationCache stationCache;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class TasksAndAssignToStationResult {
+        Protocol.AssignedTask.Task simpleTask;
+    }
 
     public List<Long> resourceReceivingChecker(long stationId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
@@ -80,21 +92,11 @@ public class TaskService {
                 }
                 WorkbookImpl workbook = workbookRepository.findById(task.workbookId).orElse(null);
                 if (workbook==null) {
+                    taskPersistencer.finishTaskAsBroken(task.getId());
                     log.warn("#317.11 Workbook for this task was already deleted");
                     return;
                 }
-
-                log.info("#317.17 Task #{} has to be reset, ResendTaskOutputResourceStatus: {}", task.getId(), status );
-                Task result = taskPersistencer.resetTask(task.getId());
-                if (result==null) {
-                    log.error("#317.22 Reset of task {} was failed. See log for more info.", task.getId());
-                    break;
-                }
-
-                if (task.order<workbook.getProducingOrder()) {
-                    workbook.setProducingOrder(task.order);
-                    workbookRepository.saveAndFlush(workbook);
-                }
+                workbookService.updateGraphWithInvalidatingAllChildrenTasks(workbook, task.id);
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
                 Enums.UploadResourceStatus uploadResourceStatus = taskPersistencer.setResultReceived(taskId, true);
@@ -106,20 +108,6 @@ public class TaskService {
                 }
                 break;
         }
-    }
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class TasksAndAssignToStationResult {
-        Protocol.AssignedTask.Task simpleTask;
-    }
-
-    public TaskService(TaskRepository taskRepository, TaskPersistencer taskPersistencer, WorkbookRepository workbookRepository, StationCache stationCache) {
-        this.taskRepository = taskRepository;
-        this.taskPersistencer = taskPersistencer;
-        this.workbookRepository = workbookRepository;
-        this.stationCache = stationCache;
     }
 
     public List<Long> storeAllConsoleResults(List<SimpleTaskExecResult> results) {
@@ -151,9 +139,9 @@ public class TaskService {
                 log.info("\tstatuses: {}", statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()));
                 log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
                 log.info("\tisFound: {}, is expired: {}", isFound, isExpired);
-                Task result = taskPersistencer.resetTask(taskId);
-                if (result==null) {
-                    log.error("#179.10 Resetting of task {} was failed. See log for more info.", taskId);
+                OperationStatusRest result = workbookService.resetTask(taskId);
+                if (result.status== EnumsApi.OperationStatus.ERROR) {
+                    log.error("#179.10 Resetting of task #{} was failed. See log for more info.", taskId);
                 }
             }
         }
@@ -233,7 +221,7 @@ public class TaskService {
                 }
                 catch (YAMLException e) {
                     log.error("Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    taskPersistencer.finishTask(task.getId());
+                    taskPersistencer.finishTaskAsBroken(task.getId());
                     continue;
                 }
                 catch (Exception e) {

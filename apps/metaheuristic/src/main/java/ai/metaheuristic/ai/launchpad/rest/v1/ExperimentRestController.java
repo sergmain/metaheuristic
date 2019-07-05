@@ -17,8 +17,10 @@
 package ai.metaheuristic.ai.launchpad.rest.v1;
 
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -32,13 +34,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Profile("launchpad")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
+@RequiredArgsConstructor
 public class ExperimentRestController {
 
     private final ExperimentTopLevelService experimentTopLevelService;
-
-    public ExperimentRestController(ExperimentTopLevelService experimentTopLevelService) {
-        this.experimentTopLevelService = experimentTopLevelService;
-    }
+    private final WorkbookService workbookService;
 
     @GetMapping("/experiments")
     public ExperimentApiData.ExperimentsResult getExperiments(@PageableDefault(size = 5) Pageable pageable) {
@@ -136,7 +136,7 @@ public class ExperimentRestController {
 
     @PostMapping("/task-rerun/{taskId}")
     public OperationStatusRest rerunTask(@PathVariable long taskId) {
-        return experimentTopLevelService.rerunTask(taskId);
+        return workbookService.resetTask(taskId);
     }
 
     @PostMapping(value = "/experiment-upload-from-file")

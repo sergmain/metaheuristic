@@ -117,15 +117,13 @@ public class TaskPersistencer {
         return null;
     }
 
-    public Task resetTask(long taskId) {
-        log.info("Start resetting task #{}", taskId);
+    public Task resetTask(TaskImpl task) {
+        log.info("Start resetting task #{}", task.getId());
+
+        // TODO 2019-07-04 do we still need this synchronization?
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
-                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
-                    if (task == null) {
-                        return null;
-                    }
                     task.setSnippetExecResults(null);
                     task.setStationId(null);
                     task.setAssignedOn(null);
@@ -137,21 +135,9 @@ public class TaskPersistencer {
                     task.setResultResourceScheduledOn(0);
                     taskRepository.saveAndFlush(task);
 
-                    Workbook workbook = workbookRepository.findById(task.workbookId).orElse(null);
-                    if (workbook != null) {
-                        if (task.order < workbook.getProducingOrder() ||
-                                EnumsApi.WorkbookExecState.toState(workbook.getExecState()) == EnumsApi.WorkbookExecState.FINISHED) {
-                            workbook.setProducingOrder( task.order );
-                            workbook.setExecState( EnumsApi.WorkbookExecState.STARTED.code );
-                            save(workbook);
-                        }
-                    }
-                    else {
-                        log.warn("#307.24 Workbook #{} wasn't found", task.workbookId);
-                    }
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.25 Error while resetting task, taskId: {}, error: {}",  taskId, e.toString());
+                    log.error("#307.25 Error while resetting task, try: {}, taskId: {}, error: {}",  i, task.getId(), e.toString());
                 }
             }
         }
@@ -190,7 +176,7 @@ public class TaskPersistencer {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public void finishTask(Long taskId) {
+    public void finishTaskAsBroken(Long taskId) {
         synchronized (syncObj) {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {

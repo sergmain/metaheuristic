@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
@@ -29,6 +30,7 @@ import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -71,8 +73,44 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     private final TaskRepository taskRepository;
     private final ExperimentRepository experimentRepository;
     private final AtlasService atlasService;
+    private final TaskPersistencer taskPersistencer;
 
     private ApplicationEventPublisher publisher;
+
+    private void updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook) {
+
+    }
+
+    public void updateGraphWithInvalidatingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
+
+    }
+
+    public void addNewTasksToGraph(Workbook wb, List<Long> parentTaskIds, List<Long> taskIds) {
+
+    }
+
+    public OperationStatusRest resetTask(long taskId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.280 Can't re-run task "+taskId+", task with such taskId wasn't found");
+        }
+        WorkbookImpl workbook = workbookRepository.findById(task.getWorkbookId()).orElse(null);
+        if (workbook == null) {
+            taskPersistencer.finishTaskAsBroken(taskId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.290 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
+        }
+
+        Task t = taskPersistencer.resetTask(task);
+        if (t==null) {
+            updateGraphWithInvalidatingAllChildrenTasks(workbook, task.id);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.300 Can't re-run task #"+taskId+", see log for more information");
+        }
+        updateGraphWithResettingAllChildrenTasks(workbook);
+
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
 
     public static class WorkbookDeletionEvent extends ApplicationEvent {
         public long workbookId;

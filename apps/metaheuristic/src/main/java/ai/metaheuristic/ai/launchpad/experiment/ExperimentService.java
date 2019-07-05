@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
+import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
@@ -520,6 +521,8 @@ public class ExperimentService {
     }
 
     @SuppressWarnings("Duplicates")
+    PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
+
     public EnumsApi.PlanProducingStatus produceTasks(
             boolean isPersist, PlanParamsYaml planParams, Workbook workbook, Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
@@ -540,8 +543,6 @@ public class ExperimentService {
         final Map<String, String> map = toMap(epy.experimentYaml.getHyperParams(), epy.experimentYaml.seed);
         final int calcTotalVariants = ExperimentUtils.calcTotalVariants(map);
 
-//        @Query("SELECT f.id, f.resourceCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
-//        List<Object[]> getAsExperimentFeatureSimpleByExperimentId(Long experimentId);
         final List<ExperimentFeature> features = epy.processing.features;
 
         // there is 2 because we have 2 types of snippets - fit and predict
@@ -589,7 +590,6 @@ public class ExperimentService {
 
                 for (HyperParams hyperParams : allHyperParams) {
 
-                    int orderAdd = 0;
                     Task prevTask;
                     Task task = null;
                     for (String snippetCode : experimentSnippets) {
@@ -602,7 +602,6 @@ public class ExperimentService {
                         task = new TaskImpl();
                         task.setParams("");
                         task.setWorkbookId(workbook.getId());
-                        task.setOrder(process.order + (orderAdd++));
                         task.setProcessType(process.type.value);
                         if (isPersist) {
                             taskRepository.saveAndFlush((TaskImpl) task);

@@ -277,13 +277,13 @@
         }
 
         /**
-         * @param {int} id
+         * @param {int} taskId
          */
-        function rerunTask(id) {
+        function rerunTask(taskId) {
             // console.log("Start rerunTask()");
             my_confirm('Do you really want to re-run this task?', 'Re-run task?', "Re-run", function() {
                 console.log("re-run was confirmed.");
-                $.post('/launchpad/task-rerun/' + id, function(status) {
+                $.post('/launchpad/task-rerun/' + taskId, function(status) {
                     // console.log("task-rerun is finished, Status: " + status);
                     if (status===true) {
                         // console.log("task-rerun is finished, status " + status);
@@ -387,7 +387,7 @@
                     <tbody>
                     <tr><td>#Id</td><td  th:text="${feature.id}">#Id</td></tr>
                     <tr><td>Feature ids</td><td th:text="${feature.resourceCodes}">Resource codes</td></tr>
-                    <tr><td>Exec status</td><td th:text="${feature.execStatusAsString()}">Exec status</td></tr>
+                    <tr><td>Exec status</td><td th:text="${feature.execStatusAsString}">Exec status</td></tr>
                     </tbody>
                 </table>
             </td>

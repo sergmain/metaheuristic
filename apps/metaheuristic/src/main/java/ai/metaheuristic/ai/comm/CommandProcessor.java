@@ -121,6 +121,7 @@ public class CommandProcessor {
         return new Command[]{new Protocol.ResendTaskOutputResourceResult(statuses)};
     }
 
+    // processing on launchpad side
     private Command[] processResendTaskOutputResourceResult(Protocol.ResendTaskOutputResourceResult command) {
         for (Protocol.ResendTaskOutputResourceResult.SimpleStatus status : command.statuses) {
             launchpadService.getTaskService().processResendTaskOutputResourceResult(command.getStationId(), status.status, status.taskId);

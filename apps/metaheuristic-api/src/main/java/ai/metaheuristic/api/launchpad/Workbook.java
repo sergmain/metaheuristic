@@ -34,7 +34,7 @@ public interface Workbook {
 
     String getInputResourceParam();
 
-    int getProducingOrder();
+//    int getProducingOrder();
 
     boolean isValid();
 
@@ -52,7 +52,7 @@ public interface Workbook {
 
     void setInputResourceParam(String inputResourceParam);
 
-    void setProducingOrder(int producingOrder);
+//    void setProducingOrder(int producingOrder);
 
     void setValid(boolean valid);
 

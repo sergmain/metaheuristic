@@ -46,12 +46,23 @@ public class WorkbookImpl implements Serializable, Workbook {
     @Column(name = "INPUT_RESOURCE_PARAM")
     public String inputResourceParam;
 
-    @Column(name = "PRODUCING_ORDER")
-    public int producingOrder;
-
     @Column(name = "IS_VALID")
     public boolean valid;
 
     @Column(name = "EXEC_STATE")
     public int execState;
+
+/*
+    // this field will be left only for compatibility
+    @Column(name = "PRODUCING_ORDER")
+    public int producingOrder;
+*/
+
+    public int getProducingOrder() {
+        throw new IllegalStateException("producingOrder isn't used any more");
+    }
+
+    public void setProducingOrder(int producingOrder) {
+        throw new IllegalStateException("producingOrder isn't used any more");
+    }
 }

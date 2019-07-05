@@ -26,6 +26,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
@@ -68,7 +69,10 @@ public class FileProcessService {
                 result.outputResourceCodes.add(outputResourceCode);
                 inputStorageUrls.put(outputResourceCode, process.outputParams);
                 if (isPersist) {
-                    createTaskInternal(planParams, workbook, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
+                    Task t = createTaskInternal(planParams, workbook, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
+                    if (t!=null) {
+                        result.taskIds.add(t.getId());
+                    }
                 }
             }
         }
@@ -79,7 +83,10 @@ public class FileProcessService {
             result.outputResourceCodes.add(outputResourceCode);
             inputStorageUrls.put(outputResourceCode, process.outputParams);
             if (isPersist) {
-                createTaskInternal(planParams, workbook, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
+                Task t = createTaskInternal(planParams, workbook, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
+                if (t!=null) {
+                    result.taskIds.add(t.getId());
+                }
             }
         }
         result.status = EnumsApi.PlanProducingStatus.OK;
@@ -88,7 +95,7 @@ public class FileProcessService {
     }
 
     @SuppressWarnings("Duplicates")
-    private void createTaskInternal(
+    private TaskImpl createTaskInternal(
             PlanParamsYaml planParams, Workbook workbook, Process process,
             String outputResourceCode,
             SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls) {
@@ -115,7 +122,7 @@ public class FileProcessService {
         yaml.taskYaml.snippet = snippetService.getSnippetConfig(snDef);
         if (yaml.taskYaml.snippet==null) {
             log.error("#171.07 Snippet wasn't found for code: {}", snDef.code);
-            return;
+            return null;
         }
         yaml.taskYaml.preSnippets = new ArrayList<>();
         if (process.getPreSnippets()!=null) {
@@ -136,10 +143,11 @@ public class FileProcessService {
 
         TaskImpl task = new TaskImpl();
         task.setWorkbookId(workbook.getId());
-        task.setOrder(process.order);
         task.setParams(taskParams);
         task.setProcessType(process.type.value);
         taskRepository.saveAndFlush(task);
+
+        return task;
     }
 
 }
