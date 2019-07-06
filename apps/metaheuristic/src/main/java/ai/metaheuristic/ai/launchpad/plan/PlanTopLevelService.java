@@ -17,7 +17,7 @@
 package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.exceptions.WrongVersionOfYamlFileException;
+import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;

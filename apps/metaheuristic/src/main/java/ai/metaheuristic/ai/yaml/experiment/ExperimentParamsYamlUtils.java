@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.experiment;
 
-import ai.metaheuristic.ai.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 
 import java.util.Map;

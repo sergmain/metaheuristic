@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.experiment;
+package ai.metaheuristic.commons.exceptions;
 
 /**
  * @author Serge

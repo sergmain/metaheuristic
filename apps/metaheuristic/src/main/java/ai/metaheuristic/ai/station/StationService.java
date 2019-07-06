@@ -32,7 +32,7 @@ import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
-import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.Data;

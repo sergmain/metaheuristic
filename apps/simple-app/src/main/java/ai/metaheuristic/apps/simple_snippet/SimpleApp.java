@@ -49,7 +49,7 @@ public class SimpleApp implements CommandLineRunner {
         Thread.sleep(TimeUnit.SECONDS.toMillis(5));
 
         if (args.length>1 ) {
-            throw new RuntimeException("Just for test");
+            throw new RuntimeException("Just for test an error reporting");
         }
 
         File yamlFile = new File(args[0]);
@@ -60,9 +60,13 @@ public class SimpleApp implements CommandLineRunner {
         Map<String, Object> cfg = yaml.load(config);
         System.out.println("cfg: " + cfg);
 
+        // for taskParamsYamlV2
         //noinspection unchecked
-//        taskYaml = (Map)cfg.get("taskYaml");
-        taskYaml = cfg;
+        taskYaml = (Map)cfg.get("taskYaml");
+
+        // for taskParamsYamlV1
+//        taskYaml = cfg;
+
         System.out.println("taskYaml = " + taskYaml);
 
 

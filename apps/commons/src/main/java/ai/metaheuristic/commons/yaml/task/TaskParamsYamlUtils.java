@@ -13,9 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.yaml.task;
+package ai.metaheuristic.commons.yaml.task;
 
-import ai.metaheuristic.ai.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 
 import java.util.Map;

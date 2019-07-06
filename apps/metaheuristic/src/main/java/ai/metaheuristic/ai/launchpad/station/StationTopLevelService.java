@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
-import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.StationData;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;

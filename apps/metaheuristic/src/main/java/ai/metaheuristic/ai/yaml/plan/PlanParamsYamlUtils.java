@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.plan;
 
-import ai.metaheuristic.ai.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 
 import java.util.Map;

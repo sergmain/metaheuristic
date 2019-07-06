@@ -14,22 +14,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.exceptions;
+package ai.metaheuristic.commons.yaml.versioning;
+
+import org.yaml.snakeyaml.Yaml;
 
 /**
  * @author Serge
- * Date: 7/1/2019
- * Time: 5:33 PM
+ * Date: 6/17/2019
+ * Time: 12:17 AM
  */
-public class WrongVersionOfYamlFileException extends RuntimeException{
-    public WrongVersionOfYamlFileException() {
-    }
+abstract public class AbstractParamsYamlUtils<CurrT, NextT, NextU, PrevT, PrevU, CurrForDownT> {
 
-    public WrongVersionOfYamlFileException(String message) {
-        super(message);
-    }
+    public abstract Yaml getYaml();
 
-    public WrongVersionOfYamlFileException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    public abstract NextT upgradeTo(CurrT yaml);
+
+    public abstract PrevT downgradeTo(CurrForDownT yaml);
+
+    public abstract NextU nextUtil();
+
+    public abstract PrevU prevUtil();
+
+    public abstract String toString(CurrT yaml);
+
+    public abstract CurrT to(String s);
+
+    public abstract int getVersion();
 }
