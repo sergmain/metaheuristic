@@ -43,6 +43,9 @@ public class WorkbookParamsYamlUtilsV2
     @Override
     public WorkbookParamsYaml upgradeTo(WorkbookParamsYamlV2 yaml) {
         WorkbookParamsYaml t = new WorkbookParamsYaml();
+
+        // right now we don't need to convert Graph because if has only one version of structure
+        // so just copying of graph field is Ok
         BeanUtils.copyProperties(yaml.workbookYaml, t.workbookYaml);
         if (yaml.workbookYaml.poolCodes!=null) {
             t.workbookYaml.poolCodes.putAll(yaml.workbookYaml.poolCodes);

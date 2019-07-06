@@ -83,7 +83,6 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     private final Globals globals;
     private final WorkbookRepository workbookRepository;
     private final PlanCache planCache;
-    private final WorkbookService workbookService;
     private final ExperimentService experimentService;
     private final BinaryDataService binaryDataService;
     private final PlanService planService;
@@ -92,6 +91,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     private final AtlasService atlasService;
     private final TaskPersistencer taskPersistencer;
     private final StationCache stationCache;
+    private final WorkbookCache workbookCache;
 
     private ApplicationEventPublisher publisher;
 
@@ -102,7 +102,6 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-
     private void updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
 
     }
@@ -111,7 +110,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     }
 
-    public void addNewTasksToGraph(Workbook wb, List<Long> parentTaskIds, List<Long> taskIds) {
+    public void addNewTasksToGraph(WorkbookImpl wb, List<Long> parentTaskIds, List<Long> taskIds) {
 
     }
 
@@ -121,7 +120,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.280 Can't re-run task "+taskId+", task with such taskId wasn't found");
         }
-        WorkbookImpl workbook = workbookRepository.findById(task.getWorkbookId()).orElse(null);
+        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(task.getWorkbookId());
         if (workbook == null) {
             taskPersistencer.finishTaskAsBroken(taskId);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -250,14 +249,14 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
         final Workbook workbook = result.workbook;
         final Plan plan = result.plan;
-        if (plan ==null || workbook ==null) {
+        if (plan==null || workbook ==null) {
             throw new IllegalStateException("#701.110 Error: (result.plan==null || result.workbook==null)");
         }
 
         workbook.setExecState(execState.code);
         save(workbook);
 
-        planService.setLockedTo(plan, true);
+        planService.setLockedTo(plan.getId(), true);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -286,17 +285,17 @@ public class WorkbookService implements ApplicationEventPublisherAware {
             return result;
         }
 
-        Workbook fi = new WorkbookImpl();
-        fi.setPlanId(planId);
-        fi.setCreatedOn(System.currentTimeMillis());
-        fi.setExecState(EnumsApi.WorkbookExecState.NONE.code);
-        fi.setCompletedOn(null);
-        fi.setInputResourceParam(inputResourceParam);
-        fi.setValid(true);
+        Workbook wb = new WorkbookImpl();
+        wb.setPlanId(planId);
+        wb.setCreatedOn(System.currentTimeMillis());
+        wb.setExecState(EnumsApi.WorkbookExecState.NONE.code);
+        wb.setCompletedOn(null);
+        wb.setParams(inputResourceParam);
+        wb.setValid(true);
 
-        workbookService.save(fi);
+        save(wb);
         result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
-        result.workbook = fi;
+        result.workbook = wb;
 
         return result;
     }
@@ -313,7 +312,11 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         save(fi);
     }
 
-    public void changeValidStatus(Workbook workbook, boolean status) {
+    public void changeValidStatus(Long workbookId, boolean status) {
+        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+        if (workbook==null) {
+            return;
+        }
         workbook.setValid(status);
         save(workbook);
     }
@@ -326,24 +329,21 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public Workbook save(Workbook workbook) {
         if (workbook instanceof WorkbookImpl) {
-            return workbookRepository.saveAndFlush((WorkbookImpl)workbook);
+            return workbookCache.save((WorkbookImpl)workbook);
         }
         else {
             throw new NotImplementedException("#701.130 Need to implement");
         }
     }
 
-    public void deleteWorkbook(Long workbookId, long planId) {
+    public void deleteWorkbook(Long workbookId) {
         experimentService.resetExperiment(workbookId);
-        workbookService.deleteById(workbookId);
         binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
-        Workbook workbook = workbookRepository.findFirstByPlanId(planId);
-        if (workbook==null) {
-            Plan p = planCache.findById(planId);
-            if (p!=null) {
-                planService.setLockedTo(p, false);
-            }
+        Workbook workbook = workbookCache.findById(workbookId);
+        if (workbook!=null && workbook.getPlanId()!=null) {
+            planService.setLockedTo(workbook.getPlanId(), false);
         }
+        deleteById(workbookId);
     }
 
     public PlanApiData.WorkbookResult getWorkbookExtended(Long workbookId) {
@@ -361,7 +361,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
         if (!plan.getId().equals(workbook.getPlanId())) {
             workbook.setValid(false);
-            workbookRepository.saveAndFlush(workbook);
+            workbookRepository.save(workbook);
             return new PlanApiData.WorkbookResult("#701.080 planId doesn't match to workbook.planId, planId: " + workbook.getPlanId()+", workbook.planId: " + workbook.getPlanId());
         }
 
@@ -372,7 +372,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public void deleteById(long workbookId) {
         publisher.publishEvent( new WorkbookDeletionEvent(this, workbookId) );
-        workbookRepository.deleteById(workbookId);
+        workbookCache.deleteById(workbookId);
     }
 
     public PlanApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDescResult(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {

@@ -16,39 +16,24 @@
 
 package ai.metaheuristic.ai.launchpad.task;
 
-import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.comm.Protocol;
-import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
-import ai.metaheuristic.ai.launchpad.station.StationCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.ai.utils.holders.LongHolder;
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
-import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,9 +44,8 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final WorkbookRepository workbookRepository;
     private final WorkbookService workbookService;
-    private final StationCache stationCache;
+    private final WorkbookCache workbookCache;
 
     public List<Long> resourceReceivingChecker(long stationId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
@@ -81,13 +65,13 @@ public class TaskService {
                     log.warn("#317.05 Task obsolete and was already deleted");
                     return;
                 }
-                WorkbookImpl workbook = workbookRepository.findById(task.workbookId).orElse(null);
+                WorkbookImpl workbook = workbookCache.findById(task.workbookId);
                 if (workbook==null) {
                     taskPersistencer.finishTaskAsBroken(task.getId());
                     log.warn("#317.11 Workbook for this task was already deleted");
                     return;
                 }
-                workbookService.updateGraphWithInvalidatingAllChildrenTasks(workbook, task.id);
+                workbookService.updateGraphWithInvalidatingAllChildrenTasks(workbook.id, task.id);
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
                 Enums.UploadResourceStatus uploadResourceStatus = taskPersistencer.setResultReceived(taskId, true);

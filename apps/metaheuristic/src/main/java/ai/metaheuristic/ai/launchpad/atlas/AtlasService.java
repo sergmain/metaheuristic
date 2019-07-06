@@ -18,18 +18,20 @@ package ai.metaheuristic.ai.launchpad.atlas;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.beans.*;
+import ai.metaheuristic.ai.launchpad.beans.Atlas;
+import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
-import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
-import ai.metaheuristic.api.data.BaseDataClass;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
-import ai.metaheuristic.ai.launchpad.repositories.*;
+import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.BaseDataClass;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.launchpad.BinaryData;
 import ai.metaheuristic.api.launchpad.Plan;
@@ -71,11 +73,11 @@ public class AtlasService {
     private final Globals globals;
     private final BinaryDataService binaryDataService;
     private final PlanCache planCache;
-    private final WorkbookRepository workbookRepository;
     private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
     private final ConsoleFormAtlasService consoleFormAtlasService;
     private final AtlasRepository atlasRepository;
+    private final WorkbookCache workbookCache;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -159,7 +161,7 @@ public class AtlasService {
             return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.02 can't find experiment for id: " + experimentId);
         }
-        Workbook workbook = workbookRepository.findById(experiment.workbookId).orElse(null);
+        Workbook workbook = workbookCache.findById(experiment.workbookId);
         if (workbook==null) {
             return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.05 can't find workbook for this experiment");

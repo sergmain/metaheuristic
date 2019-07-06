@@ -32,7 +32,7 @@ public interface Workbook {
 
     Long getCompletedOn();
 
-    String getInputResourceParam();
+    String getParams();
 
 //    int getProducingOrder();
 
@@ -50,7 +50,7 @@ public interface Workbook {
 
     void setCompletedOn(Long completedOn);
 
-    void setInputResourceParam(String inputResourceParam);
+    void setParams(String params);
 
 //    void setProducingOrder(int producingOrder);
 

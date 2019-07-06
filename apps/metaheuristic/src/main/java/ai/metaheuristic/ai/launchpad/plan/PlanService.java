@@ -121,7 +121,7 @@ public class PlanService {
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
-            log.info("#701.030 Producing tasks for plan.code: {}, input resource pool: \n{}",plan.code, workbook.inputResourceParam);
+            log.info("#701.030 Producing tasks for plan.code: {}, input resource pool: \n{}",plan.code, workbook.params);
             produceAllTasks(true, plan, workbook);
             Monitoring.log("##022", Enums.Monitor.MEMORY);
         }
@@ -165,9 +165,9 @@ public class PlanService {
         }
     }
 
-    public void setLockedTo(Plan plan, boolean locked) {
+    public void setLockedTo(Long planId, boolean locked) {
         synchronized (syncObj) {
-            Plan p = planRepository.findByIdForUpdate(plan.getId());
+            Plan p = planRepository.findByIdForUpdate(planId);
             if (p!=null && p.isLocked()!=locked) {
                 p.setLocked(locked);
                 saveInternal(p);
@@ -379,14 +379,14 @@ public class PlanService {
         }
     }
 
-    public PlanApiData.TaskProducingResultComplex produceTasks(boolean isPersist, Plan plan, Workbook wb) {
+    public PlanApiData.TaskProducingResultComplex produceTasks(boolean isPersist, Plan plan, Workbook w1b) {
 
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
         result.planValidateStatus = EnumsApi.PlanValidateStatus.OK;
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
-        WorkbookParamsYaml resourceParams = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(wb.getInputResourceParam());
+        WorkbookParamsYaml resourceParams = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(wb.getParams());
         List<SimpleCodeAndStorageUrl> initialInputResourceCodes;
         initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllPoolCodes());
         log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );

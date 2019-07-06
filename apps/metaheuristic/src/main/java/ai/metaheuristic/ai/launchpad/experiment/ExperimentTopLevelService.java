@@ -17,15 +17,13 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
-import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.snippet.SnippetCode;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
@@ -39,6 +37,7 @@ import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
@@ -77,8 +76,7 @@ public class ExperimentTopLevelService {
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
     private final TaskRepository taskRepository;
-    private final WorkbookRepository workbookRepository;
-    private final TaskPersistencer taskPersistencer;
+    private final WorkbookCache workbookCache;
 
     private final ExperimentCache experimentCache;
     private final ExperimentService experimentService;
@@ -175,7 +173,7 @@ public class ExperimentTopLevelService {
         if (experiment.getWorkbookId() == null) {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.070 experiment wasn't startet yet, experimentId: " + id);
         }
-        Workbook workbook = workbookRepository.findById(experiment.getWorkbookId()).orElse(null);
+        Workbook workbook = workbookCache.findById(experiment.getWorkbookId());
         if (workbook == null) {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to workbook, experimentId: " + id);
         }
@@ -203,6 +201,7 @@ public class ExperimentTopLevelService {
         return result;
     }
 
+    @SuppressWarnings("RedundantIfStatement")
     public ExperimentApiData.ExperimentsEditResult editExperiment(@PathVariable Long id) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {

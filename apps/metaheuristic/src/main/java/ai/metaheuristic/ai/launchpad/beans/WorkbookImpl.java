@@ -15,7 +15,12 @@
  */
 package ai.metaheuristic.ai.launchpad.beans;
 
+import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Workbook;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -44,7 +49,7 @@ public class WorkbookImpl implements Serializable, Workbook {
     public Long completedOn;
 
     @Column(name = "INPUT_RESOURCE_PARAM")
-    public String inputResourceParam;
+    public String params;
 
     @Column(name = "IS_VALID")
     public boolean valid;
@@ -64,5 +69,29 @@ public class WorkbookImpl implements Serializable, Workbook {
 
     public void setProducingOrder(int producingOrder) {
         throw new IllegalStateException("producingOrder isn't used any more");
+    }
+
+    @Transient
+    @JsonIgnore
+    private WorkbookParamsYaml wpy = null;
+
+    @JsonIgnore
+    public WorkbookParamsYaml getWorkbookParamsYaml() {
+
+        if (wpy ==null) {
+            synchronized (this) {
+                if (wpy ==null) {
+                    //noinspection UnnecessaryLocalVariable
+                    WorkbookParamsYaml temp = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    wpy = temp;
+                }
+            }
+        }
+        return wpy;
+    }
+
+    @JsonIgnore
+    public void updateParams(WorkbookParamsYaml wpy) {
+        params = WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy);
     }
 }

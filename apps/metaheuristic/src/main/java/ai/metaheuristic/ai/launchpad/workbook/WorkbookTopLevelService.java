@@ -80,7 +80,7 @@ public class WorkbookTopLevelService {
         if (fi==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.084 Workbook wasn't found, workbookId: " + workbookId );
         }
-        workbookService.deleteWorkbook(workbookId, fi.getPlanId());
+        workbookService.deleteWorkbook(workbookId);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

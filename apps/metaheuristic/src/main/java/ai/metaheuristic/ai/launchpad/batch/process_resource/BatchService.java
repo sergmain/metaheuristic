@@ -360,7 +360,7 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            String mainDocumentPoolCode = getMainDocumentPoolCode(wb.getInputResourceParam());
+            String mainDocumentPoolCode = getMainDocumentPoolCode(wb.getParams());
 
             final String fullMainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
             if (fullMainDocument == null) {
@@ -547,7 +547,7 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            String mainDocumentPoolCode = getMainDocumentPoolCode(wb.getInputResourceParam());
+            String mainDocumentPoolCode = getMainDocumentPoolCode(wb.getParams());
 
             final String fullMainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
             if (fullMainDocument == null) {

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.data.workbook;
 
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
@@ -36,14 +37,14 @@ public class WorkbookParamsYaml implements BaseParams {
     }
 
     @Data
-    public static class TaskGraph {
-        public Map<String, List<String>> poolCodes = new HashMap<>();
-
-        public boolean preservePoolNames;
+    public static class TaskVertex {
+        public Long taskId;
+        public EnumsApi.TaskExecState execState;
     }
 
     public final int version = 2;
     public WorkbookYaml workbookYaml = new WorkbookYaml();
+    public String graph;
 
     @Override
     public boolean checkIntegrity() {

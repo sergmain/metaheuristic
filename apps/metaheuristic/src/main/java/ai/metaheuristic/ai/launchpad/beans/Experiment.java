@@ -58,6 +58,7 @@ public class Experiment implements Serializable {
     public String params;
 
     @Transient
+    @JsonIgnore
     private ExperimentParamsYaml epy = null;
 
     @JsonIgnore
@@ -75,6 +76,7 @@ public class Experiment implements Serializable {
         return epy;
     }
 
+    @JsonIgnore
     public void updateParams(ExperimentParamsYaml epy) {
         params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
     }

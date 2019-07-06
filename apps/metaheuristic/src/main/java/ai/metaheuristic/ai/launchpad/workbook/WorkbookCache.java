@@ -14,13 +14,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.station;
+package ai.metaheuristic.ai.launchpad.workbook;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Station;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.api.launchpad.Workbook;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
@@ -36,61 +39,58 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("launchpad")
 @Slf4j
-public class StationCache {
+@RequiredArgsConstructor
+public class WorkbookCache {
 
-    private final StationsRepository stationsRepository;
+    private final WorkbookRepository workbookRepository;
 
-    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, allEntries = true)
+    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, allEntries = true)
     public void clearCache() {
     }
 
-    public StationCache(StationsRepository stationsRepository) {
-        this.stationsRepository = stationsRepository;
-    }
-
-    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#result.id")
-    public Station save(Station station) {
-        if (station==null) {
+    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#result.id")
+    public WorkbookImpl save(WorkbookImpl workbook) {
+        if (workbook==null) {
             return null;
         }
-        log.info("#457.010 save station, id: #{}, station: {}", station.id, station);
-        return stationsRepository.saveAndFlush(station);
+        log.info("#461.010 save workbook, id: #{}, workbook: {}", workbook.id, workbook);
+        return workbookRepository.save(workbook);
     }
 
-    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#station.id")
-    public void delete(Station station) {
+    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#workbook.id")
+    public void delete(WorkbookImpl workbook) {
         try {
-            stationsRepository.delete(station);
+            workbookRepository.delete(workbook);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#457.030 Error deleting of station by object", e);
+            log.error("#457.030 Error deleting of workbook by object", e);
         }
     }
 
-    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#id")
+    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#id")
     public void evictById(Long id) {
         //
     }
 
-    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#stationId")
-    public void delete(Long stationId) {
+    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#workbookId")
+    public void delete(Long workbookId) {
         try {
-            stationsRepository.deleteById(stationId);
+            workbookRepository.deleteById(workbookId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#457.050 Error deleting of station by id", e);
+            log.error("#457.050 Error deleting of workbook by id", e);
         }
     }
 
-    @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#stationId")
+    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#stationId")
     public void deleteById(Long stationId) {
         try {
-            stationsRepository.deleteById(stationId);
+            workbookRepository.deleteById(stationId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#457.070 Error deleting of station by id", e);
+            log.error("#457.070 Error deleting of workbook by id", e);
         }
     }
 
-    @Cacheable(cacheNames = {Consts.STATIONS_CACHE}, unless="#result==null")
-    public Station findById(Long id) {
-        return stationsRepository.findById(id).orElse(null);
+    @Cacheable(cacheNames = {Consts.WORKBOOK_CACHE}, unless="#result==null")
+    public WorkbookImpl findById(Long id) {
+        return workbookRepository.findById(id).orElse(null);
     }
 }

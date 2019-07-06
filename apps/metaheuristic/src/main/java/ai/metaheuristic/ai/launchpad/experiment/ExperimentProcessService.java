@@ -91,7 +91,7 @@ public class ExperimentProcessService {
 
         List<String> features;
         if (meta==null) {
-            WorkbookParamsYaml resourceParams = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(workbook.getInputResourceParam());
+            WorkbookParamsYaml resourceParams = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(workbook.getParams());
             List<String> list = resourceParams.workbookYaml.getPoolCodes().get(FEATURE_POOL_CODE_TYPE);
             if (CollectionUtils.isEmpty(list)) {
                 result.status = EnumsApi.PlanProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;

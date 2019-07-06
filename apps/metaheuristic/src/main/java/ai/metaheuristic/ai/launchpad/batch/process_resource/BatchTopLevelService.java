@@ -249,7 +249,7 @@ public class BatchTopLevelService {
             if (wb == null) {
                 continue;
             }
-            workbookService.deleteWorkbook(wb.getId(), wb.getPlanId());
+            workbookService.deleteWorkbook(wb.getId());
         }
         batchWorkbookRepository.deleteByBatchId(batch.id);
         batchCache.deleteById(batch.id);
@@ -382,10 +382,10 @@ public class BatchTopLevelService {
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
             throw new BatchResourceProcessingException("#995.190 Error creating workbook: " + producingResult.planProducingStatus);
         }
-        BatchWorkbook bfi = new BatchWorkbook();
-        bfi.batchId=batch.id;
-        bfi.workbookId=producingResult.workbook.getId();
-        batchWorkbookRepository.saveAndFlush(bfi);
+        BatchWorkbook bw = new BatchWorkbook();
+        bw.batchId=batch.id;
+        bw.workbookId=producingResult.workbook.getId();
+        batchWorkbookRepository.saveAndFlush(bw);
 
         // ugly work-around on ObjectOptimisticLockingFailureException, StaleObjectStateException
         Long planId = plan.getId();
@@ -406,12 +406,12 @@ public class BatchTopLevelService {
         }
 
         if (globals.maxTasksPerPlan < countTasks.numberOfTasks) {
-            workbookService.changeValidStatus(producingResult.workbook, false);
+            workbookService.changeValidStatus(producingResult.workbook.getId(), false);
             throw new BatchResourceProcessingException(
                     "#995.220 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                             "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + countTasks.numberOfTasks);
         }
-        workbookService.changeValidStatus(producingResult.workbook, true);
+        workbookService.changeValidStatus(producingResult.workbook.getId(), true);
 
         // start producing new tasks
         OperationStatusRest operationStatus = workbookService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.PRODUCING);
