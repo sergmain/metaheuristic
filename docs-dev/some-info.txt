@@ -62,3 +62,10 @@ Framework for working with graph
     https://jgrapht.org/
     https://jgrapht.org/guide/UserOverview
 
+Angular lib for graph
+    https://github.com/swimlane/ngx-graph
+    https://swimlane.github.io/ngx-graph/
+
+pure JavaScript
+    http://js.cytoscape.org/#introduction/about
+
