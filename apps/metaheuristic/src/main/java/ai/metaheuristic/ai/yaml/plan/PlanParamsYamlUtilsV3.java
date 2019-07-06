@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai.yaml.plan;
 
-import ai.metaheuristic.ai.yaml.versioning.AbstractParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV2;

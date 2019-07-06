@@ -15,7 +15,7 @@
  */
 package ai.metaheuristic.ai.yaml.task_params_new;
 
-import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import org.apache.commons.io.IOUtils;
 import org.junit.Test;

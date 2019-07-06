@@ -14,9 +14,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.versioning;
+package ai.metaheuristic.commons.yaml.versioning;
 
-import ai.metaheuristic.ai.exceptions.WrongVersionOfYamlFileException;
+import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.api.data.BaseParams;
 import ai.metaheuristic.api.data.YamlVersion;
 import org.yaml.snakeyaml.error.YAMLException;

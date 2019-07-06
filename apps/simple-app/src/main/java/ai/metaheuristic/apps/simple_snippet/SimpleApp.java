@@ -15,18 +15,18 @@
  */
 package ai.metaheuristic.apps.simple_snippet;
 
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.apache.commons.io.FileUtils;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
@@ -36,7 +36,7 @@ public class SimpleApp implements CommandLineRunner {
         SpringApplication.run(SimpleApp.class, args);
     }
 
-    private Map<String, Object> taskYaml;
+    private TaskParamsYaml params;
 
     @Override
     public void run(String... args) throws IOException, InterruptedException {
@@ -46,25 +46,19 @@ public class SimpleApp implements CommandLineRunner {
         }
         System.out.println("args = " + Arrays.toString(args));
         // sleep for testing timeoutBeforeTerminate
+        System.out.println("Start timeout...");
         Thread.sleep(TimeUnit.SECONDS.toMillis(5));
+        System.out.println("Timeout ended.");
 
         if (args.length>1 ) {
-            throw new RuntimeException("Just for test");
+            throw new RuntimeException("Just for test an error reporting");
         }
 
         File yamlFile = new File(args[0]);
         String config = FileUtils.readFileToString(yamlFile, "utf-8");
         System.out.println("Yaml config file:\n"+config);
 
-        Yaml yaml = new Yaml();
-        Map<String, Object> cfg = yaml.load(config);
-        System.out.println("cfg: " + cfg);
-
-        //noinspection unchecked
-//        taskYaml = (Map)cfg.get("taskYaml");
-        taskYaml = cfg;
-        System.out.println("taskYaml = " + taskYaml);
-
+        params = TaskParamsYamlUtils.BASE_YAML_UTILS.to(config);
 
         String inputFile = getInputFile();
         System.out.println("input file: " + inputFile);
@@ -75,15 +69,12 @@ public class SimpleApp implements CommandLineRunner {
     }
 
     public String getOutputFile() {
-        return ""+taskYaml.get("outputResourceAbsolutePath");
+        return params.taskYaml.outputResourceAbsolutePath;
     }
 
     public String getInputFile() {
 
-        @SuppressWarnings("unchecked")
-        Map<String, List<String>> inputResourceCodes = (Map)taskYaml.get("inputResourceAbsolutePaths");
-
-        Collection<List<String>> values = inputResourceCodes.values();
+        Collection<List<String>> values = params.taskYaml.inputResourceAbsolutePaths.values();
         if (values.isEmpty()) {
             throw new IllegalStateException("inputResourceAbsolutePaths is empty");
         }

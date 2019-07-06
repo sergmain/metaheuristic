@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.task;
+package ai.metaheuristic.commons.yaml.task;
 
-import ai.metaheuristic.ai.launchpad.experiment.DowngradeNotSupportedException;
-import ai.metaheuristic.ai.yaml.versioning.AbstractParamsYamlUtils;
+import ai.metaheuristic.commons.exceptions.DowngradeNotSupportedException;
+import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV1;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV2;
