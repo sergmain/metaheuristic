@@ -9,17 +9,17 @@ import { MatDialog } from '@angular/material';
 import { ConfirmationDialogMethod } from '@app/views/app-dialog-confirmation/app-dialog-confirmation.component';
 
 @Component({
-// tslint:disable-next-line: component-selector
-  selector: 'archive-plans',
-  templateUrl: './archive-plans.component.pug',
-  styleUrls: ['./archive-plans.component.scss']
+    // tslint:disable-next-line: component-selector
+    selector: 'archive-plans',
+    templateUrl: './archive-plans.component.pug',
+    styleUrls: ['./archive-plans.component.scss']
 })
 export class ArchivePlansComponent implements OnInit {
     readonly states = LoadStates;
     currentStates = new Set();
     response: PlansResponse.Response;
     dataSource = new MatTableDataSource < PlansResponse.Plan > ([]);
-    columnsToDisplay = ['id', 'code', 'createdOn', 'valid',  'bts'];
+    columnsToDisplay = ['id', 'code', 'createdOn', 'valid', 'bts'];
     deletedPlans: (PlansResponse.Plan)[] = [];
 
     @ViewChild('nextTable') nextTable: MatButton;
@@ -59,8 +59,10 @@ export class ArchivePlansComponent implements OnInit {
     }
 
     @ConfirmationDialogMethod({
-        resolveTitle: 'Delete',
-        rejectTitle: 'Cancel'
+        question: (plan: PlansResponse.Plan): string =>
+            `Do you want to delete Plan #${plan.id}`,
+        rejectTitle: 'Cancel',
+        resolveTitle: 'Delete'
     })
     delete(plan: PlansResponse.Plan) {
         this.deletedPlans.push(plan);

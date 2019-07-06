@@ -2,7 +2,7 @@ import { Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { BatchService } from '@app/services/batch/batch.service';
 import { MatTableDataSource, MatButton } from '@angular/material';
 import { LoadStates } from '@app/enums/LoadStates';
-import { BatchesResponse } from '@app/models';
+import { BatchesResponse, Plan } from '@app/models';
 import { CtTableComponent } from '@app/custom-tags/ct-table/ct-table.component';
 import { Subscription } from 'rxjs';
 import { MatDialog } from '@angular/material';
@@ -59,10 +59,14 @@ export class BatchComponent implements OnInit {
             );
     }
 
-    @ConfirmationDialogMethod({
-        rejectTitle: 'Cancel',
-        resolveTitle: 'Delete'
-    })
+    // @ConfirmationDialogMethod({
+    //     question: (plan: Plan): string => {
+    //         console.log(plan)
+    //         return `Do you want to delete Plan #`;
+    //     },
+    //     rejectTitle: 'Cancel',
+    //     resolveTitle: 'Delete'
+    // })
     delete() {
 
     }

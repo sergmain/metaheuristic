@@ -1,12 +1,11 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { PlansService } from '@app/services/plans/plans.service';
-import { MatTableDataSource, MatButton } from '@angular/material';
+import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
+import { CtTableComponent } from '@app/custom-tags/ct-table/ct-table.component';
 import { LoadStates } from '@app/enums/LoadStates';
 import { PlansResponse } from '@app/models';
-import { CtTableComponent } from '@app/custom-tags/ct-table/ct-table.component';
-import { Subscription } from 'rxjs';
-import { MatDialog } from '@angular/material';
+import { PlansService } from '@app/services/plans/plans.service';
 import { ConfirmationDialogMethod } from '@app/views/app-dialog-confirmation/app-dialog-confirmation.component';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'plans-view',
@@ -20,7 +19,8 @@ export class PlansComponent implements OnInit {
     response: PlansResponse.Response;
     dataSource = new MatTableDataSource < PlansResponse.Plan > ([]);
     columnsToDisplay = ['id', 'code', 'createdOn', 'valid', 'bts'];
-    deletedPlans: (PlansResponse.Plan)[] = [];
+    deletedPlans: PlansResponse.Plan[] = [];
+    archivedPlans: PlansResponse.Plan[] = [];
 
     @ViewChild('nextTable') nextTable: MatButton;
     @ViewChild('prevTable') prevTable: MatButton;
@@ -59,8 +59,10 @@ export class PlansComponent implements OnInit {
     }
 
     @ConfirmationDialogMethod({
-        resolveTitle: 'Delete',
-        rejectTitle: 'Cancel'
+        question: (plan: PlansResponse.Plan): string =>
+            `Do you want to delete Plan\xa0#${plan.id}`,
+        rejectTitle: 'Cancel',
+        resolveTitle: 'Delete'
     })
     delete(plan: PlansResponse.Plan) {
         this.deletedPlans.push(plan);
@@ -78,11 +80,23 @@ export class PlansComponent implements OnInit {
     }
 
     @ConfirmationDialogMethod({
-        resolveTitle: 'Archive',
-        rejectTitle: 'Cancel'
+        question: (plan: PlansResponse.Plan): string =>
+            `Do you want to archive Plan\xa0#${plan.id}`,
+        rejectTitle: 'Cancel',
+        resolveTitle: 'Archive'
     })
+
     archive(plan: PlansResponse.Plan) {
-        console.log('archive');
+        this.archivedPlans.push(plan);
+        const subscribe: Subscription = this.planService.plan
+            .archive(plan.id)
+            .subscribe(
+                () => {},
+                () => {},
+                () => {
+                    subscribe.unsubscribe();
+                },
+            );
     }
 
     next() {

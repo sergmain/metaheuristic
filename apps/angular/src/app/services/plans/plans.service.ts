@@ -12,67 +12,76 @@ export class PlansService {
     ) {}
 
     plans: any = {
-        get: data => this.http.get(urls.plans.get(data))
+        get: (data: any): Observable < object > => this.http.get(urls.plans.get(data))
     };
 
     plan: any = {
         get: (id: string): Observable < object > => this.http.get(urls.plan.get(id)),
         update: (id: number, code: string, params: string): Observable < object > => {
-            return this.http.post(urls.plan.edit(), {
-                id,
-                code,
-                params
-            });
+            return this.http.post(
+                urls.plan.edit(), {
+                    id,
+                    code,
+                    params
+                });
         },
 
         validate: (id: string | number): Observable < object > => {
-            return this.http.get(urls.plan.validate(id))
+            return this.http.get(urls.plan.validate(id));
         },
 
-        delete: (id: string | number): Observable < object > => {
-            return this.http.post(urls.plan.delete({
-                id
-            }), {
-                id
-            });
-        },
+        delete: (
+                id: string | number
+            ): Observable < object > =>
+            this.http.post(urls.plan.delete({ id }), { id }),
 
-        add: (code: string, params: string): Observable < PlanResponse.Response > => {
-            return this.http.post < PlanResponse.Response > (urls.plan.add(), {
-                code,
-                params
-            });
-        }
+        archive: (id: string | number): Observable < object > =>
+            this.http.post(urls.plan.archive({ id }), { id }),
+
+        add: (planYaml: string): Observable < PlanResponse.Response > =>
+            this.http.post < PlanResponse.Response > (urls.plan.add({ planYaml }), {})
     };
 
     workbooks: any = {
-        get: (planId, page): Observable < object > => {
-            return this.http.get(urls.workbooks.get(planId, {
-                page
-            }));
-        }
+        get: (
+                planId: string | number,
+                page: any
+            ): Observable < object > =>
+            this.http.get(urls.workbooks.get(planId, { page }))
+
     };
 
     workbook: any = {
-        get: () => {},
-        edit: () => {},
-        validate: () => {},
-        delete: () => {},
-        targetExecState: (planId, state, id): Observable < object > => {
-            return this.http.get(urls.workbook.targetExecState(planId, state, id))
-        },
-        deleteCommit: (planId, workbookId): Observable < object > => {
-            return this.http.post(urls.workbook.deleteCommit({
-                planId: planId,
-                workbookId: workbookId,
-            }), null);
-        },
-        addCommit: (floplanId, code, inputResourceParams): Observable < object > => {
-            return this.http.post(urls.workbook.addCommit({
+        get: (): void => {},
+        edit: (): void => {},
+        validate: (): void => {},
+        delete: (): void => {},
+
+        targetExecState: (
+                planId: string | number,
+                state: string | number,
+                id: string | number
+            ): Observable < object > =>
+            this.http.get(urls.workbook.targetExecState(planId, state, id)),
+
+        deleteCommit: (
+                planId: string | number,
+                workbookId: string | number
+            ): Observable < object > =>
+            this.http.post(urls.workbook.deleteCommit({
+                planId,
+                workbookId,
+            }), null),
+
+        addCommit: (
+                floplanId: string | number,
+                code: string,
+                inputResourceParams: string
+            ): Observable < object > =>
+            this.http.post(urls.workbook.addCommit({
                 planId: floplanId,
                 poolCode: code || '',
                 inputResourceParams: inputResourceParams || ''
-            }), null);
-        },
-    }
+            }), null),
+    };
 }

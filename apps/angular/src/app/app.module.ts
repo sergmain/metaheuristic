@@ -21,7 +21,11 @@ import { MaterialAppModule } from './ngmaterial.module';
 import { NotificationsInterceptor } from './notifications.interceptor';
 import { AboutComponent } from './views/about/about.component';
 import { AppViewComponent } from './views/app-view/app-view.component';
-import { AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddWorkbookComponent, AddResourceComponent, AddSnippetComponent, EditAccountComponent, EditExperimentComponent, EditPlanComponent, EditWorkbookComponent, EditPassAccountComponent, EditStationComponent, ExperimentsComponent, PlansComponent, InfoExperimentComponent, WorkbooksComponent, LaunchpadComponent, NavLaunchpadComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, ArchivePlansComponent, AtlasComponent, BatchComponent } from './views/launchpad';
+// tslint:disable-next-line: max-line-length
+import { AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddWorkbookComponent, AddResourceComponent, AddSnippetComponent, EditAccountComponent, EditExperimentComponent, EditPlanComponent, EditWorkbookComponent, EditPassAccountComponent, EditStationComponent, ExperimentsComponent, PlansComponent, InfoExperimentComponent, WorkbooksComponent, LaunchpadComponent, NavLaunchpadComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, ArchivePlansComponent, AtlasComponent } from './views/launchpad';
+
+import { BatchComponent, BatchStatusComponent } from './components';
+
 import { LoginComponent } from './views/login/login.component';
 import { AppDialogConfirmationComponent } from './views/app-dialog-confirmation/app-dialog-confirmation.component';
 import { NavPilotComponent, PilotComponent, ProcessResourcesComponent } from './views/pilot';
@@ -76,6 +80,7 @@ import { CtWrapBlockComponent } from './custom-tags/ct-wrap-block/ct-wrap-block.
         AtlasComponent,
         //
         BatchComponent,
+        BatchStatusComponent,
         //
         AppDialogConfirmationComponent,
         // custom-tags

@@ -1,54 +1,14 @@
 import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
-import { AppComponent } from './app.component';
-
-import { AppViewComponent } from './views/app-view/app-view.component';
-
-import {
-    NavLaunchpadComponent,
-    LaunchpadComponent,
-
-    AccountsComponent,
-    AddAccountComponent,
-    EditAccountComponent,
-    EditPassAccountComponent,
-
-    PlansComponent,
-    AddPlanComponent,
-    EditPlanComponent,
-
-    WorkbooksComponent,
-    AddWorkbookComponent,
-    EditWorkbookComponent,
-
-    ResourcesComponent,
-    AddResourceComponent,
-
-    SnippetsComponent,
-    AddSnippetComponent,
-
-    StationsComponent,
-    EditStationComponent,
-
-    ExperimentsComponent,
-    AddExperimentComponent,
-    EditExperimentComponent,
-    InfoExperimentComponent,
-    ProgressExperimentComponent,
-
-    BatchComponent,
-
-    AtlasComponent
-} from './views/launchpad';
-
-import {
-    PilotComponent,
-    NavPilotComponent,
-    ProcessResourcesComponent
-} from './views/pilot';
-
+import { BatchComponent, BatchStatusComponent } from './components';
 import { AboutComponent } from './views/about/about.component';
+import { AppViewComponent } from './views/app-view/app-view.component';
+// tslint:disable-next-line: max-line-length
+import { AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AtlasComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, ExperimentsComponent, InfoExperimentComponent, LaunchpadComponent, NavLaunchpadComponent, PlansComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './views/launchpad';
+import { NavPilotComponent, PilotComponent, ProcessResourcesComponent } from './views/pilot';
+
+
 
 export function launchpadRoute(p): any {
     return {
@@ -118,11 +78,13 @@ const routes: Routes = [
     launchpadRoute({ path: 'launchpad/accounts/edit-password/:id', body: EditPassAccountComponent }),
 
     launchpadRoute({ path: 'launchpad/batch', body: BatchComponent }),
+    launchpadRoute({ path: 'launchpad/batch/:id/status', body: BatchStatusComponent }),
+
 
     launchpadRoute({ path: 'launchpad/atlas', body: AtlasComponent }),
-    // 
-    // 
-    // 
+    //
+    //
+    //
     {
         path: 'pilot',
         component: AppViewComponent,
@@ -133,9 +95,9 @@ const routes: Routes = [
         ]
     },
     pilotRoute({ path: 'pilot/process-resources', body: ProcessResourcesComponent }),
-    // 
-    // 
-    // 
+    //
+    //
+    //
     {
         path: 'about',
         component: AppViewComponent,
@@ -144,9 +106,9 @@ const routes: Routes = [
             { path: '', component: AboutComponent, outlet: 'body' }
         ]
     },
-    // 
-    // 
-    // 
+    //
+    //
+    //
     {
         path: '**',
         redirectTo: ''

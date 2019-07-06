@@ -5,12 +5,12 @@
         ct-cols(align-items="baseline")
             ct-col(size='6')
                 .section__content
+                    //- mat-form-field(appearance="outline") 
+                    //-     mat-label Code 
+                    //-     input(matInput '[(ngModel)]'="code" autocomplete="off") 
                     mat-form-field(appearance="outline") 
-                        mat-label Code 
-                        input(matInput '[(ngModel)]'="code" autocomplete="off") 
-                    mat-form-field(appearance="outline") 
-                        mat-label Parameters 
-                        textarea('[(ngModel)]'="params" matInput cdkTextareaAutosize cdkAutosizeMinRows="10" value="" autocomplete="off")  
+                        mat-label Parameters of Plan
+                        textarea('[(ngModel)]'="planYaml" matInput cdkTextareaAutosize cdkAutosizeMinRows="10" value="" autocomplete="off")  
                     .buttons.buttons--right
                         button(mat-stroked-button '(click)'="cancel()") Back 
                         button(mat-flat-button '(click)'="create()" color="primary" '[disabled]'="currentState == states.loading" title="") Add

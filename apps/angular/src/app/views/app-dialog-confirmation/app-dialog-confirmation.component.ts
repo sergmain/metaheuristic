@@ -4,6 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 export interface DialogData {
     resolveTitle: string;
     rejectTitle: string;
+    question ?(...data: any[]) : string; 
 }
 
 @Component({
@@ -16,7 +17,7 @@ export class AppDialogConfirmationComponent {
         public dialogRef: MatDialogRef < AppDialogConfirmationComponent > ,
         @Inject(MAT_DIALOG_DATA) public data: any
     ) {
-        console.log(data);
+        // console.log(data);
     }
 
     onNoClick(): void {
@@ -46,10 +47,13 @@ export function ConfirmationDialogMethod(dialogData: DialogData) {
     ): PropertyDescriptor {
         const method: any = propertyDesciptor.value;
         propertyDesciptor.value = function(...args: any[]) {
-            const params: any = JSON.parse(args.map((a: any) => JSON.stringify(a)).join());
             const dialogRef: MatDialogRef < any > = this.dialog.open(AppDialogConfirmationComponent, {
-                width: '250px',
-                data: { dialogData }
+                width: '300px',
+                data: {
+                    question: dialogData.question(...args),
+                    rejectTitle: dialogData.rejectTitle,
+                    resolveTitle: dialogData.resolveTitle
+                }
             });
             dialogRef.afterClosed().subscribe((result: boolean) => {
                 if (result) {

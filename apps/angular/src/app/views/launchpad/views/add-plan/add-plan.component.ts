@@ -1,25 +1,12 @@
-import {
-    Component,
-    OnInit
-} from '@angular/core';
-import {
-    Location
-} from '@angular/common';
-import {
-    PlansService
-} from '@app/services/plans/plans.service';
-import {
-    PlanResponse
-} from '@app/models';
-
-import {
-    LoadStates
-} from '@app/enums/LoadStates';
-import {
-    Subscription
-} from 'rxjs';
+import { Location } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { LoadStates } from '@app/enums/LoadStates';
+import { PlanResponse } from '@app/models';
+import { PlansService } from '@app/services/plans/plans.service';
+import { Subscription } from 'rxjs';
 
 @Component({
+    // tslint:disable-next-line: component-selector
     selector: 'add-plan',
     templateUrl: './add-plan.component.pug',
     styleUrls: ['./add-plan.component.scss']
@@ -29,8 +16,7 @@ export class AddPlanComponent implements OnInit {
     readonly states: any = LoadStates;
 
     currentState: LoadStates = LoadStates.show;
-    code: string = '';
-    params: string = '';
+    planYaml: string = '';
     response: PlanResponse.Response;
 
     constructor(
@@ -50,7 +36,7 @@ export class AddPlanComponent implements OnInit {
         this.currentState = LoadStates.loading;
         this.response = null;
         const subscribe: Subscription = this.plansService.plan
-            .add(this.code, this.params)
+            .add(this.planYaml)
             .subscribe((data: PlanResponse.Response) => {
                 this.currentState = LoadStates.show;
                 this.response = {

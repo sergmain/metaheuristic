@@ -1,7 +1,6 @@
-.mat-dialog-content
-    p Lorem ipsum dolor sit amet consectetur adipisicing elit. Perferendis tempore impedit nihil blanditiis id dolore repellat voluptatibus soluta, ipsa dignissimos saepe! Atque aliquam magni rerum assumenda mollitia laudantium provident corrupti.
+.mat-dialog-content {{data.question}}
 .mat-dialog-actions
     .mat-dialog-action
-        button(mat-stroked-button color="basic" '(click)'='onNoClick()') {{data.dialogData.rejectTitle}}
+        button(mat-stroked-button color="basic" '(click)'='onNoClick()') {{data.rejectTitle}}
     .mat-dialog-action
-        button(mat-flat-button color="warn" '(click)'='onYesClick()') {{data.dialogData.resolveTitle}}
+        button(mat-flat-button color="warn" '(click)'='onYesClick()') {{data.resolveTitle}}
