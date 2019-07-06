@@ -31,7 +31,7 @@ import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
-import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.pilot.BatchParamsUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -39,7 +39,7 @@ import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.InputResourceParam;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
@@ -213,8 +213,8 @@ public class BatchService {
     }
 
     private static String getMainDocumentPoolCode(String inputResourceParams) {
-        InputResourceParam resourceParams = InputResourceParamUtils.to(inputResourceParams);
-        List<String> codes = resourceParams.poolCodes.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH);
+        WorkbookParamsYaml resourceParams = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(inputResourceParams);
+        List<String> codes = resourceParams.workbookYaml.poolCodes.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH);
         if (codes.isEmpty()) {
             throw new IllegalStateException("#990.080 Main document section is missed. inputResourceParams:\n" + inputResourceParams);
         }

@@ -35,19 +35,19 @@ import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
+import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.InputResourceParam;
 import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
+import ai.metaheuristic.commons.yaml.versioning.YamlForVersioning;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
@@ -386,7 +386,7 @@ public class PlanService {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
-        InputResourceParam resourceParams = InputResourceParamUtils.to(wb.getInputResourceParam());
+        WorkbookParamsYaml resourceParams = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(wb.getInputResourceParam());
         List<SimpleCodeAndStorageUrl> initialInputResourceCodes;
         initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllPoolCodes());
         log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
@@ -396,11 +396,11 @@ public class PlanService {
             result.planProducingStatus = pools.status;
             return result;
         }
-        if (resourceParams.preservePoolNames) {
+        if (resourceParams.workbookYaml.preservePoolNames) {
             final Map<String, List<String>> collectedInputs = new HashMap<>();
             pools.collectedInputs.forEach( (key, value) -> {
                 String newKey = null;
-                for (Map.Entry<String, List<String>> entry : resourceParams.poolCodes.entrySet()) {
+                for (Map.Entry<String, List<String>> entry : resourceParams.workbookYaml.poolCodes.entrySet()) {
                     if (entry.getValue().contains(key)) {
                         newKey = entry.getKey();
                         break;

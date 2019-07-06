@@ -28,10 +28,10 @@ import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.plan.TaskCollector;
-import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.InputResourceParam;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
@@ -89,7 +89,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public Snippet s5 = null;
     public Workbook workbook = null;
 
-    public InputResourceParam inputResourceParam;
+    public WorkbookParamsYaml workbookParamsYaml;
 
     public abstract String getPlanYamlAsString();
 
@@ -206,9 +206,8 @@ public abstract class PreparingPlan extends PreparingExperiment {
                 true, "file-03.txt",
                 null, null);
 
-        inputResourceParam = new InputResourceParam();
-        inputResourceParam.poolCodes = new HashMap<>();
-        inputResourceParam.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o-> new ArrayList<>()).add(INPUT_POOL_CODE);
+        workbookParamsYaml = new WorkbookParamsYaml();
+        workbookParamsYaml.workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o-> new ArrayList<>()).add(INPUT_POOL_CODE);
     }
 
     private Snippet createSnippet(String snippetCode) {
@@ -278,7 +277,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
+        TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(workbookParamsYaml));
         workbook = result.workbook;
 
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);

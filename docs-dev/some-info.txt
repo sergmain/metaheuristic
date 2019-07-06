@@ -55,3 +55,10 @@ SHA256+Signature
 Red Hat's OpenJDK 
 	https://github.com/AdoptOpenJDK/openjdk11-upstream-binaries/releases/
 
+
+=======================
+Framework for working with graph
+    https://github.com/jgrapht/jgrapht
+    https://jgrapht.org/
+    https://jgrapht.org/guide/UserOverview
+

@@ -14,23 +14,32 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.api.data;
+package ai.metaheuristic.api.data.workbook;
 
+import ai.metaheuristic.api.data.BaseParams;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Data
-public class InputResourceParam {
-    public Map<String, List<String>> poolCodes;
+public class WorkbookParamsYamlV2 implements BaseParams {
 
-    public boolean preservePoolNames;
+    @Data
+    public static class WorkbookYamlV2 {
+        public Map<String, List<String>> poolCodes = new HashMap<>();
 
-    public List<String> getAllPoolCodes() {
-        List<String> codes = new ArrayList<>();
-        poolCodes.values().forEach(codes::addAll);
-        return codes;
+        public boolean preservePoolNames;
+    }
+
+    public final int version = 2;
+    public WorkbookYamlV2 workbookYaml = new WorkbookYamlV2();
+
+    @Override
+    public boolean checkIntegrity() {
+        return true;
     }
 }

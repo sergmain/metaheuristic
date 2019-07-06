@@ -37,18 +37,18 @@ import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
-import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
-import ai.metaheuristic.ai.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.InputResourceParam;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
@@ -103,7 +103,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     }
 
 
-    private void updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook) {
+    private void updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
 
     }
 
@@ -133,7 +133,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
             updateGraphWithInvalidatingAllChildrenTasks(workbook, task.id);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.300 Can't re-run task #"+taskId+", see log for more information");
         }
-        updateGraphWithResettingAllChildrenTasks(workbook);
+        updateGraphWithResettingAllChildrenTasks(workbook, task.id);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -279,7 +279,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, String inputResourceParam) {
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
 
-        InputResourceParam resourceParam = InputResourceParamUtils.to(inputResourceParam);
+        WorkbookParamsYaml resourceParam = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(inputResourceParam);
         List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParam.getAllPoolCodes());
         if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
             result.planProducingStatus = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
