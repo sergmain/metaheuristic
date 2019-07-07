@@ -16,19 +16,22 @@
 
 package ai.metaheuristic.ai.graph;
 
-import org.jgrapht.*;
-import org.jgrapht.alg.connectivity.*;
-import org.jgrapht.alg.interfaces.ShortestPathAlgorithm.*;
-import org.jgrapht.alg.interfaces.*;
-import org.jgrapht.alg.shortestpath.*;
-import org.jgrapht.graph.*;
-import org.jgrapht.io.*;
+import org.jgrapht.Graph;
+import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
+import org.jgrapht.alg.interfaces.ShortestPathAlgorithm.SingleSourcePaths;
+import org.jgrapht.alg.interfaces.StrongConnectivityAlgorithm;
+import org.jgrapht.alg.shortestpath.DijkstraShortestPath;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.DirectedAcyclicGraph;
+import org.jgrapht.io.ComponentNameProvider;
+import org.jgrapht.io.DOTExporter;
+import org.jgrapht.io.ExportException;
+import org.jgrapht.io.GraphExporter;
 import org.junit.Test;
 
 import java.io.StringWriter;
 import java.io.Writer;
-import java.net.URI;
-import java.util.*;
+import java.util.List;
 
 /**
  * @author Serge
@@ -93,23 +96,22 @@ public class TestSimpleGraph {
 
         // use helper classes to define how vertices should be rendered,
         // adhering to the DOT language restrictions
-        ComponentNameProvider<String> vertexIdProvider = new ComponentNameProvider<>(){
-            public String getName(String v){
-                return v;
-            }
-        };
-        ComponentNameProvider<String> vertexLabelProvider = new ComponentNameProvider<>() {
-            public String getName(String v){
-                return v;
-            }
-        };
+        ComponentNameProvider<String> vertexIdProvider = v -> v;
+        ComponentNameProvider<String> vertexLabelProvider = v -> v;
+
         GraphExporter<String, DefaultEdge> exporter =
                 new DOTExporter<>(vertexIdProvider, vertexLabelProvider, null);
+        outputGraph(directedGraph, exporter);
+        outputGraph(new DirectedAcyclicGraph<>(DefaultEdge.class), exporter);
+
+    }
+
+    public void outputGraph(DirectedAcyclicGraph<String, DefaultEdge> directedGraph, GraphExporter<String, DefaultEdge> exporter) throws ExportException {
         Writer writer = new StringWriter();
         exporter.exportGraph(directedGraph, writer);
         final String export = writer.toString();
         System.out.println("len: " + export.length());
         System.out.println(export);
-
+        System.out.println("\n\n\n");
     }
 }

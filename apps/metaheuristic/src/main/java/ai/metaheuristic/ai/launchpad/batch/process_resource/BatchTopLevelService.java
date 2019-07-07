@@ -40,6 +40,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -339,13 +340,14 @@ public class BatchTopLevelService {
         return mainDocFile;
     }
 
-    private static String asInputResourceParams(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
-        String yaml ="preservePoolNames: true\n" +
-                "poolCodes:\n  " + Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH + ":\n" + ITEM_LIST_PREFIX + mainPoolCode;
+    private static WorkbookParamsYaml initWorkbookParamsYaml(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
+        WorkbookParamsYaml yaml = new WorkbookParamsYaml();
+        yaml.workbookYaml.preservePoolNames = true;
+        yaml.workbookYaml.poolCodes.computeIfAbsent(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, o-> new ArrayList<>()).add(mainPoolCode);
         if (attachmentCodes.isEmpty()) {
             return yaml;
         }
-        yaml += "\n  " + ATTACHMENTS_POOL_CODE + ":\n" + ITEM_LIST_PREFIX + attachPoolCode + '\n';
+        yaml.workbookYaml.poolCodes.computeIfAbsent(ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
         return yaml;
     }
 
@@ -381,8 +383,8 @@ public class BatchTopLevelService {
             throw new BatchResourceProcessingException("#995.180 main document wasn't found");
         }
 
-        final String paramYaml = asInputResourceParams(mainPoolCode, attachPoolCode, attachments);
-        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(planId, paramYaml);
+        final WorkbookParamsYaml params = initWorkbookParamsYaml(mainPoolCode, attachPoolCode, attachments);
+        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(planId, params);
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
             throw new BatchResourceProcessingException("#995.190 Error creating workbook: " + producingResult.planProducingStatus);
         }

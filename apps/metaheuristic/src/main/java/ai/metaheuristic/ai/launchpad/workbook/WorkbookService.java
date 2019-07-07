@@ -40,17 +40,16 @@ import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
@@ -91,6 +90,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     private final TaskPersistencer taskPersistencer;
     private final StationCache stationCache;
     private final WorkbookCache workbookCache;
+    private final WorkbookGraphService workbookGraphService;
 
     private ApplicationEventPublisher publisher;
 
@@ -101,17 +101,6 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-    private void updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
-
-    }
-
-    public void updateGraphWithInvalidatingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
-
-    }
-
-    public void addNewTasksToGraph(WorkbookImpl wb, List<Long> parentTaskIds, List<Long> taskIds) {
-
-    }
 
     public OperationStatusRest resetTask(long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
@@ -128,10 +117,10 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
         Task t = taskPersistencer.resetTask(task);
         if (t==null) {
-            updateGraphWithInvalidatingAllChildrenTasks(workbook, task.id);
+            workbookGraphService.updateGraphWithInvalidatingAllChildrenTasks(workbook, task.id);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.300 Can't re-run task #"+taskId+", see log for more information");
         }
-        updateGraphWithResettingAllChildrenTasks(workbook, task.id);
+        workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, task.id);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -180,7 +169,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public WorkbookImpl markOrderAsProcessed(WorkbookImpl workbook) {
 
-        if (getCountUnfinishedTasks(workbook.getId())==0) {
+        if (workbookGraphService.getCountUnfinishedTasks(workbook.getId())==0) {
             log.info("Workbook #{} was finished", workbook.getId());
             experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
             workbook.setCompletedOn(System.currentTimeMillis());
@@ -235,11 +224,6 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 */
     }
 
-    private int getCountUnfinishedTasks(Long workbookId) {
-        if (true) throw new NotImplementedException("Not yet");
-        return 0;
-    }
-
     public OperationStatusRest workbookTargetExecState(Long workbookId, EnumsApi.WorkbookExecState execState) {
         PlanApiData.WorkbookResult result = getWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
@@ -271,7 +255,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         return workbook;
     }
 
-    public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, String inputResourceParam) {
+    public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml params) {
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
 
         WorkbookImpl wb = new WorkbookImpl();
@@ -279,7 +263,8 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         wb.setCreatedOn(System.currentTimeMillis());
         wb.setExecState(EnumsApi.WorkbookExecState.NONE.code);
         wb.setCompletedOn(null);
-        wb.setParams(inputResourceParam);
+        params.graph = WorkbookGraphService.EMPTY_GRAPH;
+        wb.updateParams(params);
         wb.setValid(true);
 
         WorkbookParamsYaml resourceParam = wb.getWorkbookParamsYaml();

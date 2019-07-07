@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
@@ -28,14 +27,13 @@ import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessValidator;
-import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessValidator;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
-import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.YamlVersion;
@@ -70,14 +68,11 @@ import static ai.metaheuristic.api.EnumsApi.PlanValidateStatus.PROCESS_VALIDATOR
 @RequiredArgsConstructor
 public class PlanService {
 
-    private final Globals globals;
-    private final ExperimentService experimentService;
     private final BinaryDataService binaryDataService;
 
     private final ExperimentProcessService experimentProcessService;
     private final FileProcessService fileProcessService;
     private final WorkbookRepository workbookRepository;
-    private final TaskRepository taskRepository;
     private final PlanCache planCache;
     private final PlanRepository planRepository;
 
@@ -85,6 +80,7 @@ public class PlanService {
     private final FileProcessValidator fileProcessValidator;
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
+    private final WorkbookGraphService workbookGraphService;
     private final CommonProcessValidatorService commonProcessValidatorService;
     private final SnippetRepository snippetRepository;
 
@@ -446,7 +442,7 @@ public class PlanService {
                 default:
                     throw new IllegalStateException("#701.200 Unknown process type");
             }
-            workbookService.addNewTasksToGraph(workbook, parentTaskIds, produceTaskResult.taskIds);
+            workbookGraphService.addNewTasksToGraph(workbook, parentTaskIds, produceTaskResult.taskIds);
             parentTaskIds.clear();
             parentTaskIds.addAll(produceTaskResult.taskIds);
 

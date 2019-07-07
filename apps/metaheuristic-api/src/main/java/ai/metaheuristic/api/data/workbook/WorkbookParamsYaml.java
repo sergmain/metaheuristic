@@ -20,6 +20,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,9 +38,10 @@ public class WorkbookParamsYaml implements BaseParams {
     }
 
     @Data
+    @EqualsAndHashCode(of = "taskId")
     public static class TaskVertex {
         public Long taskId;
-        public EnumsApi.TaskExecState execState;
+        public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;
     }
 
     public final int version = 2;
