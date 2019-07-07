@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
+import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
@@ -34,9 +35,8 @@ import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.plan.PlanApiData;
@@ -84,24 +84,20 @@ public class PlanService {
     private final ExperimentProcessValidator experimentProcessValidator;
     private final FileProcessValidator fileProcessValidator;
     private final WorkbookService workbookService;
+    private final WorkbookCache workbookCache;
     private final CommonProcessValidatorService commonProcessValidatorService;
     private final SnippetRepository snippetRepository;
 
-    public Workbook toStarted(Workbook workbook) {
-        WorkbookImpl fi = workbookRepository.findById(workbook.getId()).orElse(null);
-        if (fi==null) {
-            String es = "#701.010 Can't change exec state to PRODUCED for workbook #" + workbook.getId();
+    public WorkbookImpl toStarted(Long workbookId) {
+        WorkbookImpl wb = workbookRepository.findByIdForUpdate(workbookId);
+        if (wb==null) {
+            String es = "#701.010 Can't change exec state to PRODUCED for workbook #" + workbookId;
             log.error(es);
             throw new IllegalStateException(es);
         }
-        PlanImpl plan = planCache.findById(fi.getPlanId());
-        if (plan==null) {
-            workbook.setExecState(EnumsApi.WorkbookExecState.ERROR.code);
-            workbookRepository.saveAndFlush(fi);
-            return null;
-        }
-        fi.setExecState(EnumsApi.WorkbookExecState.STARTED.code);
-        return workbookRepository.saveAndFlush(fi);
+        PlanImpl plan = planCache.findById(wb.getPlanId());
+        wb.setExecState(plan == null ? EnumsApi.WorkbookExecState.ERROR.code : EnumsApi.WorkbookExecState.STARTED.code);
+        return workbookCache.save(wb);
     }
 
     // TODO 2019.05.19 add reporting of producing of tasks
@@ -116,8 +112,7 @@ public class PlanService {
         for (WorkbookImpl workbook : workbooks) {
             PlanImpl plan = planCache.findById(workbook.getPlanId());
             if (plan==null) {
-                workbook.setExecState(EnumsApi.WorkbookExecState.ERROR.code);
-                workbookRepository.saveAndFlush(workbook);
+                workbookService.toStopped(workbook.id);
                 continue;
             }
             Monitoring.log("##021", Enums.Monitor.MEMORY);
@@ -130,7 +125,7 @@ public class PlanService {
         }
     }
 
-    public PlanApiData.PlanValidation validateInternal(Plan plan) {
+    public PlanApiData.PlanValidation validateInternal(PlanImpl plan) {
         final PlanApiData.PlanValidation planValidation = new PlanApiData.PlanValidation();
         try {
             planValidation.status = validate(plan);
@@ -196,19 +191,21 @@ public class PlanService {
         if (result.planValidateStatus != EnumsApi.PlanValidateStatus.OK &&
                 result.planValidateStatus != EnumsApi.PlanValidateStatus.EXPERIMENT_ALREADY_STARTED_ERROR ) {
             log.error("#701.160 Can't produce tasks, error: {}", result.planValidateStatus);
-            workbookService.toStopped(isPersist, workbook.getId());
+            if(isPersist) {
+                workbookService.toStopped(workbook.getId());
+            }
             return result;
         }
         Monitoring.log("##022", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
-        result = produceTasks(isPersist, plan, workbook);
+        result = produceTasks(isPersist, plan, workbook.getId());
         log.info("#701.170 PlanService.produceTasks() was processed for "+(System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##033", Enums.Monitor.MEMORY);
 
         return result;
     }
 
-    public EnumsApi.PlanValidateStatus validate(Plan plan) {
+    public EnumsApi.PlanValidateStatus validate(PlanImpl plan) {
         if (plan==null) {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
         }
@@ -218,7 +215,7 @@ public class PlanService {
         if (StringUtils.isBlank(plan.getParams())) {
             return EnumsApi.PlanValidateStatus.PLAN_PARAMS_EMPTY_ERROR;
         }
-        PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
+        PlanParamsYaml planParams = plan.getPlanParamsYaml();
         PlanParamsYaml.PlanYaml planYaml = planParams.planYaml;
         if (planYaml.getProcesses().isEmpty()) {
             return EnumsApi.PlanValidateStatus.NO_ANY_PROCESSES_ERROR;
@@ -379,79 +376,83 @@ public class PlanService {
         }
     }
 
-    public PlanApiData.TaskProducingResultComplex produceTasks(boolean isPersist, Plan plan, Workbook w1b) {
-
-        PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
-        result.planValidateStatus = EnumsApi.PlanValidateStatus.OK;
+    public PlanApiData.TaskProducingResultComplex produceTasks(boolean isPersist, PlanImpl plan, Long workbookId) {
 
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
-        WorkbookParamsYaml resourceParams = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(wb.getParams());
+
+        WorkbookImpl workbook = workbookCache.findById(workbookId);
+        if (workbook==null) {
+            log.error("#701.175 Can't find workbook #{}", workbookId );
+            return new PlanApiData.TaskProducingResultComplex(EnumsApi.PlanValidateStatus.WORKBOOK_NOT_FOUND_ERROR);
+        }
+
+        WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
         List<SimpleCodeAndStorageUrl> initialInputResourceCodes;
         initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllPoolCodes());
         log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
 
         ResourcePools pools = new ResourcePools(initialInputResourceCodes);
         if (pools.status!= EnumsApi.PlanProducingStatus.OK) {
-            result.planProducingStatus = pools.status;
-            return result;
+            return new PlanApiData.TaskProducingResultComplex(pools.status);
         }
+
         if (resourceParams.workbookYaml.preservePoolNames) {
             final Map<String, List<String>> collectedInputs = new HashMap<>();
-            pools.collectedInputs.forEach( (key, value) -> {
-                String newKey = null;
-                for (Map.Entry<String, List<String>> entry : resourceParams.workbookYaml.poolCodes.entrySet()) {
-                    if (entry.getValue().contains(key)) {
-                        newKey = entry.getKey();
-                        break;
+            try {
+                pools.collectedInputs.forEach( (key, value) -> {
+                    String newKey = null;
+                    for (Map.Entry<String, List<String>> entry : resourceParams.workbookYaml.poolCodes.entrySet()) {
+                        if (entry.getValue().contains(key)) {
+                            newKey = entry.getKey();
+                            break;
+                        }
                     }
-                }
-                if (newKey==null) {
-                    log.error("#701.190 Can't find key for pool code {}", key );
-                    result.planProducingStatus = EnumsApi.PlanProducingStatus.ERROR;
-                    return;
-                }
-                collectedInputs.put(newKey, value);
-            });
+                    if (newKey==null) {
+                        log.error("#701.190 Can't find key for pool code {}", key );
+                        throw new BreakFromForEachException();
+                    }
+                    collectedInputs.put(newKey, value);
+                });
+            } catch (BreakFromForEachException e) {
+                return new PlanApiData.TaskProducingResultComplex(EnumsApi.PlanProducingStatus.ERROR);
+            }
+
             pools.collectedInputs.clear();
             pools.collectedInputs.putAll(collectedInputs);
         }
 
         Monitoring.log("##025", Enums.Monitor.MEMORY);
-
-        result.workbook = wb;
-        PlanParamsYaml planParams = PlanParamsYamlUtils.BASE_YAML_UTILS.to(plan.getParams());
-        result.planYaml = planParams.planYaml;
+        PlanParamsYaml planParams = plan.getPlanParamsYaml();
 
         int idx = Consts.TASK_ORDER_START_VALUE;
-        result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
         List<Long> parentTaskIds = new ArrayList<>();
-        for (Process process : result.planYaml.getProcesses()) {
+        int numberOfTasks=0;
+        for (Process process : planParams.planYaml.getProcesses()) {
             process.order = idx++;
 
             ProduceTaskResult produceTaskResult;
             switch(process.type) {
                 case FILE_PROCESSING:
                     Monitoring.log("##026", Enums.Monitor.MEMORY);
-                    produceTaskResult = fileProcessService.produceTasks(isPersist, plan.getId(), planParams, wb, process, pools);
+                    produceTaskResult = fileProcessService.produceTasks(isPersist, plan.getId(), planParams, workbookId, process, pools);
                     Monitoring.log("##027", Enums.Monitor.MEMORY);
                     break;
                 case EXPERIMENT:
                     Monitoring.log("##028", Enums.Monitor.MEMORY);
-                    produceTaskResult = experimentProcessService.produceTasks(isPersist, plan.getId(), planParams, wb, process, pools);
+                    produceTaskResult = experimentProcessService.produceTasks(isPersist, planParams, workbookId, process, pools);
                     Monitoring.log("##029", Enums.Monitor.MEMORY);
                     break;
                 default:
                     throw new IllegalStateException("#701.200 Unknown process type");
             }
-            workbookService.addNewTasksToGraph(wb, parentTaskIds, produceTaskResult.taskIds);
+            workbookService.addNewTasksToGraph(workbook, parentTaskIds, produceTaskResult.taskIds);
             parentTaskIds.clear();
             parentTaskIds.addAll(produceTaskResult.taskIds);
 
-            result.numberOfTasks += produceTaskResult.numberOfTasks;
+            numberOfTasks += produceTaskResult.numberOfTasks;
             if (produceTaskResult.status != EnumsApi.PlanProducingStatus.OK) {
-                result.planProducingStatus = produceTaskResult.status;
-                return result;
+                return new PlanApiData.TaskProducingResultComplex(produceTaskResult.status);
             }
             if (!process.collectResources) {
                 pools.clean();
@@ -462,9 +463,17 @@ public class PlanService {
             }
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }
-        workbookService.toProduced(isPersist, result, wb);
+        if (isPersist) {
+            workbook = workbookService.toProduced(workbook.id);
+        }
 
+        PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
+        result.workbook = workbook;
+        result.planYaml = planParams.planYaml;
+        result.numberOfTasks += numberOfTasks;
+        result.planValidateStatus = EnumsApi.PlanValidateStatus.OK;
         result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
+
         return result;
     }
 

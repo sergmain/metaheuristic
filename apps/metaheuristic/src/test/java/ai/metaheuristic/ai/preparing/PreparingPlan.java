@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.preparing;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
@@ -28,16 +29,15 @@ import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.plan.TaskCollector;
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
@@ -48,7 +48,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import java.io.ByteArrayInputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static ai.metaheuristic.api.data.plan.PlanApiData.TaskProducingResultComplex;
 import static org.junit.Assert.*;
@@ -87,7 +90,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public Snippet s3 = null;
     public Snippet s4 = null;
     public Snippet s5 = null;
-    public Workbook workbook = null;
+    public WorkbookImpl workbook = null;
 
     public WorkbookParamsYaml workbookParamsYaml;
 
@@ -278,19 +281,19 @@ public abstract class PreparingPlan extends PreparingExperiment {
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
         TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(workbookParamsYaml));
-        workbook = result.workbook;
+        workbook = (WorkbookImpl)result.workbook;
 
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
-        EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook);
+        EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook.id);
         assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
         result = planService.produceAllTasks(true, plan, workbook);
-        workbook = result.workbook;
+        workbook = (WorkbookImpl)result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, workbook.getExecState());
 

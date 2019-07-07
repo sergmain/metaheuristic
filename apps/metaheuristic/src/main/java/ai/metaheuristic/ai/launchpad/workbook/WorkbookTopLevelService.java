@@ -96,13 +96,14 @@ public class WorkbookTopLevelService {
 
     // ============= Service methods =============
 
+    // TODO 2019-07-06 why we need this method?
     public OperationStatusRest changeValidStatus(Long workbookId, boolean state) {
         Workbook workbook = workbookRepository.findById(workbookId).orElse(null);
         if (workbook == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#560.110 workbook wasn't found, workbookId: " + workbookId);
         }
-        workbookService.changeValidStatus(workbook, state);
+        workbookService.changeValidStatus(workbookId, state);
         return OperationStatusRest.OPERATION_STATUS_OK;
 
     }

@@ -37,7 +37,6 @@ import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -174,19 +173,19 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public void markOrderAsProcessed() {
         List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
-        for (Workbook workbook : workbooks) {
+        for (WorkbookImpl workbook : workbooks) {
             markOrderAsProcessed(workbook);
         }
     }
 
-    public Workbook markOrderAsProcessed(Workbook workbook) {
+    public WorkbookImpl markOrderAsProcessed(WorkbookImpl workbook) {
 
         if (getCountUnfinishedTasks(workbook.getId())==0) {
             log.info("Workbook #{} was finished", workbook.getId());
             experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
             workbook.setCompletedOn(System.currentTimeMillis());
             workbook.setExecState(EnumsApi.WorkbookExecState.FINISHED.code);
-            Workbook instance = save(workbook);
+            WorkbookImpl instance = workbookCache.save(workbook);
 
             Long experimentId = experimentRepository.findIdByWorkbookId(instance.getId());
             if (experimentId==null) {
@@ -254,38 +253,28 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         }
 
         workbook.setExecState(execState.code);
-        save(workbook);
+        workbookCache.save((WorkbookImpl) workbook);
 
         planService.setLockedTo(plan.getId(), true);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public void toProduced(boolean isPersist, PlanApiData.TaskProducingResultComplex result, Workbook fi) {
-        if (!isPersist) {
-            return;
-        }
-        Long id = fi.getId();
-        result.workbook = workbookRepository.findById(id).orElse(null);
-        if (result.workbook==null) {
-            String es = "#701.210 Can't change exec state to PRODUCED for workbook #" + id;
+    public WorkbookImpl toProduced(Long workbookId) {
+        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+        if (workbook==null) {
+            String es = "#701.210 Can't change exec state to PRODUCED for workbook #" + workbookId;
             log.error(es);
             throw new IllegalStateException(es);
         }
-        result.workbook.setExecState(EnumsApi.WorkbookExecState.PRODUCED.code);
-        save(result.workbook);
+        workbook.setExecState(EnumsApi.WorkbookExecState.PRODUCED.code);
+        workbookCache.save(workbook);
+        return workbook;
     }
 
     public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, String inputResourceParam) {
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
 
-        WorkbookParamsYaml resourceParam = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(inputResourceParam);
-        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParam.getAllPoolCodes());
-        if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
-            result.planProducingStatus = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
-            return result;
-        }
-
-        Workbook wb = new WorkbookImpl();
+        WorkbookImpl wb = new WorkbookImpl();
         wb.setPlanId(planId);
         wb.setCreatedOn(System.currentTimeMillis());
         wb.setExecState(EnumsApi.WorkbookExecState.NONE.code);
@@ -293,23 +282,27 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         wb.setParams(inputResourceParam);
         wb.setValid(true);
 
-        save(wb);
+        WorkbookParamsYaml resourceParam = wb.getWorkbookParamsYaml();
+        List<SimpleCodeAndStorageUrl> inputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParam.getAllPoolCodes());
+        if (inputResourceCodes==null || inputResourceCodes.isEmpty()) {
+            result.planProducingStatus = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_DOESNT_EXIST_ERROR;
+            return result;
+        }
+
+        workbookCache.save(wb);
         result.planProducingStatus = EnumsApi.PlanProducingStatus.OK;
         result.workbook = wb;
 
         return result;
     }
 
-    public void toStopped(boolean isPersist, long workbookId) {
-        if (!isPersist) {
+    public void toStopped(long workbookId) {
+        WorkbookImpl wb = workbookRepository.findByIdForUpdate(workbookId);
+        if (wb==null) {
             return;
         }
-        Workbook fi = workbookRepository.findById(workbookId).orElse(null);
-        if (fi==null) {
-            return;
-        }
-        fi.setExecState(EnumsApi.WorkbookExecState.STOPPED.code);
-        save(fi);
+        wb.setExecState(EnumsApi.WorkbookExecState.STOPPED.code);
+        workbookCache.save(wb);
     }
 
     public void changeValidStatus(Long workbookId, boolean status) {
@@ -318,22 +311,17 @@ public class WorkbookService implements ApplicationEventPublisherAware {
             return;
         }
         workbook.setValid(status);
-        save(workbook);
+        workbookCache.save(workbook);
     }
 
-    public EnumsApi.PlanProducingStatus toProducing(Workbook fi) {
-        fi.setExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
-        save(fi);
+    public EnumsApi.PlanProducingStatus toProducing(Long workbookId) {
+        WorkbookImpl wb = workbookRepository.findByIdForUpdate(workbookId);
+        if (wb==null) {
+            return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
+        }
+        wb.setExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
+        workbookCache.save(wb);
         return EnumsApi.PlanProducingStatus.OK;
-    }
-
-    public Workbook save(Workbook workbook) {
-        if (workbook instanceof WorkbookImpl) {
-            return workbookCache.save((WorkbookImpl)workbook);
-        }
-        else {
-            throw new NotImplementedException("#701.130 Need to implement");
-        }
     }
 
     public void deleteWorkbook(Long workbookId) {
@@ -350,7 +338,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         if (workbookId==null) {
             return new PlanApiData.WorkbookResult("#701.050 workbookId is null");
         }
-        final WorkbookImpl workbook = workbookRepository.findById(workbookId).orElse(null);
+        WorkbookImpl workbook = workbookCache.findById(workbookId);
         if (workbook == null) {
             return new PlanApiData.WorkbookResult("#701.060 workbook wasn't found, workbookId: " + workbookId);
         }
@@ -360,6 +348,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         }
 
         if (!plan.getId().equals(workbook.getPlanId())) {
+            workbook = workbookRepository.findByIdForUpdate(workbookId);
             workbook.setValid(false);
             workbookRepository.save(workbook);
             return new PlanApiData.WorkbookResult("#701.080 planId doesn't match to workbook.planId, planId: " + workbook.getPlanId()+", workbook.planId: " + workbook.getPlanId());

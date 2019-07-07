@@ -15,9 +15,7 @@
  */
 package ai.metaheuristic.ai.launchpad.beans;
 
-import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Workbook;
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -77,7 +75,6 @@ public class WorkbookImpl implements Serializable, Workbook {
 
     @JsonIgnore
     public WorkbookParamsYaml getWorkbookParamsYaml() {
-
         if (wpy ==null) {
             synchronized (this) {
                 if (wpy ==null) {

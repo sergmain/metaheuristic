@@ -17,10 +17,8 @@
 package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
@@ -29,7 +27,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +46,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -66,70 +63,52 @@ public class PlanTopLevelService {
     private final PlanCache planCache;
     private final PlanService planService;
     private final PlanRepository planRepository;
-    private final WorkbookRepository workbookRepository;
     private final WorkbookService workbookService;
 
     public PlanApiData.WorkbookResult addWorkbook(Long planId, String poolCode, String inputResourceParams) {
-        PlanApiData.WorkbookResult result = new PlanApiData.WorkbookResult(planCache.findById(planId));
-        if (result.plan == null) {
-            result.addErrorMessage("#560.060 plan wasn't found, planId: " + planId);
-            return result;
+        final PlanImpl plan = planCache.findById(planId);
+
+        if (plan == null) {
+            return new PlanApiData.WorkbookResult("#560.060 plan wasn't found, planId: " + planId);
         }
-
-
         if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams)) {
-            result.addErrorMessage("#560.063 both inputResourcePoolCode of Workbook and inputResourceParams are empty");
-            return result;
+            return new PlanApiData.WorkbookResult("#560.063 both inputResourcePoolCode of Workbook and inputResourceParams are empty");
         }
 
         if (StringUtils.isNotBlank(poolCode) && StringUtils.isNotBlank(inputResourceParams)) {
-            result.addErrorMessage("#560.065 both inputResourcePoolCode of Workbook and inputResourceParams aren't empty");
-            return result;
+            return new PlanApiData.WorkbookResult("#560.065 both inputResourcePoolCode of Workbook and inputResourceParams aren't empty");
         }
 
         // validate the plan
-        PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
+        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK) {
-            result.errorMessages = planValidation.errorMessages;
-            return result;
+            PlanApiData.WorkbookResult r = new PlanApiData.WorkbookResult();
+            r.errorMessages = planValidation.errorMessages;
+            return r;
         }
 
-        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(result.plan.getId(),
+        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(plan.getId(),
                 StringUtils.isNotBlank(inputResourceParams) ? inputResourceParams : PlanService.asInputResourceParams(poolCode));
         if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
-            result.addErrorMessage("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
-            return result;
-        }
-        result.workbook = producingResult.workbook;
-
-        // ugly work-around on ObjectOptimisticLockingFailureException, StaleObjectStateException
-        result.plan = planCache.findById(planId);
-        if (result.plan == null) {
-            return new PlanApiData.WorkbookResult("#560.073 plan wasn't found, planId: " + planId);
+            return new PlanApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
         }
 
-        // validate the plan + the workbook
-        planValidation = planService.validateInternal(result.plan);
-        if (planValidation.status != EnumsApi.PlanValidateStatus.OK) {
-            result.errorMessages = planValidation.errorMessages;
-            return result;
-        }
-        result.plan = planCache.findById(planId);
-
-        PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, result.getPlan(), producingResult.workbook);
+        PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook.getId());
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
-            workbookService.changeValidStatus(producingResult.workbook, false);
-            result.addErrorMessage("#560.077 plan producing was failed, status: " + countTasks.planProducingStatus);
-            return result;
+            workbookService.changeValidStatus(producingResult.workbook.getId(), false);
+            return new PlanApiData.WorkbookResult("#560.077 plan producing was failed, status: " + countTasks.planProducingStatus);
         }
 
         if (globals.maxTasksPerPlan < countTasks.numberOfTasks) {
-            workbookService.changeValidStatus(producingResult.workbook, false);
-            result.addErrorMessage("#560.081 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
+            workbookService.changeValidStatus(producingResult.workbook.getId(), false);
+            return new PlanApiData.WorkbookResult("#560.081 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                     "Allowed maximum number of tasks: " + globals.maxTasksPerPlan + ", tasks in this workbook:  " + countTasks.numberOfTasks);
-            return result;
         }
-        workbookService.changeValidStatus(producingResult.workbook, true);
+
+        PlanApiData.WorkbookResult result = new PlanApiData.WorkbookResult(plan);
+        result.workbook = producingResult.workbook;
+
+        workbookService.changeValidStatus(producingResult.workbook.getId(), true);
 
         return result;
     }
@@ -157,9 +136,7 @@ public class PlanTopLevelService {
                 })
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize())
-                .peek(o-> {
-                    o.setParams(null);
-                })
+                .peek(o-> o.setParams(null))
                 .collect(Collectors.toList());
 
         PlanApiData.PlansResult plansResultRest = new PlanApiData.PlansResult();
@@ -218,13 +195,13 @@ public class PlanTopLevelService {
         PlanImpl plan = new PlanImpl();
         plan.createdOn = System.currentTimeMillis();
         plan.code = ppy.planYaml.planCode;
-        // we have to preserve planParamsYaml for compatibility with old snippets
+        // we have to preserve a format of planParamsYaml for compatibility with old snippets
         plan.setParams(planYamlAsStr);
-
         plan = planCache.save(plan);
 
+        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
+
         PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.params );
-        PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
         return result;
@@ -256,13 +233,13 @@ public class PlanTopLevelService {
             return new PlanApiData.PlanResult("#560.230 plan with such code already exists, code: " + code);
         }
         plan.code = code;
-        // we have to preserve planParamsYaml for compatibility with old snippets
+        // we have to preserve a format of planParamsYaml for compatibility with old snippets
         plan.setParams(planYamlAsStr);
-
         plan = planCache.save(plan);
 
+        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
+
         PlanApiData.PlanResult result = new PlanApiData.PlanResult(plan, plan.params );
-        PlanApiData.PlanValidation planValidation = planService.validateInternal(result.plan);
         result.infoMessages = planValidation.infoMessages;
         result.errorMessages = planValidation.errorMessages;
         return result;
@@ -341,7 +318,7 @@ public class PlanTopLevelService {
         }
     }
 
-    private List<String> toErrorMessages(List<PlanApiData.PlanStatus > statuses) {
+    private List<String> toErrorMessages(List<PlanApiData.PlanStatus> statuses) {
         return statuses.stream().filter(o->!o.isOk).map(o->o.error).collect(Collectors.toList());
     }
 
@@ -351,21 +328,23 @@ public class PlanTopLevelService {
 
     // ============= Service methods =============
 
-    public PlanApiData.TaskProducingResult produceTasksWithoutPersistence(long workbookId) {
+    // TODO 2019-07-06 why we need this method?
+    public PlanApiData.TaskProducingResult produceTasksWithoutPersistence(Long workbookId) {
 
-        PlanApiData.WorkbookResult workbook = workbookService.getWorkbookExtended(workbookId);
-        if (workbook.isErrorMessages()) {
+        PlanImpl plan = planCache.findById(workbookId);
+        if (plan == null) {
             return new PlanApiData.TaskProducingResult(
-                    List.of("#560.590 plan wasn't found, workbookId: " + workbookId),
+                    List.of("#701.070 plan wasn't found, planId: " + workbookId),
                     EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR, null, null );
 
         }
 
-        final PlanApiData.TaskProducingResultComplex result = planService.produceTasks(false, workbook.getPlan(), workbook.workbook);
+        final PlanApiData.TaskProducingResultComplex result = planService.produceTasks(false, plan, workbookId);
         return new PlanApiData.TaskProducingResult(List.of("See statuses to determine what is actual status"), result.planValidateStatus, result.planProducingStatus,
                 result.workbook!=null ? result.workbook.getId() : null);
     }
 
+    // TODO 2019-07-06 why we need this method?
     public void createAllTasks() {
         planService.createAllTasks();
     }

@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.plan;
 
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanApiData;
@@ -66,13 +67,13 @@ public class TestCountOfTasks extends PreparingPlan {
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
         PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(workbookParamsYaml));
-        workbook = result.workbook;
+        workbook = (WorkbookImpl)result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
-        EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook);
+        EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook.id);
         assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
@@ -93,7 +94,7 @@ public class TestCountOfTasks extends PreparingPlan {
         result = planService.produceAllTasks(true, plan, workbook);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        workbook = result.workbook;
+        workbook = (WorkbookImpl)result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, workbook.getExecState());
 

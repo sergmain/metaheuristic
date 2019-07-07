@@ -15,9 +15,9 @@
  */
 package ai.metaheuristic.ai.service;
 
-import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
+import ai.metaheuristic.api.EnumsApi;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -42,7 +42,8 @@ public class TestFeatureWithSomeOk extends FeatureMethods {
         produceTasks();
         log.info("produceTasks() was finished for {}", System.currentTimeMillis() - mills);
 
-        workbook = planService.toStarted(workbook);
+        workbook = planService.toStarted(workbook.getId());
+        assertEquals(EnumsApi.WorkbookExecState.STARTED.code, workbook.getExecState());
 
         getTaskAndAssignToStation_mustBeNewTask();
 

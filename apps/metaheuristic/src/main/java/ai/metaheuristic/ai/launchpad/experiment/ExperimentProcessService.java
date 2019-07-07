@@ -19,20 +19,21 @@ package ai.metaheuristic.ai.launchpad.experiment;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
-import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.api.launchpad.process.Process;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -45,23 +46,19 @@ import java.util.Map;
 @Service
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class ExperimentProcessService {
 
     private static final String FEATURE_POOL_CODE_TYPE = "feature";
+
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
     private final ExperimentCache experimentCache;
     private final BinaryDataService binaryDataService;
-
-    public ExperimentProcessService(ExperimentService experimentService, ExperimentRepository experimentRepository, ExperimentCache experimentCache, BinaryDataService binaryDataService) {
-        this.experimentService = experimentService;
-        this.experimentRepository = experimentRepository;
-        this.experimentCache = experimentCache;
-        this.binaryDataService = binaryDataService;
-    }
+    private final WorkbookCache workbookCache;
 
     public PlanService.ProduceTaskResult produceTasks(
-            boolean isPersist, Long planId, PlanParamsYaml planParams, Workbook workbook,
+            boolean isPersist, PlanParamsYaml planParams, Long workbookId,
             Process process, PlanService.ResourcePools pools) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
@@ -82,7 +79,7 @@ public class ExperimentProcessService {
         }
 
         // TODO 2019-06-23 workbookId is set even it isn't in persistent mode. Need to check fro side-effects
-        e.setWorkbookId(workbook.getId());
+        e.setWorkbookId(workbookId);
         if (isPersist) {
             e = experimentCache.save(e);
         }
@@ -91,7 +88,12 @@ public class ExperimentProcessService {
 
         List<String> features;
         if (meta==null) {
-            WorkbookParamsYaml resourceParams = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(workbook.getParams());
+            WorkbookImpl workbook = workbookCache.findById(workbookId);
+            if (workbook==null) {
+                result.status = EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
+                return result;
+            }
+            WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
             List<String> list = resourceParams.workbookYaml.getPoolCodes().get(FEATURE_POOL_CODE_TYPE);
             if (CollectionUtils.isEmpty(list)) {
                 result.status = EnumsApi.PlanProducingStatus.META_WASNT_CONFIGURED_FOR_EXPERIMENT_ERROR;
@@ -110,7 +112,7 @@ public class ExperimentProcessService {
         else {
             if (!collectedInputs.containsKey(meta.getValue())) {
                 List<SimpleCodeAndStorageUrl> initialInputResourceCodes = binaryDataService.getResourceCodesInPool(
-                        Collections.singletonList(meta.getValue()), workbook.getId()
+                        Collections.singletonList(meta.getValue()), workbookId
                 );
 
                 PlanService.ResourcePools metaPools = new PlanService.ResourcePools(initialInputResourceCodes);
@@ -137,7 +139,7 @@ public class ExperimentProcessService {
         Monitoring.log("##051", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
         EnumsApi.PlanProducingStatus status = experimentService.produceTasks(
-                isPersist, planParams, workbook, process, e, collectedInputs, inputStorageUrls, intHolder);
+                isPersist, planParams, workbookId, process, e, collectedInputs, inputStorageUrls, intHolder);
 
         log.info("experimentService.produceTasks() was done for " + (System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##071", Enums.Monitor.MEMORY);

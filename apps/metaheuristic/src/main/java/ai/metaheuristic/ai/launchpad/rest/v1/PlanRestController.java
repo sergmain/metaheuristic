@@ -87,11 +87,13 @@ public class PlanRestController {
 
     // ============= Service methods =============
 
+    // TODO 2019-07-06 why we need this method?
     @GetMapping(value = "/emulate-producing-tasks/{workbookId}")
     public PlanApiData.TaskProducingResult emulateProducingTasks(@PathVariable Long workbookId) {
         return planTopLevelService.produceTasksWithoutPersistence(workbookId);
     }
 
+    // TODO 2019-07-06 why we need this method?
     @GetMapping(value = "/create-all-tasks")
     public void createAllTasks() {
         planTopLevelService.createAllTasks();

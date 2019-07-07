@@ -524,7 +524,7 @@ public class ExperimentService {
     PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
 
     public EnumsApi.PlanProducingStatus produceTasks(
-            boolean isPersist, PlanParamsYaml planParams, Workbook workbook, Process process,
+            boolean isPersist, PlanParamsYaml planParams, Long workbookId, Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
             Map<String, DataStorageParams> inputStorageUrls, IntHolder numberOfTasks) {
         if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
@@ -558,24 +558,24 @@ public class ExperimentService {
 
         final Map<String, Snippet> localCache = new HashMap<>();
         final IntHolder size = new IntHolder();
-        final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, workbook, experiment, size);
+        final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, workbookId, experiment, size);
 
         numberOfTasks.value = 0;
 
         log.debug("total size of tasks' params is {} bytes", size.value);
         final AtomicBoolean boolHolder = new AtomicBoolean();
         final Consumer<Long> longConsumer = o -> {
-            if (workbook.getId().equals(o)) {
+            if (workbookId.equals(o)) {
                 boolHolder.set(true);
             }
         };
         final WorkbookService.WorkbookDeletionListener listener =
-                new WorkbookService.WorkbookDeletionListener(workbook.getId(), longConsumer);
+                new WorkbookService.WorkbookDeletionListener(workbookId, longConsumer);
 
         int processed = 0;
         try {
             eventMulticaster.addApplicationListener(listener);
-            Workbook instance = workbookRepository.findById(workbook.getId()).orElse(null);
+            Workbook instance = workbookRepository.findById(workbookId).orElse(null);
             if (instance==null) {
                 return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
             }
@@ -601,7 +601,7 @@ public class ExperimentService {
                         // create empty task. we need task id for initialization
                         task = new TaskImpl();
                         task.setParams("");
-                        task.setWorkbookId(workbook.getId());
+                        task.setWorkbookId(workbookId);
                         task.setProcessType(process.type.value);
                         if (isPersist) {
                             taskRepository.saveAndFlush((TaskImpl) task);
@@ -672,7 +672,7 @@ public class ExperimentService {
                         });
 
                         ExperimentTaskFeature tef = new ExperimentTaskFeature();
-                        tef.setWorkbookId(workbook.getId());
+                        tef.setWorkbookId(workbookId);
                         tef.setTaskId(task.getId());
                         tef.setFeatureId(feature.id);
                         tef.setTaskType(type.value);

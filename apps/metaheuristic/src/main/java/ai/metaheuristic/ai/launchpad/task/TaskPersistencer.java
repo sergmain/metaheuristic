@@ -18,20 +18,17 @@ package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -40,18 +37,13 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class TaskPersistencer {
 
     private static final int NUMBER_OF_TRY = 2;
     private final TaskRepository taskRepository;
-    private final WorkbookRepository workbookRepository;
 
     private final Object syncObj = new Object();
-
-    public TaskPersistencer(TaskRepository taskRepository, WorkbookRepository workbookRepository) {
-        this.taskRepository = taskRepository;
-        this.workbookRepository = workbookRepository;
-    }
 
     public Task setParams(long taskId, String taskParams) {
         synchronized (syncObj) {
@@ -142,15 +134,6 @@ public class TaskPersistencer {
             }
         }
         return null;
-    }
-
-    public Workbook save(Workbook workbook) {
-        if (workbook instanceof WorkbookImpl) {
-            return workbookRepository.saveAndFlush((WorkbookImpl)workbook);
-        }
-        else {
-            throw new NotImplementedException("Need to implement");
-        }
     }
 
     @SuppressWarnings("UnusedReturnValue")

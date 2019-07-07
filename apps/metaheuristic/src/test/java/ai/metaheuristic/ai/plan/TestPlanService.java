@@ -102,7 +102,8 @@ public class TestPlanService extends PreparingPlan {
         Protocol.AssignedTask.Task simpleTask0 = assignToStation0.getSimpleTask();
         assertNull(simpleTask0);
 
-        workbook = planService.toStarted(workbook);
+        workbook = planService.toStarted(workbook.getId());
+        assertEquals(EnumsApi.WorkbookExecState.STARTED.code, workbook.getExecState());
         {
             WorkbookService.TasksAndAssignToStationResult assignToStation =
                     workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());

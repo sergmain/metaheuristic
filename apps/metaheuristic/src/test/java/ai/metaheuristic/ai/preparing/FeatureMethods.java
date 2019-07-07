@@ -17,6 +17,7 @@ package ai.metaheuristic.ai.preparing;
 
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
@@ -70,7 +71,8 @@ public abstract class FeatureMethods extends PreparingPlan {
     }
 
     public void toStarted() {
-        workbook = planService.toStarted(workbook);
+        workbook = planService.toStarted(workbook.getId());
+        assertEquals(EnumsApi.WorkbookExecState.STARTED.code, workbook.getExecState());
     }
 
     protected void produceTasks() {
@@ -78,13 +80,13 @@ public abstract class FeatureMethods extends PreparingPlan {
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
         PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(workbookParamsYaml));
-        workbook = result.workbook;
+        workbook = (WorkbookImpl)result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
-        EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook);
+        EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook.id);
         assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
@@ -100,7 +102,7 @@ public abstract class FeatureMethods extends PreparingPlan {
         result = planService.produceAllTasks(true, plan, workbook);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        workbook = result.workbook;
+        workbook = (WorkbookImpl)result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, workbook.getExecState());
 

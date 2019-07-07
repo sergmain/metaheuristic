@@ -99,12 +99,12 @@ public class AtlasService {
         return result;
     }
 
-    public OperationStatusRest toAtlas(long workbookId, long experimentId) {
+    public OperationStatusRest toAtlas(Long workbookId, long experimentId) {
         StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(experimentId);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.errorMessages);
         }
-        if (workbookId!=stored.experimentStoredToAtlas.workbook.id) {
+        if (!workbookId.equals(stored.experimentStoredToAtlas.workbook.id)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment can't be stored, workbookId is different");
         }
         String poolCode = getPoolCodeForExperiment(workbookId, experimentId);

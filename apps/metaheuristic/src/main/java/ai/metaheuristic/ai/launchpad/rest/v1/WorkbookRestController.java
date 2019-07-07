@@ -78,6 +78,7 @@ public class WorkbookRestController {
 
     // ============= Service methods =============
 
+    // TODO 2019-07-06 why we need this method?
     @GetMapping(value = "/change-valid-status/{workbookId}/{status}")
     public OperationStatusRest changeValidStatus(@PathVariable Long workbookId, @PathVariable boolean status) {
         return workbookTopLevelService.changeValidStatus(workbookId, status);

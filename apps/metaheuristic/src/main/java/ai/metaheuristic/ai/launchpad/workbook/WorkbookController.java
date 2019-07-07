@@ -74,14 +74,8 @@ public class WorkbookController {
     }
 
     @PostMapping("/workbook-add-commit")
-    public String workbookAddCommit(@ModelAttribute("result") PlanApiData.PlanResult result, Long planId, String poolCode, String inputResourceParams, final RedirectAttributes redirectAttributes) {
+    public String workbookAddCommit(Long planId, String poolCode, String inputResourceParams, final RedirectAttributes redirectAttributes) {
         PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams);
-        result.plan = workbookResultRest.plan;
-        if (result.plan == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.60 plan wasn't found, planId: " + planId);
-            return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
-        }
-
         if (workbookResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", workbookResultRest.errorMessages);
         }
