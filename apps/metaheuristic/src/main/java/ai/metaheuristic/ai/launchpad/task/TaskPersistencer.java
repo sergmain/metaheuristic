@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -109,13 +110,23 @@ public class TaskPersistencer {
         return null;
     }
 
+    public Task resetTask(Long taskId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            return null;
+        }
+        return resetTask(task);
+    }
+
     public Task resetTask(TaskImpl task) {
         log.info("Start resetting task #{}", task.getId());
 
+/*
         // TODO 2019-07-04 do we still need this synchronization?
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
+*/
                     task.setSnippetExecResults(null);
                     task.setStationId(null);
                     task.setAssignedOn(null);
@@ -125,15 +136,17 @@ public class TaskPersistencer {
                     task.setExecState(EnumsApi.TaskExecState.NONE.value);
                     task.setResultReceived(false);
                     task.setResultResourceScheduledOn(0);
-                    taskRepository.saveAndFlush(task);
+                    taskRepository.save(task);
 
                     return task;
+/*
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.error("#307.25 Error while resetting task, try: {}, taskId: {}, error: {}",  i, task.getId(), e.toString());
                 }
             }
         }
         return null;
+*/
     }
 
     @SuppressWarnings("UnusedReturnValue")

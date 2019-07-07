@@ -19,8 +19,10 @@ package ai.metaheuristic.api.data.workbook;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseParams;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +41,8 @@ public class WorkbookParamsYaml implements BaseParams {
 
     @Data
     @EqualsAndHashCode(of = "taskId")
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class TaskVertex {
         public Long taskId;
         public EnumsApi.TaskExecState execState =  EnumsApi.TaskExecState.NONE;

@@ -119,6 +119,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
             workbookGraphService.updateGraphWithInvalidatingAllChildrenTasks(workbook, task.id);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.300 Can't re-run task #"+taskId+", see log for more information");
         }
+
         workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, task.id);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
