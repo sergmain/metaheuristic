@@ -101,7 +101,6 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-
     public OperationStatusRest resetTask(long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
