@@ -39,11 +39,6 @@ public class MetricsMaxValueCollector {
     private final TaskRepository taskRepository;
 
     public double calcMaxValueForMetrics(ExperimentParamsYaml epy, Long featureId) {
-
-//        @Query(value="select t.id, t.metrics from TaskImpl t, ExperimentTaskFeature f " +
-//                "where t.id=f.taskId and f.featureId=:experimentFeatureId ")
-//        Stream<Object[]> findMetricsByIds(long experimentFeatureId);
-
         List<Long> ids = epy.getTaskFeatureIds(featureId);
 
         List<Object[]> list = taskRepository.findMetricsByIds(ids);

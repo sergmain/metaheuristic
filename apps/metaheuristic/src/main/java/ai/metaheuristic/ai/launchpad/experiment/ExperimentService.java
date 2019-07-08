@@ -296,7 +296,7 @@ public class ExperimentService {
                 .limit(pageable.getPageSize())
                 .collect(Collectors.toList());
 
-        List<Long> ids = etfs.stream().mapToLong(ExperimentTaskFeature::getId).boxed().collect(Collectors.toList());
+        List<Long> ids = etfs.stream().mapToLong(ExperimentTaskFeature::getTaskId).boxed().collect(Collectors.toList());
 
         List<TaskImpl> tasks = taskRepository.findTasksByIds(pageable, ids);
         List<TaskWIthType> list = new ArrayList<>();
