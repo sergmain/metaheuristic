@@ -17,11 +17,11 @@
 package ai.metaheuristic.ai.launchpad.workbook;
 
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.launchpad.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.graph.DefaultEdge;
@@ -52,7 +52,7 @@ public class WorkbookGraphService {
     public static final String EMPTY_GRAPH = "strict digraph G { }";
     public static final String TASK_EXEC_STATE_ATTR = "task_exec_state";
 
-    private final WorkbookRepository workbookRepository;
+    private final WorkbookCache workbookCache;
     private final TaskPersistencer taskPersistencer;
 
     @FunctionalInterface
@@ -96,7 +96,7 @@ public class WorkbookGraphService {
             exporter.exportGraph(graph, writer);
             wpy.graph = writer.toString();
             workbook.updateParams(wpy);
-            workbookRepository.save(workbook);
+            workbookCache.save(workbook);
         }
     }
 
@@ -146,6 +146,23 @@ public class WorkbookGraphService {
         //noinspection UnnecessaryLocalVariable
         DOTImporter<WorkbookParamsYaml.TaskVertex, DefaultEdge> importer = new DOTImporter<>(WorkbookGraphService::toTaskVertex, ep);
         return importer;
+    }
+
+    public OperationStatusRest updateTaskExecState(WorkbookImpl workbook, Task task) {
+        try {
+            changeGraph(workbook, graph -> {
+                graph.vertexSet()
+                        .stream()
+                        .filter(o -> o.taskId.equals(task.getId()))
+                        .findFirst()
+                        .ifPresent(currV -> currV.execState = EnumsApi.TaskExecState.from(task.getExecState()));
+            });
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+        catch (Throwable th) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
+        }
+
     }
 
     public long getCountUnfinishedTasks(WorkbookImpl workbook) {

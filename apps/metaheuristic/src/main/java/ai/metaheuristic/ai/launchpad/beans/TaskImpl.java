@@ -78,17 +78,8 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "RESULT_RESOURCE_SCHEDULED_ON")
     public long resultResourceScheduledOn;
 
-/*
-    // this field will be left only for compatibility
+    // this field will be left only for compatibility, order isn't used any more
+    @Deprecated
     @Column(name = "TASK_ORDER")
     public int order;
-*/
-
-    public int getOrder() {
-        throw new IllegalStateException("order isn't used any more");
-    }
-
-    public void setOrder(int order) {
-        throw new IllegalStateException("order isn't used any more");
-    }
 }

@@ -25,7 +25,6 @@ import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -140,7 +139,7 @@ public abstract class FeatureMethods extends PreparingPlan {
             results.add(sser);
         }
 
-        taskService.storeAllConsoleResults(results);
+        workbookService.storeAllConsoleResults(results);
     }
 
     protected void finishCurrentWithOk(int expectedTasks) {
@@ -159,7 +158,7 @@ public abstract class FeatureMethods extends PreparingPlan {
             results.add(ster);
         }
 
-        taskService.storeAllConsoleResults(results);
+        workbookService.storeAllConsoleResults(results);
     }
 
 

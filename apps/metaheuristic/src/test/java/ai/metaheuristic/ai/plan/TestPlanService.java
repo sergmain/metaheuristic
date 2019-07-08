@@ -121,7 +121,7 @@ public class TestPlanService extends PreparingPlan {
             assertNull(assignToStation2.getSimpleTask());
 
             storeExecResult(simpleTask);
-            workbookService.markOrderAsProcessed();
+            workbookService.checkWorkbookStatuses();
         }
         {
             WorkbookService.TasksAndAssignToStationResult assignToStation20 =
@@ -140,7 +140,7 @@ public class TestPlanService extends PreparingPlan {
             assertNull(assignToStation21.getSimpleTask());
 
             storeExecResult(simpleTask20);
-            workbookService.markOrderAsProcessed();
+            workbookService.checkWorkbookStatuses();
         }
         {
             WorkbookService.TasksAndAssignToStationResult assignToStation30 =
@@ -160,7 +160,7 @@ public class TestPlanService extends PreparingPlan {
             assertNull(simpleTask31);
 
             storeExecResult(simpleTask30);
-            workbookService.markOrderAsProcessed();
+            workbookService.checkWorkbookStatuses();
         }
         {
             WorkbookService.TasksAndAssignToStationResult assignToStation32 =
@@ -173,7 +173,7 @@ public class TestPlanService extends PreparingPlan {
             assertNotNull(task32);
 //            assertEquals(3, task32.getOrder());
             storeExecResult(simpleTask32);
-            workbookService.markOrderAsProcessed();
+            workbookService.checkWorkbookStatuses();
         }
         int j;
         for ( j = 0; j < 1000; j++) {
@@ -188,7 +188,7 @@ public class TestPlanService extends PreparingPlan {
             Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
             assertNotNull(loopTask);
             taskPersistencer.setResultReceived(loopSimpleTask.getTaskId(), true);
-            workbookService.markOrderAsProcessed();
+            workbookService.checkWorkbookStatuses();
 //            if (loopTask.getOrder()==4) {
 //                break;
 //            }

@@ -28,8 +28,8 @@ import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
+import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
-import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -63,10 +63,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.yaml.snakeyaml.error.YAMLException;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -159,16 +156,17 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         this.publisher = publisher;
     }
 
-    public void markOrderAsProcessed() {
+    public void checkWorkbookStatuses() {
         List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
         for (WorkbookImpl workbook : workbooks) {
-            markOrderAsProcessed(workbook);
+            checkWorkbookStatus(workbook);
         }
     }
 
-    public WorkbookImpl markOrderAsProcessed(WorkbookImpl workbook) {
+    public WorkbookImpl checkWorkbookStatus(WorkbookImpl workbook) {
 
-        if (workbookGraphService.getCountUnfinishedTasks(workbook)==0) {
+        final long countUnfinishedTasks = workbookGraphService.getCountUnfinishedTasks(workbook);
+        if (countUnfinishedTasks==0) {
             log.info("Workbook #{} was finished", workbook.getId());
             experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
             workbook.setCompletedOn(System.currentTimeMillis());
@@ -474,6 +472,20 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         taskRepository.saveAndFlush((TaskImpl)resultTask);
 
         return new TasksAndAssignToStationResult(assignedTask);
+    }
+
+    public List<Long> storeAllConsoleResults(List<SimpleTaskExecResult> results) {
+        List<Long> ids = new ArrayList<>();
+        for (SimpleTaskExecResult result : results) {
+            ids.add(result.taskId);
+            Task t = taskPersistencer.storeExecResult(result);
+            if (t==null) {
+                continue;
+            }
+            WorkbookImpl workbook = workbookRepository.findByIdForUpdate(t.getWorkbookId());
+            workbookGraphService.updateTaskExecState(workbook, t);
+        }
+        return ids;
     }
 
 

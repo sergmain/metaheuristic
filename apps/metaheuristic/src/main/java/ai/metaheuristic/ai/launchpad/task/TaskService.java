@@ -85,14 +85,4 @@ public class TaskService {
                 break;
         }
     }
-
-    public List<Long> storeAllConsoleResults(List<SimpleTaskExecResult> results) {
-        List<Long> ids = new ArrayList<>();
-        for (SimpleTaskExecResult result : results) {
-            ids.add(result.taskId);
-            taskPersistencer.storeExecResult(result);
-        }
-        return ids;
-    }
-
 }

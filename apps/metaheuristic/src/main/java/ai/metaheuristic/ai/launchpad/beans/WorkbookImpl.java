@@ -55,19 +55,10 @@ public class WorkbookImpl implements Serializable, Workbook {
     @Column(name = "EXEC_STATE")
     public int execState;
 
-/*
-    // this field will be left only for compatibility
+    // this field will be left only for compatibility, producingOrder isn't used any more
+    @Deprecated
     @Column(name = "PRODUCING_ORDER")
-    public int producingOrder;
-*/
-
-    public int getProducingOrder() {
-        throw new IllegalStateException("producingOrder isn't used any more");
-    }
-
-    public void setProducingOrder(int producingOrder) {
-        throw new IllegalStateException("producingOrder isn't used any more");
-    }
+    public int producingOrder = 0;
 
     @Transient
     @JsonIgnore
