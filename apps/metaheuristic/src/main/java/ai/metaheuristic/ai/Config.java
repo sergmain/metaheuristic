@@ -51,6 +51,16 @@ public class Config {
         return new LayoutDialect();
     }
 
+    // https://medium.com/@joeclever/using-multiple-datasources-with-spring-boot-and-spring-data-6430b00c02e7
+
+    @Bean
+    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+        ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+        threadPoolTaskScheduler.setPoolSize(globals.threadNumber);
+        return threadPoolTaskScheduler;
+    }
+
+
 /*
     @Bean
     public CacheManager cacheManager() {
@@ -191,16 +201,6 @@ public class Config {
     }
 
 */
-
-    // https://medium.com/@joeclever/using-multiple-datasources-with-spring-boot-and-spring-data-6430b00c02e7
-
-    @Bean
-    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
-        ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-        threadPoolTaskScheduler.setPoolSize(globals.threadNumber);
-        return threadPoolTaskScheduler;
-    }
-
 
 
 

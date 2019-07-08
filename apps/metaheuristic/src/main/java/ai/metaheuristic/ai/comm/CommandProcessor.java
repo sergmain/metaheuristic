@@ -20,7 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.LaunchpadService;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
-import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.station.StationServicesHolder;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
@@ -121,6 +121,7 @@ public class CommandProcessor {
         return new Command[]{new Protocol.ResendTaskOutputResourceResult(statuses)};
     }
 
+    // processing on launchpad side
     private Command[] processResendTaskOutputResourceResult(Protocol.ResendTaskOutputResourceResult command) {
         for (Protocol.ResendTaskOutputResourceResult.SimpleStatus status : command.statuses) {
             launchpadService.getTaskService().processResendTaskOutputResourceResult(command.getStationId(), status.status, status.taskId);
@@ -128,8 +129,9 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
+    // processing on launchpad side
     private Command[] processStationTaskStatus(Protocol.StationTaskStatus command) {
-        launchpadService.getTaskService().reconcileStationTasks(command.stationId, command.statuses!=null ? command.statuses : new ArrayList<>());
+        launchpadService.getStationTopLevelService().reconcileStationTasks(command.stationId, command.statuses!=null ? command.statuses : new ArrayList<>());
         return Protocol.NOP_ARRAY;
     }
 
@@ -146,12 +148,13 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
+    // processing on launchpad side
     private Command[] processReportTaskProcessingResult(Protocol.ReportTaskProcessingResult command) {
         if (command.getResults().isEmpty()) {
             return Protocol.NOP_ARRAY;
         }
         final Protocol.ReportResultDelivering cmd1 = new Protocol.ReportResultDelivering(
-                launchpadService.getTaskService().storeAllConsoleResults(command.getResults())
+                launchpadService.getWorkbookService().storeAllConsoleResults(command.getResults())
         );
         // we can't return immediately task because we have to receive some params from station,
         // like: does snippet have to be signed or not
@@ -185,8 +188,8 @@ public class CommandProcessor {
 
     private synchronized Protocol.AssignedTask assignTaskToStation(String stationId, boolean isAcceptOnlySigned) {
         Protocol.AssignedTask r = new Protocol.AssignedTask();
-        TaskService.TasksAndAssignToStationResult result =
-            launchpadService.getTaskService().getTaskAndAssignToStation(
+        WorkbookService.TasksAndAssignToStationResult result =
+            launchpadService.getWorkbookService().getTaskAndAssignToStation(
                     Long.parseLong(stationId), isAcceptOnlySigned, null);
 
         if (result.getSimpleTask()!=null) {

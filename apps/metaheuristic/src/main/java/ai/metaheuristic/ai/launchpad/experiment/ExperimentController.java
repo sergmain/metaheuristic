@@ -270,12 +270,6 @@ public class ExperimentController {
         return REDIRECT_LAUNCHPAD_EXPERIMENTS;
     }
 
-    @PostMapping("/task-rerun/{taskId}")
-    public @ResponseBody boolean rerunTask(@PathVariable long taskId) {
-        OperationStatusRest status = experimentTopLevelService.rerunTask(taskId);
-        return !status.isErrorMessages();
-    }
-
     @GetMapping(value = "/experiment-to-atlas/{id}")
     public String toAtlas(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
 

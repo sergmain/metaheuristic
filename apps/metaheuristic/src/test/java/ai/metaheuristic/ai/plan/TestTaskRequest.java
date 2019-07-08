@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -83,7 +84,7 @@ public class TestTaskRequest extends FeatureMethods {
 
 
             Protocol.AssignedTask r = new Protocol.AssignedTask();
-            TaskService.TasksAndAssignToStationResult result = taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            WorkbookService.TasksAndAssignToStationResult result = workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
             if (result.getSimpleTask()!=null) {
                 r.tasks = Collections.singletonList(result.getSimpleTask());
             }
@@ -113,9 +114,9 @@ public class TestTaskRequest extends FeatureMethods {
             assertNotNull(task);
             assertTrue(task.isCompleted);
 
-            int order = workbook.getProducingOrder();
-            workbook = planService.markOrderAsProcessed(workbook);
-            assertEquals(order + 1, workbook.getProducingOrder());
+//            int order = workbook.getProducingOrder();
+            workbook = workbookService.checkWorkbookStatus(workbook);
+//            assertEquals(order + 1, workbook.getProducingOrder());
         }
 
         ExchangeData data = new ExchangeData();

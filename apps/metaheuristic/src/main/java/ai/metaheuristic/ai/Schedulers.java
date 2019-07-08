@@ -52,7 +52,7 @@ public class Schedulers {
         // Launchpad schedulers
 
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-workbook'), 5, 40, 5)*1000 }")
-        public void markOrderAsProcessed() {
+        public void checkWorkbookStatus() {
             if (globals.isUnitTesting) {
                 return;
             }
@@ -61,11 +61,13 @@ public class Schedulers {
             }
             log.info("Invoke PlanService.markOrderAsProcessed()");
             try {
-                launchpadService.getPlanService().markOrderAsProcessed();
+                launchpadService.getWorkbookService().checkWorkbookStatuses();
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("Error while markOrderAsProcessed()",e);
                 // TODO 2019-06-11 or just log an error?
-                System.exit(-1);
+//                System.exit(-1);
+                // TODO 2019-07-04 lets just output an error
+
             }
         }
 

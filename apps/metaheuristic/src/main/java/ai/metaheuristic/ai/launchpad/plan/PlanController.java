@@ -33,14 +33,13 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.ArrayList;
 import java.util.Collections;
 
-@SuppressWarnings("Duplicates")
 @Controller
 @RequestMapping("/launchpad/plan")
 @Slf4j
 @Profile("launchpad")
 public class PlanController {
 
-    private static final String REDIRECT_LAUNCHPAD_PLAN_PLANS = "redirect:/launchpad/plan/plans";
+    public static final String REDIRECT_LAUNCHPAD_PLAN_PLANS = "redirect:/launchpad/plan/plans";
 
     private final PlanTopLevelService planTopLevelService;
 
@@ -174,79 +173,6 @@ public class PlanController {
             redirectAttributes.addFlashAttribute("errorMessage", Collections.singletonList("#560.40 plan wasn't found, id: "+id) );
         }
         return REDIRECT_LAUNCHPAD_PLAN_PLANS;
-    }
-
-    // ============= Workbooks =============
-
-    @GetMapping("/workbooks/{id}")
-    public String workbooks(Model model, @PathVariable Long id, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
-        model.addAttribute("result", planTopLevelService.getWorkbooksOrderByCreatedOnDesc(id, pageable));
-        return "launchpad/plan/workbooks";
-    }
-
-    // for AJAX
-    @PostMapping("/workbooks-part/{id}")
-    public String workbooksPart(Model model, @PathVariable Long id, @PageableDefault(size = 10) Pageable pageable) {
-        model.addAttribute("result", planTopLevelService.getWorkbooksOrderByCreatedOnDesc(id, pageable));
-        return "launchpad/plan/workbooks :: table";
-    }
-
-    @SuppressWarnings("Duplicates")
-    @GetMapping(value = "/workbook-add/{id}")
-    public String workbookAdd(@ModelAttribute("result") PlanApiData.PlanResult result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id);
-        if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
-            redirectAttributes.addFlashAttribute("errorMessage", planResultRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
-        }
-        result.plan = planResultRest.plan;
-        return "launchpad/plan/workbook-add";
-    }
-
-    @PostMapping("/workbook-add-commit")
-    public String workbookAddCommit(@ModelAttribute("result") PlanApiData.PlanResult result, Long planId, String poolCode, String inputResourceParams, final RedirectAttributes redirectAttributes) {
-        PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams);
-        result.plan = workbookResultRest.plan;
-        if (result.plan == null) {
-            redirectAttributes.addFlashAttribute("errorMessage", "#560.60 plan wasn't found, planId: " + planId);
-            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
-        }
-
-        if (workbookResultRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", workbookResultRest.errorMessages);
-        }
-        return "redirect:/launchpad/plan/workbooks/" + planId;
-    }
-
-    @GetMapping("/workbook-delete/{planId}/{workbookId}")
-    public String workbookDelete(Model model, @PathVariable Long planId, @PathVariable Long workbookId, final RedirectAttributes redirectAttributes) {
-        PlanApiData.WorkbookResult result = planTopLevelService.getWorkbookExtended(workbookId);
-        if (result.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
-        }
-        model.addAttribute("result", result);
-        return "launchpad/plan/workbook-delete";
-    }
-
-    @PostMapping("/workbook-delete-commit")
-    public String workbookDeleteCommit(Long planId, Long workbookId, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(workbookId);
-        if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
-        }
-        return "redirect:/launchpad/plan/workbooks/"+ planId;
-    }
-
-    @GetMapping("/workbook-target-exec-state/{planId}/{state}/{id}")
-    public String workbookTargetExecState(@PathVariable Long planId, @PathVariable String state, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = planTopLevelService.changeWorkbookExecState(state, id);
-        if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_PLAN_PLANS;
-        }
-        return "redirect:/launchpad/plan/workbooks/" + planId;
     }
 
 }

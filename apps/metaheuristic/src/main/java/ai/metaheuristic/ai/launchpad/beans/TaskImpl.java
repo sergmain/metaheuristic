@@ -62,9 +62,6 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "METRICS")
     public String metrics;
 
-    @Column(name = "TASK_ORDER")
-    public int order;
-
     @Column(name = "WORKBOOK_ID")
     public long workbookId;
 
@@ -74,10 +71,15 @@ public class TaskImpl implements Serializable, Task {
     @Column(name = "PROCESS_TYPE")
     public int processType;
 
-    // by result means file which is created by task
+    // by result that means a file which is created by this task
     @Column(name = "IS_RESULT_RECEIVED")
     public boolean resultReceived;
 
     @Column(name = "RESULT_RESOURCE_SCHEDULED_ON")
     public long resultResourceScheduledOn;
+
+    // this field will be left only for compatibility, order isn't used any more
+    @Deprecated
+    @Column(name = "TASK_ORDER")
+    public int order;
 }

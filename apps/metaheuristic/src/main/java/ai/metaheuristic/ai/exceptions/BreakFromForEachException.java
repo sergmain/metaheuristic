@@ -17,6 +17,9 @@
 package ai.metaheuristic.ai.exceptions;
 
 public class BreakFromForEachException extends RuntimeException {
+    public BreakFromForEachException() {
+    }
+
     public BreakFromForEachException(Throwable cause) {
         super(cause);
     }

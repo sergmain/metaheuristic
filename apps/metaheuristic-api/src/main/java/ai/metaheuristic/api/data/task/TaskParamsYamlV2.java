@@ -65,7 +65,7 @@ public class TaskParamsYamlV2 implements BaseParams {
         public String outputResourceAbsolutePath;
     }
 
-    public final Integer version = 2;
+    public final int version = 2;
     public TaskYamlV2 taskYaml = new TaskYamlV2();
 
 }

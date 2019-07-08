@@ -16,7 +16,7 @@
 package ai.metaheuristic.ai.service;
 
 import ai.metaheuristic.ai.comm.Protocol;
-import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
@@ -56,13 +56,15 @@ public class TestFeatureWithAllError extends FeatureMethods {
         finishCurrentWithError(1);
         log.info("finishCurrentWithError() was finished for {}", System.currentTimeMillis() - mills);
 
+/*
         noNewTask();
 
         taskPersistencer.setResultReceived(simpleTask.taskId, true);
 
         noNewTask();
 
-        planService.markOrderAsProcessed();
+        workbookService.checkWorkbookStatuses();
+*/
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToStation_mustBeNewTask()");
@@ -71,21 +73,18 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         mills = System.currentTimeMillis();
         log.info("Start finishCurrentWithError()");
-        finishCurrentWithError(1);
+        finishCurrentWithError(2);
         log.info("finishCurrentWithError() was finished for {}", System.currentTimeMillis() - mills);
 
-        // TODO add some new tests here
-
-        System.out.println();
     }
 
     public void noNewTask() {
-        TaskService.TasksAndAssignToStationResult task;
-        task = taskService.getTaskAndAssignToStation(station.getId(), false, experiment.getWorkbookId());
+        WorkbookService.TasksAndAssignToStationResult task;
+        task = workbookService.getTaskAndAssignToStation(station.getId(), false, experiment.getWorkbookId());
         assertNotNull(task);
         assertNull(task.getSimpleTask());
 
-        task = taskService.getTaskAndAssignToStation(station.getId() + 1, false, experiment.getWorkbookId());
+        task = workbookService.getTaskAndAssignToStation(station.getId() + 1, false, experiment.getWorkbookId());
         assertNotNull(task);
         assertNull(task.getSimpleTask());
     }

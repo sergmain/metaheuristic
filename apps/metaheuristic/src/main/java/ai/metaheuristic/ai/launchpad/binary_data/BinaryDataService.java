@@ -140,7 +140,7 @@ public class BinaryDataService {
     }
 
     @Transactional(readOnly = true)
-    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode, long workbookId) {
+    public List<SimpleCodeAndStorageUrl> getResourceCodesInPool(List<String> inputResourcePoolCode, Long workbookId) {
         return binaryDataRepository.getCodeAndStorageUrlInPool(inputResourcePoolCode, workbookId);
     }
 

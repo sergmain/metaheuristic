@@ -35,7 +35,7 @@ public interface Task {
 
     String getMetrics();
 
-    int getOrder();
+//    int getOrder();
 
     long getWorkbookId();
 
@@ -65,7 +65,7 @@ public interface Task {
 
     void setMetrics(String metrics);
 
-    void setOrder(int order);
+//    void setOrder(int order);
 
     void setWorkbookId(long workbookId);
 

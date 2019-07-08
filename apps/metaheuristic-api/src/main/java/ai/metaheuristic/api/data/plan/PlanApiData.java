@@ -79,6 +79,14 @@ public class PlanApiData {
             }
             return EnumsApi.TaskProducingStatus.OK;
         }
+
+        public TaskProducingResultComplex(EnumsApi.PlanProducingStatus planProducingStatus) {
+            this.planProducingStatus = planProducingStatus;
+        }
+
+        public TaskProducingResultComplex(EnumsApi.PlanValidateStatus planValidateStatus) {
+            this.planValidateStatus = planValidateStatus;
+        }
     }
 
     @Data

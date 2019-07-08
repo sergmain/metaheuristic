@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.exceptions.StoreNewFileWithRedirectException;
 import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchWorkbook;
+import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceService;
@@ -31,6 +32,7 @@ import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
@@ -38,7 +40,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.UnzipArchiveException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -99,6 +101,7 @@ public class BatchTopLevelService {
     private final BatchCache batchCache;
     private final PlanRepository planRepository;
     private final WorkbookRepository workbookRepository;
+    private final WorkbookService workbookService;
     private final BatchWorkbookRepository batchWorkbookRepository;
 
     public static final Function<String, Boolean> VALIDATE_ZIP_FUNCTION = BatchTopLevelService::isZipEntityNameOk;
@@ -160,12 +163,14 @@ public class BatchTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.040 name of uploaded file is null");
         }
         final String originFilename = tempFilename.toLowerCase();
-        Plan plan = planCache.findById(planId);
+        PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.050 plan wasn't found, planId: " + planId);
         }
 
         // validate the plan
+        // TODO 2019-07-06 Do we need to validate plan here in case that there is another check
+        // in ai.metaheuristic.ai.launchpad.batch.process_resource.BatchTopLevelService.createAndProcessTask
         PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
         if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.060 validation of plan was failed, status: " + planValidation.status);
@@ -205,11 +210,11 @@ public class BatchTopLevelService {
                         log.debug("Start unzipping archive");
                         Map<String, String> mapping = ZipUtils.unzipFolder(dataFile, tempDir, true, EXCLUDE_FROM_MAPPING);
                         log.debug("Start loading file data to db");
-                        loadFilesFromDirAfterZip(batch, tempDir, plan, mapping);
+                        loadFilesFromDirAfterZip(batch, tempDir, mapping);
                     }
                     else {
                         log.debug("Start loading file data to db");
-                        loadFilesFromDirAfterZip(batch, tempDir,  plan, Collections.emptyMap());
+                        loadFilesFromDirAfterZip(batch, tempDir, Collections.emptyMap());
                     }
                 }
                 catch(UnzipArchiveException e) {
@@ -247,7 +252,7 @@ public class BatchTopLevelService {
             if (wb == null) {
                 continue;
             }
-            planService.deleteWorkbook(wb.getId(), wb.getPlanId());
+            planService.deleteWorkbook(wb.getId());
         }
         batchWorkbookRepository.deleteByBatchId(batch.id);
         batchCache.deleteById(batch.id);
@@ -255,7 +260,7 @@ public class BatchTopLevelService {
         return new OperationStatusRest(EnumsApi.OperationStatus.OK, "Batch #"+batch.id+" was deleted successfully.", null);
     }
 
-    private void loadFilesFromDirAfterZip(Batch batch, File srcDir, Plan plan, final Map<String, String> mapping) throws IOException {
+    private void loadFilesFromDirAfterZip(Batch batch, File srcDir, final Map<String, String> mapping) throws IOException {
 
         List<Path> paths = Files.list(srcDir.toPath())
                 .filter(o -> {
@@ -283,7 +288,7 @@ public class BatchTopLevelService {
                                 files.add(new FileWithMapping(f.toFile(), actualFileName));
                             });
 
-                    createAndProcessTask(batch, plan, files, mainDocFile);
+                    createAndProcessTask(batch, files, mainDocFile);
                 } catch (StoreNewFileWithRedirectException e) {
                     throw e;
                 } catch (Throwable th) {
@@ -294,7 +299,7 @@ public class BatchTopLevelService {
             } else {
                 String actualFileName = mapping.get(file.getName());
                 final List<FileWithMapping> files = Collections.singletonList(new FileWithMapping(file, actualFileName));
-                createAndProcessTask(batch, plan, files, file);
+                createAndProcessTask(batch, files, file);
             }
         }
     }
@@ -335,21 +340,24 @@ public class BatchTopLevelService {
         return mainDocFile;
     }
 
-    private static String asInputResourceParams(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
-        String yaml ="preservePoolNames: true\n" +
-                "poolCodes:\n  " + Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH + ":\n" + ITEM_LIST_PREFIX + mainPoolCode;
+    private static WorkbookParamsYaml initWorkbookParamsYaml(String mainPoolCode, String attachPoolCode, List<String> attachmentCodes) {
+        WorkbookParamsYaml yaml = new WorkbookParamsYaml();
+        yaml.workbookYaml.preservePoolNames = true;
+        yaml.workbookYaml.poolCodes.computeIfAbsent(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, o-> new ArrayList<>()).add(mainPoolCode);
         if (attachmentCodes.isEmpty()) {
             return yaml;
         }
-        yaml += "\n  " + ATTACHMENTS_POOL_CODE + ":\n" + ITEM_LIST_PREFIX + attachPoolCode + '\n';
+        yaml.workbookYaml.poolCodes.computeIfAbsent(ATTACHMENTS_POOL_CODE, o-> new ArrayList<>()).add(attachPoolCode);
         return yaml;
     }
 
-    private void createAndProcessTask(Batch batch, Plan plan, List<FileWithMapping> dataFile, File mainDocFile) {
+    private void createAndProcessTask(Batch batch, List<FileWithMapping> dataFile, File mainDocFile) {
+
+        Long planId = batch.planId;
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
-        String mainPoolCode = String.format("%d-%s-%d", plan.getId(), Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
-        String attachPoolCode = String.format("%d-%s-%d", plan.getId(), ATTACHMENTS_POOL_CODE, nanoTime);
+        String mainPoolCode = String.format("%d-%s-%d", planId, Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
+        String attachPoolCode = String.format("%d-%s-%d", planId, ATTACHMENTS_POOL_CODE, nanoTime);
         boolean isMainDocPresent = false;
         for (FileWithMapping fileWithMapping : dataFile) {
             String originFilename = fileWithMapping.originName!=null ? fileWithMapping.originName : fileWithMapping.file.getName();
@@ -375,41 +383,33 @@ public class BatchTopLevelService {
             throw new BatchResourceProcessingException("#995.180 main document wasn't found");
         }
 
-        final String paramYaml = asInputResourceParams(mainPoolCode, attachPoolCode, attachments);
-        PlanApiData.TaskProducingResultComplex producingResult = planService.createWorkbook(plan.getId(), paramYaml);
+        final WorkbookParamsYaml params = initWorkbookParamsYaml(mainPoolCode, attachPoolCode, attachments);
+        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(planId, params);
         if (producingResult.planProducingStatus!= EnumsApi.PlanProducingStatus.OK) {
             throw new BatchResourceProcessingException("#995.190 Error creating workbook: " + producingResult.planProducingStatus);
         }
-        BatchWorkbook bfi = new BatchWorkbook();
-        bfi.batchId=batch.id;
-        bfi.workbookId=producingResult.workbook.getId();
-        batchWorkbookRepository.saveAndFlush(bfi);
+        BatchWorkbook bw = new BatchWorkbook();
+        bw.batchId=batch.id;
+        bw.workbookId=producingResult.workbook.getId();
+        batchWorkbookRepository.save(bw);
 
-        // ugly work-around on ObjectOptimisticLockingFailureException, StaleObjectStateException
-        Long planId = plan.getId();
-        plan = planCache.findById(planId);
+        PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
             throw new BatchResourceProcessingException("#995.200 plan wasn't found, planId: " + planId);
         }
 
-        // validate the plan + the workbook
-        PlanApiData.PlanValidation planValidation = planService.validateInternal(plan);
-        if (planValidation.status != EnumsApi.PlanValidateStatus.OK ) {
-            throw new BatchResourceProcessingException("#995.210 validation of plan was failed, status: " + planValidation.status);
-        }
-
-        PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook);
+        PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook.getId());
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             throw new BatchResourceProcessingException("#995.220 validation of plan was failed, status: " + countTasks.planValidateStatus);
         }
 
         if (globals.maxTasksPerPlan < countTasks.numberOfTasks) {
-            planService.changeValidStatus(producingResult.workbook, false);
+            workbookService.changeValidStatus(producingResult.workbook.getId(), false);
             throw new BatchResourceProcessingException(
                     "#995.220 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
                             "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + countTasks.numberOfTasks);
         }
-        planService.changeValidStatus(producingResult.workbook, true);
+        workbookService.changeValidStatus(producingResult.workbook.getId(), true);
 
         // start producing new tasks
         OperationStatusRest operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.PRODUCING);
