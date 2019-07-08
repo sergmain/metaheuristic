@@ -22,6 +22,7 @@ import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
@@ -44,6 +45,7 @@ import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
@@ -134,10 +136,35 @@ public class ExperimentService {
         return ed;
     }
 
-    public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(ExperimentFeature experimentFeature) {
+    public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(
+            ExperimentFeature experimentFeature,
+            List<WorkbookParamsYaml.TaskVertex> taskVertices,
+            List<ExperimentTaskFeature> taskFeatures) {
         final ExperimentApiData.ExperimentFeatureData featureData = new ExperimentApiData.ExperimentFeatureData();
         BeanUtils.copyProperties(experimentFeature, featureData);
-        featureData.execStatusAsString = Enums.FeatureExecStatus.toState(featureData.execStatus).info;
+
+        List<ExperimentTaskFeature> etfs = taskFeatures.stream().filter(tf->tf.featureId.equals(featureData.id)).collect(Collectors.toList());
+
+        Set<EnumsApi.TaskExecState> statuses = taskVertices
+                .stream()
+                .filter(t -> etfs
+                        .stream()
+                        .filter(etf-> etf.taskId.equals(t.taskId))
+                        .findFirst()
+                        .orElse(null) !=null ).map(o->o.execState)
+                .collect(Collectors.toSet());
+
+        Enums.FeatureExecStatus execStatus = statuses.isEmpty() ? Enums.FeatureExecStatus.empty : Enums.FeatureExecStatus.unknown;
+        if (statuses.contains(EnumsApi.TaskExecState.OK)) {
+            execStatus = Enums.FeatureExecStatus.finished;
+        }
+        else if (statuses.contains(EnumsApi.TaskExecState.ERROR)|| statuses.contains(EnumsApi.TaskExecState.BROKEN)) {
+            execStatus = Enums.FeatureExecStatus.finished_with_errors;
+        }
+        else if (statuses.contains(EnumsApi.TaskExecState.IN_PROGRESS)) {
+            execStatus = Enums.FeatureExecStatus.processing;
+        }
+        featureData.execStatusAsString = execStatus.info;
         return featureData;
     }
 
@@ -418,8 +445,17 @@ public class ExperimentService {
         return true;
     }
 
-    @SuppressWarnings("Duplicates")
-    public ExperimentApiData.ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
+    public ExperimentApiData.ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, Long featureId ) {
+        if (experiment.workbookId==null) {
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.040 workbookId is null");
+        }
+        WorkbookImpl workbook = workbookCache.findById(experiment.workbookId);
+
+        ExperimentParamsYaml.ExperimentFeature experimentFeature = experiment.getExperimentParamsYaml().getFeature(featureId);
+        if (experimentFeature == null) {
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.050 feature wasn't found, experimentFeatureId: " + featureId);
+        }
+
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
 
         tasksResult.items = findPredictTasks(Consts.PAGE_REQUEST_10_REC, experiment, experimentFeature.getId());
@@ -464,12 +500,14 @@ public class ExperimentService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
+
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
         result.hyperParamResult = hyperParamResult;
         result.tasksResult = tasksResult;
         result.experiment = asExperimentData(experiment);
-        result.experimentFeature = asExperimentFeatureData(experimentFeature);
+        result.experimentFeature = asExperimentFeatureData(experimentFeature, taskVertices, experiment.getExperimentParamsYaml().processing.taskFeatures);
         result.consoleResult = new ExperimentApiData.ConsoleResult();
 
         return result;

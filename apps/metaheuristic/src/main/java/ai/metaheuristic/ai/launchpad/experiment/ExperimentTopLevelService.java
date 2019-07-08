@@ -19,11 +19,13 @@ package ai.metaheuristic.ai.launchpad.experiment;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.snippet.SnippetCode;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
@@ -34,8 +36,8 @@ import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -77,6 +79,7 @@ public class ExperimentTopLevelService {
     private final SnippetService snippetService;
     private final TaskRepository taskRepository;
     private final WorkbookCache workbookCache;
+    private final WorkbookGraphService workbookGraphService;
 
     private final ExperimentCache experimentCache;
     private final ExperimentService experimentService;
@@ -134,16 +137,19 @@ public class ExperimentTopLevelService {
 
     public ExperimentApiData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentId, Long featureId, String[] params, Pageable pageable) {
         Experiment experiment= experimentCache.findById(experimentId);
+        WorkbookImpl workbook = workbookCache.findById(experiment.workbookId);
 
         ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
 
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
         tasksResult.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
+
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.tasksResult = tasksResult;
         result.experiment = ExperimentService.asExperimentData(experiment);
-        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature);
+        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature, taskVertices, experiment.getExperimentParamsYaml().processing.taskFeatures);
         result.consoleResult = new ExperimentApiData.ConsoleResult();
         return result;
     }
@@ -153,16 +159,7 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.030 experiment wasn't found, experimentId: " + experimentId);
         }
-        if (experiment.workbookId==null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.040 workbookId is null");
-        }
-
-        ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
-        if (feature == null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.050 feature wasn't found, experimentFeatureId: " + featureId);
-        }
-
-        return experimentService.prepareExperimentFeatures(experiment, feature);
+        return experimentService.prepareExperimentFeatures(experiment, featureId);
     }
 
     public ExperimentApiData.ExperimentInfoExtendedResult getExperimentInfo(Long id) {
@@ -173,7 +170,7 @@ public class ExperimentTopLevelService {
         if (experiment.getWorkbookId() == null) {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.070 experiment wasn't startet yet, experimentId: " + id);
         }
-        Workbook workbook = workbookCache.findById(experiment.getWorkbookId());
+        WorkbookImpl workbook = workbookCache.findById(experiment.getWorkbookId());
         if (workbook == null) {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to workbook, experimentId: " + id);
         }
@@ -191,9 +188,10 @@ public class ExperimentTopLevelService {
             result.addInfoMessage("#285.090 A launch is disabled, dataset isn't assigned");
         }
 
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
         ExperimentApiData.ExperimentInfoResult experimentInfoResult = new ExperimentApiData.ExperimentInfoResult();
         final List<ExperimentParamsYaml.ExperimentFeature> experimentFeatures = epy.processing.features;
-        experimentInfoResult.features = experimentFeatures.stream().map(ExperimentService::asExperimentFeatureData).collect(Collectors.toList());
+        experimentInfoResult.features = experimentFeatures.stream().map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
         experimentInfoResult.workbook = workbook;
         experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.getExecState());
         result.experiment = ExperimentService.asExperimentData(experiment);

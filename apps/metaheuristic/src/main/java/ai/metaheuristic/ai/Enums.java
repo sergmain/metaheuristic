@@ -51,7 +51,11 @@ public final class Enums {
     }
 
     public enum FeatureExecStatus {
-        unknown(0, "Unknown"), ok(1, "Ok"), error(2, "All are errors"), empty(3, "No tasks");
+        unknown(0, "None"),
+        processing(1, "Processing"),
+        finished(2, "Finished"),
+        finished_with_errors(3, "Finished with errors"),
+        empty(4, "No tasks");
 
         public final int code;
         public final String info;
@@ -61,16 +65,17 @@ public final class Enums {
             this.info = info;
         }
 
-        @SuppressWarnings("DuplicateBranchesInSwitch")
         public static FeatureExecStatus toState(int code) {
             switch (code) {
                 case 0:
                     return unknown;
                 case 1:
-                    return ok;
+                    return processing;
                 case 2:
-                    return error;
+                    return finished;
                 case 3:
+                    return finished_with_errors;
+                case 4:
                     return empty;
                 default:
                     return unknown;

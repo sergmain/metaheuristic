@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,8 +67,13 @@ public class WorkbookGraphService {
     }
 
     @FunctionalInterface
-    public interface WorkWithGraphTaskVertex {
+    public interface WorkWithGraphListOfTaskVertex {
         List<WorkbookParamsYaml.TaskVertex> execute(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph);
+    }
+
+    @FunctionalInterface
+    public interface WorkWithGraphTaskVertex {
+        WorkbookParamsYaml.TaskVertex execute(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph);
     }
 
     public void changeGraph(WorkbookImpl workbook, WorkWithGraphVoid callable) throws ImportException {
@@ -100,7 +106,12 @@ public class WorkbookGraphService {
         }
     }
 
-    public List<WorkbookParamsYaml.TaskVertex> readOnlyGraphTaskVertex(WorkbookImpl workbook, WorkWithGraphTaskVertex callable) throws ImportException {
+    public List<WorkbookParamsYaml.TaskVertex> readOnlyGraphListOfTaskVertex(WorkbookImpl workbook, WorkWithGraphListOfTaskVertex callable) throws ImportException {
+        DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
+        return callable.execute(graph);
+    }
+
+    public WorkbookParamsYaml.TaskVertex readOnlyGraphTaskVertex(WorkbookImpl workbook, WorkWithGraphTaskVertex callable) throws ImportException {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
         return callable.execute(graph);
     }
@@ -122,9 +133,6 @@ public class WorkbookGraphService {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
         callable.execute(graph);
     }
-
-    private static final ComponentNameProvider<WorkbookParamsYaml.TaskVertex> vertexIdProvider = v -> v.taskId.toString();
-    private static final ComponentNameProvider<WorkbookParamsYaml.TaskVertex> vertexLabelProvider = v -> "#" + v.taskId.toString();
 
     private static WorkbookParamsYaml.TaskVertex toTaskVertex(String id, Map<String, Attribute> attributes) {
         WorkbookParamsYaml.TaskVertex v = new WorkbookParamsYaml.TaskVertex();
@@ -203,13 +211,48 @@ public class WorkbookGraphService {
 //    BreadthFirstIterator breadthFirstIterator = new BreadthFirstIterator<>(graph);
 
         try {
-            return readOnlyGraphTaskVertex(workbook, graph -> {
+            return readOnlyGraphListOfTaskVertex(workbook, graph -> {
                 //noinspection UnnecessaryLocalVariable
-                List<WorkbookParamsYaml.TaskVertex> vertexes = graph.vertexSet()
+                List<WorkbookParamsYaml.TaskVertex> vertices = graph.vertexSet()
                         .stream()
                         .filter(o -> graph.getDescendants(o).isEmpty())
                         .collect(Collectors.toList());
-                return vertexes;
+                return vertices;
+            });
+        }
+        catch (Throwable th) {
+            log.error("Error", th);
+            return null;
+        }
+    }
+
+    public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
+//    DepthFirstIterator depthFirstIterator = new DepthFirstIterator<>(graph);
+//    BreadthFirstIterator breadthFirstIterator = new BreadthFirstIterator<>(graph);
+
+        try {
+            return readOnlyGraphListOfTaskVertex(workbook, graph -> {
+                //noinspection UnnecessaryLocalVariable
+                List<WorkbookParamsYaml.TaskVertex> vertices = new ArrayList<>(graph.vertexSet());
+                return vertices;
+            });
+        }
+        catch (Throwable th) {
+            log.error("Error", th);
+            return null;
+        }
+    }
+
+    public WorkbookParamsYaml.TaskVertex findVertex(WorkbookImpl workbook, Long taskId) {
+        try {
+            return readOnlyGraphTaskVertex(workbook, graph -> {
+                //noinspection UnnecessaryLocalVariable
+                WorkbookParamsYaml.TaskVertex vertex = graph.vertexSet()
+                        .stream()
+                        .filter(o -> o.taskId.equals(taskId))
+                        .findFirst()
+                        .orElse(null);
+                return vertex;
             });
         }
         catch (Throwable th) {
@@ -239,14 +282,14 @@ public class WorkbookGraphService {
 
     public OperationStatusRest addNewTasksToGraph(WorkbookImpl workbook, List<Long> parentTaskIds, List<Long> taskIds) {
         try {
-            final List<WorkbookParamsYaml.TaskVertex> parentVertexes = parentTaskIds
+            final List<WorkbookParamsYaml.TaskVertex> parentVertices = parentTaskIds
                     .stream().map(o-> new WorkbookParamsYaml.TaskVertex(o, EnumsApi.TaskExecState.NONE)).collect(Collectors.toList());
 
             changeGraph(workbook, graph -> {
                 taskIds.forEach(id -> {
                     final WorkbookParamsYaml.TaskVertex v = new WorkbookParamsYaml.TaskVertex(id, EnumsApi.TaskExecState.NONE);
                     graph.addVertex(v);
-                    parentVertexes.forEach(parentV -> graph.addEdge(parentV, v) );
+                    parentVertices.forEach(parentV -> graph.addEdge(parentV, v) );
                 });
             });
             return OperationStatusRest.OPERATION_STATUS_OK;

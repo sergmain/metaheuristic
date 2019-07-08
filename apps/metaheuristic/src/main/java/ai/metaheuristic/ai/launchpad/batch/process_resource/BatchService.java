@@ -367,9 +367,9 @@ public class BatchService {
             }
             String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
 
-            List<WorkbookParamsYaml.TaskVertex> taskVertexes;
+            List<WorkbookParamsYaml.TaskVertex> taskVertices;
             try {
-                taskVertexes = workbookGraphService.findLeafs(wb);
+                taskVertices = workbookGraphService.findLeafs(wb);
             } catch (ObjectOptimisticLockingFailureException e) {
                 String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
                 log.warn(msg);
@@ -377,14 +377,14 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            if (taskVertexes.isEmpty()) {
+            if (taskVertices.isEmpty()) {
                 String msg = "#990.170 " + mainDocument + ", Can't find any task for batchId: " + batchId;
                 log.info(msg);
                 bs.add(msg,'\n');
                 isOk = false;
                 continue;
             }
-            if (taskVertexes.size() > 1) {
+            if (taskVertices.size() > 1) {
                 String msg = "#990.180 " + mainDocument + ", Can't download file because there are more than one task " +
                         "at the final state, batchId: " + batchId + ", workbookId: " + wb.getId();
                 log.info(msg);
@@ -392,9 +392,9 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            final Task task = taskRepository.findById(taskVertexes.get(0).taskId).orElse(null);
+            final Task task = taskRepository.findById(taskVertices.get(0).taskId).orElse(null);
             if (task==null) {
-                String msg = "#990.183 " + mainDocument + ", Can't find task #" + taskVertexes.get(0).taskId;
+                String msg = "#990.183 " + mainDocument + ", Can't find task #" + taskVertices.get(0).taskId;
                 log.info(msg);
                 bs.add(msg,'\n');
                 isOk = false;
@@ -552,16 +552,16 @@ public class BatchService {
             }
             String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
 
-            List<WorkbookParamsYaml.TaskVertex> taskVertexes;
-            taskVertexes = workbookGraphService.findLeafs(wb);
-            if (taskVertexes.isEmpty()) {
+            List<WorkbookParamsYaml.TaskVertex> taskVertices;
+            taskVertices = workbookGraphService.findLeafs(wb);
+            if (taskVertices.isEmpty()) {
                 String msg = "#990.290 " + mainDocument + ", Can't find any task for batchId: " + batchId;
                 log.info(msg);
                 bs.add(msg,'\n');
                 isOk = false;
                 continue;
             }
-            if (taskVertexes.size() > 1) {
+            if (taskVertices.size() > 1) {
                 String msg = "#990.300 " + mainDocument + ", Can't download file because there are more than one task " +
                         "at the final state, batchId: " + batchId + ", workbookId: " + wb.getId();
                 log.info(msg);
@@ -569,9 +569,9 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            final Task task = taskRepository.findById(taskVertexes.get(0).taskId).orElse(null);
+            final Task task = taskRepository.findById(taskVertices.get(0).taskId).orElse(null);
             if (task==null) {
-                String msg = "#990.303 " + mainDocument + ", Can't find task #" + taskVertexes.get(0).taskId;
+                String msg = "#990.303 " + mainDocument + ", Can't find task #" + taskVertices.get(0).taskId;
                 log.info(msg);
                 bs.add(msg,'\n');
                 isOk = false;
