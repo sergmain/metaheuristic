@@ -76,9 +76,6 @@ public class TestFeatureWithAllError extends FeatureMethods {
         finishCurrentWithError(2);
         log.info("finishCurrentWithError() was finished for {}", System.currentTimeMillis() - mills);
 
-        // TODO add some new tests here
-
-        System.out.println();
     }
 
     public void noNewTask() {
