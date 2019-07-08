@@ -34,6 +34,7 @@ import org.yaml.snakeyaml.Yaml;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -75,9 +76,17 @@ public class PlanParamsYamlUtilsV4
             pr.outputParams.storageType = o.outputType;
             return pr;
         }).collect(Collectors.toList());
-        String planCode = "p" + DateTimeFormatter.BASIC_ISO_DATE.format(LocalDate.now());
+//        final String dateAsStr = DateTimeFormatter.BASIC_ISO_DATE.format(LocalDate.now());
+        LocalDate date = LocalDate.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
+        String dateAsStr = date.format(formatter);
+
+        String planCode = "p" + dateAsStr;
         if (!p.planYaml.processes.isEmpty()) {
             planCode += ("-" + p.planYaml.processes.get(0).code);
+        }
+        else {
+            planCode += UUID.randomUUID().toString();
         }
 
         p.planYaml.planCode = StringUtils.truncate(planCode, 50);

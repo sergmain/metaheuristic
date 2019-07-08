@@ -39,6 +39,7 @@ import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.utils.holders.LongHolder;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
+import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
@@ -324,6 +325,9 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         result.currentPlanId = id;
 
         for (Workbook workbook : result.instances) {
+            WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(workbook.getParams());
+            wpy.graph = null;
+            workbook.setParams( WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
             Plan plan = planCache.findById(workbook.getPlanId());
             if (plan==null) {
                 log.warn("#701.140 Found workbook with wrong planId. planId: {}", workbook.getPlanId());
