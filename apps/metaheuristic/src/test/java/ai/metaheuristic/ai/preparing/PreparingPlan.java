@@ -27,19 +27,20 @@ import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.plan.TaskCollector;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsV2;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.plan.PlanParamsYamlV2;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.process.Process;
-import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
+import ai.metaheuristic.api.launchpad.process.ProcessV2;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
@@ -50,7 +51,6 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static ai.metaheuristic.api.data.plan.PlanApiData.TaskProducingResultComplex;
@@ -69,6 +69,9 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public WorkbookRepository workbookRepository;
 
     @Autowired
+    public WorkbookCache workbookCache;
+
+    @Autowired
     public PlanService planService;
 
     @Autowired
@@ -81,10 +84,13 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public WorkbookService workbookService;
 
     @Autowired
+    public WorkbookGraphService workbookGraphService;
+
+    @Autowired
     public TaskPersistencer taskPersistencer;
 
     public PlanImpl plan = null;
-    public PlanParamsYaml planParamsYaml = null;
+    public PlanParamsYamlV2 planParamsYaml = null;
     public Snippet s1 = null;
     public Snippet s2 = null;
     public Snippet s3 = null;
@@ -97,49 +103,53 @@ public abstract class PreparingPlan extends PreparingExperiment {
     public abstract String getPlanYamlAsString();
 
     public String getPlanParamsYamlAsString_Simple() {
-        PlanParamsYaml.PlanYaml planYaml = new PlanParamsYaml.PlanYaml();
+        planParamsYaml = new PlanParamsYamlV2();
+        planParamsYaml.planYaml = new PlanParamsYamlV2.PlanYamlV2();
         {
-            Process p = new Process();
+            ProcessV2 p = new ProcessV2();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "assembly raw file";
             p.code = "assembly-raw-file";
 
-            p.snippets = Collections.singletonList(new SnippetDefForPlan("snippet-01:1.1"));
+            p.snippetCodes = List.of("snippet-01:1.1");
             p.collectResources = false;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "assembled-raw-output";
+            p.outputType = "assembled-raw-output";
 
-            planYaml.processes.add(p);
+            planParamsYaml.planYaml.processes.add(p);
         }
         {
-            Process p = new Process();
+            ProcessV2 p = new ProcessV2();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "dataset processing";
             p.code = "dataset-processing";
 
-            p.snippets = Collections.singletonList(new SnippetDefForPlan("snippet-02:1.1"));
+            p.snippetCodes = List.of("snippet-02:1.1");
             p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "dataset-processing-output";
+            p.outputType = "dataset-processing-output";
 
-            planYaml.processes.add(p);
+            planParamsYaml.planYaml.processes.add(p);
         }
         {
-            Process p = new Process();
+            ProcessV2 p = new ProcessV2();
             p.type = EnumsApi.ProcessType.FILE_PROCESSING;
             p.name = "feature processing";
             p.code = "feature-processing";
 
-            p.snippets = List.of(new SnippetDefForPlan("snippet-03:1.1"), new SnippetDefForPlan("snippet-04:1.1"), new SnippetDefForPlan("snippet-05:1.1"));
+            p.snippetCodes = List.of("snippet-03:1.1", "snippet-04:1.1", "snippet-05:1.1");
             p.parallelExec = true;
             p.collectResources = true;
             p.outputParams = new DataStorageParams(EnumsApi.DataSourcing.launchpad);
             p.outputParams.storageType = "feature-output";
+            p.outputType = "feature-output";
 
-            planYaml.processes.add(p);
+            planParamsYaml.planYaml.processes.add(p);
         }
         {
-            Process p = new Process();
+            ProcessV2 p = new ProcessV2();
             p.type = EnumsApi.ProcessType.EXPERIMENT;
             p.name = "experiment";
             p.code = PreparingExperiment.TEST_EXPERIMENT_CODE_01;
@@ -152,14 +162,16 @@ public abstract class PreparingPlan extends PreparingExperiment {
                     )
             );
 
-            planYaml.processes.add(p);
+            planParamsYaml.planYaml.processes.add(p);
         }
-        planYaml.planCode = "test-plan-code";
+//        planYaml.planCode = "test-plan-code";
 
-        planParamsYaml = new PlanParamsYaml();
-        planParamsYaml.planYaml = planYaml;
+//        planParamsYaml = new PlanParamsYamlV2();
+//        planParamsYaml.planYaml = planYaml;
 
-        String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
+        final PlanParamsYamlUtilsV2 forVersion = (PlanParamsYamlUtilsV2) PlanParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+        String yaml = forVersion.toString(planParamsYaml);
+//        String yaml = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(planParamsYaml);
         System.out.println(yaml);
         return yaml;
     }
@@ -290,12 +302,18 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
         EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook.id);
         assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
+        workbook = workbookCache.findById(this.workbook.id);
+        assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
-        result = planService.produceAllTasks(true, plan, workbook);
-        workbook = (WorkbookImpl)result.workbook;
+        result = planService.produceAllTasks(true, plan, this.workbook);
+        this.workbook = (WorkbookImpl)result.workbook;
+        assertEquals(result.numberOfTasks, taskRepository.findAllByWorkbookId(workbook.id).size());
+        assertEquals(result.numberOfTasks, workbookGraphService.getCountUnfinishedTasks(workbook));
+
+
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
-        assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, workbook.getExecState());
+        assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, this.workbook.getExecState());
 
         experiment = experimentCache.findById(experiment.getId());
         return result;

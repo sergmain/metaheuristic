@@ -22,7 +22,6 @@ import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -45,6 +44,8 @@ public class TaskPersistencer {
     private final TaskRepository taskRepository;
 
     private final Object syncObj = new Object();
+
+
 
     public Task setParams(long taskId, String taskParams) {
         synchronized (syncObj) {
@@ -149,8 +150,13 @@ public class TaskPersistencer {
 */
     }
 
+    @FunctionalInterface
+    public interface PostTaskCreationAction {
+        void execute(Task t);
+    }
+
     @SuppressWarnings("UnusedReturnValue")
-    public Task storeExecResult(SimpleTaskExecResult result) {
+    public Task storeExecResult(SimpleTaskExecResult result, PostTaskCreationAction action) {
         synchronized (syncObj) {
             SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
             if (!snippetExec.exec.isOk) {
@@ -160,8 +166,8 @@ public class TaskPersistencer {
             }
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
-                    //noinspection UnnecessaryLocalVariable
                     Task t = prepareAndSaveTask(result, snippetExec.allSnippetsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR);
+                    action.execute(t);
                     return t;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.error("#307.29 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());

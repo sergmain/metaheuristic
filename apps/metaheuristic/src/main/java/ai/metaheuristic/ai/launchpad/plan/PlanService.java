@@ -30,7 +30,6 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessValidator;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessValidator;
-import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -400,13 +399,16 @@ public class PlanService {
         Monitoring.log("##023", Enums.Monitor.MEMORY);
         long mill = System.currentTimeMillis();
 
-        WorkbookImpl workbook = workbookCache.findById(workbookId);
-        if (workbook==null) {
-            log.error("#701.175 Can't find workbook #{}", workbookId );
-            return new PlanApiData.TaskProducingResultComplex(EnumsApi.PlanValidateStatus.WORKBOOK_NOT_FOUND_ERROR);
-        }
+        WorkbookParamsYaml resourceParams;
+        {
+            WorkbookImpl workbook = workbookCache.findById(workbookId);
+            if (workbook == null) {
+                log.error("#701.175 Can't find workbook #{}", workbookId);
+                return new PlanApiData.TaskProducingResultComplex(EnumsApi.PlanValidateStatus.WORKBOOK_NOT_FOUND_ERROR);
+            }
 
-        WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
+            resourceParams = workbook.getWorkbookParamsYaml();
+        }
         List<SimpleCodeAndStorageUrl> initialInputResourceCodes;
         initialInputResourceCodes = binaryDataService.getResourceCodesInPool(resourceParams.getAllPoolCodes());
         log.info("#701.180 Resources was acquired for " + (System.currentTimeMillis() - mill) +" ms" );
@@ -454,18 +456,17 @@ public class PlanService {
             switch(process.type) {
                 case FILE_PROCESSING:
                     Monitoring.log("##026", Enums.Monitor.MEMORY);
-                    produceTaskResult = fileProcessService.produceTasks(isPersist, plan.getId(), planParams, workbookId, process, pools);
+                    produceTaskResult = fileProcessService.produceTasks(isPersist, plan.getId(), planParams, workbookId, process, pools, parentTaskIds);
                     Monitoring.log("##027", Enums.Monitor.MEMORY);
                     break;
                 case EXPERIMENT:
                     Monitoring.log("##028", Enums.Monitor.MEMORY);
-                    produceTaskResult = experimentProcessService.produceTasks(isPersist, planParams, workbookId, process, pools);
+                    produceTaskResult = experimentProcessService.produceTasks(isPersist, planParams, workbookId, process, pools, parentTaskIds);
                     Monitoring.log("##029", Enums.Monitor.MEMORY);
                     break;
                 default:
                     throw new IllegalStateException("#701.200 Unknown process type");
             }
-            workbookGraphService.addNewTasksToGraph(workbook, parentTaskIds, produceTaskResult.taskIds);
             parentTaskIds.clear();
             parentTaskIds.addAll(produceTaskResult.taskIds);
 
@@ -482,12 +483,14 @@ public class PlanService {
             }
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }
-        if (isPersist) {
-            workbook = workbookService.toProduced(workbook.id);
-        }
 
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
-        result.workbook = workbook;
+        if (isPersist) {
+            result.workbook = workbookService.toProduced(workbookId);
+        }
+        else {
+            result.workbook = workbookCache.findById(workbookId);
+        }
         result.planYaml = planParams.planYaml;
         result.numberOfTasks += numberOfTasks;
         result.planValidateStatus = EnumsApi.PlanValidateStatus.OK;

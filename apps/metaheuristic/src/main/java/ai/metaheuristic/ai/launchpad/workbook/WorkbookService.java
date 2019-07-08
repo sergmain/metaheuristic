@@ -229,7 +229,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
             throw new IllegalStateException(es);
         }
         workbook.setExecState(EnumsApi.WorkbookExecState.PRODUCED.code);
-        workbookCache.save(workbook);
+        workbook = workbookCache.save(workbook);
         return workbook;
     }
 
@@ -475,15 +475,17 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     }
 
     public List<Long> storeAllConsoleResults(List<SimpleTaskExecResult> results) {
+        final TaskPersistencer.PostTaskCreationAction action = t -> {
+            if (t!=null) {
+                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(t.getWorkbookId());
+                workbookGraphService.updateTaskExecState(workbook, t);
+            }
+        };
+
         List<Long> ids = new ArrayList<>();
         for (SimpleTaskExecResult result : results) {
             ids.add(result.taskId);
-            Task t = taskPersistencer.storeExecResult(result);
-            if (t==null) {
-                continue;
-            }
-            WorkbookImpl workbook = workbookRepository.findByIdForUpdate(t.getWorkbookId());
-            workbookGraphService.updateTaskExecState(workbook, t);
+            taskPersistencer.storeExecResult(result, action);
         }
         return ids;
     }

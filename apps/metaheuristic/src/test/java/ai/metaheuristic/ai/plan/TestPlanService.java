@@ -17,9 +17,11 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.comm.Protocol;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -29,6 +31,7 @@ import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.launchpad.process.ProcessV2;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -55,6 +58,9 @@ public class TestPlanService extends PreparingPlan {
 
     @Autowired
     public WorkbookService workbookService;
+
+    @Autowired
+    public WorkbookGraphService workbookGraphService;
 
     @Override
     public String getPlanYamlAsString() {
@@ -84,15 +90,19 @@ public class TestPlanService extends PreparingPlan {
         assertFalse(tasks.isEmpty());
 
         int taskNumber = 0;
-        for (Process process : planParamsYaml.planYaml.processes) {
+        for (ProcessV2 process : planParamsYaml.planYaml.processes) {
             if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }
-            taskNumber += process.snippets.size();
+            taskNumber += process.snippetCodes.size();
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
-        assertEquals(1 + 1 + 3 + 2 * 12 * 7, taskNumber + epy.processing.getNumberOfTask());
+        final int actualTaskNumber = taskNumber + epy.processing.getNumberOfTask();
+        assertEquals(1 + 1 + 3 + 2 * 12 * 7, actualTaskNumber);
+
+        long numberFromGraph = workbookGraphService.getCountUnfinishedTasks(workbook);
+        assertEquals(actualTaskNumber, numberFromGraph);
 
         // ======================
 
@@ -176,6 +186,7 @@ public class TestPlanService extends PreparingPlan {
             workbookService.checkWorkbookStatuses();
         }
         int j;
+        long prevValue = workbookGraphService.getCountUnfinishedTasks(workbook);
         for ( j = 0; j < 1000; j++) {
 
             System.out.println("j = " + j);
@@ -187,11 +198,15 @@ public class TestPlanService extends PreparingPlan {
             assertNotNull(loopSimpleTask.getTaskId());
             Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
             assertNotNull(loopTask);
-            taskPersistencer.setResultReceived(loopSimpleTask.getTaskId(), true);
+            storeExecResult(loopSimpleTask);
             workbookService.checkWorkbookStatuses();
-//            if (loopTask.getOrder()==4) {
-//                break;
-//            }
+
+            final long count = workbookGraphService.getCountUnfinishedTasks(workbookCache.findById(workbook.id));
+            assertNotEquals(count, prevValue);
+            prevValue = count;
+            if (count==0) {
+                break;
+            }
         }
         assertNotEquals(1000, j);
 
@@ -214,7 +229,15 @@ public class TestPlanService extends PreparingPlan {
         r.setTaskId(simpleTask.getTaskId());
         r.setMetrics(null);
         r.setResult(getOKExecResult());
-        taskPersistencer.storeExecResult(r);
+
+        final TaskPersistencer.PostTaskCreationAction action = t -> {
+            if (t!=null) {
+                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(t.getWorkbookId());
+                workbookGraphService.updateTaskExecState(workbook, t);
+            }
+        };
+
+        taskPersistencer.storeExecResult(r, action);
         taskPersistencer.setResultReceived(simpleTask.getTaskId(), true);
     }
 

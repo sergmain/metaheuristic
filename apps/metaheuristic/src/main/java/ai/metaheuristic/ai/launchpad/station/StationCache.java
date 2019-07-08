@@ -59,6 +59,9 @@ public class StationCache {
 
     @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#station.id")
     public void delete(Station station) {
+        if (station==null || station.id==null) {
+            return;
+        }
         try {
             stationsRepository.delete(station);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -73,6 +76,9 @@ public class StationCache {
 
     @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#stationId")
     public void delete(Long stationId) {
+        if (stationId==null) {
+            return;
+        }
         try {
             stationsRepository.deleteById(stationId);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -82,6 +88,9 @@ public class StationCache {
 
     @CacheEvict(cacheNames = {Consts.STATIONS_CACHE}, key = "#stationId")
     public void deleteById(Long stationId) {
+        if (stationId==null) {
+            return;
+        }
         try {
             stationsRepository.deleteById(stationId);
         } catch (ObjectOptimisticLockingFailureException e) {

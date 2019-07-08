@@ -26,6 +26,7 @@ import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.launchpad.process.ProcessV2;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -74,7 +75,8 @@ public class TestCountOfTasks extends PreparingPlan {
 
 
         EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook.id);
-        assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
+        workbook = workbookCache.findById(this.workbook.id);
+        assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
         List<Object[]> tasks01 = taskCollector.getTasks(result.workbook);
@@ -114,11 +116,11 @@ public class TestCountOfTasks extends PreparingPlan {
         assertEquals(numberOfTasks, tasks.size());
 
         int taskNumber = 0;
-        for (Process process : planParamsYaml.planYaml.processes) {
+        for (ProcessV2 process : planParamsYaml.planYaml.processes) {
             if (process.type== EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }
-            taskNumber += process.snippets.size();
+            taskNumber += process.snippetCodes.size();
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 

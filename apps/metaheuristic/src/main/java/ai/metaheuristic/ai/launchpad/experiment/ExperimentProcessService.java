@@ -59,7 +59,7 @@ public class ExperimentProcessService {
 
     public PlanService.ProduceTaskResult produceTasks(
             boolean isPersist, PlanParamsYaml planParams, Long workbookId,
-            Process process, PlanService.ResourcePools pools) {
+            Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
 
         Map<String, List<String>> collectedInputs = pools.collectedInputs;
         Map<String, DataStorageParams> inputStorageUrls = pools.inputStorageUrls;
@@ -139,7 +139,7 @@ public class ExperimentProcessService {
         Monitoring.log("##051", Enums.Monitor.MEMORY);
         mills = System.currentTimeMillis();
         EnumsApi.PlanProducingStatus status = experimentService.produceTasks(
-                isPersist, planParams, workbookId, process, e, collectedInputs, inputStorageUrls, intHolder);
+                isPersist, planParams, workbookId, process, e, collectedInputs, inputStorageUrls, intHolder, parentTaskIds);
 
         log.info("experimentService.produceTasks() was done for " + (System.currentTimeMillis() - mills) + " ms.");
         Monitoring.log("##071", Enums.Monitor.MEMORY);

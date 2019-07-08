@@ -56,6 +56,9 @@ public class ExperimentCache {
 
     @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#experiment.id")
     public void delete(Experiment experiment) {
+        if (experiment==null || experiment.id==null) {
+            return;
+        }
         try {
             experimentRepository.delete(experiment);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -70,6 +73,9 @@ public class ExperimentCache {
 
     @CacheEvict(cacheNames = {Consts.EXPERIMENTS_CACHE}, key = "#id")
     public void deleteById(Long id) {
+        if (id==null) {
+            return;
+        }
         try {
             experimentRepository.deleteById(id);
         } catch (ObjectOptimisticLockingFailureException e) {

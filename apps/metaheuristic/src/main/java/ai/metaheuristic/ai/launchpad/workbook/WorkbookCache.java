@@ -59,6 +59,9 @@ public class WorkbookCache {
 
     @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#workbook.id")
     public void delete(WorkbookImpl workbook) {
+        if (workbook==null || workbook.id==null) {
+            return;
+        }
         try {
             workbookRepository.delete(workbook);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -73,6 +76,9 @@ public class WorkbookCache {
 
     @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#workbookId")
     public void delete(Long workbookId) {
+        if (workbookId==null) {
+            return;
+        }
         try {
             workbookRepository.deleteById(workbookId);
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -80,10 +86,13 @@ public class WorkbookCache {
         }
     }
 
-    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#stationId")
-    public void deleteById(Long stationId) {
+    @CacheEvict(cacheNames = {Consts.WORKBOOK_CACHE}, key = "#workbookId")
+    public void deleteById(Long workbookId) {
+        if (workbookId==null) {
+            return;
+        }
         try {
-            workbookRepository.deleteById(stationId);
+            workbookRepository.deleteById(workbookId);
         } catch (ObjectOptimisticLockingFailureException e) {
             log.error("#457.070 Error deleting of workbook by id", e);
         }
