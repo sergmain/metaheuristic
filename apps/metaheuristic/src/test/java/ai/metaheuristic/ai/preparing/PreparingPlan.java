@@ -307,6 +307,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
         result = planService.produceAllTasks(true, plan, this.workbook);
+        experiment = experimentCache.findById(experiment.id);
         this.workbook = (WorkbookImpl)result.workbook;
         assertEquals(result.numberOfTasks, taskRepository.findAllByWorkbookId(workbook.id).size());
         assertEquals(result.numberOfTasks, workbookGraphService.getCountUnfinishedTasks(workbook));
@@ -315,7 +316,6 @@ public abstract class PreparingPlan extends PreparingExperiment {
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, this.workbook.getExecState());
 
-        experiment = experimentCache.findById(experiment.getId());
         return result;
     }
 

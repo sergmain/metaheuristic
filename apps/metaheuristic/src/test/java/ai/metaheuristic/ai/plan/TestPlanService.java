@@ -188,8 +188,9 @@ public class TestPlanService extends PreparingPlan {
         int j;
         long prevValue = workbookGraphService.getCountUnfinishedTasks(workbook);
         for ( j = 0; j < 1000; j++) {
-
-            System.out.println("j = " + j);
+            if (j%20==0) {
+                System.out.println("j = " + j);
+            }
             WorkbookService.TasksAndAssignToStationResult loopAssignToStation =
                     workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
@@ -208,18 +209,7 @@ public class TestPlanService extends PreparingPlan {
                 break;
             }
         }
-        assertNotEquals(1000, j);
-
-        WorkbookService.TasksAndAssignToStationResult assignToStation40 =
-                workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-
-        Protocol.AssignedTask.Task simpleTask40 = assignToStation40.getSimpleTask();
-        assertNotNull(simpleTask40);
-        assertNotNull(simpleTask40.getTaskId());
-        Task task40 = taskRepository.findById(simpleTask40.getTaskId()).orElse(null);
-        assertNotNull(task40);
-//        assertEquals(4, task40.getOrder());
-        taskPersistencer.setResultReceived(simpleTask40.getTaskId(), true);
+        assertEquals(0, prevValue);
 
         int i=0;
     }

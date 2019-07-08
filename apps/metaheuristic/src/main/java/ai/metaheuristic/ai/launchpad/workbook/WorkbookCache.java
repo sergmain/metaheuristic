@@ -65,7 +65,7 @@ public class WorkbookCache {
         try {
             workbookRepository.delete(workbook);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#457.030 Error deleting of workbook by object", e);
+            log.error("#461.030 Error deleting of workbook by object", e);
         }
     }
 
@@ -82,7 +82,7 @@ public class WorkbookCache {
         try {
             workbookRepository.deleteById(workbookId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#457.050 Error deleting of workbook by id", e);
+            log.error("#461.050 Error deleting of workbook by id", e);
         }
     }
 
@@ -94,7 +94,7 @@ public class WorkbookCache {
         try {
             workbookRepository.deleteById(workbookId);
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#457.070 Error deleting of workbook by id", e);
+            log.error("#461.070 Error deleting of workbook by id", e);
         }
     }
 

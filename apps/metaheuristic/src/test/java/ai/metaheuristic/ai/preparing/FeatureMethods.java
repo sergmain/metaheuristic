@@ -86,6 +86,7 @@ public abstract class FeatureMethods extends PreparingPlan {
 
 
         EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook.id);
+        workbook = workbookCache.findById(workbook.id);
         assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 

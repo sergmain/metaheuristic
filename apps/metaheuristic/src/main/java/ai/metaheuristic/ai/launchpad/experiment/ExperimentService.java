@@ -71,7 +71,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -582,6 +582,7 @@ public class ExperimentService {
                 return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
             }
             List<Long> taskIds = new ArrayList<>();
+            AtomicLong id = new AtomicLong(0);
             for (ExperimentFeature feature : features) {
                 ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(feature.resourceCodes);
                 if (!numberOfVariants.status) {
@@ -675,6 +676,7 @@ public class ExperimentService {
                         });
 
                         ExperimentTaskFeature tef = new ExperimentTaskFeature();
+                        tef.id = id.incrementAndGet();
                         tef.setWorkbookId(workbookId);
                         tef.setTaskId(task.getId());
                         tef.setFeatureId(feature.id);
@@ -764,7 +766,7 @@ public class ExperimentService {
 
         final Permutation<String> permutation = new Permutation<>();
         Monitoring.log("##040", Enums.Monitor.MEMORY);
-        AtomicInteger featureId = new AtomicInteger(1);
+        AtomicLong featureId = new AtomicLong(0);
         for (int i = 0; i < inputResourceCodes.size(); i++) {
             Monitoring.log("##041", Enums.Monitor.MEMORY);
             permutation.printCombination(inputResourceCodes, i+1,
@@ -786,11 +788,12 @@ public class ExperimentService {
                         }
 
                         ExperimentFeature feature = new ExperimentFeature();
-                        feature.id = featureId.longValue();
+                        feature.id = featureId.incrementAndGet();
                         feature.setExperimentId(experiment.id);
                         feature.setResourceCodes(listAsStr);
                         feature.setChecksumIdCodes(checksumIdCodes);
                         epy.processing.features.add(feature);
+
                         total.value++;
                         return true;
                     }

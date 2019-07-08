@@ -56,6 +56,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         finishCurrentWithError(1);
         log.info("finishCurrentWithError() was finished for {}", System.currentTimeMillis() - mills);
 
+/*
         noNewTask();
 
         taskPersistencer.setResultReceived(simpleTask.taskId, true);
@@ -63,6 +64,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
         noNewTask();
 
         workbookService.checkWorkbookStatuses();
+*/
 
         mills = System.currentTimeMillis();
         log.info("Start getTaskAndAssignToStation_mustBeNewTask()");
@@ -71,7 +73,7 @@ public class TestFeatureWithAllError extends FeatureMethods {
 
         mills = System.currentTimeMillis();
         log.info("Start finishCurrentWithError()");
-        finishCurrentWithError(1);
+        finishCurrentWithError(2);
         log.info("finishCurrentWithError() was finished for {}", System.currentTimeMillis() - mills);
 
         // TODO add some new tests here
