@@ -25,29 +25,32 @@ import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchParams;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.launchpad.beans.Station;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
-import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.yaml.pilot.BatchParamsUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.utils.StrUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -71,6 +74,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class BatchService {
 
     private static final String PLAN_NOT_FOUND = "Plan wasn't found";
@@ -81,22 +85,12 @@ public class BatchService {
     private final BatchCache batchCache;
     private final BatchRepository batchRepository;
     private final WorkbookRepository workbookRepository;
+    private final WorkbookCache workbookCache;
+    private final WorkbookGraphService workbookGraphService;
     private final BatchWorkbookRepository batchWorkbookRepository;
     private final BinaryDataService binaryDataService;
     private final TaskRepository taskRepository;
     private final StationCache stationCache;
-
-    public BatchService(Globals globals, PlanCache planCache, BatchCache batchCache, BatchRepository batchRepository, WorkbookRepository workbookRepository, BatchWorkbookRepository batchWorkbookRepository, BinaryDataService binaryDataService, TaskRepository taskRepository, StationCache stationCache) {
-        this.globals = globals;
-        this.planCache = planCache;
-        this.batchCache = batchCache;
-        this.batchRepository = batchRepository;
-        this.workbookRepository = workbookRepository;
-        this.batchWorkbookRepository = batchWorkbookRepository;
-        this.binaryDataService = binaryDataService;
-        this.taskRepository = taskRepository;
-        this.stationCache = stationCache;
-    }
 
     private static final ConcurrentHashMap<Long, Object> batchMap = new ConcurrentHashMap<>(100, 0.75f, 10);
 
@@ -212,14 +206,14 @@ public class BatchService {
         }
     }
 
-    private static String getMainDocumentPoolCode(String inputResourceParams) {
-        WorkbookParamsYaml resourceParams = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(inputResourceParams);
+    private static String getMainDocumentPoolCode(WorkbookImpl workbook) {
+        WorkbookParamsYaml resourceParams = workbook.getWorkbookParamsYaml();
         List<String> codes = resourceParams.workbookYaml.poolCodes.get(Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH);
         if (codes.isEmpty()) {
-            throw new IllegalStateException("#990.080 Main document section is missed. inputResourceParams:\n" + inputResourceParams);
+            throw new IllegalStateException("#990.080 Main document section is missed. inputResourceParams:\n" + workbook.getParams());
         }
         if (codes.size()>1) {
-            throw new IllegalStateException("#990.090 Main document section contains more than one main document. inputResourceParams:\n" + inputResourceParams);
+            throw new IllegalStateException("#990.090 Main document section contains more than one main document. inputResourceParams:\n" + workbook.getParams());
         }
         return codes.get(0);
     }
@@ -352,7 +346,7 @@ public class BatchService {
 
         boolean isOk = true;
         for (Long workbookId : ids) {
-            Workbook wb = workbookRepository.findById(workbookId).orElse(null);
+            WorkbookImpl wb = workbookCache.findById(workbookId);
             if (wb == null) {
                 String msg = "#990.140 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
                 bs.add(msg, '\n');
@@ -360,9 +354,9 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            String mainDocumentPoolCode = getMainDocumentPoolCode(wb.getParams());
+            String mainDocumentPoolCode = getMainDocumentPoolCode(wb);
 
-            final String fullMainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
+            final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode);
             if (fullMainDocument == null) {
                 String msg = "#990.150 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
                         "batchId: " + batchId + ", workbookId: " + workbookId;
@@ -373,19 +367,9 @@ public class BatchService {
             }
             String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
 
-            Integer taskOrder = taskRepository.findMaxConcreteOrder(wb.getId());
-            // TODO 2019-05-23 investigate all cases when this is happened
-            if (taskOrder == null) {
-                String msg = "#990.160 " + mainDocument + ", Tasks weren't created correctly for this batch, need to re-upload documents, " +
-                        "batchId: " + batchId + ", workbookId: " + workbookId;
-                log.warn(msg);
-                bs.add(msg, '\n');
-                isOk = false;
-                continue;
-            }
-            List<Task> tasks;
+            List<WorkbookParamsYaml.TaskVertex> taskVertexes;
             try {
-                tasks = taskRepository.findAnyWithConcreteOrder(wb.getId(), taskOrder);
+                taskVertexes = workbookGraphService.findLeafs(wb);
             } catch (ObjectOptimisticLockingFailureException e) {
                 String msg = "#990.167 Can't find tasks for workbookId #" + wb.getId() + ", error: " + e.getMessage();
                 log.warn(msg);
@@ -393,14 +377,14 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            if (tasks.isEmpty()) {
+            if (taskVertexes.isEmpty()) {
                 String msg = "#990.170 " + mainDocument + ", Can't find any task for batchId: " + batchId;
                 log.info(msg);
                 bs.add(msg,'\n');
                 isOk = false;
                 continue;
             }
-            if (tasks.size() > 1) {
+            if (taskVertexes.size() > 1) {
                 String msg = "#990.180 " + mainDocument + ", Can't download file because there are more than one task " +
                         "at the final state, batchId: " + batchId + ", workbookId: " + wb.getId();
                 log.info(msg);
@@ -408,7 +392,15 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            final Task task = tasks.get(0);
+            final Task task = taskRepository.findById(taskVertexes.get(0).taskId).orElse(null);
+            if (task==null) {
+                String msg = "#990.183 " + mainDocument + ", Can't find task #" + taskVertexes.get(0).taskId;
+                log.info(msg);
+                bs.add(msg,'\n');
+                isOk = false;
+                continue;
+            }
+
             EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
             SnippetApiData.SnippetExec snippetExec;
             try {
@@ -539,7 +531,7 @@ public class BatchService {
 
         boolean isOk = true;
         for (Long workbookId : ids) {
-            Workbook wb = workbookRepository.findById(workbookId).orElse(null);
+            WorkbookImpl wb = workbookCache.findById(workbookId);
             if (wb == null) {
                 String msg = "#990.260 Batch #" + batchId + " contains broken workbookId - #" + workbookId;
                 bs.add(msg, '\n');
@@ -547,9 +539,9 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            String mainDocumentPoolCode = getMainDocumentPoolCode(wb.getParams());
+            String mainDocumentPoolCode = getMainDocumentPoolCode(wb);
 
-            final String fullMainDocument = getMainDocumentForPoolCode(mainDocumentPoolCode);
+            final String fullMainDocument = getMainDocumentFilenameForPoolCode(mainDocumentPoolCode);
             if (fullMainDocument == null) {
                 String msg = "#990.270 " + mainDocumentPoolCode + ", Can't determine actual file name of main document, " +
                         "batchId: " + batchId + ", workbookId: " + workbookId;
@@ -560,25 +552,16 @@ public class BatchService {
             }
             String mainDocument = StrUtils.getName(fullMainDocument) + getActualExtension(wb.getPlanId());
 
-            Integer taskOrder = taskRepository.findMaxConcreteOrder(wb.getId());
-            // TODO 2019-05-23 investigate all cases when this is happened
-            if (taskOrder == null) {
-                String msg = "#990.280 " + mainDocument + ", Tasks weren't created correctly for this batch, need to re-upload documents, " +
-                        "batchId: " + batchId + ", workbookId: " + workbookId;
-                log.warn(msg);
-                bs.add(msg, '\n');
-                isOk = false;
-                continue;
-            }
-            List<Task> tasks = taskRepository.findAnyWithConcreteOrder(wb.getId(), taskOrder);
-            if (tasks.isEmpty()) {
+            List<WorkbookParamsYaml.TaskVertex> taskVertexes;
+            taskVertexes = workbookGraphService.findLeafs(wb);
+            if (taskVertexes.isEmpty()) {
                 String msg = "#990.290 " + mainDocument + ", Can't find any task for batchId: " + batchId;
                 log.info(msg);
                 bs.add(msg,'\n');
                 isOk = false;
                 continue;
             }
-            if (tasks.size() > 1) {
+            if (taskVertexes.size() > 1) {
                 String msg = "#990.300 " + mainDocument + ", Can't download file because there are more than one task " +
                         "at the final state, batchId: " + batchId + ", workbookId: " + wb.getId();
                 log.info(msg);
@@ -586,7 +569,15 @@ public class BatchService {
                 isOk = false;
                 continue;
             }
-            final Task task = tasks.get(0);
+            final Task task = taskRepository.findById(taskVertexes.get(0).taskId).orElse(null);
+            if (task==null) {
+                String msg = "#990.303 " + mainDocument + ", Can't find task #" + taskVertexes.get(0).taskId;
+                log.info(msg);
+                bs.add(msg,'\n');
+                isOk = false;
+                continue;
+            }
+
             EnumsApi.TaskExecState execState = EnumsApi.TaskExecState.from(task.getExecState());
             SnippetApiData.SnippetExec snippetExec;
             try {
@@ -701,7 +692,7 @@ public class BatchService {
         return bs;
     }
 
-    private String getMainDocumentForPoolCode(String mainDocumentPoolCode) {
+    private String getMainDocumentFilenameForPoolCode(String mainDocumentPoolCode) {
         final String filename = binaryDataService.getFilenameByPool1CodeAndType(mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);
         if (StringUtils.isBlank(filename)) {
             log.error("#990.390 Filename is blank for poolCode: {}, data type: {}", mainDocumentPoolCode, EnumsApi.BinaryDataType.DATA);

@@ -16,9 +16,20 @@
 
 package ai.metaheuristic.ai.launchpad.plan;
 
+import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV1;
+
 public class PlanUtils {
 
     public static String getResourceCode(long planId, long workbookId, String processCode, String snippetName, int processOrder, int snippetIdx) {
         return String.format("%d-%d-%d-%s-%s-%d", planId, workbookId, processOrder, snippetName, processCode, snippetIdx);
+    }
+
+    public static WorkbookParamsYaml parseToWorkbookParamsYaml(String inputResourceParams) {
+        WorkbookParamsYamlV1 v1 = (WorkbookParamsYamlV1) WorkbookParamsYamlUtils.BASE_YAML_UTILS.getForVersion(1).to(inputResourceParams);
+        WorkbookParamsYaml wpy = new WorkbookParamsYaml();
+        wpy.workbookYaml.poolCodes.putAll(v1.poolCodes);
+        return wpy;
     }
 }

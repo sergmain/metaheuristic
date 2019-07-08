@@ -280,7 +280,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(workbookParamsYaml));
+        TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookParamsYaml);
         workbook = (WorkbookImpl)result.workbook;
 
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);

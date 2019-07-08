@@ -27,8 +27,10 @@ import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentProcessValidator;
+import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessService;
 import ai.metaheuristic.ai.launchpad.file_process.FileProcessValidator;
+import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
@@ -36,6 +38,7 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.YamlVersion;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
@@ -76,6 +79,7 @@ public class PlanService {
     private final PlanCache planCache;
     private final PlanRepository planRepository;
 
+    private final ExperimentService experimentService;
     private final ExperimentProcessValidator experimentProcessValidator;
     private final FileProcessValidator fileProcessValidator;
     private final WorkbookService workbookService;
@@ -173,6 +177,25 @@ public class PlanService {
         else {
             throw new NotImplementedException("#701.120 Need to implement");
         }
+    }
+
+    public OperationStatusRest workbookTargetExecState(Long workbookId, EnumsApi.WorkbookExecState execState) {
+        PlanApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
+        if (result.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
+        }
+
+        final WorkbookImpl workbook = (WorkbookImpl) result.workbook;
+        final Plan plan = result.plan;
+        if (plan==null || workbook ==null) {
+            throw new IllegalStateException("#701.110 Error: (result.plan==null || result.workbook==null)");
+        }
+
+        workbook.setExecState(execState.code);
+        workbookCache.save(workbook);
+
+        setLockedTo(plan.getId(), true);
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public PlanApiData.TaskProducingResultComplex produceAllTasks(boolean isPersist, PlanImpl plan, Workbook workbook ) {
@@ -473,8 +496,17 @@ public class PlanService {
         return result;
     }
 
-    public static String asInputResourceParams(String poolCode) {
-        return "poolCodes:\n  "+Consts.WORKBOOK_INPUT_TYPE+":\n" +
-                "  - " + poolCode;
+    // ========= Workbook specific =============
+
+    public void deleteWorkbook(Long workbookId) {
+        experimentService.resetExperiment(workbookId);
+        binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
+        Workbook workbook = workbookCache.findById(workbookId);
+        if (workbook!=null && workbook.getPlanId()!=null) {
+            setLockedTo(workbook.getPlanId(), false);
+        }
+        workbookCache.deleteById(workbookId);
     }
+
+
 }

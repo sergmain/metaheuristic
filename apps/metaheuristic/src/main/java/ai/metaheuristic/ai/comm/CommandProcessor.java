@@ -129,8 +129,9 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
+    // processing on launchpad side
     private Command[] processStationTaskStatus(Protocol.StationTaskStatus command) {
-        launchpadService.getTaskService().reconcileStationTasks(command.stationId, command.statuses!=null ? command.statuses : new ArrayList<>());
+        launchpadService.getStationTopLevelService().reconcileStationTasks(command.stationId, command.statuses!=null ? command.statuses : new ArrayList<>());
         return Protocol.NOP_ARRAY;
     }
 

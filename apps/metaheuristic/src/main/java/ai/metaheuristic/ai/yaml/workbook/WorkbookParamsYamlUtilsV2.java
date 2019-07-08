@@ -50,6 +50,7 @@ public class WorkbookParamsYamlUtilsV2
         if (yaml.workbookYaml.poolCodes!=null) {
             t.workbookYaml.poolCodes.putAll(yaml.workbookYaml.poolCodes);
         }
+        t.graph = yaml.graph;
         return t;
     }
 

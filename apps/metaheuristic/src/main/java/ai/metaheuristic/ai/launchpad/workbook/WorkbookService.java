@@ -81,10 +81,9 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     private final Globals globals;
     private final WorkbookRepository workbookRepository;
     private final PlanCache planCache;
-    private final ExperimentService experimentService;
     private final BinaryDataService binaryDataService;
-    private final PlanService planService;
     private final TaskRepository taskRepository;
+    private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
     private final AtlasService atlasService;
     private final TaskPersistencer taskPersistencer;
@@ -169,7 +168,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public WorkbookImpl markOrderAsProcessed(WorkbookImpl workbook) {
 
-        if (workbookGraphService.getCountUnfinishedTasks(workbook.getId())==0) {
+        if (workbookGraphService.getCountUnfinishedTasks(workbook)==0) {
             log.info("Workbook #{} was finished", workbook.getId());
             experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
             workbook.setCompletedOn(System.currentTimeMillis());
@@ -222,25 +221,6 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         workbook.setProducingOrder(workbook.getProducingOrder()+1);
         return save(workbook);
 */
-    }
-
-    public OperationStatusRest workbookTargetExecState(Long workbookId, EnumsApi.WorkbookExecState execState) {
-        PlanApiData.WorkbookResult result = getWorkbookExtended(workbookId);
-        if (result.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
-        }
-
-        final Workbook workbook = result.workbook;
-        final Plan plan = result.plan;
-        if (plan==null || workbook ==null) {
-            throw new IllegalStateException("#701.110 Error: (result.plan==null || result.workbook==null)");
-        }
-
-        workbook.setExecState(execState.code);
-        workbookCache.save((WorkbookImpl) workbook);
-
-        planService.setLockedTo(plan.getId(), true);
-        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
     public WorkbookImpl toProduced(Long workbookId) {
@@ -307,16 +287,6 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         wb.setExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
         workbookCache.save(wb);
         return EnumsApi.PlanProducingStatus.OK;
-    }
-
-    public void deleteWorkbook(Long workbookId) {
-        experimentService.resetExperiment(workbookId);
-        binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
-        Workbook workbook = workbookCache.findById(workbookId);
-        if (workbook!=null && workbook.getPlanId()!=null) {
-            planService.setLockedTo(workbook.getPlanId(), false);
-        }
-        deleteById(workbookId);
     }
 
     public PlanApiData.WorkbookResult getWorkbookExtended(Long workbookId) {

@@ -95,7 +95,7 @@ public class WorkbookController {
 
     @PostMapping("/workbook-delete-commit")
     public String workbookDeleteCommit(Long planId, Long workbookId, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = workbookTopLevelService.deleteWorkbookById(workbookId);
+        OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(workbookId);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
             return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
@@ -105,7 +105,7 @@ public class WorkbookController {
 
     @GetMapping("/workbook-target-exec-state/{planId}/{state}/{id}")
     public String workbookTargetExecState(@PathVariable Long planId, @PathVariable String state, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
-        OperationStatusRest operationStatusRest = workbookTopLevelService.changeWorkbookExecState(state, id);
+        OperationStatusRest operationStatusRest = planTopLevelService.changeWorkbookExecState(state, id);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
             return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;

@@ -252,7 +252,7 @@ public class BatchTopLevelService {
             if (wb == null) {
                 continue;
             }
-            workbookService.deleteWorkbook(wb.getId());
+            planService.deleteWorkbook(wb.getId());
         }
         batchWorkbookRepository.deleteByBatchId(batch.id);
         batchCache.deleteById(batch.id);
@@ -412,7 +412,7 @@ public class BatchTopLevelService {
         workbookService.changeValidStatus(producingResult.workbook.getId(), true);
 
         // start producing new tasks
-        OperationStatusRest operationStatus = workbookService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.PRODUCING);
+        OperationStatusRest operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.PRODUCING);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());
@@ -421,7 +421,7 @@ public class BatchTopLevelService {
 
 
         batchService.changeStateToProcessing(batch.id);
-        operationStatus = workbookService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.STARTED);
+        operationStatus = planService.workbookTargetExecState(producingResult.workbook.getId(), EnumsApi.WorkbookExecState.STARTED);
 
         if (operationStatus.isErrorMessages()) {
             throw new BatchResourceProcessingException(operationStatus.getErrorMessagesAsStr());

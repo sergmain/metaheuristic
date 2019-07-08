@@ -45,7 +45,6 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final WorkbookService workbookService;
     private final WorkbookGraphService workbookGraphService;
     private final WorkbookCache workbookCache;
 
@@ -94,34 +93,6 @@ public class TaskService {
             taskPersistencer.storeExecResult(result);
         }
         return ids;
-    }
-
-    public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
-        final long stationId = Long.parseLong(stationIdAsStr);
-        List<Object[]> tasks = taskRepository.findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(stationId);
-        for (Object[] obj : tasks) {
-            long taskId = ((Number)obj[0]).longValue();
-            Long assignedOn = obj[1]!=null ? ((Number)obj[1]).longValue() : null;
-
-            boolean isFound = false;
-            for (Protocol.StationTaskStatus.SimpleStatus status : statuses) {
-                if (status.taskId ==taskId) {
-                    isFound = true;
-                }
-            }
-
-            boolean isExpired = assignedOn!=null && (System.currentTimeMillis() - assignedOn > 90_000);
-            if (!isFound && isExpired) {
-                log.info("De-assign task #{} from station #{}", taskId, stationIdAsStr);
-                log.info("\tstatuses: {}", statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()));
-                log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
-                log.info("\tisFound: {}, is expired: {}", isFound, isExpired);
-                OperationStatusRest result = workbookService.resetTask(taskId);
-                if (result.status== EnumsApi.OperationStatus.ERROR) {
-                    log.error("#179.10 Resetting of task #{} was failed. See log for more info.", taskId);
-                }
-            }
-        }
     }
 
 }

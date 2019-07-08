@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.workbook;
 
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -52,7 +53,7 @@ public class WorkbookTopLevelService {
     }
 
     public PlanApiData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam) {
-        final PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(planId, inputResourceParam);
+        final PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(planId, PlanUtils.parseToWorkbookParamsYaml(inputResourceParam));
         return new PlanApiData.TaskProducingResult(
                 result.getStatus()== EnumsApi.TaskProducingStatus.OK
                         ? new ArrayList<>()
@@ -68,44 +69,6 @@ public class WorkbookTopLevelService {
         //noinspection UnnecessaryLocalVariable
         PlanApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
         return result;
-    }
-
-    public OperationStatusRest deleteWorkbookById(Long workbookId) {
-        PlanApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
-        if (CollectionUtils.isNotEmpty(result.errorMessages)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
-        }
-
-        Workbook fi = workbookRepository.findById(workbookId).orElse(null);
-        if (fi==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.084 Workbook wasn't found, workbookId: " + workbookId );
-        }
-        workbookService.deleteWorkbook(workbookId);
-        return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    public OperationStatusRest changeWorkbookExecState(String state, Long workbookId) {
-        EnumsApi.WorkbookExecState execState = EnumsApi.WorkbookExecState.valueOf(state.toUpperCase());
-        if (execState== EnumsApi.WorkbookExecState.UNKNOWN) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.070 Unknown exec state, state: " + state);
-        }
-        //noinspection UnnecessaryLocalVariable
-        OperationStatusRest status = workbookService.workbookTargetExecState(workbookId, execState);
-        return status;
-    }
-
-    // ============= Service methods =============
-
-    // TODO 2019-07-06 why we need this method?
-    public OperationStatusRest changeValidStatus(Long workbookId, boolean state) {
-        Workbook workbook = workbookRepository.findById(workbookId).orElse(null);
-        if (workbook == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.110 workbook wasn't found, workbookId: " + workbookId);
-        }
-        workbookService.changeValidStatus(workbookId, state);
-        return OperationStatusRest.OPERATION_STATUS_OK;
-
     }
 
 }

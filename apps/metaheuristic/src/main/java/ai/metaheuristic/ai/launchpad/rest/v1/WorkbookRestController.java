@@ -68,20 +68,12 @@ public class WorkbookRestController {
 
     @PostMapping("/workbook-delete-commit")
     public OperationStatusRest workbookDeleteCommit(Long planId, Long workbookId) {
-        return workbookTopLevelService.deleteWorkbookById(workbookId);
+        return planTopLevelService.deleteWorkbookById(workbookId);
     }
 
     @GetMapping("/workbook-target-exec-state/{planId}/{state}/{id}")
     public OperationStatusRest workbookTargetExecState(@SuppressWarnings("unused") @PathVariable Long planId, @PathVariable String state, @PathVariable Long id) {
-        return workbookTopLevelService.changeWorkbookExecState(state, id);
-    }
-
-    // ============= Service methods =============
-
-    // TODO 2019-07-06 why we need this method?
-    @GetMapping(value = "/change-valid-status/{workbookId}/{status}")
-    public OperationStatusRest changeValidStatus(@PathVariable Long workbookId, @PathVariable boolean status) {
-        return workbookTopLevelService.changeValidStatus(workbookId, status);
+        return planTopLevelService.changeWorkbookExecState(state, id);
     }
 
 }

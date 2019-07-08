@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.api.data.task.TaskWIthType;
 import ai.metaheuristic.api.launchpad.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -79,28 +78,8 @@ public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
     Slice<Task> findForAssigning(Pageable pageable, Long workbookId);
 
     @Transactional(readOnly = true)
-    @Query("SELECT max(t.order) as max_order FROM TaskImpl t where t.workbookId=:workbookId")
-    Integer findMaxConcreteOrder(Long workbookId);
-
-    @Transactional(readOnly = true)
-    @Query("SELECT t FROM TaskImpl t where t.stationId is not null and t.workbookId=:workbookId and t.order =:taskOrder")
-    List<Task> findWithConcreteOrder(Long workbookId, int taskOrder);
-
-    @Transactional(readOnly = true)
-    @Query("SELECT t FROM TaskImpl t where t.workbookId=:workbookId and t.order =:taskOrder")
-    List<Task> findAnyWithConcreteOrder(Long workbookId, int taskOrder);
-
-    @Transactional(readOnly = true)
-    @Query("SELECT t.id FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId and t.order =:taskOrder")
-    List<Long> findAnyNotAssignedWithConcreteOrder(Pageable limit, Long workbookId, int taskOrder);
-
-    @Transactional(readOnly = true)
     @Query("SELECT t.id FROM TaskImpl t where t.stationId=:stationId and t.isCompleted=false")
     List<Long> findAnyActiveForStationId(Pageable limit, Long stationId);
-
-    @Transactional(readOnly = true)
-    @Query("SELECT count(t) FROM TaskImpl t where t.workbookId=:workbookId and t.order =:taskOrder")
-    Long countWithConcreteOrder(long workbookId, int taskOrder);
 
     @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.stationId=:stationId and t.resultReceived=false and " +
@@ -118,6 +97,7 @@ public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
     List<TaskImpl> findTasksByIds(Pageable pageable, List<Long> ids);
 
 
+    @SuppressWarnings("SqlRedundantOrderingDirection")
     @Transactional(readOnly = true)
     @Query(nativeQuery = true, value = "select z.* "+
             "from ( "+

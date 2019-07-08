@@ -16,17 +16,22 @@
 
 package ai.metaheuristic.ai.launchpad.plan;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.plan.PlanParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
+import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
@@ -46,6 +51,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -64,6 +70,7 @@ public class PlanTopLevelService {
     private final PlanService planService;
     private final PlanRepository planRepository;
     private final WorkbookService workbookService;
+    private final WorkbookCache workbookCache;
 
     public PlanApiData.WorkbookResult addWorkbook(Long planId, String poolCode, String inputResourceParams) {
         final PlanImpl plan = planCache.findById(planId);
@@ -87,8 +94,10 @@ public class PlanTopLevelService {
             return r;
         }
 
-        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(plan.getId(),
-                StringUtils.isNotBlank(inputResourceParams) ? inputResourceParams : PlanService.asInputResourceParams(poolCode));
+        WorkbookParamsYaml wpy = StringUtils.isNotBlank(inputResourceParams)
+                ? PlanUtils.parseToWorkbookParamsYaml(inputResourceParams)
+                : asWorkbookParamsYaml(poolCode);
+        PlanApiData.TaskProducingResultComplex producingResult = workbookService.createWorkbook(plan.getId(), wpy);
         if (producingResult.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
             return new PlanApiData.WorkbookResult("#560.072 Error creating workbook: " + producingResult.planProducingStatus);
         }
@@ -326,27 +335,39 @@ public class PlanTopLevelService {
         return statuses.stream().filter(o->!o.isOk).findFirst().orElse(null)!=null;
     }
 
-    // ============= Service methods =============
+    public static WorkbookParamsYaml asWorkbookParamsYaml(String poolCode) {
+        WorkbookParamsYaml wpy = new WorkbookParamsYaml();
+        wpy.workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o->new ArrayList<>()).add(poolCode);
+//        return "poolCodes:\n  "+ Consts.WORKBOOK_INPUT_TYPE+":\n" +
+//                "  - " + poolCode;
+        return wpy;
+    }
 
-    // TODO 2019-07-06 why we need this method?
-    public PlanApiData.TaskProducingResult produceTasksWithoutPersistence(Long workbookId) {
+    // ========= Workbook specific =============
 
-        PlanImpl plan = planCache.findById(workbookId);
-        if (plan == null) {
-            return new PlanApiData.TaskProducingResult(
-                    List.of("#701.070 plan wasn't found, planId: " + workbookId),
-                    EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR, null, null );
+    public OperationStatusRest changeWorkbookExecState(String state, Long workbookId) {
+        EnumsApi.WorkbookExecState execState = EnumsApi.WorkbookExecState.valueOf(state.toUpperCase());
+        if (execState== EnumsApi.WorkbookExecState.UNKNOWN) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.070 Unknown exec state, state: " + state);
+        }
+        //noinspection UnnecessaryLocalVariable
+        OperationStatusRest status = planService.workbookTargetExecState(workbookId, execState);
+        return status;
+    }
 
+    public OperationStatusRest deleteWorkbookById(Long workbookId) {
+        PlanApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
+        if (CollectionUtils.isNotEmpty(result.errorMessages)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
         }
 
-        final PlanApiData.TaskProducingResultComplex result = planService.produceTasks(false, plan, workbookId);
-        return new PlanApiData.TaskProducingResult(List.of("See statuses to determine what is actual status"), result.planValidateStatus, result.planProducingStatus,
-                result.workbook!=null ? result.workbook.getId() : null);
+        Workbook wb = workbookCache.findById(workbookId);
+        if (wb==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.084 Workbook wasn't found, workbookId: " + workbookId );
+        }
+        planService.deleteWorkbook(workbookId);
+        return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    // TODO 2019-07-06 why we need this method?
-    public void createAllTasks() {
-        planService.createAllTasks();
-    }
 
 }
