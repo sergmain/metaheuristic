@@ -162,17 +162,27 @@ public class ExperimentTopLevelService {
         return experimentService.prepareExperimentFeatures(experiment, featureId);
     }
 
-    public ExperimentApiData.ExperimentInfoExtendedResult getExperimentInfo(Long id) {
-        Experiment experiment = experimentCache.findById(id);
+    public ExperimentApiData.ExperimentInfoExtendedResult getExperimentInfo(Long experimentId) {
+
+        Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.060 experiment wasn't found, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.060 experiment wasn't found, experimentId: " + experimentId);
         }
+        experimentService.updateMaxValueForExperimentFeatures(experiment.getWorkbookId());
+
+        // one more time to get new object from cache
+        experiment = experimentCache.findById(experimentId);
+        if (experiment == null) {
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.061 experiment wasn't found, experimentId: " + experimentId);
+        }
+
         if (experiment.getWorkbookId() == null) {
-            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.070 experiment wasn't startet yet, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.070 experiment wasn't startet yet, experimentId: " + experimentId);
         }
+
         WorkbookImpl workbook = workbookCache.findById(experiment.getWorkbookId());
         if (workbook == null) {
-            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to workbook, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to workbook, experimentId: " + experimentId);
         }
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         for (ExperimentParamsYaml.HyperParam hyperParams : epy.experimentYaml.hyperParams) {

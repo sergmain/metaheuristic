@@ -140,7 +140,7 @@ public class ExperimentParamsYaml implements BaseParams {
     public List<Long> getTaskFeatureIds(Long featureId) {
         //noinspection UnnecessaryLocalVariable
         List<Long> ids = processing.taskFeatures
-                .stream().filter(o -> o.featureId.equals(featureId)).mapToLong(o->o.id).boxed().collect(Collectors.toList());
+                .stream().filter(o -> o.featureId.equals(featureId)).mapToLong(o->o.taskId).boxed().collect(Collectors.toList());
         return ids;
     }
 
