@@ -18,9 +18,8 @@ package ai.metaheuristic.ai.station;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
+import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.exceptions.ResourceProviderException;
-import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.actors.UploadResourceActor;
@@ -34,11 +33,9 @@ import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
-import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,7 +50,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -186,6 +182,10 @@ public class StationService {
             taskParamYaml.taskYaml.inputResourceCodes.forEach((key, value) -> {
                 for (String resourceCode : value) {
                     final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(resourceCode);
+                    if (params==null) {
+                        log.error("inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml));
+                        throw new BreakFromForEachException();
+                    }
                     ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                     List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, params);
                     result.assetFiles.computeIfAbsent(key, o -> new ArrayList<>()).addAll(assetFiles);
@@ -198,7 +198,13 @@ public class StationService {
                     }
                 }
             });
-        } catch (ResourceProviderException e) {
+        }
+        catch (BreakFromForEachException e) {
+            stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
+            result.isError = true;
+            return result;
+        }
+        catch (ResourceProviderException e) {
             log.error("Error", e);
             stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
             result.isError = true;

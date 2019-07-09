@@ -158,10 +158,10 @@ public class ExperimentService {
         if (statuses.contains(EnumsApi.TaskExecState.OK)) {
             execStatus = Enums.FeatureExecStatus.finished;
         }
-        else if (statuses.contains(EnumsApi.TaskExecState.ERROR)|| statuses.contains(EnumsApi.TaskExecState.BROKEN)) {
+        if (statuses.contains(EnumsApi.TaskExecState.ERROR)|| statuses.contains(EnumsApi.TaskExecState.BROKEN)) {
             execStatus = Enums.FeatureExecStatus.finished_with_errors;
         }
-        else if (statuses.contains(EnumsApi.TaskExecState.IN_PROGRESS)) {
+        if (statuses.contains(EnumsApi.TaskExecState.NONE) || statuses.contains(EnumsApi.TaskExecState.IN_PROGRESS)) {
             execStatus = Enums.FeatureExecStatus.processing;
         }
         featureData.execStatusAsString = execStatus.info;
@@ -602,7 +602,7 @@ public class ExperimentService {
 
         numberOfTasks.value = 0;
 
-        log.debug("total size of tasks' params is {} bytes", size.value);
+        log.debug("total size of tasks' params received from db is {} bytes", size.value);
         final AtomicBoolean boolHolder = new AtomicBoolean();
         final Consumer<Long> longConsumer = o -> {
             if (workbookId.equals(o)) {
@@ -613,6 +613,7 @@ public class ExperimentService {
                 new WorkbookService.WorkbookDeletionListener(workbookId, longConsumer);
 
         int processed = 0;
+        long prevMills = System.currentTimeMillis();
         try {
             eventMulticaster.addApplicationListener(listener);
             Workbook wb = workbookCache.findById(workbookId);
@@ -742,8 +743,10 @@ public class ExperimentService {
 
                         processed++;
                         if (processed % 100 == 0) {
-                            log.info("total tasks: {}, created: {}", totalVariants, processed);
+                            log.info("total tasks: {}, created: {}. last batch of tasks was created for {} seconds", totalVariants, processed, ((float)(System.currentTimeMillis() - prevMills))/1000);
+                            prevMills = System.currentTimeMillis();
                         }
+                        // TODO 2019.07.08 this isn't good solution. need to rewrite
                         if (taskParams.contains(currTaskParams)) {
                             log.info("Params already processed, skip");
                             continue;
