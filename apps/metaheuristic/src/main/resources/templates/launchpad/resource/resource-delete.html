@@ -3,8 +3,8 @@
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
-    <div sec:authorize="isAuthenticated()">
-        <h1 class="widget-header">Station</h1>
+    <div>
+        <h1 class="widget-header">Deletion of resource</h1>
 
         <!--/*@thymesVar id="resource" type="ai.metaheuristic.api.launchpad.BinaryData"*/-->
         <form class="form-horizontal" th:object="${resource}">
@@ -31,7 +31,7 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${resource}" th:method="post" th:action="@{/launchpad/resource-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${resource}" th:method="post" th:action="@{/launchpad/resource/resource-delete-commit}"
                           accept-charset="UTF-8"
                           id="resource-delete-commit"
                           name="f">
@@ -45,7 +45,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/resources}" accept-charset="UTF-8" id="resource-delete-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/resource/resources}" accept-charset="UTF-8" id="resource-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

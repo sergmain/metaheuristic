@@ -16,7 +16,9 @@
 
 package ai.metaheuristic.ai.launchpad.experiment;
 
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +51,7 @@ public class ExperimentController {
 
     private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiment/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
+    private final WorkbookService workbookService;
 
     @GetMapping("/experiments")
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
@@ -277,5 +280,9 @@ public class ExperimentController {
         return "redirect:/launchpad/experiment/experiment-info/"+id;
     }
 
+    @PostMapping("/task-rerun/{taskId}")
+    public @ResponseBody boolean rerunTask(@PathVariable long taskId) {
+        return workbookService.resetTask(taskId).status== EnumsApi.OperationStatus.OK;
+    }
 
 }

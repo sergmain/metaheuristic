@@ -15,7 +15,7 @@
             console.log("Start deleteSnippet("+id+")");
             my_confirm('Do you really want to delete this snippet?', 'Delete snippet?', "Delete", function() {
                 console.log("Deletion of snippet was confirmed.");
-                $.get('/launchpad/snippet-delete/' + id, function(status) {
+                $.get('/launchpad/snippet/snippet-delete/' + id, function(status) {
                     console.log("task-rerun is finished, Status: " + status);
                     var text;
                     if (status==="true") {
@@ -25,7 +25,7 @@
                         text = 'There is some problem with deleting of snippet. Status: '+status;
                     }
                     my_alert_with_action(text, 'Status', function(status) {
-                        window.location.replace("/launchpad/snippets");
+                        window.location.replace("/launchpad/snippet/snippets");
                     });
                 });
             });
@@ -57,7 +57,7 @@
 
     <h2 class="widget-header">Upload snippet </h2>
     <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-          th:action="@{/launchpad/snippet-upload-from-file}"
+          th:action="@{/launchpad/snippet/snippet-upload-from-file}"
     >
         <table>
             <tr>

@@ -24,7 +24,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/stations-part', table);
+            $.post('/launchpad/station/stations-part', table);
         });
 
         function switchStatus() {
@@ -78,8 +78,8 @@
             <td><pre style="display: none;" id="station-status" th:if="${r.station.status}!=null" th:text="${r.station.status}">Status of station </pre></td>
             <td><div th:text="${r.active ? 'Yes' : 'No'}" class="no-wrap">Is active</div><div th:text="${r.blacklisted ? 'Yes' : 'No'}" class="no-wrap">Is blacklisted</div></td>
             <td th:text="${#dates.format(r.lastSeen, 'dd-MMM-yy HH:mm')}">Last seen</td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-edit/' + r.station.id}">Edit</a></td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station-delete/' + r.station.id}">Delete</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station/station-edit/' + r.station.id}">Edit</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/station/station-delete/' + r.station.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="8">
@@ -88,17 +88,17 @@
                         <li class="table-nav-padding">
                             <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                               th:href="@{/launchpad/stations-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                               th:href="@{/launchpad/station/stations-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                               th:href="@{/launchpad/stations-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/launchpad/station/stations-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                               th:href='@{/launchpad/stations-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
+                               th:href='@{/launchpad/station/stations-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>

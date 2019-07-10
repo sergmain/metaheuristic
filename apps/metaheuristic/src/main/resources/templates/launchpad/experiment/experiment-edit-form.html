@@ -21,7 +21,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/datasets-part', table);
+            $.post('/launchpad/experiment/datasets-part', table);
         });
 
         var trStateMap = {};
@@ -56,7 +56,7 @@
         <!--/*@thymesVar id="hyperParams" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.HyperParamsResult"*/-->
         <!--/*@thymesVar id="simpleExperiment" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.SimpleExperiment"*/-->
         <!--/*@thymesVar id="snippetResult" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.SnippetResult"*/-->
-        <form class="pure-form pure-form-stacked" th:object="${simpleExperiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment-edit-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
+        <form class="pure-form pure-form-stacked" th:object="${simpleExperiment}" method="post" action="#" th:method="POST" th:action="@{/launchpad/experiment/experiment-edit-form-commit}" accept-charset="UTF-8" id="experiment-form" name="f">
             <input type="hidden" th:field="*{id}"/>
             <fieldset>
 
@@ -85,7 +85,7 @@
                             &nbsp;
                         </td>
                         <td>
-                            <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">Cancel</a>
+                            <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiment/experiments'}">Cancel</a>
                         </td>
                     </tr>
                 </table>
@@ -94,7 +94,7 @@
         <p>&nbsp;</p>
 
         <h1 class="widget-header">Snippets</h1>
-        <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-snippet-add-commit/'+simpleExperiment.id}" accept-charset="UTF-8"
+        <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment/experiment-snippet-add-commit/'+simpleExperiment.id}" accept-charset="UTF-8"
               th:if="${!snippetResult.selectOptions.isEmpty()}">
             <select class="pure-input-medium" th:name="code">
                 <option  th:each="o : ${snippetResult.selectOptions}" th:value="${o.value}" th:text="${o.desc} "></option>
@@ -116,7 +116,7 @@
             <tr th:each="s : ${snippetResult.snippets}">
                 <td th:text="${s.type}">Snippet type</td>
                 <td th:text="${s.getSnippetCode()}">Snippet code</td>
-                <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment-snippet-delete-commit/' + simpleExperiment.id+'/'+ s.snippetCode}">Delete</a></td>
+                <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment/experiment-snippet-delete-commit/' + simpleExperiment.id+'/'+ s.snippetCode}">Delete</a></td>
             </tr>
             </tbody>
         </table>
@@ -129,10 +129,10 @@
         <span class="pure-form-message">Concrete value - 10</span>
         <span class="pure-form-message">Array of strings, some strings contain space - ['#some custom accuracy', accuracy] </span>
 
-        <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/experiment-metadata-default-add-commit/' + simpleExperiment.id}">Fill with default metadatas</a>
+        <a class="pure-button pure-button-primary" href="#" th:href="${'/launchpad/experiment/experiment-metadata-default-add-commit/' + simpleExperiment.id}">Fill with default metadatas</a>
         <p>&nbsp;</p>
 
-        <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-metadata-add-commit/'+simpleExperiment.id}" accept-charset="UTF-8" >
+        <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment/experiment-metadata-add-commit/'+simpleExperiment.id}" accept-charset="UTF-8" >
             <fieldset>
                 <input placeholder="Key" name="key" type="text">
                 <input placeholder="Value" name="value" type="text" size="100">
@@ -158,9 +158,9 @@
                     <td th:text="${p.values}"
                         th:data-id="${'meta-edit-' + p.key}"
                         onclick="switchTr(this.getAttribute('data-id'));">Hyper param values</td>
-                    <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment-metadata-delete-commit/' + simpleExperiment.id+'/'+ p.key}">Delete</a></td>
+                    <td><a class="pure-button pure-button-primary table-nav-button" th:href="${'/launchpad/experiment/experiment-metadata-delete-commit/' + simpleExperiment.id+'/'+ p.key}">Delete</a></td>
                 </tr>
-                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment-metadata-edit-commit/'+simpleExperiment.id}" accept-charset="UTF-8" >
+                <form class="pure-form" action="#" th:method="POST" th:action="${'/launchpad/experiment/experiment-metadata-edit-commit/'+simpleExperiment.id}" accept-charset="UTF-8" >
                     <input type="hidden" th:name="key" th:value="${p.key}"/>
                     <tr style="display:none" th:id="${'meta-edit-' + p.key}">
                         <td>&nbsp;</td>
@@ -174,6 +174,6 @@
         <p>&nbsp;</p>
 
         <h1 class="widget-header">Back</h1>
-        <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiments'}">To list of experiments</a>
+        <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiment/experiments'}">To list of experiments</a>
     </div>
 </div>

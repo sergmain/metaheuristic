@@ -3,7 +3,7 @@
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
-    <div sec:authorize="isAuthenticated()">
+    <div>
         <h1 class="widget-header">Station</h1>
 
         <!--/*@thymesVar id="station" type="ai.metaheuristic.ai.launchpad.beans.Station"*/-->
@@ -26,7 +26,7 @@
         <table>
             <tr>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${station}" th:method="post" th:action="@{/launchpad/station-delete-commit}"
+                    <form class="pure-form pure-form-stacked" method="post" action="#" th:object="${station}" th:method="post" th:action="@{/launchpad/station/station-delete-commit}"
                           accept-charset="UTF-8"
                           id="station-delete-commit"
                           name="f">
@@ -40,7 +40,7 @@
                     &nbsp;
                 </td>
                 <td>
-                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/stations}" accept-charset="UTF-8" id="station-delete-cancel" name="f">
+                    <form class="pure-form pure-form-stacked" method="get" action="#" th:method="get" th:action="@{/launchpad/station/stations}" accept-charset="UTF-8" id="station-delete-cancel" name="f">
                         <fieldset>
                             <button type="submit" class="pure-button pure-button-primary">Cancel</button>
                         </fieldset>

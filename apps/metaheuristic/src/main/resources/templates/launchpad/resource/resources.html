@@ -20,7 +20,7 @@
             $(document).ajaxSend(function (e, xhr, options) {
                 xhr.setRequestHeader(header, token);
             });
-            $.post('/launchpad/resources-part', table);
+            $.post('/launchpad/resource/resources-part', table);
         });
 
     </script>
@@ -28,7 +28,7 @@
     <h1 class="widget-header">Create resource from file</h1>
 
     <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
-          th:action="@{/launchpad/resource-upload-from-file}"
+          th:action="@{/launchpad/resource/resource-upload-from-file}"
     >
         <fieldset>
             <label for="uploadFile">File for uploading</label>
@@ -63,7 +63,7 @@
 
     <h1 class="widget-header">Create resource with storage url</h1>
     <form class="pure-form pure-form-stacked" action="#" th:method="POST"
-          th:action="@{/launchpad/resource-in-external-storage}" accept-charset="UTF-8" id="workbook-multiply-add-form" name="f">
+          th:action="@{/launchpad/resource/resource-in-external-storage}" accept-charset="UTF-8" id="workbook-multiply-add-form" name="f">
         <fieldset>
             <label for="poolCode1">Resource pool code</label>
             <input name="poolCode" id="poolCode1" type="text" placeholder="Pool code">
@@ -137,7 +137,7 @@ git:
             <td th:text="${p.manual}">is manual</td>
             <td th:text="${p.filename}">Filename</td>
             <td th:text="${p.storageUrl}">Storage url</td>
-            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/resource-delete/' + p.id}">Delete</a></td>
+            <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/resource/resource-delete/' + p.id}">Delete</a></td>
         </tr>
         <tr>
             <td colspan="12">
@@ -146,17 +146,17 @@ git:
                         <li class="table-nav-padding">
                             <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                               th:href="@{/launchpad/resources-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                               th:href="@{/launchpad/resource/resources-part(page=0,size=${result.items.pageable.pageSize})}">« First</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                               th:href="@{/launchpad/resources-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                               th:href="@{/launchpad/resource/resources-part(page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                         </li>
                         <li class="table-nav-padding">
                             <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                             <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                               th:href='@{/launchpad/resources-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
+                               th:href='@{/launchpad/resource/resources-part(page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}' title='Go to next page'>→</a>
                         </li>
                     </ul>
                 </div>

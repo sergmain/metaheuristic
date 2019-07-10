@@ -46,7 +46,7 @@
 
                     let /*{string}*/ url = $(this).attr('href');
                     printLogMain('url: ' + url);
-                    // /launchpad/experiment-feature-progress-part/82/428/,/part?page=1&size=10
+                    // /launchpad/experiment/experiment-feature-progress-part/82/428/,/part?page=1&size=10
                     let /*{string}*/ urlPart1 = url.substring(0, url.indexOf(',/part'));
                     let /*{string}*/ urlPart = urlPart1.substring(0, urlPart1.lastIndexOf('/'));
                     let /*{string}*/ urlParams = url.substring(url.indexOf('?'));
@@ -91,7 +91,7 @@
                 xhr.setRequestHeader(header, token);
             });
 
-            $.post('/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]]+'/,/part', table);
+            $.post('/launchpad/experiment/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]]+'/,/part', table);
         });
 
         /**
@@ -218,7 +218,7 @@
 
         function drawPlot() {
             if (isDrawEnabled) {
-                let url = '/launchpad/experiment-feature-plot-data-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/' + paramFilterAxis + '/part';
+                let url = '/launchpad/experiment/experiment-feature-plot-data-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/' + paramFilterAxis + '/part';
                 printLogButtonAxis('url for plot data: ' + url);
                 $.post(url, function(data ) {
                     printLogButtonAxis('json for plotting:\n' + data);
@@ -267,7 +267,7 @@
             $( '#fragment-console-table' ).empty();
             printLogButton('state: ' + buttonStateMap[id].state + ', idx: ' +buttonStateMap[id].idx);
             paramFilter = paramsForUrl();
-            let url = '/launchpad/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
+            let url = '/launchpad/experiment/experiment-feature-progress-part/' + [[${experiment.id}]] + '/' + [[${feature.id}]] + '/' + paramFilter + '/part';
             printLogButton('url: '+ url);
             $.post(url, table);
             printLogButton('');
@@ -282,7 +282,7 @@
             // console.log("Start rerunTask()");
             my_confirm('Do you really want to re-run this task?', 'Re-run task?', "Re-run", function() {
                 console.log("re-run was confirmed.");
-                $.post('/launchpad/task-rerun/' + id, function(status) {
+                $.post('/launchpad/experiment/task-rerun/' + id, function(status) {
                     // console.log("task-rerun is finished, Status: " + status);
                     if (status===true) {
                         // console.log("task-rerun is finished, status " + status);
@@ -469,17 +469,17 @@
                                     <li class="table-nav-padding">
                                         <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                                           th:href="@{/launchpad/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
                                     </li>
                                     <li class="table-nav-padding">
                                         <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                                           th:href="@{/launchpad/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                                     </li>
                                     <li class="table-nav-padding">
                                         <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
+                                           th:href="@{/launchpad/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
                                     </li>
                                 </ul>
                             </div>
@@ -536,7 +536,7 @@
                         <tr valign="top">
                             <td>
                                 <a class='ajax-elem-console table-nav-button pure-button' th:id="${'a-console-'+ g.index}" href="#"
-                                   th:href="@{/launchpad/experiment-feature-progress-console-part/{id}/(id=${s.task.id})}"
+                                   th:href="@{/launchpad/experiment/experiment-feature-progress-console-part/{id}/(id=${s.task.id})}"
                                    title='Console output'>Info</a>
                             </td>
                             <td>
@@ -554,17 +554,17 @@
                                     <li class="table-nav-padding">
                                         <span th:if='${result.items.first}' class="table-nav-button">« First</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${not result.items.first}'
-                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
+                                           th:href="@{/launchpad/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=0,size=${result.items.pageable.pageSize})}">« First</a>
                                     </li>
                                     <li class="table-nav-padding">
                                         <span th:if='${not result.items.hasPrevious()}' class="table-nav-button">←</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasPrevious()}'
-                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
+                                           th:href="@{/launchpad/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber - 1},size=${result.items.pageable.pageSize})}" title='Go to previous page'>←</a>
                                     </li>
                                     <li class="table-nav-padding">
                                         <span th:if='${not result.items.hasNext()}' class="table-nav-button">→</span>
                                         <a class='ajax-elem table-nav-button pure-button prev' href="#" th:if='${result.items.hasNext()}'
-                                           th:href="@{/launchpad/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
+                                           th:href="@{/launchpad/experiment/experiment-feature-progress-part/{experimentId}/{featureId}/,/part(experimentId=${experiment.id},featureId=${feature.id},page=${result.items.pageable.pageNumber + 1},size=${result.items.pageable.pageSize})}" title='Go to next page'>→</a>
                                     </li>
                                 </ul>
                             </div>
@@ -574,7 +574,7 @@
                 </table>
                 <p>&nbsp;</p>
 
-                <a class="pure-button pure-button-primary" href="experiment-info.html" th:href="${'/launchpad/experiment-info/' + experiment.id }">To experiment info</a>
+                <a class="pure-button pure-button-primary" href="experiment-info.html" th:href="${'/launchpad/experiment/experiment-info/' + experiment.id }">To experiment info</a>
 
             </td>
             <td width="20">&nbsp;</td>
