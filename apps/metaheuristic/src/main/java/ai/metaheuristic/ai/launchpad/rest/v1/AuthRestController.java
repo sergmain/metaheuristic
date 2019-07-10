@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.rest.v1;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.data.UserData;
 import org.springframework.context.annotation.Profile;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -35,7 +36,7 @@ import java.util.Collection;
 //@CrossOrigin(origins="*", maxAge=3600)
 public class AuthRestController {
 
-    // this end-point is used by angular's part Only
+    // this end-point is used by angular's part only
     @RequestMapping("/user")
     public UserData user(Principal user) {
         UsernamePasswordAuthenticationToken passwordAuthenticationToken = (UsernamePasswordAuthenticationToken) user;

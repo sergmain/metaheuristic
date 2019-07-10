@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.batch.process_resource;
+package ai.metaheuristic.ai.launchpad.batch;
 
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
@@ -32,6 +32,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -47,6 +48,7 @@ import java.nio.charset.StandardCharsets;
 @RequestMapping("/launchpad/batch")
 @Slf4j
 @Profile("launchpad")
+@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
 public class BatchController {
 
     private static final String REDIRECT_BATCH_BATCHES = "redirect:/launchpad/batch/batches";

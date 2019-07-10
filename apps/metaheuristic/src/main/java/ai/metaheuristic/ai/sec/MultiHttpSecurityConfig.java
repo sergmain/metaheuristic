@@ -88,8 +88,7 @@ public class MultiHttpSecurityConfig {
                         .and()
                         .authorizeRequests()
                         .antMatchers("/rest/login").permitAll()
-                        .and()
-                        .antMatcher("/rest/**").authorizeRequests().anyRequest().hasAuthority("ROLE_ACCESS_REST")
+                        .antMatchers("/rest/**").authenticated()
                         .and()
                         .httpBasic().realmName(REST_REALM)
                         .and()
@@ -102,7 +101,7 @@ public class MultiHttpSecurityConfig {
                         .and()
                         .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                         .and()
-                        .antMatcher("/rest/**").authorizeRequests().anyRequest().anonymous()
+                        .authorizeRequests().antMatchers("/rest/**").permitAll()
                         .and()
                         .csrf().disable()
                         .headers().cacheControl();

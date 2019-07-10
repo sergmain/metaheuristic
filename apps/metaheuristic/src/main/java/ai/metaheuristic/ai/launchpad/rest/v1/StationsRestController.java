@@ -20,9 +20,11 @@ import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.StationData;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -30,13 +32,11 @@ import org.springframework.web.bind.annotation.*;
 @Profile("launchpad")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'ACCESS_REST')")
 public class StationsRestController {
 
     private final StationTopLevelService stationTopLevelService;
-
-    public StationsRestController(StationTopLevelService stationTopLevelService) {
-        this.stationTopLevelService = stationTopLevelService;
-    }
 
     @GetMapping("/stations")
     public StationData.StationsResult init(@PageableDefault(size = 5) Pageable pageable) {

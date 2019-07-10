@@ -22,6 +22,9 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.graph.DefaultEdge;
@@ -56,6 +59,18 @@ public class WorkbookGraphService {
     private final WorkbookCache workbookCache;
     private final TaskPersistencer taskPersistencer;
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OperationStatusWithTaskList {
+        OperationStatusRest status;
+        List<WorkbookParamsYaml.TaskVertex> tasks = new ArrayList<>();
+
+        public OperationStatusWithTaskList(OperationStatusRest status) {
+            this.status = status;
+        }
+    }
+
     @FunctionalInterface
     public interface WorkWithGraphVoid {
         void execute(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph);
@@ -75,6 +90,9 @@ public class WorkbookGraphService {
     public interface WorkWithGraphTaskVertex {
         WorkbookParamsYaml.TaskVertex execute(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph);
     }
+
+    //    DepthFirstIterator depthFirstIterator = new DepthFirstIterator<>(graph);
+    //    BreadthFirstIterator breadthFirstIterator = new BreadthFirstIterator<>(graph);
 
     public void changeGraph(WorkbookImpl workbook, WorkWithGraphVoid callable) throws ImportException {
         WorkbookParamsYaml wpy = workbook.getWorkbookParamsYaml();
@@ -187,29 +205,28 @@ public class WorkbookGraphService {
         }
     }
 
-    public OperationStatusRest updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
+    public OperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
         try {
+            final OperationStatusWithTaskList withTaskList = new OperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
             changeGraph(workbook, graph -> {
                     graph.vertexSet()
                             .stream()
                             .filter(o -> o.taskId.equals(taskId))
                             .findFirst()
                             .ifPresent(currV -> graph.getDescendants(currV).forEach(t -> {
-                        taskPersistencer.resetTask(t.taskId);
-                        t.execState = EnumsApi.TaskExecState.NONE;
-                    }));
+                                withTaskList.tasks.add(t);
+                                taskPersistencer.resetTask(t.taskId);
+                                t.execState = EnumsApi.TaskExecState.NONE;
+                            }));
             });
-            return OperationStatusRest.OPERATION_STATUS_OK;
+            return withTaskList;
         }
         catch (Throwable th) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
+            return new OperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
         }
     }
 
     public List<WorkbookParamsYaml.TaskVertex> findLeafs(WorkbookImpl workbook) {
-//    DepthFirstIterator depthFirstIterator = new DepthFirstIterator<>(graph);
-//    BreadthFirstIterator breadthFirstIterator = new BreadthFirstIterator<>(graph);
-
         try {
             return readOnlyGraphListOfTaskVertex(workbook, graph -> {
                 //noinspection UnnecessaryLocalVariable
@@ -227,9 +244,6 @@ public class WorkbookGraphService {
     }
 
     public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
-//    DepthFirstIterator depthFirstIterator = new DepthFirstIterator<>(graph);
-//    BreadthFirstIterator breadthFirstIterator = new BreadthFirstIterator<>(graph);
-
         try {
             return readOnlyGraphListOfTaskVertex(workbook, graph -> {
                 //noinspection UnnecessaryLocalVariable
@@ -261,22 +275,24 @@ public class WorkbookGraphService {
         }
     }
 
-    public OperationStatusRest updateGraphWithInvalidatingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
+    public OperationStatusWithTaskList updateGraphWithInvalidatingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
         try {
+            final OperationStatusWithTaskList withTaskList = new OperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
             changeGraph(workbook, graph -> {
                 graph.vertexSet()
                         .stream()
                         .filter(o -> o.taskId.equals(taskId))
                         .findFirst()
                         .ifPresent(currV -> graph.getDescendants(currV).forEach(t -> {
+                            withTaskList.tasks.add(t);
                             taskPersistencer.resetTask(t.taskId);
                             t.execState = EnumsApi.TaskExecState.BROKEN;
                         }));
             });
-            return OperationStatusRest.OPERATION_STATUS_OK;
+            return withTaskList;
         }
         catch (Throwable th) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
+            return new OperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
         }
     }
 

@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
@@ -54,6 +55,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -84,6 +86,7 @@ public class ExperimentTopLevelService {
     private final ExperimentCache experimentCache;
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
+    private final AtlasService atlasService;
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
@@ -173,7 +176,7 @@ public class ExperimentTopLevelService {
         // one more time to get new object from cache
         experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.061 experiment wasn't found, experimentId: " + experimentId);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.064 experiment wasn't found, experimentId: " + experimentId);
         }
 
         if (experiment.getWorkbookId() == null) {
@@ -455,7 +458,7 @@ public class ExperimentTopLevelService {
 
     public OperationStatusRest snippetDeleteCommit(long experimentId, String snippetCode) {
         if (snippetCode==null || snippetCode.isBlank()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.62 snippetCode is blank");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.245 snippetCode is blank");
         }
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment == null) {
@@ -561,25 +564,25 @@ public class ExperimentTopLevelService {
 
     public OperationStatusRest addExperiment(String experimentYamlAsStr) {
         if (StringUtils.isBlank(experimentYamlAsStr)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.017 plan yaml is empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.370 plan yaml is empty");
         }
 
         ExperimentParamsYaml ppy;
         try {
             ppy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experimentYamlAsStr);
         } catch (WrongVersionOfYamlFileException e) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.017 Error parsing yaml: " + e.getMessage());
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.380 Error parsing yaml: " + e.getMessage());
         }
 
         final String code = ppy.experimentYaml.code;
         if (StringUtils.isBlank(code)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.020 code of experiment is empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.390 code of experiment is empty");
         }
         ppy.createdOn = System.currentTimeMillis();
 
         Long experimentId = experimentRepository.findIdByCode(code);
         if (experimentId!=null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.033 plan with such code already exists, code: " + code);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.400 plan with such code already exists, code: " + code);
         }
 
         Experiment e = new Experiment();
@@ -591,4 +594,22 @@ public class ExperimentTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
+    public OperationStatusRest toAtlas(Long id) {
+
+        Experiment experiment = experimentCache.findById(id);
+        if (experiment==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.410 can't find experiment for id: " + id);
+        }
+
+        if (experiment.workbookId==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.420 This experiment isn't bound to Workbook");
+        }
+
+        OperationStatusRest status = atlasService.toAtlas(experiment.workbookId, id);
+        if (status.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, status.errorMessages);
+        }
+        return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Experiment was successfully stored to atlas", null);
+    }
 }

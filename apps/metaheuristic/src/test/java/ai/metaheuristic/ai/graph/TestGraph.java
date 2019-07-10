@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.graph;
 
+import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.api.EnumsApi;
@@ -28,8 +29,10 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.data.workbook.WorkbookParamsYaml.*;
+import static ai.metaheuristic.api.data.workbook.WorkbookParamsYaml.TaskVertex;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -69,6 +72,33 @@ public class TestGraph {
         assertTrue(leafs.contains(new TaskVertex(2L, EnumsApi.TaskExecState.NONE)));
         assertTrue(leafs.contains(new TaskVertex(3L, EnumsApi.TaskExecState.NONE)));
 
+        setExecState(workbook, 1L, EnumsApi.TaskExecState.BROKEN);
+        setExecState(workbook, 2L, EnumsApi.TaskExecState.NONE);
+        setExecState(workbook, 3L, EnumsApi.TaskExecState.NONE);
+        workbookGraphService.updateGraphWithInvalidatingAllChildrenTasks(workbook, 1L);
 
+        // there is only 'ERROR' exec state
+        Set<EnumsApi.TaskExecState> states = workbookGraphService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
+        assertEquals(1, states.size());
+        assertTrue(states.contains(EnumsApi.TaskExecState.BROKEN));
+
+        count = workbookGraphService.getCountUnfinishedTasks(workbook);
+        assertEquals(0, count);
+
+
+        setExecState(workbook, 1L, EnumsApi.TaskExecState.NONE);
+        workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, 1L);
+
+        // there is only 'NONE' exec state
+        states = workbookGraphService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
+        assertEquals(1, states.size());
+        assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
+    }
+
+    public void setExecState(WorkbookImpl workbook, Long id, EnumsApi.TaskExecState execState) {
+        TaskImpl t1 = new TaskImpl();
+        t1.id = id;
+        t1.execState = execState.value;
+        workbookGraphService.updateTaskExecState(workbook, t1 );
     }
 }

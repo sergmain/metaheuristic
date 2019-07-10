@@ -17,13 +17,14 @@
 package ai.metaheuristic.ai.launchpad.atlas;
 
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
-import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.ai.launchpad.experiment.ExperimentCache;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -36,15 +37,12 @@ import java.util.ArrayList;
 @RequestMapping("/launchpad/atlas")
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class AtlasController {
 
     private final AtlasService atlasService;
     private final AtlasTopLevelService atlasTopLevelService;
-
-    public AtlasController(AtlasService atlasService, ExperimentCache experimentCache, AtlasTopLevelService atlasTopLevelService) {
-        this.atlasService = atlasService;
-        this.atlasTopLevelService = atlasTopLevelService;
-    }
 
     @GetMapping("/atlas-experiments")
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,

@@ -14,10 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.launchpad.batch.process_resource;
+package ai.metaheuristic.ai.launchpad.batch;
 
-import ai.metaheuristic.ai.launchpad.batch.beans.BatchWorkbook;
+import ai.metaheuristic.ai.launchpad.batch.beans.Batch;
 import org.springframework.context.annotation.Profile;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
@@ -25,16 +27,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
 @Repository
-@Transactional(propagation = Propagation.REQUIRES_NEW)
 @Profile("launchpad")
-public interface BatchWorkbookRepository extends JpaRepository<BatchWorkbook, Long> {
+@Transactional(propagation = Propagation.REQUIRES_NEW)
+public interface BatchRepository extends JpaRepository<Batch, Long> {
 
     @Transactional(readOnly = true)
-    @Query(value="select b.workbookId from BatchWorkbook b where b.batchId=:batchId")
-    List<Long> findWorkbookIdsByBatchId(long batchId);
-
-    void deleteByBatchId(Long batchId);
+    @Query("select b.id from Batch b order by b.createdOn desc")
+    Page<Long> findAllByOrderByCreatedOnDesc(Pageable pageable);
 }

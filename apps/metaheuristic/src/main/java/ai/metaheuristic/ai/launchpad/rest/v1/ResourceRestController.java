@@ -19,10 +19,12 @@ package ai.metaheuristic.ai.launchpad.rest.v1;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.ResourceData;
 import ai.metaheuristic.ai.launchpad.launchpad_resource.ResourceTopLevelService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,13 +33,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Profile("launchpad")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
 public class ResourceRestController {
 
     private final ResourceTopLevelService resourceTopLevelService;
-
-    public ResourceRestController(ResourceTopLevelService resourceTopLevelService) {
-        this.resourceTopLevelService = resourceTopLevelService;
-    }
 
     @GetMapping("/resources")
     public ResourceData.ResourcesResult getResources(@PageableDefault(size = 5) Pageable pageable) {

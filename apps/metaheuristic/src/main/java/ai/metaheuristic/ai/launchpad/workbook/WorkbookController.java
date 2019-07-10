@@ -26,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -49,6 +50,7 @@ public class WorkbookController {
     // ============= Workbooks =============
 
     @GetMapping("/workbooks/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
     public String workbooks(Model model, @PathVariable Long id, @PageableDefault(size = 5) Pageable pageable, @ModelAttribute("errorMessage") final String errorMessage) {
         model.addAttribute("result", workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(id, pageable));
         return "launchpad/plan/workbooks";
@@ -56,13 +58,14 @@ public class WorkbookController {
 
     // for AJAX
     @PostMapping("/workbooks-part/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
     public String workbooksPart(Model model, @PathVariable Long id, @PageableDefault(size = 10) Pageable pageable) {
         model.addAttribute("result", workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(id, pageable));
         return "launchpad/plan/workbooks :: table";
     }
 
-    @SuppressWarnings("Duplicates")
     @GetMapping(value = "/workbook-add/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String workbookAdd(@ModelAttribute("result") PlanApiData.PlanResult result, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         PlanApiData.PlanResult planResultRest = planTopLevelService.getPlan(id);
         if (planResultRest.status== EnumsApi.PlanValidateStatus.PLAN_NOT_FOUND_ERROR) {
@@ -74,6 +77,7 @@ public class WorkbookController {
     }
 
     @PostMapping("/workbook-add-commit")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String workbookAddCommit(Long planId, String poolCode, String inputResourceParams, final RedirectAttributes redirectAttributes) {
         PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams);
         if (workbookResultRest.isErrorMessages()) {
@@ -83,6 +87,7 @@ public class WorkbookController {
     }
 
     @GetMapping("/workbook-delete/{planId}/{workbookId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String workbookDelete(Model model, @PathVariable Long planId, @PathVariable Long workbookId, final RedirectAttributes redirectAttributes) {
         PlanApiData.WorkbookResult result = workbookTopLevelService.getWorkbookExtended(workbookId);
         if (result.isErrorMessages()) {
@@ -94,6 +99,7 @@ public class WorkbookController {
     }
 
     @PostMapping("/workbook-delete-commit")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String workbookDeleteCommit(Long planId, Long workbookId, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(workbookId);
         if (operationStatusRest.isErrorMessages()) {
@@ -104,6 +110,7 @@ public class WorkbookController {
     }
 
     @GetMapping("/workbook-target-exec-state/{planId}/{state}/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String workbookTargetExecState(@PathVariable Long planId, @PathVariable String state, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = planTopLevelService.changeWorkbookExecState(state, id);
         if (operationStatusRest.isErrorMessages()) {

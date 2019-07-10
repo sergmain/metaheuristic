@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import static ai.metaheuristic.ai.launchpad.batch.process_resource.BatchTopLevelService.VALIDATE_ZIP_FUNCTION;
+import static ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService.VALIDATE_ZIP_FUNCTION;
 import static org.junit.Assert.assertFalse;
 
 /**

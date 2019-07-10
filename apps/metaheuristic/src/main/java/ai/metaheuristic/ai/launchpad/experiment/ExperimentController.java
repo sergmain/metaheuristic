@@ -16,16 +16,15 @@
 
 package ai.metaheuristic.ai.launchpad.experiment;
 
-import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
-import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -45,12 +44,11 @@ import java.util.ArrayList;
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class ExperimentController {
 
     private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
-    private final AtlasService atlasService;
-    private final ExperimentCache experimentCache;
 
     @GetMapping("/experiments")
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
@@ -272,30 +270,11 @@ public class ExperimentController {
 
     @GetMapping(value = "/experiment-to-atlas/{id}")
     public String toAtlas(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
-
-        Experiment experiment = experimentCache.findById(id);
-        if (experiment==null) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "# can't find experiment for id: " + id);
-            return "redirect:/launchpad/experiment-info/"+id;
-        }
-
-        if (experiment.workbookId==null) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "# This experiment isn't bound to Workbook");
-            return "redirect:/launchpad/experiment-info/"+id;
-        }
-
-        OperationStatusRest status = atlasService.toAtlas(experiment.workbookId, id);
+        OperationStatusRest status = experimentTopLevelService.toAtlas(id);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        else {
-            redirectAttributes.addFlashAttribute("infoMessages",
-                    "Experiment was successfully stored to atlas");
-        }
         return "redirect:/launchpad/experiment-info/"+id;
-
     }
 
 

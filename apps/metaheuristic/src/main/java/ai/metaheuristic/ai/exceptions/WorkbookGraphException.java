@@ -13,7 +13,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-package ai.metaheuristic.ai.launchpad.batch.process_resource;
 
-public interface RefToPilotRepositories {
+package ai.metaheuristic.ai.exceptions;
+
+/**
+ * @author Serge
+ * Date: 7/9/2019
+ * Time: 5:42 PM
+ */
+public class WorkbookGraphException extends RuntimeException {
+    public WorkbookGraphException() {
+    }
+
+    public WorkbookGraphException(String message) {
+        super(message);
+    }
+
+    public WorkbookGraphException(String message, Throwable cause) {
+        super(message, cause);
+    }
 }

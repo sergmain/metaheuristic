@@ -20,9 +20,11 @@ import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.StationData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -39,13 +41,11 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @RequestMapping("/launchpad")
 @Profile("launchpad")
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN')")
 public class StationsController {
 
     private final StationTopLevelService stationTopLevelService;
-
-    public StationsController(StationTopLevelService stationTopLevelService) {
-        this.stationTopLevelService = stationTopLevelService;
-    }
 
     @GetMapping("/stations")
     public String getStations(Model model, @PageableDefault(size = 5) Pageable pageable) {
