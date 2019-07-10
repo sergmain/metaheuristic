@@ -116,8 +116,8 @@ public class BinaryDataService {
 */
             Blob blob = binaryDataRepository.getDataAsStreamByCode(code);
             if (blob==null) {
-                log.warn("#087.14.01 Binary data for code {} wasn't found", code);
-                throw new BinaryDataNotFoundException("#087.14 Binary data wasn't found, code: " + code);
+                log.warn("#087.010 Binary data for code {} wasn't found", code);
+                throw new BinaryDataNotFoundException("#087.010 Binary data wasn't found, code: " + code);
             }
             try (InputStream is = blob.getBinaryStream()) {
                 FileUtils.copyInputStreamToFile(is, trgFile);
@@ -125,7 +125,7 @@ public class BinaryDataService {
         } catch (BinaryDataNotFoundException e) {
             throw e;
         } catch (Exception e) {
-            String es = "#087.10 Error while storing binary data";
+            String es = "#087.020 Error while storing binary data";
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -167,12 +167,12 @@ public class BinaryDataService {
                            BinaryDataType binaryDataType, String code, String poolCode,
                            boolean isManual, String filename, Long refId, BinaryDataRefType refType) {
         if (binaryDataType== BinaryDataType.SNIPPET && refId!=null) {
-            String es = "#087.01 Snippet can't be bound to workbook";
+            String es = "#087.030 Snippet can't be bound to workbook";
             log.error(es);
             throw new BinaryDataSaveException(es);
         }
         if ((refId==null && refType!=null) || (refId!=null && refType==null)) {
-            String es = "#087.02 refId and refType both must be null or both must not be null, " +
+            String es = "#087.040 refId and refType both must be null or both must not be null, " +
                     "refId: #"+refId+", refType: "+refType;
             log.error(es);
             throw new BinaryDataSaveException(es);
@@ -193,14 +193,14 @@ public class BinaryDataService {
             } else {
                 if (!poolCode.equals(data.getPoolCode())) {
                     // this is exception for the case when two resources have the same names but different pool codes
-                    String es = "#087.04 Pool code is different, old: " + data.getPoolCode() + ", new: " + poolCode;
+                    String es = "#087.050 Pool code is different, old: " + data.getPoolCode() + ", new: " + poolCode;
                     log.error(es);
                     throw new BinaryDataSaveException(es);
                 }
                 DataStorageParams dataStorageParams = DataStorageParamsUtils.to(data.params);
-                if (dataStorageParams.sourcing!= DataSourcing.launchpad) {
-                    // this is exception for the case when two resources have the same names but different pool codes
-                    String es = "#087.05 Sourcing must be launchpad, value in db: " + data.getParams();
+                if (dataStorageParams.sourcing!=DataSourcing.launchpad) {
+                    // this is an exception for the case when two resources have the same names but different pool codes
+                    String es = "#087.060 Sourcing must be launchpad, value in db: " + data.getParams();
                     log.error(es);
                     throw new BinaryDataSaveException(es);
                 }
@@ -217,7 +217,7 @@ public class BinaryDataService {
         catch(BinaryDataSaveException | PessimisticLockingFailureException e) {
             throw e;
         } catch(Throwable th) {
-            log.error("#087.09 error storing data to db", th);
+            log.error("#087.070 error storing data to db", th);
             throw new BinaryDataSaveException("Error", th);
         }
     }
@@ -232,13 +232,13 @@ public class BinaryDataService {
                 data = new BinaryDataImpl();
             } else {
                 if (datas.size()>1) {
-                    String es = "#087.17 Can't create resource with storage url, too many resources are associated with this pool code: " + poolCode;
+                    String es = "#087.080 Can't create resource with storage url, too many resources are associated with this pool code: " + poolCode;
                     log.error(es);
                     throw new IllegalStateException(es);
                 }
                 data = datas.get(0);
                 if (data.getDataType()!= BinaryDataType.DATA.value) {
-                    String es = "#087.21 Can't create resource with storage url because record has different types: " + BinaryDataType.from(data.getDataType());
+                    String es = "#087.090 Can't create resource with storage url because record has different types: " + BinaryDataType.from(data.getDataType());
                     log.error(es);
                     throw new IllegalStateException(es);
                 }
@@ -263,7 +263,7 @@ public class BinaryDataService {
             throw e;
         }
         catch(Throwable th) {
-            log.error("#087.09 error storing data to db", th);
+            log.error("#087.100 error storing data to db", th);
             throw new RuntimeException("Error", th);
         }
     }
