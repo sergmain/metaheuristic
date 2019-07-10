@@ -23,6 +23,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -35,17 +36,12 @@ import java.util.UUID;
 @Slf4j
 @Profile("launchpad")
 @Service
+@RequiredArgsConstructor
 public class AccountTopLevelService {
 
     private final AccountRepository accountRepository;
     private final PasswordEncoder passwordEncoder;
     private final Globals globals;
-
-    public AccountTopLevelService(AccountRepository accountRepository, PasswordEncoder passwordEncoder, Globals globals) {
-        this.accountRepository = accountRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.globals = globals;
-    }
 
     public AccountData.AccountsResult getAccounts(Pageable pageable)  {
         pageable = ControllerUtils.fixPageSize(globals.accountRowsLimit, pageable);
@@ -76,7 +72,7 @@ public class AccountTopLevelService {
         account.setPassword(passwordEncoder.encode(account.getPassword()));
         account.setToken(UUID.randomUUID().toString());
         account.setCreatedOn(System.currentTimeMillis());
-        account.setRoles("ROLE_USER");
+        account.setRoles("ROLE_OPERATOR");
         account.setAccountNonExpired(true);
         account.setAccountNonLocked(true);
         account.setCredentialsNonExpired(true);

@@ -40,14 +40,14 @@ import java.util.ArrayList;
  */
 @SuppressWarnings("Duplicates")
 @Controller
-@RequestMapping("/launchpad")
+@RequestMapping("/launchpad/experiment")
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class ExperimentController {
 
-    private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiments";
+    private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiment/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
 
     @GetMapping("/experiments")
@@ -57,7 +57,7 @@ public class ExperimentController {
         ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
         ControllerUtils.addMessagesToModel(model, experiments);
         model.addAttribute("result", experiments);
-        return "launchpad/experiments";
+        return "launchpad/experiment/experiments";
     }
 
     // for AJAX
@@ -65,7 +65,7 @@ public class ExperimentController {
     public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable) {
         ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
         model.addAttribute("result", experiments);
-        return "launchpad/experiments :: table";
+        return "launchpad/experiment/experiments :: table";
     }
 
     @PostMapping("/experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
@@ -80,7 +80,7 @@ public class ExperimentController {
     public String getTasksConsolePart(Model model, @PathVariable(name="taskId") Long taskId) {
         ExperimentApiData.ConsoleResult result = experimentTopLevelService.getTasksConsolePart(taskId);
         model.addAttribute("consoleResult", result);
-        return "launchpad/experiment-feature-progress :: fragment-console-table";
+        return "launchpad/experiment/experiment-feature-progress :: fragment-console-table";
     }
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
@@ -95,7 +95,7 @@ public class ExperimentController {
         model.addAttribute("feature", experimentProgressResult.experimentFeature);
         model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
 
-        return "launchpad/experiment-feature-progress :: fragment-table";
+        return "launchpad/experiment/experiment-feature-progress :: fragment-table";
     }
 
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
@@ -113,7 +113,7 @@ public class ExperimentController {
         model.addAttribute("feature", experimentProgressResult.experimentFeature);
         model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
 
-        return "launchpad/experiment-feature-progress";
+        return "launchpad/experiment/experiment-feature-progress";
     }
 
     @GetMapping(value = "/experiment-add")
@@ -138,7 +138,7 @@ public class ExperimentController {
 
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("experimentResult", result.experimentInfo);
-        return "launchpad/experiment-info";
+        return "launchpad/experiment/experiment-info";
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
@@ -152,7 +152,7 @@ public class ExperimentController {
         model.addAttribute("hyperParams", r.hyperParams);
         model.addAttribute("simpleExperiment", r.simpleExperiment);
         model.addAttribute("snippetResult", r.snippetResult);
-        return "launchpad/experiment-edit-form";
+        return "launchpad/experiment/experiment-edit-form";
     }
 
     @PostMapping(value = "/experiment-upload-from-file")
@@ -169,7 +169,7 @@ public class ExperimentController {
         OperationStatusRest status = experimentTopLevelService.addExperimentCommit(experiment);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
-            return "launchpad/experiment-add-form";
+            return "launchpad/experiment/experiment-add-form";
         }
         return REDIRECT_LAUNCHPAD_EXPERIMENTS;
     }
@@ -180,7 +180,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/" + simpleExperiment.getId();
+        return "redirect:/launchpad/experiment/experiment-edit/" + simpleExperiment.getId();
     }
 
     @PostMapping("/experiment-metadata-add-commit/{id}")
@@ -189,7 +189,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/"+id;
+        return "redirect:/launchpad/experiment/experiment-edit/"+id;
     }
 
     @PostMapping("/experiment-metadata-edit-commit/{id}")
@@ -198,7 +198,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/"+id;
+        return "redirect:/launchpad/experiment/experiment-edit/"+id;
     }
 
     @PostMapping("/experiment-snippet-add-commit/{id}")
@@ -208,7 +208,7 @@ public class ExperimentController {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
-        return "redirect:/launchpad/experiment-edit/"+id;
+        return "redirect:/launchpad/experiment/experiment-edit/"+id;
     }
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
@@ -217,7 +217,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/" + experimentId;
+        return "redirect:/launchpad/experiment/experiment-edit/" + experimentId;
     }
 
     @GetMapping("/experiment-metadata-default-add-commit/{experimentId}")
@@ -226,7 +226,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/" + experimentId;
+        return "redirect:/launchpad/experiment/experiment-edit/" + experimentId;
     }
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{snippetCode}")
@@ -235,7 +235,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/" + experimentId;
+        return "redirect:/launchpad/experiment/experiment-edit/" + experimentId;
     }
 
     @GetMapping("/experiment-delete/{id}")
@@ -247,7 +247,7 @@ public class ExperimentController {
         }
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("params", result.params);
-        return "launchpad/experiment-delete";
+        return "launchpad/experiment/experiment-delete";
     }
 
     @PostMapping("/experiment-delete-commit")
@@ -274,7 +274,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-info/"+id;
+        return "redirect:/launchpad/experiment/experiment-info/"+id;
     }
 
 

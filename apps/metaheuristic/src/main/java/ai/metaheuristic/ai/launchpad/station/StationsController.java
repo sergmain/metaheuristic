@@ -39,7 +39,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
  * Time: 20:21
  */
 @Controller
-@RequestMapping("/launchpad")
+@RequestMapping("/launchpad/station")
 @Profile("launchpad")
 @RequiredArgsConstructor
 @PreAuthorize("hasAnyRole('ADMIN')")
@@ -52,7 +52,7 @@ public class StationsController {
         StationData.StationsResult stationsResultRest = stationTopLevelService.getStations(pageable);
         ControllerUtils.addMessagesToModel(model, stationsResultRest);
         model.addAttribute("result", stationsResultRest);
-        return "launchpad/stations";
+        return "launchpad/station/stations";
     }
 
     // for AJAX
@@ -61,7 +61,7 @@ public class StationsController {
         StationData.StationsResult stationsResultRest = stationTopLevelService.getStations(pageable);
         ControllerUtils.addMessagesToModel(model, stationsResultRest);
         model.addAttribute("result", stationsResultRest);
-        return "launchpad/stations :: table";
+        return "launchpad/station/stations :: table";
     }
 
     @GetMapping(value = "/station-edit/{id}")
@@ -69,11 +69,11 @@ public class StationsController {
         StationData.StationResult stationResultRest = stationTopLevelService.getStation(id);
         if (stationResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", stationResultRest.errorMessages);
-            return "redirect:/launchpad/stations";
+            return "redirect:/launchpad/station/stations";
         }
         ControllerUtils.addMessagesToModel(model, stationResultRest);
         model.addAttribute("station", stationResultRest.station);
-        return "launchpad/station-form";
+        return "launchpad/station/station-form";
     }
 
     @PostMapping("/station-form-commit")
@@ -82,7 +82,7 @@ public class StationsController {
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
-        return "redirect:/launchpad/stations";
+        return "redirect:/launchpad/station/stations";
     }
 
     @GetMapping("/station-delete/{id}")
@@ -90,10 +90,10 @@ public class StationsController {
         StationData.StationResult stationResultRest = stationTopLevelService.getStation(id);
         if (stationResultRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", stationResultRest.errorMessages);
-            return "redirect:/launchpad/stations";
+            return "redirect:/launchpad/station/stations";
         }
         model.addAttribute("station", stationResultRest.station);
-        return "launchpad/station-delete";
+        return "launchpad/station/station-delete";
     }
 
     @PostMapping("/station-delete-commit")
@@ -102,7 +102,7 @@ public class StationsController {
         if (r.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", r.errorMessages);
         }
-        return "redirect:/launchpad/stations";
+        return "redirect:/launchpad/station/stations";
     }
 
 }

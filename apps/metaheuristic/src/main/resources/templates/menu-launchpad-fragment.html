@@ -1,5 +1,5 @@
 <div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-     sec:authorize="isAuthenticated()"
+     sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER')"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
     <a class="pure-menu-heading">Launchpad</a>

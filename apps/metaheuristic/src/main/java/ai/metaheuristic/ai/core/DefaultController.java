@@ -47,6 +47,7 @@ public class DefaultController {
 
     @GetMapping("/user")
     public String user() {
+        // info about current user
         return "user";
     }
 

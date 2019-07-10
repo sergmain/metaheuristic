@@ -39,7 +39,7 @@ import java.util.ArrayList;
  * Time: 20:21
  */
 @Controller
-@RequestMapping("/launchpad")
+@RequestMapping("/launchpad/resource")
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
@@ -55,7 +55,7 @@ public class ResourceController {
         ResourceData.ResourcesResult resourcesResultRest = resourceTopLevelService.getResources(pageable);
         ControllerUtils.addMessagesToModel(model, resourcesResultRest);
         model.addAttribute("result", resourcesResultRest);
-        return "launchpad/resources";
+        return "launchpad/resource/resources";
     }
 
     // for AJAX
@@ -63,7 +63,7 @@ public class ResourceController {
     public String getResourcesForAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
         ResourceData.ResourcesResult resourcesResultRest = resourceTopLevelService.getResources(pageable);
         model.addAttribute("result", resourcesResultRest);
-        return "launchpad/resources :: fragment-table";
+        return "launchpad/resource/resources :: fragment-table";
     }
 
     @PostMapping(value = "/resource-upload-from-file")
@@ -77,7 +77,7 @@ public class ResourceController {
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
-        return "redirect:/launchpad/resources";
+        return "redirect:/launchpad/resource/resources";
     }
 
     @PostMapping(value = "/resource-in-external-storage")
@@ -90,7 +90,7 @@ public class ResourceController {
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
-        return "redirect:/launchpad/resources";
+        return "redirect:/launchpad/resource/resources";
     }
 
     @GetMapping("/resource-delete/{id}")
@@ -101,7 +101,7 @@ public class ResourceController {
             return "redirect:/launchpad/resources";
         }
         model.addAttribute("resource", resourceResultRest.data);
-        return "launchpad/resource-delete";
+        return "launchpad/resource/resource-delete";
     }
 
     @PostMapping("/resource-delete-commit")
@@ -110,6 +110,6 @@ public class ResourceController {
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
-        return "redirect:/launchpad/resources";
+        return "redirect:/launchpad/resource/resources";
     }
 }

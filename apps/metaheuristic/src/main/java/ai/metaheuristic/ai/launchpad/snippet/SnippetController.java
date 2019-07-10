@@ -30,13 +30,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
-@RequestMapping("/launchpad")
+@RequestMapping("/launchpad/snippet")
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
 public class SnippetController {
 
-    private static final String REDIRECT_LAUNCHPAD_SNIPPETS = "redirect:/launchpad/snippets";
+    private static final String REDIRECT_LAUNCHPAD_SNIPPETS = "redirect:/launchpad/snippet/snippets";
 
     private final SnippetTopLevelService snippetTopLevelService;
 
@@ -48,7 +48,7 @@ public class SnippetController {
         SnippetData.SnippetsResult snippetsResult = snippetTopLevelService.getSnippets();
         ControllerUtils.addMessagesToModel(model, snippetsResult);
         model.addAttribute("result", snippetsResult);
-        return "launchpad/snippets";
+        return "launchpad/snippet/snippets";
     }
 
     @GetMapping("/snippet-delete/{id}")
