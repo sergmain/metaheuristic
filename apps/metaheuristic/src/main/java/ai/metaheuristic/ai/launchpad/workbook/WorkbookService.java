@@ -373,7 +373,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         List<Long> anyTaskId = taskRepository.findAnyActiveForStationId(Consts.PAGE_REQUEST_1_REC, stationId);
         if (!anyTaskId.isEmpty()) {
             // this station already has active task
-            log.info("#705.160 can't assign any new task to station #{} because this station has active task #{}", stationId, anyTaskId);
+            log.info("#705.160 can't assign any new task to the station #{} because this station has an active task #{}", stationId, anyTaskId);
             return EMPTY_RESULT;
         }
 

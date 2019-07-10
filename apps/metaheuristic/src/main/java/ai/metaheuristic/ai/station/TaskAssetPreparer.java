@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -37,6 +38,7 @@ import java.util.stream.Collectors;
 @Service
 @Slf4j
 @Profile("station")
+@RequiredArgsConstructor
 public class TaskAssetPreparer {
 
     private final Globals globals;
@@ -46,16 +48,6 @@ public class TaskAssetPreparer {
     private final LaunchpadLookupExtendedService launchpadLookupExtendedService;
     private final MetadataService metadataService;
     private final StationService stationService;
-
-    public TaskAssetPreparer(Globals globals, DownloadSnippetActor downloadSnippetActor, CurrentExecState currentExecState, StationTaskService stationTaskService, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, StationService stationService) {
-        this.globals = globals;
-        this.downloadSnippetActor = downloadSnippetActor;
-        this.currentExecState = currentExecState;
-        this.stationTaskService = stationTaskService;
-        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
-        this.metadataService = metadataService;
-        this.stationService = stationService;
-    }
 
     public void fixedDelay() {
         if (globals.isUnitTesting) {
@@ -73,17 +65,18 @@ public class TaskAssetPreparer {
             }
         });
 
-        List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(false);
+        // find all tasks which weren't finished and resorces aren't prepared yet
+        List<StationTask> tasks = stationTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(false);
         if (tasks.size()>1) {
-            log.warn("#951.01 There is more than one task: {}", tasks.stream().map(StationTask::getTaskId).collect(Collectors.toList()));
+            log.warn("#951.010 There is more than one task: {}", tasks.stream().map(StationTask::getTaskId).collect(Collectors.toList()));
         }
         for (StationTask task : tasks) {
             if (StringUtils.isBlank(task.launchpadUrl)) {
-                log.error("launchpadUrl for task {} is blank", task.getTaskId());
+                log.error("#951.020 launchpadUrl for task {} is blank", task.getTaskId());
                 continue;
             }
             if (StringUtils.isBlank(task.getParams())) {
-                log.error("Params for task {} is blank", task.getTaskId());
+                log.error("#951.030 Params for task {} is blank", task.getTaskId());
                 continue;
             }
             Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
@@ -95,7 +88,7 @@ public class TaskAssetPreparer {
             }
             final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
             if (taskParamYaml.taskYaml.inputResourceCodes.isEmpty()) {
-                log.warn("taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
+                log.warn("#951.040 taskParamYaml.inputResourceCodes is empty\n{}", task.getParams());
                 continue;
             }
             final LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad =
@@ -106,7 +99,7 @@ public class TaskAssetPreparer {
                 continue;
             }
             if (launchpad.config.chunkSize==null) {
-                log.error("Launchpad {} doesn't provide chunkSize", task.launchpadUrl);
+                log.error("#951.050 Launchpad {} doesn't provide chunkSize", task.launchpadUrl);
                 continue;
             }
 

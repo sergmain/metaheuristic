@@ -223,7 +223,7 @@ public class LaunchpadRequestor {
         }
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask task : list) {
-            if (task.isDelivered()) {
+            if (task.isDelivered() || task.isReported()) {
                 continue;
             }
             command.getResults().add(new SimpleTaskExecResult(task.getTaskId(),

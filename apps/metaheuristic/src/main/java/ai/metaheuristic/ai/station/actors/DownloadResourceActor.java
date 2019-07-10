@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.station.actors;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.station.StationTaskService;
@@ -113,18 +114,18 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
                 String mask = assetFile.file.getName() + ".%s.tmp";
                 File dir = assetFile.file.getParentFile();
-                boolean isFinished = false;
+                Enums.FlowState flowState = Enums.FlowState.none;
                 int idx = 0;
                 do {
-                    final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)
-                            .addParameter("stationId", task.stationId)
-                            .addParameter("taskId", Long.toString(task.getTaskId()))
-                            .addParameter("code", task.getId())
-                            .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
-                            .addParameter("chunkNum", Integer.toString(idx));
-
-                    final URI build = builder.build();
                     try {
+                        final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)
+                                .addParameter("stationId", task.stationId)
+                                .addParameter("taskId", Long.toString(task.getTaskId()))
+                                .addParameter("code", task.getId())
+                                .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
+                                .addParameter("chunkNum", Integer.toString(idx));
+
+                        final URI build = builder.build();
                         final Request request = Request.Get(build)
                                 .connectTimeout(5000)
                                 .socketTimeout(20000);
@@ -141,21 +142,29 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                         File partFile = new File(dir, String.format(mask, idx));
                         response.saveContent(partFile);
                         if (partFile.length()==0) {
-                            isFinished = true;
+                            flowState = Enums.FlowState.ok;
                             break;
                         }
                     } catch (HttpResponseException e) {
                         if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                            final String es = String.format("#810.070 Resource %s wasn't found on launchpad. Task #%s is finished.", task.getId(), task.getTaskId());
+                            final String es = String.format("#810.035 Resource %s wasn't found on launchpad. Task #%s is finished.", task.getId(), task.getTaskId());
                             log.warn(es);
                             stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
-                            isFinished = true;
-                            continue;
+                            flowState = Enums.FlowState.resource_doesnt_exist;
+                            break;
                         }
-                        else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ||
-                                e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE
-                        ) {
-                            isFinished = true;
+                        else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
+                            final String es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.getId(), task.getTaskId());
+                            log.warn(es);
+                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            flowState = Enums.FlowState.unknow_error;
+                            break;
+                        }
+                        else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
+                            final String es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.getId(), task.getTaskId());
+                            log.warn(es);
+                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            flowState = Enums.FlowState.unknow_error;
                             break;
                         }
                     }
@@ -165,16 +174,19 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                     }
                     idx++;
                 } while (idx<1000);
-                if (!isFinished) {
+                if (flowState==Enums.FlowState.none) {
                     log.error("#810.050  something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
                     continue;
                 }
+                else if (flowState==Enums.FlowState.unknow_error || flowState==Enums.FlowState.resource_doesnt_exist) {
+                    continue;
+                }
+
                 try (FileOutputStream fos = new FileOutputStream(tempFile)) {
                     for (int i = 0; i < idx; i++) {
                         FileUtils.copyFile(new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp"), fos);
                     }
                 }
-
 
                 if (!tempFile.renameTo(assetFile.file)) {
                     log.warn("#810.060 Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());

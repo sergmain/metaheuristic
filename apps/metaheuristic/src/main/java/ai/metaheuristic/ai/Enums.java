@@ -21,6 +21,9 @@ public final class Enums {
 
     public enum StoringStatus {OK, CANT_BE_STORED}
 
+    public enum FlowState {none, ok, file_too_big, resource_doesnt_exist, unknow_error}
+
+
     //    public enum StorageType {launchpad, disk, hadoop, ftp }
 
     public enum UploadResourceStatus {

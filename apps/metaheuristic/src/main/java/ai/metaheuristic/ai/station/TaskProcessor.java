@@ -94,11 +94,19 @@ public class TaskProcessor {
             return;
         }
 
-        List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(true);
+        // find all tasks which weren't completeded and  weren't finished and resorces aren't prepared yet
+        List<StationTask> tasks = stationTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
 //            if (task.isDelivered()) {
 //                continue;
 //            }
+/*
+            if (stationTask!=null && stationTask.finishedOn!=null) {
+                log.info("Task #{} was already finished, skip it", task.taskId);
+                continue;
+            }
+*/
+
             log.info("Start processing task {}", task);
             final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 

@@ -105,7 +105,7 @@ public class StationTaskService {
                                         throw new RuntimeException(es, e);
                                     }
                                     catch (YAMLException e) {
-                                        String es = "#713.020 yaml Error";
+                                        String es = "#713.020 yaml Error: " + e.getMessage();
                                         deleteDirWithBrokenTask(s);
                                     }
                                 }
@@ -330,12 +330,12 @@ public class StationTaskService {
         return map.computeIfAbsent(launchpadUrl, m -> new HashMap<>());
     }
 
-    public List<StationTask> findAllByFinishedOnIsNullAndAssetsPreparedIs(boolean status) {
+    public List<StationTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(boolean status) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             List<StationTask> list = new ArrayList<>();
             for (String launchpadUrl : map.keySet()) {
                 for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
-                    if (task.finishedOn == null && task.assetsPrepared==status) {
+                    if (!task.completed && task.finishedOn == null && task.assetsPrepared==status) {
                         list.add(task);
                     }
                 }
