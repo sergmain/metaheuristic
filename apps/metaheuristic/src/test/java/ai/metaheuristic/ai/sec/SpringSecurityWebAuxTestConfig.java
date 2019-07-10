@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.rest;
+package ai.metaheuristic.ai.sec;
 
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -30,9 +30,16 @@ import java.util.*;
 @TestConfiguration
 public class SpringSecurityWebAuxTestConfig {
 
-    private static final Long ADMIN_USER_ID = 1L;
-    private static final Long USER_USER_ID = 2L;
-    private static final Long REST_USER_ID = 3L;
+    private static final Long ADMIN_ID = 1L;
+
+    private static final Long DATA_REST_ID = 2L;
+    private static final Long DATA_ID = 3L;
+
+    private static final Long OPERATOR_REST_ID = 4L;
+    private static final Long OPERATOR_ID = 5L;
+
+    private static final Long MANAGER_REST_ID = 6L;
+    private static final Long MANAGER_ID = 7L;
 
     public static class MyUserDetailsManager implements UserDetailsManager {
 
@@ -85,8 +92,8 @@ public class SpringSecurityWebAuxTestConfig {
         {
             Account account = new Account();
 
-            account.setId(REST_USER_ID);
-            account.setUsername("rest");
+            account.setId(DATA_REST_ID);
+            account.setUsername("data_rest");
             account.setToken("123");
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
@@ -94,13 +101,13 @@ public class SpringSecurityWebAuxTestConfig {
             account.setEnabled(true);
             account.setPassword("123");
 
-            account.setRoles("ROLE_ACCESS_REST, ACCESS_REST");
+            account.setRoles("ROLE_ACCESS_REST, ROLE_DATA");
             accounts.add(account);
         }
         {
             Account account = new Account();
 
-            account.setId(ADMIN_USER_ID);
+            account.setId(ADMIN_ID);
             account.setUsername("admin");
             account.setToken("123");
             account.setAccountNonExpired(true);
@@ -115,8 +122,8 @@ public class SpringSecurityWebAuxTestConfig {
         {
             Account account = new Account();
 
-            account.setId(USER_USER_ID);
-            account.setUsername("user");
+            account.setId(DATA_ID);
+            account.setUsername("data");
             account.setToken("123");
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
@@ -124,7 +131,7 @@ public class SpringSecurityWebAuxTestConfig {
             account.setEnabled(true);
             account.setPassword("123");
 
-            account.setRoles("ROLE_USER");
+            account.setRoles("ROLE_DATA");
             accounts.add(account);
         }
 

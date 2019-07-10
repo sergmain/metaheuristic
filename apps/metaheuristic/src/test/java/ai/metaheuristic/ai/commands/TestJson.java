@@ -14,7 +14,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.rest;
+package ai.metaheuristic.ai.commands;
 
 import ai.metaheuristic.ai.comm.Command;
 import ai.metaheuristic.ai.comm.ExchangeData;
@@ -75,15 +75,4 @@ public class TestJson {
         Assert.assertEquals("13", command.getParams().get("key"));
     }
 
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
-    @Test
-    public void testJsonFromEmpty_1() throws IOException {
-        System.out.println("testJsonFromEmpty_1()");
-        String json = "";
-
-        thrown.expect(MismatchedInputException.class);
-        JsonUtils.getMapper().readValue(json, NewMessage.class);
-    }
 }

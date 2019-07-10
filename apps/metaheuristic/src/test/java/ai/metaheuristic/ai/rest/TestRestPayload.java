@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.ai.rest;
 
+import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,7 +55,7 @@ public class TestRestPayload {
     }
 
     @Test
-    @WithUserDetails("rest")
+    @WithUserDetails("data_rest")
     public void testRestPayload_asRest() throws Exception {
         final String url = "/rest/v1/payload/resource/DATA/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
         //noinspection ConstantConditions
@@ -65,13 +66,10 @@ public class TestRestPayload {
                         .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
         )
                 .andExpect(status().isGone());
-
-
     }
 
-    @SuppressWarnings("DefaultAnnotationParam")
     @Test
-    @WithUserDetails("user")
+    @WithUserDetails("data")
     public void testRestPayload_asUser() throws Exception {
         final String url = "/rest/v1/payload/resource/DATA/f8ce9508-15-114784-aaa-task-114783-ml_model.bin";
         //noinspection ConstantConditions
@@ -82,7 +80,5 @@ public class TestRestPayload {
                         .contentType(MediaType.APPLICATION_OCTET_STREAM_VALUE)
         )
                 .andExpect(status().isForbidden());
-
-
     }
 }

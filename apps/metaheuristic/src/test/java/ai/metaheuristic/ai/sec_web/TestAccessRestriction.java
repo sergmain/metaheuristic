@@ -14,19 +14,16 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.rest;
+package ai.metaheuristic.ai.sec_web;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.comm.ExchangeData;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.core.JsonUtils;
 import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,13 +33,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.WebApplicationContext;
 
 import javax.servlet.http.Cookie;
-
-import java.io.IOException;
 
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -51,56 +44,21 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
+/**
+ * @author Serge
+ * Date: 7/10/2019
+ * Time: 1:29 AM
+ */
 @RunWith(SpringRunner.class)
 @SpringBootTest
-@Import({SpringSecurityWebAuxTestConfig.class, TestRest.JsonTestController.class})
+@Import({SpringSecurityWebAuxTestConfig.class})
 @ActiveProfiles("launchpad")
-public class TestRest {
+public class TestAccessRestriction {
 
-    @RestController
-    public static class JsonTestController {
-
-        // This isn't the test
-        // see testNearMessages() below
-        @GetMapping("/rest/test/message")
-        public NewMessage getMessage() {
-            return new NewMessage("42", "test msg");
-        }
-    }
     private MockMvc mockMvc;
 
     @Autowired
     private WebApplicationContext webApplicationContext;
-
-    // let's test the case with marshalling message to json
-    @Test
-    @WithUserDetails("data_rest")
-    public void testNearMessages() throws Exception {
-        MvcResult result = mockMvc
-                .perform(get("/rest/test/message"))
-                .andExpect(status().isOk())
-                .andReturn();
-        String content = result.getResponse().getContentAsString();
-
-        NewMessage m = new NewMessage("42", "test msg");
-
-        String json = JsonUtils.getMapper().writeValueAsString(m);
-        Assert.assertEquals(json, content);
-        System.out.println(content);
-    }
-
-
-    @Rule
-    public ExpectedException thrown = ExpectedException.none();
-
-    @Test
-    public void testJsonFromEmpty_1() throws IOException {
-        System.out.println("testJsonFromEmpty_1()");
-        String json = "";
-
-        thrown.expect(MismatchedInputException.class);
-        JsonUtils.getMapper().readValue(json, NewMessage.class);
-    }
 
     @Before
     public void setup() {
@@ -117,7 +75,7 @@ public class TestRest {
     }
 
     @Test
-    @WithUserDetails("data_rest")
+    @WithUserDetails("rest")
     public void testAnonymousAccessToTest() throws Exception {
         mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
@@ -142,7 +100,7 @@ public class TestRest {
     }
 
     @Test
-    @WithUserDetails("data_rest")
+    @WithUserDetails("rest")
     public void testSimpleCommunicationWithServer() throws Exception {
         ExchangeData dataRequest = new ExchangeData(new Protocol.Nop());
         String jsonRequest = JsonUtils.toJson(dataRequest);
@@ -160,3 +118,4 @@ public class TestRest {
 
     }
 }
+

@@ -22,7 +22,7 @@ import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.core.JsonUtils;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
-import ai.metaheuristic.ai.rest.SpringSecurityWebAuxTestConfig;
+import ai.metaheuristic.ai.sec.SpringSecurityWebAuxTestConfig;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.yaml.env.EnvYaml;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
