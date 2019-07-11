@@ -97,4 +97,8 @@ public class Consts {
     public static final String YML_EXT = ".yml";
     public static final String ZIP_EXT = ".zip";
     public static final String RAR_EXT = ".rar";
+
+    // snippets' metas
+    public static final String SNIPPET_PARAMS_AS_FILE_META = "snippet-params-as-file";
+    public static final String SNIPPET_PARAMS_FILE_EXT_META = "snippet-params-file-ext";
 }

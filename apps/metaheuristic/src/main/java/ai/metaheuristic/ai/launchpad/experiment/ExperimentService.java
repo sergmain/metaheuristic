@@ -544,7 +544,7 @@ public class ExperimentService {
         return experimentHyperParams.stream().collect(Collectors.toMap(HyperParam::getKey, HyperParam::getValues, (a, b) -> b, HashMap::new));
     }
 
-    public void resetExperiment(long workbookId) {
+    public void resetExperimentByWorkbookId(long workbookId) {
 
         Experiment e = experimentRepository.findIdByWorkbookIdForUpdate(workbookId);
         if (e==null) {
@@ -621,6 +621,7 @@ public class ExperimentService {
                 return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
             }
             AtomicLong id = new AtomicLong(0);
+            AtomicLong taskIdForEmulation = new AtomicLong(0);
             for (ExperimentFeature feature : features) {
                 ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(feature.resourceCodes);
                 if (!numberOfVariants.status) {
@@ -628,7 +629,7 @@ public class ExperimentService {
                     continue;
                 }
                 List<String> inputResourceCodes = numberOfVariants.values;
-                List<Long> prevparentTaskIds = parentTaskIds;
+                List<Long> prevParentTaskIds = parentTaskIds;
                 for (HyperParams hyperParams : allHyperParams) {
 
                     TaskImpl prevTask;
@@ -646,6 +647,9 @@ public class ExperimentService {
                         task.setProcessType(process.type.value);
                         if (isPersist) {
                             task = taskRepository.save(task);
+                        }
+                        else {
+                            task.id = taskIdForEmulation.incrementAndGet();
                         }
                         // inc number of tasks
                         numberOfTasks.value++;
@@ -750,15 +754,15 @@ public class ExperimentService {
                             continue;
                         }
                         task.setParams(currTaskParams);
+                        final List<Long> taskIds = List.of(task.getId());
                         if (isPersist) {
                             task = taskPersistencer.setParams(task.getId(), currTaskParams);
                             if (task == null) {
                                 return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
+                            workbookGraphService.addNewTasksToGraph(workbookCache.findById(workbookId), prevParentTaskIds, taskIds);
                         }
-                        final List<Long> taskIds = List.of(task.getId());
-                        workbookGraphService.addNewTasksToGraph(workbookCache.findById(workbookId), prevparentTaskIds, taskIds);
-                        prevparentTaskIds = taskIds;
+                        prevParentTaskIds = taskIds;
                     }
                 }
             }
@@ -769,7 +773,7 @@ public class ExperimentService {
         }
 
         if (epy.processing.getNumberOfTask() != totalVariants && epy.processing.getNumberOfTask() != 0) {
-            log.warn("#179.33 ! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", epy.processing.getNumberOfTask(), totalVariants);
+            log.warn("#179.33 ! Number of tasks is different. experiment.getNumberOfTask(): {}, totalVariants: {}", epy.processing.getNumberOfTask(), totalVariants);
         }
         if (isPersist) {
             Experiment experimentTemp = experimentRepository.findByIdForUpdate(experiment.getId());

@@ -89,7 +89,7 @@ public class WorkbookController {
     @GetMapping("/workbook-delete/{planId}/{workbookId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public String workbookDelete(Model model, @PathVariable Long planId, @PathVariable Long workbookId, final RedirectAttributes redirectAttributes) {
-        PlanApiData.WorkbookResult result = workbookTopLevelService.getWorkbookExtended(workbookId);
+        PlanApiData.WorkbookResult result = workbookTopLevelService.getWorkbookExtendedForDeletion(workbookId);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;

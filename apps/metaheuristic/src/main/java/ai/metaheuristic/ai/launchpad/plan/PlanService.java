@@ -125,13 +125,7 @@ public class PlanService {
     }
 
     public PlanApiData.PlanValidation validateInternal(PlanImpl plan) {
-        final PlanApiData.PlanValidation planValidation = new PlanApiData.PlanValidation();
-        try {
-            planValidation.status = validate(plan);
-        } catch (YAMLException e) {
-            planValidation.addErrorMessage("#701.090 Error while parsing yaml config, " + e.toString());
-            planValidation.status = EnumsApi.PlanValidateStatus.YAML_PARSING_ERROR;
-        }
+        PlanApiData.PlanValidation planValidation = getPlanValidation(plan);
         setValidTo(plan, planValidation.status == EnumsApi.PlanValidateStatus.OK );
         if (plan.isValid() || planValidation.status==OK) {
             if (plan.isValid() && planValidation.status!=OK) {
@@ -143,6 +137,17 @@ public class PlanService {
             final String es = "#701.100 Validation error: " + planValidation.status;
             log.error(es);
             planValidation.addErrorMessage(es);
+        }
+        return planValidation;
+    }
+
+    private PlanApiData.PlanValidation getPlanValidation(PlanImpl plan) {
+        final PlanApiData.PlanValidation planValidation = new PlanApiData.PlanValidation();
+        try {
+            planValidation.status = validate(plan);
+        } catch (YAMLException e) {
+            planValidation.addErrorMessage("#701.090 Error while parsing yaml config, " + e.toString());
+            planValidation.status = EnumsApi.PlanValidateStatus.YAML_PARSING_ERROR;
         }
         return planValidation;
     }
@@ -502,7 +507,7 @@ public class PlanService {
     // ========= Workbook specific =============
 
     public void deleteWorkbook(Long workbookId) {
-        experimentService.resetExperiment(workbookId);
+        experimentService.resetExperimentByWorkbookId(workbookId);
         binaryDataService.deleteByRefId(workbookId, EnumsApi.BinaryDataRefType.workbook);
         Workbook workbook = workbookCache.findById(workbookId);
         if (workbook!=null && workbook.getPlanId()!=null) {

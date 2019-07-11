@@ -496,7 +496,7 @@ public class ExperimentTopLevelService {
         }
         // do not use experiment.getExperimentParamsYaml() because it's  caching ExperimentParamsYaml
         ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.params);
-
+        epy.processing = new ExperimentParamsYaml.ExperimentProcessing();
         epy.createdOn = System.currentTimeMillis();
 
         final Experiment e = new Experiment();

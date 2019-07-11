@@ -208,8 +208,6 @@ public class TaskPersistencer {
         if (state== EnumsApi.TaskExecState.ERROR) {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
-            // TODO 2019.05.02 !!! add here statuses to tasks which are in chain after this one
-            // TODO we have to stop processing workbook if there is error in tasks
         }
         else {
             TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());

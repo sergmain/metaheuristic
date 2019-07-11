@@ -20,9 +20,12 @@ import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanUtils;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.utils.CollectionUtils;
+import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.launchpad.Plan;
 import ai.metaheuristic.api.launchpad.Workbook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -63,6 +66,17 @@ public class WorkbookTopLevelService {
                 result.planProducingStatus,
                 result.workbook.getId()
         );
+    }
+
+    public PlanApiData.WorkbookResult getWorkbookExtendedForDeletion(Long workbookId) {
+        PlanApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
+
+        // don't show actual graph for this workbook
+        WorkbookParamsYaml wpy = WorkbookParamsYamlUtils.BASE_YAML_UTILS.to(result.workbook .getParams());
+        wpy.graph = null;
+        result.workbook .setParams( WorkbookParamsYamlUtils.BASE_YAML_UTILS.toString(wpy) );
+
+        return result;
     }
 
     public PlanApiData.WorkbookResult getWorkbookExtended(Long workbookId) {
