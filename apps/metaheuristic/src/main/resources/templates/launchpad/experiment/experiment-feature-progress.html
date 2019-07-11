@@ -124,7 +124,7 @@
             let trId = 'some-id--doesnt-matter-which';
             printLogMain("metricsStateMap.hasOwnProperty(trId): " + trStateMap.hasOwnProperty(trId));
             if (!metricsStateMap.hasOwnProperty(trId)) {
-                metricsStateMap[trId] = 'hide';
+                metricsStateMap[trId] = 'show';
             }
             let state = metricsStateMap[trId];
             printLogMetrics('state : ' + state);
@@ -441,8 +441,8 @@
     <p>&nbsp;</p>
 
     <h1 class="widget-header" onclick="switchMetrics();" >Metrics</h1>
-    <p id="metrics-main-p">Metrics is hidden</p>
-    <table style="display:none" id="metrics-main-table">
+    <p id="metrics-main-p" style="display:none">Metrics is hidden</p>
+    <table style="" id="metrics-main-table">
         <tr valign="top">
             <td>
                 <h1 class="widget-header">As the table</h1>

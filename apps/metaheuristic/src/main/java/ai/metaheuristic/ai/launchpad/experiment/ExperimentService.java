@@ -620,7 +620,6 @@ public class ExperimentService {
             if (wb==null) {
                 return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
             }
-            List<Long> taskIds = new ArrayList<>();
             AtomicLong id = new AtomicLong(0);
             for (ExperimentFeature feature : features) {
                 ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(feature.resourceCodes);
@@ -629,11 +628,11 @@ public class ExperimentService {
                     continue;
                 }
                 List<String> inputResourceCodes = numberOfVariants.values;
-
+                List<Long> prevparentTaskIds = parentTaskIds;
                 for (HyperParams hyperParams : allHyperParams) {
 
-                    Task prevTask;
-                    Task task = null;
+                    TaskImpl prevTask;
+                    TaskImpl task = null;
                     for (String snippetCode : experimentSnippets) {
                         if (boolHolder.get()) {
                             return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
@@ -646,8 +645,7 @@ public class ExperimentService {
                         task.setWorkbookId(workbookId);
                         task.setProcessType(process.type.value);
                         if (isPersist) {
-                            task = taskRepository.save((TaskImpl) task);
-                            taskIds.add(task.getId());
+                            task = taskRepository.save(task);
                         }
                         // inc number of tasks
                         numberOfTasks.value++;
@@ -758,10 +756,12 @@ public class ExperimentService {
                                 return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
                         }
+                        final List<Long> taskIds = List.of(task.getId());
+                        workbookGraphService.addNewTasksToGraph(workbookCache.findById(workbookId), prevparentTaskIds, taskIds);
+                        prevparentTaskIds = taskIds;
                     }
                 }
             }
-            workbookGraphService.addNewTasksToGraph(workbookCache.findById(workbookId), parentTaskIds, taskIds);
             log.info("Created {} tasks, total: {}", processed, totalVariants);
         }
         finally {

@@ -45,9 +45,7 @@ public class TaskPersistencer {
 
     private final Object syncObj = new Object();
 
-
-
-    public Task setParams(long taskId, String taskParams) {
+    public TaskImpl setParams(long taskId, String taskParams) {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
