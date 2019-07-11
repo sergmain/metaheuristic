@@ -78,7 +78,8 @@ public class PlanTopLevelService {
         pageable = ControllerUtils.fixPageSize(globals.planRowsLimit, pageable);
         List<Plan> plans = planRepository.findAllByOrderByIdDesc();
         AtomicInteger count = new AtomicInteger();
-        plans = plans.stream()
+
+        List<Plan> activePlans = plans.stream()
                 .filter(o-> {
                     try {
                         PlanParamsYaml ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams());
@@ -94,7 +95,9 @@ public class PlanTopLevelService {
                         log.error("#560.030 Error: {}", e.toString());
                         return false;
                     }
-                })
+                }).collect(Collectors.toList());
+
+        plans = activePlans.stream()
                 .skip(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .peek(o-> {
