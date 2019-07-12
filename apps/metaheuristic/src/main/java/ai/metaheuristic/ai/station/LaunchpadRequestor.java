@@ -224,7 +224,7 @@ public class LaunchpadRequestor {
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask task : list) {
             if (task.isDelivered() && !task.isReported() ) {
-                log.warn("#775.140 This state need to be investigating");
+                log.warn("#775.140 This state need to be investigating: (task.isDelivered() && !task.isReported())==true");
             }
             // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enought?
             if (task.isDelivered() && task.isReported() ) {
