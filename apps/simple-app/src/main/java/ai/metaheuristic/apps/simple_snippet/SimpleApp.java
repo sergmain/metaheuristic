@@ -45,6 +45,7 @@ public class SimpleApp implements CommandLineRunner {
             System.exit(-1);
         }
         System.out.println("args = " + Arrays.toString(args));
+
         // sleep for testing timeoutBeforeTerminate
         System.out.println("Start timeout...");
         Thread.sleep(TimeUnit.SECONDS.toMillis(5));
