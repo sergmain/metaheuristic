@@ -51,6 +51,14 @@ public class WorkbookRestController {
         return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(id, pageable);
     }
 
+    @PostMapping("/plan-code-workbook-add-commit")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    public PlanApiData.WorkbookResult workbookAddCommit(String planCode, String poolCode, String inputResourceParams) {
+        //noinspection UnnecessaryLocalVariable
+        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planCode, poolCode, inputResourceParams);
+        return workbookResult;
+    }
+
     @PostMapping("/workbook-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
     public PlanApiData.WorkbookResult workbookAddCommit(Long planId, String poolCode, String inputResourceParams) {
@@ -81,6 +89,12 @@ public class WorkbookRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
     public OperationStatusRest workbookTargetExecState(@SuppressWarnings("unused") @PathVariable Long planId, @PathVariable String state, @PathVariable Long id) {
         return planTopLevelService.changeWorkbookExecState(state, id);
+    }
+
+    @GetMapping("/experiment-code-workbook-target-exec-state/{state}/{experimentCode}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    public OperationStatusRest workbookTargetExecStateWithExperimentCode(@PathVariable String state, @PathVariable String experimentCode) {
+        return planTopLevelService.changeWorkbookExecStateWithExperimentCode(state, experimentCode);
     }
 
 }

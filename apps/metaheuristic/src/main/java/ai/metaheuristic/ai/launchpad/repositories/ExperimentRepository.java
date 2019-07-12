@@ -62,4 +62,8 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
     @Transactional(readOnly = true)
     @Query(value="select e.id from Experiment e where e.code=:code")
     Long findIdByCode(String code);
+
+    @Transactional(readOnly = true)
+    @Query(value="select e from Experiment e where e.code=:code")
+    Experiment findByCode(String code);
 }

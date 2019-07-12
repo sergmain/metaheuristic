@@ -46,7 +46,7 @@ Build node =============
 Link github repo =======
 - after creating topology,
   add a link to git repository - https://github.com/sergmain/metaheuristic.git
-  branch - master
+  branch - release
 
 
 

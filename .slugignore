@@ -4,6 +4,7 @@
 /docs
 /data
 /config
+/apps/angular
 /apps/simple-app
 /apps/sign-string
 /apps/package-snippet

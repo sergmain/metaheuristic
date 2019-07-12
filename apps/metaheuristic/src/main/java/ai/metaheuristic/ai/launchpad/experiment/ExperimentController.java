@@ -122,7 +122,7 @@ public class ExperimentController {
     @GetMapping(value = "/experiment-add")
     public String add(@ModelAttribute("experiment") ExperimentApiData.ExperimentData experiment) {
         experiment.setSeed(1);
-        return "launchpad/experiment-add-form";
+        return "launchpad/experiment/experiment-add-form";
     }
 
     @GetMapping(value = "/experiment-info/{id}")

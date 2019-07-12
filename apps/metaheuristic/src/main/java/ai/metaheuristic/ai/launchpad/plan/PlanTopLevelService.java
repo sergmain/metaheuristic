@@ -18,7 +18,9 @@ package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
+import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
@@ -71,12 +73,21 @@ public class PlanTopLevelService {
     private final PlanRepository planRepository;
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
+    private final ExperimentRepository experimentRepository;
 
     public PlanApiData.WorkbookResult addWorkbook(Long planId, String poolCode, String inputResourceParams) {
         final PlanImpl plan = planCache.findById(planId);
+        return getAddWorkbookInternal(poolCode, inputResourceParams, plan);
+    }
 
+    public PlanApiData.WorkbookResult addWorkbook(String planCode, String poolCode, String inputResourceParams) {
+        final PlanImpl plan = planRepository.findByCode(planCode);
+        return getAddWorkbookInternal(poolCode, inputResourceParams, plan);
+    }
+
+    public PlanApiData.WorkbookResult getAddWorkbookInternal(String poolCode, String inputResourceParams, PlanImpl plan) {
         if (plan == null) {
-            return new PlanApiData.WorkbookResult("#560.060 plan wasn't found, planId: " + planId);
+            return new PlanApiData.WorkbookResult("#560.060 plan wasn't found.");
         }
         if (StringUtils.isBlank(poolCode) && StringUtils.isBlank(inputResourceParams)) {
             return new PlanApiData.WorkbookResult("#560.063 both inputResourcePoolCode of Workbook and inputResourceParams are empty");
@@ -341,17 +352,32 @@ public class PlanTopLevelService {
     public static WorkbookParamsYaml asWorkbookParamsYaml(String poolCode) {
         WorkbookParamsYaml wpy = new WorkbookParamsYaml();
         wpy.workbookYaml.poolCodes.computeIfAbsent(Consts.WORKBOOK_INPUT_TYPE, o->new ArrayList<>()).add(poolCode);
-//        return "poolCodes:\n  "+ Consts.WORKBOOK_INPUT_TYPE+":\n" +
-//                "  - " + poolCode;
         return wpy;
     }
 
     // ========= Workbook specific =============
 
+    public OperationStatusRest changeWorkbookExecStateWithExperimentCode(String state, String experimentCode) {
+        Experiment e = experimentRepository.findByCode(experimentCode);
+        if (e==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.380 Experiment not found for code: " + experimentCode);
+        }
+        if (e.workbookId==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#560.380 Experiment wasn't bound to any workbook, experiment code: " + experimentCode);
+        }
+        return changeWorkbookExecStateInternal(state, e.workbookId);
+    }
+
     public OperationStatusRest changeWorkbookExecState(String state, Long workbookId) {
+        return changeWorkbookExecStateInternal(state, workbookId);
+    }
+
+    private OperationStatusRest changeWorkbookExecStateInternal(String state, Long workbookId) {
         EnumsApi.WorkbookExecState execState = EnumsApi.WorkbookExecState.valueOf(state.toUpperCase());
         if (execState== EnumsApi.WorkbookExecState.UNKNOWN) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.070 Unknown exec state, state: " + state);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
         }
         //noinspection UnnecessaryLocalVariable
         OperationStatusRest status = planService.workbookTargetExecState(workbookId, execState);
@@ -366,7 +392,7 @@ public class PlanTopLevelService {
 
         Workbook wb = workbookCache.findById(workbookId);
         if (wb==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.084 Workbook wasn't found, workbookId: " + workbookId );
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 Workbook wasn't found, workbookId: " + workbookId );
         }
         planService.deleteWorkbook(workbookId);
         return OperationStatusRest.OPERATION_STATUS_OK;
