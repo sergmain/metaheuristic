@@ -19,8 +19,8 @@ package ai.metaheuristic.ai.sec;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -35,18 +35,36 @@ import org.springframework.stereotype.Service;
  */
 @Service
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class CustomUserDetails implements UserDetailsService {
 
-    private final AccountService accountService;
     private final Globals globals;
-
+    private final AccountCache accountService;
     public final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    public CustomUserDetails(AccountService accountService, Globals globals, PasswordEncoder passwordEncoder) {
-        this.accountService = accountService;
-        this.globals = globals;
-        this.passwordEncoder = passwordEncoder;
+    @Data
+    public static class ComplexUsername {
+        String username;
+        String token;
+
+        private ComplexUsername(String username, String token) {
+            this.username = username;
+            this.token = token;
+        }
+
+        public static ComplexUsername getInstance(String fullUsername) {
+            int idx = fullUsername.lastIndexOf('=');
+            if (idx == -1) {
+                return null;
+            }
+            ComplexUsername complexUsername = new ComplexUsername(fullUsername.substring(0, idx), fullUsername.substring(idx + 1));
+
+            return complexUsername.isValid() ? complexUsername : null;
+        }
+
+        private boolean isValid() {
+            return username.length() > 0 && token.length() > 0;
+        }
     }
 
     @Override
@@ -89,30 +107,4 @@ public class CustomUserDetails implements UserDetailsService {
         }
         return account;
     }
-
-    @Data
-    public static class ComplexUsername {
-        String username;
-        String token;
-
-        private ComplexUsername(String username, String token) {
-            this.username = username;
-            this.token = token;
-        }
-
-        public static ComplexUsername getInstance(String fullUsername) {
-            int idx = fullUsername.lastIndexOf('=');
-            if (idx == -1) {
-                return null;
-            }
-            ComplexUsername complexUsername = new ComplexUsername(fullUsername.substring(0, idx), fullUsername.substring(idx + 1));
-
-            return complexUsername.isValid() ? complexUsername : null;
-        }
-
-        private boolean isValid() {
-            return username.length() > 0 && token.length() > 0;
-        }
-    }
-
 }

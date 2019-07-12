@@ -1,5 +1,5 @@
 <div class="pure-menu pure-menu-open pure-menu-horizontal" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
-    <a class="pure-menu-heading">Metaheuristic project</a>
+    <a class="pure-menu-heading" th:text="${@environment.getProperty('mh.branding')}"></a>
     <ul>
         <li th:attr="class=${#httpServletRequest.requestURI=='/' || #httpServletRequest.requestURI=='/index'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="/" th:href="@{/}">Index</a>
@@ -7,10 +7,13 @@
         <li th:attr="class=${#httpServletRequest.requestURI=='/about'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="about.html" th:href="@{/about}">About</a>
         </li>
-        <li th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/') && !#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+        <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER')"
+            th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+            th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/') && !#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/index.html" th:href="@{/launchpad/index}">Launchpad</a>
         </li>
-        <li th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
+        <li sec:authorize="hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'OPERATOR')"
+            th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}" th:attr="class=${#strings.startsWith(#httpServletRequest.requestURI, '/launchpad/batch/')} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">
             <a class="pure-menu-link" href="launchpad/batch/index.html" th:href="@{/launchpad/batch/index}">Batch</a>
         </li>
         <li sec:authorize="isAnonymous()" th:attr="class=${#httpServletRequest.requestURI=='/login'} ? 'pure-menu-item pure-menu-selected' : 'pure-menu-item'">

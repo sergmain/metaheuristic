@@ -27,12 +27,14 @@ import ai.metaheuristic.ai.station.station_resource.ResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
+import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -47,9 +49,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static ai.metaheuristic.ai.Consts.SNIPPET_PARAMS_FILE_EXT_META;
+
 @Service
 @Slf4j
 @Profile("station")
+@RequiredArgsConstructor
 public class TaskProcessor {
 
     private final Globals globals;
@@ -72,19 +77,6 @@ public class TaskProcessor {
         boolean isLoaded = true;
     }
 
-    public TaskProcessor(Globals globals, ExecProcessService execProcessService, StationTaskService stationTaskService, CurrentExecState currentExecState, LaunchpadLookupExtendedService launchpadLookupExtendedService, MetadataService metadataService, EnvService envService, StationService stationService, ResourceProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
-        this.globals = globals;
-        this.execProcessService = execProcessService;
-        this.stationTaskService = stationTaskService;
-        this.currentExecState = currentExecState;
-        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
-        this.metadataService = metadataService;
-        this.envService = envService;
-        this.stationService = stationService;
-        this.resourceProviderFactory = resourceProviderFactory;
-        this.gitSourcingService = gitSourcingService;
-    }
-
     @SuppressWarnings("Duplicates")
     public void fixedDelay() {
         if (globals.isUnitTesting) {
@@ -94,20 +86,19 @@ public class TaskProcessor {
             return;
         }
 
-        List<StationTask> tasks = stationTaskService.findAllByFinishedOnIsNullAndAssetsPreparedIs(true);
+        // find all tasks which weren't completeded and  weren't finished and resources aren't prepared yet
+        List<StationTask> tasks = stationTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
-//            if (task.isDelivered()) {
-//                continue;
-//            }
+
             log.info("Start processing task {}", task);
             final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 
             if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. LaunchpadUrl is blank.");
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.010 Broken task. LaunchpadUrl is blank.");
                 continue;
             }
             if (StringUtils.isBlank(task.launchpadUrl)) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.020 Broken task. Launchpad wasn't found for url "+ task.launchpadUrl);
                 continue;
             }
 
@@ -119,7 +110,7 @@ public class TaskProcessor {
             }
 
             if (StringUtils.isBlank(task.getParams())) {
-                log.warn("#100.10 Params for task {} is blank", task.getTaskId());
+                log.warn("#100.030 Params for task {} is blank", task.getTaskId());
                 continue;
             }
             EnumsApi.WorkbookExecState state = currentExecState.getState(task.launchpadUrl, task.workbookId);
@@ -151,12 +142,12 @@ public class TaskProcessor {
             }
             File outputResourceFile = stationService.getOutputResourceFile(task, taskParamYaml, launchpad, taskDir);
             if (outputResourceFile==null) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Can't create outputResourceFile");
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.040 Broken task. Can't create outputResourceFile");
                 continue;
             }
             DataStorageParams dsp = taskParamYaml.taskYaml.getResourceStorageUrls().get(taskParamYaml.taskYaml.outputResourceCode);
             if (dsp==null) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Can't find params for outputResourceCode");
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.050 Broken task. Can't find params for outputResourceCode");
                 continue;
             }
             switch(dsp.sourcing) {
@@ -174,27 +165,27 @@ public class TaskProcessor {
                     break;
                 case git:
                     stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId,
-                            "Git sourcing isn't implemented yet");
+                            "#100.060 Git sourcing isn't implemented yet");
                     continue;
                 default:
                     stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId,
-                            "Unknown sourcing type: " + dsp.sourcing);
+                            "#100.070 Unknown sourcing type: " + dsp.sourcing);
                     continue;
             }
             if (taskParamYaml.taskYaml.snippet==null) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Broken task. Snippet isn't defined");
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.080 Broken task. Snippet isn't defined");
                 continue;
             }
 
             File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
             if (artifactDir == null) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.090 Error of configuring of environment. 'artifacts' directory wasn't created, task can't be processed.");
                 continue;
             }
 
             File systemDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.SYSTEM_DIR);
             if (systemDir == null) {
-                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
+                stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, "#100.100 Error of configuring of environment. 'system' directory wasn't created, task can't be processed.");
                 continue;
             }
 
@@ -250,7 +241,7 @@ public class TaskProcessor {
                 if (result==null) {
                     execResult = new SnippetApiData.SnippetExecResult(
                             preSnippetConfig.code, false, -999,
-                            "Illegal State, result of preparing of snippet "+preSnippetConfig.code+" is null");
+                            "#100.110 Illegal State, result of preparing of snippet "+preSnippetConfig.code+" is null");
                 }
                 else {
                     execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
@@ -268,7 +259,7 @@ public class TaskProcessor {
                 if (result==null) {
                     snippetExecResult = new SnippetApiData.SnippetExecResult(
                             taskParamYaml.taskYaml.getSnippet().code, false, -999,
-                            "Illegal State, result of preparing of snippet "+taskParamYaml.taskYaml.getSnippet()+" is null");
+                            "#100.120 Illegal State, result of preparing of snippet "+taskParamYaml.taskYaml.getSnippet()+" is null");
                     isOk = false;
                 }
                 if (isOk) {
@@ -284,7 +275,7 @@ public class TaskProcessor {
                             if (result==null) {
                                 execResult = new SnippetApiData.SnippetExecResult(
                                         postSnippetConfig.code, false, -999,
-                                        "Illegal State, result of preparing of snippet "+postSnippetConfig.code+" is null");
+                                        "#100.130 Illegal State, result of preparing of snippet "+postSnippetConfig.code+" is null");
                             }
                             else {
                                 execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
@@ -342,7 +333,7 @@ public class TaskProcessor {
             try {
                 FileUtils.writeStringToFile(paramFile, params, StandardCharsets.UTF_8);
             } catch (IOException e) {
-                log.error("Error with writing to " + paramFile.getAbsolutePath() + " file", e);
+                log.error("#100.140 Error with writing to " + paramFile.getAbsolutePath() + " file", e);
                 return false;
             }
         }
@@ -369,7 +360,7 @@ public class TaskProcessor {
         if (StringUtils.isNotBlank(snippetPrepareResult.snippet.env)) {
             interpreter = new Interpreter(envService.getEnvYaml().getEnvs().get(snippetPrepareResult.snippet.env));
             if (interpreter.list == null) {
-                log.warn("Can't process the task, the interpreter wasn't found for env: {}", snippetPrepareResult.snippet.env);
+                log.warn("#100.150 Can't process the task, the interpreter wasn't found for env: {}", snippetPrepareResult.snippet.env);
                 return null;
             }
             cmd = Arrays.stream(interpreter.list).collect(Collectors.toList());
@@ -389,7 +380,7 @@ public class TaskProcessor {
                 case launchpad:
                 case git:
                     if (snippetPrepareResult.snippetAssetFile==null) {
-                        throw new IllegalStateException("snippetAssetFile is null");
+                        throw new IllegalStateException("#100.160 snippetAssetFile is null");
                     }
                     cmd.add(snippetPrepareResult.snippetAssetFile.file.getAbsolutePath());
 
@@ -401,13 +392,24 @@ public class TaskProcessor {
                     }
                     break;
                 default:
-                    throw new IllegalStateException("Unknown sourcing: "+snippetPrepareResult.snippet.sourcing );
+                    throw new IllegalStateException("#100.170 Unknown sourcing: "+snippetPrepareResult.snippet.sourcing );
             }
 
             if (!snippetPrepareResult.snippet.skipParams) {
                 if (StringUtils.isNoneBlank(snippetPrepareResult.snippet.params)) {
-                    //noinspection UseBulkOperation
-                    Arrays.stream(StringUtils.split(snippetPrepareResult.snippet.params)).forEachOrdered(cmd::add);
+                    final Meta meta = snippetPrepareResult.snippet.getMeta(Consts.SNIPPET_PARAMS_AS_FILE_META);
+                    if (meta!=null && Boolean.parseBoolean(meta.value)) {
+                        final Meta metaExt = snippetPrepareResult.snippet.getMeta(Consts.SNIPPET_PARAMS_FILE_EXT_META);
+                        String ext = (metaExt!=null && metaExt.value!=null && !metaExt.value.isBlank())
+                                ? metaExt.value : ".txt";
+
+                        File execFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + toFilename(snippetPrepareResult.snippet.code) + ext);
+                        FileUtils.writeStringToFile(execFile, snippetPrepareResult.snippet.params, StandardCharsets.UTF_8 );
+                        cmd.add( execFile.getAbsolutePath() );
+                    }
+                    else {
+                        cmd.addAll(Arrays.asList(StringUtils.split(snippetPrepareResult.snippet.params)));
+                    }
                 }
                 cmd.add(paramFile.getAbsolutePath());
             }
@@ -419,7 +421,7 @@ public class TaskProcessor {
                     cmd, taskDir, consoleLogFile, taskParamYaml.taskYaml.timeoutBeforeTerminate, snippetPrepareResult.snippet.code);
 
         } catch (Throwable th) {
-            log.error("Error exec process:\n" +
+            log.error("#100.180 Error exec process:\n" +
                     "\tenv: " + snippetPrepareResult.snippet.env +"\n" +
                     "\tinterpreter: " + interpreter+"\n" +
                     "\tfile: " + (snippetPrepareResult.snippetAssetFile!=null && snippetPrepareResult.snippetAssetFile.file!=null
@@ -430,6 +432,10 @@ public class TaskProcessor {
                     snippetPrepareResult.snippet.code, false, -1, ExceptionUtils.getStackTrace(th));
         }
         return snippetExecResult;
+    }
+
+    private String toFilename(String snippetCode) {
+        return snippetCode.replace(':', '_').replace(' ', '_');
     }
 
     @SuppressWarnings("WeakerAccess")

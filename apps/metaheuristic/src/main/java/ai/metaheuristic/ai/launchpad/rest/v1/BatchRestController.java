@@ -16,13 +16,15 @@
 
 package ai.metaheuristic.ai.launchpad.rest.v1;
 
-import ai.metaheuristic.ai.launchpad.batch.process_resource.BatchTopLevelService;
+import ai.metaheuristic.ai.launchpad.batch.BatchTopLevelService;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,13 +38,11 @@ import org.springframework.web.multipart.MultipartFile;
 @Slf4j
 @Profile("launchpad")
 @CrossOrigin
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'ACCESS_REST')")
 public class BatchRestController {
 
     private final BatchTopLevelService batchTopLevelService;
-
-    public BatchRestController(BatchTopLevelService batchTopLevelService) {
-        this.batchTopLevelService = batchTopLevelService;
-    }
 
     @GetMapping("/batches")
     public BatchData.BatchesResult batches(@PageableDefault(size = 20) Pageable pageable) {

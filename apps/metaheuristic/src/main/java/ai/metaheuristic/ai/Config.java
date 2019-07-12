@@ -16,7 +16,7 @@
 
 package ai.metaheuristic.ai;
 
-import ai.metaheuristic.ai.launchpad.batch.process_resource.RefToPilotRepositories;
+import ai.metaheuristic.ai.launchpad.batch.RefToPilotRepositories;
 import ai.metaheuristic.ai.launchpad.repositories.RefToLaunchpadRepositories;
 import nz.net.ultraq.thymeleaf.LayoutDialect;
 import org.springframework.cache.annotation.EnableCaching;
@@ -50,6 +50,16 @@ public class Config {
     public LayoutDialect layoutDialect() {
         return new LayoutDialect();
     }
+
+    // https://medium.com/@joeclever/using-multiple-datasources-with-spring-boot-and-spring-data-6430b00c02e7
+
+    @Bean
+    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
+        ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
+        threadPoolTaskScheduler.setPoolSize(globals.threadNumber);
+        return threadPoolTaskScheduler;
+    }
+
 
 /*
     @Bean
@@ -191,16 +201,6 @@ public class Config {
     }
 
 */
-
-    // https://medium.com/@joeclever/using-multiple-datasources-with-spring-boot-and-spring-data-6430b00c02e7
-
-    @Bean
-    public ThreadPoolTaskScheduler threadPoolTaskScheduler() {
-        ThreadPoolTaskScheduler threadPoolTaskScheduler = new ThreadPoolTaskScheduler();
-        threadPoolTaskScheduler.setPoolSize(globals.threadNumber);
-        return threadPoolTaskScheduler;
-    }
-
 
 
 

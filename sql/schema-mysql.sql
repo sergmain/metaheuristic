@@ -138,7 +138,7 @@ CREATE TABLE mh_workbook (
   PLAN_ID       NUMERIC(10, 0) NOT NULL,
   CREATED_ON    bigint NOT NULL,
   COMPLETED_ON  bigint,
-  INPUT_RESOURCE_PARAM  TEXT NOT NULL,
+  INPUT_RESOURCE_PARAM  LONGTEXT NOT NULL,
   PRODUCING_ORDER integer NOT NULL,
   IS_VALID      BOOLEAN not null default false,
   EXEC_STATE   smallint not null default 0
@@ -152,7 +152,7 @@ CREATE TABLE mh_atlas
   DESCRIPTION   VARCHAR(250)  NOT NULL,
   CODE          VARCHAR(50)   NOT NULL,
   CREATED_ON    bigint not null,
-  EXPERIMENT    TEXT NOT NULL
+  EXPERIMENT    LONGTEXT NOT NULL
 );
 
 create table mh_batch

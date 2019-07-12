@@ -28,6 +28,7 @@ import ai.metaheuristic.ai.yaml.station_task.StationTaskUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -51,6 +52,7 @@ import java.util.stream.Stream;
 @Service
 @Slf4j
 @Profile("station")
+@RequiredArgsConstructor
 public class StationTaskService {
 
     private final Globals globals;
@@ -58,12 +60,6 @@ public class StationTaskService {
     private final MetadataService metadataService;
 
     private final Map<String, Map<Long, StationTask>> map = new ConcurrentHashMap<>();
-
-    public StationTaskService(Globals globals, CurrentExecState currentExecState, MetadataService metadataService) {
-        this.currentExecState = currentExecState;
-        this.globals = globals;
-        this.metadataService = metadataService;
-    }
 
     @PostConstruct
     public void postConstruct() {
@@ -104,12 +100,12 @@ public class StationTaskService {
                                         }
                                     }
                                     catch (IOException e) {
-                                        String es = "#713.01 Error";
+                                        String es = "#713.010 Error";
                                         log.error(es, e);
                                         throw new RuntimeException(es, e);
                                     }
                                     catch (YAMLException e) {
-                                        String es = "#713.03 yaml Error";
+                                        String es = "#713.020 yaml Error: " + e.getMessage();
                                         deleteDirWithBrokenTask(s);
                                     }
                                 }
@@ -119,20 +115,20 @@ public class StationTaskService {
                             });
                         }
                         catch (IOException e) {
-                            String es = "#713.09 Error";
+                            String es = "#713.030 Error";
                             log.error(es, e);
                             throw new RuntimeException(es, e);
                         }
                     });
                 } catch (IOException e) {
-                    String es = "#713.14 Error";
+                    String es = "#713.040 Error";
                     log.error(es, e);
                     throw new RuntimeException(es, e);
                 }
             });
         }
         catch (IOException e) {
-            String es = "#713.17 Error";
+            String es = "#713.050 Error";
             log.error(es, e);
             throw new RuntimeException(es, e);
         }
@@ -148,7 +144,7 @@ public class StationTaskService {
             // IDK is that bug or side-effect. so delete one more time
             FileUtils.deleteDirectory(s.toFile());
         } catch (IOException e) {
-            log.warn("#713.06 Error while deleting dir " + path, e);
+            log.warn("#713.060 Error while deleting dir " + path, e);
         }
     }
 
@@ -157,7 +153,7 @@ public class StationTaskService {
             log.info("setReportedOn({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("#713.21 StationRestTask wasn't found for Id " + taskId);
+                log.error("#713.070 StationRestTask wasn't found for Id " + taskId);
                 return;
             }
             task.setReported(true);
@@ -171,7 +167,7 @@ public class StationTaskService {
             log.info("setDelivered({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("#713.25 StationTask wasn't found for Id {}", taskId);
+                log.error("#713.080 StationTask wasn't found for Id {}", taskId);
                 return;
             }
             task.setDelivered(true);
@@ -191,7 +187,7 @@ public class StationTaskService {
             log.info("setResourceUploadedAndCompleted({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("#713.29 StationTask wasn't found for Id {}", taskId);
+                log.error("#713.090 StationTask wasn't found for Id {}", taskId);
                 return;
             }
             task.setResourceUploaded(true);
@@ -206,7 +202,7 @@ public class StationTaskService {
             log.info("setCompleted({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("#713.33 StationTask wasn't found for Id {}", taskId);
+                log.error("#713.100 StationTask wasn't found for Id {}", taskId);
                 return;
             }
             task.setCompleted(true);
@@ -241,14 +237,14 @@ public class StationTaskService {
             log.info("markAsFinished({}, {})", launchpadUrl, taskId);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("#713.38 StationTask wasn't found for Id " + taskId);
+                log.error("#713.110 StationTask wasn't found for Id " + taskId);
             } else {
                 if (task.getLaunchedOn()==null) {
-                    log.info("\t713.38.1 task #{} doesn't have the launchedOn as inited", taskId);
+                    log.info("\t713.113 task #{} doesn't have the launchedOn as inited", taskId);
                     task.setLaunchedOn(System.currentTimeMillis());
                 }
                 if (!snippetExec.allSnippetsAreOk()) {
-                    log.info("\t713.38.2 task #{} finished with an error, set completed to true", taskId);
+                    log.info("\t713.115 task #{} finished with an error, set completed to true", taskId);
                     // there are some problems with this task. mark it as completed
                     task.setCompleted(true);
                 }
@@ -267,7 +263,7 @@ public class StationTaskService {
             log.info("markAsAssetPrepared(launchpadUrl: {}, taskId: {}, status: {})", launchpadUrl, taskId, status);
             StationTask task = findById(launchpadUrl, taskId);
             if (task == null) {
-                log.error("#713.42 StationTask wasn't found for Id {}", taskId);
+                log.error("#713.130 StationTask wasn't found for Id {}", taskId);
             } else {
                 task.setAssetsPrepared(status);
                 save(task);
@@ -305,7 +301,7 @@ public class StationTaskService {
                     metrics.setMetrics(execMetrics);
                 }
                 catch (IOException e) {
-                    log.error("#713.53 Error reading metrics file {}", metricsFile.getAbsolutePath());
+                    log.error("#713.140 Error reading metrics file {}", metricsFile.getAbsolutePath());
                     task.setMetrics("system-error: " + e.toString());
                     metrics.setStatus(Metrics.Status.Error);
                     metrics.setError(e.toString());
@@ -334,12 +330,12 @@ public class StationTaskService {
         return map.computeIfAbsent(launchpadUrl, m -> new HashMap<>());
     }
 
-    public List<StationTask> findAllByFinishedOnIsNullAndAssetsPreparedIs(boolean status) {
+    public List<StationTask> findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(boolean status) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             List<StationTask> list = new ArrayList<>();
             for (String launchpadUrl : map.keySet()) {
                 for (StationTask task : getMapForLaunchpadUrl(launchpadUrl).values()) {
-                    if (task.finishedOn == null && task.assetsPrepared==status) {
+                    if (!task.completed && task.finishedOn == null && task.assetsPrepared==status) {
                         list.add(task);
                     }
                 }
@@ -363,7 +359,7 @@ public class StationTaskService {
 
     public void createTask(String launchpadUrl, long taskId, Long workbookId, String params) {
         if (launchpadUrl==null) {
-            throw new IllegalStateException("#713.55 launchpadUrl is null");
+            throw new IllegalStateException("#713.150 launchpadUrl is null");
         }
         synchronized (StationSyncHolder.stationGlobalSync) {
             log.info("Assign new task #{}, params:\n{}", taskId, params );
@@ -398,7 +394,7 @@ public class StationTaskService {
                 systemDir.mkdirs();
                 FileUtils.write(taskYamlFile, StationTaskUtils.toString(task), Charsets.UTF_8, false);
             } catch (Throwable th) {
-                String es = "#713.60 Error";
+                String es = "#713.160 Error";
                 log.error(es, th);
                 throw new RuntimeException(es, th);
             }
@@ -407,12 +403,12 @@ public class StationTaskService {
 
     public static boolean deleteOrRenameTaskDir(File systemDir, File taskYamlFile) throws IOException {
         if (systemDir.exists()) {
-            log.warn("#713.57 task's directory already exists, {}", systemDir.getPath());
+            log.warn("#713.170 task's directory already exists, {}", systemDir.getPath());
             if (taskYamlFile.exists()) {
                 File temp = new File(taskYamlFile.getParentFile(), Consts.TASK_YAML+".temp" );
                 FileUtils.moveFile(taskYamlFile, temp);
                 if (taskYamlFile.exists()) {
-                    log.error("#713.58 File task.yaml still exists");
+                    log.error("#713.180 File task.yaml still exists");
                 }
             }
             File tempDir = new File(systemDir.getParentFile(), systemDir.getName() + ".temp");
@@ -420,7 +416,7 @@ public class StationTaskService {
             systemDir.renameTo(tempDir);
             FileUtils.deleteDirectory(tempDir);
             if (systemDir.exists()) {
-                log.error("c#713.59 an't delete or more task's dir {}", systemDir.getPath());
+                log.error("#713.190 an't delete or more task's dir {}", systemDir.getPath());
                 return false;
             }
         }
@@ -456,7 +452,7 @@ public class StationTaskService {
         try {
             FileUtils.write(taskYaml, StationTaskUtils.toString(task), Charsets.UTF_8, false);
         } catch (IOException e) {
-            String es = "#713.63 Error while writing to file: " + taskYaml.getPath();
+            String es = "#713.200 Error while writing to file: " + taskYaml.getPath();
             log.error(es, e);
             throw new IllegalStateException(es, e);
         }
@@ -510,7 +506,7 @@ public class StationTaskService {
                 mapTask.remove(taskId);
                 log.debug("Does task present in map after deleting: {}", mapTask.containsKey(taskId));
             } catch (Throwable th) {
-                log.error("#713.66 Error deleting task " + taskId, th);
+                log.error("#713.210 Error deleting task " + taskId, th);
             }
         }
     }
@@ -550,7 +546,7 @@ public class StationTaskService {
         File taskSubDir = new File(taskDir, subDir);
         taskSubDir.mkdirs();
         if (!taskSubDir.exists()) {
-            log.warn("#713.69 Can't create taskSubDir: {}", taskSubDir.getAbsolutePath());
+            log.warn("#713.220 Can't create taskSubDir: {}", taskSubDir.getAbsolutePath());
             return null;
         }
         return taskSubDir;

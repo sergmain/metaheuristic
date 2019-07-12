@@ -1,7 +1,7 @@
 Create an environment topology:
 
 Load balanser =========
-- NGiNX 1.4.x
+- NGiNX 1.14.x
 - change redirection rule by adding to nginx-jelastic.conf the following line in the HTTP (80) server block:
 return 301 https://$host$request_uri;
 
@@ -28,7 +28,7 @@ SQL DB =================
 
   Preparing:
   -- create database mh
-  -- run scrip https://github.com/sergmain/metaheuristic/blob/master/sql/db-mysql.sql in mh database
+  -- run scrip https://github.com/sergmain/metaheuristic/blob/master/sql/schema-mysql.sql in mh database
   -- create user mh, grant all to it, use SSL required
   -- replace <pass-for-db> in app server's variable JDBC_DATABASE_PASSWORD
   -- replace <ip-address>: in app server's variable JDBC_DATABASE_URL
@@ -46,7 +46,7 @@ Build node =============
 Link github repo =======
 - after creating topology,
   add a link to git repository - https://github.com/sergmain/metaheuristic.git
-  branch - master
+  branch - release
 
 
 
@@ -54,3 +54,5 @@ Link github repo =======
 If everything will be ok then you can use a configured credential to login into Metaheuristic :
 login: q=1
 pass: 123
+
+!! login is exactly q=1 - 3 chars

@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.server;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.ExchangeData;
+import ai.metaheuristic.ai.exceptions.BinaryDataNotFoundException;
 import ai.metaheuristic.ai.exceptions.BinaryDataSaveException;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
@@ -26,12 +27,12 @@ import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,8 +40,9 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.dao.PessimisticLockingFailureException;
-import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -94,7 +96,7 @@ public class ServerController {
     }
 
     @GetMapping(value="/payload/resource/{type}/{random-part}", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
-    public HttpEntity<AbstractResource> deliverResourceAuth(
+    public ResponseEntity<AbstractResource> deliverResourceAuth(
             HttpServletResponse response,
             @PathVariable("type") String typeAsStr,
             @SuppressWarnings("unused") @PathVariable("random-part") String randomPart,
@@ -105,13 +107,17 @@ public class ServerController {
         log.debug("deliverResourceAuth(), globals.isSecurityEnabled: {}, typeAsStr: {}, code: {}, chunkSize: {}, chunkNum: {}",
                 globals.isSecurityEnabled, typeAsStr, normalCode, chunkSize, chunkNum);
         if (chunkSize==null || chunkSize.isBlank() || chunkNum==null) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST);
-            return new HttpEntity<>(new ByteArrayResource(new byte[0]));
+            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.BAD_REQUEST);
         }
 
-        final HttpEntity<AbstractResource> entity = serverService.deliverResource(typeAsStr, normalCode, chunkSize, chunkNum);
+        final ResponseEntity<AbstractResource> entity;
+        try {
+            entity = serverService.deliverResource(typeAsStr, normalCode, chunkSize, chunkNum);
+        } catch (BinaryDataNotFoundException e) {
+            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.GONE);
+        }
         if (entity==null) {
-            return new HttpEntity<>(new ByteArrayResource(new byte[0]));
+            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.OK);
         }
         return entity;
     }

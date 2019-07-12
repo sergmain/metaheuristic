@@ -21,6 +21,7 @@ import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
 import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
@@ -49,6 +50,11 @@ public class NullLaunchpadService implements LaunchpadService {
 
     @Override
     public PlanService getPlanService() {
+        return null;
+    }
+
+    @Override
+    public WorkbookService getWorkbookService() {
         return null;
     }
 

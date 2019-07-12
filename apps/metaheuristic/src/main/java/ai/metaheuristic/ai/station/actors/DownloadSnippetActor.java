@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.station.actors;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.station.MetadataService;
@@ -89,7 +90,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
             final File snippetDir = stationTaskService.prepareSnippetDir(launchpadCode);
             final AssetFile assetFile = ResourceUtils.prepareSnippetFile(snippetDir, task.snippetCode, task.filename);
             if (assetFile.isError ) {
-                log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
+                log.warn("#811.010 Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
             }
             if (assetFile.isContent ) {
@@ -138,13 +139,13 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         logError(snippetCode, e);
                         continue;
                     } catch (SocketTimeoutException e) {
-                        log.error("SocketTimeoutException: {}", e.toString());
+                        log.error("#811.020 SocketTimeoutException: {}", e.toString());
                         continue;
                     } catch (IOException e) {
-                        log.error("IOException", e);
+                        log.error("#811.030 IOException", e);
                         continue;
                     } catch (Throwable th) {
-                        log.error("Throwable", th);
+                        log.error("#811.040 Throwable", th);
                         continue;
                     }
                 }
@@ -153,17 +154,17 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
                 String mask = assetFile.file.getName() + ".%s.tmp";
                 File dir = assetFile.file.getParentFile();
-                boolean isFinished = false;
+                Enums.FlowState flowState = Enums.FlowState.none;
                 int idx = 0;
                 do {
-                    final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
-                            .addParameter("stationId", task.stationId)
-                            .addParameter("taskId", Long.toString(task.getTaskId()))
-                            .addParameter("code", task.snippetCode)
-                            .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
-                            .addParameter("chunkNum", Integer.toString(idx));
-
                     try {
+                        final URIBuilder builder = new URIBuilder(targetUrl + randomPartUri).setCharset(StandardCharsets.UTF_8)
+                                .addParameter("stationId", task.stationId)
+                                .addParameter("taskId", Long.toString(task.getTaskId()))
+                                .addParameter("code", task.snippetCode)
+                                .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
+                                .addParameter("chunkNum", Integer.toString(idx));
+
                         final Request request = Request.Get(builder.build())
                                 .connectTimeout(5000)
                                 .socketTimeout(5000);
@@ -180,23 +181,42 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         File partFile = new File(dir, String.format(mask, idx));
                         response.saveContent(partFile);
                         if (partFile.length()==0) {
-                            isFinished = true;
+                            flowState = Enums.FlowState.ok;
                             break;
                         }
                     } catch (HttpResponseException e) {
-                        if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ||
-                                e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE
-                        ) {
-                            isFinished = true;
+                        if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
+                            final String es = String.format("#811.050 Resource %s wasn't found on launchpad. Task #%s is finished.", task.snippetCode, task.getTaskId());
+                            log.warn(es);
+                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            flowState = Enums.FlowState.resource_doesnt_exist;
+                            break;
+                        }
+                        else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
+                            final String es = String.format("#811.060 Unknown error with a resource %s. Task #%s is finished.", task.snippetCode, task.getTaskId());
+                            log.warn(es);
+                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            flowState = Enums.FlowState.unknow_error;
+                            break;
+                        }
+                        else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
+                            final String es = String.format("#811.070 Unknown error with a resource %s. Task #%s is finished.", task.snippetCode, task.getTaskId());
+                            log.warn(es);
+                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            flowState = Enums.FlowState.unknow_error;
                             break;
                         }
                     }
                     idx++;
                 } while (idx<1000);
-                if (!isFinished) {
-                    log.error("#xxx.xxx something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
+                if (flowState==Enums.FlowState.none) {
+                    log.error("#811.080  something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
                     continue;
                 }
+                else if (flowState==Enums.FlowState.unknow_error || flowState==Enums.FlowState.resource_doesnt_exist) {
+                    continue;
+                }
+
                 try (FileOutputStream fos = new FileOutputStream(snippetTempFile)) {
                     for (int i = 0; i < idx; i++) {
                         FileUtils.copyFile(new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp"), fos);
@@ -210,11 +230,11 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                         status = ChecksumWithSignatureService.verifyChecksumAndSignature(checksum, "Snippet "+snippetCode, fis, true, task.launchpad.createPublicKey());
                     }
                     if ( status.isSignatureOk == null){
-                        log.warn("launchpad.acceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
+                        log.warn("#811.090 launchpad.acceptOnlySignedSnippets is {} but snippet with code {} doesn't have signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
                         continue;
                     }
                     if (Boolean.FALSE.equals(status.isSignatureOk)) {
-                        log.warn("launchpad.acceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
+                        log.warn("#811.100 launchpad.acceptOnlySignedSnippets is {} but snippet with code {} has the broken signature", task.launchpad.acceptOnlySignedSnippets, snippetCode);
                         continue;
                     }
                     isOk = status.isOk;
@@ -233,25 +253,25 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
                 logError(snippetCode, e);
             }
             catch (SocketTimeoutException e) {
-                log.error("SocketTimeoutException: {}", e.toString());
+                log.error("#811.110 SocketTimeoutException: {}", e.toString());
             }
             catch (IOException e) {
-                log.error("IOException", e);
+                log.error("#811.120 IOException", e);
             } catch (URISyntaxException e) {
-                log.error("URISyntaxException", e);
+                log.error("#811.130 URISyntaxException", e);
             }
         }
     }
 
     private void logError(String snippetCode, HttpResponseException e) {
         if (e.getStatusCode()== HttpServletResponse.SC_GONE) {
-            log.warn("Snippet with code {} wasn't found", snippetCode);
+            log.warn("#811.140 Snippet with code {} wasn't found", snippetCode);
         }
         else if (e.getStatusCode()== HttpServletResponse.SC_CONFLICT) {
-            log.warn("Snippet with id {} is broken and need to be recreated", snippetCode);
+            log.warn("#811.150 Snippet with id {} is broken and need to be recreated", snippetCode);
         }
         else {
-            log.error("HttpResponseException", e);
+            log.error("#811.160 HttpResponseException", e);
         }
     }
 

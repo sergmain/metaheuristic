@@ -128,7 +128,6 @@ public class ExperimentApiData {
         public String execStatusAsString;
         public Long experimentId;
         public Double maxValue;
-
     }
 
     @Data

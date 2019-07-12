@@ -16,16 +16,17 @@
 
 package ai.metaheuristic.ai.launchpad.experiment;
 
-import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
-import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -41,16 +42,16 @@ import java.util.ArrayList;
  */
 @SuppressWarnings("Duplicates")
 @Controller
-@RequestMapping("/launchpad")
+@RequestMapping("/launchpad/experiment")
 @Slf4j
 @Profile("launchpad")
 @RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class ExperimentController {
 
-    private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiments";
+    private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiment/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
-    private final AtlasService atlasService;
-    private final ExperimentCache experimentCache;
+    private final WorkbookService workbookService;
 
     @GetMapping("/experiments")
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
@@ -59,7 +60,7 @@ public class ExperimentController {
         ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
         ControllerUtils.addMessagesToModel(model, experiments);
         model.addAttribute("result", experiments);
-        return "launchpad/experiments";
+        return "launchpad/experiment/experiments";
     }
 
     // for AJAX
@@ -67,7 +68,7 @@ public class ExperimentController {
     public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable) {
         ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
         model.addAttribute("result", experiments);
-        return "launchpad/experiments :: table";
+        return "launchpad/experiment/experiments :: table";
     }
 
     @PostMapping("/experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
@@ -82,7 +83,7 @@ public class ExperimentController {
     public String getTasksConsolePart(Model model, @PathVariable(name="taskId") Long taskId) {
         ExperimentApiData.ConsoleResult result = experimentTopLevelService.getTasksConsolePart(taskId);
         model.addAttribute("consoleResult", result);
-        return "launchpad/experiment-feature-progress :: fragment-console-table";
+        return "launchpad/experiment/experiment-feature-progress :: fragment-console-table";
     }
 
     @PostMapping("/experiment-feature-progress-part/{experimentId}/{featureId}/{params}/part")
@@ -97,7 +98,7 @@ public class ExperimentController {
         model.addAttribute("feature", experimentProgressResult.experimentFeature);
         model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
 
-        return "launchpad/experiment-feature-progress :: fragment-table";
+        return "launchpad/experiment/experiment-feature-progress :: fragment-table";
     }
 
     @GetMapping(value = "/experiment-feature-progress/{experimentId}/{featureId}")
@@ -115,13 +116,13 @@ public class ExperimentController {
         model.addAttribute("feature", experimentProgressResult.experimentFeature);
         model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
 
-        return "launchpad/experiment-feature-progress";
+        return "launchpad/experiment/experiment-feature-progress";
     }
 
     @GetMapping(value = "/experiment-add")
     public String add(@ModelAttribute("experiment") ExperimentApiData.ExperimentData experiment) {
         experiment.setSeed(1);
-        return "launchpad/experiment-add-form";
+        return "launchpad/experiment/experiment-add-form";
     }
 
     @GetMapping(value = "/experiment-info/{id}")
@@ -140,7 +141,7 @@ public class ExperimentController {
 
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("experimentResult", result.experimentInfo);
-        return "launchpad/experiment-info";
+        return "launchpad/experiment/experiment-info";
     }
 
     @GetMapping(value = "/experiment-edit/{id}")
@@ -154,7 +155,7 @@ public class ExperimentController {
         model.addAttribute("hyperParams", r.hyperParams);
         model.addAttribute("simpleExperiment", r.simpleExperiment);
         model.addAttribute("snippetResult", r.snippetResult);
-        return "launchpad/experiment-edit-form";
+        return "launchpad/experiment/experiment-edit-form";
     }
 
     @PostMapping(value = "/experiment-upload-from-file")
@@ -171,7 +172,7 @@ public class ExperimentController {
         OperationStatusRest status = experimentTopLevelService.addExperimentCommit(experiment);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
-            return "launchpad/experiment-add-form";
+            return "launchpad/experiment/experiment-add-form";
         }
         return REDIRECT_LAUNCHPAD_EXPERIMENTS;
     }
@@ -182,7 +183,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/" + simpleExperiment.getId();
+        return "redirect:/launchpad/experiment/experiment-edit/" + simpleExperiment.getId();
     }
 
     @PostMapping("/experiment-metadata-add-commit/{id}")
@@ -191,7 +192,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/"+id;
+        return "redirect:/launchpad/experiment/experiment-edit/"+id;
     }
 
     @PostMapping("/experiment-metadata-edit-commit/{id}")
@@ -200,7 +201,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/"+id;
+        return "redirect:/launchpad/experiment/experiment-edit/"+id;
     }
 
     @PostMapping("/experiment-snippet-add-commit/{id}")
@@ -210,7 +211,7 @@ public class ExperimentController {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
-        return "redirect:/launchpad/experiment-edit/"+id;
+        return "redirect:/launchpad/experiment/experiment-edit/"+id;
     }
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
@@ -219,7 +220,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/" + experimentId;
+        return "redirect:/launchpad/experiment/experiment-edit/" + experimentId;
     }
 
     @GetMapping("/experiment-metadata-default-add-commit/{experimentId}")
@@ -228,7 +229,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/" + experimentId;
+        return "redirect:/launchpad/experiment/experiment-edit/" + experimentId;
     }
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{snippetCode}")
@@ -237,7 +238,7 @@ public class ExperimentController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/experiment-edit/" + experimentId;
+        return "redirect:/launchpad/experiment/experiment-edit/" + experimentId;
     }
 
     @GetMapping("/experiment-delete/{id}")
@@ -249,7 +250,7 @@ public class ExperimentController {
         }
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("params", result.params);
-        return "launchpad/experiment-delete";
+        return "launchpad/experiment/experiment-delete";
     }
 
     @PostMapping("/experiment-delete-commit")
@@ -270,39 +271,18 @@ public class ExperimentController {
         return REDIRECT_LAUNCHPAD_EXPERIMENTS;
     }
 
-    @PostMapping("/task-rerun/{taskId}")
-    public @ResponseBody boolean rerunTask(@PathVariable long taskId) {
-        OperationStatusRest status = experimentTopLevelService.rerunTask(taskId);
-        return !status.isErrorMessages();
-    }
-
     @GetMapping(value = "/experiment-to-atlas/{id}")
     public String toAtlas(@PathVariable Long id, final RedirectAttributes redirectAttributes) {
-
-        Experiment experiment = experimentCache.findById(id);
-        if (experiment==null) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "# can't find experiment for id: " + id);
-            return "redirect:/launchpad/experiment-info/"+id;
-        }
-
-        if (experiment.workbookId==null) {
-            redirectAttributes.addFlashAttribute("errorMessage",
-                    "# This experiment isn't bound to Workbook");
-            return "redirect:/launchpad/experiment-info/"+id;
-        }
-
-        OperationStatusRest status = atlasService.toAtlas(experiment.workbookId, id);
+        OperationStatusRest status = experimentTopLevelService.toAtlas(id);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        else {
-            redirectAttributes.addFlashAttribute("infoMessages",
-                    "Experiment was successfully stored to atlas");
-        }
-        return "redirect:/launchpad/experiment-info/"+id;
-
+        return "redirect:/launchpad/experiment/experiment-info/"+id;
     }
 
+    @PostMapping("/task-rerun/{taskId}")
+    public @ResponseBody boolean rerunTask(@PathVariable long taskId) {
+        return workbookService.resetTask(taskId).status== EnumsApi.OperationStatus.OK;
+    }
 
 }

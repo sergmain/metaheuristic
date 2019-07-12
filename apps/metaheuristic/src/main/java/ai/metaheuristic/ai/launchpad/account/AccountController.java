@@ -16,16 +16,15 @@
 
 package ai.metaheuristic.ai.launchpad.account;
 
-import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.data.AccountData;
-import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -37,19 +36,11 @@ import java.util.ArrayList;
 @Controller
 @RequestMapping("/launchpad/account")
 @Profile("launchpad")
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN')")
 public class AccountController {
 
     private final AccountTopLevelService accountTopLevelService;
-    private final AccountRepository accountRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final Globals globals;
-
-    public AccountController(AccountTopLevelService accountTopLevelService, AccountRepository accountRepository, PasswordEncoder passwordEncoder, Globals globals) {
-        this.accountTopLevelService = accountTopLevelService;
-        this.accountRepository = accountRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.globals = globals;
-    }
 
     @GetMapping("/accounts")
     public String accounts(Model model,
@@ -78,7 +69,7 @@ public class AccountController {
     }
 
     @PostMapping("/account-add-commit")
-    public String addFormCommit(Model model, Account account, final RedirectAttributes redirectAttributes) {
+    public String addFormCommit(Model model, Account account) {
         OperationStatusRest operationStatusRest = accountTopLevelService.addAccount(account);
         if (operationStatusRest.isErrorMessages()) {
             model.addAttribute("errorMessage", operationStatusRest.errorMessages);

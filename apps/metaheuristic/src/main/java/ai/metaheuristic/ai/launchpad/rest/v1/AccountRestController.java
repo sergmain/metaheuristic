@@ -20,10 +20,12 @@ import ai.metaheuristic.ai.launchpad.account.AccountTopLevelService;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.data.AccountData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @SuppressWarnings("Duplicates")
@@ -32,13 +34,11 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @Profile("launchpad")
 @CrossOrigin
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'ACCESS_REST')")
 public class AccountRestController {
 
     private final AccountTopLevelService accountTopLevelService;
-
-    public AccountRestController(AccountTopLevelService accountTopLevelService) {
-        this.accountTopLevelService = accountTopLevelService;
-    }
 
     @GetMapping("/accounts")
     public AccountData.AccountsResult accounts(@PageableDefault(size = 5) Pageable pageable) {

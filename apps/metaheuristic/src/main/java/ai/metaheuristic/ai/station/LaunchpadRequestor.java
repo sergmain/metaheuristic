@@ -77,7 +77,7 @@ public class LaunchpadRequestor {
         this.restTemplate = new RestTemplate();
         this.launchpad = this.launchpadLookupExtendedService.lookupExtendedMap.get(launchpadUrl);
         if (launchpad == null) {
-            throw new IllegalStateException("#775.01 Can'r find launchpad config for url " + launchpadUrl);
+            throw new IllegalStateException("#775.010 Can'r find launchpad config for url " + launchpadUrl);
         }
         serverRestUrl = launchpadUrl + Consts.REST_V1_URL + Consts.SERVER_REST_URL;
 
@@ -181,7 +181,7 @@ public class LaunchpadRequestor {
                     return;
                 }
                 if (!result.isSuccess()) {
-                    log.error("#775.055 Something wrong at the launchpad side. Check the launchpad's logs for more info.");
+                    log.error("#775.060 Something wrong at the launchpad side. Check the launchpad's logs for more info.");
                     return;
                 }
                 result.launchpadUrl = launchpadUrl;
@@ -192,27 +192,27 @@ public class LaunchpadRequestor {
                 Monitoring.log("##018", Enums.Monitor.MEMORY);
             } catch (HttpClientErrorException e) {
                 if (e.getStatusCode() == HttpStatus.UNAUTHORIZED) {
-                    log.error("#775.11 Error 401 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
+                    log.error("#775.070 Error 401 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
                 } else if (e.getStatusCode() == HttpStatus.FORBIDDEN) {
-                    log.error("#775.16 Error 403 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
+                    log.error("#775.080 Error 403 accessing url {}, securityEnabled: {}", serverRestUrl, launchpad.launchpadLookup.securityEnabled);
                 } else {
                     throw e;
                 }
             } catch (ResourceAccessException e) {
                 Throwable cause = e.getCause();
                 if (cause instanceof SocketException) {
-                    log.error("#775.22 Connection error: url: {}, err: {}", url, cause.toString());
+                    log.error("#775.090 Connection error: url: {}, err: {}", url, cause.toString());
                 } else {
-                    log.error("#775.27 Error, url: " + url, e);
+                    log.error("#775.100 Error, url: " + url, e);
                 }
             } catch (RestClientException e) {
-                log.error("#775.31 Error accessing url: {}, error: {}", url, e.getMessage());
+                log.error("#775.110 Error accessing url: {}, error: {}", url, e.getMessage());
                 if (e.getMessage() == null || !e.getMessage().contains("503")) {
-                    log.error("#775.35 Stacktrace", e);
+                    log.error("#775.120 Stacktrace", e);
                 }
             }
         } catch (Throwable e) {
-            log.error("#775.41 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
+            log.error("#775.130 Error in fixedDelay(), url: "+serverRestUrl+", error: {}", e);
         }
     }
 
@@ -223,7 +223,11 @@ public class LaunchpadRequestor {
         }
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask task : list) {
-            if (task.isDelivered()) {
+            if (task.isDelivered() && !task.isReported() ) {
+                log.warn("#775.140 This state need to be investigating: (task.isDelivered() && !task.isReported())==true");
+            }
+            // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enought?
+            if (task.isDelivered() && task.isReported() ) {
                 continue;
             }
             command.getResults().add(new SimpleTaskExecResult(task.getTaskId(),

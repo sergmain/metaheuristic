@@ -1,0 +1,123 @@
+<div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+     xmlns:th="http://www.thymeleaf.org"
+     layout:decorate="~{layout-launchpad}"
+     th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
+>
+    <script>
+        'use strict';
+
+        let /*boolean*/ isShowStatus = false;
+
+        /**
+         * @param {int} id
+         */
+        function deleteSnippet(id) {
+            console.log("Start deleteSnippet("+id+")");
+            my_confirm('Do you really want to delete this snippet?', 'Delete snippet?', "Delete", function() {
+                console.log("Deletion of snippet was confirmed.");
+                $.get('/launchpad/snippet/snippet-delete/' + id, function(status) {
+                    console.log("task-rerun is finished, Status: " + status);
+                    var text;
+                    if (status==="true") {
+                        text = 'Snippet was deleted.';
+                    }
+                    else {
+                        text = 'There is some problem with deleting of snippet. Status: '+status;
+                    }
+                    my_alert_with_action(text, 'Status', function(status) {
+                        window.location.replace("/launchpad/snippet/snippets");
+                    });
+                });
+            });
+            return true;
+        }
+
+        function switchStatus() {
+            $('pre').each(function () {
+                let $2 = $(this);
+                printLogMain('$(this).id: ' + $2.attr('id'));
+                printLogMain('$(this).content: ' + $2.content);
+
+                if (isShowStatus) {
+                    $2.hide();
+                }
+                else {
+                    $2.show();
+                }
+
+            });
+            isShowStatus = isShowStatus===false;
+
+            return false;
+        }
+
+    </script>
+
+    <!-- ==================================== Snippet files ==================================== -->
+
+    <h2 class="widget-header">Upload snippet </h2>
+    <form class="pure-form" action="#" method="post" enctype="multipart/form-data" th:method="POST"
+          th:action="@{/launchpad/snippet/snippet-upload-from-file}"
+    >
+        <table>
+            <tr>
+                <td valign="top">
+                    <fieldset>
+
+                        <label for="uploadFile">Snippet file</label>
+                        <input id="uploadFile" placeholder="Choose File" th:disabled="disabled" th:size="100" style="color:black; background-color:white"/>
+                        <div class="fileUpload pure-button pure-button-primary">
+                            <span>Select snippet files</span>
+                            <input name="file" id="uploadBtn" type="file" class="upload">
+                        </div>
+                        <span class="pure-form-message">This is a required field.</span>
+                    </fieldset>
+                </td>
+            </tr>
+        </table>
+        <p></p>
+        <button type="submit" class="pure-button pure-button-primary">Start uploading snippet file</button>
+    </form>
+    <p>&nbsp;</p>
+
+    <script>
+        // Do not move upper. Must be placed after <input name="file" id="uploadBtn" type="file" class="upload">
+        document.getElementById("uploadBtn").onchange = function () {
+            document.getElementById("uploadFile").value = this.value;
+        };
+    </script>
+
+    <div class="pure-controls">
+        <label for="show-status" class="pure-checkbox">
+            <input id="show-status" type="checkbox" onclick="switchStatus();"/>
+            Show current status of station
+        </label>
+    </div>
+
+    <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.SnippetData$SnippetsResult"*/-->
+    <table class="pure-table pure-table-bordered" id="table-ds-path-cols">
+        <thead>
+        <tr>
+            <th>#</th>
+            <th>Code</th>
+            <th>Type</th>
+            <th>Params</th>
+            <th colspan="1">&nbsp;</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="s : ${result.snippets}">
+            <td th:text="${s.id}">#Id</td>
+            <td th:text="${s.code}">Code</td>
+            <td th:text="${s.type}">Type</td>
+            <td><pre style="display: none;" th:if="${s.params}!=null" th:text="${s.params}">Params</pre></td>
+            <td><a class="pure-button pure-button-primary" href="#"
+                   th:data-id="${s.id}"
+                   onclick="deleteSnippet( this.getAttribute('data-id') ); return false;"
+                   title='Delete snippet'>Delete</a></td>
+        </tr>
+        </tbody>
+    </table>
+    <p>&nbsp;</p>
+
+</div>

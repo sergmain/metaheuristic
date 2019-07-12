@@ -20,10 +20,12 @@ import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.atlas.AtlasTopLevelService;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -31,15 +33,12 @@ import org.springframework.web.bind.annotation.*;
 @Slf4j
 @Profile("launchpad")
 @CrossOrigin
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
 public class AtlasRestController {
 
     private final AtlasService atlasService;
     private final AtlasTopLevelService atlasTopLevelService;
-
-    public AtlasRestController(AtlasService atlasService, AtlasTopLevelService atlasTopLevelService) {
-        this.atlasService = atlasService;
-        this.atlasTopLevelService = atlasTopLevelService;
-    }
 
     @GetMapping("/atlas-experiments")
     public AtlasData.AtlasSimpleExperiments init(@PageableDefault(size = 5) Pageable pageable) {

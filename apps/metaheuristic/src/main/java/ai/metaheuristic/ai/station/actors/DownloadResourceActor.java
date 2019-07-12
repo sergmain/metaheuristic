@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai.station.actors;
 
 import ai.metaheuristic.ai.Consts;
+import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.station.StationTaskService;
@@ -81,7 +82,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
             }
             AssetFile assetFile = ResourceUtils.prepareDataFile(task.targetDir, task.id, null);
             if (assetFile.isError ) {
-                log.warn("Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
+                log.warn("#810.010 Resource can't be downloaded. Asset file initialization was failed, {}", assetFile);
                 continue;
             }
             if (assetFile.isContent ) {
@@ -96,7 +97,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
                 File parentDir = assetFile.file.getParentFile();
                 if (parentDir==null) {
-                    String es = "Can't get parent dir for asset file " + assetFile.file.getAbsolutePath();
+                    String es = "#810.020 Can't get parent dir for asset file " + assetFile.file.getAbsolutePath();
                     log.error(es);
                     stationTaskService.markAsFinishedWithError(task.launchpad.url, task.taskId, es);
                     continue;
@@ -105,7 +106,7 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                 try {
                     tempFile = File.createTempFile("resource-", ".temp", parentDir);
                 } catch (IOException e) {
-                    String es = "Error creating temp file in parent dir: " + parentDir.getAbsolutePath();
+                    String es = "#810.030 Error creating temp file in parent dir: " + parentDir.getAbsolutePath();
                     log.error(es, e);
                     stationTaskService.markAsFinishedWithError(task.launchpad.url, task.taskId, es);
                     continue;
@@ -113,18 +114,18 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
 
                 String mask = assetFile.file.getName() + ".%s.tmp";
                 File dir = assetFile.file.getParentFile();
-                boolean isFinished = false;
+                Enums.FlowState flowState = Enums.FlowState.none;
                 int idx = 0;
                 do {
-                    final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)
-                            .addParameter("stationId", task.stationId)
-                            .addParameter("taskId", Long.toString(task.getTaskId()))
-                            .addParameter("code", task.getId())
-                            .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
-                            .addParameter("chunkNum", Integer.toString(idx));
-
-                    final URI build = builder.build();
                     try {
+                        final URIBuilder builder = new URIBuilder(uri).setCharset(StandardCharsets.UTF_8)
+                                .addParameter("stationId", task.stationId)
+                                .addParameter("taskId", Long.toString(task.getTaskId()))
+                                .addParameter("code", task.getId())
+                                .addParameter("chunkSize", task.chunkSize!=null ? task.chunkSize.toString() : "")
+                                .addParameter("chunkNum", Integer.toString(idx));
+
+                        final URI build = builder.build();
                         final Request request = Request.Get(build)
                                 .connectTimeout(5000)
                                 .socketTimeout(20000);
@@ -141,56 +142,70 @@ public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTas
                         File partFile = new File(dir, String.format(mask, idx));
                         response.saveContent(partFile);
                         if (partFile.length()==0) {
-                            isFinished = true;
+                            flowState = Enums.FlowState.ok;
                             break;
                         }
                     } catch (HttpResponseException e) {
-                        if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ||
-                                e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE
-                        ) {
-                            isFinished = true;
+                        if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
+                            final String es = String.format("#810.035 Resource %s wasn't found on launchpad. Task #%s is finished.", task.getId(), task.getTaskId());
+                            log.warn(es);
+                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            flowState = Enums.FlowState.resource_doesnt_exist;
+                            break;
+                        }
+                        else if (e.getStatusCode() == HttpServletResponse.SC_REQUESTED_RANGE_NOT_SATISFIABLE ) {
+                            final String es = String.format("#810.036 Unknown error with a resource %s. Task #%s is finished.", task.getId(), task.getTaskId());
+                            log.warn(es);
+                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            flowState = Enums.FlowState.unknow_error;
+                            break;
+                        }
+                        else if (e.getStatusCode() == HttpServletResponse.SC_NOT_ACCEPTABLE) {
+                            final String es = String.format("#810.037 Unknown error with a resource %s. Task #%s is finished.", task.getId(), task.getTaskId());
+                            log.warn(es);
+                            stationTaskService.markAsFinishedWithError(task.launchpad.url, task.getTaskId(), es);
+                            flowState = Enums.FlowState.unknow_error;
                             break;
                         }
                     }
                     catch(SocketTimeoutException e) {
-                        log.error("SocketTimeoutException, uri: " + uri, e);
+                        log.error("#810.040 SocketTimeoutException, uri: " + uri, e);
                         return;
                     }
                     idx++;
                 } while (idx<1000);
-                if (!isFinished) {
-                    log.error("#xxx.xxx something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
+                if (flowState==Enums.FlowState.none) {
+                    log.error("#810.050  something wrong, is file too big or chunkSize too small? chunkSize: {}", task.chunkSize);
                     continue;
                 }
+                else if (flowState==Enums.FlowState.unknow_error || flowState==Enums.FlowState.resource_doesnt_exist) {
+                    continue;
+                }
+
                 try (FileOutputStream fos = new FileOutputStream(tempFile)) {
                     for (int i = 0; i < idx; i++) {
                         FileUtils.copyFile(new File(assetFile.file.getAbsolutePath() + "." + i + ".tmp"), fos);
                     }
                 }
 
-
                 if (!tempFile.renameTo(assetFile.file)) {
-                    log.warn("Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());
+                    log.warn("#810.060 Can't rename file {} to file {}", tempFile.getPath(), assetFile.file.getPath());
                     continue;
                 }
                 log.info("Resource #{} was loaded", task.getId());
             } catch (HttpResponseException e) {
-                if (e.getStatusCode() == HttpServletResponse.SC_GONE) {
-                    log.warn("Resource with id {} wasn't found. stop processing task #{}", task.getId(), task.getTaskId());
-                    stationTaskService.markAsFinishedWithError( task.launchpad.url, task.getTaskId(),
-                            String.format("Resource %s wasn't found on launchpad. Task #%s is finished.", task.getId(), task.getTaskId() ));
-                } else if (e.getStatusCode() == HttpServletResponse.SC_CONFLICT) {
-                    log.warn("Resource with id {} is broken and need to be recreated", task.getId());
+                if (e.getStatusCode() == HttpServletResponse.SC_CONFLICT) {
+                    log.warn("#810.080 Resource with id {} is broken and need to be recreated", task.getId());
                 } else {
-                    log.error("HttpResponseException.getStatusCode(): {}", e.getStatusCode());
-                    log.error("HttpResponseException", e);
+                    log.error("#810.090 HttpResponseException.getStatusCode(): {}", e.getStatusCode());
+                    log.error("#810.091 HttpResponseException", e);
                 }
             } catch (SocketTimeoutException e) {
-                log.error("SocketTimeoutException", e);
+                log.error("#810.100 SocketTimeoutException", e);
             } catch (IOException e) {
-                log.error("IOException", e);
+                log.error("#810.110 IOException", e);
             } catch (URISyntaxException e) {
-                log.error("URISyntaxException", e);
+                log.error("#810.120 URISyntaxException", e);
             }
         }
     }

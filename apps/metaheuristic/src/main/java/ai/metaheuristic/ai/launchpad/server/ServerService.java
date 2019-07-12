@@ -37,14 +37,16 @@ import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.utils.DirUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -60,6 +62,7 @@ import java.util.stream.Stream;
 @Service
 @Profile("launchpad")
 @Slf4j
+@RequiredArgsConstructor
 public class ServerService {
 
     private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
@@ -74,16 +77,19 @@ public class ServerService {
     private final CommandSetter commandSetter;
     private final StationsRepository stationsRepository;
 
-    public HttpEntity<AbstractResource> deliverResource(String typeAsStr, String code, String chunkSize, int chunkNum) {
+    // return a requested resource to a station
+    public ResponseEntity<AbstractResource> deliverResource(String typeAsStr, String code, String chunkSize, int chunkNum) {
         EnumsApi.BinaryDataType binaryDataType = EnumsApi.BinaryDataType.valueOf(typeAsStr.toUpperCase());
         return deliverResource(binaryDataType, code, chunkSize, chunkNum);
     }
 
-    public HttpEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, String chunkSize, int chunkNum) {
+    // return a requested resource to a station
+    public ResponseEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, String chunkSize, int chunkNum) {
         return deliverResource(binaryDataType, code, null, chunkSize, chunkNum);
     }
 
-    public HttpEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders, String chunkSize, int chunkNum) {
+    // return a requested resource to a station
+    public ResponseEntity<AbstractResource> deliverResource(EnumsApi.BinaryDataType binaryDataType, String code, HttpHeaders httpHeaders, String chunkSize, int chunkNum) {
         AssetFile assetFile;
         switch(binaryDataType) {
             case SNIPPET:
@@ -99,14 +105,14 @@ public class ServerService {
         }
 
         if (assetFile==null) {
-            String es = "#442.012 resource with code "+code+" wasn't found";
+            String es = "#442.010 resource with code "+code+" wasn't found";
             log.error(es);
             throw new BinaryDataNotFoundException(es);
         }
         try {
             binaryDataService.storeToFile(code, assetFile.file);
         } catch (BinaryDataNotFoundException e) {
-            log.error("#442.016 Error store data to temp file, data doesn't exist in db, code " + code+", file: " + assetFile.file.getPath());
+            log.error("#442.020 Error store data to temp file, data doesn't exist in db, code " + code+", file: " + assetFile.file.getPath());
             throw e;
         }
         File f;
@@ -124,7 +130,7 @@ public class ServerService {
             copyChunk(assetFile.file, f, offset, realSize);
             long len = f.length();
         }
-        return new HttpEntity<>(new FileSystemResource(f.toPath()), getHeader(httpHeaders, f.length()));
+        return new ResponseEntity<>(new FileSystemResource(f.toPath()), getHeader(httpHeaders, f.length()), HttpStatus.OK);
     }
 
     public static void copyChunk(File sourceFile, File destFile, long offset, long size) {
@@ -138,6 +144,7 @@ public class ServerService {
             while (left>0) {
                 int realSize = (int)(left>realChunkSize ? realChunkSize : left);
                 int state;
+                //noinspection CaughtExceptionImmediatelyRethrown
                 try {
                     state = raf.read(bytes, 0, realSize);
                 } catch (IndexOutOfBoundsException e) {
@@ -176,7 +183,7 @@ public class ServerService {
         }
 
         // TODO 2019-05-28 Transaction is read-only but method is setCommandInTransaction
-        // need to investigate and fix
+        // need to investigate why and fix it
         @Transactional(readOnly = true)
         public void setCommandInTransaction(ExchangeData resultData) {
             try (Stream<Workbook> stream = workbookRepository.findAllAsStream() ) {
@@ -184,15 +191,6 @@ public class ServerService {
                         stream.map(ServerService::to).collect(Collectors.toList())));
             }
         }
-    }
-
-    public ServerService(Globals globals, BinaryDataService binaryDataService, CommandProcessor commandProcessor, StationCache stationCache, CommandSetter commandSetter, StationsRepository stationsRepository) {
-        this.globals = globals;
-        this.binaryDataService = binaryDataService;
-        this.commandProcessor = commandProcessor;
-        this.stationCache = stationCache;
-        this.commandSetter = commandSetter;
-        this.stationsRepository = stationsRepository;
     }
 
     public ExchangeData processRequest(ExchangeData data, String remoteAddress) {
@@ -221,8 +219,8 @@ public class ServerService {
 
             return resultData;
         } catch (Throwable th) {
-            log.error("Error while processing client's request,ExchangeData:\n{}", data);
-            log.error("Error", th);
+            log.error("#442.040 Error while processing client's request,ExchangeData:\n{}", data);
+            log.error("#442.041 Error", th);
             return new ExchangeData(Protocol.NOP, false);
         }
     }
@@ -245,8 +243,8 @@ public class ServerService {
         try {
             ss = StationStatusUtils.to(station.status);
         } catch (Throwable e) {
-            log.error("#442.035 Error parsing current status of station:\n{}", station.status);
-            log.error("#442.036 Error ", e);
+            log.error("#442.065 Error parsing current status of station:\n{}", station.status);
+            log.error("#442.066 Error ", e);
             // skip any command from this station
             return Protocol.NOP_ARRAY;
         }
@@ -281,8 +279,8 @@ public class ServerService {
             try {
                 stationCache.save(station);
             } catch (ObjectOptimisticLockingFailureException e) {
-                log.error("#442.040 Error saving station. old : {}, new: {}", stationCache.findById(station.id), station);
-                log.error("#442.045 Error");
+                log.error("#442.080 Error saving station. old : {}, new: {}", stationCache.findById(station.id), station);
+                log.error("#442.085 Error");
                 throw e;
             }
             // the same stationId but new sessionId

@@ -19,6 +19,8 @@ package ai.metaheuristic.ai.launchpad.station;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.Station;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
@@ -27,6 +29,7 @@ import ai.metaheuristic.ai.launchpad.data.StationData;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
@@ -41,23 +44,21 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Profile("launchpad")
 @Service
+@RequiredArgsConstructor
 public class StationTopLevelService {
 
     private final Globals globals;
     private final StationsRepository stationsRepository;
     private final StationCache stationCache;
+    private final WorkbookService workbookService;
+    private final TaskRepository taskRepository;
 
     private static final long STATION_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
-
-    public StationTopLevelService(Globals globals, StationsRepository stationsRepository, StationCache stationCache) {
-        this.globals = globals;
-        this.stationsRepository = stationsRepository;
-        this.stationCache = stationCache;
-    }
 
     public static String createNewSessionId() {
         return UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
@@ -151,6 +152,34 @@ public class StationTopLevelService {
             }
         }
         log.debug("After leaving sync block");
+    }
+
+    public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
+        final long stationId = Long.parseLong(stationIdAsStr);
+        List<Object[]> tasks = taskRepository.findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(stationId);
+        for (Object[] obj : tasks) {
+            long taskId = ((Number)obj[0]).longValue();
+            Long assignedOn = obj[1]!=null ? ((Number)obj[1]).longValue() : null;
+
+            boolean isFound = false;
+            for (Protocol.StationTaskStatus.SimpleStatus status : statuses) {
+                if (status.taskId ==taskId) {
+                    isFound = true;
+                }
+            }
+
+            boolean isExpired = assignedOn!=null && (System.currentTimeMillis() - assignedOn > 90_000);
+            if (!isFound && isExpired) {
+                log.info("De-assign task #{} from station #{}", taskId, stationIdAsStr);
+                log.info("\tstatuses: {}", statuses.stream().map( o -> Long.toString(o.taskId)).collect(Collectors.toList()));
+                log.info("\ttasks: {}", tasks.stream().map( o -> ""+o[0] + ',' + o[1]).collect(Collectors.toList()));
+                log.info("\tisFound: {}, is expired: {}", isFound, isExpired);
+                OperationStatusRest result = workbookService.resetTask(taskId);
+                if (result.status== EnumsApi.OperationStatus.ERROR) {
+                    log.error("#179.10 Resetting of task #{} was failed. See log for more info.", taskId);
+                }
+            }
+        }
     }
 
 

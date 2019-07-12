@@ -14,7 +14,7 @@
         <pre style="width:50%" th:text="${result.plan.params}"></pre>
 
         <p>Input resource pool codes:</p>
-        <pre style="width:50%" th:text="${result.workbook.inputResourceParam}"></pre>
+        <pre style="width:50%" th:text="${result.workbook.params}"></pre>
 
         <p>Exec state:</p>
         <pre style="width:50%" th:text="${T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).from(result.workbook.execState)}"></pre>

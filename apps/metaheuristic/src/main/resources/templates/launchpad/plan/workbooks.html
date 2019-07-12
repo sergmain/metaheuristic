@@ -49,7 +49,7 @@
         <tr th:each="i : ${result.instances}">
             <td th:text="${i.id}">#Id</td>
             <td th:text="${result.plans.get(i.id).code}">Plan code</td>
-            <td><pre th:text="${i.inputResourceParam}">Input pool codes</pre></td>
+            <td><pre th:text="${i.params}">Input pool codes</pre></td>
             <td th:text="${#dates.format(i.createdOn, 'dd-MMM-yy HH:mm')}">Created on</td>
             <td th:text="${result.plans.get(i.id).valid}">Is plan valid</td>
             <td th:text="${i.valid}">Is workbook valid</td>

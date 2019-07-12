@@ -22,19 +22,21 @@ import ai.metaheuristic.ai.Monitoring;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.ai.launchpad.plan.WorkbookService;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
 import ai.metaheuristic.ai.yaml.hyper_params.HyperParams;
 import ai.metaheuristic.ai.yaml.metrics.MetricValues;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
@@ -43,6 +45,7 @@ import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskWIthType;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.api.launchpad.Workbook;
@@ -51,6 +54,7 @@ import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
 import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -69,7 +73,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -92,7 +96,8 @@ public class ExperimentService {
     private final TaskPersistencer taskPersistencer;
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
-    private final WorkbookRepository workbookRepository;
+    private final WorkbookGraphService workbookGraphService;
+    private final WorkbookCache workbookCache;
 
     private final ExperimentCache experimentCache;
     private final ExperimentRepository experimentRepository;
@@ -131,10 +136,35 @@ public class ExperimentService {
         return ed;
     }
 
-    public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(ExperimentFeature experimentFeature) {
+    public static ExperimentApiData.ExperimentFeatureData asExperimentFeatureData(
+            ExperimentFeature experimentFeature,
+            List<WorkbookParamsYaml.TaskVertex> taskVertices,
+            List<ExperimentTaskFeature> taskFeatures) {
         final ExperimentApiData.ExperimentFeatureData featureData = new ExperimentApiData.ExperimentFeatureData();
         BeanUtils.copyProperties(experimentFeature, featureData);
-        featureData.execStatusAsString = Enums.FeatureExecStatus.toState(featureData.execStatus).info;
+
+        List<ExperimentTaskFeature> etfs = taskFeatures.stream().filter(tf->tf.featureId.equals(featureData.id)).collect(Collectors.toList());
+
+        Set<EnumsApi.TaskExecState> statuses = taskVertices
+                .stream()
+                .filter(t -> etfs
+                        .stream()
+                        .filter(etf-> etf.taskId.equals(t.taskId))
+                        .findFirst()
+                        .orElse(null) !=null ).map(o->o.execState)
+                .collect(Collectors.toSet());
+
+        Enums.FeatureExecStatus execStatus = statuses.isEmpty() ? Enums.FeatureExecStatus.empty : Enums.FeatureExecStatus.unknown;
+        if (statuses.contains(EnumsApi.TaskExecState.OK)) {
+            execStatus = Enums.FeatureExecStatus.finished;
+        }
+        if (statuses.contains(EnumsApi.TaskExecState.ERROR)|| statuses.contains(EnumsApi.TaskExecState.BROKEN)) {
+            execStatus = Enums.FeatureExecStatus.finished_with_errors;
+        }
+        if (statuses.contains(EnumsApi.TaskExecState.NONE) || statuses.contains(EnumsApi.TaskExecState.IN_PROGRESS)) {
+            execStatus = Enums.FeatureExecStatus.processing;
+        }
+        featureData.execStatusAsString = execStatus.info;
         return featureData;
     }
 
@@ -266,7 +296,7 @@ public class ExperimentService {
                 .limit(pageable.getPageSize())
                 .collect(Collectors.toList());
 
-        List<Long> ids = etfs.stream().mapToLong(ExperimentTaskFeature::getId).boxed().collect(Collectors.toList());
+        List<Long> ids = etfs.stream().mapToLong(ExperimentTaskFeature::getTaskId).boxed().collect(Collectors.toList());
 
         List<TaskImpl> tasks = taskRepository.findTasksByIds(pageable, ids);
         List<TaskWIthType> list = new ArrayList<>();
@@ -415,8 +445,17 @@ public class ExperimentService {
         return true;
     }
 
-    @SuppressWarnings("Duplicates")
-    public ExperimentApiData.ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, ExperimentFeature experimentFeature) {
+    public ExperimentApiData.ExperimentFeatureExtendedResult prepareExperimentFeatures(Experiment experiment, Long featureId ) {
+        if (experiment.workbookId==null) {
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.040 workbookId is null");
+        }
+        WorkbookImpl workbook = workbookCache.findById(experiment.workbookId);
+
+        ExperimentParamsYaml.ExperimentFeature experimentFeature = experiment.getExperimentParamsYaml().getFeature(featureId);
+        if (experimentFeature == null) {
+            return new ExperimentApiData.ExperimentFeatureExtendedResult("#179.050 feature wasn't found, experimentFeatureId: " + featureId);
+        }
+
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
 
         tasksResult.items = findPredictTasks(Consts.PAGE_REQUEST_10_REC, experiment, experimentFeature.getId());
@@ -461,12 +500,14 @@ public class ExperimentService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
+
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
         result.hyperParamResult = hyperParamResult;
         result.tasksResult = tasksResult;
         result.experiment = asExperimentData(experiment);
-        result.experimentFeature = asExperimentFeatureData(experimentFeature);
+        result.experimentFeature = asExperimentFeatureData(experimentFeature, taskVertices, experiment.getExperimentParamsYaml().processing.taskFeatures);
         result.consoleResult = new ExperimentApiData.ConsoleResult();
 
         return result;
@@ -503,7 +544,7 @@ public class ExperimentService {
         return experimentHyperParams.stream().collect(Collectors.toMap(HyperParam::getKey, HyperParam::getValues, (a, b) -> b, HashMap::new));
     }
 
-    public void resetExperiment(long workbookId) {
+    public void resetExperimentByWorkbookId(long workbookId) {
 
         Experiment e = experimentRepository.findIdByWorkbookIdForUpdate(workbookId);
         if (e==null) {
@@ -520,10 +561,12 @@ public class ExperimentService {
     }
 
     @SuppressWarnings("Duplicates")
+    PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
+
     public EnumsApi.PlanProducingStatus produceTasks(
-            boolean isPersist, PlanParamsYaml planParams, Workbook workbook, Process process,
+            boolean isPersist, PlanParamsYaml planParams, Long workbookId, Process process,
             Experiment experiment, Map<String, List<String>> collectedInputs,
-            Map<String, DataStorageParams> inputStorageUrls, IntHolder numberOfTasks) {
+            Map<String, DataStorageParams> inputStorageUrls, IntHolder numberOfTasks, List<Long> parentTaskIds) {
         if (process.type!= EnumsApi.ProcessType.EXPERIMENT) {
             throw new IllegalStateException("#179.190 Wrong type of process, " +
                     "expected: "+ EnumsApi.ProcessType.EXPERIMENT+", " +
@@ -540,8 +583,6 @@ public class ExperimentService {
         final Map<String, String> map = toMap(epy.experimentYaml.getHyperParams(), epy.experimentYaml.seed);
         final int calcTotalVariants = ExperimentUtils.calcTotalVariants(map);
 
-//        @Query("SELECT f.id, f.resourceCodes FROM ExperimentFeature f where f.experimentId=:experimentId")
-//        List<Object[]> getAsExperimentFeatureSimpleByExperimentId(Long experimentId);
         final List<ExperimentFeature> features = epy.processing.features;
 
         // there is 2 because we have 2 types of snippets - fit and predict
@@ -557,28 +598,30 @@ public class ExperimentService {
 
         final Map<String, Snippet> localCache = new HashMap<>();
         final IntHolder size = new IntHolder();
-        final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, workbook, experiment, size);
+        final Set<String> taskParams = paramsSetter.getParamsInTransaction(isPersist, workbookId, experiment, size);
 
         numberOfTasks.value = 0;
 
-        log.debug("total size of tasks' params is {} bytes", size.value);
+        log.debug("total size of tasks' params received from db is {} bytes", size.value);
         final AtomicBoolean boolHolder = new AtomicBoolean();
         final Consumer<Long> longConsumer = o -> {
-            if (workbook.getId().equals(o)) {
+            if (workbookId.equals(o)) {
                 boolHolder.set(true);
             }
         };
         final WorkbookService.WorkbookDeletionListener listener =
-                new WorkbookService.WorkbookDeletionListener(workbook.getId(), longConsumer);
+                new WorkbookService.WorkbookDeletionListener(workbookId, longConsumer);
 
         int processed = 0;
+        long prevMills = System.currentTimeMillis();
         try {
             eventMulticaster.addApplicationListener(listener);
-            Workbook instance = workbookRepository.findById(workbook.getId()).orElse(null);
-            if (instance==null) {
+            Workbook wb = workbookCache.findById(workbookId);
+            if (wb==null) {
                 return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
             }
-
+            AtomicLong id = new AtomicLong(0);
+            AtomicLong taskIdForEmulation = new AtomicLong(0);
             for (ExperimentFeature feature : features) {
                 ExperimentUtils.NumberOfVariants numberOfVariants = ExperimentUtils.getNumberOfVariants(feature.resourceCodes);
                 if (!numberOfVariants.status) {
@@ -586,12 +629,11 @@ public class ExperimentService {
                     continue;
                 }
                 List<String> inputResourceCodes = numberOfVariants.values;
-
+                List<Long> prevParentTaskIds = parentTaskIds;
                 for (HyperParams hyperParams : allHyperParams) {
 
-                    int orderAdd = 0;
-                    Task prevTask;
-                    Task task = null;
+                    TaskImpl prevTask;
+                    TaskImpl task = null;
                     for (String snippetCode : experimentSnippets) {
                         if (boolHolder.get()) {
                             return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
@@ -601,11 +643,13 @@ public class ExperimentService {
                         // create empty task. we need task id for initialization
                         task = new TaskImpl();
                         task.setParams("");
-                        task.setWorkbookId(workbook.getId());
-                        task.setOrder(process.order + (orderAdd++));
+                        task.setWorkbookId(workbookId);
                         task.setProcessType(process.type.value);
                         if (isPersist) {
-                            taskRepository.saveAndFlush((TaskImpl) task);
+                            task = taskRepository.save(task);
+                        }
+                        else {
+                            task.id = taskIdForEmulation.incrementAndGet();
                         }
                         // inc number of tasks
                         numberOfTasks.value++;
@@ -673,7 +717,8 @@ public class ExperimentService {
                         });
 
                         ExperimentTaskFeature tef = new ExperimentTaskFeature();
-                        tef.setWorkbookId(workbook.getId());
+                        tef.id = id.incrementAndGet();
+                        tef.setWorkbookId(workbookId);
                         tef.setTaskId(task.getId());
                         tef.setFeatureId(feature.id);
                         tef.setTaskType(type.value);
@@ -700,19 +745,24 @@ public class ExperimentService {
 
                         processed++;
                         if (processed % 100 == 0) {
-                            log.info("total tasks: {}, created: {}", totalVariants, processed);
+                            log.info("total tasks: {}, created: {}. last batch of tasks was created for {} seconds", totalVariants, processed, ((float)(System.currentTimeMillis() - prevMills))/1000);
+                            prevMills = System.currentTimeMillis();
                         }
+                        // TODO 2019.07.08 this isn't good solution. need to rewrite
                         if (taskParams.contains(currTaskParams)) {
                             log.info("Params already processed, skip");
                             continue;
                         }
                         task.setParams(currTaskParams);
+                        final List<Long> taskIds = List.of(task.getId());
                         if (isPersist) {
                             task = taskPersistencer.setParams(task.getId(), currTaskParams);
                             if (task == null) {
                                 return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
+                            workbookGraphService.addNewTasksToGraph(workbookCache.findById(workbookId), prevParentTaskIds, taskIds);
                         }
+                        prevParentTaskIds = taskIds;
                     }
                 }
             }
@@ -723,7 +773,7 @@ public class ExperimentService {
         }
 
         if (epy.processing.getNumberOfTask() != totalVariants && epy.processing.getNumberOfTask() != 0) {
-            log.warn("#179.33 ! Number of sequence is different. experiment.getNumberOfTask(): {}, totalVariants: {}", epy.processing.getNumberOfTask(), totalVariants);
+            log.warn("#179.33 ! Number of tasks is different. experiment.getNumberOfTask(): {}, totalVariants: {}", epy.processing.getNumberOfTask(), totalVariants);
         }
         if (isPersist) {
             Experiment experimentTemp = experimentRepository.findByIdForUpdate(experiment.getId());
@@ -761,7 +811,7 @@ public class ExperimentService {
 
         final Permutation<String> permutation = new Permutation<>();
         Monitoring.log("##040", Enums.Monitor.MEMORY);
-        AtomicInteger featureId = new AtomicInteger(1);
+        AtomicLong featureId = new AtomicLong(0);
         for (int i = 0; i < inputResourceCodes.size(); i++) {
             Monitoring.log("##041", Enums.Monitor.MEMORY);
             permutation.printCombination(inputResourceCodes, i+1,
@@ -783,11 +833,12 @@ public class ExperimentService {
                         }
 
                         ExperimentFeature feature = new ExperimentFeature();
-                        feature.id = featureId.longValue();
+                        feature.id = featureId.incrementAndGet();
                         feature.setExperimentId(experiment.id);
                         feature.setResourceCodes(listAsStr);
                         feature.setChecksumIdCodes(checksumIdCodes);
                         epy.processing.features.add(feature);
+
                         total.value++;
                         return true;
                     }

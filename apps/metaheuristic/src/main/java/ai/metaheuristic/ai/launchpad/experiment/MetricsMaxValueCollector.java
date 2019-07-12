@@ -20,10 +20,10 @@ import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.yaml.metrics.MetricValues;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -33,21 +33,12 @@ import java.util.Objects;
 @Service
 @Profile("launchpad")
 @Slf4j
+@RequiredArgsConstructor
 public class MetricsMaxValueCollector {
 
     private final TaskRepository taskRepository;
 
-    public MetricsMaxValueCollector(TaskRepository taskRepository) {
-        this.taskRepository = taskRepository;
-    }
-
-    @Transactional
     public double calcMaxValueForMetrics(ExperimentParamsYaml epy, Long featureId) {
-
-//        @Query(value="select t.id, t.metrics from TaskImpl t, ExperimentTaskFeature f " +
-//                "where t.id=f.taskId and f.featureId=:experimentFeatureId ")
-//        Stream<Object[]> findMetricsByIds(long experimentFeatureId);
-
         List<Long> ids = epy.getTaskFeatureIds(featureId);
 
         List<Object[]> list = taskRepository.findMetricsByIds(ids);

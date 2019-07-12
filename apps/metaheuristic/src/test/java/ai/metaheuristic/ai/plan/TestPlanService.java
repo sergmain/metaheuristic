@@ -17,9 +17,12 @@
 package ai.metaheuristic.ai.plan;
 
 import ai.metaheuristic.ai.comm.Protocol;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -28,6 +31,7 @@ import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.launchpad.process.ProcessV2;
 import org.junit.After;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,6 +55,12 @@ public class TestPlanService extends PreparingPlan {
     public TaskPersistencer taskPersistencer;
     @Autowired
     public TaskCollector taskCollector;
+
+    @Autowired
+    public WorkbookService workbookService;
+
+    @Autowired
+    public WorkbookGraphService workbookGraphService;
 
     @Override
     public String getPlanYamlAsString() {
@@ -80,28 +90,33 @@ public class TestPlanService extends PreparingPlan {
         assertFalse(tasks.isEmpty());
 
         int taskNumber = 0;
-        for (Process process : planParamsYaml.planYaml.processes) {
+        for (ProcessV2 process : planParamsYaml.planYaml.processes) {
             if (process.type == EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }
-            taskNumber += process.snippets.size();
+            taskNumber += process.snippetCodes.size();
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
-        assertEquals(1 + 1 + 3 + 2 * 12 * 7, taskNumber + epy.processing.getNumberOfTask());
+        final int actualTaskNumber = taskNumber + epy.processing.getNumberOfTask();
+        assertEquals(1 + 1 + 3 + 2 * 12 * 7, actualTaskNumber);
+
+        long numberFromGraph = workbookGraphService.getCountUnfinishedTasks(workbook);
+        assertEquals(actualTaskNumber, numberFromGraph);
 
         // ======================
 
-        TaskService.TasksAndAssignToStationResult assignToStation0 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+        WorkbookService.TasksAndAssignToStationResult assignToStation0 =
+                workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
         Protocol.AssignedTask.Task simpleTask0 = assignToStation0.getSimpleTask();
         assertNull(simpleTask0);
 
-        workbook = planService.toStarted(workbook);
+        workbook = planService.toStarted(workbook.getId());
+        assertEquals(EnumsApi.WorkbookExecState.STARTED.code, workbook.getExecState());
         {
-            TaskService.TasksAndAssignToStationResult assignToStation =
-                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            WorkbookService.TasksAndAssignToStationResult assignToStation =
+                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             Protocol.AssignedTask.Task simpleTask = assignToStation.getSimpleTask();
 
@@ -109,18 +124,18 @@ public class TestPlanService extends PreparingPlan {
             assertNotNull(simpleTask.getTaskId());
             Task task = taskRepository.findById(simpleTask.getTaskId()).orElse(null);
             assertNotNull(task);
-            assertEquals(1, task.getOrder());
+//            assertEquals(1, task.getOrder());
 
-            TaskService.TasksAndAssignToStationResult assignToStation2 =
-                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            WorkbookService.TasksAndAssignToStationResult assignToStation2 =
+                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
             assertNull(assignToStation2.getSimpleTask());
 
             storeExecResult(simpleTask);
-            planService.markOrderAsProcessed();
+            workbookService.checkWorkbookStatuses();
         }
         {
-            TaskService.TasksAndAssignToStationResult assignToStation20 =
-                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            WorkbookService.TasksAndAssignToStationResult assignToStation20 =
+                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             Protocol.AssignedTask.Task simpleTask20 = assignToStation20.getSimpleTask();
 
@@ -128,78 +143,73 @@ public class TestPlanService extends PreparingPlan {
             assertNotNull(simpleTask20.getTaskId());
             Task task3 = taskRepository.findById(simpleTask20.getTaskId()).orElse(null);
             assertNotNull(task3);
-            assertEquals(2, task3.getOrder());
+//            assertEquals(2, task3.getOrder());
 
-            TaskService.TasksAndAssignToStationResult assignToStation21 =
-                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            WorkbookService.TasksAndAssignToStationResult assignToStation21 =
+                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
             assertNull(assignToStation21.getSimpleTask());
 
             storeExecResult(simpleTask20);
-            planService.markOrderAsProcessed();
+            workbookService.checkWorkbookStatuses();
         }
         {
-            TaskService.TasksAndAssignToStationResult assignToStation30 =
-                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            WorkbookService.TasksAndAssignToStationResult assignToStation30 =
+                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             Protocol.AssignedTask.Task simpleTask30 = assignToStation30.getSimpleTask();
             assertNotNull(simpleTask30);
             assertNotNull(simpleTask30.getTaskId());
             Task task30 = taskRepository.findById(simpleTask30.getTaskId()).orElse(null);
             assertNotNull(task30);
-            assertEquals(3, task30.getOrder());
+//            assertEquals(3, task30.getOrder());
 
-            TaskService.TasksAndAssignToStationResult assignToStation31 =
-                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            WorkbookService.TasksAndAssignToStationResult assignToStation31 =
+                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             Protocol.AssignedTask.Task simpleTask31 = assignToStation31.getSimpleTask();
             assertNull(simpleTask31);
 
             storeExecResult(simpleTask30);
-            planService.markOrderAsProcessed();
+            workbookService.checkWorkbookStatuses();
         }
         {
-            TaskService.TasksAndAssignToStationResult assignToStation32 =
-                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            WorkbookService.TasksAndAssignToStationResult assignToStation32 =
+                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             Protocol.AssignedTask.Task simpleTask32 = assignToStation32.getSimpleTask();
             assertNotNull(simpleTask32);
             assertNotNull(simpleTask32.getTaskId());
             Task task32 = taskRepository.findById(simpleTask32.getTaskId()).orElse(null);
             assertNotNull(task32);
-            assertEquals(3, task32.getOrder());
+//            assertEquals(3, task32.getOrder());
             storeExecResult(simpleTask32);
-            planService.markOrderAsProcessed();
+            workbookService.checkWorkbookStatuses();
         }
         int j;
+        long prevValue = workbookGraphService.getCountUnfinishedTasks(workbook);
         for ( j = 0; j < 1000; j++) {
-
-            System.out.println("j = " + j);
-            TaskService.TasksAndAssignToStationResult loopAssignToStation =
-                    taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
+            if (j%20==0) {
+                System.out.println("j = " + j);
+            }
+            WorkbookService.TasksAndAssignToStationResult loopAssignToStation =
+                    workbookService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
 
             Protocol.AssignedTask.Task loopSimpleTask = loopAssignToStation.getSimpleTask();
             assertNotNull(loopSimpleTask);
             assertNotNull(loopSimpleTask.getTaskId());
             Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
             assertNotNull(loopTask);
-            taskPersistencer.setResultReceived(loopSimpleTask.getTaskId(), true);
-            planService.markOrderAsProcessed();
-            if (loopTask.getOrder()==4) {
+            storeExecResult(loopSimpleTask);
+            workbookService.checkWorkbookStatuses();
+
+            final long count = workbookGraphService.getCountUnfinishedTasks(workbookCache.findById(workbook.id));
+            assertNotEquals(count, prevValue);
+            prevValue = count;
+            if (count==0) {
                 break;
             }
         }
-        assertNotEquals(1000, j);
-
-        TaskService.TasksAndAssignToStationResult assignToStation40 =
-                taskService.getTaskAndAssignToStation(station.getId(), false, workbook.getId());
-
-        Protocol.AssignedTask.Task simpleTask40 = assignToStation40.getSimpleTask();
-        assertNotNull(simpleTask40);
-        assertNotNull(simpleTask40.getTaskId());
-        Task task40 = taskRepository.findById(simpleTask40.getTaskId()).orElse(null);
-        assertNotNull(task40);
-        assertEquals(4, task40.getOrder());
-        taskPersistencer.setResultReceived(simpleTask40.getTaskId(), true);
+        assertEquals(0, prevValue);
 
         int i=0;
     }
@@ -209,7 +219,15 @@ public class TestPlanService extends PreparingPlan {
         r.setTaskId(simpleTask.getTaskId());
         r.setMetrics(null);
         r.setResult(getOKExecResult());
-        taskPersistencer.storeExecResult(r);
+
+        final TaskPersistencer.PostTaskCreationAction action = t -> {
+            if (t!=null) {
+                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(t.getWorkbookId());
+                workbookGraphService.updateTaskExecState(workbook, t);
+            }
+        };
+
+        taskPersistencer.storeExecResult(r, action);
         taskPersistencer.setResultReceived(simpleTask.getTaskId(), true);
     }
 

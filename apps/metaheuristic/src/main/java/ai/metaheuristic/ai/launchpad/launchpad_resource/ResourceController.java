@@ -19,10 +19,12 @@ package ai.metaheuristic.ai.launchpad.launchpad_resource;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.ResourceData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -37,16 +39,14 @@ import java.util.ArrayList;
  * Time: 20:21
  */
 @Controller
-@RequestMapping("/launchpad")
+@RequestMapping("/launchpad/resource")
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class ResourceController {
 
     private final ResourceTopLevelService resourceTopLevelService;
-
-    public ResourceController(ResourceTopLevelService resourceTopLevelService) {
-        this.resourceTopLevelService = resourceTopLevelService;
-    }
 
     @GetMapping("/resources")
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
@@ -55,7 +55,7 @@ public class ResourceController {
         ResourceData.ResourcesResult resourcesResultRest = resourceTopLevelService.getResources(pageable);
         ControllerUtils.addMessagesToModel(model, resourcesResultRest);
         model.addAttribute("result", resourcesResultRest);
-        return "launchpad/resources";
+        return "launchpad/resource/resources";
     }
 
     // for AJAX
@@ -63,7 +63,7 @@ public class ResourceController {
     public String getResourcesForAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
         ResourceData.ResourcesResult resourcesResultRest = resourceTopLevelService.getResources(pageable);
         model.addAttribute("result", resourcesResultRest);
-        return "launchpad/resources :: fragment-table";
+        return "launchpad/resource/resources :: fragment-table";
     }
 
     @PostMapping(value = "/resource-upload-from-file")
@@ -73,11 +73,11 @@ public class ResourceController {
             @RequestParam(name = "poolCode") String resourcePoolCode,
             final RedirectAttributes redirectAttributes) {
 
-        OperationStatusRest operationStatusRest = resourceTopLevelService.createResourceFromFile(file, resourceCode, resourcePoolCode);
+        OperationStatusRest operationStatusRest = resourceTopLevelService.createResourceFromFile(file, resourcePoolCode, resourceCode);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
-        return "redirect:/launchpad/resources";
+        return "redirect:/launchpad/resource/resources";
     }
 
     @PostMapping(value = "/resource-in-external-storage")
@@ -90,7 +90,7 @@ public class ResourceController {
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
-        return "redirect:/launchpad/resources";
+        return "redirect:/launchpad/resource/resources";
     }
 
     @GetMapping("/resource-delete/{id}")
@@ -101,7 +101,7 @@ public class ResourceController {
             return "redirect:/launchpad/resources";
         }
         model.addAttribute("resource", resourceResultRest.data);
-        return "launchpad/resource-delete";
+        return "launchpad/resource/resource-delete";
     }
 
     @PostMapping("/resource-delete-commit")
@@ -110,6 +110,6 @@ public class ResourceController {
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }
-        return "redirect:/launchpad/resources";
+        return "redirect:/launchpad/resource/resources";
     }
 }

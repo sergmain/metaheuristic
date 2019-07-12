@@ -18,11 +18,14 @@ package ai.metaheuristic.ai.db;
 
 import ai.metaheuristic.ai.launchpad.beans.LogData;
 import ai.metaheuristic.ai.launchpad.repositories.LogDataRepository;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
@@ -34,26 +37,43 @@ public class TestLogDataRepository {
     @Autowired
     private LogDataRepository logDataRepository;
 
+    private LogData logData = null;
+
+    @Before
+    public void before() {
+        logData = new LogData();
+        logData.setLogData("This is log data");
+        logData.setType(LogData.Type.ASSEMBLING);
+        logData.setRefId(42L);
+        logData = logDataRepository.saveAndFlush(logData);
+        Assert.assertNotNull(logData);
+    }
+
+    @After
+    public void after() {
+        if (logData!=null) {
+            try {
+                logDataRepository.deleteById(logData.getId());
+            } catch (EmptyResultDataAccessException e) {
+                //
+            }
+        }
+    }
+
     @Test
     public void testLogData(){
 
-        LogData logData = logDataRepository.findById(-1L).orElse(null);
-        Assert.assertNull(logData);
+        LogData logDataTemp = logDataRepository.findById(-1L).orElse(null);
+        Assert.assertNull(logDataTemp);
 
-        LogData logData1 = new LogData();
-        logData1.setLogData("This is log data");
-        logData1.setType(LogData.Type.ASSEMBLING);
-        logData1.setRefId(42L);
-        LogData newlogData = logDataRepository.saveAndFlush(logData1);
-        Assert.assertNotNull(newlogData);
 
-        LogData datasetWithLogs = logDataRepository.findById(newlogData.getId()).orElse(null);
+        LogData datasetWithLogs = logDataRepository.findById(logData.getId()).orElse(null);
         Assert.assertNotNull(datasetWithLogs);
 
         logDataRepository.delete(datasetWithLogs);
 
-        logData1 = logDataRepository.findById(newlogData.getId()).orElse(null);
-        Assert.assertNull(logData1);
+        LogData newlogData = logDataRepository.findById(datasetWithLogs.getId()).orElse(null);
+        Assert.assertNull(newlogData);
 
     }
 }

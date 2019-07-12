@@ -16,14 +16,17 @@
 
 package ai.metaheuristic.ai.plan;
 
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
-import ai.metaheuristic.ai.yaml.input_resource_param.InputResourceParamUtils;
+import ai.metaheuristic.ai.yaml.workbook.WorkbookParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.launchpad.process.ProcessV2;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,6 +54,8 @@ public class TestCountOfTasks extends PreparingPlan {
     public TaskService taskService;
     @Autowired
     public TaskPersistencer taskPersistencer;
+    @Autowired
+    public WorkbookService workbookService;
 
     @Test
     public void testCountNumberOfTasks() {
@@ -62,15 +67,16 @@ public class TestCountOfTasks extends PreparingPlan {
         EnumsApi.PlanValidateStatus status = planService.validate(plan);
         assertEquals(EnumsApi.PlanValidateStatus.OK, status);
 
-        PlanApiData.TaskProducingResultComplex result = planService.createWorkbook(plan.getId(), InputResourceParamUtils.toString(inputResourceParam));
-        workbook = result.workbook;
+        PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookParamsYaml);
+        workbook = (WorkbookImpl)result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.NONE.code, workbook.getExecState());
 
 
-        EnumsApi.PlanProducingStatus producingStatus = planService.toProducing(workbook);
-        assertEquals(EnumsApi.PlanProducingStatus.OK, producingStatus);
+        EnumsApi.PlanProducingStatus producingStatus = workbookService.toProducing(workbook.id);
+        workbook = workbookCache.findById(this.workbook.id);
+        assertNotNull(workbook);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCING.code, workbook.getExecState());
 
         List<Object[]> tasks01 = taskCollector.getTasks(result.workbook);
@@ -90,7 +96,7 @@ public class TestCountOfTasks extends PreparingPlan {
         result = planService.produceAllTasks(true, plan, workbook);
         log.info("All tasks were produced for " + (System.currentTimeMillis() - mills )+" ms.");
 
-        workbook = result.workbook;
+        workbook = (WorkbookImpl)result.workbook;
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);
         assertEquals(EnumsApi.WorkbookExecState.PRODUCED.code, workbook.getExecState());
 
@@ -110,11 +116,11 @@ public class TestCountOfTasks extends PreparingPlan {
         assertEquals(numberOfTasks, tasks.size());
 
         int taskNumber = 0;
-        for (Process process : planParamsYaml.planYaml.processes) {
+        for (ProcessV2 process : planParamsYaml.planYaml.processes) {
             if (process.type== EnumsApi.ProcessType.EXPERIMENT) {
                 continue;
             }
-            taskNumber += process.snippets.size();
+            taskNumber += process.snippetCodes.size();
         }
         final ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 

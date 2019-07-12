@@ -17,14 +17,18 @@
 package ai.metaheuristic.ai.launchpad.rest.v1;
 
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @RestController
 @RequestMapping("/rest/v1/launchpad/experiment")
@@ -32,13 +36,12 @@ import org.springframework.web.multipart.MultipartFile;
 @Profile("launchpad")
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
+@RequiredArgsConstructor
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
 public class ExperimentRestController {
 
     private final ExperimentTopLevelService experimentTopLevelService;
-
-    public ExperimentRestController(ExperimentTopLevelService experimentTopLevelService) {
-        this.experimentTopLevelService = experimentTopLevelService;
-    }
+    private final WorkbookService workbookService;
 
     @GetMapping("/experiments")
     public ExperimentApiData.ExperimentsResult getExperiments(@PageableDefault(size = 5) Pageable pageable) {
@@ -110,7 +113,7 @@ public class ExperimentRestController {
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
     public OperationStatusRest metadataDeleteCommit(@PathVariable long experimentId, @PathVariable String key) {
-        if (true) throw new IllegalStateException("Need to change this in web and angular");
+        if (true) throw new IllegalStateException("Need to change this in web(html files) and angular");
         return experimentTopLevelService.metadataDeleteCommit(experimentId, key);
     }
 
@@ -136,7 +139,7 @@ public class ExperimentRestController {
 
     @PostMapping("/task-rerun/{taskId}")
     public OperationStatusRest rerunTask(@PathVariable long taskId) {
-        return experimentTopLevelService.rerunTask(taskId);
+        return workbookService.resetTask(taskId);
     }
 
     @PostMapping(value = "/experiment-upload-from-file")
@@ -144,5 +147,8 @@ public class ExperimentRestController {
         return experimentTopLevelService.uploadExperiment(file);
     }
 
-
+    @GetMapping(value = "/experiment-to-atlas/{id}")
+    public OperationStatusRest toAtlas(@PathVariable Long id) {
+        return experimentTopLevelService.toAtlas(id);
+    }
 }

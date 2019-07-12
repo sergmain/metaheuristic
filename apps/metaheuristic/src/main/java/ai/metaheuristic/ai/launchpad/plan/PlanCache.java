@@ -50,6 +50,9 @@ public class PlanCache {
 
     @CacheEvict(cacheNames = {Consts.PLANS_CACHE}, key = "#plan.id")
     public void delete(Plan plan) {
+        if (plan==null || plan.getId()==null) {
+            return;
+        }
         try {
             planRepository.deleteById(plan.getId());
         } catch (ObjectOptimisticLockingFailureException e) {
@@ -59,6 +62,9 @@ public class PlanCache {
 
     @CacheEvict(cacheNames = {Consts.PLANS_CACHE}, key = "#id")
     public void deleteById(Long id) {
+        if (id==null) {
+            return;
+        }
         try {
             planRepository.deleteById(id);
         } catch (ObjectOptimisticLockingFailureException e) {

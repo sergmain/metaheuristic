@@ -15,7 +15,10 @@
  */
 package ai.metaheuristic.ai.launchpad.beans;
 
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.launchpad.Plan;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
@@ -49,4 +52,26 @@ public class PlanImpl implements Serializable, Plan {
     @Column(name = "IS_VALID")
     public boolean valid;
 
+    @Transient
+    @JsonIgnore
+    private PlanParamsYaml ppy = null;
+
+    @JsonIgnore
+    public PlanParamsYaml getPlanParamsYaml() {
+        if (ppy ==null) {
+            synchronized (this) {
+                if (ppy ==null) {
+                    //noinspection UnnecessaryLocalVariable
+                    PlanParamsYaml temp = PlanParamsYamlUtils.BASE_YAML_UTILS.to(params);
+                    ppy = temp;
+                }
+            }
+        }
+        return ppy;
+    }
+
+    @JsonIgnore
+    public void updateParams(PlanParamsYaml ppy) {
+        params = PlanParamsYamlUtils.BASE_YAML_UTILS.toString(ppy);
+    }
 }

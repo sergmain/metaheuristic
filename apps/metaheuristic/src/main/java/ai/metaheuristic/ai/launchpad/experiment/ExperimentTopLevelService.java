@@ -17,15 +17,16 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
+import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
-import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.snippet.SnippetCode;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
@@ -36,9 +37,10 @@ import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
 import ai.metaheuristic.commons.CommonConsts;
+import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
 import lombok.RequiredArgsConstructor;
@@ -53,6 +55,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -77,12 +80,13 @@ public class ExperimentTopLevelService {
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
     private final TaskRepository taskRepository;
-    private final WorkbookRepository workbookRepository;
-    private final TaskPersistencer taskPersistencer;
+    private final WorkbookCache workbookCache;
+    private final WorkbookGraphService workbookGraphService;
 
     private final ExperimentCache experimentCache;
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
+    private final AtlasService atlasService;
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
@@ -136,16 +140,19 @@ public class ExperimentTopLevelService {
 
     public ExperimentApiData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long experimentId, Long featureId, String[] params, Pageable pageable) {
         Experiment experiment= experimentCache.findById(experimentId);
+        WorkbookImpl workbook = workbookCache.findById(experiment.workbookId);
 
         ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
 
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
         tasksResult.items = experimentService.findTasks(ControllerUtils.fixPageSize(10, pageable), experiment, feature, params);
 
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
+
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.tasksResult = tasksResult;
         result.experiment = ExperimentService.asExperimentData(experiment);
-        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature);
+        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature, taskVertices, experiment.getExperimentParamsYaml().processing.taskFeatures);
         result.consoleResult = new ExperimentApiData.ConsoleResult();
         return result;
     }
@@ -155,29 +162,30 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.030 experiment wasn't found, experimentId: " + experimentId);
         }
-        if (experiment.workbookId==null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.040 workbookId is null");
-        }
-
-        ExperimentParamsYaml.ExperimentFeature feature = experiment.getExperimentParamsYaml().getFeature(featureId);
-        if (feature == null) {
-            return new ExperimentApiData.ExperimentFeatureExtendedResult("#285.050 feature wasn't found, experimentFeatureId: " + featureId);
-        }
-
-        return experimentService.prepareExperimentFeatures(experiment, feature);
+        return experimentService.prepareExperimentFeatures(experiment, featureId);
     }
 
-    public ExperimentApiData.ExperimentInfoExtendedResult getExperimentInfo(Long id) {
-        Experiment experiment = experimentCache.findById(id);
+    public ExperimentApiData.ExperimentInfoExtendedResult getExperimentInfo(Long experimentId) {
+
+        Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
-            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.060 experiment wasn't found, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.060 experiment wasn't found, experimentId: " + experimentId);
         }
+        experimentService.updateMaxValueForExperimentFeatures(experiment.getWorkbookId());
+
+        // one more time to get new object from cache
+        experiment = experimentCache.findById(experimentId);
+        if (experiment == null) {
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.064 experiment wasn't found, experimentId: " + experimentId);
+        }
+
         if (experiment.getWorkbookId() == null) {
-            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.070 experiment wasn't startet yet, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.070 experiment wasn't startet yet, experimentId: " + experimentId);
         }
-        Workbook workbook = workbookRepository.findById(experiment.getWorkbookId()).orElse(null);
+
+        WorkbookImpl workbook = workbookCache.findById(experiment.getWorkbookId());
         if (workbook == null) {
-            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to workbook, experimentId: " + id);
+            return new ExperimentApiData.ExperimentInfoExtendedResult("#285.080 experiment has broken ref to workbook, experimentId: " + experimentId);
         }
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
         for (ExperimentParamsYaml.HyperParam hyperParams : epy.experimentYaml.hyperParams) {
@@ -193,9 +201,10 @@ public class ExperimentTopLevelService {
             result.addInfoMessage("#285.090 A launch is disabled, dataset isn't assigned");
         }
 
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
         ExperimentApiData.ExperimentInfoResult experimentInfoResult = new ExperimentApiData.ExperimentInfoResult();
         final List<ExperimentParamsYaml.ExperimentFeature> experimentFeatures = epy.processing.features;
-        experimentInfoResult.features = experimentFeatures.stream().map(ExperimentService::asExperimentFeatureData).collect(Collectors.toList());
+        experimentInfoResult.features = experimentFeatures.stream().map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
         experimentInfoResult.workbook = workbook;
         experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.getExecState());
         result.experiment = ExperimentService.asExperimentData(experiment);
@@ -203,6 +212,7 @@ public class ExperimentTopLevelService {
         return result;
     }
 
+    @SuppressWarnings("RedundantIfStatement")
     public ExperimentApiData.ExperimentsEditResult editExperiment(@PathVariable Long id) {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
@@ -448,7 +458,7 @@ public class ExperimentTopLevelService {
 
     public OperationStatusRest snippetDeleteCommit(long experimentId, String snippetCode) {
         if (snippetCode==null || snippetCode.isBlank()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.62 snippetCode is blank");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.245 snippetCode is blank");
         }
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment == null) {
@@ -486,7 +496,7 @@ public class ExperimentTopLevelService {
         }
         // do not use experiment.getExperimentParamsYaml() because it's  caching ExperimentParamsYaml
         ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.params);
-
+        epy.processing = new ExperimentParamsYaml.ExperimentProcessing();
         epy.createdOn = System.currentTimeMillis();
 
         final Experiment e = new Experiment();
@@ -504,24 +514,6 @@ public class ExperimentTopLevelService {
         e.updateParams(epy);
         experimentCache.save(e);
         return OperationStatusRest.OPERATION_STATUS_OK;
-    }
-
-    public OperationStatusRest rerunTask(long taskId) {
-        Task task = taskRepository.findById(taskId).orElse(null);
-        if (task == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.280 Can't re-run task "+taskId+", task with such taskId wasn't found");
-        }
-        Workbook workbook = workbookRepository.findById(task.getWorkbookId()).orElse(null);
-        if (workbook == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.290 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
-        }
-
-        Task t = taskPersistencer.resetTask(taskId);
-        return t!=null
-                ? OperationStatusRest.OPERATION_STATUS_OK
-                : new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.300 Can't re-run task #"+taskId+", see log for more information");
     }
 
     public OperationStatusRest uploadExperiment(MultipartFile file) {
@@ -572,25 +564,25 @@ public class ExperimentTopLevelService {
 
     public OperationStatusRest addExperiment(String experimentYamlAsStr) {
         if (StringUtils.isBlank(experimentYamlAsStr)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.017 plan yaml is empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.370 plan yaml is empty");
         }
 
         ExperimentParamsYaml ppy;
         try {
             ppy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experimentYamlAsStr);
         } catch (WrongVersionOfYamlFileException e) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.017 Error parsing yaml: " + e.getMessage());
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.380 Error parsing yaml: " + e.getMessage());
         }
 
         final String code = ppy.experimentYaml.code;
         if (StringUtils.isBlank(code)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.020 code of experiment is empty");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.390 code of experiment is empty");
         }
         ppy.createdOn = System.currentTimeMillis();
 
         Long experimentId = experimentRepository.findIdByCode(code);
         if (experimentId!=null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.033 plan with such code already exists, code: " + code);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.400 plan with such code already exists, code: " + code);
         }
 
         Experiment e = new Experiment();
@@ -602,4 +594,22 @@ public class ExperimentTopLevelService {
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
+    public OperationStatusRest toAtlas(Long id) {
+
+        Experiment experiment = experimentCache.findById(id);
+        if (experiment==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.410 can't find experiment for id: " + id);
+        }
+
+        if (experiment.workbookId==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.420 This experiment isn't bound to Workbook");
+        }
+
+        OperationStatusRest status = atlasService.toAtlas(experiment.workbookId, id);
+        if (status.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, status.errorMessages);
+        }
+        return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Experiment was successfully stored to atlas", null);
+    }
 }

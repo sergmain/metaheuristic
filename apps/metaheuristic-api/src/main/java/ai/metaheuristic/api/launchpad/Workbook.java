@@ -32,9 +32,9 @@ public interface Workbook {
 
     Long getCompletedOn();
 
-    String getInputResourceParam();
+    String getParams();
 
-    int getProducingOrder();
+//    int getProducingOrder();
 
     boolean isValid();
 
@@ -50,9 +50,9 @@ public interface Workbook {
 
     void setCompletedOn(Long completedOn);
 
-    void setInputResourceParam(String inputResourceParam);
+    void setParams(String params);
 
-    void setProducingOrder(int producingOrder);
+//    void setProducingOrder(int producingOrder);
 
     void setValid(boolean valid);
 

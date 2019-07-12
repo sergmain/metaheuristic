@@ -18,20 +18,17 @@ package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
@@ -40,20 +37,15 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class TaskPersistencer {
 
     private static final int NUMBER_OF_TRY = 2;
     private final TaskRepository taskRepository;
-    private final WorkbookRepository workbookRepository;
 
     private final Object syncObj = new Object();
 
-    public TaskPersistencer(TaskRepository taskRepository, WorkbookRepository workbookRepository) {
-        this.taskRepository = taskRepository;
-        this.workbookRepository = workbookRepository;
-    }
-
-    public Task setParams(long taskId, String taskParams) {
+    public TaskImpl setParams(long taskId, String taskParams) {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
@@ -117,15 +109,23 @@ public class TaskPersistencer {
         return null;
     }
 
-    public Task resetTask(long taskId) {
-        log.info("Start resetting task #{}", taskId);
+    public Task resetTask(Long taskId) {
+        TaskImpl task = taskRepository.findById(taskId).orElse(null);
+        if (task == null) {
+            return null;
+        }
+        return resetTask(task);
+    }
+
+    public Task resetTask(TaskImpl task) {
+        log.info("Start resetting task #{}", task.getId());
+
+/*
+        // TODO 2019-07-04 do we still need this synchronization?
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
-                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
-                    if (task == null) {
-                        return null;
-                    }
+*/
                     task.setSnippetExecResults(null);
                     task.setStationId(null);
                     task.setAssignedOn(null);
@@ -135,40 +135,26 @@ public class TaskPersistencer {
                     task.setExecState(EnumsApi.TaskExecState.NONE.value);
                     task.setResultReceived(false);
                     task.setResultResourceScheduledOn(0);
-                    taskRepository.saveAndFlush(task);
+                    taskRepository.save(task);
 
-                    Workbook workbook = workbookRepository.findById(task.workbookId).orElse(null);
-                    if (workbook != null) {
-                        if (task.order < workbook.getProducingOrder() ||
-                                EnumsApi.WorkbookExecState.toState(workbook.getExecState()) == EnumsApi.WorkbookExecState.FINISHED) {
-                            workbook.setProducingOrder( task.order );
-                            workbook.setExecState( EnumsApi.WorkbookExecState.STARTED.code );
-                            save(workbook);
-                        }
-                    }
-                    else {
-                        log.warn("#307.24 Workbook #{} wasn't found", task.workbookId);
-                    }
                     return task;
+/*
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.25 Error while resetting task, taskId: {}, error: {}",  taskId, e.toString());
+                    log.error("#307.25 Error while resetting task, try: {}, taskId: {}, error: {}",  i, task.getId(), e.toString());
                 }
             }
         }
         return null;
+*/
     }
 
-    public Workbook save(Workbook workbook) {
-        if (workbook instanceof WorkbookImpl) {
-            return workbookRepository.saveAndFlush((WorkbookImpl)workbook);
-        }
-        else {
-            throw new NotImplementedException("Need to implement");
-        }
+    @FunctionalInterface
+    public interface PostTaskCreationAction {
+        void execute(Task t);
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public Task storeExecResult(SimpleTaskExecResult result) {
+    public Task storeExecResult(SimpleTaskExecResult result, PostTaskCreationAction action) {
         synchronized (syncObj) {
             SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
             if (!snippetExec.exec.isOk) {
@@ -178,8 +164,8 @@ public class TaskPersistencer {
             }
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
-                    //noinspection UnnecessaryLocalVariable
                     Task t = prepareAndSaveTask(result, snippetExec.allSnippetsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR);
+                    action.execute(t);
                     return t;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.error("#307.29 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
@@ -190,7 +176,7 @@ public class TaskPersistencer {
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    public void finishTask(Long taskId) {
+    public void finishTaskAsBroken(Long taskId) {
         synchronized (syncObj) {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
@@ -222,8 +208,6 @@ public class TaskPersistencer {
         if (state== EnumsApi.TaskExecState.ERROR) {
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
-            // TODO 2019.05.02 !!! add here statuses to tasks which are in chain after this one
-            // TODO we have to stop processing workbook if there is error in tasks
         }
         else {
             TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());

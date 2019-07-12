@@ -48,8 +48,8 @@ public class ExecProcessService {
         log.info("\ttaskDir: {}", execDir.getPath());
         log.info("\ttaskDir abs: {}", execDir.getAbsolutePath());
         log.info("\tconsoleLogFile abs: {}", consoleLogFile.getAbsolutePath());
-        log.info("\ttimeoutBeforeTerminate (seconds): {}", timeoutBeforeTerminate);
         log.info("\tsnippetCode: {}", snippetCode);
+        log.info("\ttimeoutBeforeTerminate (seconds): {}", timeoutBeforeTerminate);
 
         final AtomicLong timeout = new AtomicLong(0);
         if (timeoutBeforeTerminate!=null && timeoutBeforeTerminate!=0) {

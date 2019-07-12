@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.station;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
+import ai.metaheuristic.ai.exceptions.BreakFromForEachException;
 import ai.metaheuristic.ai.exceptions.ResourceProviderException;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
@@ -32,10 +33,11 @@ import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Profile;
@@ -52,6 +54,7 @@ import java.util.Map;
 @Service
 @Slf4j
 @Profile("station")
+@RequiredArgsConstructor
 public class StationService {
 
     private final Globals globals;
@@ -62,17 +65,6 @@ public class StationService {
     private final EnvService envService;
     private final ResourceProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
-
-    public StationService(Globals globals, StationTaskService stationTaskService, UploadResourceActor uploadResourceActor, MetadataService metadataService, LaunchpadLookupExtendedService launchpadLookupExtendedService, EnvService envService, ResourceProviderFactory resourceProviderFactory, GitSourcingService gitSourcingService) {
-        this.globals = globals;
-        this.stationTaskService = stationTaskService;
-        this.uploadResourceActor = uploadResourceActor;
-        this.metadataService = metadataService;
-        this.launchpadLookupExtendedService = launchpadLookupExtendedService;
-        this.envService = envService;
-        this.resourceProviderFactory = resourceProviderFactory;
-        this.gitSourcingService = gitSourcingService;
-    }
 
     Protocol.ReportStationStatus produceReportStationStatus(String launchpadUrl, LaunchpadSchedule schedule) {
 
@@ -190,6 +182,10 @@ public class StationService {
             taskParamYaml.taskYaml.inputResourceCodes.forEach((key, value) -> {
                 for (String resourceCode : value) {
                     final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(resourceCode);
+                    if (params==null) {
+                        log.error("inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml));
+                        throw new BreakFromForEachException();
+                    }
                     ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                     List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, params);
                     result.assetFiles.computeIfAbsent(key, o -> new ArrayList<>()).addAll(assetFiles);
@@ -202,7 +198,13 @@ public class StationService {
                     }
                 }
             });
-        } catch (ResourceProviderException e) {
+        }
+        catch (BreakFromForEachException e) {
+            stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
+            result.isError = true;
+            return result;
+        }
+        catch (ResourceProviderException e) {
             log.error("Error", e);
             stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
             result.isError = true;
@@ -238,5 +240,4 @@ public class StationService {
             return null;
         }
     }
-
 }
