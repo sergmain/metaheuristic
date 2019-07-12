@@ -143,6 +143,7 @@ public class CommandProcessor {
         return Protocol.NOP_ARRAY;
     }
 
+    // processing on station side
     private Command[] processReportResultDelivering(Protocol.ReportResultDelivering command) {
         stationServicesHolder.getStationService().markAsDelivered(command.launchpadUrl, command.getIds());
         return Protocol.NOP_ARRAY;

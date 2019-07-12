@@ -20,6 +20,9 @@ import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -45,6 +48,13 @@ public class WorkbookRestController {
     private final PlanTopLevelService planTopLevelService;
     private final WorkbookTopLevelService workbookTopLevelService;
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SimpleWorkbookAddingResult {
+        public Long workbookId;
+    }
+
     @GetMapping("/workbooks/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'ACCESS_REST')")
     public PlanApiData.WorkbooksResult workbooks(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
@@ -53,10 +63,9 @@ public class WorkbookRestController {
 
     @PostMapping("/plan-code-workbook-add-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
-    public PlanApiData.WorkbookResult workbookAddCommit(String planCode, String poolCode, String inputResourceParams) {
-        //noinspection UnnecessaryLocalVariable
+    public SimpleWorkbookAddingResult workbookAddCommit(String planCode, String poolCode, String inputResourceParams) {
         PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planCode, poolCode, inputResourceParams);
-        return workbookResult;
+        return new SimpleWorkbookAddingResult(workbookResult.workbook.getId());
     }
 
     @PostMapping("/workbook-add-commit")
@@ -79,6 +88,7 @@ public class WorkbookRestController {
         return workbookTopLevelService.getWorkbookExtended(workbookId);
     }
 
+    @SuppressWarnings("unused")
     @PostMapping("/workbook-delete-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
     public OperationStatusRest workbookDeleteCommit(Long planId, Long workbookId) {
@@ -89,12 +99,6 @@ public class WorkbookRestController {
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
     public OperationStatusRest workbookTargetExecState(@SuppressWarnings("unused") @PathVariable Long planId, @PathVariable String state, @PathVariable Long id) {
         return planTopLevelService.changeWorkbookExecState(state, id);
-    }
-
-    @GetMapping("/experiment-code-workbook-target-exec-state/{state}/{experimentCode}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
-    public OperationStatusRest workbookTargetExecStateWithExperimentCode(@PathVariable String state, @PathVariable String experimentCode) {
-        return planTopLevelService.changeWorkbookExecStateWithExperimentCode(state, experimentCode);
     }
 
 }

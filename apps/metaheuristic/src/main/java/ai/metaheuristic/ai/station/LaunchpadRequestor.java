@@ -223,7 +223,8 @@ public class LaunchpadRequestor {
         }
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask task : list) {
-            if (task.isDelivered() || task.isReported()) {
+            // TODO 2019-07-12 do we need to check against task.isReported()? isn't task.isDelivered() just enought?
+            if (task.isDelivered() && task.isReported() ) {
                 continue;
             }
             command.getResults().add(new SimpleTaskExecResult(task.getTaskId(),
