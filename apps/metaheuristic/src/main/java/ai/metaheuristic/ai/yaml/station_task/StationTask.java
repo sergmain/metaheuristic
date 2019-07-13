@@ -34,7 +34,7 @@ public class StationTask {
     // snippet exec result
     public String snippetExecResult;
 
-    // need to clean dir of task after processing this task?
+    // need to clean a dir of task after processing this task?
     public boolean clean;
 
     public String launchpadUrl;

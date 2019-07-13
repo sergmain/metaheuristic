@@ -34,7 +34,6 @@ import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -83,7 +82,6 @@ public class PlanService {
     private final FileProcessValidator fileProcessValidator;
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
-    private final WorkbookGraphService workbookGraphService;
     private final CommonProcessValidatorService commonProcessValidatorService;
     private final SnippetRepository snippetRepository;
 

@@ -15,23 +15,22 @@
  */
 package ai.metaheuristic.ai.launchpad.snippet;
 
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetUtils;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.snippet.SnippetCode;
-import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -41,7 +40,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
