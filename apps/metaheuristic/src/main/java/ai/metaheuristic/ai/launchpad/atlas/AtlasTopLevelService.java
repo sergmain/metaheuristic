@@ -25,7 +25,7 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
 import ai.metaheuristic.ai.utils.ControllerUtils;
-import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYaml;
+import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.metrics.MetricValues;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -91,7 +91,7 @@ public class AtlasTopLevelService {
             return new AtlasData.ExperimentInfoExtended("#280.02 experiment wasn't found in atlas, id: " + id);
         }
 
-        AtlasParamsYaml estb1;
+        AtlasParamsYamlWithCache estb1;
         try {
             estb1 = atlasService.fromJson(atlas.experiment);
         } catch (IOException e) {
@@ -152,7 +152,7 @@ public class AtlasTopLevelService {
             return new AtlasData.PlotData("#280.22 experiment wasn't found in atlas, id: " + atlasId);
         }
 
-        AtlasParamsYaml estb1;
+        AtlasParamsYamlWithCache estb1;
         try {
             estb1 = atlasService.fromJson(atlas.experiment);
         } catch (IOException e) {
@@ -169,7 +169,7 @@ public class AtlasTopLevelService {
     }
 
     public AtlasData.PlotData findExperimentTaskForPlot(
-            AtlasParamsYaml estb, ExperimentFeature feature, String[] params, String[] paramsAxis) {
+            AtlasParamsYamlWithCache estb, ExperimentFeature feature, String[] params, String[] paramsAxis) {
         if (estb.experiment == null || feature == null) {
             return AtlasData.EMPTY_PLOT_DATA;
         } else {
@@ -178,7 +178,7 @@ public class AtlasTopLevelService {
         }
     }
 
-    public List<Task> getTasksForFeatureIdAndParams(AtlasParamsYaml estb1, ExperimentFeature feature, String[] params) {
+    public List<Task> getTasksForFeatureIdAndParams(AtlasParamsYamlWithCache estb1, ExperimentFeature feature, String[] params) {
         final Map<Long, Integer> taskToTaskType = estb1.experiment.getExperimentParamsYaml().processing.taskFeatures
                 .stream()
                 .filter(taskFeature -> taskFeature.featureId.equals(feature.getId()))
@@ -195,7 +195,7 @@ public class AtlasTopLevelService {
         return selected;
     }
 
-    private AtlasData.PlotData collectDataForPlotting(AtlasParamsYaml estb, List<Task> selected, String[] paramsAxis) {
+    private AtlasData.PlotData collectDataForPlotting(AtlasParamsYamlWithCache estb, List<Task> selected, String[] paramsAxis) {
         final AtlasData.PlotData data = new AtlasData.PlotData();
         final List<String> paramCleared = new ArrayList<>();
         for (String param : paramsAxis) {
@@ -328,7 +328,7 @@ public class AtlasTopLevelService {
             return new AtlasData.ExperimentFeatureExtendedResult("#280.31 experiment wasn't found in atlas, id: " + atlasId);
         }
 
-        AtlasParamsYaml estb1;
+        AtlasParamsYamlWithCache estb1;
         try {
             estb1 = atlasService.fromJson(atlas.experiment);
         } catch (IOException e) {
@@ -350,7 +350,7 @@ public class AtlasTopLevelService {
     }
 
     public AtlasData.ExperimentFeatureExtendedResult prepareExperimentFeatures(
-            AtlasParamsYaml estb,
+            AtlasParamsYamlWithCache estb,
             Experiment experiment, final ExperimentFeature experimentFeature) {
 
         TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
@@ -444,7 +444,7 @@ public class AtlasTopLevelService {
             return new AtlasData.ConsoleResult("#280.42 experiment wasn't found in atlas, id: " + atlasId);
         }
 
-        AtlasParamsYaml estb;
+        AtlasParamsYamlWithCache estb;
         try {
             estb = atlasService.fromJson(atlas.experiment);
         } catch (IOException e) {
@@ -507,7 +507,7 @@ public class AtlasTopLevelService {
             return new AtlasData.ExperimentFeatureExtendedResult("#280.57 experiment wasn't found in atlas, id: " + atlasId);
         }
 
-        AtlasParamsYaml estb;
+        AtlasParamsYamlWithCache estb;
         try {
             estb = atlasService.fromJson(atlas.experiment);
         } catch (IOException e) {
@@ -529,7 +529,7 @@ public class AtlasTopLevelService {
         return result;
     }
 
-    public Slice<TaskWIthType> findTasks(AtlasParamsYaml estb, long atlasId, Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
+    public Slice<TaskWIthType> findTasks(AtlasParamsYamlWithCache estb, long atlasId, Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
         if (experiment == null || feature == null) {
             return Page.empty();
         } else {

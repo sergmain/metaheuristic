@@ -18,7 +18,7 @@ package ai.metaheuristic.ai.atlas;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
-import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYaml;
+import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
@@ -88,10 +88,10 @@ public class TestExperimentToJson extends PreparingPlan {
         if (r.status!= Enums.StoringStatus.OK) {
             throw new IllegalStateException("experiment can't be stored, status: " + r.status+", error: " + r.errorMessages);
         }
-        String json = atlasService.toJson(r.atlasParamsYaml);
+        String json = atlasService.toJson(r.atlasParamsYamlWithCache);
 
         System.out.println("json =\n" + json);
-        AtlasParamsYaml estb1 = atlasService.fromJson(json);
+        AtlasParamsYamlWithCache estb1 = atlasService.fromJson(json);
         System.out.println("estb1 = " + estb1);
     }
 }
