@@ -88,10 +88,21 @@ public class SnippetService {
             if (snippet != null) {
                 snippetConfig = SnippetConfigUtils.to(snippet.params);
                 if (!snippetConfig.skipParams) {
+                    if (snippetConfig.params!=null && snippetDef.params!=null) {
+                        snippetConfig.params = snippetConfig.params + ' ' + snippetDef.params;
+                    }
+                    else if (snippetConfig.params == null) {
+                        if (snippetDef.params != null) {
+                            snippetConfig.params = snippetDef.params;
+                        }
+                    }
+/*
+                    // TODO 2019-07-12 to delete after 2019-07-26
                     snippetConfig.params =
                             snippetConfig.params!=null
                                     ? snippetConfig.params + ' ' + snippetDef.params
                                     : snippetDef.params;
+*/
                 }
             } else {
                 log.warn("#295.010 Can't find snippet for code {}", snippetDef.code);
