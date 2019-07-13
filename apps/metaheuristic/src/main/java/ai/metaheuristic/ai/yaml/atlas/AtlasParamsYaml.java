@@ -16,24 +16,16 @@
 
 package ai.metaheuristic.ai.yaml.atlas;
 
-import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtilsV5;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYamlV1;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV2;
-import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV2;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.springframework.beans.BeanUtils;
 
 import java.util.*;
 
@@ -42,18 +34,18 @@ import java.util.*;
 public class AtlasParamsYaml {
 
     @JsonIgnore
-    public ExperimentParamsYaml.ExperimentFeature getFeature(Long featureId) {
-        return experiment.getExperimentParamsYaml().processing.features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
+    public ExperimentParamsYamlV1.ExperimentFeatureV1 getFeature(Long featureId) {
+        return experimentParams.processing.features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
     }
 
     @JsonIgnore
-    public TaskOnShelf getTask(Long taskId) {
-        return tasks.stream().filter(o -> Objects.equals(o.id, taskId)).findAny().orElse(null);
+    public TaskOnShelfV1 getTask(Long taskId) {
+        return tasks.stream().filter(o -> Objects.equals(o.taskId, taskId)).findAny().orElse(null);
     }
 
     @JsonIgnore
-    public ExperimentParamsYaml.ExperimentTaskFeature getExperimentTaskFeature(Long taskId) {
-        return experiment.getExperimentParamsYaml().processing.taskFeatures
+    public ExperimentParamsYamlV1.ExperimentTaskFeatureV1 getExperimentTaskFeature(Long taskId) {
+        return experimentParams.processing.taskFeatures
                 .stream()
                 .filter(o -> o.taskId.equals(taskId))
                 .findFirst().orElse(null);
@@ -63,7 +55,7 @@ public class AtlasParamsYaml {
     @JsonIgnore
     public Map<String, Map<String, Integer>> getHyperParamsAsMap(boolean isFull) {
         final Map<String, Map<String, Integer>> paramByIndex = new LinkedHashMap<>();
-        for (ExperimentParamsYaml.HyperParam hyperParam : experiment.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
+        for (ExperimentParamsYamlV1.HyperParamV1 hyperParam : experimentParams.experimentYaml.getHyperParams()) {
             ExperimentUtils.NumberOfVariants ofVariants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues() );
             Map<String, Integer> map = new LinkedHashMap<>();
             paramByIndex.put(hyperParam.getKey(), map);
@@ -79,67 +71,42 @@ public class AtlasParamsYaml {
 
     @Data
     @NoArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    @JsonIgnoreProperties(value = {"version", "clean"})
-    @ToString(callSuper = true)
-    public static class PlanOnShelf extends PlanImpl {
-        public PlanOnShelf(Plan plan) {
-            BeanUtils.copyProperties(plan, this);
-        }
+    @AllArgsConstructor
+    @ToString
+    public static class PlanOnShelf {
+        public PlanParamsYamlUtilsV5 ppy;
     }
 
     @Data
     @NoArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    @JsonIgnoreProperties(value = {"version"})
-    @ToString(callSuper = true)
-    public static class WorkbookOnShelf extends WorkbookImpl {
-        public WorkbookOnShelf(Workbook workbook) {
-            BeanUtils.copyProperties(workbook, this);
-        }
+    @AllArgsConstructor
+    @ToString
+    public static class WorkbookOnShelf {
+        public WorkbookParamsYamlV2 workbookParams;
     }
 
 
     @Data
     @NoArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    @JsonIgnoreProperties(value = {"version", "hyperParams", "hyperParamsAsMap"})
-    @ToString(callSuper = true)
-    public static class ExperimentOnShelf extends Experiment {
-        public ExperimentParamsYaml epy = null;
-
-        public ExperimentOnShelf(Experiment experiment) {
-            BeanUtils.copyProperties(experiment, this);
-        }
+    @AllArgsConstructor
+    @ToString
+    public static class TaskOnShelfV1 {
+        public Long taskId;
+        public TaskParamsYamlV2 taskParams;
     }
 
-    @Data
-    @NoArgsConstructor
-    @EqualsAndHashCode(callSuper = false)
-    @JsonIgnoreProperties(value = {"version"})
-    @ToString(callSuper = true)
-    public static class TaskOnShelf extends TaskImpl {
-        TaskParamsYamlV2 taskParams;
-        public TaskOnShelf(Task task) {
-            BeanUtils.copyProperties(task, this);
-        }
-    }
+    public PlanParamsYamlUtilsV5 planParams;
+    public WorkbookParamsYamlV2 workbookParams;
+    public ExperimentParamsYamlV1 experimentParams;
+    public List<TaskOnShelfV1> tasks = new ArrayList<>();
 
-    public PlanOnShelf plan;
-    public WorkbookOnShelf workbook;
-    public ExperimentOnShelf experiment;
-    public List<TaskOnShelf> tasks = new ArrayList<>();
+    public AtlasParamsYaml(
+            PlanParamsYamlUtilsV5 planParams, WorkbookParamsYamlV2 workbookParams,
+            ExperimentParamsYamlV1 experimentParams, List<TaskOnShelfV1> tasks) {
+        this.planParams = planParams;
+        this.workbookParams = workbookParams;
 
-    public AtlasParamsYaml(Plan plan, Workbook workbook, Experiment experiment, List<Task> tasks) {
-
-        this.plan = new PlanOnShelf(plan);
-        this.workbook = new WorkbookOnShelf(workbook);
-        this.experiment = new ExperimentOnShelf(experiment);
-
-        if (tasks!=null) {
-            for (Task task : tasks) {
-                this.tasks.add( new TaskOnShelf(task));
-            }
-        }
+        this.experimentParams = experimentParams;
+        this.tasks = tasks;
     }
 }
