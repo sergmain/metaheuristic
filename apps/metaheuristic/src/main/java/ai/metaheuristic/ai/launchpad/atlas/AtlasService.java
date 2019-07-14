@@ -111,7 +111,7 @@ public class AtlasService {
         b.name = epy.experimentYaml.name;
         b.description = epy.experimentYaml.description;
         b.code = epy.experimentYaml.code;
-        b.createdOn = epy.createdOn;
+        b.createdOn = System.currentTimeMillis();
         atlasRepository.save(b);
 
 /*

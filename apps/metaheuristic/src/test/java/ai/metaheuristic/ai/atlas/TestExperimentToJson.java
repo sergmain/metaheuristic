@@ -75,7 +75,7 @@ public class TestExperimentToJson extends PreparingPlan {
     }
 
     @Test
-    public void toExperimentStoredToAtlasToJson() throws IOException {
+    public void toExperimentStoredToAtlasToYaml() throws IOException {
 
         //noinspection unused
         PlanApiData.TaskProducingResultComplex result = produceTasksForTest();

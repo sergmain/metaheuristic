@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.commons.yaml.versioning;
 
+import ai.metaheuristic.api.data.BaseParams;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -23,7 +24,7 @@ import org.yaml.snakeyaml.Yaml;
  * Date: 6/17/2019
  * Time: 12:17 AM
  */
-abstract public class AbstractParamsYamlUtils<CurrT, NextT, NextU, PrevT, PrevU, CurrForDownT> {
+abstract public class AbstractParamsYamlUtils<CurrT extends BaseParams, NextT extends BaseParams, NextU, PrevT, PrevU, CurrForDownT> {
 
     public abstract Yaml getYaml();
 

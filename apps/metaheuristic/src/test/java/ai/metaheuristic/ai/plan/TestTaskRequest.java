@@ -115,7 +115,7 @@ public class TestTaskRequest extends FeatureMethods {
             assertTrue(task.isCompleted);
 
 //            int order = workbook.getProducingOrder();
-            workbook = workbookService.checkWorkbookStatus(workbook);
+            workbook = workbookService.updateWorkbookStatus(workbook);
 //            assertEquals(order + 1, workbook.getProducingOrder());
         }
 

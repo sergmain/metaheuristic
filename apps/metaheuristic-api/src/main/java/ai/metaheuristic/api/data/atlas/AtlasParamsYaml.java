@@ -31,6 +31,9 @@ public class AtlasParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
+        if (plan==null || workbook==null || experiment==null || tasks==null) {
+            throw new IllegalArgumentException("(plan==null || workbook==null || experiment==null || tasks==null)");
+        }
         return true;
     }
 
@@ -73,9 +76,9 @@ public class AtlasParamsYaml implements BaseParams {
         public String metrics;
         public String exec;
 
-        public long completedOn;
+        public Long completedOn;
         public boolean completed;
-        public long assignedOn;
+        public Long assignedOn;
         public String typeAsString;
     }
 

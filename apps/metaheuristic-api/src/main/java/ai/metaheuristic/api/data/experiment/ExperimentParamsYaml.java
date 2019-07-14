@@ -37,6 +37,9 @@ public class ExperimentParamsYaml implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
+        if (experimentYaml.code==null || experimentYaml.code.isBlank()) {
+            throw new IllegalArgumentException("(experimentYaml.code==null || experimentYaml.code.isBlank()) ");
+        }
         return true;
     }
 

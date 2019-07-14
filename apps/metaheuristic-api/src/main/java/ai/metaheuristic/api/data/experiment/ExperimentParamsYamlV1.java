@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.data.experiment;
 
+import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,7 +31,15 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class ExperimentParamsYamlV1 {
+public class ExperimentParamsYamlV1 implements BaseParams {
+
+    @Override
+    public boolean checkIntegrity() {
+        if (experimentYaml.code==null || experimentYaml.code.isBlank()) {
+            throw new IllegalArgumentException("(experimentYaml.code==null || experimentYaml.code.isBlank()) ");
+        }
+        return true;
+    }
 
     @Data
     public static class HyperParamV1 {

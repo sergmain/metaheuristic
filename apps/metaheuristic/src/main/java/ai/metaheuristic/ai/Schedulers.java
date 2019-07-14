@@ -51,23 +51,22 @@ public class Schedulers {
 
         // Launchpad schedulers
 
+        /**
+         * update status of all workbooks which are in 'started' state. Also, if workbook is finished, atlas will be produced
+         */
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-workbook'), 5, 40, 5)*1000 }")
-        public void checkWorkbookStatus() {
+        public void updateWorkbookStatuses() {
             if (globals.isUnitTesting) {
                 return;
             }
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke PlanService.markOrderAsProcessed()");
+            log.info("Invoke WorkbookService.updateWorkbookStatuses()");
             try {
-                launchpadService.getWorkbookService().checkWorkbookStatuses();
+                launchpadService.getWorkbookService().updateWorkbookStatuses();
             } catch (InvalidDataAccessResourceUsageException e) {
-                log.error("Error while markOrderAsProcessed()",e);
-                // TODO 2019-06-11 or just log an error?
-//                System.exit(-1);
-                // TODO 2019-07-04 lets just output an error
-
+                log.error("!!! need to investigate. Error while updateWorkbookStatuses()",e);
             }
         }
 

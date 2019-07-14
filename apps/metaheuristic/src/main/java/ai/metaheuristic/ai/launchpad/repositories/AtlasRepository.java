@@ -23,20 +23,16 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
-@Transactional
 @Profile("launchpad")
-public interface AtlasRepository extends JpaRepository<Atlas, Long> {
+public interface AtlasRepository extends CrudRepository<Atlas, Long> {
 
     @Transactional(readOnly = true)
     @Query(value="select new ai.metaheuristic.ai.launchpad.atlas.AtlasSimple(" +
-            "b.id, b.experiment, b.name, b.description, b.createdOn ) from Atlas b order by b.id desc")
+            "b.id, b.name, b.description, b.createdOn ) from Atlas b order by b.id desc")
     Slice<AtlasSimple> findAllAsSimple(Pageable pageable);
-
-    @Transactional(readOnly = true)
-    Slice<Atlas> findAllByOrderByIdDesc(Pageable pageable);
-
 }

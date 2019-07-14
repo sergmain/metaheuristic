@@ -21,7 +21,6 @@ import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV1;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
-import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
 
 import java.util.stream.Collectors;
@@ -45,13 +44,18 @@ public class AtlasParamsYamlUtilsV1
 
     @Override
     public AtlasParamsYaml upgradeTo(AtlasParamsYamlV1 src) {
+        src.checkIntegrity();
         AtlasParamsYaml trg = new AtlasParamsYaml();
         trg.createdOn = src.createdOn;
-        BeanUtils.copyProperties(src, trg, "tasks");
+        trg.plan = new AtlasParamsYaml.PlanWithParams(src.plan.planId, src.plan.planParams);
+        trg.workbook = new AtlasParamsYaml.WorkbookWithParams(src.workbook.workbookId, src.workbook.workbookParams, src.workbook.execState);
+        trg.experiment = new AtlasParamsYaml.ExperimentWithParams(src.experiment.experimentId, src.experiment.experimentParams);
         trg.tasks = src.tasks
                 .stream()
-                .map(o->new AtlasParamsYaml.TaskWithParams(o.taskId, o.taskParams, o.execSate, o.metrics, o.exec, o.completedOn, o.completed, o.assignedOn, o.typeAsString))
+                .map(o->new AtlasParamsYaml.TaskWithParams(o.taskId, o.taskParams, o.execState, o.metrics, o.exec, o.completedOn, o.completed, o.assignedOn, o.typeAsString))
                 .collect(Collectors.toList());
+
+        trg.checkIntegrity();
         return trg;
     }
 

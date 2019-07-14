@@ -169,14 +169,14 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         this.publisher = publisher;
     }
 
-    public void checkWorkbookStatuses() {
+    public void updateWorkbookStatuses() {
         List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
         for (WorkbookImpl workbook : workbooks) {
-            checkWorkbookStatus(workbook);
+            updateWorkbookStatus(workbook);
         }
     }
 
-    public WorkbookImpl checkWorkbookStatus(WorkbookImpl workbook) {
+    public WorkbookImpl updateWorkbookStatus(WorkbookImpl workbook) {
 
         final long countUnfinishedTasks = workbookGraphService.getCountUnfinishedTasks(workbook);
         if (countUnfinishedTasks==0) {
@@ -195,43 +195,6 @@ public class WorkbookService implements ApplicationEventPublisherAware {
             return instance;
         }
         return workbook;
-/*
-
-        List<Long> anyTask = taskRepository.findAnyNotAssignedWithConcreteOrder(Consts.PAGE_REQUEST_1_REC, workbook.getId(), workbook.getProducingOrder() );
-        if (!anyTask.isEmpty()) {
-            return workbook;
-        }
-        List<Task> forChecking = taskRepository.findWithConcreteOrder(workbook.getId(), workbook.getProducingOrder() );
-        if (forChecking.isEmpty()) {
-            Long count = taskRepository.countWithConcreteOrder(workbook.getId(), workbook.getProducingOrder() + 1);
-            if (count==null) {
-                throw new IllegalStateException("#701.220 count of records is null");
-            }
-            if (count==0) {
-                log.info("Workbook #{} was finished", workbook.getId());
-                experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
-                workbook.setCompletedOn(System.currentTimeMillis());
-                workbook.setExecState(EnumsApi.WorkbookExecState.FINISHED.code);
-                Workbook instance = save(workbook);
-
-                Long experimentId = experimentRepository.findIdByWorkbookId(instance.getId());
-                if (experimentId==null) {
-                    log.info("#701.230 Can't store an experiment to atlas, the workbook "+instance.getId()+" doesn't contain an experiment" );
-                    return instance;
-                }
-                atlasService.toAtlas(instance.getId(), experimentId);
-                return instance;
-            }
-            return workbook;
-        }
-        for (Task task : forChecking) {
-            if (!task.isCompleted()) {
-                return workbook;
-            }
-        }
-        workbook.setProducingOrder(workbook.getProducingOrder()+1);
-        return save(workbook);
-*/
     }
 
     public WorkbookImpl toProduced(Long workbookId) {

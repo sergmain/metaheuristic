@@ -16,6 +16,7 @@
 
 package ai.metaheuristic.api.data.atlas;
 
+import ai.metaheuristic.api.data.BaseParams;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -26,13 +27,21 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class AtlasParamsYamlV1 {
+public class AtlasParamsYamlV1 implements BaseParams {
+
+    @Override
+    public boolean checkIntegrity() {
+        if (plan==null || workbook==null || experiment==null || tasks==null) {
+            throw new IllegalArgumentException("(plan==null || workbook==null || experiment==null || tasks==null)");
+        }
+        return true;
+    }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class PlanWithParams {
+    public static class PlanWithParamsV1 {
         public Long planId;
         public String planParams;
     }
@@ -41,7 +50,7 @@ public class AtlasParamsYamlV1 {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class ExperimentWithParams {
+    public static class ExperimentWithParamsV1 {
         public Long experimentId;
         public String experimentParams;
     }
@@ -50,32 +59,33 @@ public class AtlasParamsYamlV1 {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class WorkbookWithParams {
+    public static class WorkbookWithParamsV1 {
         public Long workbookId;
         public String workbookParams;
+        public int execState;
     }
 
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class TaskWithParams {
+    public static class TaskWithParamsV1 {
         public Long taskId;
         public String taskParams;
-        public int execSate;
+        public int execState;
         public String metrics;
         public String exec;
 
-        public long completedOn;
+        public Long completedOn;
         public boolean completed;
-        public long assignedOn;
+        public Long assignedOn;
         public String typeAsString;
     }
 
     public long createdOn;
     public final int version = 1;
-    public PlanWithParams plan;
-    public WorkbookWithParams workbook;
-    public ExperimentWithParams experiment;
-    public List<TaskWithParams> tasks = new ArrayList<>();
+    public PlanWithParamsV1 plan;
+    public WorkbookWithParamsV1 workbook;
+    public ExperimentWithParamsV1 experiment;
+    public List<TaskWithParamsV1> tasks = new ArrayList<>();
 }
