@@ -18,12 +18,12 @@ package ai.metaheuristic.ai.launchpad.atlas;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Atlas;
-import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
@@ -37,6 +37,7 @@ import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +62,7 @@ import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.HyperPar
 public class AtlasTopLevelService {
 
     private final AtlasRepository atlasRepository;
+    private final WorkbookGraphService workbookGraphService;
 
     private static class ParamFilter {
         String key;
@@ -101,12 +103,22 @@ public class AtlasTopLevelService {
             return new AtlasData.ExperimentInfoExtended("#280.12 experiment wasn't startet yet, experimentId: " + id);
         }
 
-        Experiment experiment = new Experiment();
+        ExperimentApiData.ExperimentData experiment = new ExperimentApiData.ExperimentData();
         experiment.id = ypywc. atlasParams.experiment.experimentId;
         experiment.workbookId = ypywc.atlasParams.workbook.workbookId;
-        WorkbookImpl workbook = new WorkbookImpl();
-        workbook.id = ypywc.atlasParams.workbook.workbookId;
-        workbook.execState = ypywc.atlasParams.workbook.execState;
+
+        ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
+        experiment.code = epy.experimentYaml.code;
+        experiment.name = epy.experimentYaml.name;
+        experiment.description = epy.experimentYaml.description;
+        experiment.seed = epy.experimentYaml.seed;
+        experiment.isAllTaskProduced = epy.processing.isAllTaskProduced;
+        experiment.isFeatureProduced = epy.processing.isFeatureProduced;
+        experiment.createdOn = epy.createdOn;
+        experiment.numberOfTask = epy.processing.numberOfTask;
+        experiment.hyperParams = epy.experimentYaml.hyperParams;
+
+
 
         for (HyperParam hyperParams : ypywc.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
             if (StringUtils.isBlank(hyperParams.getValues())) {
@@ -122,8 +134,17 @@ public class AtlasTopLevelService {
         }
         result.atlas = atlas;
 
+        WorkbookImpl workbook = new WorkbookImpl();
+        workbook.params = ypywc.atlasParams.workbook.workbookParams;
+        workbook.id = ypywc.atlasParams.workbook.workbookId;
+        workbook.execState = ypywc.atlasParams.workbook.execState;
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
+
         AtlasData.ExperimentInfo experimentInfoResult = new AtlasData.ExperimentInfo();
-        experimentInfoResult.features = ypywc.getExperimentParamsYaml().processing.features;
+        experimentInfoResult.features = ypywc.getExperimentParamsYaml().processing.features
+                .stream()
+                .map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
+
         experimentInfoResult.workbook = workbook;
         experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.execState);
 
@@ -420,11 +441,17 @@ public class AtlasTopLevelService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
+        WorkbookImpl workbook = new WorkbookImpl();
+        workbook.params = ypywc.atlasParams.workbook.workbookParams;
+        workbook.id = ypywc.atlasParams.workbook.workbookId;
+        workbook.execState = ypywc.atlasParams.workbook.execState;
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
+
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
         result.hyperParamResult = hyperParamResult;
         result.tasks = tasks;
-        result.experimentFeature = experimentFeature;
+        result.experimentFeature = ExperimentService.asExperimentFeatureData(experimentFeature, taskVertices, epy.processing.taskFeatures);
         result.consoleResult = new AtlasData.ConsoleResult();
 
         return result;
@@ -471,9 +498,15 @@ public class AtlasTopLevelService {
 
         ExperimentFeature feature = ypywc.getFeature(featureId);
 
+        WorkbookImpl workbook = new WorkbookImpl();
+        workbook.params = ypywc.atlasParams.workbook.workbookParams;
+        workbook.id = ypywc.atlasParams.workbook.workbookId;
+        workbook.execState = ypywc.atlasParams.workbook.execState;
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
+
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
         result.tasks = findTasks(ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
-        result.experimentFeature = feature;
+        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature, taskVertices, ypywc.getExperimentParamsYaml().processing.taskFeatures);;
         result.consoleResult = new AtlasData.ConsoleResult();
         return result;
     }
