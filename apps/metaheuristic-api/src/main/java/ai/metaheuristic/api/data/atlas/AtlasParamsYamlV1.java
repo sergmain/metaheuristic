@@ -65,6 +65,11 @@ public class AtlasParamsYamlV1 {
         public int execSate;
         public String metrics;
         public String exec;
+
+        public long completedOn;
+        public boolean completed;
+        public long assignedOn;
+        public String typeAsString;
     }
 
     public long createdOn;

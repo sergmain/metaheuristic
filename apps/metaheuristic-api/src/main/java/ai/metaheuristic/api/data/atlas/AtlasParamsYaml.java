@@ -72,6 +72,11 @@ public class AtlasParamsYaml implements BaseParams {
         public int execState;
         public String metrics;
         public String exec;
+
+        public long completedOn;
+        public boolean completed;
+        public long assignedOn;
+        public String typeAsString;
     }
 
     public long createdOn;

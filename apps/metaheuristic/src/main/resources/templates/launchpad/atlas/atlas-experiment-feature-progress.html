@@ -1,8 +1,6 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
-     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
-     sec:authorize="isAuthenticated()"
 >
     <!--/*@thymesVar id="tasks" type="Slice<AtlasParamsYaml.TaskWithParams>"*/-->
     <!--/*@thymesVar id="feature" type="ai.metaheuristic.api.data.experiment.ExperimentParamsYaml$ExperimentFeature"*/-->
@@ -527,12 +525,12 @@
                     <div th:remove="tag" th:each="t, g : ${tasks}">
                         <tr valign="top">
                             <td th:text="${t.taskId}" rowspan="3">Task Id</td>
-                                <td th:text="${'type: ' + s.typeAsString()}"></td>
+                                <td th:text="${'type: ' + t.typeAsString}"></td>
                                 <td th:text="${'assigned: ' + #dates.format(t.assignedOn, 'dd-MMM-yy HH:mm')}">assigned on</td>
                         </tr>
                         <tr valign="top">
-                            <td th:text="${'completed: ' + t.isCompleted}">completed on</td>
-                            <td th:text="${'completed: ' + #dates.format(t.completedOn, 'dd-MMM-yy HH:mm')}">completed on</td>
+                            <td th:text="${'completed: ' + t.completed}">is completed</td>
+                            <td th:text="${'completed on: ' + #dates.format(t.completedOn, 'dd-MMM-yy HH:mm')}">completed on</td>
                         </tr>
                         <tr valign="top">
                             <td>

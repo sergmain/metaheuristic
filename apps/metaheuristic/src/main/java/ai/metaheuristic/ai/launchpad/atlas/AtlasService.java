@@ -36,6 +36,7 @@ import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -59,7 +60,6 @@ public class AtlasService {
     private final PlanCache planCache;
     private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
-    private final ConsoleFormAtlasService consoleFormAtlasService;
     private final AtlasRepository atlasRepository;
     private final WorkbookCache workbookCache;
 
@@ -166,7 +166,17 @@ public class AtlasService {
         atlasParamsYaml.workbook = new AtlasParamsYaml.WorkbookWithParams(workbook.id, workbook.params, workbook.execState);
         atlasParamsYaml.experiment = new AtlasParamsYaml.ExperimentWithParams(experiment.id, experiment.params);
         atlasParamsYaml.tasks = taskRepository.findAllByWorkbookId(workbook.getId()).stream()
-                .map(o->new AtlasParamsYaml.TaskWithParams(o.getId(), o.getParams(), o.getExecState(), o.getMetrics(), o.getSnippetExecResults()))
+                .map(o-> {
+                    String typeAsString = TaskParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams()).taskYaml.snippet.type;
+                    return new AtlasParamsYaml.TaskWithParams(
+                            o.getId(), o.getParams(), o.getExecState(), o.getMetrics(), o.getSnippetExecResults(),
+                            o.getCompletedOn(),
+                            o.isCompleted(),
+                            o.getAssignedOn(),
+                            typeAsString
+
+                    );
+                })
                 .collect(Collectors.toList());
 
         StoredToAtlasWithStatus result = new StoredToAtlasWithStatus();
@@ -175,10 +185,11 @@ public class AtlasService {
         return result;
     }
 
-    @SuppressWarnings("WeakerAccess")
+/*
     public ConsoleOutputStoredToAtlas toConsoleOutputStoredToAtlas(long workbookId) {
         //noinspection UnnecessaryLocalVariable
         ConsoleOutputStoredToAtlas result = consoleFormAtlasService.collectConsoleOutputs(workbookId);
         return result;
     }
+*/
 }
