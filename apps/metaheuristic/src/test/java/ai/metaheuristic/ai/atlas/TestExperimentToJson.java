@@ -18,10 +18,11 @@ package ai.metaheuristic.ai.atlas;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
-import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
-import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
+import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
+import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.plan.PlanApiData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +36,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.IOException;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
@@ -85,13 +87,14 @@ public class TestExperimentToJson extends PreparingPlan {
         long experimentId = experiment.getId();
 
         AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(experimentId);
-        if (r.status!= Enums.StoringStatus.OK) {
-            throw new IllegalStateException("experiment can't be stored, status: " + r.status+", error: " + r.errorMessages);
-        }
-        String json = atlasService.toJson(r.atlasParamsYamlWithCache);
+        assertEquals(Enums.StoringStatus.OK, r.status);
 
-        System.out.println("json =\n" + json);
-        AtlasParamsYamlWithCache estb1 = atlasService.fromJson(json);
-        System.out.println("estb1 = " + estb1);
+        String yaml = AtlasParamsYamlUtils.BASE_YAML_UTILS.toString(r.atlasParamsYamlWithCache.atlasParams);
+
+        System.out.println("yaml =\n" + yaml);
+        AtlasParamsYamlWithCache atywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(yaml));
+        System.out.println("atywc = " + atywc);
+
+        // TODO 2019-07-13 add here comparisons of r.atlasParamsYamlWithCache.atlasParams and atywc
     }
 }

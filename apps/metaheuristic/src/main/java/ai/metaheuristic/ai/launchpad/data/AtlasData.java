@@ -22,10 +22,12 @@ import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
+import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.api.data.task.TaskWIthType;
 import ai.metaheuristic.api.launchpad.Workbook;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -115,19 +117,27 @@ public class AtlasData {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ConsoleResult extends BaseDataClass {
-        @Data
-        @AllArgsConstructor
-        @NoArgsConstructor
-        public static class SimpleConsoleOutput {
-            public int exitCode;
-            public boolean isOk;
-            public String console;
+        public int exitCode;
+        public boolean isOk;
+        public String console;
+
+        public ConsoleResult(int exitCode, boolean isOk, String console) {
+            this.exitCode = exitCode;
+            this.isOk = isOk;
+            this.console = console;
         }
-        public final List<ConsoleResult.SimpleConsoleOutput> items = new ArrayList<>();
 
         public ConsoleResult(String errorMessage) {
             addErrorMessage(errorMessage);
         }
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @EqualsAndHashCode(callSuper = false)
+    public static class TasksResult extends BaseDataClass {
+        public Slice<AtlasParamsYaml.TaskWithParams> items;
     }
 
     @Data
@@ -136,8 +146,7 @@ public class AtlasData {
     public static class ExperimentFeatureExtendedResult extends BaseDataClass {
         public MetricsResult metricsResult;
         public HyperParamResult hyperParamResult;
-        public TaskApiData.TasksResult tasksResult;
-        public Experiment experiment;
+        public Slice<AtlasParamsYaml.TaskWithParams> tasks;
         public ExperimentParamsYaml.ExperimentFeature experimentFeature;
         public ConsoleResult consoleResult;
 

@@ -37,6 +37,7 @@ public class AtlasParamsYamlWithCache {
 
     public AtlasParamsYaml atlasParams = null;
 
+    // for caching
     private PlanParamsYaml planParamsYaml = null;
     private ExperimentParamsYaml experimentParamsYaml = null;
     private WorkbookParamsYaml workbookParamsYaml = null;
@@ -64,8 +65,6 @@ public class AtlasParamsYamlWithCache {
             paramByIndex.put(hyperParam.getKey(), map);
             for (int i = 0; i <ofVariants.values.size(); i++) {
                 String value = ofVariants.values.get(i);
-
-
                 map.put(isFull ? hyperParam.getKey()+'-'+value : value , i);
             }
         }
@@ -111,7 +110,8 @@ public class AtlasParamsYamlWithCache {
         }
         return workbookParamsYaml;
     };
-    public AtlasParamsYamlWithCache(String atlasParams) {
-        this.atlasParams = AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlasParams);
+
+    public AtlasParamsYamlWithCache(AtlasParamsYaml atlasParams) {
+        this.atlasParams = atlasParams;
     }
 }

@@ -50,7 +50,7 @@ public class AtlasParamsYamlUtilsV1
         BeanUtils.copyProperties(src, trg, "tasks");
         trg.tasks = src.tasks
                 .stream()
-                .map(o->new AtlasParamsYaml.TaskWithParams(o.taskId, o.taskParams))
+                .map(o->new AtlasParamsYaml.TaskWithParams(o.taskId, o.taskParams, o.execSate, o.metrics, o.exec))
                 .collect(Collectors.toList());
         return trg;
     }

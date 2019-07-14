@@ -62,6 +62,9 @@ public class AtlasParamsYamlV1 {
     public static class TaskWithParams {
         public Long taskId;
         public String taskParams;
+        public int execSate;
+        public String metrics;
+        public String exec;
     }
 
     public long createdOn;

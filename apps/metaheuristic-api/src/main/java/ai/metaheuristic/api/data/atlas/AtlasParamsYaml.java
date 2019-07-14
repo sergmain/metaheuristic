@@ -59,6 +59,7 @@ public class AtlasParamsYaml implements BaseParams {
     public static class WorkbookWithParams {
         public Long workbookId;
         public String workbookParams;
+        public int execState;
     }
 
     @Data
@@ -68,6 +69,9 @@ public class AtlasParamsYaml implements BaseParams {
     public static class TaskWithParams {
         public Long taskId;
         public String taskParams;
+        public int execState;
+        public String metrics;
+        public String exec;
     }
 
     public long createdOn;

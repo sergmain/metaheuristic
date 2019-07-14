@@ -122,10 +122,10 @@ public class AtlasController {
         }
         model.addAttribute("metrics", experimentProgressResult.metricsResult);
         model.addAttribute("params", experimentProgressResult.hyperParamResult);
-        model.addAttribute("result", experimentProgressResult.tasksResult);
-        model.addAttribute("experiment", experimentProgressResult.experiment);
+        model.addAttribute("tasks", experimentProgressResult.tasks);
         model.addAttribute("feature", experimentProgressResult.experimentFeature);
         model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
+        model.addAttribute("experimentId", experimentId);
         model.addAttribute("atlasId", atlasId);
 
         return "launchpad/atlas/atlas-experiment-feature-progress";
@@ -156,10 +156,13 @@ public class AtlasController {
         AtlasData.ExperimentFeatureExtendedResult experimentProgressResult =
                 atlasTopLevelService.getFeatureProgressPart(atlasId, experimentId, featureId, params, pageable);
 
-        model.addAttribute("result", experimentProgressResult.tasksResult);
-        model.addAttribute("experiment", experimentProgressResult.experiment);
+        model.addAttribute("metrics", experimentProgressResult.metricsResult);
+        model.addAttribute("params", experimentProgressResult.hyperParamResult);
+        model.addAttribute("tasks", experimentProgressResult.tasks);
         model.addAttribute("feature", experimentProgressResult.experimentFeature);
         model.addAttribute("consoleResult", experimentProgressResult.consoleResult);
+        model.addAttribute("experimentId", experimentId);
+        model.addAttribute("atlasId", atlasId);
 
         return "launchpad/atlas/atlas-experiment-feature-progress :: fragment-table";
     }
