@@ -25,7 +25,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class AtlasSimple {
     public Long id;
-    public String experiment;
     public String name;
     public String description;
     public long createdOn;

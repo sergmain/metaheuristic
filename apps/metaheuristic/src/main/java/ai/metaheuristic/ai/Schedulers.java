@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 public class Schedulers {
@@ -51,23 +52,34 @@ public class Schedulers {
 
         // Launchpad schedulers
 
+        private static final long TIMEOUT_BETWEEN_RECONCILIATION = TimeUnit.MINUTES.toMillis(1);
+        private long prevReconsilationTime = 0L;
+
+        /**
+         * update status of all workbooks which are in 'started' state. Also, if workbook is finished, atlas will be produced
+         */
         @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-workbook'), 5, 40, 5)*1000 }")
-        public void checkWorkbookStatus() {
+        public void updateWorkbookStatuses() {
             if (globals.isUnitTesting) {
                 return;
             }
             if (!globals.isLaunchpadEnabled) {
                 return;
             }
-            log.info("Invoke PlanService.markOrderAsProcessed()");
+            log.info("Invoke WorkbookService.updateWorkbookStatuses()");
+            boolean needReconciliation = false;
             try {
-                launchpadService.getWorkbookService().checkWorkbookStatuses();
+                if ((System.currentTimeMillis()- prevReconsilationTime)>TIMEOUT_BETWEEN_RECONCILIATION) {
+                    needReconciliation = true;
+                }
+                launchpadService.getWorkbookService().updateWorkbookStatuses(needReconciliation);
             } catch (InvalidDataAccessResourceUsageException e) {
-                log.error("Error while markOrderAsProcessed()",e);
-                // TODO 2019-06-11 or just log an error?
-//                System.exit(-1);
-                // TODO 2019-07-04 lets just output an error
-
+                log.error("!!! need to investigate. Error while updateWorkbookStatuses()",e);
+            }
+            finally {
+                if (needReconciliation) {
+                    prevReconsilationTime = System.currentTimeMillis();
+                }
             }
         }
 

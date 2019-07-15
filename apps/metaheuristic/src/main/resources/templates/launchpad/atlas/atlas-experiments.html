@@ -37,10 +37,14 @@
         </thead>
 
         <tbody>
-        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.AtlasData$AtlasExperiments"*/-->
+        <!--/*@thymesVar id="result" type="ai.metaheuristic.ai.launchpad.data.AtlasData$AtlasSimpleExperiments"*/-->
         <div th:remove="tag" th:each="r : ${result.items}" >
             <tr>
-                <td th:text="${r.description}">description</td>
+                <td>
+<!--                    <div th:text="${'Code: ' + r.code}">code</div>-->
+                    <div th:text="${'Name: ' + r.name}">Name</div>
+                    <div th:text="${'Desc: ' + r.description}">Description</div>
+                </td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-info/' + r.id}">Details</a></td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-delete/' + r.id}">Delete</a></td>
             </tr>

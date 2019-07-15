@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.experiment;
 
+import ai.metaheuristic.ai.launchpad.beans.Experiment;
+import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -52,6 +54,8 @@ public class ExperimentController {
     private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiment/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
     private final WorkbookService workbookService;
+    private final ExperimentCache experimentCache;
+    private final PlanTopLevelService planTopLevelService;
 
     @GetMapping("/experiments")
     public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
@@ -127,8 +131,7 @@ public class ExperimentController {
 
     @GetMapping(value = "/experiment-info/{id}")
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
-        ExperimentApiData.ExperimentInfoExtendedResult result =
-                experimentTopLevelService.getExperimentInfo(id);
+        ExperimentApiData.ExperimentInfoExtendedResult result = experimentTopLevelService.getExperimentInfo(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
@@ -243,11 +246,12 @@ public class ExperimentController {
 
     @GetMapping("/experiment-delete/{id}")
     public String delete(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes) {
-        ExperimentApiData.ExperimentResult result = experimentTopLevelService.getExperiment(id);
+        ExperimentApiData.ExperimentResult result = experimentTopLevelService.getExperimentWithoutProcessing(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
+
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("params", result.params);
         return "launchpad/experiment/experiment-delete";
@@ -255,6 +259,17 @@ public class ExperimentController {
 
     @PostMapping("/experiment-delete-commit")
     public String deleteCommit(Long id, final RedirectAttributes redirectAttributes) {
+        Experiment experiment = experimentCache.findById(id);
+        if (experiment == null) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "#285.260 experiment wasn't found, experimentId: " + id);
+            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+        }
+        OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(experiment.workbookId);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+        }
         OperationStatusRest status = experimentTopLevelService.experimentDeleteCommit(id);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);

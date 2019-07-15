@@ -35,8 +35,6 @@ public interface Task {
 
     String getMetrics();
 
-//    int getOrder();
-
     long getWorkbookId();
 
     int getExecState();
@@ -64,8 +62,6 @@ public interface Task {
     void setSnippetExecResults(String snippetExecResults);
 
     void setMetrics(String metrics);
-
-//    void setOrder(int order);
 
     void setWorkbookId(long workbookId);
 

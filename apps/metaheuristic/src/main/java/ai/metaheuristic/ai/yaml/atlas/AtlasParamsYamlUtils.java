@@ -14,31 +14,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.versioning;
+package ai.metaheuristic.ai.yaml.atlas;
 
-import ai.metaheuristic.api.data.BaseParams;
-import org.yaml.snakeyaml.Yaml;
+import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
+import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+
+import java.util.Map;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 12:17 AM
+ * Date: 6/22/2019
+ * Time: 11:36 PM
  */
-abstract public class AbstractParamsYamlUtils<CurrT extends BaseParams, NextT extends BaseParams, NextU, PrevT, PrevU, CurrForDownT> {
+public class AtlasParamsYamlUtils {
 
-    public abstract Yaml getYaml();
+    private static final AtlasParamsYamlUtilsV1 YAML_UTILS_V_1 = new AtlasParamsYamlUtilsV1();
+    private static final AtlasParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
 
-    public abstract NextT upgradeTo(CurrT yaml);
+    public static final BaseYamlUtils<AtlasParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
+            Map.of(
+                    1, YAML_UTILS_V_1
+            ),
+            DEFAULT_UTILS
+    );
 
-    public abstract PrevT downgradeTo(CurrForDownT yaml);
 
-    public abstract NextU nextUtil();
-
-    public abstract PrevU prevUtil();
-
-    public abstract String toString(CurrT yaml);
-
-    public abstract CurrT to(String s);
-
-    public abstract int getVersion();
 }

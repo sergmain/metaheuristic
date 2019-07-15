@@ -47,12 +47,12 @@ public class AtlasRestController {
 
     @GetMapping(value = "/atlas-experiment-info/{id}")
     public AtlasData.ExperimentInfoExtended info(@PathVariable Long id) {
-        return atlasTopLevelService.getExperimentInfo(id);
+        return atlasTopLevelService.getExperimentInfoExtended(id);
     }
 
     @PostMapping("/atlas-experiment-delete-commit")
     public OperationStatusRest deleteCommit(Long id) {
-        return atlasTopLevelService.experimentDeleteCommit(id);
+        return atlasTopLevelService.atlasDeleteCommit(id);
     }
 
     @GetMapping(value = "/atlas-experiment-feature-progress/{atlasId}/{experimentId}/{featureId}")

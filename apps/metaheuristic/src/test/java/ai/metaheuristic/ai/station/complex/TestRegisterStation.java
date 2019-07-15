@@ -101,7 +101,7 @@ public class TestRegisterStation {
     }
 
     @Test
-    @WithUserDetails("rest")
+    @WithUserDetails("data_rest")
     public void testRestPayload_asRest() throws Exception {
 
         ExchangeData data = new ExchangeData();
@@ -176,9 +176,8 @@ public class TestRegisterStation {
                 .content(JsonUtils.toJson(data));
     }
 
-    @SuppressWarnings("DefaultAnnotationParam")
     @Test
-    @WithUserDetails("user")
+    @WithUserDetails("data")
     public void testRestPayload_asUser() throws Exception {
         ExchangeData data = new ExchangeData();
 

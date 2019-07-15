@@ -27,12 +27,12 @@ import ai.metaheuristic.ai.station.station_resource.ResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
-import ai.metaheuristic.api.data.Meta;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,8 +48,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static ai.metaheuristic.ai.Consts.SNIPPET_PARAMS_FILE_EXT_META;
 
 @Service
 @Slf4j
@@ -77,7 +75,8 @@ public class TaskProcessor {
         boolean isLoaded = true;
     }
 
-    @SuppressWarnings("Duplicates")
+    private Long currentTaskId;
+
     public void fixedDelay() {
         if (globals.isUnitTesting) {
             return;
@@ -86,11 +85,15 @@ public class TaskProcessor {
             return;
         }
 
-        // find all tasks which weren't completeded and  weren't finished and resources aren't prepared yet
+        // find all tasks which weren't completed and  weren't finished and resources aren't prepared yet
         List<StationTask> tasks = stationTaskService.findAllByCompetedIsFalseAndFinishedOnIsNullAndAssetsPreparedIs(true);
         for (StationTask task : tasks) {
 
             log.info("Start processing task {}", task);
+            if (task.launchedOn!=null && currentTaskId==null) {
+                log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched", task.taskId);
+            }
+
             final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);
 
             if (StringUtils.isBlank(task.launchpadUrl)) {
@@ -228,86 +231,93 @@ public class TaskProcessor {
             }
 
             // at this point all required resources have to be prepared
-
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
-
-            List<SnippetApiData.SnippetExecResult> preSnippetExecResult = new ArrayList<>();
-            List<SnippetApiData.SnippetExecResult> postSnippetExecResult = new ArrayList<>();
-            boolean isOk = true;
-            idx = 0;
-            for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
-                result = results[idx++];
-                SnippetApiData.SnippetExecResult execResult;
-                if (result==null) {
-                    execResult = new SnippetApiData.SnippetExecResult(
-                            preSnippetConfig.code, false, -999,
-                            "#100.110 Illegal State, result of preparing of snippet "+preSnippetConfig.code+" is null");
-                }
-                else {
-                    execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
-                }
-                preSnippetExecResult.add(execResult);
-                if (!execResult.isOk) {
-                    isOk = false;
-                    break;
-                }
+            try {
+                currentTaskId = task.taskId;
+                execAllSnippets(task, launchpadCode, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, results);
+            } finally {
+                currentTaskId = null;
             }
-            SnippetApiData.SnippetExecResult snippetExecResult = null;
-            SnippetApiData.SnippetExecResult generalExec = null;
-            if (isOk) {
-                result = results[idx++];
-                if (result==null) {
-                    snippetExecResult = new SnippetApiData.SnippetExecResult(
-                            taskParamYaml.taskYaml.getSnippet().code, false, -999,
-                            "#100.120 Illegal State, result of preparing of snippet "+taskParamYaml.taskYaml.getSnippet()+" is null");
-                    isOk = false;
-                }
-                if (isOk) {
-                    SnippetApiData.SnippetConfig mainSnippetConfig = result.snippet;
-                    snippetExecResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
-                    if (!snippetExecResult.isOk) {
-                        isOk = false;
-                    }
-                    if (isOk) {
-                        for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
-                            result = results[idx++];
-                            SnippetApiData.SnippetExecResult execResult;
-                            if (result==null) {
-                                execResult = new SnippetApiData.SnippetExecResult(
-                                        postSnippetConfig.code, false, -999,
-                                        "#100.130 Illegal State, result of preparing of snippet "+postSnippetConfig.code+" is null");
-                            }
-                            else {
-                                execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
-                            }
-                            postSnippetExecResult.add(execResult);
-                            if (!execResult.isOk) {
-                                isOk = false;
-                                break;
-                            }
-                        }
-                        if (isOk && snippetExecResult.isOk()) {
-                            stationTaskService.storeMetrics(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
-
-                            final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
-                            ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
-                            generalExec = resourceProvider.processResultingFile(
-                                    launchpad, task, launchpadCode,
-                                    new File(taskParamYaml.taskYaml.outputResourceAbsolutePath),
-                                    mainSnippetConfig
-
-                            );
-                        }
-                    }
-                }
-            }
-
-            stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(),
-                    new SnippetApiData.SnippetExec(snippetExecResult, preSnippetExecResult, postSnippetExecResult, generalExec));
         }
     }
 
-    public boolean prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml, SnippetPrepareResult[] results) {
+    private void execAllSnippets(StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamsYaml taskParamYaml, File artifactDir, File systemDir, SnippetPrepareResult[] results) {
+        List<SnippetApiData.SnippetExecResult> preSnippetExecResult = new ArrayList<>();
+        List<SnippetApiData.SnippetExecResult> postSnippetExecResult = new ArrayList<>();
+        boolean isOk = true;
+        int idx = 0;
+        for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
+            SnippetPrepareResult result = results[idx++];
+            SnippetApiData.SnippetExecResult execResult;
+            if (result==null) {
+                execResult = new SnippetApiData.SnippetExecResult(
+                        preSnippetConfig.code, false, -999,
+                        "#100.110 Illegal State, result of preparing of snippet "+preSnippetConfig.code+" is null");
+            }
+            else {
+                execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
+            }
+            preSnippetExecResult.add(execResult);
+            if (!execResult.isOk) {
+                isOk = false;
+                break;
+            }
+        }
+        SnippetApiData.SnippetExecResult snippetExecResult = null;
+        SnippetApiData.SnippetExecResult generalExec = null;
+        if (isOk) {
+            SnippetPrepareResult result = results[idx++];
+            if (result==null) {
+                snippetExecResult = new SnippetApiData.SnippetExecResult(
+                        taskParamYaml.taskYaml.getSnippet().code, false, -999,
+                        "#100.120 Illegal State, result of preparing of snippet "+taskParamYaml.taskYaml.getSnippet()+" is null");
+                isOk = false;
+            }
+            if (isOk) {
+                SnippetApiData.SnippetConfig mainSnippetConfig = result.snippet;
+                snippetExecResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
+                if (!snippetExecResult.isOk) {
+                    isOk = false;
+                }
+                if (isOk) {
+                    for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
+                        result = results[idx++];
+                        SnippetApiData.SnippetExecResult execResult;
+                        if (result==null) {
+                            execResult = new SnippetApiData.SnippetExecResult(
+                                    postSnippetConfig.code, false, -999,
+                                    "#100.130 Illegal State, result of preparing of snippet "+postSnippetConfig.code+" is null");
+                        }
+                        else {
+                            execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
+                        }
+                        postSnippetExecResult.add(execResult);
+                        if (!execResult.isOk) {
+                            isOk = false;
+                            break;
+                        }
+                    }
+                    if (isOk && snippetExecResult.isOk()) {
+                        stationTaskService.storeMetrics(task.launchpadUrl, task, mainSnippetConfig, artifactDir);
+
+                        final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(taskParamYaml.taskYaml.outputResourceCode);
+                        ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
+                        generalExec = resourceProvider.processResultingFile(
+                                launchpad, task, launchpadCode,
+                                new File(taskParamYaml.taskYaml.outputResourceAbsolutePath),
+                                mainSnippetConfig
+
+                        );
+                    }
+                }
+            }
+        }
+
+        stationTaskService.markAsFinished(task.launchpadUrl, task.getTaskId(),
+                new SnippetApiData.SnippetExec(snippetExecResult, preSnippetExecResult, postSnippetExecResult, generalExec));
+    }
+
+    private boolean prepareParamsFileForTask(File taskDir, TaskParamsYaml taskParamYaml, SnippetPrepareResult[] results) {
 
         File artifactDir = stationTaskService.prepareTaskSubDir(taskDir, Consts.ARTIFACTS_DIR);
         if (artifactDir == null) {

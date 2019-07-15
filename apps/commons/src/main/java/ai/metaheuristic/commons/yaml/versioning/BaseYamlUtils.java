@@ -76,7 +76,7 @@ public class BaseYamlUtils<T > {
         try {
             YamlVersion v = YamlForVersioning.getYamlForVersion().load(s);
             AbstractParamsYamlUtils yamlUtils = getForVersion(v.getActualVersion());
-            Object currPlanParamsYaml = yamlUtils.to(s);
+            BaseParams currPlanParamsYaml = yamlUtils.to(s);
             do {
                 //noinspection unchecked
                 currPlanParamsYaml = yamlUtils.upgradeTo(currPlanParamsYaml);

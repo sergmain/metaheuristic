@@ -56,6 +56,9 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('logging.file' )) }")
     public File logFile;
 
+    @Value("${mh.branding:#{'Metaheuristic project'}}")
+    public String branding;
+
     // Launchpad's globals
 
     @Value("${mh.launchpad.is-security-enabled:#{true}}")
@@ -217,6 +220,13 @@ public class Globals {
                 launchpadDir = null;
             }
         }
+        String tempBranding = env.getProperty("MH_BRANDING");
+        if (tempBranding!=null && !tempBranding.isBlank()) {
+            branding = tempBranding;
+        }
+        if (branding==null || branding.isBlank()) {
+            branding = "Metaheuristic project";
+        }
 
         if (isLaunchpadEnabled && launchpadDir==null) {
             launchpadDir = new File("./target/mh-launchpad");
@@ -323,6 +333,7 @@ public class Globals {
     private void logGlobals() {
         log.info("Current globals:");
         log.info("\tthreadNumber: {}", threadNumber);
+        log.info("\tbranding: {}", branding);
         log.info("\tisUnitTesting: {}", isUnitTesting);
         log.info("\tisSecurityEnabled: {}", isSecurityEnabled);
         log.info("\tisSslRequired: {}", isSslRequired);
