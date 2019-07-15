@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 public class Schedulers {
@@ -51,6 +52,9 @@ public class Schedulers {
 
         // Launchpad schedulers
 
+        private static final long TIMEOUT_BETWEEN_RECONCILIATION = TimeUnit.MINUTES.toMillis(1);
+        private long prevReconsilationTime = 0L;
+
         /**
          * update status of all workbooks which are in 'started' state. Also, if workbook is finished, atlas will be produced
          */
@@ -63,10 +67,19 @@ public class Schedulers {
                 return;
             }
             log.info("Invoke WorkbookService.updateWorkbookStatuses()");
+            boolean needReconciliation = false;
             try {
-                launchpadService.getWorkbookService().updateWorkbookStatuses();
+                if ((System.currentTimeMillis()- prevReconsilationTime)>TIMEOUT_BETWEEN_RECONCILIATION) {
+                    needReconciliation = true;
+                }
+                launchpadService.getWorkbookService().updateWorkbookStatuses(needReconciliation);
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("!!! need to investigate. Error while updateWorkbookStatuses()",e);
+            }
+            finally {
+                if (needReconciliation) {
+                    prevReconsilationTime = System.currentTimeMillis();
+                }
             }
         }
 

@@ -66,6 +66,10 @@ public interface TaskRepository extends JpaRepository<TaskImpl, Long> {
             "where t.stationId=:stationId and t.resultReceived=false and t.isCompleted=false")
     List<Object[]> findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(Long stationId);
 
+    @Transactional(readOnly = true)
+    @Query(value="select t.id, t.execState from TaskImpl t where t.workbookId=:workbookId")
+    List<Object[]> findAllExecStateByWorkbookId(Long workbookId);
+
     @Transactional
     void deleteByWorkbookId(Long workbookId);
 

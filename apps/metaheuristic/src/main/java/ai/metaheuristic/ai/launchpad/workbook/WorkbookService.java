@@ -66,6 +66,8 @@ import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 @Service
@@ -169,22 +171,20 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         this.publisher = publisher;
     }
 
-    public void updateWorkbookStatuses() {
+    public void updateWorkbookStatuses(boolean needReconciliation) {
         List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
         for (WorkbookImpl workbook : workbooks) {
-            updateWorkbookStatus(workbook);
+            updateWorkbookStatus(workbook, needReconciliation);
         }
     }
 
-    public WorkbookImpl updateWorkbookStatus(WorkbookImpl workbook) {
+    public WorkbookImpl updateWorkbookStatus(WorkbookImpl workbook, boolean needReconciliation) {
 
         final long countUnfinishedTasks = workbookGraphService.getCountUnfinishedTasks(workbook);
         if (countUnfinishedTasks==0) {
             log.info("Workbook #{} was finished", workbook.getId());
             experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
-            workbook.setCompletedOn(System.currentTimeMillis());
-            workbook.setExecState(EnumsApi.WorkbookExecState.FINISHED.code);
-            WorkbookImpl instance = workbookCache.save(workbook);
+            WorkbookImpl instance = toFinished(workbook.getId());
 
             Long experimentId = experimentRepository.findIdByWorkbookId(instance.getId());
             if (experimentId==null) {
@@ -194,17 +194,78 @@ public class WorkbookService implements ApplicationEventPublisherAware {
             atlasService.toAtlas(instance.getId(), experimentId);
             return instance;
         }
+        else {
+            if (needReconciliation) {
+                List<Object[]>  list = taskRepository.findAllExecStateByWorkbookId(workbook.getId());
+                List<WorkbookParamsYaml.TaskVertex> vertices = workbookGraphService.findAll(workbook);
+                Map<Long, Integer> states = new HashMap<>(list.size()+1);
+                for (Object[] o : list) {
+                    Long taskId = (Long) o[0];
+                    Integer execState = (Integer) o[1];
+                    states.put(taskId, execState);
+                }
+                final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+                vertices.stream().parallel().forEach(tv -> {
+                        Integer state = states.get(tv.taskId);
+                        if (state==null) {
+                            readWriteLock.writeLock().lock();
+                            try {
+                                log.info("#705.052 Found non-created task, graph consistency is failed");
+                                WorkbookImpl instance = toError(workbook.getId());
+                            } finally {
+                                readWriteLock.writeLock().unlock();
+                            }
+                        }
+                        else if (tv.execState.value!=state) {
+                            readWriteLock.writeLock().lock();
+                            try {
+                                log.info("#705.054 Found different states for task #"+tv.taskId+", " +
+                                        "db: "+ EnumsApi.TaskExecState.from(state)+", " +
+                                        "graph: "+tv.execState);
+                                workbookGraphService.updateTaskExecState(workbook, tv.taskId, state);
+                            } finally {
+                                readWriteLock.writeLock().unlock();
+                            }
+                        }
+                });
+            }
+        }
         return workbook;
     }
 
     public WorkbookImpl toProduced(Long workbookId) {
+        return toState(workbookId, EnumsApi.WorkbookExecState.PRODUCED);
+    }
+
+    public WorkbookImpl toFinished(Long workbookId) {
+        return toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.FINISHED);
+    }
+
+    public WorkbookImpl toError(Long workbookId) {
+        return toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.ERROR);
+    }
+
+    public WorkbookImpl toStateWithCompletion(Long workbookId, EnumsApi.WorkbookExecState state) {
         WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
         if (workbook==null) {
-            String es = "#705.080 Can't change exec state to PRODUCED for workbook #" + workbookId;
+            String es = "#705.080 Can't change exec state to "+state+" for workbook #" + workbookId;
             log.error(es);
             throw new IllegalStateException(es);
         }
-        workbook.setExecState(EnumsApi.WorkbookExecState.PRODUCED.code);
+        workbook.setCompletedOn(System.currentTimeMillis());
+        workbook.setExecState(state.code);
+        workbook = workbookCache.save(workbook);
+        return workbook;
+    }
+
+    public WorkbookImpl toState(Long workbookId, EnumsApi.WorkbookExecState state) {
+        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+        if (workbook==null) {
+            String es = "#705.082 Can't change exec state to "+state+" for workbook #" + workbookId;
+            log.error(es);
+            throw new IllegalStateException(es);
+        }
+        workbook.setExecState(state.code);
         workbook = workbookCache.save(workbook);
         return workbook;
     }
@@ -457,7 +518,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         final TaskPersistencer.PostTaskCreationAction action = t -> {
             if (t!=null) {
                 WorkbookImpl workbook = workbookRepository.findByIdForUpdate(t.getWorkbookId());
-                workbookGraphService.updateTaskExecState(workbook, t);
+                workbookGraphService.updateTaskExecState(workbook, t.getId(), t.getExecState());
             }
         };
 

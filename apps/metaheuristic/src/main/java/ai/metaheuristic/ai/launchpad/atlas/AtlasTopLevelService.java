@@ -228,19 +228,21 @@ public class AtlasTopLevelService {
             return new AtlasData.PlotData(es);
         }
         ExperimentFeature feature = ypywc.getFeature(featureId);
-
+        if (feature==null) {
+            return AtlasData.EMPTY_PLOT_DATA;
+        }
         //noinspection UnnecessaryLocalVariable
         AtlasData.PlotData data = findExperimentTaskForPlot(ypywc, feature, params, paramsAxis);
         return data;
     }
 
     public AtlasData.PlotData findExperimentTaskForPlot(
-            AtlasParamsYamlWithCache estb, ExperimentFeature feature, String[] params, String[] paramsAxis) {
-        if (estb.atlasParams.experiment == null || estb.getExperimentParamsYaml().processing.features == null ) {
+            AtlasParamsYamlWithCache apywc, ExperimentFeature feature, String[] params, String[] paramsAxis) {
+        if (apywc.atlasParams.experiment == null || apywc.getExperimentParamsYaml().processing.features == null ) {
             return AtlasData.EMPTY_PLOT_DATA;
         } else {
-            List<AtlasParamsYaml.TaskWithParams> selected = getTasksForFeatureIdAndParams(estb, feature, params);
-            return collectDataForPlotting(estb, selected, paramsAxis);
+            List<AtlasParamsYaml.TaskWithParams> selected = getTasksForFeatureIdAndParams(apywc, feature, params);
+            return collectDataForPlotting(apywc, selected, paramsAxis);
         }
     }
 

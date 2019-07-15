@@ -55,7 +55,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -109,12 +108,16 @@ public class ExperimentTopLevelService {
         return result;
     }
 
-    public ExperimentApiData.ExperimentResult getExperiment(long experimentId) {
-        Experiment experiment = experimentRepository.findById(experimentId).orElse(null);
+    public ExperimentApiData.ExperimentResult getExperimentWithoutProcessing(long experimentId) {
+        Experiment experiment = experimentCache.findById(experimentId);
         if (experiment == null) {
             return new ExperimentApiData.ExperimentResult("#285.010 experiment wasn't found, experimentId: " + experimentId );
         }
-        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment), experiment.params);
+        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.params);
+        epy.processing = null; //new ExperimentParamsYaml.ExperimentProcessing();
+        String params = ExperimentParamsYamlUtils.BASE_YAML_UTILS.toString(epy);
+
+        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(experiment), params);
     }
 
     public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {

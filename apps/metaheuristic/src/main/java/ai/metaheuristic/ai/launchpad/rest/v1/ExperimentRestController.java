@@ -28,7 +28,6 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @RestController
 @RequestMapping("/rest/v1/launchpad/experiment")
@@ -50,7 +49,7 @@ public class ExperimentRestController {
 
     @GetMapping(value = "/experiment/{id}")
     public ExperimentApiData.ExperimentResult getExperiment(@PathVariable Long id) {
-        return experimentTopLevelService.getExperiment(id);
+        return experimentTopLevelService.getExperimentWithoutProcessing(id);
     }
 
     @PostMapping("/experiment-feature-plot-data-part/{experimentId}/{featureId}/{params}/{paramsAxis}/part")
