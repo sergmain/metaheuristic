@@ -76,6 +76,18 @@ public class AtlasData {
     }
 
     @Data
+    @EqualsAndHashCode(callSuper = false)
+    @NoArgsConstructor
+    public static class ExperimentDataOnly extends BaseDataClass {
+        public Long atlasId;
+        public ExperimentApiData.ExperimentData experiment;
+
+        public ExperimentDataOnly(String errorMessage) {
+            addErrorMessage(errorMessage);
+        }
+    }
+
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)

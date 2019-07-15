@@ -127,8 +127,7 @@ public class ExperimentController {
 
     @GetMapping(value = "/experiment-info/{id}")
     public String info(@PathVariable Long id, Model model, final RedirectAttributes redirectAttributes, @ModelAttribute("errorMessage") final String errorMessage ) {
-        ExperimentApiData.ExperimentInfoExtendedResult result =
-                experimentTopLevelService.getExperimentInfo(id);
+        ExperimentApiData.ExperimentInfoExtendedResult result = experimentTopLevelService.getExperimentInfo(id);
         if (result.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", result.errorMessages);
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;

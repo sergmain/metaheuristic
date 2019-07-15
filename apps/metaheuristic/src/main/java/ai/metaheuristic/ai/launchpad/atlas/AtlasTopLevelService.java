@@ -78,7 +78,57 @@ public class AtlasTopLevelService {
         }
     }
 
-    public AtlasData.ExperimentInfoExtended getExperimentInfo(Long id) {
+    public AtlasData.ExperimentDataOnly getExperimentDataOnly(Long id) {
+
+        Atlas atlas = atlasRepository.findById(id).orElse(null);
+        if (atlas == null) {
+            return new AtlasData.ExperimentDataOnly("#280.02 experiment wasn't found in atlas, id: " + id);
+        }
+
+        AtlasParamsYamlWithCache ypywc;
+        try {
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+        } catch (YAMLException e) {
+            String es = "#280.05 Can't parse an atlas, error: " + e.toString();
+            log.error(es, e);
+            return new AtlasData.ExperimentDataOnly(es);
+        }
+        if (ypywc.atlasParams.experiment == null) {
+            return new AtlasData.ExperimentDataOnly("#280.07 experiment wasn't found, experimentId: " + id);
+        }
+        if (ypywc.atlasParams.workbook == null) {
+            return new AtlasData.ExperimentDataOnly("#280.16 experiment has broken ref to workbook, experimentId: " + id);
+        }
+        if (ypywc.atlasParams.workbook.workbookId==null ) {
+            return new AtlasData.ExperimentDataOnly("#280.12 experiment wasn't startet yet, experimentId: " + id);
+        }
+
+        ExperimentApiData.ExperimentData experiment = new ExperimentApiData.ExperimentData();
+        experiment.id = ypywc. atlasParams.experiment.experimentId;
+        experiment.workbookId = ypywc.atlasParams.workbook.workbookId;
+
+        ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
+        experiment.code = epy.experimentYaml.code;
+        experiment.name = epy.experimentYaml.name;
+        experiment.description = epy.experimentYaml.description;
+        experiment.seed = epy.experimentYaml.seed;
+        experiment.isAllTaskProduced = epy.processing.isAllTaskProduced;
+        experiment.isFeatureProduced = epy.processing.isFeatureProduced;
+        experiment.createdOn = epy.createdOn;
+        experiment.numberOfTask = epy.processing.numberOfTask;
+        experiment.hyperParams = epy.experimentYaml.hyperParams;
+
+        AtlasData.ExperimentDataOnly result = new AtlasData.ExperimentDataOnly();
+        if (experiment.getWorkbookId() == null) {
+            result.addInfoMessage("Launch is disabled, dataset isn't assigned");
+        }
+
+        result.experiment = experiment;
+        result.atlasId = atlas.id;
+        return result;
+    }
+
+    public AtlasData.ExperimentInfoExtended getExperimentInfoExtended(Long id) {
 
         Atlas atlas = atlasRepository.findById(id).orElse(null);
         if (atlas == null) {
@@ -153,7 +203,7 @@ public class AtlasTopLevelService {
         return result;
     }
 
-    public OperationStatusRest experimentDeleteCommit(Long id) {
+    public OperationStatusRest atlasDeleteCommit(Long id) {
         Atlas atlas = atlasRepository.findById(id).orElse(null);
         if (atlas == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -416,18 +466,6 @@ public class AtlasTopLevelService {
                     values.add(metricValues.values);
 
                 });
-
-//        List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndIds(experimentFeature.getId());
-//        for (Task seq : tasks) {
-//            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.metrics) );
-//            if (metricValues==null) {
-//                continue;
-//            }
-//            for (Map.Entry<String, BigDecimal> entry : metricValues.values.entrySet()) {
-//                metricsResult.metricNames.add(entry.getKey());
-//            }
-//            values.add(metricValues.values);
-//        }
 
         List<AtlasData.MetricElement> elements = new ArrayList<>();
         for (Map<String, BigDecimal> value : values) {
