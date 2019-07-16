@@ -56,7 +56,7 @@ public class WorkbookImpl implements Serializable, Workbook {
     public int execState;
 
     // this field will be left only for compatibility, producingOrder isn't used any more
-    @Deprecated
+    @Deprecated(forRemoval = true)
     @Column(name = "PRODUCING_ORDER")
     public int producingOrder = 0;
 

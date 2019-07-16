@@ -27,10 +27,10 @@ import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.holders.IntHolder;
 import ai.metaheuristic.ai.utils.permutation.Permutation;
@@ -96,8 +96,9 @@ public class ExperimentService {
     private final TaskPersistencer taskPersistencer;
     private final SnippetRepository snippetRepository;
     private final SnippetService snippetService;
-    private final WorkbookGraphService workbookGraphService;
+    private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
+    private final WorkbookRepository workbookRepository;
 
     private final ExperimentCache experimentCache;
     private final ExperimentRepository experimentRepository;
@@ -501,7 +502,7 @@ public class ExperimentService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
-        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookService.findAll(workbook);
 
         ExperimentApiData.ExperimentFeatureExtendedResult result = new ExperimentApiData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
@@ -761,7 +762,8 @@ public class ExperimentService {
                             if (task == null) {
                                 return EnumsApi.PlanProducingStatus.PRODUCING_OF_EXPERIMENT_ERROR;
                             }
-                            workbookGraphService.addNewTasksToGraph(workbookCache.findById(workbookId), prevParentTaskIds, taskIds);
+                            final WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+                            workbookService.addNewTasksToGraph(workbook, prevParentTaskIds, taskIds);
                         }
                         prevParentTaskIds = taskIds;
                     }

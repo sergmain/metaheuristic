@@ -72,7 +72,7 @@ public class Schedulers {
                 if ((System.currentTimeMillis()- prevReconsilationTime)>TIMEOUT_BETWEEN_RECONCILIATION) {
                     needReconciliation = true;
                 }
-                launchpadService.getWorkbookService().updateWorkbookStatuses(needReconciliation);
+                launchpadService.getWorkbookSchedulerService().updateWorkbookStatuses(needReconciliation);
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("!!! need to investigate. Error while updateWorkbookStatuses()",e);
             }

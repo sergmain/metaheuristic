@@ -21,7 +21,7 @@ import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
@@ -59,7 +59,7 @@ public class TestPlanService extends PreparingPlan {
     public WorkbookService workbookService;
 
     @Autowired
-    public WorkbookGraphService workbookGraphService;
+    public WorkbookSchedulerService workbookSchedulerService;
 
     @Override
     public String getPlanYamlAsString() {
@@ -100,7 +100,7 @@ public class TestPlanService extends PreparingPlan {
         final int actualTaskNumber = taskNumber + epy.processing.getNumberOfTask();
         assertEquals(1 + 1 + 3 + 2 * 12 * 7, actualTaskNumber);
 
-        long numberFromGraph = workbookGraphService.getCountUnfinishedTasks(workbook);
+        long numberFromGraph = workbookService.getCountUnfinishedTasks(workbook);
         assertEquals(actualTaskNumber, numberFromGraph);
 
         // ======================
@@ -130,7 +130,7 @@ public class TestPlanService extends PreparingPlan {
             assertNull(assignToStation2.getSimpleTask());
 
             storeExecResult(simpleTask);
-            workbookService.updateWorkbookStatuses(true);
+            workbookSchedulerService.updateWorkbookStatuses(true);
         }
         {
             WorkbookService.TasksAndAssignToStationResult assignToStation20 =
@@ -149,7 +149,7 @@ public class TestPlanService extends PreparingPlan {
             assertNull(assignToStation21.getSimpleTask());
 
             storeExecResult(simpleTask20);
-            workbookService.updateWorkbookStatuses(true);
+            workbookSchedulerService.updateWorkbookStatuses(true);
         }
         {
             WorkbookService.TasksAndAssignToStationResult assignToStation30 =
@@ -169,7 +169,7 @@ public class TestPlanService extends PreparingPlan {
             assertNull(simpleTask31);
 
             storeExecResult(simpleTask30);
-            workbookService.updateWorkbookStatuses(true);
+            workbookSchedulerService.updateWorkbookStatuses(true);
         }
         {
             WorkbookService.TasksAndAssignToStationResult assignToStation32 =
@@ -182,10 +182,10 @@ public class TestPlanService extends PreparingPlan {
             assertNotNull(task32);
 //            assertEquals(3, task32.getOrder());
             storeExecResult(simpleTask32);
-            workbookService.updateWorkbookStatuses(true);
+            workbookSchedulerService.updateWorkbookStatuses(true);
         }
         int j;
-        long prevValue = workbookGraphService.getCountUnfinishedTasks(workbook);
+        long prevValue = workbookService.getCountUnfinishedTasks(workbook);
         for ( j = 0; j < 1000; j++) {
             if (j%20==0) {
                 System.out.println("j = " + j);
@@ -199,9 +199,9 @@ public class TestPlanService extends PreparingPlan {
             Task loopTask = taskRepository.findById(loopSimpleTask.getTaskId()).orElse(null);
             assertNotNull(loopTask);
             storeExecResult(loopSimpleTask);
-            workbook = workbookService.updateWorkbookStatus( workbookRepository.findByIdForUpdate(workbook.id), true);
+            workbook = workbookSchedulerService.updateWorkbookStatus( workbookRepository.findByIdForUpdate(workbook.id), true);
 
-            final long count = workbookGraphService.getCountUnfinishedTasks(workbookCache.findById(workbook.id));
+            final long count = workbookService.getCountUnfinishedTasks(workbookCache.findById(workbook.id));
             assertNotEquals(count, prevValue);
             prevValue = count;
             if (count==0) {
@@ -222,7 +222,7 @@ public class TestPlanService extends PreparingPlan {
         final TaskPersistencer.PostTaskCreationAction action = t -> {
             if (t!=null) {
                 WorkbookImpl workbook = workbookRepository.findByIdForUpdate(t.getWorkbookId());
-                workbookGraphService.updateTaskExecState(workbook, t.getId(), t.getExecState());
+                workbookService.updateTaskExecState(workbook, t.getId(), t.getExecState());
             }
         };
 

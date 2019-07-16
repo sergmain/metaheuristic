@@ -22,11 +22,7 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
-import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.plan.PlanApiData;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,28 +46,9 @@ public class TestExperimentToJson extends PreparingPlan {
     @Autowired
     private AtlasService atlasService;
 
-    private static ObjectMapper mapper;
-
-    static {
-        mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-    }
-
     @Override
     public String getPlanYamlAsString() {
         return getPlanParamsYamlAsString_Simple();
-    }
-
-    @Test
-    public void toJson() throws JsonProcessingException {
-
-        long experimentId = experiment.getId();
-        ExperimentApiData.ExperimentInfoExtendedResult result =
-                experimentTopLevelService.getExperimentInfo(experimentId);
-
-        String json = mapper.writeValueAsString(result);
-
-        System.out.println("json =\n" + json);
     }
 
     @Test

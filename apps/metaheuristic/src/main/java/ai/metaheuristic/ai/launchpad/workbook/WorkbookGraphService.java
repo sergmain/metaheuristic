@@ -21,9 +21,6 @@ import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.graph.DefaultEdge;
@@ -39,6 +36,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -50,25 +48,13 @@ import java.util.stream.Collectors;
 @Profile("launchpad")
 @Slf4j
 @RequiredArgsConstructor
-public class WorkbookGraphService {
+class WorkbookGraphService {
 
     public static final String EMPTY_GRAPH = "strict digraph G { }";
     public static final String TASK_EXEC_STATE_ATTR = "task_exec_state";
 
     private final WorkbookCache workbookCache;
     private final TaskPersistencer taskPersistencer;
-
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class OperationStatusWithTaskList {
-        OperationStatusRest status;
-        List<WorkbookParamsYaml.TaskVertex> tasks = new ArrayList<>();
-
-        public OperationStatusWithTaskList(OperationStatusRest status) {
-            this.status = status;
-        }
-    }
 
     @FunctionalInterface
     public interface WorkWithGraphVoid {
@@ -173,6 +159,32 @@ public class WorkbookGraphService {
         return importer;
     }
 
+    public OperationStatusRest updateTaskExecStates(WorkbookImpl workbook, ConcurrentHashMap<Long, Integer> taskStates) {
+        if (taskStates==null || taskStates.isEmpty()) {
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+        try {
+            changeGraph(workbook, graph -> {
+                List<WorkbookParamsYaml.TaskVertex> tvs = graph.vertexSet()
+                        .stream()
+                        .filter(o -> taskStates.containsKey(o.taskId))
+                        .collect(Collectors.toList());
+
+                // Don't combine streams, a side-effect could be occurred
+                tvs.forEach(t -> {
+                    t.execState = EnumsApi.TaskExecState.from(taskStates.get(t.taskId));
+                    if (t.execState == EnumsApi.TaskExecState.ERROR) {
+                        functionUpdateWithInvalidatingAllChildrenTasks(graph, t.taskId, new WorkbookOperationStatusWithTaskList());
+                    }
+                });
+            });
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+        catch (Throwable th) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
+        }
+    }
+
     public OperationStatusRest updateTaskExecState(WorkbookImpl workbook, Long taskId, int execState) {
         try {
             changeGraph(workbook, graph -> {
@@ -186,13 +198,14 @@ public class WorkbookGraphService {
                 if (tv!=null) {
                     tv.execState = EnumsApi.TaskExecState.from(execState);
                     if (tv.execState==EnumsApi.TaskExecState.ERROR) {
-                        functionUpdateWithInvalidatingAllChildrenTasks(graph, tv.taskId, new OperationStatusWithTaskList());
+                        functionUpdateWithInvalidatingAllChildrenTasks(graph, tv.taskId, new WorkbookOperationStatusWithTaskList());
                     }
                 }
             });
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         catch (Throwable th) {
+            log.error("Error while updating graph", th);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
     }
@@ -206,14 +219,14 @@ public class WorkbookGraphService {
                     .count());
         }
         catch (Throwable th) {
-            log.error("Error", th);
+            log.error("#915.010 Error", th);
             return 0L;
         }
     }
 
-    public OperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
+    public WorkbookOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
         try {
-            final OperationStatusWithTaskList withTaskList = new OperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+            final WorkbookOperationStatusWithTaskList withTaskList = new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
             changeGraph(workbook, graph -> {
                     graph.vertexSet()
                             .stream()
@@ -228,7 +241,7 @@ public class WorkbookGraphService {
             return withTaskList;
         }
         catch (Throwable th) {
-            return new OperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
+            return new WorkbookOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
         }
     }
 
@@ -244,7 +257,7 @@ public class WorkbookGraphService {
             });
         }
         catch (Throwable th) {
-            log.error("Error", th);
+            log.error("#915.020 Error", th);
             return null;
         }
     }
@@ -258,7 +271,7 @@ public class WorkbookGraphService {
             });
         }
         catch (Throwable th) {
-            log.error("Error", th);
+            log.error("#915.030 Error", th);
             return null;
         }
     }
@@ -276,23 +289,24 @@ public class WorkbookGraphService {
             });
         }
         catch (Throwable th) {
-            log.error("Error", th);
+            log.error("#915.040 Error", th);
             return null;
         }
     }
 
-    public OperationStatusWithTaskList updateGraphWithInvalidatingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
+    public WorkbookOperationStatusWithTaskList updateGraphWithInvalidatingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
         try {
-            final OperationStatusWithTaskList withTaskList = new OperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+            final WorkbookOperationStatusWithTaskList withTaskList = new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
             changeGraph(workbook, graph -> functionUpdateWithInvalidatingAllChildrenTasks(graph, taskId, withTaskList));
             return withTaskList;
         }
         catch (Throwable th) {
-            return new OperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
+            log.error("#915.050 Error", th);
+            return new WorkbookOperationStatusWithTaskList(new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage()), List.of());
         }
     }
 
-    private void functionUpdateWithInvalidatingAllChildrenTasks(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph, Long taskId, OperationStatusWithTaskList withTaskList) {
+    private void functionUpdateWithInvalidatingAllChildrenTasks(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph, Long taskId, WorkbookOperationStatusWithTaskList withTaskList) {
         graph.vertexSet()
                 .stream()
                 .filter(o -> o.taskId.equals(taskId))
@@ -319,6 +333,7 @@ public class WorkbookGraphService {
             return OperationStatusRest.OPERATION_STATUS_OK;
         }
         catch (Throwable th) {
+            log.error("Erorr while adding task to graph", th);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
     }

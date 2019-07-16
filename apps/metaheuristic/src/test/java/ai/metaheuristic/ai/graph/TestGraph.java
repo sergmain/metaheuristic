@@ -18,9 +18,13 @@ package ai.metaheuristic.ai.graph;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookOperationStatusWithTaskList;
+import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.plan.PlanApiData;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,8 +37,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static ai.metaheuristic.api.data.workbook.WorkbookParamsYaml.TaskVertex;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Serge
@@ -44,29 +47,46 @@ import static org.junit.Assert.assertTrue;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
-public class TestGraph {
+@Slf4j
+public class TestGraph extends PreparingPlan {
 
     @Autowired
-    public WorkbookGraphService workbookGraphService;
+    public WorkbookCache workbookCache;
+
+    @Override
+    public String getPlanYamlAsString() {
+        return getPlanParamsYamlAsString_Simple();
+    }
 
     @Test
     public void test() {
-        WorkbookImpl workbook = new WorkbookImpl();
-        WorkbookParamsYaml params = new WorkbookParamsYaml();
-        params.graph = WorkbookGraphService.EMPTY_GRAPH;
-        workbook.updateParams(params);
 
-        workbookGraphService.addNewTasksToGraph(workbook, List.of(), List.of(1L));
+        PlanApiData.TaskProducingResultComplex result = workbookService.createWorkbook(plan.getId(), workbookParamsYaml);
+        workbook = (WorkbookImpl)result.workbook;
 
-        long count = workbookGraphService.getCountUnfinishedTasks(workbook);
+        assertNotNull(workbook);
+
+        OperationStatusRest osr = workbookService.addNewTasksToGraph(
+                workbookRepository.findByIdForUpdate(workbook.id),
+                List.of(), List.of(1L));
+        workbook = workbookCache.findById(workbook.id);
+
+        assertEquals(EnumsApi.OperationStatus.OK, osr.status);
+
+        long count = workbookService.getCountUnfinishedTasks(workbook);
         assertEquals(1, count);
 
-        workbookGraphService.addNewTasksToGraph(workbook, List.of(1L), List.of(2L, 3L));
 
-        count = workbookGraphService.getCountUnfinishedTasks(workbook);
+        osr = workbookService.addNewTasksToGraph(
+                workbookRepository.findByIdForUpdate(workbook.id),
+                List.of(1L), List.of(2L, 3L));
+        assertEquals(EnumsApi.OperationStatus.OK, osr.status);
+        workbook = workbookCache.findById(workbook.id);
+
+        count = workbookService.getCountUnfinishedTasks(workbook);
         assertEquals(3, count);
 
-        List<TaskVertex> leafs = workbookGraphService.findLeafs(workbook);
+        List<TaskVertex> leafs = workbookService.findLeafs(workbook);
 
         assertEquals(2, leafs.size());
         assertTrue(leafs.contains(new TaskVertex(2L, EnumsApi.TaskExecState.NONE)));
@@ -75,22 +95,31 @@ public class TestGraph {
         setExecState(workbook, 1L, EnumsApi.TaskExecState.BROKEN);
         setExecState(workbook, 2L, EnumsApi.TaskExecState.NONE);
         setExecState(workbook, 3L, EnumsApi.TaskExecState.NONE);
-        workbookGraphService.updateGraphWithInvalidatingAllChildrenTasks(workbook, 1L);
+
+        WorkbookOperationStatusWithTaskList status =
+                workbookService.updateGraphWithInvalidatingAllChildrenTasks(
+                        workbookRepository.findByIdForUpdate(workbook.id),
+                        1L);
+        assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
+        workbook = workbookCache.findById(workbook.id);
 
         // there is only 'ERROR' exec state
-        Set<EnumsApi.TaskExecState> states = workbookGraphService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
+        Set<EnumsApi.TaskExecState> states = workbookService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(1, states.size());
         assertTrue(states.contains(EnumsApi.TaskExecState.BROKEN));
 
-        count = workbookGraphService.getCountUnfinishedTasks(workbook);
+        count = workbookService.getCountUnfinishedTasks(workbook);
         assertEquals(0, count);
 
 
         setExecState(workbook, 1L, EnumsApi.TaskExecState.NONE);
-        workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, 1L);
+        workbookService.updateGraphWithResettingAllChildrenTasks(
+                workbookRepository.findByIdForUpdate(workbook.id),
+                1L);
+        workbook = workbookCache.findById(workbook.id);
 
         // there is only 'NONE' exec state
-        states = workbookGraphService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
+        states = workbookService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(1, states.size());
         assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
     }
@@ -99,6 +128,7 @@ public class TestGraph {
         TaskImpl t1 = new TaskImpl();
         t1.id = id;
         t1.execState = execState.value;
-        workbookGraphService.updateTaskExecState(workbook, t1.id, t1.execState );
+        workbookService.updateTaskExecState(workbook, t1.id, t1.execState );
     }
+
 }

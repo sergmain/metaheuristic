@@ -14,19 +14,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.utils.holders;
+package ai.metaheuristic.ai.launchpad.workbook;
 
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Use AtomicBoolean
+ * @author Serge
+ * Date: 7/15/2019
+ * Time: 11:03 PM
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Deprecated
-public class BoolHolder {
-    public boolean value;
+public class WorkbookOperationStatusWithTaskList {
+    OperationStatusRest status;
+    List<WorkbookParamsYaml.TaskVertex> tasks = new ArrayList<>();
+
+    public WorkbookOperationStatusWithTaskList(OperationStatusRest status) {
+        this.status = status;
+    }
 }
