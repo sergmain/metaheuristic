@@ -119,7 +119,7 @@ public class StationTopLevelService {
     public void storeStationStatus(Protocol.ReportStationStatus command) {
         final Long stationId = Long.valueOf(command.getStationId());
         final Object obj = syncMap.computeIfAbsent(stationId, o -> new Object());
-        log.debug("Before entering in sync block");
+        log.debug("Before entering in sync block, storeStationStatus()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
@@ -154,6 +154,7 @@ public class StationTopLevelService {
         log.debug("After leaving sync block");
     }
 
+    // TODO Need to re-write this method
     public void reconcileStationTasks(String stationIdAsStr, List<Protocol.StationTaskStatus.SimpleStatus> statuses) {
         final long stationId = Long.parseLong(stationIdAsStr);
         List<Object[]> tasks = taskRepository.findAllByStationIdAndResultReceivedIsFalseAndCompletedIsFalse(stationId);

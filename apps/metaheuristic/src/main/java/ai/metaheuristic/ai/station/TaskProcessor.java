@@ -66,6 +66,7 @@ public class TaskProcessor {
     private final StationService stationService;
     private final ResourceProviderFactory resourceProviderFactory;
     private final GitSourcingService gitSourcingService;
+    private final TaskProcessorStateService taskProcessorStateService;
 
     @Data
     public static class SnippetPrepareResult {
@@ -74,8 +75,6 @@ public class TaskProcessor {
         public SnippetApiData.SnippetExecResult snippetExecResult;
         boolean isLoaded = true;
     }
-
-    private Long currentTaskId;
 
     public void fixedDelay() {
         if (globals.isUnitTesting) {
@@ -90,7 +89,7 @@ public class TaskProcessor {
         for (StationTask task : tasks) {
 
             log.info("Start processing task {}", task);
-            if (task.launchedOn!=null && currentTaskId==null) {
+            if (task.launchedOn!=null && taskProcessorStateService.currentTaskId==null) {
                 log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched", task.taskId);
             }
 
@@ -233,10 +232,10 @@ public class TaskProcessor {
             // at this point all required resources have to be prepared
             task = stationTaskService.setLaunchOn(task.launchpadUrl, task.taskId);
             try {
-                currentTaskId = task.taskId;
+                taskProcessorStateService.currentTaskId = task.taskId;
                 execAllSnippets(task, launchpadCode, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, results);
             } finally {
-                currentTaskId = null;
+                taskProcessorStateService.currentTaskId = null;
             }
         }
     }

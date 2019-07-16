@@ -58,7 +58,7 @@ public class Schedulers {
         /**
          * update status of all workbooks which are in 'started' state. Also, if workbook is finished, atlas will be produced
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-workbook'), 5, 40, 5)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-workbook'), 1, 40, 2)*1000 }")
         public void updateWorkbookStatuses() {
             if (globals.isUnitTesting) {
                 return;

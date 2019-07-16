@@ -20,6 +20,7 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.EnumsApi;
@@ -41,7 +42,7 @@ public class TaskService {
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
     private final WorkbookService workbookService;
-    private final WorkbookCache workbookCache;
+    private final WorkbookRepository workbookRepository;
 
     public List<Long> resourceReceivingChecker(long stationId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
@@ -61,9 +62,9 @@ public class TaskService {
                     log.warn("#317.05 Task obsolete and was already deleted");
                     return;
                 }
-                WorkbookImpl workbook = workbookCache.findById(task.workbookId);
+                taskPersistencer.finishTaskAsBroken(task.getId());
+                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(task.workbookId);
                 if (workbook==null) {
-                    taskPersistencer.finishTaskAsBroken(task.getId());
                     log.warn("#317.11 Workbook for this task was already deleted");
                     return;
                 }

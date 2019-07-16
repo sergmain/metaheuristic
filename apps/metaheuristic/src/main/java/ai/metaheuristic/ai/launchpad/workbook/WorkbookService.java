@@ -20,17 +20,14 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
-import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
-import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
-import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
@@ -67,9 +64,6 @@ import org.yaml.snakeyaml.error.YAMLException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 @Service
@@ -114,7 +108,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
         Task t = taskPersistencer.resetTask(task);
         if (t==null) {
-            WorkbookOperationStatusWithTaskList withTaskList = workbookGraphService.updateGraphWithInvalidatingAllChildrenTasks(workbook, task.id);
+            WorkbookOperationStatusWithTaskList withTaskList = workbookGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, task.id);
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.030 Can't re-run task #" + taskId + ", see log for more information");
             }
@@ -451,7 +445,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     private OperationStatusRest updateTaskExecStateInternal(Long workbookId, Long taskId, int execState) {
         final Object obj = syncMap.computeIfAbsent(workbookId, o -> new Object());
-        log.debug("Before entering in sync block");
+        log.debug("Before entering in sync block, updateTaskExecStateInternal()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
@@ -465,7 +459,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public OperationStatusRest updateTaskExecState(WorkbookImpl workbook, Long taskId, int execState) {
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block");
+        log.debug("Before entering in sync block, updateTaskExecState()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
@@ -478,7 +472,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block");
+        log.debug("Before entering in sync block, findAll()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
@@ -491,11 +485,11 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public WorkbookOperationStatusWithTaskList updateGraphWithInvalidatingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block");
+        log.debug("Before entering in sync block, updateGraphWithInvalidatingAllChildrenTasks()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
-                return workbookGraphService.updateGraphWithInvalidatingAllChildrenTasks(workbook, taskId);
+                return workbookGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, taskId);
             } finally {
                 syncMap.remove(workbook.getId());
             }
@@ -504,7 +498,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public OperationStatusRest addNewTasksToGraph(WorkbookImpl workbook, List<Long> parentTaskIds, List<Long> taskIds) {
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block");
+        log.debug("Before entering in sync block, addNewTasksToGraph()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
@@ -517,7 +511,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public List<WorkbookParamsYaml.TaskVertex> findLeafs(WorkbookImpl workbook) {
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block");
+        log.debug("Before entering in sync block, findLeafs()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
@@ -530,7 +524,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public long getCountUnfinishedTasks(WorkbookImpl workbook) {
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block");
+        log.debug("Before entering in sync block, getCountUnfinishedTasks()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
@@ -543,7 +537,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
 
     public WorkbookOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block");
+        log.debug("Before entering in sync block, updateGraphWithResettingAllChildrenTasks()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
@@ -555,8 +549,11 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     }
 
     public OperationStatusRest updateTaskExecStates(WorkbookImpl workbook, ConcurrentHashMap<Long, Integer> taskStates) {
+        if (taskStates==null || taskStates.isEmpty()) {
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block");
+        log.debug("Before entering in sync block, updateTaskExecStates()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {

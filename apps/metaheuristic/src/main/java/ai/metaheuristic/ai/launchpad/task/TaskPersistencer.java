@@ -183,8 +183,9 @@ public class TaskPersistencer {
                 log.warn("#307.33 Can't find Task for Id: {}", taskId);
                 return;
             }
+            // TODO 2019-07-16 why we were using fake Id for station. Do we still need it?
             // fake station Id
-            task.setStationId(-1L);
+//            task.setStationId(-1L);
             task.setExecState(EnumsApi.TaskExecState.BROKEN.value);
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
