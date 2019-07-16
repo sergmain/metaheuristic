@@ -20,8 +20,8 @@ import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Atlas;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
-import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
+import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
@@ -29,17 +29,14 @@ import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.launchpad.BinaryData;
-import ai.metaheuristic.api.launchpad.Plan;
-import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -48,13 +45,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.error.YAMLException;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Collections;
-import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -62,20 +56,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AtlasService {
 
-    private static ObjectMapper mapper;
-
-    static {
-        mapper = new ObjectMapper();
-        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, false);
-    }
-
     private final Globals globals;
-    private final BinaryDataService binaryDataService;
     private final PlanCache planCache;
     private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
-    private final ConsoleFormAtlasService consoleFormAtlasService;
     private final AtlasRepository atlasRepository;
     private final WorkbookCache workbookCache;
 
@@ -83,7 +67,7 @@ public class AtlasService {
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class StoredToAtlasWithStatus extends BaseDataClass {
-        public ExperimentStoredToAtlas experimentStoredToAtlas;
+        public AtlasParamsYamlWithCache atlasParamsYamlWithCache;
         public Enums.StoringStatus status;
 
         public StoredToAtlasWithStatus(Enums.StoringStatus status, String errorMessage) {
@@ -104,31 +88,34 @@ public class AtlasService {
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.errorMessages);
         }
-        if (!workbookId.equals(stored.experimentStoredToAtlas.workbook.id)) {
+        if (!workbookId.equals(stored.atlasParamsYamlWithCache.atlasParams.workbook.workbookId)) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment can't be stored, workbookId is different");
         }
+        // TODO 2019-07-13 need to re-write this check
+/*
         String poolCode = getPoolCodeForExperiment(workbookId, experimentId);
         List<SimpleCodeAndStorageUrl> codes = binaryDataService.getResourceCodesInPool(List.of(poolCode), workbookId);
         if (!codes.isEmpty()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment already stored");
         }
+*/
         Atlas b = new Atlas();
         try {
-            b.experiment = toJson(stored.experimentStoredToAtlas);
-        } catch (JsonProcessingException e) {
+            b.params = AtlasParamsYamlUtils.BASE_YAML_UTILS.toString(stored.atlasParamsYamlWithCache.atlasParams);
+        } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "General error while storing experiment, " + e.toString());
         }
-        ExperimentParamsYaml params = stored.experimentStoredToAtlas.experiment.getExperimentParamsYaml();
+        ExperimentParamsYaml epy = stored.atlasParamsYamlWithCache.getExperimentParamsYaml();
 
-
-        b.name = params.experimentYaml.getName();
-        b.description = params.experimentYaml.getDescription();
-        b.code = stored.experimentStoredToAtlas.experiment.getCode();
-        b.createdOn = params.createdOn;
+        b.name = epy.experimentYaml.name;
+        b.description = epy.experimentYaml.description;
+        b.code = epy.experimentYaml.code;
+        b.createdOn = System.currentTimeMillis();
         atlasRepository.save(b);
 
-        ConsoleOutputStoredToAtlas filed = toConsoleOutputStoredToAtlas(stored.experimentStoredToAtlas.workbook.id);
+/*
+        ConsoleOutputStoredToAtlas filed = toConsoleOutputStoredToAtlas(stored.atlasParamsYamlWithCache.atlasParams.workbook.workbookId);
         if (filed.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, filed.errorMessages);
         }
@@ -146,6 +133,7 @@ public class AtlasService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "Error storing console outputs to db, " + e.toString());
         }
+*/
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
@@ -161,43 +149,47 @@ public class AtlasService {
             return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.02 can't find experiment for id: " + experimentId);
         }
-        Workbook workbook = workbookCache.findById(experiment.workbookId);
+        WorkbookImpl workbook = workbookCache.findById(experiment.workbookId);
         if (workbook==null) {
             return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.05 can't find workbook for this experiment");
         }
-        Plan plan = planCache.findById(workbook.getPlanId());
+        PlanImpl plan = planCache.findById(workbook.getPlanId());
         if (plan==null) {
             return new StoredToAtlasWithStatus(Enums.StoringStatus.CANT_BE_STORED,
                     "#604.10 can't find plan for this experiment");
         }
+
+        AtlasParamsYaml atlasParamsYaml = new AtlasParamsYaml();
+        atlasParamsYaml.createdOn = System.currentTimeMillis();
+        atlasParamsYaml.plan = new AtlasParamsYaml.PlanWithParams(plan.id, plan.params);
+        atlasParamsYaml.workbook = new AtlasParamsYaml.WorkbookWithParams(workbook.id, workbook.params, workbook.execState);
+        atlasParamsYaml.experiment = new AtlasParamsYaml.ExperimentWithParams(experiment.id, experiment.params);
+        atlasParamsYaml.tasks = taskRepository.findAllByWorkbookId(workbook.getId()).stream()
+                .map(o-> {
+                    String typeAsString = TaskParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams()).taskYaml.snippet.type;
+                    return new AtlasParamsYaml.TaskWithParams(
+                            o.getId(), o.getParams(), o.getExecState(), o.getMetrics(), o.getSnippetExecResults(),
+                            o.getCompletedOn(),
+                            o.isCompleted(),
+                            o.getAssignedOn(),
+                            typeAsString
+
+                    );
+                })
+                .collect(Collectors.toList());
+
         StoredToAtlasWithStatus result = new StoredToAtlasWithStatus();
-
-        List<Task> tasks = taskRepository.findAllByWorkbookId(workbook.getId());
-
-        result.experimentStoredToAtlas = new ExperimentStoredToAtlas( plan, workbook, experiment, tasks);
+        result.atlasParamsYamlWithCache = new AtlasParamsYamlWithCache( atlasParamsYaml );
         result.status = Enums.StoringStatus.OK;
         return result;
     }
 
-    // TODO 2019-06-23 change to yaml format
-    public ExperimentStoredToAtlas fromJson(String json) throws IOException {
-        //noinspection UnnecessaryLocalVariable,SpellCheckingInspection
-        ExperimentStoredToAtlas estb = mapper.readValue(json, ExperimentStoredToAtlas.class);
-        return estb;
-    }
-
-    // TODO 2019-06-23 change to yaml format
-    public String toJson(ExperimentStoredToAtlas stored) throws JsonProcessingException {
-        //noinspection UnnecessaryLocalVariable
-        String json = mapper.writeValueAsString(stored);
-        return json;
-    }
-
-    @SuppressWarnings("WeakerAccess")
+/*
     public ConsoleOutputStoredToAtlas toConsoleOutputStoredToAtlas(long workbookId) {
         //noinspection UnnecessaryLocalVariable
         ConsoleOutputStoredToAtlas result = consoleFormAtlasService.collectConsoleOutputs(workbookId);
         return result;
     }
+*/
 }

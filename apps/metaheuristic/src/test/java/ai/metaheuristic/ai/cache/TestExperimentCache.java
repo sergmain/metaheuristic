@@ -18,6 +18,8 @@ package ai.metaheuristic.ai.cache;
 
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.preparing.PreparingExperiment;
+import ai.metaheuristic.ai.yaml.experiment.ExperimentParamsYamlUtils;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -42,6 +44,8 @@ public class TestExperimentCache extends PreparingExperiment {
 
         assertNotNull(e1);
         assertNotNull(e2);
+
+        System.out.println("\n\ne1.params:\n" + e1.params);
 
         assertNull(e1.getWorkbookId());
         assertNull(e2.getWorkbookId());

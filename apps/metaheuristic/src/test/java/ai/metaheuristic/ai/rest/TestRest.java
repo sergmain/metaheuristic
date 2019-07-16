@@ -125,7 +125,7 @@ public class TestRest {
     }
 
     @Test
-    @WithUserDetails("rest")
+    @WithUserDetails("data_rest")
     public void whenTestAdminCredentials_thenOk() throws Exception {
         MvcResult result = mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())

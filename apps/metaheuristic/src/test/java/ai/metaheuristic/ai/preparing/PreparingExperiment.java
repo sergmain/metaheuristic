@@ -201,6 +201,7 @@ public abstract class PreparingExperiment {
             experiment.setCode(TEST_EXPERIMENT_CODE_01);
 
             ExperimentParamsYaml epy = new ExperimentParamsYaml();
+            epy.experimentYaml.setCode(TEST_EXPERIMENT_CODE_01);
             epy.experimentYaml.setName("Test experiment.");
             epy.experimentYaml.setDescription("Test experiment. Must be deleted automatically.");
             epy.experimentYaml.setSeed(42);

@@ -45,6 +45,7 @@ public class ExperimentParamsYamlUtilsV1
 
     @Override
     public ExperimentParamsYaml upgradeTo(ExperimentParamsYamlV1 src) {
+        src.checkIntegrity();
         ExperimentParamsYaml trg = new ExperimentParamsYaml();
         trg.createdOn = src.createdOn;
         BeanUtils.copyProperties(src.experimentYaml, trg.experimentYaml, "hyperParams");
@@ -72,6 +73,7 @@ public class ExperimentParamsYamlUtilsV1
                 })
                 .collect(Collectors.toList());
 
+        trg.checkIntegrity();
         return trg;
     }
 

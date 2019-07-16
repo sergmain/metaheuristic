@@ -20,6 +20,9 @@ import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookTopLevelService;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Pageable;
@@ -45,10 +48,24 @@ public class WorkbookRestController {
     private final PlanTopLevelService planTopLevelService;
     private final WorkbookTopLevelService workbookTopLevelService;
 
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class SimpleWorkbookAddingResult {
+        public Long workbookId;
+    }
+
     @GetMapping("/workbooks/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'ACCESS_REST')")
     public PlanApiData.WorkbooksResult workbooks(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
         return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(id, pageable);
+    }
+
+    @PostMapping("/plan-code-workbook-add-commit")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    public SimpleWorkbookAddingResult workbookAddCommit(String planCode, String poolCode, String inputResourceParams) {
+        PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planCode, poolCode, inputResourceParams);
+        return new SimpleWorkbookAddingResult(workbookResult.workbook.getId());
     }
 
     @PostMapping("/workbook-add-commit")
@@ -71,6 +88,7 @@ public class WorkbookRestController {
         return workbookTopLevelService.getWorkbookExtended(workbookId);
     }
 
+    @SuppressWarnings("unused")
     @PostMapping("/workbook-delete-commit")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
     public OperationStatusRest workbookDeleteCommit(Long planId, Long workbookId) {

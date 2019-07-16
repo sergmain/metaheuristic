@@ -58,7 +58,7 @@ public class ResourceTopLevelService {
     }
 
     public OperationStatusRest createResourceFromFile(
-            MultipartFile file, String resourceCode, String resourcePoolCode ) {
+            MultipartFile file, String resourcePoolCode, String resourceCode) {
         String originFilename = file.getOriginalFilename();
         return storeFileInternal(file, resourceCode, resourcePoolCode, originFilename);
     }

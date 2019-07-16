@@ -168,8 +168,9 @@ public class ExperimentService {
         return featureData;
     }
 
-    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment) {
-        return getHyperParamsAsMap(experiment.getExperimentParamsYaml().experimentYaml.hyperParams, true);
+    // TODO 2019-07-13 Need to optimize the set of getHyperParamsAsMap() methods
+    public static Map<String, Map<String, Integer>> getHyperParamsAsMap(ExperimentParamsYaml epy) {
+        return getHyperParamsAsMap(epy.experimentYaml.hyperParams, true);
     }
 
     public static Map<String, Map<String, Integer>> getHyperParamsAsMap(Experiment experiment, boolean isFull) {
@@ -396,7 +397,7 @@ public class ExperimentService {
             paramSet.add(param);
             paramFilterKeys.add(ParamFilter.of(param).key);
         }
-        final Map<String, Map<String, Integer>> paramByIndex = getHyperParamsAsMap(experiment);
+        final Map<String, Map<String, Integer>> paramByIndex = getHyperParamsAsMap(experiment.getExperimentParamsYaml());
 
         List<Task> list = findByIsCompletedIsTrueAndFeatureId(experiment.getExperimentParamsYaml(), featureId);
 

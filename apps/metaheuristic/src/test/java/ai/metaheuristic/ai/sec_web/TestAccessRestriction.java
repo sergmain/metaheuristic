@@ -75,7 +75,7 @@ public class TestAccessRestriction {
     }
 
     @Test
-    @WithUserDetails("rest")
+    @WithUserDetails("data_rest")
     public void testAnonymousAccessToTest() throws Exception {
         mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
@@ -83,7 +83,7 @@ public class TestAccessRestriction {
     }
 
     @Test
-    @WithUserDetails("rest")
+    @WithUserDetails("data_rest")
     public void whenTestAdminCredentials_thenOk() throws Exception {
         MvcResult result = mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
@@ -100,7 +100,7 @@ public class TestAccessRestriction {
     }
 
     @Test
-    @WithUserDetails("rest")
+    @WithUserDetails("data_rest")
     public void testSimpleCommunicationWithServer() throws Exception {
         ExchangeData dataRequest = new ExchangeData(new Protocol.Nop());
         String jsonRequest = JsonUtils.toJson(dataRequest);

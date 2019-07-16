@@ -36,7 +36,7 @@ public class TaskApiData {
         public Slice<TaskWIthType> items;
     }
 
-   @Data
+    @Data
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)

@@ -15,23 +15,22 @@
  */
 package ai.metaheuristic.ai.launchpad.snippet;
 
-import ai.metaheuristic.api.data.plan.PlanParamsYaml;
-import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
-import ai.metaheuristic.commons.yaml.snippet.SnippetUtils;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.snippet.SnippetCode;
-import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.launchpad.process.SnippetDefForPlan;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.utils.Checksum;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigList;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigListUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetConfigUtils;
+import ai.metaheuristic.commons.yaml.snippet.SnippetUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
@@ -41,7 +40,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 @Service
 @Slf4j
@@ -88,10 +90,21 @@ public class SnippetService {
             if (snippet != null) {
                 snippetConfig = SnippetConfigUtils.to(snippet.params);
                 if (!snippetConfig.skipParams) {
+                    if (snippetConfig.params!=null && snippetDef.params!=null) {
+                        snippetConfig.params = snippetConfig.params + ' ' + snippetDef.params;
+                    }
+                    else if (snippetConfig.params == null) {
+                        if (snippetDef.params != null) {
+                            snippetConfig.params = snippetDef.params;
+                        }
+                    }
+/*
+                    // TODO 2019-07-12 to delete after 2019-07-26
                     snippetConfig.params =
                             snippetConfig.params!=null
                                     ? snippetConfig.params + ' ' + snippetDef.params
                                     : snippetDef.params;
+*/
                 }
             } else {
                 log.warn("#295.010 Can't find snippet for code {}", snippetDef.code);

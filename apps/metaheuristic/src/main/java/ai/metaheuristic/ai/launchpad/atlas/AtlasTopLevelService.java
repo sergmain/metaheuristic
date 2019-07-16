@@ -18,54 +18,51 @@ package ai.metaheuristic.ai.launchpad.atlas;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Atlas;
-import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
+import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
+import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.metrics.MetricValues;
 import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SnippetApiData;
+import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
-import ai.metaheuristic.api.data.task.TaskApiData;
+import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
-import ai.metaheuristic.api.data.task.TaskWIthType;
-import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.LineIterator;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
+import org.yaml.snakeyaml.error.YAMLException;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.*;
+import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.ExperimentFeature;
+import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.HyperParam;
 
 @SuppressWarnings("Duplicates")
 @Slf4j
 @Service
 @Profile("launchpad")
+@RequiredArgsConstructor
 public class AtlasTopLevelService {
 
     private final AtlasRepository atlasRepository;
-    private final AtlasService atlasService;
-    private final BinaryDataService binaryDataService;
-    private final ConsoleFormAtlasService consoleFormAtlasService;
+    private final WorkbookGraphService workbookGraphService;
 
     private static class ParamFilter {
         String key;
@@ -81,42 +78,99 @@ public class AtlasTopLevelService {
         }
     }
 
-    public AtlasTopLevelService(AtlasRepository atlasRepository, AtlasService atlasService, BinaryDataService binaryDataService, ConsoleFormAtlasService consoleFormAtlasService) {
-        this.atlasRepository = atlasRepository;
-        this.atlasService = atlasService;
-        this.binaryDataService = binaryDataService;
-        this.consoleFormAtlasService = consoleFormAtlasService;
+    public AtlasData.ExperimentDataOnly getExperimentDataOnly(Long id) {
+
+        Atlas atlas = atlasRepository.findById(id).orElse(null);
+        if (atlas == null) {
+            return new AtlasData.ExperimentDataOnly("#280.02 experiment wasn't found in atlas, id: " + id);
+        }
+
+        AtlasParamsYamlWithCache ypywc;
+        try {
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+        } catch (YAMLException e) {
+            String es = "#280.05 Can't parse an atlas, error: " + e.toString();
+            log.error(es, e);
+            return new AtlasData.ExperimentDataOnly(es);
+        }
+        if (ypywc.atlasParams.experiment == null) {
+            return new AtlasData.ExperimentDataOnly("#280.07 experiment wasn't found, experimentId: " + id);
+        }
+        if (ypywc.atlasParams.workbook == null) {
+            return new AtlasData.ExperimentDataOnly("#280.16 experiment has broken ref to workbook, experimentId: " + id);
+        }
+        if (ypywc.atlasParams.workbook.workbookId==null ) {
+            return new AtlasData.ExperimentDataOnly("#280.12 experiment wasn't startet yet, experimentId: " + id);
+        }
+
+        ExperimentApiData.ExperimentData experiment = new ExperimentApiData.ExperimentData();
+        experiment.id = ypywc. atlasParams.experiment.experimentId;
+        experiment.workbookId = ypywc.atlasParams.workbook.workbookId;
+
+        ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
+        experiment.code = epy.experimentYaml.code;
+        experiment.name = epy.experimentYaml.name;
+        experiment.description = epy.experimentYaml.description;
+        experiment.seed = epy.experimentYaml.seed;
+        experiment.isAllTaskProduced = epy.processing.isAllTaskProduced;
+        experiment.isFeatureProduced = epy.processing.isFeatureProduced;
+        experiment.createdOn = epy.createdOn;
+        experiment.numberOfTask = epy.processing.numberOfTask;
+        experiment.hyperParams = epy.experimentYaml.hyperParams;
+
+        AtlasData.ExperimentDataOnly result = new AtlasData.ExperimentDataOnly();
+        if (experiment.getWorkbookId() == null) {
+            result.addInfoMessage("Launch is disabled, dataset isn't assigned");
+        }
+
+        result.experiment = experiment;
+        result.atlasId = atlas.id;
+        return result;
     }
 
-    public AtlasData.ExperimentInfoExtended getExperimentInfo(Long id) {
+    public AtlasData.ExperimentInfoExtended getExperimentInfoExtended(Long id) {
 
         Atlas atlas = atlasRepository.findById(id).orElse(null);
         if (atlas == null) {
             return new AtlasData.ExperimentInfoExtended("#280.02 experiment wasn't found in atlas, id: " + id);
         }
 
-        ExperimentStoredToAtlas estb1;
+        AtlasParamsYamlWithCache ypywc;
         try {
-            estb1 = atlasService.fromJson(atlas.experiment);
-        } catch (IOException e) {
-            String es = "#280.05 Can't extract experiment from atlas, error: " + e.toString();
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+        } catch (YAMLException e) {
+            String es = "#280.05 Can't parse an atlas, error: " + e.toString();
             log.error(es, e);
             return new AtlasData.ExperimentInfoExtended(es);
         }
-
-        Experiment experiment = estb1.experiment;
-        if (experiment == null) {
+        if (ypywc.atlasParams.experiment == null) {
             return new AtlasData.ExperimentInfoExtended("#280.07 experiment wasn't found, experimentId: " + id);
         }
-        if (experiment.getWorkbookId() == null) {
-            return new AtlasData.ExperimentInfoExtended("#280.12 experiment wasn't startet yet, experimentId: " + id);
-        }
-        Workbook workbook = estb1.workbook;
-        if (workbook == null) {
+        if (ypywc.atlasParams.workbook == null) {
             return new AtlasData.ExperimentInfoExtended("#280.16 experiment has broken ref to workbook, experimentId: " + id);
         }
+        if (ypywc.atlasParams.workbook.workbookId==null ) {
+            return new AtlasData.ExperimentInfoExtended("#280.12 experiment wasn't startet yet, experimentId: " + id);
+        }
 
-        for (HyperParam hyperParams : estb1.experiment.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
+        ExperimentApiData.ExperimentData experiment = new ExperimentApiData.ExperimentData();
+        experiment.id = ypywc. atlasParams.experiment.experimentId;
+        experiment.workbookId = ypywc.atlasParams.workbook.workbookId;
+
+        ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
+        experiment.code = epy.experimentYaml.code;
+        experiment.name = epy.experimentYaml.name;
+        experiment.description = epy.experimentYaml.description;
+        experiment.seed = epy.experimentYaml.seed;
+        experiment.isAllTaskProduced = epy.processing.isAllTaskProduced;
+        experiment.isFeatureProduced = epy.processing.isFeatureProduced;
+        experiment.createdOn = epy.createdOn;
+        experiment.numberOfTask = epy.processing.numberOfTask;
+        experiment.hyperParams = epy.experimentYaml.hyperParams;
+
+
+
+        for (HyperParam hyperParams : ypywc.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
             if (StringUtils.isBlank(hyperParams.getValues())) {
                 continue;
             }
@@ -130,17 +184,26 @@ public class AtlasTopLevelService {
         }
         result.atlas = atlas;
 
+        WorkbookImpl workbook = new WorkbookImpl();
+        workbook.params = ypywc.atlasParams.workbook.workbookParams;
+        workbook.id = ypywc.atlasParams.workbook.workbookId;
+        workbook.execState = ypywc.atlasParams.workbook.execState;
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
+
         AtlasData.ExperimentInfo experimentInfoResult = new AtlasData.ExperimentInfo();
-        experimentInfoResult.features = estb1.experiment.getExperimentParamsYaml().processing.features;
+        experimentInfoResult.features = ypywc.getExperimentParamsYaml().processing.features
+                .stream()
+                .map(e -> ExperimentService.asExperimentFeatureData(e, taskVertices, epy.processing.taskFeatures)).collect(Collectors.toList());
+
         experimentInfoResult.workbook = workbook;
-        experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.getExecState());
+        experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.execState);
 
         result.experiment = experiment;
         result.experimentInfo = experimentInfoResult;
         return result;
     }
 
-    public OperationStatusRest experimentDeleteCommit(Long id) {
+    public OperationStatusRest atlasDeleteCommit(Long id) {
         Atlas atlas = atlasRepository.findById(id).orElse(null);
         if (atlas == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -156,50 +219,50 @@ public class AtlasTopLevelService {
             return new AtlasData.PlotData("#280.22 experiment wasn't found in atlas, id: " + atlasId);
         }
 
-        ExperimentStoredToAtlas estb1;
+        AtlasParamsYamlWithCache ypywc;
         try {
-            estb1 = atlasService.fromJson(atlas.experiment);
-        } catch (IOException e) {
-            final String es = "#280.25 Can't extract experiment from atlas, error: " + e.toString();
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+        } catch (YAMLException e) {
+            String es = "#280.05 Can't parse an atlas, error: " + e.toString();
             log.error(es, e);
             return new AtlasData.PlotData(es);
         }
-
-        ExperimentFeature feature = estb1.getFeature(featureId);
-
+        ExperimentFeature feature = ypywc.getFeature(featureId);
+        if (feature==null) {
+            return AtlasData.EMPTY_PLOT_DATA;
+        }
         //noinspection UnnecessaryLocalVariable
-        AtlasData.PlotData data = findExperimentTaskForPlot(estb1, feature, params, paramsAxis);
+        AtlasData.PlotData data = findExperimentTaskForPlot(ypywc, feature, params, paramsAxis);
         return data;
     }
 
     public AtlasData.PlotData findExperimentTaskForPlot(
-            ExperimentStoredToAtlas estb, ExperimentFeature feature, String[] params, String[] paramsAxis) {
-        if (estb.experiment == null || feature == null) {
+            AtlasParamsYamlWithCache apywc, ExperimentFeature feature, String[] params, String[] paramsAxis) {
+        if (apywc.atlasParams.experiment == null || apywc.getExperimentParamsYaml().processing.features == null ) {
             return AtlasData.EMPTY_PLOT_DATA;
         } else {
-            List<Task> selected = getTasksForFeatureIdAndParams(estb, feature, params);
-            return collectDataForPlotting(estb, selected, paramsAxis);
+            List<AtlasParamsYaml.TaskWithParams> selected = getTasksForFeatureIdAndParams(apywc, feature, params);
+            return collectDataForPlotting(apywc, selected, paramsAxis);
         }
     }
 
-    public List<Task> getTasksForFeatureIdAndParams(ExperimentStoredToAtlas estb1, ExperimentFeature feature, String[] params) {
-        final Map<Long, Integer> taskToTaskType = estb1.experiment.getExperimentParamsYaml().processing.taskFeatures
+    public List<AtlasParamsYaml.TaskWithParams> getTasksForFeatureIdAndParams(AtlasParamsYamlWithCache estb1, ExperimentFeature feature, String[] params) {
+        final Map<Long, Integer> taskToTaskType = estb1.getExperimentParamsYaml().processing.taskFeatures
                 .stream()
                 .filter(taskFeature -> taskFeature.featureId.equals(feature.getId()))
                 .collect(Collectors.toMap(o -> o.taskId, o -> o.taskType));
 
-//                selected = taskRepository.findByIsCompletedIsTrueAndIds(feature.getId());
-        List<Task> selected = estb1.tasks.stream()
-                .filter(o -> taskToTaskType.containsKey(o.id) && o.execState > 1)
+        List<AtlasParamsYaml.TaskWithParams> selected = estb1.atlasParams.tasks.stream()
+                .filter(o -> taskToTaskType.containsKey(o.taskId) && o.execState > 1)
                 .collect(Collectors.toList());
 
         if (!isEmpty(params)) {
-            selected = filterTasks(estb1.experiment, params, selected);
+            selected = filterTasks(estb1.getExperimentParamsYaml(), params, selected);
         }
         return selected;
     }
 
-    private AtlasData.PlotData collectDataForPlotting(ExperimentStoredToAtlas estb, List<Task> selected, String[] paramsAxis) {
+    private AtlasData.PlotData collectDataForPlotting(AtlasParamsYamlWithCache estb, List<AtlasParamsYaml.TaskWithParams> selected, String[] paramsAxis) {
         final AtlasData.PlotData data = new AtlasData.PlotData();
         final List<String> paramCleared = new ArrayList<>();
         for (String param : paramsAxis) {
@@ -236,9 +299,9 @@ public class AtlasTopLevelService {
         }
 
         String metricKey = null;
-        for (Task task : selected) {
+        for (AtlasParamsYaml.TaskWithParams task : selected) {
 
-            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(task.getMetrics()) );
+            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(task.metrics) );
             if (metricValues==null) {
                 continue;
             }
@@ -250,7 +313,7 @@ public class AtlasTopLevelService {
                 }
             }
 
-            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.taskParams);
             int idxX = mapX.get(taskParamYaml.taskYaml.hyperParams.get(paramCleared.get(0)));
             int idxY = mapY.get(taskParamYaml.taskYaml.hyperParams.get(paramCleared.get(1)));
             data.z[idxY][idxX] = data.z[idxY][idxX].add(metricValues.values.get(metricKey));
@@ -260,7 +323,7 @@ public class AtlasTopLevelService {
     }
 
 
-    private List<Task> filterTasks(Experiment experiment, String[] params, List<Task> tasks) {
+    private List<AtlasParamsYaml.TaskWithParams> filterTasks(ExperimentParamsYaml epy, String[] params, List<AtlasParamsYaml.TaskWithParams> tasks) {
         final Set<String> paramSet = new HashSet<>();
         final Set<String> paramFilterKeys = new HashSet<>();
         for (String param : params) {
@@ -270,11 +333,11 @@ public class AtlasTopLevelService {
             paramSet.add(param);
             paramFilterKeys.add(ParamFilter.of(param).key);
         }
-        final Map<String, Map<String, Integer>> paramByIndex = ExperimentService.getHyperParamsAsMap(experiment);
+        final Map<String, Map<String, Integer>> paramByIndex = ExperimentService.getHyperParamsAsMap(epy);
 
-        List<Task> selected = new ArrayList<>();
-        for (Task task : tasks) {
-            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+        List<AtlasParamsYaml.TaskWithParams> selected = new ArrayList<>();
+        for (AtlasParamsYaml.TaskWithParams task : tasks) {
+            final TaskParamsYaml taskParamYaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.taskParams);
             boolean[] isOk = new boolean[taskParamYaml.taskYaml.hyperParams.size()];
             int idx = 0;
             for (Map.Entry<String, String> entry : taskParamYaml.taskYaml.hyperParams.entrySet()) {
@@ -332,53 +395,52 @@ public class AtlasTopLevelService {
             return new AtlasData.ExperimentFeatureExtendedResult("#280.31 experiment wasn't found in atlas, id: " + atlasId);
         }
 
-        ExperimentStoredToAtlas estb1;
+        AtlasParamsYamlWithCache ypywc;
         try {
-            estb1 = atlasService.fromJson(atlas.experiment);
-        } catch (IOException e) {
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+        } catch (YAMLException e) {
             final String es = "#280.35 Can't extract experiment from atlas, error: " + e.toString();
             log.error(es, e);
             return new AtlasData.ExperimentFeatureExtendedResult(es);
         }
 
-        ExperimentFeature experimentFeature = estb1.getFeature(featureId);
+        ExperimentFeature experimentFeature = ypywc.getFeature(featureId);
         if (experimentFeature == null) {
             return new AtlasData.ExperimentFeatureExtendedResult("#280.37 feature wasn't found, experimentFeatureId: " + featureId);
         }
 
-        AtlasData.ExperimentFeatureExtendedResult result = prepareExperimentFeatures(estb1, estb1.experiment, experimentFeature);
+        AtlasData.ExperimentFeatureExtendedResult result = prepareExperimentFeatures(ypywc, experimentFeature);
         if (result==null) {
             return new AtlasData.ExperimentFeatureExtendedResult("#280.40 can't prepare experiment data");
         }
         return result;
     }
 
-    public AtlasData.ExperimentFeatureExtendedResult prepareExperimentFeatures(
-            ExperimentStoredToAtlas estb,
-            Experiment experiment, final ExperimentFeature experimentFeature) {
+    private AtlasData.ExperimentFeatureExtendedResult prepareExperimentFeatures(
+            AtlasParamsYamlWithCache ypywc, final ExperimentFeature experimentFeature) {
 
-        TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
-
-        final Map<Long, Integer> taskToTaskType = estb.experiment.getExperimentParamsYaml().processing.taskFeatures
+        ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
+        final Map<Long, Integer> taskToTaskType = epy.processing.taskFeatures
                 .stream()
                 .filter(taskFeature -> taskFeature.featureId.equals(experimentFeature.id))
                 .collect(Collectors.toMap(o -> o.taskId, o -> o.taskType));
 
-        List<TaskWIthType> taskWIthTypes = estb.tasks.stream()
-                .filter(o->taskToTaskType.containsKey(o.id))
-                .sorted(Comparator.comparingLong(o -> o.id))
-                .limit(11)
-                .map(o-> new TaskWIthType(o, taskToTaskType.get(o.id)))
+        List<AtlasParamsYaml.TaskWithParams> taskWIthTypes = ypywc.atlasParams.tasks.stream()
+                .filter(o->taskToTaskType.containsKey(o.taskId))
+                .sorted(Comparator.comparingLong(o -> o.taskId))
+                .limit(Consts.PAGE_REQUEST_10_REC.getPageSize() + 1)
                 .collect(Collectors.toList());
 
-        tasksResult.items = new SliceImpl<>(
-                taskWIthTypes.subList(0, taskWIthTypes.size()>10 ? 10 : taskWIthTypes.size()),
-                Consts.PAGE_REQUEST_10_REC,
-                taskWIthTypes.size()>10
+        Slice<AtlasParamsYaml.TaskWithParams> tasks = new SliceImpl<>(
+                taskWIthTypes.subList(0,
+                        taskWIthTypes.size()>Consts.PAGE_REQUEST_10_REC.getPageSize()
+                                ? Consts.PAGE_REQUEST_10_REC.getPageSize()
+                                : taskWIthTypes.size()),
+                Consts.PAGE_REQUEST_10_REC,taskWIthTypes.size()>10
         );
 
         AtlasData.HyperParamResult hyperParamResult = new AtlasData.HyperParamResult();
-        for (HyperParam hyperParam : estb.experiment.getExperimentParamsYaml().experimentYaml.getHyperParams()) {
+        for (HyperParam hyperParam : epy.experimentYaml.getHyperParams()) {
             ExperimentUtils.NumberOfVariants variants = ExperimentUtils.getNumberOfVariants(hyperParam.getValues());
             ExperimentApiData.HyperParamList list = new ExperimentApiData.HyperParamList(hyperParam.getKey());
             for (String value : variants.values) {
@@ -393,8 +455,8 @@ public class AtlasTopLevelService {
         final AtlasData.MetricsResult metricsResult = new AtlasData.MetricsResult();
         final List<Map<String, BigDecimal>> values = new ArrayList<>();
 
-        estb.tasks.stream()
-                .filter(o->taskToTaskType.containsKey(o.id) && o.execState > 1)
+        ypywc.atlasParams.tasks.stream()
+                .filter(o->taskToTaskType.containsKey(o.taskId) && o.execState > 1)
                 .forEach( o-> {
                     MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(o.metrics) );
                     if (metricValues==null) {
@@ -406,18 +468,6 @@ public class AtlasTopLevelService {
                     values.add(metricValues.values);
 
                 });
-
-//        List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndIds(experimentFeature.getId());
-//        for (Task seq : tasks) {
-//            MetricValues metricValues = MetricsUtils.getValues( MetricsUtils.to(seq.metrics) );
-//            if (metricValues==null) {
-//                continue;
-//            }
-//            for (Map.Entry<String, BigDecimal> entry : metricValues.values.entrySet()) {
-//                metricsResult.metricNames.add(entry.getKey());
-//            }
-//            values.add(metricValues.values);
-//        }
 
         List<AtlasData.MetricElement> elements = new ArrayList<>();
         for (Map<String, BigDecimal> value : values) {
@@ -431,12 +481,17 @@ public class AtlasTopLevelService {
 
         metricsResult.metrics.addAll( elements.subList(0, Math.min(20, elements.size())) );
 
+        WorkbookImpl workbook = new WorkbookImpl();
+        workbook.params = ypywc.atlasParams.workbook.workbookParams;
+        workbook.id = ypywc.atlasParams.workbook.workbookId;
+        workbook.execState = ypywc.atlasParams.workbook.execState;
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
+
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
         result.metricsResult = metricsResult;
         result.hyperParamResult = hyperParamResult;
-        result.tasksResult = tasksResult;
-        result.experiment = experiment;
-        result.experimentFeature = experimentFeature;
+        result.tasks = tasks;
+        result.experimentFeature = ExperimentService.asExperimentFeatureData(experimentFeature, taskVertices, epy.processing.taskFeatures);
         result.consoleResult = new AtlasData.ConsoleResult();
 
         return result;
@@ -448,61 +503,22 @@ public class AtlasTopLevelService {
             return new AtlasData.ConsoleResult("#280.42 experiment wasn't found in atlas, id: " + atlasId);
         }
 
-        ExperimentStoredToAtlas estb;
+        AtlasParamsYamlWithCache ypywc;
         try {
-            estb = atlasService.fromJson(atlas.experiment);
-        } catch (IOException e) {
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+        } catch (YAMLException e) {
             final String es = "#280.45 Can't extract experiment from atlas, error: " + e.toString();
             log.error(es, e);
             return new AtlasData.ConsoleResult(es);
         }
+        AtlasParamsYaml.TaskWithParams task = ypywc.atlasParams.tasks.stream()
+                .filter(t->t.taskId.equals(taskId)).findFirst().orElse(null);
 
-        String poolCode = AtlasService.getPoolCodeForExperiment(estb.workbook.id, estb.experiment.id);
-        List<Long> ids = binaryDataService.getByPoolCodeAndType(poolCode, EnumsApi.BinaryDataType.CONSOLE);
-        if (ids.isEmpty()) {
+        if (task==null ) {
             return new AtlasData.ConsoleResult("#280.47 Can't find a console output");
         }
-
-        if (ids.size()>1) {
-            log.warn("Structure of console output is broken. " +
-                    "There is more than one console output for poolCode: {}, dataType: {}", poolCode, EnumsApi.BinaryDataType.CONSOLE);
-        }
-
-        // TODO need to refactor to use InputStream
-        byte[] bytes = binaryDataService.getDataAsBytes(ids.get(0));
-        ConsoleOutputStoredToAtlas.TaskOutput taskOutput = null;
-        try(InputStream is = new ByteArrayInputStream(bytes)) {
-            LineIterator it = IOUtils.lineIterator(is, StandardCharsets.UTF_8);
-            String taskIdAsStr = Long.toString(taskId);
-            while (it.hasNext()) {
-                String line = it.nextLine();
-                int idx = line.indexOf(',');
-                if (idx==-1) {
-                    log.warn("280.50 wrong format of line: " + line);
-                    continue;
-                }
-                if (taskIdAsStr.equals(line.substring(0, idx))) {
-                    String json = line.substring(idx+1);
-                    taskOutput = consoleFormAtlasService.fromJson(json);
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            return new AtlasData.ConsoleResult("#280.53 Can't process a console output, error: " + e.toString());
-        }
-
-        AtlasData.ConsoleResult result = new AtlasData.ConsoleResult();
-        if (taskOutput!=null) {
-            SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(taskOutput.console);
-            if (snippetExec!=null) {
-                final SnippetApiData.SnippetExecResult execSnippetExecResult = snippetExec.getExec();
-                result.items.add(new AtlasData.ConsoleResult.SimpleConsoleOutput(execSnippetExecResult.exitCode, execSnippetExecResult.isOk, execSnippetExecResult.console));
-            }
-            else {
-                log.info("#280.55 snippetExec is null");
-            }
-        }
-        return result;
+        SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.exec);
+        return new AtlasData.ConsoleResult(snippetExec.exec.exitCode, snippetExec.exec.isOk, snippetExec.exec.console);
     }
 
     public AtlasData.ExperimentFeatureExtendedResult getFeatureProgressPart(long atlasId, Long experimentId, Long featureId, String[] params, Pageable pageable) {
@@ -511,49 +527,38 @@ public class AtlasTopLevelService {
             return new AtlasData.ExperimentFeatureExtendedResult("#280.57 experiment wasn't found in atlas, id: " + atlasId);
         }
 
-        ExperimentStoredToAtlas estb;
+        AtlasParamsYamlWithCache ypywc;
         try {
-            estb = atlasService.fromJson(atlas.experiment);
-        } catch (IOException e) {
+            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+        } catch (YAMLException e) {
             final String es = "#280.60 Can't extract experiment from atlas, error: " + e.toString();
             log.error(es, e);
             return new AtlasData.ExperimentFeatureExtendedResult(es);
         }
 
-        ExperimentFeature feature = estb.getFeature(featureId);
+        ExperimentFeature feature = ypywc.getFeature(featureId);
 
-        TaskApiData.TasksResult tasksResult = new TaskApiData.TasksResult();
-        tasksResult.items = findTasks(estb, atlasId, ControllerUtils.fixPageSize(10, pageable), estb.experiment, feature, params);
+        WorkbookImpl workbook = new WorkbookImpl();
+        workbook.params = ypywc.atlasParams.workbook.workbookParams;
+        workbook.id = ypywc.atlasParams.workbook.workbookId;
+        workbook.execState = ypywc.atlasParams.workbook.execState;
+        List<WorkbookParamsYaml.TaskVertex> taskVertices = workbookGraphService.findAll(workbook);
 
         AtlasData.ExperimentFeatureExtendedResult result = new AtlasData.ExperimentFeatureExtendedResult();
-        result.tasksResult = tasksResult;
-        result.experiment = estb.experiment;
-        result.experimentFeature = feature;
+        result.tasks = findTasks(ypywc, ControllerUtils.fixPageSize(10, pageable), feature, params);
+        result.experimentFeature = ExperimentService.asExperimentFeatureData(feature, taskVertices, ypywc.getExperimentParamsYaml().processing.taskFeatures);;
         result.consoleResult = new AtlasData.ConsoleResult();
         return result;
     }
 
-    public Slice<TaskWIthType> findTasks(ExperimentStoredToAtlas estb, long atlasId, Pageable pageable, Experiment experiment, ExperimentFeature feature, String[] params) {
-        if (experiment == null || feature == null) {
+    private Slice<AtlasParamsYaml.TaskWithParams> findTasks(AtlasParamsYamlWithCache estb, Pageable pageable, ExperimentFeature feature, String[] params) {
+        if (feature == null) {
             return Page.empty();
-        } else {
-            List<Task> selected = getTasksForFeatureIdAndParams(estb, feature, params);
-            List<Task> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
-            List<TaskWIthType> list = new ArrayList<>();
-            for (Task task : subList) {
-                ExperimentTaskFeature etf = estb.getExperimentTaskFeature(task.getId());
-                if (etf==null) {
-                    log.warn("280.63 Can't get type of task for taskId " + task.getId());
-                }
-                int type = etf!=null ? EnumsApi.ExperimentTaskType.from( etf.getTaskType() ).value : EnumsApi.ExperimentTaskType.UNKNOWN.value;
-
-                list.add(new TaskWIthType(task, type));
-            }
-            //noinspection UnnecessaryLocalVariable
-            Slice<TaskWIthType> slice = new PageImpl<>(list, pageable, selected.size());
-            return slice;
         }
+        List<AtlasParamsYaml.TaskWithParams> selected = getTasksForFeatureIdAndParams(estb, feature, params);
+        List<AtlasParamsYaml.TaskWithParams> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
+        //noinspection UnnecessaryLocalVariable
+        Slice<AtlasParamsYaml.TaskWithParams> slice = new PageImpl<>(subList, pageable, selected.size());
+        return slice;
     }
-
-
 }

@@ -73,7 +73,7 @@ public class ResourceController {
             @RequestParam(name = "poolCode") String resourcePoolCode,
             final RedirectAttributes redirectAttributes) {
 
-        OperationStatusRest operationStatusRest = resourceTopLevelService.createResourceFromFile(file, resourceCode, resourcePoolCode);
+        OperationStatusRest operationStatusRest = resourceTopLevelService.createResourceFromFile(file, resourcePoolCode, resourceCode);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
         }

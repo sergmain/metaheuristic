@@ -34,8 +34,9 @@ public class Atlas implements Serializable {
     @Version
     public Integer version;
 
+    // even thought db field is 'experiment'  bean's field will be params
     @Column(name = "EXPERIMENT")
-    public String experiment;
+    public String params;
 
     @Column(name = "NAME")
     public String name;

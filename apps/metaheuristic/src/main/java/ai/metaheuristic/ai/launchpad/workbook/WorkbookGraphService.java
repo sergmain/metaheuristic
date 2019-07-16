@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
-import ai.metaheuristic.api.launchpad.Task;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -174,18 +173,18 @@ public class WorkbookGraphService {
         return importer;
     }
 
-    public OperationStatusRest updateTaskExecState(WorkbookImpl workbook, Task task) {
+    public OperationStatusRest updateTaskExecState(WorkbookImpl workbook, Long taskId, int execState) {
         try {
             changeGraph(workbook, graph -> {
                 WorkbookParamsYaml.TaskVertex tv = graph.vertexSet()
                         .stream()
-                        .filter(o -> o.taskId.equals(task.getId()))
+                        .filter(o -> o.taskId.equals(taskId))
                         .findFirst()
                         .orElse(null);
 
                 // Don't combine streams, a side-effect could be occurred
                 if (tv!=null) {
-                    tv.execState = EnumsApi.TaskExecState.from(task.getExecState());
+                    tv.execState = EnumsApi.TaskExecState.from(execState);
                     if (tv.execState==EnumsApi.TaskExecState.ERROR) {
                         functionUpdateWithInvalidatingAllChildrenTasks(graph, tv.taskId, new OperationStatusWithTaskList());
                     }
@@ -196,7 +195,6 @@ public class WorkbookGraphService {
         catch (Throwable th) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
-
     }
 
     public long getCountUnfinishedTasks(WorkbookImpl workbook) {

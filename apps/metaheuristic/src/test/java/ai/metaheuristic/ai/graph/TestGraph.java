@@ -99,6 +99,6 @@ public class TestGraph {
         TaskImpl t1 = new TaskImpl();
         t1.id = id;
         t1.execState = execState.value;
-        workbookGraphService.updateTaskExecState(workbook, t1 );
+        workbookGraphService.updateTaskExecState(workbook, t1.id, t1.execState );
     }
 }
