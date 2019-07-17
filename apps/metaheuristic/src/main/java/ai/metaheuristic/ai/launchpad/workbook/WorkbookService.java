@@ -419,7 +419,8 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         resultTask.setResultResourceScheduledOn(0);
 
-        taskRepository.saveAndFlush((TaskImpl)resultTask);
+        taskRepository.save((TaskImpl)resultTask);
+        updateTaskExecStateInternal(workbook.getId(), resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
 
         return new TasksAndAssignToStationResult(assignedTask);
     }

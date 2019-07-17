@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * User: Serg
@@ -98,6 +99,7 @@ public class LaunchpadRequestor {
     }
 
     private long lastRequestForMissingResources = 0;
+    private long lastCheckForResendTaskOutputResource = 0;
 
     public void proceedWithRequest() {
         if (globals.isUnitTesting) {
@@ -137,6 +139,21 @@ public class LaunchpadRequestor {
                     Monitoring.log("##012", Enums.Monitor.MEMORY);
                     if (b) {
                         data.setCommand(new Protocol.RequestTask(launchpad.launchpadLookup.acceptOnlySignedSnippets));
+                    }
+                    else {
+                        if (System.currentTimeMillis() - lastCheckForResendTaskOutputResource > 30_000) {
+                            // let's check resources for non-completed and not-sending yet tasks
+                            List<Protocol.ResendTaskOutputResourceResult.SimpleStatus> statuses = stationTaskService.findAllByCompletedIsFalse(launchpadUrl).stream()
+                                    .filter(t -> t.delivered && t.finishedOn!=null && !t.resourceUploaded)
+                                    .map(t->
+                                            new Protocol.ResendTaskOutputResourceResult.SimpleStatus(
+                                                    t.taskId, stationService.resendTaskOutputResource(launchpadUrl, t.taskId)
+                                            )
+                                    ).collect(Collectors.toList());
+
+                            data.setCommands( new Command[]{new Protocol.ResendTaskOutputResourceResult(statuses)});
+                            lastCheckForResendTaskOutputResource = System.currentTimeMillis();
+                        }
                     }
                 }
                 if (System.currentTimeMillis() - lastRequestForMissingResources > 15_000) {

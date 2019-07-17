@@ -55,7 +55,7 @@ public class TaskPersistencer {
                         return null;
                     }
                     task.setParams(taskParams);
-                    taskRepository.saveAndFlush(task);
+                    taskRepository.save(task);
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.error("#307.07 Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
@@ -80,7 +80,7 @@ public class TaskPersistencer {
                     task.setCompleted(true);
                     task.setCompletedOn(System.currentTimeMillis());
                     task.setResultReceived(resultReceived);
-                    taskRepository.saveAndFlush(task);
+                    taskRepository.save(task);
                     return Enums.UploadResourceStatus.OK;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.warn("#307.18 Error set resultReceived to {} try #{}, taskId: {}, error: {}", resultReceived, i, taskId, e.toString());
@@ -88,25 +88,6 @@ public class TaskPersistencer {
             }
         }
         return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
-    }
-
-    @SuppressWarnings("unused")
-    public Task assignTask(Task task, long stationId) {
-        synchronized (syncObj) {
-            for (int i = 0; i < NUMBER_OF_TRY; i++) {
-                try {
-                    task.setAssignedOn(System.currentTimeMillis());
-                    task.setStationId(stationId);
-                    task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
-                    task.setResultResourceScheduledOn(System.currentTimeMillis());
-
-                    taskRepository.saveAndFlush((TaskImpl) task);
-                } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.21 Error assign task {}, taskId: {}, error: {}", task.toString(), task.getId(), e.toString());
-                }
-            }
-        }
-        return null;
     }
 
     public Task resetTask(Long taskId) {
@@ -194,7 +175,7 @@ public class TaskPersistencer {
             task.setResultReceived(true);
 
             //noinspection UnusedAssignment
-            task = taskRepository.saveAndFlush(task);
+            task = taskRepository.save(task);
         }
     }
 
@@ -223,7 +204,7 @@ public class TaskPersistencer {
         task.setSnippetExecResults(result.getResult());
         task.setMetrics(result.getMetrics());
         task.setResultResourceScheduledOn(System.currentTimeMillis());
-        task = taskRepository.saveAndFlush(task);
+        task = taskRepository.save(task);
 
         return task;
     }
