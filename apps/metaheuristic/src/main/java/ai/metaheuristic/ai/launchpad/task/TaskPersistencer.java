@@ -99,34 +99,24 @@ public class TaskPersistencer {
     }
 
     public Task resetTask(TaskImpl task) {
+        if (task==null) {
+            log.error("task is null");
+            return null;
+        }
         log.info("Start resetting task #{}", task.getId());
 
-/*
-        // TODO 2019-07-04 do we still need this synchronization?
-        synchronized (syncObj) {
-            for (int i = 0; i < NUMBER_OF_TRY; i++) {
-                try {
-*/
-                    task.setSnippetExecResults(null);
-                    task.setStationId(null);
-                    task.setAssignedOn(null);
-                    task.setCompleted(false);
-                    task.setCompletedOn(null);
-                    task.setMetrics(null);
-                    task.setExecState(EnumsApi.TaskExecState.NONE.value);
-                    task.setResultReceived(false);
-                    task.setResultResourceScheduledOn(0);
-                    taskRepository.save(task);
+        task.setSnippetExecResults(null);
+        task.setStationId(null);
+        task.setAssignedOn(null);
+        task.setCompleted(false);
+        task.setCompletedOn(null);
+        task.setMetrics(null);
+        task.setExecState(EnumsApi.TaskExecState.NONE.value);
+        task.setResultReceived(false);
+        task.setResultResourceScheduledOn(0);
+        taskRepository.save(task);
 
-                    return task;
-/*
-                } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.25 Error while resetting task, try: {}, taskId: {}, error: {}",  i, task.getId(), e.toString());
-                }
-            }
-        }
-        return null;
-*/
+        return task;
     }
 
     @FunctionalInterface
@@ -136,22 +126,20 @@ public class TaskPersistencer {
 
     @SuppressWarnings("UnusedReturnValue")
     public Task storeExecResult(SimpleTaskExecResult result, PostTaskCreationAction action) {
-        synchronized (syncObj) {
-            SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
-            if (!snippetExec.exec.isOk) {
-                log.info("#307.27 Task #{} finished with error, console: {}",
-                        result.taskId,
-                        StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<console output is empty>");
-            }
-            for (int i = 0; i < NUMBER_OF_TRY; i++) {
-                try {
-                    Task t = prepareAndSaveTask(result, snippetExec.allSnippetsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR);
-                    action.execute(t);
-                    return t;
-                } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.29 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
-                }
-            }
+        SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
+        SnippetApiData.SnippetExecResult actualSnippet = snippetExec.generalExec!=null ? snippetExec.generalExec : snippetExec.exec;
+        if (!actualSnippet.isOk) {
+            log.info("#307.27 Task #{} finished with error, snippetCode: {}, console: {}",
+                    actualSnippet.snippetCode,
+                    result.taskId,
+                    StringUtils.isNotBlank(actualSnippet.console) ? actualSnippet.console : "<console output is empty>");
+        }
+        try {
+            Task t = prepareAndSaveTask(result, snippetExec.allSnippetsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR);
+            action.execute(t);
+            return t;
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.error("#307.29 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
         }
         return null;
     }
@@ -164,14 +152,16 @@ public class TaskPersistencer {
                 log.warn("#307.33 Can't find Task for Id: {}", taskId);
                 return;
             }
-            // TODO 2019-07-16 why we were using fake Id for station. Do we still need it?
-            // fake station Id
-//            task.setStationId(-1L);
             task.setExecState(EnumsApi.TaskExecState.BROKEN.value);
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
 
-            task.setSnippetExecResults("Task is broken, cant' process it");
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+            SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec();
+            snippetExec.exec = new SnippetApiData.SnippetExecResult(
+                    tpy.taskYaml.snippet.code,false,-999,"Task is broken, cant' process it"
+            );
+            task.setSnippetExecResults(SnippetExecUtils.toString(snippetExec));
             task.setResultReceived(true);
 
             //noinspection UnusedAssignment

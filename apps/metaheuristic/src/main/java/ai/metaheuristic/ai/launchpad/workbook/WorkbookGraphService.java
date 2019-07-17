@@ -159,9 +159,11 @@ class WorkbookGraphService {
         return importer;
     }
 
-    public OperationStatusRest updateTaskExecStates(WorkbookImpl workbook, ConcurrentHashMap<Long, Integer> taskStates) {
+    public WorkbookOperationStatusWithTaskList updateTaskExecStates(WorkbookImpl workbook, ConcurrentHashMap<Long, Integer> taskStates) {
+        final WorkbookOperationStatusWithTaskList status = new WorkbookOperationStatusWithTaskList();
+        status.status = OperationStatusRest.OPERATION_STATUS_OK;
         if (taskStates==null || taskStates.isEmpty()) {
-            return OperationStatusRest.OPERATION_STATUS_OK;
+            return status;
         }
         try {
             changeGraph(workbook, graph -> {
@@ -174,18 +176,22 @@ class WorkbookGraphService {
                 tvs.forEach(t -> {
                     t.execState = EnumsApi.TaskExecState.from(taskStates.get(t.taskId));
                     if (t.execState == EnumsApi.TaskExecState.ERROR) {
-                        functionSetAllChildrenTasksAsBroken(graph, t.taskId, new WorkbookOperationStatusWithTaskList());
+                        functionSetStateForAllChildrenTasks(graph, t.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.BROKEN);
+                    }
+                    else if (t.execState == EnumsApi.TaskExecState.OK) {
+                        functionSetStateForAllChildrenTasks(graph, t.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.NONE);
                     }
                 });
             });
-            return OperationStatusRest.OPERATION_STATUS_OK;
         }
         catch (Throwable th) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
+            status.status = new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
+        return status;
     }
 
-    public OperationStatusRest updateTaskExecState(WorkbookImpl workbook, Long taskId, int execState) {
+    public WorkbookOperationStatusWithTaskList updateTaskExecState(WorkbookImpl workbook, Long taskId, int execState) {
+        final WorkbookOperationStatusWithTaskList status = new WorkbookOperationStatusWithTaskList();
         try {
             changeGraph(workbook, graph -> {
                 WorkbookParamsYaml.TaskVertex tv = graph.vertexSet()
@@ -198,16 +204,20 @@ class WorkbookGraphService {
                 if (tv!=null) {
                     tv.execState = EnumsApi.TaskExecState.from(execState);
                     if (tv.execState==EnumsApi.TaskExecState.ERROR) {
-                        functionSetAllChildrenTasksAsBroken(graph, tv.taskId, new WorkbookOperationStatusWithTaskList());
+                        functionSetStateForAllChildrenTasks(graph, tv.taskId, status, EnumsApi.TaskExecState.BROKEN);
+                    }
+                    else if (tv.execState==EnumsApi.TaskExecState.OK) {
+                        functionSetStateForAllChildrenTasks(graph, tv.taskId, status, EnumsApi.TaskExecState.NONE);
                     }
                 }
             });
-            return OperationStatusRest.OPERATION_STATUS_OK;
+            status.status = OperationStatusRest.OPERATION_STATUS_OK;
         }
         catch (Throwable th) {
             log.error("Error while updating graph", th);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
+            status.status = new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
+        return status;
     }
 
     public long getCountUnfinishedTasks(WorkbookImpl workbook) {
@@ -233,7 +243,7 @@ class WorkbookGraphService {
                             .filter(o -> o.taskId.equals(taskId))
                             .findFirst()
                             .ifPresent(currV -> graph.getDescendants(currV).forEach(t -> {
-                                withTaskList.tasks.add(t);
+                                withTaskList.childrenTasks.add(t);
                                 taskPersistencer.resetTask(t.taskId);
                                 t.execState = EnumsApi.TaskExecState.NONE;
                             }));
@@ -297,7 +307,7 @@ class WorkbookGraphService {
     public WorkbookOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(WorkbookImpl workbook, Long taskId) {
         try {
             final WorkbookOperationStatusWithTaskList withTaskList = new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-            changeGraph(workbook, graph -> functionSetAllChildrenTasksAsBroken(graph, taskId, withTaskList));
+            changeGraph(workbook, graph -> functionSetStateForAllChildrenTasks(graph, taskId, withTaskList, EnumsApi.TaskExecState.BROKEN));
             return withTaskList;
         }
         catch (Throwable th) {
@@ -306,15 +316,17 @@ class WorkbookGraphService {
         }
     }
 
-    private void functionSetAllChildrenTasksAsBroken(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph, Long taskId, WorkbookOperationStatusWithTaskList withTaskList) {
+    private void functionSetStateForAllChildrenTasks(
+            DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph,
+            Long taskId, WorkbookOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
         graph.vertexSet()
                 .stream()
                 .filter(o -> o.taskId.equals(taskId))
                 .findFirst()
                 .ifPresent(currV -> graph.getDescendants(currV).forEach(t -> {
-                    withTaskList.tasks.add(t);
+                    withTaskList.childrenTasks.add(t);
                     taskPersistencer.finishTaskAsBroken(t.taskId);
-                    t.execState = EnumsApi.TaskExecState.BROKEN;
+                    t.execState = state;
                 }));
     }
 

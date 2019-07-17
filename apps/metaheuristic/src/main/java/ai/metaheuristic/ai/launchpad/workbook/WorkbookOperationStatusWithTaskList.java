@@ -34,8 +34,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class WorkbookOperationStatusWithTaskList {
-    OperationStatusRest status;
-    List<WorkbookParamsYaml.TaskVertex> tasks = new ArrayList<>();
+    public OperationStatusRest status;
+    public List<WorkbookParamsYaml.TaskVertex> childrenTasks = new ArrayList<>();
 
     public WorkbookOperationStatusWithTaskList(OperationStatusRest status) {
         this.status = status;

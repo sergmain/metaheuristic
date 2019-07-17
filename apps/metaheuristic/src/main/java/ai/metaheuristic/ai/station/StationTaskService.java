@@ -58,7 +58,6 @@ public class StationTaskService {
     private final Globals globals;
     private final CurrentExecState currentExecState;
     private final MetadataService metadataService;
-    private final TaskProcessorStateService taskProcessorStateService;
 
     private final Map<String, Map<Long, StationTask>> map = new ConcurrentHashMap<>();
 
@@ -89,14 +88,13 @@ public class StationTaskService {
                                 if (taskYamlFile.exists()) {
                                     try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
                                         StationTask task = StationTaskUtils.to(fis);
-//                                        if (task.isDelivered()) {
-//                                            return;
-//                                        }
                                         getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
 
                                         // fix state of task
                                         SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
-                                        if (snippetExec!=null && !snippetExec.exec.isOk) {
+                                        if (snippetExec!=null &&
+                                                ((snippetExec.generalExec!=null && !snippetExec.exec.isOk ) ||
+                                                        (snippetExec.generalExec!=null && !snippetExec.generalExec.isOk))) {
                                             markAsFinished(launchpadUrl, taskId, snippetExec);
                                         }
                                     }
@@ -107,6 +105,7 @@ public class StationTaskService {
                                     }
                                     catch (YAMLException e) {
                                         String es = "#713.020 yaml Error: " + e.getMessage();
+                                        log.warn(es, e);
                                         deleteDirWithBrokenTask(s);
                                     }
                                 }
@@ -547,6 +546,7 @@ public class StationTaskService {
 
     File prepareTaskSubDir(File taskDir, String subDir) {
         File taskSubDir = new File(taskDir, subDir);
+        //noinspection ResultOfMethodCallIgnored
         taskSubDir.mkdirs();
         if (!taskSubDir.exists()) {
             log.warn("#713.220 Can't create taskSubDir: {}", taskSubDir.getAbsolutePath());
