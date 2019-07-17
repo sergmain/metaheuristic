@@ -26,16 +26,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
 import org.jgrapht.io.*;
+import org.jgrapht.traverse.BreadthFirstIterator;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
 import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.Writer;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -72,12 +70,14 @@ class WorkbookGraphService {
     }
 
     @FunctionalInterface
+    public interface WorkWithGraphSetOfTaskVertex {
+        Set<WorkbookParamsYaml.TaskVertex> execute(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph);
+    }
+
+    @FunctionalInterface
     public interface WorkWithGraphTaskVertex {
         WorkbookParamsYaml.TaskVertex execute(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph);
     }
-
-    //    DepthFirstIterator depthFirstIterator = new DepthFirstIterator<>(graph);
-    //    BreadthFirstIterator breadthFirstIterator = new BreadthFirstIterator<>(graph);
 
     public void changeGraph(WorkbookImpl workbook, WorkWithGraphVoid callable) throws ImportException {
         WorkbookParamsYaml wpy = workbook.getWorkbookParamsYaml();
@@ -110,6 +110,11 @@ class WorkbookGraphService {
     }
 
     public List<WorkbookParamsYaml.TaskVertex> readOnlyGraphListOfTaskVertex(WorkbookImpl workbook, WorkWithGraphListOfTaskVertex callable) throws ImportException {
+        DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
+        return callable.execute(graph);
+    }
+
+    public Set<WorkbookParamsYaml.TaskVertex> readOnlyGraphSetOfTaskVertex(WorkbookImpl workbook, WorkWithGraphSetOfTaskVertex callable) throws ImportException {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
         return callable.execute(graph);
     }
@@ -176,15 +181,16 @@ class WorkbookGraphService {
                 tvs.forEach(t -> {
                     t.execState = EnumsApi.TaskExecState.from(taskStates.get(t.taskId));
                     if (t.execState == EnumsApi.TaskExecState.ERROR) {
-                        functionSetStateForAllChildrenTasks(graph, t.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.BROKEN);
+                        setStateForAllChildrenTasksInternal(graph, t.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.BROKEN);
                     }
                     else if (t.execState == EnumsApi.TaskExecState.OK) {
-                        functionSetStateForAllChildrenTasks(graph, t.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.NONE);
+                        setStateForAllChildrenTasksInternal(graph, t.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.NONE);
                     }
                 });
             });
         }
         catch (Throwable th) {
+            log.error("Error updaing graph", th);
             status.status = new OperationStatusRest(EnumsApi.OperationStatus.ERROR, th.getMessage());
         }
         return status;
@@ -204,10 +210,10 @@ class WorkbookGraphService {
                 if (tv!=null) {
                     tv.execState = EnumsApi.TaskExecState.from(execState);
                     if (tv.execState==EnumsApi.TaskExecState.ERROR) {
-                        functionSetStateForAllChildrenTasks(graph, tv.taskId, status, EnumsApi.TaskExecState.BROKEN);
+                        setStateForAllChildrenTasksInternal(graph, tv.taskId, status, EnumsApi.TaskExecState.BROKEN);
                     }
                     else if (tv.execState==EnumsApi.TaskExecState.OK) {
-                        functionSetStateForAllChildrenTasks(graph, tv.taskId, status, EnumsApi.TaskExecState.NONE);
+                        setStateForAllChildrenTasksInternal(graph, tv.taskId, status, EnumsApi.TaskExecState.NONE);
                     }
                 }
             });
@@ -238,7 +244,15 @@ class WorkbookGraphService {
         try {
             final WorkbookOperationStatusWithTaskList withTaskList = new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
             changeGraph(workbook, graph -> {
-                    graph.vertexSet()
+
+                Set<WorkbookParamsYaml.TaskVertex> set = findDescendantsInternal(graph, taskId);
+                set.forEach( t->{
+                    taskPersistencer.resetTask(t.taskId);
+                    t.execState = EnumsApi.TaskExecState.NONE;
+                });
+                withTaskList.childrenTasks.addAll(set);
+/*
+                graph.vertexSet()
                             .stream()
                             .filter(o -> o.taskId.equals(taskId))
                             .findFirst()
@@ -247,6 +261,7 @@ class WorkbookGraphService {
                                 taskPersistencer.resetTask(t.taskId);
                                 t.execState = EnumsApi.TaskExecState.NONE;
                             }));
+*/
             });
             return withTaskList;
         }
@@ -258,10 +273,11 @@ class WorkbookGraphService {
     public List<WorkbookParamsYaml.TaskVertex> findLeafs(WorkbookImpl workbook) {
         try {
             return readOnlyGraphListOfTaskVertex(workbook, graph -> {
+
                 //noinspection UnnecessaryLocalVariable
                 List<WorkbookParamsYaml.TaskVertex> vertices = graph.vertexSet()
                         .stream()
-                        .filter(o -> graph.getDescendants(o).isEmpty())
+                        .filter(o -> graph.outDegreeOf(o)==0)
                         .collect(Collectors.toList());
                 return vertices;
             });
@@ -270,6 +286,37 @@ class WorkbookGraphService {
             log.error("#915.020 Error", th);
             return null;
         }
+    }
+
+    public Set<WorkbookParamsYaml.TaskVertex> findDescendants(WorkbookImpl workbook, Long taskId) {
+        try {
+            return readOnlyGraphSetOfTaskVertex(workbook, graph -> findDescendantsInternal(graph, taskId));
+        }
+        catch (Throwable th) {
+            log.error("#915.022 Error", th);
+            return null;
+        }
+    }
+
+    private Set<WorkbookParamsYaml.TaskVertex> findDescendantsInternal(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph, Long taskId) {
+        WorkbookParamsYaml.TaskVertex vertex = graph.vertexSet()
+                .stream()
+                .filter(o -> taskId.equals(o.taskId))
+                .findFirst().orElse(null);
+        if (vertex==null) {
+            return Set.of();
+        }
+
+        Iterator<WorkbookParamsYaml.TaskVertex> iterator = new BreadthFirstIterator<>(graph, vertex);
+        Set<WorkbookParamsYaml.TaskVertex> descendants = new HashSet<>();
+
+        // Do not add start vertex to result.
+        if (iterator.hasNext()) {
+            iterator.next();
+        }
+
+        iterator.forEachRemaining(descendants::add);
+        return descendants;
     }
 
     public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
@@ -307,7 +354,7 @@ class WorkbookGraphService {
     public WorkbookOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(WorkbookImpl workbook, Long taskId) {
         try {
             final WorkbookOperationStatusWithTaskList withTaskList = new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
-            changeGraph(workbook, graph -> functionSetStateForAllChildrenTasks(graph, taskId, withTaskList, EnumsApi.TaskExecState.BROKEN));
+            changeGraph(workbook, graph -> setStateForAllChildrenTasksInternal(graph, taskId, withTaskList, EnumsApi.TaskExecState.BROKEN));
             return withTaskList;
         }
         catch (Throwable th) {
@@ -316,9 +363,18 @@ class WorkbookGraphService {
         }
     }
 
-    private void functionSetStateForAllChildrenTasks(
+    private void setStateForAllChildrenTasksInternal(
             DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph,
             Long taskId, WorkbookOperationStatusWithTaskList withTaskList, EnumsApi.TaskExecState state) {
+
+        Set<WorkbookParamsYaml.TaskVertex> set = findDescendantsInternal(graph, taskId);
+        set.forEach( t->{
+            taskPersistencer.finishTaskAsBroken(t.taskId);
+            t.execState = state;
+        });
+        withTaskList.childrenTasks.addAll(set);
+
+/*
         graph.vertexSet()
                 .stream()
                 .filter(o -> o.taskId.equals(taskId))
@@ -328,18 +384,26 @@ class WorkbookGraphService {
                     taskPersistencer.finishTaskAsBroken(t.taskId);
                     t.execState = state;
                 }));
+*/
     }
 
     public OperationStatusRest addNewTasksToGraph(WorkbookImpl workbook, List<Long> parentTaskIds, List<Long> taskIds) {
         try {
+/*
             final List<WorkbookParamsYaml.TaskVertex> parentVertices = parentTaskIds
                     .stream().map(o-> new WorkbookParamsYaml.TaskVertex(o, EnumsApi.TaskExecState.NONE)).collect(Collectors.toList());
 
+*/
             changeGraph(workbook, graph -> {
+                List<WorkbookParamsYaml.TaskVertex> vertices = graph.vertexSet()
+                        .stream()
+                        .filter(o -> parentTaskIds.contains(o.taskId))
+                        .collect(Collectors.toList());;
+
                 taskIds.forEach(id -> {
                     final WorkbookParamsYaml.TaskVertex v = new WorkbookParamsYaml.TaskVertex(id, EnumsApi.TaskExecState.NONE);
                     graph.addVertex(v);
-                    parentVertices.forEach(parentV -> graph.addEdge(parentV, v) );
+                    vertices.forEach(parentV -> graph.addEdge(parentV, v) );
                 });
             });
             return OperationStatusRest.OPERATION_STATUS_OK;

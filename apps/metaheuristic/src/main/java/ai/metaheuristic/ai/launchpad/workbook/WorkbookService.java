@@ -531,6 +531,19 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         }
     }
 
+    public Set<WorkbookParamsYaml.TaskVertex> findDescendants(WorkbookImpl workbook, Long taskId) {
+        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
+        log.debug("Before entering in sync block, findLeafs()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                return workbookGraphService.findDescendants(workbook, taskId);
+            } finally {
+                syncMap.remove(workbook.getId());
+            }
+        }
+    }
+
     public long getCountUnfinishedTasks(WorkbookImpl workbook) {
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
         log.debug("Before entering in sync block, getCountUnfinishedTasks()");
@@ -557,9 +570,9 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         }
     }
 
-    public OperationStatusRest updateTaskExecStates(WorkbookImpl workbook, ConcurrentHashMap<Long, Integer> taskStates) {
+    public WorkbookOperationStatusWithTaskList updateTaskExecStates(WorkbookImpl workbook, ConcurrentHashMap<Long, Integer> taskStates) {
         if (taskStates==null || taskStates.isEmpty()) {
-            return OperationStatusRest.OPERATION_STATUS_OK;
+            return new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
         }
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
         log.debug("Before entering in sync block, updateTaskExecStates()");
@@ -568,7 +581,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
             try {
                 final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecStates(workbook, taskStates);
                 updateTasksStateInDb(status);
-                return status.status;
+                return status;
             } finally {
                 syncMap.remove(workbook.getId());
             }

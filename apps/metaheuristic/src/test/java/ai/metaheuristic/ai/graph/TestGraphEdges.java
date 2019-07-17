@@ -24,6 +24,7 @@ import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,19 +37,18 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static ai.metaheuristic.api.data.workbook.WorkbookParamsYaml.TaskVertex;
 import static org.junit.Assert.*;
 
 /**
  * @author Serge
- * Date: 7/7/2019
- * Time: 3:50 PM
+ * Date: 7/16/2019
+ * Time: 8:53 PM
  */
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("launchpad")
 @Slf4j
-public class TestGraph extends PreparingPlan {
+public class TestGraphEdges extends PreparingPlan {
 
     @Autowired
     public WorkbookCache workbookCache;
@@ -79,49 +79,30 @@ public class TestGraph extends PreparingPlan {
 
         osr = workbookService.addNewTasksToGraph(
                 workbookRepository.findByIdForUpdate(workbook.id),
-                List.of(1L), List.of(2L, 3L));
+                List.of(1L), List.of(21L, 22L, 23L));
         assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         workbook = workbookCache.findById(workbook.id);
 
-        count = workbookService.getCountUnfinishedTasks(workbook);
-        assertEquals(3, count);
+        List<WorkbookParamsYaml.TaskVertex> leafs = workbookService.findLeafs(workbook);
 
-        List<TaskVertex> leafs = workbookService.findLeafs(workbook);
+        assertEquals(3, leafs.size());
+        assertTrue(leafs.contains(new WorkbookParamsYaml.TaskVertex(21L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new WorkbookParamsYaml.TaskVertex(22L, EnumsApi.TaskExecState.NONE)));
+        assertTrue(leafs.contains(new WorkbookParamsYaml.TaskVertex(23L, EnumsApi.TaskExecState.NONE)));
 
-        assertEquals(2, leafs.size());
-        assertTrue(leafs.contains(new TaskVertex(2L, EnumsApi.TaskExecState.NONE)));
-        assertTrue(leafs.contains(new TaskVertex(3L, EnumsApi.TaskExecState.NONE)));
-
-        setExecState(workbook, 1L, EnumsApi.TaskExecState.BROKEN);
-        setExecState(workbook, 2L, EnumsApi.TaskExecState.NONE);
-        setExecState(workbook, 3L, EnumsApi.TaskExecState.NONE);
-
-        WorkbookOperationStatusWithTaskList status =
-                workbookService.updateGraphWithInvalidatingAllChildrenTasks(
-                        workbookRepository.findByIdForUpdate(workbook.id),
-                        1L);
-        assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
+        osr = workbookService.addNewTasksToGraph( workbookRepository.findByIdForUpdate(workbook.id),
+                List.of(21L), List.of(311L, 312L, 313L));
+        assertEquals(EnumsApi.OperationStatus.OK, osr.status);
         workbook = workbookCache.findById(workbook.id);
 
-        // there is only 'ERROR' exec state
-        Set<EnumsApi.TaskExecState> states = workbookService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
-        assertEquals(1, states.size());
-        assertTrue(states.contains(EnumsApi.TaskExecState.BROKEN));
+        Set<WorkbookParamsYaml.TaskVertex> descendands = workbookService.findDescendants(workbook, 1L);
+        assertEquals(6, descendands.size());
 
-        count = workbookService.getCountUnfinishedTasks(workbook);
-        assertEquals(0, count);
+        descendands = workbookService.findDescendants(workbook, 21L);
+        assertEquals(3, descendands.size());
 
-
-        setExecState(workbook, 1L, EnumsApi.TaskExecState.NONE);
-        workbookService.updateGraphWithResettingAllChildrenTasks(
-                workbookRepository.findByIdForUpdate(workbook.id),
-                1L);
-        workbook = workbookCache.findById(workbook.id);
-
-        // there is only 'NONE' exec state
-        states = workbookService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
-        assertEquals(1, states.size());
-        assertTrue(states.contains(EnumsApi.TaskExecState.NONE));
+        leafs = workbookService.findLeafs(workbook);
+        assertEquals(5, leafs.size());
     }
 
     public void setExecState(WorkbookImpl workbook, Long id, EnumsApi.TaskExecState execState) {
@@ -130,5 +111,4 @@ public class TestGraph extends PreparingPlan {
         t1.execState = execState.value;
         workbookService.updateTaskExecState(workbook, t1.id, t1.execState );
     }
-
 }
