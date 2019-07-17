@@ -21,7 +21,6 @@ import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.launchpad.Task;
@@ -68,7 +67,7 @@ public class TaskService {
                     log.warn("#317.11 Workbook for this task was already deleted");
                     return;
                 }
-                workbookService.updateGraphWithInvalidatingAllChildrenTasks(workbook, task.id);
+                workbookService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, task.id);
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
                 Enums.UploadResourceStatus uploadResourceStatus = taskPersistencer.setResultReceived(taskId, true);

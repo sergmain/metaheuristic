@@ -24,7 +24,6 @@ import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.ai.utils.CollectionUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -42,6 +41,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -65,7 +66,7 @@ import static ai.metaheuristic.ai.Consts.YML_EXT;
 @Profile("launchpad")
 @Service
 @RequiredArgsConstructor
-public class PlanTopLevelService {
+public class PlanTopLevelService implements ApplicationEventPublisherAware {
 
     private final Globals globals;
     private final PlanCache planCache;
@@ -74,6 +75,12 @@ public class PlanTopLevelService {
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
     private final ExperimentRepository experimentRepository;
+
+    private ApplicationEventPublisher publisher;
+
+    public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
+        this.publisher = publisher;
+    }
 
     public PlanApiData.WorkbookResult addWorkbook(Long planId, String poolCode, String inputResourceParams) {
         final PlanImpl plan = planCache.findById(planId);
@@ -385,18 +392,16 @@ public class PlanTopLevelService {
     }
 
     public OperationStatusRest deleteWorkbookById(Long workbookId) {
-        PlanApiData.WorkbookResult result = workbookService.getWorkbookExtended(workbookId);
-        if (CollectionUtils.isNotEmpty(result.errorMessages)) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, result.errorMessages);
+        if (workbookId==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.090 workbookId is null");
         }
-
         Workbook wb = workbookCache.findById(workbookId);
         if (wb==null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.400 Workbook wasn't found, workbookId: " + workbookId );
         }
+        publisher.publishEvent( new WorkbookService.WorkbookDeletionEvent(this, workbookId) );
         planService.deleteWorkbook(workbookId);
+
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
-
-
 }

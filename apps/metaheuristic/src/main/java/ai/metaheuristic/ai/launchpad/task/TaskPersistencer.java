@@ -95,6 +95,9 @@ public class TaskPersistencer {
         if (task == null) {
             return null;
         }
+        if (task.execState==EnumsApi.TaskExecState.NONE.value) {
+            return task;
+        }
         return resetTask(task);
     }
 
@@ -130,8 +133,8 @@ public class TaskPersistencer {
         SnippetApiData.SnippetExecResult actualSnippet = snippetExec.generalExec!=null ? snippetExec.generalExec : snippetExec.exec;
         if (!actualSnippet.isOk) {
             log.info("#307.27 Task #{} finished with error, snippetCode: {}, console: {}",
-                    actualSnippet.snippetCode,
                     result.taskId,
+                    actualSnippet.snippetCode,
                     StringUtils.isNotBlank(actualSnippet.console) ? actualSnippet.console : "<console output is empty>");
         }
         try {
@@ -144,7 +147,6 @@ public class TaskPersistencer {
         return null;
     }
 
-    @SuppressWarnings("UnusedReturnValue")
     public void finishTaskAsBroken(Long taskId) {
         synchronized (syncObj) {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);

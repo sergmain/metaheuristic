@@ -631,11 +631,11 @@ public class ExperimentService {
                     continue;
                 }
                 List<String> inputResourceCodes = numberOfVariants.values;
-                List<Long> prevParentTaskIds = parentTaskIds;
                 for (HyperParams hyperParams : allHyperParams) {
 
                     TaskImpl prevTask;
                     TaskImpl task = null;
+                    List<Long> prevParentTaskIds = new ArrayList<>(parentTaskIds);
                     for (String snippetCode : experimentSnippets) {
                         if (boolHolder.get()) {
                             return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
@@ -661,11 +661,14 @@ public class ExperimentService {
 
                         yaml.taskYaml.setHyperParams(hyperParams.toSortedMap());
                         // TODO need to implement an unit-test for a plan without metas in experiment
-                        // TODO and see that features are correctly defined
+                        //  and check that features are correctly defined
+                        // TODO 2019-07-17 right now it doesn't work
+                        //  - you need to specify 'feature', dataset' (not sure) in metas
                         yaml.taskYaml.inputResourceCodes.computeIfAbsent("feature", k -> new ArrayList<>()).addAll(inputResourceCodes);
                         for (Map.Entry<String, List<String>> entry : collectedInputs.entrySet()) {
 
                             // TODO 2019.04.24 need to decide do we need this check or not
+                            // TODO 2019-07-17 see comment above about required metas
                             // if ("feature".equals(entry.getKey())) {
                             //     log.info("Output type is the same as workbook inputResourceParam:\n"+ workbook.inputResourceParam );
                             // }

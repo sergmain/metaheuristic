@@ -398,6 +398,7 @@ public class BatchTopLevelService {
 
         PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook.getId());
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
+            workbookService.changeValidStatus(bw.workbookId, false);
             throw new BatchResourceProcessingException("#995.220 validation of plan was failed, status: " + countTasks.planValidateStatus);
         }
 

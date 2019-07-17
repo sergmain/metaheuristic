@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.launchpad.workbook;
 
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
@@ -52,7 +51,6 @@ class WorkbookGraphService {
     public static final String TASK_EXEC_STATE_ATTR = "task_exec_state";
 
     private final WorkbookCache workbookCache;
-    private final TaskPersistencer taskPersistencer;
 
     @FunctionalInterface
     public interface WorkWithGraphVoid {
@@ -180,7 +178,7 @@ class WorkbookGraphService {
                 // Don't combine streams, a side-effect could be occurred
                 tvs.forEach(t -> {
                     t.execState = EnumsApi.TaskExecState.from(taskStates.get(t.taskId));
-                    if (t.execState == EnumsApi.TaskExecState.ERROR) {
+                    if (t.execState == EnumsApi.TaskExecState.ERROR || t.execState == EnumsApi.TaskExecState.BROKEN) {
                         setStateForAllChildrenTasksInternal(graph, t.taskId, new WorkbookOperationStatusWithTaskList(), EnumsApi.TaskExecState.BROKEN);
                     }
                     else if (t.execState == EnumsApi.TaskExecState.OK) {
@@ -247,21 +245,9 @@ class WorkbookGraphService {
 
                 Set<WorkbookParamsYaml.TaskVertex> set = findDescendantsInternal(graph, taskId);
                 set.forEach( t->{
-                    taskPersistencer.resetTask(t.taskId);
                     t.execState = EnumsApi.TaskExecState.NONE;
                 });
                 withTaskList.childrenTasks.addAll(set);
-/*
-                graph.vertexSet()
-                            .stream()
-                            .filter(o -> o.taskId.equals(taskId))
-                            .findFirst()
-                            .ifPresent(currV -> graph.getDescendants(currV).forEach(t -> {
-                                withTaskList.childrenTasks.add(t);
-                                taskPersistencer.resetTask(t.taskId);
-                                t.execState = EnumsApi.TaskExecState.NONE;
-                            }));
-*/
             });
             return withTaskList;
         }
@@ -369,31 +355,13 @@ class WorkbookGraphService {
 
         Set<WorkbookParamsYaml.TaskVertex> set = findDescendantsInternal(graph, taskId);
         set.forEach( t->{
-            taskPersistencer.finishTaskAsBroken(t.taskId);
             t.execState = state;
         });
         withTaskList.childrenTasks.addAll(set);
-
-/*
-        graph.vertexSet()
-                .stream()
-                .filter(o -> o.taskId.equals(taskId))
-                .findFirst()
-                .ifPresent(currV -> graph.getDescendants(currV).forEach(t -> {
-                    withTaskList.childrenTasks.add(t);
-                    taskPersistencer.finishTaskAsBroken(t.taskId);
-                    t.execState = state;
-                }));
-*/
     }
 
     public OperationStatusRest addNewTasksToGraph(WorkbookImpl workbook, List<Long> parentTaskIds, List<Long> taskIds) {
         try {
-/*
-            final List<WorkbookParamsYaml.TaskVertex> parentVertices = parentTaskIds
-                    .stream().map(o-> new WorkbookParamsYaml.TaskVertex(o, EnumsApi.TaskExecState.NONE)).collect(Collectors.toList());
-
-*/
             changeGraph(workbook, graph -> {
                 List<WorkbookParamsYaml.TaskVertex> vertices = graph.vertexSet()
                         .stream()

@@ -18,11 +18,13 @@ package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
+import ai.metaheuristic.api.launchpad.Workbook;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -54,6 +56,7 @@ public class ExperimentController {
     private static final String REDIRECT_LAUNCHPAD_EXPERIMENTS = "redirect:/launchpad/experiment/experiments";
     private final ExperimentTopLevelService experimentTopLevelService;
     private final WorkbookService workbookService;
+    private final WorkbookCache workbookCache;
     private final ExperimentCache experimentCache;
     private final PlanTopLevelService planTopLevelService;
 
@@ -265,10 +268,13 @@ public class ExperimentController {
                     "#285.260 experiment wasn't found, experimentId: " + id);
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
-        OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(experiment.workbookId);
-        if (operationStatusRest.isErrorMessages()) {
-            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-            return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+        Workbook wb = workbookCache.findById(experiment.workbookId);
+        if (wb!=null) {
+            OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(experiment.workbookId);
+            if (operationStatusRest.isErrorMessages()) {
+                redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+                return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+            }
         }
         OperationStatusRest status = experimentTopLevelService.experimentDeleteCommit(id);
         if (status.isErrorMessages()) {

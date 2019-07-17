@@ -97,13 +97,12 @@ public class TestGraph extends PreparingPlan {
         setExecState(workbook, 3L, EnumsApi.TaskExecState.NONE);
 
         WorkbookOperationStatusWithTaskList status =
-                workbookService.updateGraphWithInvalidatingAllChildrenTasks(
-                        workbookRepository.findByIdForUpdate(workbook.id),
-                        1L);
+                workbookService.updateGraphWithSettingAllChildrenTasksAsBroken(
+                        workbookRepository.findByIdForUpdate(workbook.id),1L);
         assertEquals(EnumsApi.OperationStatus.OK, status.getStatus().status);
         workbook = workbookCache.findById(workbook.id);
 
-        // there is only 'ERROR' exec state
+        // there is only 'BROKEN' exec state
         Set<EnumsApi.TaskExecState> states = workbookService.findAll(workbook).stream().map(o -> o.execState).collect(Collectors.toSet());
         assertEquals(1, states.size());
         assertTrue(states.contains(EnumsApi.TaskExecState.BROKEN));
