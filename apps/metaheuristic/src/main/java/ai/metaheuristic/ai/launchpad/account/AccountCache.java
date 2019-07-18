@@ -14,16 +14,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.sec;
+package ai.metaheuristic.ai.launchpad.account;
 
+import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.launchpad.beans.Account;
 import ai.metaheuristic.ai.launchpad.repositories.AccountRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.context.annotation.Profile;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -33,14 +32,13 @@ public class AccountCache {
 
     private final AccountRepository accountRepository;
 
-    @CachePut(cacheNames = "accounts", key = "#account.username")
-    public void save(Account account) {
-        accountRepository.saveAndFlush(account);
+    @CacheEvict(cacheNames = Consts.ACCOUNTS_CACHE, key = "#result.username")
+    public Account save(Account account) {
+        return accountRepository.saveAndFlush(account);
     }
 
-    @Cacheable(cacheNames = "accounts", unless="#result==null")
+    @Cacheable(cacheNames = Consts.ACCOUNTS_CACHE, unless="#result==null")
     public Account findByUsername(String username) {
-        //System.out.println("return non-cached result");
         return accountRepository.findByUsername(username);
     }
 }

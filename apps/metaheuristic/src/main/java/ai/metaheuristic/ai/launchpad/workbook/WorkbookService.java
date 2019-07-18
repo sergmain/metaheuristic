@@ -112,9 +112,13 @@ public class WorkbookService {
         }
         else {
             WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithResettingAllChildrenTasks(workbook, task.id);
-            updateTasksStateInDb(withTaskList);
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.040 Can't re-run task #" + taskId + ", see log for more information");
+            }
+            updateTasksStateInDb(withTaskList);
+
+            if (workbook.execState==EnumsApi.WorkbookExecState.FINISHED.code) {
+                toState(workbook.id, EnumsApi.WorkbookExecState.STARTED);
             }
         }
 
@@ -621,6 +625,8 @@ public class WorkbookService {
                 taskPersistencer.toOkSimple(taskId);
                 break;
             case IN_PROGRESS:
+                taskPersistencer.toInProgressSimple(taskId);
+                break;
             default:
                 throw new IllegalStateException("Right now it must be initialized somewhere else. state: " + state);
         }

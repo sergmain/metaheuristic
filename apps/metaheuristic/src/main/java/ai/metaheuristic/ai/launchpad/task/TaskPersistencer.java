@@ -186,6 +186,18 @@ public class TaskPersistencer {
         }
     }
 
+    public void toInProgressSimple(Long taskId) {
+        synchronized (syncObj) {
+            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            if (task==null) {
+                log.warn("#307.34 Can't find Task for Id: {}", taskId);
+                return;
+            }
+            task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
+            taskRepository.save(task);
+        }
+    }
+
     private Task prepareAndSaveTask(SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
