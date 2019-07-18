@@ -89,8 +89,8 @@ public class TaskProcessor {
         for (StationTask task : tasks) {
 
             log.info("Start processing task {}", task);
-            if (task.launchedOn!=null && taskProcessorStateService.currentTaskId==null) {
-                log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched", task.taskId);
+            if (task.launchedOn!=null && task.finishedOn!=null && taskProcessorStateService.currentTaskId==null) {
+                log.warn("#100.001 unusual situation, there isn't any processed task (currentTaskId==null) but task #{} was already launched and then finished", task.taskId);
             }
 
             final Metadata.LaunchpadInfo launchpadCode = metadataService.launchpadUrlAsCode(task.launchpadUrl);

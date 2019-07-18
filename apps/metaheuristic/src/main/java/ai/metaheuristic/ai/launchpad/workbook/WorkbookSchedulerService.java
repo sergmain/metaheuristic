@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.workbook;
 
 import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
+import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
@@ -34,8 +35,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Serge
@@ -70,25 +69,30 @@ public class WorkbookSchedulerService {
      * @param needReconciliation
      * @return WorkbookImpl updated workbook
      */
-    public WorkbookImpl updateWorkbookStatus(WorkbookImpl workbook, boolean needReconciliation) {
+    public void updateWorkbookStatus(WorkbookImpl workbook, boolean needReconciliation) {
 
         final long countUnfinishedTasks = workbookGraphService.getCountUnfinishedTasks(workbook);
         if (countUnfinishedTasks==0) {
             log.info("Workbook #{} was finished", workbook.getId());
             experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
-            WorkbookImpl instance = toFinished(workbook.getId());
+            workbookService.toFinished(workbook.getId());
+            WorkbookImpl instance = workbookCache.findById(workbook.id);
 
             Long experimentId = experimentRepository.findIdByWorkbookId(instance.getId());
             if (experimentId==null) {
                 log.info("#705.050 Can't store an experiment to atlas, the workbook "+instance.getId()+" doesn't contain an experiment" );
-                return instance;
+                return;
             }
             atlasService.toAtlas(instance.getId(), experimentId);
-            return instance;
+            //noinspection UnnecessaryReturnStatement
+            return;
         }
         else {
             if (needReconciliation) {
-                List<Object[]>  list = taskRepository.findAllExecStateByWorkbookId(workbook.getId());
+                List<Object[]> list = taskRepository.findAllExecStateByWorkbookId(workbook.getId());
+                final Long workbookId = workbook.id;
+
+                // Reconcile states in db and in graph
                 List<WorkbookParamsYaml.TaskVertex> vertices = workbookGraphService.findAll(workbook);
                 Map<Long, Integer> states = new HashMap<>(list.size()+1);
                 for (Object[] o : list) {
@@ -96,13 +100,13 @@ public class WorkbookSchedulerService {
                     Integer execState = (Integer) o[1];
                     states.put(taskId, execState);
                 }
-                final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+//                final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+//                readWriteLock.writeLock().lock();
                 ConcurrentHashMap<Long, Integer> taskStates = new ConcurrentHashMap<>();
                 AtomicBoolean isNullState = new AtomicBoolean(false);
                 vertices.stream().parallel().forEach(tv -> {
                     Integer state = states.get(tv.taskId);
                     if (state==null) {
-                        readWriteLock.writeLock().lock();
                         isNullState.set(true);
                     }
                     else if (tv.execState.value!=state) {
@@ -115,36 +119,25 @@ public class WorkbookSchedulerService {
 
                 if (isNullState.get()) {
                     log.info("#705.052 Found non-created task, graph consistency is failed");
-                    workbook = toError(workbook.getId());
+                    workbookService.toError(workbook.getId());
                 }
                 else {
                     workbookService.updateTaskExecStates(workbook, taskStates);
                 }
+
+                // fix actual state of tasks (can be as a result of OptimisticLockingException) {
+                // fix IN_PROCESSING stae
+                states.entrySet().stream()
+                        .filter(e-> EnumsApi.TaskExecState.IN_PROGRESS.value==e.getValue())
+                        .forEach(e->{
+                            Long taskId = e.getKey();
+                            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+                            if (task!=null && task.resultReceived && task.isCompleted ) {
+                                WorkbookImpl wb = workbookRepository.findByIdForUpdate(workbookId);
+                                workbookService.updateTaskExecState(wb, task.id, EnumsApi.TaskExecState.OK.value);
+                            }
+                        });
             }
         }
-        return workbook;
     }
-
-    public WorkbookImpl toFinished(Long workbookId) {
-        return toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.FINISHED);
-    }
-
-    public WorkbookImpl toError(Long workbookId) {
-        return toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.ERROR);
-    }
-
-    public WorkbookImpl toStateWithCompletion(Long workbookId, EnumsApi.WorkbookExecState state) {
-        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
-        if (workbook==null) {
-            String es = "#705.080 Can't change exec state to "+state+" for workbook #" + workbookId;
-            log.error(es);
-            throw new IllegalStateException(es);
-        }
-        workbook.setCompletedOn(System.currentTimeMillis());
-        workbook.setExecState(state.code);
-        workbook = workbookCache.save(workbook);
-        return workbook;
-    }
-
-
 }

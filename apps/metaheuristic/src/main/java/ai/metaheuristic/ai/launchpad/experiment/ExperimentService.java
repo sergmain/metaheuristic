@@ -270,7 +270,7 @@ public class ExperimentService {
                 for (TaskWIthType taskWIthType : slice) {
                     experiment.getExperimentParamsYaml().processing.taskFeatures
                             .stream()
-                            .filter(t -> t.id.equals(taskWIthType.task.getId()))
+                            .filter(t -> t.taskId.equals(taskWIthType.task.getId()))
                             .findFirst()
                             .ifPresent(etf -> taskWIthType.type = EnumsApi.ExperimentTaskType.from(etf.getTaskType()).value);
                 }

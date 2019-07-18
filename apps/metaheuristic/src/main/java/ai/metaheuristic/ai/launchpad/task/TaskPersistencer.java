@@ -147,7 +147,10 @@ public class TaskPersistencer {
         return null;
     }
 
-    public void finishTaskAsBroken(Long taskId) {
+    public void finishTaskAsBrokenOrError(Long taskId, EnumsApi.TaskExecState state) {
+        if (state!=EnumsApi.TaskExecState.BROKEN && state!=EnumsApi.TaskExecState.ERROR) {
+            throw new IllegalStateException("#307.30 state must be EnumsApi.TaskExecState.BROKEN or EnumsApi.TaskExecState.ERROR, actual: " +state);
+        }
         synchronized (syncObj) {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
@@ -168,6 +171,18 @@ public class TaskPersistencer {
 
             //noinspection UnusedAssignment
             task = taskRepository.save(task);
+        }
+    }
+
+    public void toOkSimple(Long taskId) {
+        synchronized (syncObj) {
+            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            if (task==null) {
+                log.warn("#307.33 Can't find Task for Id: {}", taskId);
+                return;
+            }
+            task.setExecState(EnumsApi.TaskExecState.OK.value);
+            taskRepository.save(task);
         }
     }
 

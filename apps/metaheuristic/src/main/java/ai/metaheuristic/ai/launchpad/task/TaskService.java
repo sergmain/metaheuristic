@@ -61,7 +61,7 @@ public class TaskService {
                     log.warn("#317.05 Task obsolete and was already deleted");
                     return;
                 }
-                taskPersistencer.finishTaskAsBroken(task.getId());
+                taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
                 WorkbookImpl workbook = workbookRepository.findByIdForUpdate(task.workbookId);
                 if (workbook==null) {
                     log.warn("#317.11 Workbook for this task was already deleted");

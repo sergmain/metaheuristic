@@ -97,7 +97,7 @@ public class WorkbookService {
         }
         WorkbookImpl workbook = workbookRepository.findByIdForUpdate(task.getWorkbookId());
         if (workbook == null) {
-            taskPersistencer.finishTaskAsBroken(taskId);
+            taskPersistencer.finishTaskAsBrokenOrError(taskId, EnumsApi.TaskExecState.BROKEN);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#705.020 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
         }
@@ -152,11 +152,11 @@ public class WorkbookService {
         }
     }
 
-    public WorkbookImpl toProduced(Long workbookId) {
-        return toState(workbookId, EnumsApi.WorkbookExecState.PRODUCED);
+    public void toProduced(Long workbookId) {
+        toState(workbookId, EnumsApi.WorkbookExecState.PRODUCED);
     }
 
-    public WorkbookImpl toState(Long workbookId, EnumsApi.WorkbookExecState state) {
+    public void toState(Long workbookId, EnumsApi.WorkbookExecState state) {
         WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
         if (workbook==null) {
             String es = "#705.082 Can't change exec state to "+state+" for workbook #" + workbookId;
@@ -164,8 +164,27 @@ public class WorkbookService {
             throw new IllegalStateException(es);
         }
         workbook.setExecState(state.code);
-        workbook = workbookCache.save(workbook);
-        return workbook;
+        workbookCache.save(workbook);
+    }
+
+    public void toFinished(Long workbookId) {
+        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.FINISHED);
+    }
+
+    public void toError(Long workbookId) {
+        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.ERROR);
+    }
+
+    public void toStateWithCompletion(Long workbookId, EnumsApi.WorkbookExecState state) {
+        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+        if (workbook==null) {
+            String es = "#705.080 Can't change exec state to "+state+" for workbook #" + workbookId;
+            log.error(es);
+            throw new IllegalStateException(es);
+        }
+        workbook.setCompletedOn(System.currentTimeMillis());
+        workbook.setExecState(state.code);
+        workbookCache.save(workbook);
     }
 
     public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml params) {
@@ -341,7 +360,7 @@ public class WorkbookService {
                 }
                 catch (YAMLException e) {
                     log.error("#705.190 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    taskPersistencer.finishTaskAsBroken(task.getId());
+                    taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
                     continue;
                 }
                 catch (Exception e) {
@@ -457,6 +476,7 @@ public class WorkbookService {
     }
 
     private WorkbookOperationStatusWithTaskList updateTaskExecStateWithoutSync(WorkbookImpl workbook, Long taskId, int execState) {
+        changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
         final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecState(workbook, taskId, execState);
         updateTasksStateInDb(status);
         return status;
@@ -594,12 +614,15 @@ public class WorkbookService {
                 taskPersistencer.resetTask(taskId);
                 break;
             case BROKEN:
-                taskPersistencer.finishTaskAsBroken(taskId);
+            case ERROR:
+                taskPersistencer.finishTaskAsBrokenOrError(taskId, state);
+                break;
+            case OK:
+                taskPersistencer.toOkSimple(taskId);
                 break;
             case IN_PROGRESS:
-            case ERROR:
-            case OK:
-                throw new IllegalStateException("Right now it must be initialized somewhere else");
+            default:
+                throw new IllegalStateException("Right now it must be initialized somewhere else. state: " + state);
         }
     }
 
