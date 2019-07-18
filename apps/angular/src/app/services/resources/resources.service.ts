@@ -1,26 +1,12 @@
-import {
-    Injectable
-} from '@angular/core';
-import {
-    HttpClient
-} from '@angular/common/http';
-import {
-    Observable,
-} from 'rxjs';
-import {
-    ResourcesResponse
-} from '@app/models';
-import {
-    urls
-} from './urls';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { urls } from './urls';
 
-@Injectable({
-    providedIn: 'root'
-})
+export * from './response';
+
+@Injectable({ providedIn: 'root' })
 
 export class ResourcesService {
-    private items: (ResourcesResponse.Resource)[];
-
 
     constructor(
         private http: HttpClient

@@ -1,8 +1,11 @@
+import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { HttpClient, } from '@angular/common/http';
-import { urls } from './urls';
 import { Observable } from 'rxjs';
-import { PlanResponse } from '@app/models';
+import { urls } from './urls';
+import { batches } from './response';
+import { PlansResponse } from '@app/models/PlansResponse';
+
+export * from './response';
 
 @Injectable({ providedIn: 'root' })
 export class BatchService {
@@ -12,18 +15,21 @@ export class BatchService {
     ) {}
 
     batches: any = {
-        get: (data: any): Observable < object > => this.http.get(urls.batches.get(data))
+        get: (data: any): Observable < any > => this.http.get(urls.batches.get(data))
     };
 
     batch: any = {
-        get: (id: string): Observable < object > => this.http.get(urls.batch.get(id)),
+        get: (id: string): Observable < any > => this.http.get(urls.batch.get(id)),
 
-        delete: (id: string | number): Observable < object > => {
+        delete: (id: string | number): Observable < any > => {
             return this.http.post(urls.batch.delete({ id }), { id });
         },
-
-        add: (code: string, params: string): Observable < PlanResponse.Response > => {
-            return this.http.post < PlanResponse.Response > (urls.batch.add(), { code, params });
-        }
+        status: (id: string | number): Observable < any > => {
+            return this.http.get(urls.batch.status(id));
+        },
+        add: (code: string, params: string): Observable < any > => {
+            return this.http.get < any > (urls.batch.add());
+        },
+        upload: (): void => {}
     };
 }

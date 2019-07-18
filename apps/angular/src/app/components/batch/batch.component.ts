@@ -1,27 +1,27 @@
-import { Component, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
-import { BatchService } from '@app/services/batch/batch.service';
-import { MatTableDataSource, MatButton } from '@angular/material';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
+import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
+import { CtTableComponent } from '@app/components/ct-table/ct-table.component';
 import { LoadStates } from '@app/enums/LoadStates';
-import { BatchesResponse, Plan } from '@app/models';
-import { CtTableComponent } from '@app/custom-tags/ct-table/ct-table.component';
+import { Batch, batches, BatchService } from '@app/services/batch/batch.service';
 import { Subscription } from 'rxjs';
-import { MatDialog } from '@angular/material';
-import { ConfirmationDialogMethod } from '@app/views/app-dialog-confirmation/app-dialog-confirmation.component';
 
 @Component({
     selector: 'batch',
     templateUrl: './batch.component.pug',
     styleUrls: ['./batch.component.scss']
 })
+
+//  TODO: enum of execState
+
 export class BatchComponent implements OnInit {
     readonly states = LoadStates;
     currentStates = new Set();
 
-    response: BatchesResponse.Response;
-    dataSource = new MatTableDataSource < BatchesResponse.ContentEntity > ([]);
+    response: batches.get.Response;
+    dataSource = new MatTableDataSource < Batch > ([]);
     columnsToDisplay = ['id', 'createdOn', 'isBatchConsistent', 'planCode', 'execState', 'bts'];
-    deletedRows: (BatchesResponse.ContentEntity)[] = [];
-
+    deletedRows: Batch[] = [];
 
     @ViewChild('nextTable') nextTable: MatButton;
     @ViewChild('prevTable') prevTable: MatButton;
@@ -43,7 +43,7 @@ export class BatchComponent implements OnInit {
                 page
             })
             .subscribe(
-                (response: BatchesResponse.Response) => {
+                (response: batches.get.Response) => {
                     this.response = response;
                     this.dataSource = new MatTableDataSource(response.batches.content || []);
                 },
@@ -59,16 +59,16 @@ export class BatchComponent implements OnInit {
             );
     }
 
-    // @ConfirmationDialogMethod({
-    //     question: (plan: Plan): string => {
-    //         console.log(plan)
-    //         return `Do you want to delete Plan #`;
-    //     },
-    //     rejectTitle: 'Cancel',
-    //     resolveTitle: 'Delete'
-    // })
-    delete() {
-
+    @ConfirmationDialogMethod({
+        question: (batch: Batch): string => {
+            return `Do you want to delete Bacth #${batch.batch.id}`;
+        },
+        rejectTitle: 'Cancel',
+        resolveTitle: 'Delete'
+    })
+    delete(batch: Batch) {
+        console.log(batch)
+        // const subscribe = this.batchService.batch.delete()
     }
 
     next() {

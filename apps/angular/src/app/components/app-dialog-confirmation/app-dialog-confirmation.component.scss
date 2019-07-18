@@ -1,0 +1,19 @@
+.mat-dialog-actions {
+    display: flex;
+    justify-content: space-between;
+    margin: 0 -8px;
+}
+
+.mat-dialog-action {
+    flex: 1;
+    margin: 0 8px;
+
+    &>* {
+        width: 100%;
+    }
+}
+
+.mat-dialog-content {
+    max-height: auto !important;
+    overflow: hidden !important ;
+}

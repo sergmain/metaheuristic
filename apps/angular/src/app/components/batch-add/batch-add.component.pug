@@ -1,0 +1,30 @@
+.section
+    .section__header
+        ct-section-caption Batch
+    .section__body
+        .section__content(*ngIf="currentStates.has(states.firstLoading)")
+            mat-progress-bar(mode="indeterminate")
+        ct-cols(align-items="baseline" '*ngIf'="currentStates.has(states.show)")
+            ct-col(size='6')
+                .section__content
+                    mat-form-field
+                        mat-label list of Plans
+                        mat-select([(ngModel)]="currentPlan")
+                            div(*ngFor="let plan of listOfPlans")
+                                mat-option([value]="plan") {{plan.code}}
+            ct-col(size='1')              
+            ct-col(size='5')
+                div(*ngIf="response")
+                    div STATUS: {{response.status}}
+                    p(*ngFor="let error of response.errorMessages; index as i; trackBy: trackByFn") {{error}}
+                    p(*ngFor="let info of response.infoMessages; index as i; trackBy: trackByFn") {{info}}
+
+    .section__footer
+        .flex.flex--jc_sb
+            .buttons.buttons--left 
+                
+            .buttons.buttons--right
+                button(mat-stroked-button '(click)'="location.back()") Cancel
+                button(mat-flat-button color="primary"
+                    '[disabled]'="currentStates.has(states.loading) || currentStates.has(states.firstLoading)"
+                    routerLink="/launchpad/batch/add") Upload File

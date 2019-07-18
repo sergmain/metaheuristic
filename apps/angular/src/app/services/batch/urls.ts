@@ -16,7 +16,7 @@ const urls: any = {
         // public BatchData.BatchesResult batchesPart(@PageableDefault(size = 20) Pageable pageable) {
         //     return batchTopLevelService.getBatches(pageable);
         // }
-        get: (id: string | number): string => `${base}/plan/${id}`,
+        get: (id: string | number): string => `${base}/batches-part/${id}`,
 
         // @GetMapping(value = "/batch-add")
         // public BatchData.PlansForBatchResult batchAdd() {
@@ -34,19 +34,19 @@ const urls: any = {
         // public BatchData.Status getProcessingResourceStatus(@PathVariable("batchId") Long batchId) {
         //     return batchTopLevelService.getProcessingResourceStatus(batchId);
         // }
-        status: (id: string | number): string => '',
+        status: (id: string | number): string => `${base}/batch-status/${id}`,
 
         // @GetMapping("/batch-delete/{batchId}")
         // public BatchData.Status processResourceDelete(@PathVariable Long batchId) {
         //     return batchTopLevelService.getProcessingResourceStatus(batchId);
         // }
-        delete2: (data: any): string => `${base}/plan-delete-commit?${toURL(data)}`,
+        delete2: (data: any): string => `${base}/batch-delete/?${toURL(data)}`,
 
         // @PostMapping("/batch-delete-commit")
         // public OperationStatusRest processResourceDeleteCommit(Long batchId) {
         //     return batchTopLevelService.processResourceDeleteCommit(batchId);
         // }
-        delete: (data: any): string => `${base}/plan-delete-commit?${toURL(data)}`
+        delete: (data: any): string => `${base}/batch-delete-commit?${toURL(data)}`
     }
 };
 

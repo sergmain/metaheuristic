@@ -1,1 +1,8 @@
-p batch-status works!
+.section
+    .section__header
+        ct-section-caption Status of execution of batch \#{{response ? response.batchId : ''}}
+    .section__body
+        .section__content('*ngIf'="currentState == states.firstLoading")
+            mat-progress-bar(mode="indeterminate")
+        .section__content('*ngIf'="[states.wait,states.show].includes(currentState)") 
+            pre {{response.console}}

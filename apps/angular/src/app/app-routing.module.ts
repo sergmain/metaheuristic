@@ -1,16 +1,12 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
-import { BatchComponent, BatchStatusComponent } from './components';
-import { AboutComponent } from './views/about/about.component';
-import { AppViewComponent } from './views/app-view/app-view.component';
 // tslint:disable-next-line: max-line-length
-import { AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AtlasComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, ExperimentsComponent, InfoExperimentComponent, LaunchpadComponent, NavLaunchpadComponent, PlansComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './views/launchpad';
-import { NavPilotComponent, PilotComponent, ProcessResourcesComponent } from './views/pilot';
+import { AboutComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppViewComponent, AtlasComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, ExperimentsComponent, InfoExperimentComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProcessResourcesComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './components';
 
 
 
-export function launchpadRoute(p): any {
+export function launchpadRoute(p: any): any {
     return {
         path: p.path,
         canActivate: [AuthGuard],
@@ -22,7 +18,7 @@ export function launchpadRoute(p): any {
     };
 }
 
-export function pilotRoute(p): any {
+export function pilotRoute(p: any): any {
     return {
         path: p.path,
         canActivate: [AuthGuard],
@@ -79,6 +75,8 @@ const routes: Routes = [
 
     launchpadRoute({ path: 'launchpad/batch', body: BatchComponent }),
     launchpadRoute({ path: 'launchpad/batch/:id/status', body: BatchStatusComponent }),
+    launchpadRoute({ path: 'launchpad/batch/add', body: BatchAddComponent }),
+
 
 
     launchpadRoute({ path: 'launchpad/atlas', body: AtlasComponent }),
