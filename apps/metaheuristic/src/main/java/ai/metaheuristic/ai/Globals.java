@@ -338,7 +338,7 @@ public class Globals {
         log.info("'\tisSecurityEnabled: {}", isSecurityEnabled);
         log.info("'\tisSslRequired: {}", isSslRequired);
         log.info("'\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
-        log.info("'\tlaunchpadDir: {}", launchpadDir.getAbsolutePath());
+        log.info("'\tlaunchpadDir: {}", launchpadDir!=null ? launchpadDir.getAbsolutePath() : null);
         log.info("'\tchunkSize: {}", chunkSize);
         log.info("'\tresourceRowsLimit: {}", resourceRowsLimit);
         log.info("'\texperimentRowsLimit: {}", experimentRowsLimit);
