@@ -9,10 +9,10 @@ ct-section-caption Features
             td(mat-cell *matCellDef="let el") {{el.resourceCodes}} 
         ng-container(matColumnDef="execStatus") 
             th(mat-header-cell *matHeaderCellDef) Exec Status 
-            td(mat-cell *matCellDef="let el") {{el.execStatus}} 
+            td(mat-cell *matCellDef="let el") {{el.execStatusAsString}}
         ng-container(matColumnDef="maxValue") 
-            th(mat-header-cell *matHeaderCellDef) Value 
-            td(mat-cell *matCellDef="let el") {{el.maxValue}} 
+            th(mat-header-cell *matHeaderCellDef) Max value
+            td(mat-cell *matCellDef="let el") {{el.maxValue}}
         ng-container(matColumnDef="bts") 
             th(mat-header-cell *matHeaderCellDef)  
             td(mat-cell *matCellDef="let el") 

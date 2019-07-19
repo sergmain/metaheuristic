@@ -221,7 +221,7 @@ public class ExperimentController {
     }
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
-    public String metadataDeleteCommit(@PathVariable long experimentId, @PathVariable String key, final RedirectAttributes redirectAttributes) {
+    public String metadataDeleteCommit(@PathVariable Long experimentId, @PathVariable String key, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.metadataDeleteCommit(experimentId, key);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
@@ -230,7 +230,7 @@ public class ExperimentController {
     }
 
     @GetMapping("/experiment-metadata-default-add-commit/{experimentId}")
-    public String metadataDefaultAddCommit(@PathVariable long experimentId, final RedirectAttributes redirectAttributes) {
+    public String metadataDefaultAddCommit(@PathVariable Long experimentId, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.metadataDefaultAddCommit(experimentId);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
@@ -239,7 +239,7 @@ public class ExperimentController {
     }
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{snippetCode}")
-    public String snippetDeleteCommit(@PathVariable long experimentId, @PathVariable String snippetCode, final RedirectAttributes redirectAttributes) {
+    public String snippetDeleteCommit(@PathVariable Long experimentId, @PathVariable String snippetCode, final RedirectAttributes redirectAttributes) {
         OperationStatusRest status = experimentTopLevelService.snippetDeleteCommit(experimentId, snippetCode);
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
@@ -302,7 +302,7 @@ public class ExperimentController {
     }
 
     @PostMapping("/task-rerun/{taskId}")
-    public @ResponseBody boolean rerunTask(@PathVariable long taskId) {
+    public @ResponseBody boolean rerunTask(@PathVariable Long taskId) {
         return workbookService.resetTask(taskId).status== EnumsApi.OperationStatus.OK;
     }
 

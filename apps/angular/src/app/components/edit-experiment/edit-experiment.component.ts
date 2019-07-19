@@ -230,7 +230,7 @@ export class EditExperimentComponent implements OnInit {
     snippetDeleteCommit(el) {
         this.snippetsBlock.wait();
         const subscribe: Subscription = this.experimentsService.experiment
-            .snippetDeleteCommit(el.experimentId, el.id)
+            .snippetDeleteCommit(el.experimentId, el.snippetCode)
             .subscribe(
                 (response: DefaultResponse) => {
                     this.snippetDeleteCommitResponse = response;

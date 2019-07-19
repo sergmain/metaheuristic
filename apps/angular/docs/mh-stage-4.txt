@@ -78,6 +78,78 @@ DONE
 
 
 
+Текущие баги:
+---- bug-100
+при редактированииметаданных по адресу
+http://localhost:4200/launchpad/experiments/300/edit
+
+в открывающуюся форму должно копироваться текущее значение. сейчас поле пустое и педлагается все с нуля заполнять
+
+---- bug-101
+на этой же странице стразу после начала раздела Metadata
+должны идти не дефолтные метаданные, а описание формата:
+Array of concrete values - [10,27,21]
+Array defined in loop - range(10,30,10)
+Array defined in loop - (10,30,10)
+Concrete value - 10
+Array of strings, some strings contain space - ['#some custom accuracy', accuracy]
+
+---- bug-102
+страница http://localhost:4200/launchpad/atlas-experiment-feature-progress/14/253/1
+идет запрос по адерсу http://localhost:8080/rest/v1/launchpad/experiment/experiment-feature-progress
+поэтому выдается ошибка
+#285.040 workbookId is null
+
+правильный запрос - http://localhost:8080/rest/v1/launchpad/atlas/atlas-experiment-feature-progress
+
+---- bug-103
+url - http://localhost:4200/launchpad/resources/add
+раздел Create resource from file
+поле должно быть опциональным
+
+---- bug-104
+url - http://localhost:4200/launchpad/resources/add
+раздел Create Resource with Storage URL
+должны выводиться примерты конфигов:
+
+Examples
+
+sourcing: disk
+disk:
+  code: storage-code
+  mask: '*'
+
+sourcing: git
+git:
+  repo: https://github.com/sergmain/metaheuristic.git
+  branch: master
+  commit: b25331edba72a1a901634212ac55752238fd2dd5
 
 
- 
+---- bug-105
+url - http://localhost:4200/launchpad/resources
+должна быть возможность горизонтального скролинга страницы.
+сейчас кнопри удаления ресурса недоступны т.к.в ыходят за границу экрана
+
+---- bug-106
+url - http://localhost:4200/launchpad/stations
+должны быть радио-кнопка которая управляет выводом поля params (AKA  status of station )
+как сделано смотреть здесь - http://localhost:8080/launchpad/station/stations
+
+---- bug-107
+url - http://localhost:4200/launchpad/experiments
+если кнопка "Info" акивна, то кнопка "Edit" Должна быть задисаблена
+
+---- bug-108
+url - http://localhost:4200/launchpad/experiments/299/info
+отсутствует кнопка "to Atlas"
+как сделано смотреть здесь в html-версии
+
+---- bug-109
+url - http://localhost:4200/launchpad/resources
+перенести кнопку "Create resource" до таблицы с ресурсами
+
+---- bug-110
+url - http://localhost:4200/launchpad/snippets
+перенести кнопку "Add" до таблицы со снипетами
+

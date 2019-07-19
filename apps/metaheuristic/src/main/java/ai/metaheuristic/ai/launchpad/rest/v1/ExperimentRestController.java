@@ -111,18 +111,18 @@ public class ExperimentRestController {
     }
 
     @GetMapping("/experiment-metadata-delete-commit/{experimentId}/{key}")
-    public OperationStatusRest metadataDeleteCommit(@PathVariable long experimentId, @PathVariable String key) {
+    public OperationStatusRest metadataDeleteCommit(@PathVariable Long experimentId, @PathVariable String key) {
         if (true) throw new IllegalStateException("Need to change this in web(html files) and angular");
         return experimentTopLevelService.metadataDeleteCommit(experimentId, key);
     }
 
     @GetMapping("/experiment-metadata-default-add-commit/{experimentId}")
-    public OperationStatusRest metadataDefaultAddCommit(@PathVariable long experimentId) {
+    public OperationStatusRest metadataDefaultAddCommit(@PathVariable Long experimentId) {
         return experimentTopLevelService.metadataDefaultAddCommit(experimentId);
     }
 
     @GetMapping("/experiment-snippet-delete-commit/{experimentId}/{snippetCode}")
-    public OperationStatusRest snippetDeleteCommit(@PathVariable long experimentId, @PathVariable String snippetCode) {
+    public OperationStatusRest snippetDeleteCommit(@PathVariable Long experimentId, @PathVariable String snippetCode) {
         return experimentTopLevelService.snippetDeleteCommit(experimentId, snippetCode);
     }
 

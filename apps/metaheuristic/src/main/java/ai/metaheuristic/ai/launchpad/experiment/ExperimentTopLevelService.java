@@ -459,14 +459,14 @@ public class ExperimentTopLevelService {
         params.add(param);
     }
 
-    public OperationStatusRest snippetDeleteCommit(long experimentId, String snippetCode) {
+    public OperationStatusRest snippetDeleteCommit(Long experimentId, String snippetCode) {
         if (snippetCode==null || snippetCode.isBlank()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#285.245 snippetCode is blank");
         }
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.250 experiment wasn't found, id: "+experimentId );
+                    "#285.250 An experiment wasn't found, id: "+experimentId );
         }
 
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
@@ -475,6 +475,10 @@ public class ExperimentTopLevelService {
         }
         else if (Objects.equals(epy.experimentYaml.predictSnippet, snippetCode)) {
             epy.experimentYaml.predictSnippet = null;
+        }
+        else {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.252 Can't find a snippet with the code: "+snippetCode );
         }
         experiment.updateParams(epy);
         experimentCache.save(experiment);
@@ -495,7 +499,7 @@ public class ExperimentTopLevelService {
         final Experiment experiment = experimentCache.findById(id);
         if (experiment == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#285.270 experiment wasn't found, experimentId: " + id);
+                    "#285.270 An experiment wasn't found, experimentId: " + id);
         }
         // do not use experiment.getExperimentParamsYaml() because it's  caching ExperimentParamsYaml
         ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.params);
@@ -509,7 +513,7 @@ public class ExperimentTopLevelService {
             newCode = StrUtils.incCopyNumber(newCode);
             if (i++>100) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                        "#285.273 Can't find new code for experiment with code: " + experiment.getCode());
+                        "#285.273 Can't find a new code for experiment with the code: " + experiment.getCode());
             }
         }
         epy.experimentYaml.code = newCode;
