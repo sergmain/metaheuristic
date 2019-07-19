@@ -30,4 +30,22 @@ export namespace experiment {
             tasks: Tasks;
         }
     }
+    export namespace featureProgressConsolePart {
+        export interface Response extends DefaultResponse {
+            console: string;
+            exitCode: number;
+            isOk: boolean;
+            ok: boolean;
+        }
+    }
+
+    export namespace featureProgressPart {
+        export interface Response extends DefaultResponse {
+            consoleResult: ConsoleResult;
+            experimentFeature: ExperimentFeature;
+            hyperParamResult: HyperParamResult;
+            metricsResult: MetricsResult;
+            tasks: Tasks;
+        }
+    }
 }

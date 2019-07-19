@@ -25,7 +25,9 @@
                         .buttons.buttons--right 
                             button(mat-flat-button '[routerLink]'="['/launchpad/batch',el.batch.id,'status']"
                             color="primary") Status
-                            button(mat-flat-button color="primary") Download Result
+                            // TODO download file
+                            a(href="{{'/launchpad/batch/batch-download-result/' + el.batch.id + '/result.zip'}}")
+                                button(mat-flat-button color="primary") Download Result
                             button(mat-flat-button color="warn" '(click)'="delete(el)" title="Delete")
                                 mat-icon delete
                 tr(mat-header-row *matHeaderRowDef="columnsToDisplay")  

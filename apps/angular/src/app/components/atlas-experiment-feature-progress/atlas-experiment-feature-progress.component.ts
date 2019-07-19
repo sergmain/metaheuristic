@@ -22,7 +22,7 @@ export class AtlasExperimentFeatureProgressComponent implements OnInit {
     plotly: PlotComponent;
 
     response: experiment.featureProgress.Response;
-    consolePartResponse: ExperimentFeatureProgressConsolePartResponse.Response;
+    consolePartResponse: experiment.featureProgressConsolePart.Response;
     plotDataResponse: ExperimentFeaturePlotDataPartResponse.Response;
 
     experiment: ExperimentFeatureProgressResponse.Experiment;
@@ -125,8 +125,8 @@ export class AtlasExperimentFeatureProgressComponent implements OnInit {
         const subscribe: Subscription = this.atlasService.experiment
             .featureProgressPart(this.atlasId, this.experimentId, this.featureId, params)
             .subscribe(
-                (response: ExperimentFeatureProgressResponse.Response) => {
-                    this.tables.tasks.table = new MatTableDataSource(response.tasksResult.items.content);
+                (response: experiment.featureProgressPart.Response) => {
+                    this.tables.tasks.table = new MatTableDataSource(response.tasks.content);
                 },
                 () => {},
                 () => subscribe.unsubscribe()
@@ -138,7 +138,7 @@ export class AtlasExperimentFeatureProgressComponent implements OnInit {
         const subscribe: Subscription = this.atlasService.experiment
             .featureProgressConsolePart(this.atlasId, taskId)
             .subscribe(
-                (response: ExperimentFeatureProgressConsolePartResponse.Response) => {
+                (response: experiment.featureProgressConsolePart.Response) => {
                     this.consolePartResponse = response;
                 },
                 () => {},
@@ -196,16 +196,6 @@ export class AtlasExperimentFeatureProgressComponent implements OnInit {
         } else {
             this.pickedAxes[this.pickedAxes.indexOf(false)] = el;
         }
-    }
-
-    featureProgressConsole(taskId: string) {
-        const subscribe: Subscription = this.atlasService.experiment
-            .featureProgressConsole(taskId)
-            .subscribe(
-                () => {},
-                () => {},
-                () => subscribe.unsubscribe()
-            );
     }
 
     featurePlotDataPart(params, paramsAxis) {
