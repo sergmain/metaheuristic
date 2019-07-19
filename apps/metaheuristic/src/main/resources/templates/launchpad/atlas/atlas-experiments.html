@@ -46,6 +46,7 @@
                     <div th:text="${'Desc: ' + r.description}">Description</div>
                 </td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-info/' + r.id}">Details</a></td>
+                <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-export-import/' + r.id}">Export / Import</a></td>
                 <td rowspan="2"><a class="pure-button pure-button-primary" th:href="${'/launchpad/atlas/atlas-experiment-delete/' + r.id}">Delete</a></td>
             </tr>
             <tr valign="top">

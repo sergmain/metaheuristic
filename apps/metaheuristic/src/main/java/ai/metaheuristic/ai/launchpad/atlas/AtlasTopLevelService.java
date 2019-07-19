@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentUtils;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
 import ai.metaheuristic.ai.yaml.metrics.MetricValues;
@@ -38,19 +39,38 @@ import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.StrUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.error.YAMLException;
 
+import java.io.File;
+import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static ai.metaheuristic.ai.Consts.YAML_EXT;
+import static ai.metaheuristic.ai.Consts.YML_EXT;
 import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.ExperimentFeature;
 import static ai.metaheuristic.api.data.experiment.ExperimentParamsYaml.HyperParam;
 
@@ -76,6 +96,73 @@ public class AtlasTopLevelService {
         static ParamFilter of(String filetr) {
             return new ParamFilter(filetr);
         }
+    }
+
+    public OperationStatusRest uploadExperiment(MultipartFile file) {
+        String originFilename = file.getOriginalFilename();
+        if (originFilename == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#422.01 name of uploaded file is null");
+        }
+        String ext = StrUtils.getExtension(originFilename);
+        if (ext==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#422.02 file without extension, bad filename: " + originFilename);
+        }
+        if (!StringUtils.equalsAny(ext.toLowerCase(), YAML_EXT, YML_EXT)) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#422.03 only '.yml' and '.yaml' files are supported, filename: " + originFilename);
+        }
+
+        final String location = System.getProperty("java.io.tmpdir");
+
+        try {
+            String params = IOUtils.toString(file.getInputStream(), StandardCharsets.UTF_8);
+            Atlas atlas = new Atlas();
+
+            LocalDate date = LocalDate.now();
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
+            String dateAsStr = date.format(formatter);
+
+            atlas.name = "experiment uploaded on " + dateAsStr;
+            atlas.description = atlas.name;
+            atlas.code = atlas.name;
+            atlas.params = params;
+            atlasRepository.save(atlas);
+        }
+        catch (Exception e) {
+            log.error("Error", e);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#422.05 can't load snippets, Error: " + e.toString());
+        }
+        return OperationStatusRest.OPERATION_STATUS_OK;
+    }
+
+    public ResponseEntity<AbstractResource> exportAtlas(Long atlasId) {
+        File resultDir = DirUtils.createTempDir("prepare-file-export-result-");
+        File zipDir = new File(resultDir, "zip");
+        zipDir.mkdir();
+        if (!zipDir.exists()) {
+            log.error("Error, temp dir wasn't created, path: {}", zipDir.getAbsolutePath());
+            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        Atlas atlas = atlasRepository.findById(atlasId).orElse(null);
+        if (atlas==null) {
+            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.NOT_FOUND);
+        }
+        File exportFile = new File(zipDir, "export.yaml");
+        try {
+            FileUtils.write(exportFile, atlas.params, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            log.error("Error", e);
+            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+//        httpHeaders.setContentDispositionFormData("attachment", RESULT_ZIP);
+        return new ResponseEntity<>(new FileSystemResource(exportFile.toPath()), RestUtils.getHeader(httpHeaders, exportFile.length()), HttpStatus.OK);
+
     }
 
     public AtlasData.ExperimentDataOnly getExperimentDataOnly(Long id) {

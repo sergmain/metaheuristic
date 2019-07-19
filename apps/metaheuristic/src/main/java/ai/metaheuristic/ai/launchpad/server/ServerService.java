@@ -32,6 +32,7 @@ import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
+import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.station_status.StationStatus;
 import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.EnumsApi;
@@ -130,7 +131,7 @@ public class ServerService {
             copyChunk(assetFile.file, f, offset, realSize);
             long len = f.length();
         }
-        return new ResponseEntity<>(new FileSystemResource(f.toPath()), getHeader(httpHeaders, f.length()), HttpStatus.OK);
+        return new ResponseEntity<>(new FileSystemResource(f.toPath()), RestUtils.getHeader(httpHeaders, f.length()), HttpStatus.OK);
     }
 
     public static void copyChunk(File sourceFile, File destFile, long offset, long size) {
@@ -161,16 +162,6 @@ public class ServerService {
         catch (Throwable th) {
             ExceptionUtils.wrapAndThrow(th);
         }
-    }
-
-    private static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
-        HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
-        header.setContentLength(length);
-        header.setCacheControl("max-age=0");
-        header.setExpires(0);
-        header.setPragma("no-cache");
-
-        return header;
     }
 
     @Service

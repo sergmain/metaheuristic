@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.launchpad.batch;
 import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
 import ai.metaheuristic.ai.launchpad.data.BatchData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.ZipUtils;
@@ -158,17 +159,7 @@ public class BatchController {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         httpHeaders.setContentDispositionFormData("attachment", RESULT_ZIP);
-        return new HttpEntity<>(new FileSystemResource(zipFile), getHeader(httpHeaders, zipFile.length()));
-    }
-
-    private static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
-        HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
-        header.setContentLength(length);
-        header.setCacheControl("max-age=0");
-        header.setExpires(0);
-        header.setPragma("no-cache");
-
-        return header;
+        return new HttpEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()));
     }
 
 }
