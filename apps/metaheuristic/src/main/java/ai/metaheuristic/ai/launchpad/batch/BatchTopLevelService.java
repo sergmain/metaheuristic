@@ -160,6 +160,9 @@ public class BatchTopLevelService {
         if (tempFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.040 name of uploaded file is null");
         }
+        if (tempFilename.isBlank()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.042 name of uploaded file is null");
+        }
         final String originFilename = tempFilename.toLowerCase();
         PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
