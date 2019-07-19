@@ -4,38 +4,36 @@ ct-cols
         .simple-table.tasks
             table(mat-table [dataSource]="tables.tasks.table") 
                 ng-container(matColumnDef="id") 
-                    td(mat-cell *matCellDef="let el") {{el.task.id}}
+                    td(mat-cell *matCellDef="let el") {{el.taskId}}
                 ng-container(matColumnDef="col1") 
                     td(mat-cell *matCellDef="let el") 
                         table
                             tr
                                 td type: 
-                                td 
-                                    span(*ngIf="el.type == 1") FIT
-                                    span(*ngIf="el.type == 2") PREDICT
+                                td: span(style="text-transform: uppercase;") {{el.typeAsString}}
                             tr
                                 td completed: 
                                 td
-                                    span.completed('[class.completed--on]'="el.task.isCompleted") {{el.task.isCompleted}} 
+                                    span.completed('[class.completed--on]'="el.completed") {{el.completed}} 
                             tr
                                 td assigned: 
                                 td 
-                                    span(*ngIf="el.task.assignedOn == null") null
-                                    span {{el.task.assignedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
+                                    span(*ngIf="el.assignedOn == null") null
+                                    span {{el.assignedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
                             tr
                                 td completed: 
                                 td 
-                                    span(*ngIf="el.task.completedOn == null") null
-                                    span {{el.task.completedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
+                                    span(*ngIf="el.completedOn == null") null
+                                    span {{el.completedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
                 ng-container(matColumnDef="col2") 
                     td(mat-cell *matCellDef="let el") 
                         .flex.flex--fd_c.flex--ai_s
                             button(mat-stroked-button
-                                '(click)'='currentTask = el.task; featureProgressConsolePart(el.task.id)'
-                                '[color]'="currentTask == el.task ? 'primary' : ''" 
-                                '[class.mat-flat-button]'="currentTask == el.task"
-                                '[class.mat-stroked-button]'="currentTask != el.task") Info
-                            button(mat-stroked-button '(click)'='taskRerun(el.task.id)' ) Re-run
+                                '(click)'='currentTask = el; featureProgressConsolePart(el.taskId)'
+                                '[color]'="currentTask == el ? 'primary' : ''" 
+                                '[class.mat-flat-button]'="currentTask == el"
+                                '[class.mat-stroked-button]'="currentTask != el") Info
+                            //- button(mat-stroked-button '(click)'='taskRerun(el.id)' ) Re-run
                 tr(mat-row *matRowDef="let row; columns: tables.tasks.columnsToDisplay;") 
     ct-col(style="flex:1")
         ct-section-caption Console output 
@@ -46,10 +44,9 @@ ct-cols
                         .flex.flex--jc_c.flex--ai_c(style="min-height: 100px;") No Task Info
 
             pre.console(*ngIf="consolePartResponse")
-                div(*ngFor="let item of consolePartResponse.items;")
-                    div exitCode: {{item.exidCode || 'NONE'}}
-                    div isOk: {{item.isOk}}
-                    div ok: {{item.ok}}
-                    br
-                    div {{item.console}}
+                div exitCode: {{consolePartResponse.exidCode || 'NONE'}}
+                div isOk: {{consolePartResponse.isOk}}
+                div ok: {{consolePartResponse.ok}}
+                br
+                div {{consolePartResponse.console}}
                     //- ngx-json-viewer('[json]'="item.console" '[expanded]'="true") 
