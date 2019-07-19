@@ -1,0 +1,39 @@
+.body {
+    padding-top: 24px;
+    border: 1px solid rgba(0, 0, 0, .03);
+    box-shadow: 0 2px 2px rgba(0, 0, 0, .24), 0 0 2px rgba(0, 0, 0, .12);
+    margin: 4px;
+    width: 400px;
+    padding: 0px;
+}
+
+.form__header {
+    padding: 16px;
+
+    h3 {
+        padding: 0;
+        margin: 0;
+        line-height: 1;
+    }
+}
+
+.form__body {
+    padding: 0 16px;
+
+    mat-form-field {
+        width: 100%;
+    }
+
+}
+
+.form__footer {
+    padding: 0 16px 16px;
+
+    display: -webkit-flex;
+    display: -moz-flex;
+    display: -ms-flex;
+    display: -o-flex;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

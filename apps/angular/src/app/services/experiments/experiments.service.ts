@@ -1,63 +1,56 @@
-import {
-    Injectable
-} from '@angular/core';
-import {
-    HttpClient,
-    HttpHeaders
-} from '@angular/common/http';
-import {
-    Observable,
-    of ,
-    from
-} from 'rxjs';
-import {
-    map
-} from 'rxjs/operators';
-import {
-    urls
-} from './urls';
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { urls } from './urls';
+import { Observable } from 'rxjs';
 
-@Injectable({
-    providedIn: 'root'
-})
+export * from './response';
+
+@Injectable({ providedIn: 'root' })
 
 export class ExperimentsService {
-    constructor(
-        private http: HttpClient
-    ) {}
+    constructor(private http: HttpClient) {}
 
     experiments = {
-        get: (page) => this.http.get(urls.experiments.get(page))
+        get: (page: number): Observable < any > => this.http.get(urls.experiments.get(page))
     };
 
     experiment = {
-        get: id => this.http.get(urls.experiment.get(id)),
-        info: id => this.http.get(urls.experiment.info(id)),
+        get: (id: string | number): Observable < any > => this.http.get(urls.experiment.get(id)),
 
-        edit: (id) => this.http.get(urls.experiment.edit(id)),
-        addCommit: (data) => this.http.post(urls.experiment.addCommit(), data),
-        editCommit: (data) => this.http.post(urls.experiment.editCommit(), data),
-        deleteCommit: (data) => this.http.post(urls.experiment.deleteCommit(data), null),
-        cloneCommit: (data) => this.http.post(urls.experiment.cloneCommit(data), null),
+        info: (id: string | number): Observable < any > => this.http.get(urls.experiment.info(id)),
 
-        featurePlotDataPart: (experimentId, featureId, params, paramsAxis) => {
-            return this.http.post(urls.experiment.featurePlotDataPart(experimentId, featureId, params, paramsAxis), null);
-        },
-        featureProgressPart: (experimentId, featureId, params) => {
-            return this.http.post(urls.experiment.featureProgressPart(experimentId, featureId, params), null);
-        },
-        featureProgress: (experimentId, featureId) => this.http.get(urls.experiment.featureProgress(experimentId, featureId)),
-        featureProgressConsole: taskId => this.http.get(urls.experiment.featureProgressConsole(taskId)),
-        featureProgressConsolePart: taskId => this.http.post(urls.experiment.featureProgressConsolePart(taskId), null),
+        edit: (id: string | number): Observable < any > => this.http.get(urls.experiment.edit(id)),
 
-        taskRerun: taskId => this.http.post(urls.experiment.taskRerun(taskId), null),
+        addCommit: (data: any): Observable < any > => this.http.post(urls.experiment.addCommit(), data),
 
-        metadataAddCommit: (experimentId, data) => this.http.post(urls.experiment.metadataAddCommit(experimentId, data), null),
-        metadataEditCommit: (experimentId, data) => this.http.post(urls.experiment.metadataEditCommit(experimentId, data), null),
-        metadataDeleteCommit: (experimentId, id) => this.http.get(urls.experiment.metadataDeleteCommit(experimentId, id)),
-        metadataDefaultAddCommit: (experimentId) => this.http.get(urls.experiment.metadataDefaultAddCommit(experimentId)),
+        editCommit: (data: any): Observable < any > => this.http.post(urls.experiment.editCommit(), data),
 
-        snippetAddCommit: (id, data) => this.http.post(urls.experiment.snippetAddCommit(id, data), null),
-        snippetDeleteCommit: (experimentId, id) => this.http.get(urls.experiment.snippetDeleteCommit(experimentId, id)),
+        deleteCommit: (data: any): Observable < any > => this.http.post(urls.experiment.deleteCommit(data), null),
+
+        cloneCommit: (data: any): Observable < any > => this.http.post(urls.experiment.cloneCommit(data), null),
+
+        featurePlotDataPart: (experimentId: string | number, featureId: string | number, params: any, paramsAxis: any): Observable < any > => this.http.post(urls.experiment.featurePlotDataPart(experimentId, featureId, params, paramsAxis), null),
+
+        featureProgressPart: (experimentId: string | number, featureId: string | number, params: any): Observable < any > => this.http.post(urls.experiment.featureProgressPart(experimentId, featureId, params), null),
+
+        featureProgress: (experimentId: string | number, featureId: string | number): Observable < any > => this.http.get(urls.experiment.featureProgress(experimentId, featureId)),
+
+        featureProgressConsole: (taskId: string | number): Observable < any > => this.http.get(urls.experiment.featureProgressConsole(taskId)),
+
+        featureProgressConsolePart: (taskId: string | number): Observable < any > => this.http.post(urls.experiment.featureProgressConsolePart(taskId), null),
+
+        taskRerun: (taskId: string | number): Observable < any > => this.http.post(urls.experiment.taskRerun(taskId), null),
+
+        metadataAddCommit: (experimentId: string | number, data: any): Observable < any > => this.http.post(urls.experiment.metadataAddCommit(experimentId, data), null),
+
+        metadataEditCommit: (experimentId: string | number, data: any): Observable < any > => this.http.post(urls.experiment.metadataEditCommit(experimentId, data), null),
+
+        metadataDeleteCommit: (experimentId: string | number, id: string | number): Observable < any > => this.http.get(urls.experiment.metadataDeleteCommit(experimentId, id)),
+
+        metadataDefaultAddCommit: (experimentId: string | number): Observable < any > => this.http.get(urls.experiment.metadataDefaultAddCommit(experimentId)),
+
+        snippetAddCommit: (id: string | number, data: any): Observable < any > => this.http.post(urls.experiment.snippetAddCommit(id, data), null),
+
+        snippetDeleteCommit: (experimentId: string | number, id: string | number): Observable < any > => this.http.get(urls.experiment.snippetDeleteCommit(experimentId, id)),
     };
 }

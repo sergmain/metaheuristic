@@ -1,0 +1,45 @@
+.section
+    .section__header
+        ct-section-caption Batch
+    .section__body
+        ct-table.simple-table(#table)
+            table(mat-table '[dataSource]'="dataSource" class="mat-table") 
+                ng-container(matColumnDef="id") 
+                    th(mat-header-cell *matHeaderCellDef) Id 
+                    td(mat-cell *matCellDef="let el") {{el.batch.id}} 
+                ng-container(matColumnDef="createdOn") 
+                    th(mat-header-cell *matHeaderCellDef)  Created On 
+                    td(mat-cell *matCellDef="let el") {{el.batch.createdOn | date:'MMM d, yyyy, HH:mm:ss'}} 
+                ng-container(matColumnDef="isBatchConsistent") 
+                    th(mat-header-cell *matHeaderCellDef) Is Batch Consistent? 
+                    td(mat-cell *matCellDef="let el") {{el.ok}} 
+                ng-container(matColumnDef="planCode") 
+                    th(mat-header-cell *matHeaderCellDef) Plan Code 
+                    td(mat-cell *matCellDef="let el") {{el.planCode}} 
+                ng-container(matColumnDef="execState") 
+                    th(mat-header-cell *matHeaderCellDef) Exec State
+                    td(mat-cell *matCellDef="let el") {{el.execState}} 
+                ng-container(matColumnDef="bts") 
+                    th(mat-header-cell *matHeaderCellDef)  
+                    td(mat-cell *matCellDef="let el") 
+                        .buttons.buttons--right 
+                            button(mat-flat-button '[routerLink]'="['/launchpad/batch',el.batch.id,'status']"
+                            color="primary") Status
+                            button(mat-flat-button color="primary") Download Result
+                            button(mat-flat-button color="warn" '(click)'="delete(el)" title="Delete")
+                                mat-icon delete
+                tr(mat-header-row *matHeaderRowDef="columnsToDisplay")  
+                tr(mat-row *matRowDef="let row; columns: columnsToDisplay;" 
+                    '[class.deleted-table-row]'="deletedRows.includes(row)")
+        .section__content(*ngIf="currentStates.has(states.firstLoading)")
+            mat-progress-bar(mode="indeterminate")
+
+    .section__footer
+        .flex.flex--jc_sb
+            .buttons.buttons--left 
+                button(mat-flat-button #prevTable '(click)'='prev()' disabled): mat-icon arrow_back_ios
+                button(mat-flat-button #nextTable '(click)'='next()' disabled): mat-icon arrow_forward_ios
+            .buttons.buttons--right
+                button(mat-flat-button color="primary"
+                    '[disabled]'="currentStates.has(states.loading) || currentStates.has(states.firstLoading)"
+                    routerLink="/launchpad/batch/add") Add Batch
