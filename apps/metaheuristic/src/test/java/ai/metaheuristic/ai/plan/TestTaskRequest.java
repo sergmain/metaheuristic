@@ -23,6 +23,7 @@ import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.server.ServerService;
 import ai.metaheuristic.ai.launchpad.task.TaskService;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookSchedulerService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.preparing.FeatureMethods;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +50,9 @@ public class TestTaskRequest extends FeatureMethods {
 
     @Autowired
     public TaskService taskService;
+
+    @Autowired
+    public WorkbookSchedulerService workbookSchedulerService;
 
     @Override
     public String getPlanYamlAsString() {
@@ -114,7 +118,10 @@ public class TestTaskRequest extends FeatureMethods {
             assertNotNull(task);
             assertTrue(task.isCompleted);
 
-            workbook = workbookService.updateWorkbookStatus(workbook, true);
+            workbookSchedulerService.updateWorkbookStatus(
+                    workbookRepository.findByIdForUpdate(workbook.id),
+                    true);
+            workbook = workbookCache.findById(workbook.id);
         }
 
         ExchangeData data = new ExchangeData();

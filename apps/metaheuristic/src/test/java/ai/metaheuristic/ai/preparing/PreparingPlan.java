@@ -28,7 +28,6 @@ import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetCache;
 import ai.metaheuristic.ai.launchpad.task.TaskPersistencer;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.plan.TaskCollector;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
@@ -82,9 +81,6 @@ public abstract class PreparingPlan extends PreparingExperiment {
 
     @Autowired
     public WorkbookService workbookService;
-
-    @Autowired
-    public WorkbookGraphService workbookGraphService;
 
     @Autowired
     public TaskPersistencer taskPersistencer;
@@ -310,7 +306,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         experiment = experimentCache.findById(experiment.id);
         this.workbook = (WorkbookImpl)result.workbook;
         assertEquals(result.numberOfTasks, taskRepository.findAllByWorkbookId(workbook.id).size());
-        assertEquals(result.numberOfTasks, workbookGraphService.getCountUnfinishedTasks(workbook));
+        assertEquals(result.numberOfTasks, workbookService.getCountUnfinishedTasks(workbook));
 
 
         assertEquals(EnumsApi.PlanProducingStatus.OK, result.planProducingStatus);

@@ -17,23 +17,18 @@
 package ai.metaheuristic.ai.launchpad.task;
 
 import ai.metaheuristic.ai.Enums;
-import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookGraphService;
+import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.api.EnumsApi;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.launchpad.Task;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,8 +40,8 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
     private final TaskPersistencer taskPersistencer;
-    private final WorkbookGraphService workbookGraphService;
-    private final WorkbookCache workbookCache;
+    private final WorkbookService workbookService;
+    private final WorkbookRepository workbookRepository;
 
     public List<Long> resourceReceivingChecker(long stationId) {
         List<Task> tasks = taskRepository.findForMissingResultResources(stationId, System.currentTimeMillis(), EnumsApi.TaskExecState.OK.value);
@@ -66,13 +61,13 @@ public class TaskService {
                     log.warn("#317.05 Task obsolete and was already deleted");
                     return;
                 }
-                WorkbookImpl workbook = workbookCache.findById(task.workbookId);
+                taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
+                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(task.workbookId);
                 if (workbook==null) {
-                    taskPersistencer.finishTaskAsBroken(task.getId());
                     log.warn("#317.11 Workbook for this task was already deleted");
                     return;
                 }
-                workbookGraphService.updateGraphWithInvalidatingAllChildrenTasks(workbook, task.id);
+                workbookService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, task.id);
                 break;
             case OUTPUT_RESOURCE_ON_EXTERNAL_STORAGE:
                 Enums.UploadResourceStatus uploadResourceStatus = taskPersistencer.setResultReceived(taskId, true);

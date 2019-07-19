@@ -25,9 +25,9 @@ import ai.metaheuristic.ai.yaml.metrics.MetricsUtils;
 import ai.metaheuristic.ai.yaml.snippet_exec.SnippetExecUtils;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.ai.yaml.station_task.StationTaskUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
@@ -88,14 +88,13 @@ public class StationTaskService {
                                 if (taskYamlFile.exists()) {
                                     try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
                                         StationTask task = StationTaskUtils.to(fis);
-//                                        if (task.isDelivered()) {
-//                                            return;
-//                                        }
                                         getMapForLaunchpadUrl(launchpadUrl).put(taskId, task);
 
                                         // fix state of task
                                         SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(task.getSnippetExecResult());
-                                        if (snippetExec!=null && !snippetExec.exec.isOk) {
+                                        if (snippetExec!=null &&
+                                                ((snippetExec.generalExec!=null && !snippetExec.exec.isOk ) ||
+                                                        (snippetExec.generalExec!=null && !snippetExec.generalExec.isOk))) {
                                             markAsFinished(launchpadUrl, taskId, snippetExec);
                                         }
                                     }
@@ -106,6 +105,7 @@ public class StationTaskService {
                                     }
                                     catch (YAMLException e) {
                                         String es = "#713.020 yaml Error: " + e.getMessage();
+                                        log.warn(es, e);
                                         deleteDirWithBrokenTask(s);
                                     }
                                 }
@@ -279,6 +279,8 @@ public class StationTaskService {
             List<StationTask> tasks = findAllByCompletedIsFalse(launchpadUrl);
             for (StationTask task : tasks) {
                 // we don't need new task because workbook for this task is active
+                // i.e. there is a non-completed task with active workbook
+                // if workbook wasn't active we would need a new task
                 if (currentExecState.isStarted(task.launchpadUrl, task.workbookId)) {
                     return false;
                 }
@@ -544,6 +546,7 @@ public class StationTaskService {
 
     File prepareTaskSubDir(File taskDir, String subDir) {
         File taskSubDir = new File(taskDir, subDir);
+        //noinspection ResultOfMethodCallIgnored
         taskSubDir.mkdirs();
         if (!taskSubDir.exists()) {
             log.warn("#713.220 Can't create taskSubDir: {}", taskSubDir.getAbsolutePath());

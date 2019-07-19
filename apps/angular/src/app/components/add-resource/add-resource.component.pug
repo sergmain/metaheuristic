@@ -1,0 +1,63 @@
+.section
+    .section__header
+        ct-section-caption Create Resource from File
+    .section__body
+        ct-cols(align-items="baseline")
+            ct-col(size='6')
+                form( '[formGroup]'="uploadForm" novalidate)
+                    .section__content
+                        .flex.flex--jc_fs.flex--fw_w
+                            button(mat-flat-button color="accent" '(click)'="fileInput.click()")
+                                    mat-icon.md-48 attach_file
+                                    span Choose File
+                            div.file-names
+                                div(*ngFor="let item of fileInput.files") {{item.name}}
+                        input(#fileInput type="file" hidden name="file" '(change)'="fileChanged($event)") 
+                        br
+                        mat-form-field(appearance="outline")
+                            mat-label Resource code
+                            input(autocomplete="off" matInput formControlName="code")
+                            mat-hint This is a required field.
+                        mat-form-field(appearance="outline")
+                            mat-label Resource pool code
+                            input(autocomplete="off" matInput formControlName="poolCode")
+                            mat-hint This is a required field.
+                    .section__content
+                        .buttons.buttons--right
+                            button(mat-stroked-button '(click)'="cancel()") Cancel
+                            button(mat-flat-button '(click)'="upload()" color="primary" '[disabled]'="[states.wait,states.firstLoading].includes(formUploadState) || uploadForm.invalid") Create
+            ct-col(size='1')
+            
+            ct-col(size='5')
+                div('*ngIf'="fileResponse")
+                    p STATUS: {{fileResponse.status}}
+                    div(*ngIf="fileResponse.errorMessages")
+                        p(*ngFor="let error of response.errorMessages; index as i; trackBy: trackByFn") {{error}}
+
+.section
+    .section__header
+        ct-section-caption Create Resource with Storage URL
+    .section__body
+        ct-cols(align-items="baseline")
+            ct-col(size='6')
+                .section__content
+                    form('[formGroup]'="urlForm" novalidate)
+                        mat-form-field(appearance="outline")
+                            mat-label Resource pool code
+                            input(autocomplete="off" matInput formControlName="poolCode")
+                            mat-hint This is a required field.
+                        br
+                        mat-form-field(appearance="outline")
+                            mat-label Storage url
+                            input(autocomplete="off" matInput formControlName="storageUrl")
+                            mat-hint This is a required field if resource is stored in other storage than launchpad. Right now, the only one supported type of storage is disk://
+                .section__content
+                    .buttons.buttons--right
+                        button(mat-stroked-button '(click)'="cancel()") Cancel
+                        button(mat-flat-button '(click)'="create()" color="primary" '[disabled]'="[states.wait,states.firstLoading].includes(formState) || urlForm.invalid") Create
+            ct-col(size='1')
+            
+            ct-col(size='5')
+                div('*ngIf'="urlResponse")
+                    p STATUS: {{urlResponse.status}}
+                    p(*ngFor="let error of urlResponse.errorMessages; index as i; trackBy: trackByFn") {{error}}

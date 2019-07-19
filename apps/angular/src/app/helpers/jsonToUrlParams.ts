@@ -1,11 +1,13 @@
-export default function jsonToUrlParams(data) {
-    return Object.keys(data).map(function(k) {
+export default function jsonToUrlParams(data: any) {
+    return Object.keys(data).map((k: string) => {
         if (data[k] === null || data[k] === undefined) {
-            return false
+            return false;
         }
-        let value = data[k].toString()
-        if (value != '') {
-            return encodeURIComponent(k) + '=' + encodeURIComponent(data[k])
+        const value: string = data[k].toString();
+        if (value !== '') {
+            return encodeURIComponent(k) + '=' + encodeURIComponent(data[k]);
         }
-    }).filter(Boolean).join('&')
+    }).filter(Boolean).join('&');
 }
+
+export { jsonToUrlParams };

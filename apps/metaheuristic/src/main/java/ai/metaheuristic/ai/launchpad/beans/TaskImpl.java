@@ -79,7 +79,7 @@ public class TaskImpl implements Serializable, Task {
     public long resultResourceScheduledOn;
 
     // this field will be left only for compatibility, order isn't used any more
-    @Deprecated
+    @Deprecated(forRemoval = true)
     @Column(name = "TASK_ORDER")
     public int order;
 }

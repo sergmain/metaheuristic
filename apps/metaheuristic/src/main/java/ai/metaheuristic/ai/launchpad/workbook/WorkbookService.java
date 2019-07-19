@@ -20,17 +20,14 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
-import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Station;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.binary_data.BinaryDataService;
 import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
-import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
 import ai.metaheuristic.ai.launchpad.experiment.task.SimpleTaskExecResult;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
-import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.station.StationCache;
@@ -52,8 +49,6 @@ import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEvent;
-import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
@@ -65,16 +60,15 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 
 @Service
 @Profile("launchpad")
 @Slf4j
 @RequiredArgsConstructor
-public class WorkbookService implements ApplicationEventPublisherAware {
+public class WorkbookService {
 
     private static final TasksAndAssignToStationResult EMPTY_RESULT = new TasksAndAssignToStationResult(null);
 
@@ -83,15 +77,10 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     private final PlanCache planCache;
     private final BinaryDataService binaryDataService;
     private final TaskRepository taskRepository;
-    private final ExperimentService experimentService;
-    private final ExperimentRepository experimentRepository;
-    private final AtlasService atlasService;
     private final TaskPersistencer taskPersistencer;
     private final StationCache stationCache;
     private final WorkbookCache workbookCache;
     private final WorkbookGraphService workbookGraphService;
-
-    private ApplicationEventPublisher publisher;
 
     @Data
     @NoArgsConstructor
@@ -108,29 +97,29 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         }
         WorkbookImpl workbook = workbookRepository.findByIdForUpdate(task.getWorkbookId());
         if (workbook == null) {
-            taskPersistencer.finishTaskAsBroken(taskId);
+            taskPersistencer.finishTaskAsBrokenOrError(taskId, EnumsApi.TaskExecState.BROKEN);
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#705.020 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
         }
 
         Task t = taskPersistencer.resetTask(task);
         if (t==null) {
-            WorkbookGraphService.OperationStatusWithTaskList withTaskList = workbookGraphService.updateGraphWithInvalidatingAllChildrenTasks(workbook, task.id);
+            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithSettingAllChildrenTasksAsBroken(workbook, task.id);
+            updateTasksStateInDb(withTaskList);
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.030 Can't re-run task #" + taskId + ", see log for more information");
             }
-            withTaskList.tasks.forEach( tt -> {
-                taskPersistencer.resetTask(tt.taskId);
-            });
         }
         else {
-            WorkbookGraphService.OperationStatusWithTaskList withTaskList = workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, task.id);
+            WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithResettingAllChildrenTasks(workbook, task.id);
             if (withTaskList.status.status== EnumsApi.OperationStatus.ERROR) {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.040 Can't re-run task #" + taskId + ", see log for more information");
             }
-            withTaskList.tasks.forEach( tt -> {
-                taskPersistencer.resetTask(tt.taskId);
-            });
+            updateTasksStateInDb(withTaskList);
+
+            if (workbook.execState==EnumsApi.WorkbookExecState.FINISHED.code) {
+                toState(workbook.id, EnumsApi.WorkbookExecState.STARTED);
+            }
         }
 
         return OperationStatusRest.OPERATION_STATUS_OK;
@@ -167,85 +156,30 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         }
     }
 
-    public void setApplicationEventPublisher(ApplicationEventPublisher publisher) {
-        this.publisher = publisher;
+    public void toProduced(Long workbookId) {
+        toState(workbookId, EnumsApi.WorkbookExecState.PRODUCED);
     }
 
-    public void updateWorkbookStatuses(boolean needReconciliation) {
-        List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
-        for (WorkbookImpl workbook : workbooks) {
-            updateWorkbookStatus(workbook, needReconciliation);
+    public void toState(Long workbookId, EnumsApi.WorkbookExecState state) {
+        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+        if (workbook==null) {
+            String es = "#705.082 Can't change exec state to "+state+" for workbook #" + workbookId;
+            log.error(es);
+            throw new IllegalStateException(es);
         }
+        workbook.setExecState(state.code);
+        workbookCache.save(workbook);
     }
 
-    public WorkbookImpl updateWorkbookStatus(WorkbookImpl workbook, boolean needReconciliation) {
-
-        final long countUnfinishedTasks = workbookGraphService.getCountUnfinishedTasks(workbook);
-        if (countUnfinishedTasks==0) {
-            log.info("Workbook #{} was finished", workbook.getId());
-            experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
-            WorkbookImpl instance = toFinished(workbook.getId());
-
-            Long experimentId = experimentRepository.findIdByWorkbookId(instance.getId());
-            if (experimentId==null) {
-                log.info("#705.050 Can't store an experiment to atlas, the workbook "+instance.getId()+" doesn't contain an experiment" );
-                return instance;
-            }
-            atlasService.toAtlas(instance.getId(), experimentId);
-            return instance;
-        }
-        else {
-            if (needReconciliation) {
-                List<Object[]>  list = taskRepository.findAllExecStateByWorkbookId(workbook.getId());
-                List<WorkbookParamsYaml.TaskVertex> vertices = workbookGraphService.findAll(workbook);
-                Map<Long, Integer> states = new HashMap<>(list.size()+1);
-                for (Object[] o : list) {
-                    Long taskId = (Long) o[0];
-                    Integer execState = (Integer) o[1];
-                    states.put(taskId, execState);
-                }
-                final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-                vertices.stream().parallel().forEach(tv -> {
-                        Integer state = states.get(tv.taskId);
-                        if (state==null) {
-                            readWriteLock.writeLock().lock();
-                            try {
-                                log.info("#705.052 Found non-created task, graph consistency is failed");
-                                WorkbookImpl instance = toError(workbook.getId());
-                            } finally {
-                                readWriteLock.writeLock().unlock();
-                            }
-                        }
-                        else if (tv.execState.value!=state) {
-                            readWriteLock.writeLock().lock();
-                            try {
-                                log.info("#705.054 Found different states for task #"+tv.taskId+", " +
-                                        "db: "+ EnumsApi.TaskExecState.from(state)+", " +
-                                        "graph: "+tv.execState);
-                                workbookGraphService.updateTaskExecState(workbook, tv.taskId, state);
-                            } finally {
-                                readWriteLock.writeLock().unlock();
-                            }
-                        }
-                });
-            }
-        }
-        return workbook;
+    public void toFinished(Long workbookId) {
+        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.FINISHED);
     }
 
-    public WorkbookImpl toProduced(Long workbookId) {
-        return toState(workbookId, EnumsApi.WorkbookExecState.PRODUCED);
+    public void toError(Long workbookId) {
+        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.ERROR);
     }
 
-    public WorkbookImpl toFinished(Long workbookId) {
-        return toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.FINISHED);
-    }
-
-    public WorkbookImpl toError(Long workbookId) {
-        return toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.ERROR);
-    }
-
-    public WorkbookImpl toStateWithCompletion(Long workbookId, EnumsApi.WorkbookExecState state) {
+    public void toStateWithCompletion(Long workbookId, EnumsApi.WorkbookExecState state) {
         WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
         if (workbook==null) {
             String es = "#705.080 Can't change exec state to "+state+" for workbook #" + workbookId;
@@ -254,20 +188,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         }
         workbook.setCompletedOn(System.currentTimeMillis());
         workbook.setExecState(state.code);
-        workbook = workbookCache.save(workbook);
-        return workbook;
-    }
-
-    public WorkbookImpl toState(Long workbookId, EnumsApi.WorkbookExecState state) {
-        WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
-        if (workbook==null) {
-            String es = "#705.082 Can't change exec state to "+state+" for workbook #" + workbookId;
-            log.error(es);
-            throw new IllegalStateException(es);
-        }
-        workbook.setExecState(state.code);
-        workbook = workbookCache.save(workbook);
-        return workbook;
+        workbookCache.save(workbook);
     }
 
     public PlanApiData.TaskProducingResultComplex createWorkbook(Long planId, WorkbookParamsYaml params) {
@@ -347,11 +268,6 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         //noinspection UnnecessaryLocalVariable
         PlanApiData.WorkbookResult result = new PlanApiData.WorkbookResult(plan, workbook);
         return result;
-    }
-
-    public void deleteById(long workbookId) {
-        publisher.publishEvent( new WorkbookDeletionEvent(this, workbookId) );
-        workbookCache.deleteById(workbookId);
     }
 
     public PlanApiData.WorkbooksResult getWorkbooksOrderByCreatedOnDescResult(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
@@ -448,7 +364,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
                 }
                 catch (YAMLException e) {
                     log.error("#705.190 Task #{} has broken params yaml and will be skipped, error: {}, params:\n{}", task.getId(), e.toString(),task.getParams());
-                    taskPersistencer.finishTaskAsBroken(task.getId());
+                    taskPersistencer.finishTaskAsBrokenOrError(task.getId(), EnumsApi.TaskExecState.BROKEN);
                     continue;
                 }
                 catch (Exception e) {
@@ -509,7 +425,8 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         resultTask.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
         resultTask.setResultResourceScheduledOn(0);
 
-        taskRepository.saveAndFlush((TaskImpl)resultTask);
+        taskRepository.save((TaskImpl)resultTask);
+        updateTaskExecStateByWorkbookId(workbook.getId(), resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
 
         return new TasksAndAssignToStationResult(assignedTask);
     }
@@ -517,8 +434,7 @@ public class WorkbookService implements ApplicationEventPublisherAware {
     public List<Long> storeAllConsoleResults(List<SimpleTaskExecResult> results) {
         final TaskPersistencer.PostTaskCreationAction action = t -> {
             if (t!=null) {
-                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(t.getWorkbookId());
-                workbookGraphService.updateTaskExecState(workbook, t.getId(), t.getExecState());
+                updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
             }
         };
 
@@ -529,6 +445,193 @@ public class WorkbookService implements ApplicationEventPublisherAware {
         }
         return ids;
     }
+
+    private static final ConcurrentHashMap<Long, Object> syncMap = new ConcurrentHashMap<>(1000, 0.75f, 10);
+
+    // workbook graph methods
+
+    private OperationStatusRest updateTaskExecStateByWorkbookId(Long workbookId, Long taskId, int execState) {
+        final Object obj = syncMap.computeIfAbsent(workbookId, o -> new Object());
+        log.debug("Before entering in sync block, updateTaskExecStateInternal()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(workbookId);
+                final WorkbookOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(workbook, taskId, execState);
+                return status.status;
+            } finally {
+                syncMap.remove(workbookId);
+            }
+        }
+    }
+
+    public OperationStatusRest updateTaskExecState(WorkbookImpl workbook, Long taskId, int execState) {
+        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
+        log.debug("Before entering in sync block, updateTaskExecState()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                final WorkbookOperationStatusWithTaskList status = updateTaskExecStateWithoutSync(workbook, taskId, execState);
+                return status.status;
+            } finally {
+                syncMap.remove(workbook.getId());
+            }
+        }
+    }
+
+    private WorkbookOperationStatusWithTaskList updateTaskExecStateWithoutSync(WorkbookImpl workbook, Long taskId, int execState) {
+        changeTaskState(taskId, EnumsApi.TaskExecState.from(execState));
+        final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecState(workbook, taskId, execState);
+        updateTasksStateInDb(status);
+        return status;
+    }
+
+    public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
+        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
+        log.debug("Before entering in sync block, findAll()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                return workbookGraphService.findAll(workbook);
+            } finally {
+                syncMap.remove(workbook.getId());
+            }
+        }
+    }
+
+    public WorkbookOperationStatusWithTaskList updateGraphWithSettingAllChildrenTasksAsBroken(WorkbookImpl workbook, Long taskId) {
+        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
+        log.debug("Before entering in sync block, updateGraphWithInvalidatingAllChildrenTasks()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                return workbookGraphService.updateGraphWithSettingAllChildrenTasksAsBroken(workbook, taskId);
+            } finally {
+                syncMap.remove(workbook.getId());
+            }
+        }
+    }
+
+    public OperationStatusRest addNewTasksToGraph(WorkbookImpl workbook, List<Long> parentTaskIds, List<Long> taskIds) {
+        if (workbook==null || workbook.getId()==null) {
+            return OperationStatusRest.OPERATION_STATUS_OK;
+        }
+        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
+//        log.debug("Before entering in sync block, addNewTasksToGraph()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                return workbookGraphService.addNewTasksToGraph(workbook, parentTaskIds, taskIds);
+            } finally {
+                syncMap.remove(workbook.getId());
+            }
+        }
+    }
+
+    public List<WorkbookParamsYaml.TaskVertex> findLeafs(WorkbookImpl workbook) {
+        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
+        log.debug("Before entering in sync block, findLeafs()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                return workbookGraphService.findLeafs(workbook);
+            } finally {
+                syncMap.remove(workbook.getId());
+            }
+        }
+    }
+
+    public Set<WorkbookParamsYaml.TaskVertex> findDescendants(WorkbookImpl workbook, Long taskId) {
+        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
+        log.debug("Before entering in sync block, findLeafs()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                return workbookGraphService.findDescendants(workbook, taskId);
+            } finally {
+                syncMap.remove(workbook.getId());
+            }
+        }
+    }
+
+    public long getCountUnfinishedTasks(WorkbookImpl workbook) {
+        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
+        log.debug("Before entering in sync block, getCountUnfinishedTasks()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                return workbookGraphService.getCountUnfinishedTasks(workbook);
+            } finally {
+                syncMap.remove(workbook.getId());
+            }
+        }
+    }
+
+    public WorkbookOperationStatusWithTaskList updateGraphWithResettingAllChildrenTasks(WorkbookImpl workbook, Long taskId) {
+        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
+        log.debug("Before entering in sync block, updateGraphWithResettingAllChildrenTasks()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                return workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, taskId);
+            } finally {
+                syncMap.remove(workbook.getId());
+            }
+        }
+    }
+
+    public WorkbookOperationStatusWithTaskList updateTaskExecStates(WorkbookImpl wb, ConcurrentHashMap<Long, Integer> taskStates) {
+        if (taskStates==null || taskStates.isEmpty()) {
+            return new WorkbookOperationStatusWithTaskList(OperationStatusRest.OPERATION_STATUS_OK);
+        }
+        final Object obj = syncMap.computeIfAbsent(wb.getId(), o -> new Object());
+        log.debug("Before entering in sync block, updateTaskExecStates()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                WorkbookImpl workbook = workbookRepository.findByIdForUpdate(wb.id);
+                final WorkbookOperationStatusWithTaskList status = workbookGraphService.updateTaskExecStates(workbook, taskStates);
+                updateTasksStateInDb(status);
+                return status;
+            } finally {
+                syncMap.remove(wb.getId());
+            }
+        }
+    }
+
+    private void updateTasksStateInDb(WorkbookOperationStatusWithTaskList status) {
+        status.childrenTasks.forEach(t -> {
+            TaskImpl task = taskRepository.findById(t.taskId).orElse(null);
+            if (task != null) {
+                if (task.execState != t.execState.value) {
+                    changeTaskState(task.id, t.execState);
+                }
+            } else {
+                log.error("Graph state is compromised, found task in graph but it doesn't exist in db");
+            }
+        });
+    }
+
+    private void changeTaskState(Long taskId, EnumsApi.TaskExecState state){
+        switch (state) {
+            case NONE:
+                taskPersistencer.resetTask(taskId);
+                break;
+            case BROKEN:
+            case ERROR:
+                taskPersistencer.finishTaskAsBrokenOrError(taskId, state);
+                break;
+            case OK:
+                taskPersistencer.toOkSimple(taskId);
+                break;
+            case IN_PROGRESS:
+                taskPersistencer.toInProgressSimple(taskId);
+                break;
+            default:
+                throw new IllegalStateException("Right now it must be initialized somewhere else. state: " + state);
+        }
+    }
+
 
 
 }

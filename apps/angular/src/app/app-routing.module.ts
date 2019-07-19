@@ -1,56 +1,12 @@
 import { NgModule } from '@angular/core';
-import { Routes, RouterModule } from '@angular/router';
+import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
-import { AppComponent } from './app.component';
+// tslint:disable-next-line: max-line-length
+import { AboutComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppViewComponent, AtlasComponent, AtlasInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, ExperimentsComponent, InfoExperimentComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProcessResourcesComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent, AtlasExperimentFeatureProgressComponent } from './components';
 
-import { AppViewComponent } from './views/app-view/app-view.component';
 
-import {
-    NavLaunchpadComponent,
-    LaunchpadComponent,
 
-    AccountsComponent,
-    AddAccountComponent,
-    EditAccountComponent,
-    EditPassAccountComponent,
-
-    PlansComponent,
-    AddPlanComponent,
-    EditPlanComponent,
-
-    WorkbooksComponent,
-    AddWorkbookComponent,
-    EditWorkbookComponent,
-
-    ResourcesComponent,
-    AddResourceComponent,
-
-    SnippetsComponent,
-    AddSnippetComponent,
-
-    StationsComponent,
-    EditStationComponent,
-
-    ExperimentsComponent,
-    AddExperimentComponent,
-    EditExperimentComponent,
-    InfoExperimentComponent,
-    ProgressExperimentComponent,
-
-    BatchComponent,
-
-    AtlasComponent
-} from './views/launchpad';
-
-import {
-    PilotComponent,
-    NavPilotComponent,
-    ProcessResourcesComponent
-} from './views/pilot';
-
-import { AboutComponent } from './views/about/about.component';
-
-export function launchpadRoute(p): any {
+export function launchpadRoute(p: any): any {
     return {
         path: p.path,
         canActivate: [AuthGuard],
@@ -62,7 +18,7 @@ export function launchpadRoute(p): any {
     };
 }
 
-export function pilotRoute(p): any {
+export function pilotRoute(p: any): any {
     return {
         path: p.path,
         canActivate: [AuthGuard],
@@ -118,11 +74,17 @@ const routes: Routes = [
     launchpadRoute({ path: 'launchpad/accounts/edit-password/:id', body: EditPassAccountComponent }),
 
     launchpadRoute({ path: 'launchpad/batch', body: BatchComponent }),
+    launchpadRoute({ path: 'launchpad/batch/:id/status', body: BatchStatusComponent }),
+    launchpadRoute({ path: 'launchpad/batch/add', body: BatchAddComponent }),
 
-    launchpadRoute({ path: 'launchpad/atlas', body: AtlasComponent }),
-    // 
-    // 
-    // 
+
+
+    launchpadRoute({ path: 'launchpad/atlas-experiments', body: AtlasComponent }),
+    launchpadRoute({ path: 'launchpad/atlas-experiment-info/:id', body: AtlasInfoComponent }),
+    launchpadRoute({ path: 'launchpad/atlas-experiment-feature-progress/:atlasId/:experimentId/:featureId', body: AtlasExperimentFeatureProgressComponent }),
+    //
+    //
+    //
     {
         path: 'pilot',
         component: AppViewComponent,
@@ -133,9 +95,9 @@ const routes: Routes = [
         ]
     },
     pilotRoute({ path: 'pilot/process-resources', body: ProcessResourcesComponent }),
-    // 
-    // 
-    // 
+    //
+    //
+    //
     {
         path: 'about',
         component: AppViewComponent,
@@ -144,9 +106,9 @@ const routes: Routes = [
             { path: '', component: AboutComponent, outlet: 'body' }
         ]
     },
-    // 
-    // 
-    // 
+    //
+    //
+    //
     {
         path: '**',
         redirectTo: ''

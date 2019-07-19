@@ -1,21 +1,15 @@
-import {
-    environment
-} from 'environments/environment';
-import jsonToUrlParams from '@app/helpers/jsonToUrlParams'
+import { jsonToUrlParams as toURL } from '@app/helpers/jsonToUrlParams';
+import { environment } from 'environments/environment';
 
-const base = environment.baseUrl + 'launchpad'
+const base: string = environment.baseUrl + 'launchpad';
 
-let urls = {
+export const urls: any = {
     stations: {
-        get: data => `${base}/stations?${jsonToUrlParams(data)}`,
+        get: (data: any): string => `${base}/stations?${toURL(data)}`,
     },
     station: {
-        get: `${base}/station/`,
-        form: `${base}/station-form-commit/`,
-        delete: `${base}/station-delete-commit/`,
-    },
+        get: (id: string | number): string => `${base}/station/${id}`,
+        form: (station: any): string => `${base}/station-form-commit/`,
+        delete: (id: string | number): string => `${base}/station-delete-commit/?id=${id}`
+    }
 };
-
-export {
-    urls
-}

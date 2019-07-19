@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.utils;
 
 import org.apache.http.client.fluent.Request;
+import org.springframework.http.HttpHeaders;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,5 +36,15 @@ public class RestUtils {
         for (Map.Entry<String, String> entry : map.entrySet()) {
             request.addHeader(entry.getKey(), entry.getValue());
         }
+    }
+
+    public static HttpHeaders getHeader(HttpHeaders httpHeaders, long length) {
+        HttpHeaders header = httpHeaders != null ? httpHeaders : new HttpHeaders();
+        header.setContentLength(length);
+        header.setCacheControl("max-age=0");
+        header.setExpires(0);
+        header.setPragma("no-cache");
+
+        return header;
     }
 }

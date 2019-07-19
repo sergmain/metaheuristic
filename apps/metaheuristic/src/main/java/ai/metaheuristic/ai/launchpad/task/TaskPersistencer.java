@@ -55,7 +55,7 @@ public class TaskPersistencer {
                         return null;
                     }
                     task.setParams(taskParams);
-                    taskRepository.saveAndFlush(task);
+                    taskRepository.save(task);
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.error("#307.07 Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
@@ -80,7 +80,7 @@ public class TaskPersistencer {
                     task.setCompleted(true);
                     task.setCompletedOn(System.currentTimeMillis());
                     task.setResultReceived(resultReceived);
-                    taskRepository.saveAndFlush(task);
+                    taskRepository.save(task);
                     return Enums.UploadResourceStatus.OK;
                 } catch (ObjectOptimisticLockingFailureException e) {
                     log.warn("#307.18 Error set resultReceived to {} try #{}, taskId: {}, error: {}", resultReceived, i, taskId, e.toString());
@@ -90,62 +90,36 @@ public class TaskPersistencer {
         return Enums.UploadResourceStatus.PROBLEM_WITH_LOCKING;
     }
 
-    @SuppressWarnings("unused")
-    public Task assignTask(Task task, long stationId) {
-        synchronized (syncObj) {
-            for (int i = 0; i < NUMBER_OF_TRY; i++) {
-                try {
-                    task.setAssignedOn(System.currentTimeMillis());
-                    task.setStationId(stationId);
-                    task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
-                    task.setResultResourceScheduledOn(System.currentTimeMillis());
-
-                    taskRepository.saveAndFlush((TaskImpl) task);
-                } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.21 Error assign task {}, taskId: {}, error: {}", task.toString(), task.getId(), e.toString());
-                }
-            }
-        }
-        return null;
-    }
-
     public Task resetTask(Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
             return null;
         }
+        if (task.execState==EnumsApi.TaskExecState.NONE.value) {
+            return task;
+        }
         return resetTask(task);
     }
 
     public Task resetTask(TaskImpl task) {
+        if (task==null) {
+            log.error("task is null");
+            return null;
+        }
         log.info("Start resetting task #{}", task.getId());
 
-/*
-        // TODO 2019-07-04 do we still need this synchronization?
-        synchronized (syncObj) {
-            for (int i = 0; i < NUMBER_OF_TRY; i++) {
-                try {
-*/
-                    task.setSnippetExecResults(null);
-                    task.setStationId(null);
-                    task.setAssignedOn(null);
-                    task.setCompleted(false);
-                    task.setCompletedOn(null);
-                    task.setMetrics(null);
-                    task.setExecState(EnumsApi.TaskExecState.NONE.value);
-                    task.setResultReceived(false);
-                    task.setResultResourceScheduledOn(0);
-                    taskRepository.save(task);
+        task.setSnippetExecResults(null);
+        task.setStationId(null);
+        task.setAssignedOn(null);
+        task.setCompleted(false);
+        task.setCompletedOn(null);
+        task.setMetrics(null);
+        task.setExecState(EnumsApi.TaskExecState.NONE.value);
+        task.setResultReceived(false);
+        task.setResultResourceScheduledOn(0);
+        taskRepository.save(task);
 
-                    return task;
-/*
-                } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.25 Error while resetting task, try: {}, taskId: {}, error: {}",  i, task.getId(), e.toString());
-                }
-            }
-        }
-        return null;
-*/
+        return task;
     }
 
     @FunctionalInterface
@@ -155,45 +129,72 @@ public class TaskPersistencer {
 
     @SuppressWarnings("UnusedReturnValue")
     public Task storeExecResult(SimpleTaskExecResult result, PostTaskCreationAction action) {
-        synchronized (syncObj) {
-            SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
-            if (!snippetExec.exec.isOk) {
-                log.info("#307.27 Task #{} finished with error, console: {}",
-                        result.taskId,
-                        StringUtils.isNotBlank(snippetExec.exec.console) ? snippetExec.exec.console : "<console output is empty>");
-            }
-            for (int i = 0; i < NUMBER_OF_TRY; i++) {
-                try {
-                    Task t = prepareAndSaveTask(result, snippetExec.allSnippetsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR);
-                    action.execute(t);
-                    return t;
-                } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.29 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
-                }
-            }
+        SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
+        SnippetApiData.SnippetExecResult actualSnippet = snippetExec.generalExec!=null ? snippetExec.generalExec : snippetExec.exec;
+        if (!actualSnippet.isOk) {
+            log.info("#307.27 Task #{} finished with error, snippetCode: {}, console: {}",
+                    result.taskId,
+                    actualSnippet.snippetCode,
+                    StringUtils.isNotBlank(actualSnippet.console) ? actualSnippet.console : "<console output is empty>");
+        }
+        try {
+            Task t = prepareAndSaveTask(result, snippetExec.allSnippetsAreOk() ? EnumsApi.TaskExecState.OK : EnumsApi.TaskExecState.ERROR);
+            action.execute(t);
+            return t;
+        } catch (ObjectOptimisticLockingFailureException e) {
+            log.error("#307.29 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
         }
         return null;
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public void finishTaskAsBroken(Long taskId) {
+    public void finishTaskAsBrokenOrError(Long taskId, EnumsApi.TaskExecState state) {
+        if (state!=EnumsApi.TaskExecState.BROKEN && state!=EnumsApi.TaskExecState.ERROR) {
+            throw new IllegalStateException("#307.30 state must be EnumsApi.TaskExecState.BROKEN or EnumsApi.TaskExecState.ERROR, actual: " +state);
+        }
         synchronized (syncObj) {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
                 log.warn("#307.33 Can't find Task for Id: {}", taskId);
                 return;
             }
-            // fake station Id
-            task.setStationId(-1L);
             task.setExecState(EnumsApi.TaskExecState.BROKEN.value);
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
 
-            task.setSnippetExecResults("Task is broken, cant' process it");
+            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+            SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec();
+            snippetExec.exec = new SnippetApiData.SnippetExecResult(
+                    tpy.taskYaml.snippet.code,false,-999,"Task is broken, cant' process it"
+            );
+            task.setSnippetExecResults(SnippetExecUtils.toString(snippetExec));
             task.setResultReceived(true);
 
             //noinspection UnusedAssignment
-            task = taskRepository.saveAndFlush(task);
+            task = taskRepository.save(task);
+        }
+    }
+
+    public void toOkSimple(Long taskId) {
+        synchronized (syncObj) {
+            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            if (task==null) {
+                log.warn("#307.33 Can't find Task for Id: {}", taskId);
+                return;
+            }
+            task.setExecState(EnumsApi.TaskExecState.OK.value);
+            taskRepository.save(task);
+        }
+    }
+
+    public void toInProgressSimple(Long taskId) {
+        synchronized (syncObj) {
+            TaskImpl task = taskRepository.findById(taskId).orElse(null);
+            if (task==null) {
+                log.warn("#307.34 Can't find Task for Id: {}", taskId);
+                return;
+            }
+            task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
+            taskRepository.save(task);
         }
     }
 
@@ -222,7 +223,7 @@ public class TaskPersistencer {
         task.setSnippetExecResults(result.getResult());
         task.setMetrics(result.getMetrics());
         task.setResultResourceScheduledOn(System.currentTimeMillis());
-        task = taskRepository.saveAndFlush(task);
+        task = taskRepository.save(task);
 
         return task;
     }

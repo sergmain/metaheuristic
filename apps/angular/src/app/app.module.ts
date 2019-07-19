@@ -13,20 +13,11 @@ import { SimpleNotificationsModule } from 'angular2-notifications';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-import { CtColComponent } from './custom-tags/ct-col/ct-col.component';
-import { CtColsComponent } from './custom-tags/ct-cols/ct-cols.component';
-import { CtSectionCaptionComponent } from './custom-tags/ct-section-caption/ct-section-caption.component';
+// tslint:disable-next-line: max-line-length
+import { AboutComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppDialogConfirmationComponent, AppViewComponent, ArchivePlansComponent, AtlasComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, CtColComponent, CtColsComponent, CtSectionCaptionComponent, CtTableComponent, CtWrapBlockComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, EditWorkbookComponent, ExperimentsComponent, FileUploaderComponent, InfoExperimentComponent, LaunchpadComponent, LoginComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProcessResourcesComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent, AtlasInfoComponent, AtlasExperimentFeatureProgressComponent } from './components';
 import { JwtInterceptor } from './jwt.interceptor';
 import { MaterialAppModule } from './ngmaterial.module';
 import { NotificationsInterceptor } from './notifications.interceptor';
-import { AboutComponent } from './views/about/about.component';
-import { AppViewComponent } from './views/app-view/app-view.component';
-import { AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddWorkbookComponent, AddResourceComponent, AddSnippetComponent, EditAccountComponent, EditExperimentComponent, EditPlanComponent, EditWorkbookComponent, EditPassAccountComponent, EditStationComponent, ExperimentsComponent, PlansComponent, InfoExperimentComponent, WorkbooksComponent, LaunchpadComponent, NavLaunchpadComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, ArchivePlansComponent, AtlasComponent, BatchComponent } from './views/launchpad';
-import { LoginComponent } from './views/login/login.component';
-import { AppDialogConfirmationComponent } from './views/app-dialog-confirmation/app-dialog-confirmation.component';
-import { NavPilotComponent, PilotComponent, ProcessResourcesComponent } from './views/pilot';
-import { CtTableComponent } from './custom-tags/ct-table/ct-table.component';
-import { CtWrapBlockComponent } from './custom-tags/ct-wrap-block/ct-wrap-block.component';
 
 @NgModule({
     declarations: [
@@ -74,17 +65,23 @@ import { CtWrapBlockComponent } from './custom-tags/ct-wrap-block/ct-wrap-block.
         LoginComponent,
         //
         AtlasComponent,
+        // TODO rename AtlasInfoComponent
+        AtlasInfoComponent,
+        AtlasExperimentFeatureProgressComponent,
         //
         BatchComponent,
+        BatchStatusComponent,
+        BatchAddComponent,
         //
         AppDialogConfirmationComponent,
+        FileUploaderComponent,
+
         // custom-tags
         CtColsComponent,
         CtSectionCaptionComponent,
         CtColComponent,
         CtTableComponent,
         CtWrapBlockComponent,
-
     ],
     imports: [
         CommonModule,

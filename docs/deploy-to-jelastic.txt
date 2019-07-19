@@ -7,7 +7,7 @@ return 301 https://$host$request_uri;
 
 
 Application server =====
-- SpringBoot, jdk - zulujdk-11.0.3,
+- SpringBoot, jdk - OpenJDK 11.0.2
   min 2, max 4 cloudlets, Horizontal scaling - 1 node, statefull
   Variables:
   JDBC_DATABASE_PASSWORD = <pass-for-db>
@@ -21,6 +21,7 @@ Application server =====
   MH_IS_SSL_REQUIRED = true
   MH_DEFAULT_RESULT_FILE_EXTENSION = <desired-default-extension>
   MH_BRANDING = <desired-branding-name>
+  MH_LAUNCHPAD_DIR = target/launchpad
 
 
 SQL DB =================
@@ -36,7 +37,7 @@ SQL DB =================
 
 
 Build node =============
-- Maven 3.6.1, jdk - zulujdk-11.0.3,
+- Maven 3.6.1, jdk - OpenJDK 11.0.2
   min 1, max 4 cloudlets
   variables:
   MAVEN_DEPLOY_ARTIFACT = metaheuristic.jar

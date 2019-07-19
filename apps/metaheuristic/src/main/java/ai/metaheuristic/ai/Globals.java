@@ -229,7 +229,7 @@ public class Globals {
         }
 
         if (isLaunchpadEnabled && launchpadDir==null) {
-            launchpadDir = new File("./target/mh-launchpad");
+            launchpadDir = new File("target/mh-launchpad");
             log.warn("Launchpad is enabled, but launchpadDir in null. " +
                     "Will be used a default value as: {}", launchpadDir.getAbsolutePath());
         }
@@ -332,23 +332,23 @@ public class Globals {
 
     private void logGlobals() {
         log.info("Current globals:");
-        log.info("\tthreadNumber: {}", threadNumber);
-        log.info("\tbranding: {}", branding);
-        log.info("\tisUnitTesting: {}", isUnitTesting);
-        log.info("\tisSecurityEnabled: {}", isSecurityEnabled);
-        log.info("\tisSslRequired: {}", isSslRequired);
-        log.info("\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
-        log.info("\tlaunchpadDir: {}", launchpadDir);
-        log.info("\tchunkSize: {}", chunkSize);
-        log.info("\tresourceRowsLimit: {}", resourceRowsLimit);
-        log.info("\texperimentRowsLimit: {}", experimentRowsLimit);
-        log.info("\tplanRowsLimit: {}", planRowsLimit);
-        log.info("\tworkbookRowsLimit: {}", workbookRowsLimit);
-        log.info("\tstationRowsLimit: {}", stationRowsLimit);
-        log.info("\taccountRowsLimit: {}", accountRowsLimit);
-        log.info("\tisReplaceSnapshot: {}", isReplaceSnapshot);
-        log.info("\tisStationEnabled: {}", isStationEnabled);
-        log.info("\tstationDir: {}", stationDir);
+        log.info("'\tthreadNumber: {}", threadNumber);
+        log.info("'\tbranding: {}", branding);
+        log.info("'\tisUnitTesting: {}", isUnitTesting);
+        log.info("'\tisSecurityEnabled: {}", isSecurityEnabled);
+        log.info("'\tisSslRequired: {}", isSslRequired);
+        log.info("'\tisLaunchpadEnabled: {}", isLaunchpadEnabled);
+        log.info("'\tlaunchpadDir: {}", launchpadDir.getAbsolutePath());
+        log.info("'\tchunkSize: {}", chunkSize);
+        log.info("'\tresourceRowsLimit: {}", resourceRowsLimit);
+        log.info("'\texperimentRowsLimit: {}", experimentRowsLimit);
+        log.info("'\tplanRowsLimit: {}", planRowsLimit);
+        log.info("'\tworkbookRowsLimit: {}", workbookRowsLimit);
+        log.info("'\tstationRowsLimit: {}", stationRowsLimit);
+        log.info("'\taccountRowsLimit: {}", accountRowsLimit);
+        log.info("'\tisReplaceSnapshot: {}", isReplaceSnapshot);
+        log.info("'\tisStationEnabled: {}", isStationEnabled);
+        log.info("'\tstationDir: {}", stationDir);
     }
 
     private static final Random r = new Random();

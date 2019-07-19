@@ -16,20 +16,37 @@
 
 package ai.metaheuristic.ai.launchpad.atlas;
 
+import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
+import ai.metaheuristic.ai.launchpad.beans.Atlas;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
+import ai.metaheuristic.commons.utils.DirUtils;
+import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 @SuppressWarnings("Duplicates")
@@ -41,6 +58,7 @@ import java.util.ArrayList;
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class AtlasController {
 
+    public static final String REDIRECT_LAUNCHPAD_ATLAS_ATLAS_EXPERIMENTS = "redirect:/launchpad/atlas/atlas-experiments";
     private final AtlasService atlasService;
     private final AtlasTopLevelService atlasTopLevelService;
 
@@ -103,9 +121,30 @@ public class AtlasController {
         if (status.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
         }
-        return "redirect:/launchpad/atlas/atlas-experiments";
+        return REDIRECT_LAUNCHPAD_ATLAS_ATLAS_EXPERIMENTS;
     }
 
+    @GetMapping(value= "/atlas-experiment-export/atlas-{atlasId}.yaml", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<AbstractResource> downloadProcessingResult(@PathVariable("atlasId") Long atlasId) {
+        //noinspection UnnecessaryLocalVariable
+        ResponseEntity<AbstractResource> res = atlasTopLevelService.exportAtlas(atlasId);
+        return res;
+    }
+
+    @PostMapping(value = "/atlas-experiment-upload-from-file")
+    public String uploadSnippet(final MultipartFile file, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = atlasTopLevelService.uploadExperiment(file);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+        }
+        return REDIRECT_LAUNCHPAD_ATLAS_ATLAS_EXPERIMENTS;
+    }
+
+    @GetMapping(value= "/atlas-experiment-export-import/{atlasId}")
+    public String selectExportImport(Model model, @PathVariable("atlasId") Long atlasId) {
+        model.addAttribute("atlasId", atlasId);
+        return "launchpad/atlas/atlas-experiment-export-import";
+    }
 
     @GetMapping(value = "/atlas-experiment-feature-progress/{atlasId}/{experimentId}/{featureId}")
     public String getFeatures(

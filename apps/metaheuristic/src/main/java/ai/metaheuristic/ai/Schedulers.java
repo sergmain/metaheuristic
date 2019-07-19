@@ -58,7 +58,7 @@ public class Schedulers {
         /**
          * update status of all workbooks which are in 'started' state. Also, if workbook is finished, atlas will be produced
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-workbook'), 5, 40, 5)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('aiai.launchpad.timeout.process-workbook'), 1, 40, 2)*1000 }")
         public void updateWorkbookStatuses() {
             if (globals.isUnitTesting) {
                 return;
@@ -72,7 +72,7 @@ public class Schedulers {
                 if ((System.currentTimeMillis()- prevReconsilationTime)>TIMEOUT_BETWEEN_RECONCILIATION) {
                     needReconciliation = true;
                 }
-                launchpadService.getWorkbookService().updateWorkbookStatuses(needReconciliation);
+                launchpadService.getWorkbookSchedulerService().updateWorkbookStatuses(needReconciliation);
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("!!! need to investigate. Error while updateWorkbookStatuses()",e);
             }
@@ -189,7 +189,7 @@ public class Schedulers {
         /**
          * this scheduler is being run at the station side
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('ai.metaheuristic.station.timeout.request-launchpad'), 3, 20, 10)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('ai.metaheuristic.station.timeout.request-launchpad'), 3, 20, 3)*1000 }")
         public void launchRequester() {
             if (globals.isUnitTesting) {
                 return;

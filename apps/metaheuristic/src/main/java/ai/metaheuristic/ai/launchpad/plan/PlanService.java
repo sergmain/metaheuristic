@@ -489,11 +489,9 @@ public class PlanService {
 
         PlanApiData.TaskProducingResultComplex result = new PlanApiData.TaskProducingResultComplex();
         if (isPersist) {
-            result.workbook = workbookService.toProduced(workbookId);
+            workbookService.toProduced(workbookId);
         }
-        else {
-            result.workbook = workbookCache.findById(workbookId);
-        }
+        result.workbook = workbookCache.findById(workbookId);
         result.planYaml = planParams.planYaml;
         result.numberOfTasks += numberOfTasks;
         result.planValidateStatus = EnumsApi.PlanValidateStatus.OK;

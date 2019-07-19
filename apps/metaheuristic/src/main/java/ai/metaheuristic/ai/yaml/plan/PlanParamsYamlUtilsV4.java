@@ -76,7 +76,6 @@ public class PlanParamsYamlUtilsV4
             pr.outputParams.storageType = o.outputType;
             return pr;
         }).collect(Collectors.toList());
-//        final String dateAsStr = DateTimeFormatter.BASIC_ISO_DATE.format(LocalDate.now());
         LocalDate date = LocalDate.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyMMdd");
         String dateAsStr = date.format(formatter);

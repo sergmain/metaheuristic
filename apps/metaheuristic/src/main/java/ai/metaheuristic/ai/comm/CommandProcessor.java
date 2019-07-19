@@ -109,7 +109,8 @@ public class CommandProcessor {
         return new Command[]{new Protocol.ResendTaskOutputResource(ids)};
     }
 
-    private Command[] resendTaskOutputResource(Protocol.ResendTaskOutputResource command) {
+    // processing on station side
+    public Command[] resendTaskOutputResource(Protocol.ResendTaskOutputResource command) {
         if (command.taskIds==null) {
             return Protocol.NOP_ARRAY;
         }
@@ -123,6 +124,9 @@ public class CommandProcessor {
 
     // processing on launchpad side
     private Command[] processResendTaskOutputResourceResult(Protocol.ResendTaskOutputResourceResult command) {
+        if (command.statuses==null) {
+            return Protocol.NOP_ARRAY;
+        }
         for (Protocol.ResendTaskOutputResourceResult.SimpleStatus status : command.statuses) {
             launchpadService.getTaskService().processResendTaskOutputResourceResult(command.getStationId(), status.status, status.taskId);
         }

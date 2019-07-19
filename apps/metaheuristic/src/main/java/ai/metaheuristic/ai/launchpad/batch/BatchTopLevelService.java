@@ -160,6 +160,9 @@ public class BatchTopLevelService {
         if (tempFilename == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.040 name of uploaded file is null");
         }
+        if (tempFilename.isBlank()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.042 name of uploaded file is null");
+        }
         final String originFilename = tempFilename.toLowerCase();
         PlanImpl plan = planCache.findById(planId);
         if (plan == null) {
@@ -398,6 +401,7 @@ public class BatchTopLevelService {
 
         PlanApiData.TaskProducingResultComplex countTasks = planService.produceTasks(false, plan, producingResult.workbook.getId());
         if (countTasks.planProducingStatus != EnumsApi.PlanProducingStatus.OK) {
+            workbookService.changeValidStatus(bw.workbookId, false);
             throw new BatchResourceProcessingException("#995.220 validation of plan was failed, status: " + countTasks.planValidateStatus);
         }
 
