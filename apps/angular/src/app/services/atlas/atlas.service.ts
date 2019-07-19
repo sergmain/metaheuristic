@@ -5,7 +5,6 @@ import { Observable } from 'rxjs';
 
 export * from './response';
 
-
 @Injectable({ providedIn: 'root' })
 export class AtlasService {
 

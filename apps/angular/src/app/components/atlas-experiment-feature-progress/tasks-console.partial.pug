@@ -4,29 +4,27 @@ ct-cols
         .simple-table.tasks
             table(mat-table [dataSource]="tables.tasks.table") 
                 ng-container(matColumnDef="id") 
-                    td(mat-cell *matCellDef="let el") {{el.task.id}}
+                    td(mat-cell *matCellDef="let el") {{el.taskId}}
                 ng-container(matColumnDef="col1") 
                     td(mat-cell *matCellDef="let el") 
                         table
                             tr
                                 td type: 
-                                td 
-                                    span(*ngIf="el.type == 1") FIT
-                                    span(*ngIf="el.type == 2") PREDICT
+                                td: span(style="text-transform: uppercase;") {{el.typeAsString}}
                             tr
                                 td completed: 
                                 td
-                                    span.completed('[class.completed--on]'="el.task.isCompleted") {{el.task.isCompleted}} 
+                                    span.completed('[class.completed--on]'="el.completed") {{el.completed}} 
                             tr
                                 td assigned: 
                                 td 
-                                    span(*ngIf="el.task.assignedOn == null") null
-                                    span {{el.task.assignedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
+                                    span(*ngIf="el.assignedOn == null") null
+                                    span {{el.assignedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
                             tr
                                 td completed: 
                                 td 
-                                    span(*ngIf="el.task.completedOn == null") null
-                                    span {{el.task.completedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
+                                    span(*ngIf="el.completedOn == null") null
+                                    span {{el.completedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
                 ng-container(matColumnDef="col2") 
                     td(mat-cell *matCellDef="let el") 
                         .flex.flex--fd_c.flex--ai_s
