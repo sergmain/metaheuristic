@@ -1,15 +1,14 @@
 import { Location } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatTableDataSource, MatButton } from '@angular/material';
-import { CtTableComponent } from '@app/components/ct-table/ct-table.component';
+import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
+import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
+import { CtTableComponent } from '@app/components/ct-table/ct-table.component';
 import { LoadStates } from '@app/enums/LoadStates';
-import { ExperimentInfoResponse } from '@app/models';
+import { Experiment, ExperimentInfoResponse, DefaultResponse } from '@app/models';
 import { AtlasService } from '@app/services/atlas/atlas.service';
-import { ExperimentsService, experiments, ExperimentItem } from '@app/services/experiments/experiments.service';
-import { Experiment } from '@app/models';
+import { ExperimentItem, experiments } from '@app/services/experiments/experiments.service';
 import { Subscription } from 'rxjs';
-
 
 @Component({
     selector: 'atlas',
@@ -26,7 +25,7 @@ export class AtlasComponent implements OnInit {
 
     dataSource = new MatTableDataSource < ExperimentItem > ([]);
 
-    deletedExperiments: ExperimentItem[] = [];
+    deletedExperiments: Experiment[] = [];
 
 
     @ViewChild('nextTable') nextTable: MatButton;
@@ -54,7 +53,8 @@ export class AtlasComponent implements OnInit {
     constructor(
         private route: ActivatedRoute,
         private atlasService: AtlasService,
-        private location: Location
+        private location: Location,
+        private dialog: MatDialog
     ) {}
 
     ngOnInit() {
@@ -81,6 +81,23 @@ export class AtlasComponent implements OnInit {
             );
     }
 
+    @ConfirmationDialogMethod({
+        question: (experiment: Experiment): string =>
+            `Do you want to delete Experiment\xa0#${experiment.id}`,
+        rejectTitle: 'Cancel',
+        resolveTitle: 'Delete'
+    })
+    delete(experiment: Experiment) {
+        this.deletedExperiments.push(experiment);
+        const subscribe: Subscription = this.atlasService.experiment
+            .deleteCommit({ id: experiment.id })
+            .subscribe(
+                (response: DefaultResponse) => {},
+                () => {},
+                () => subscribe.unsubscribe()
+            );
+    }
+
     next() {
         this.prevTable.disabled = true;
         this.nextTable.disabled = true;
@@ -94,20 +111,4 @@ export class AtlasComponent implements OnInit {
         this.updateTable(this.response.items.number - 1);
         this.table.wait();
     }
-
-    // load() {
-    //     const id = this.route.snapshot.paramMap.get('experimentId');
-    //     const subscribe = this.atlasService.experiments.get()
-    //         .subscribe(
-    //             (response: ExperimentInfoResponse.Response) => {
-    //                 this.experiment = response.experiment;
-    //                 this.experimentInfo = response.experimentInfo;
-    //                 this.tables.generalInfo.table = Object.keys(this.experiment).map(key => [key, this.experiment[key]]);
-    //                 this.tables.hyperParameters.table = new MatTableDataSource(this.experiment.hyperParams);
-    //                 this.tables.features.table = new MatTableDataSource(this.experimentInfo.features);
-    //             },
-    //             () => {},
-    //             () => subscribe.unsubscribe()
-    //         );
-    // }
 }

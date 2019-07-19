@@ -4,7 +4,7 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 export interface DialogData {
     resolveTitle: string;
     rejectTitle: string;
-    question ?(...data: any[]) : string; 
+    question ? (...data: any[]) : string;
 }
 
 @Component({
@@ -47,6 +47,17 @@ export function ConfirmationDialogMethod(dialogData: DialogData) {
     ): PropertyDescriptor {
         const method: any = propertyDesciptor.value;
         propertyDesciptor.value = function(...args: any[]) {
+            if (!this.dialog) {
+                throw new Error(`
+
+require MatDialog
+constructor(
+    ...
+    private dialog: MatDialog
+    ...
+) {}
+                `);
+            }
             const dialogRef: MatDialogRef < any > = this.dialog.open(AppDialogConfirmationComponent, {
                 width: '300px',
                 data: {

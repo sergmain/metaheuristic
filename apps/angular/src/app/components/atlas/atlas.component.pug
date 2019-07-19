@@ -35,9 +35,8 @@
                     th(mat-header-cell *matHeaderCellDef) 
                     td(mat-cell *matCellDef="let el") 
                         .buttons.buttons--right
-                            a('[routerLink]'="['/launchpad/atlas-experiment-info',el.id]")
-                                button(mat-flat-button color="primary") Detail
-                            button(mat-flat-button color="warn" '(click)'="delete(el)" ) <mat-icon>delete</mat-icon> 
+                            a('[routerLink]'="['/launchpad/atlas-experiment-info',el.id]"): button(mat-flat-button color="primary") Detail
+                            button(mat-flat-button color="warn" '(click)'="delete(el)" ): mat-icon delete
                 tr(mat-header-row *matHeaderRowDef="columnsToDisplay")
                 tr(mat-row *matRowDef="let row; columns: columnsToDisplay;"
                     '[class.deleted-table-row]'="deletedExperiments.includes(row)")
@@ -47,6 +46,6 @@
     .section__footer
         .flex.flex--jc_sb
             .buttons.buttons--left 
-                button(mat-flat-button #prevTable disabled '(click)'='prev()') <mat-icon>arrow_back_ios</mat-icon>
-                button(mat-flat-button #nextTable disabled '(click)'='next()') <mat-icon>arrow_forward_ios</mat-icon>
+                button(mat-flat-button #prevTable disabled '(click)'='prev()'): mat-icon arrow_back_ios
+                button(mat-flat-button #nextTable disabled '(click)'='next()'): mat-icon arrow_forward_ios
             .buttons.buttons--right
