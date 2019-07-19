@@ -39,3 +39,5 @@ export * from './resources/resources.component';
 export * from './snippets/snippets.component';
 export * from './stations/stations.component';
 export * from './workbooks/workbooks.component';
+export * from './atlas-info/atlas-info.component';
+export * from './atlas-experiment-feature-progress/atlas-experiment-feature-progress.component';

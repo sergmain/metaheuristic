@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
 // tslint:disable-next-line: max-line-length
-import { AboutComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppViewComponent, AtlasComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, ExperimentsComponent, InfoExperimentComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProcessResourcesComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './components';
+import { AboutComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppViewComponent, AtlasComponent, AtlasInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, ExperimentsComponent, InfoExperimentComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProcessResourcesComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent, AtlasExperimentFeatureProgressComponent } from './components';
 
 
 
@@ -79,7 +79,9 @@ const routes: Routes = [
 
 
 
-    launchpadRoute({ path: 'launchpad/atlas', body: AtlasComponent }),
+    launchpadRoute({ path: 'launchpad/atlas-experiments', body: AtlasComponent }),
+    launchpadRoute({ path: 'launchpad/atlas-experiment-info/:id', body: AtlasInfoComponent }),
+    launchpadRoute({ path: 'launchpad/atlas-experiment-feature-progress/:atlasId/:experimentId/:featureId', body: AtlasExperimentFeatureProgressComponent }),
     //
     //
     //

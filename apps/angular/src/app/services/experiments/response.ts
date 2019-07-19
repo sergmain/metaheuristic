@@ -1,6 +1,9 @@
-import { DefaultResponse } from '@app/models/DefaultResponse';
-import { DefaultListOfItems } from '@app/models/DefaultListOfItems';
-import { Snippet } from '@app/models';
+import {
+    Snippet,
+    Experiment,
+    DefaultResponse,
+    DefaultListOfItems
+} from '@app/models';
 
 export interface ListOfItems extends DefaultListOfItems {
     content: ExperimentItem[];
@@ -8,22 +11,6 @@ export interface ListOfItems extends DefaultListOfItems {
 
 export interface ExperimentItem extends DefaultResponse {
     experiment: Experiment;
-}
-
-export interface Experiment {
-    id: number;
-    version: number;
-    workbookId: number;
-    name: string;
-    description: string;
-    code: string;
-    seed: number;
-    createdOn: number;
-    numberOfTask: number;
-    hyperParams ? : (any)[] | null;
-    featureProduced: boolean;
-    allTaskProduced: boolean;
-    hyperParamsAsMap: any;
 }
 
 export interface SimpleExperiment {

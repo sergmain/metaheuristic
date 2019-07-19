@@ -1,9 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator, MatTableDataSource } from '@angular/material';
-import { ExperimentsService } from '@app/services/experiments/experiments.service'
-import { Location } from '@angular/common'
-import { ActivatedRoute } from '@angular/router'
-import { state } from '@app/helpers/state'
+import { ExperimentsService } from '@app/services/experiments/experiments.service';
+import { Location } from '@angular/common';
+import { ActivatedRoute } from '@angular/router';
+import { state } from '@app/helpers/state';
 import { ExperimentInfoResponse } from '@app/models';
 
 @Component({
@@ -14,7 +14,7 @@ import { ExperimentInfoResponse } from '@app/models';
 
 export class InfoExperimentComponent implements OnInit {
     state = state;
-    currentState = this.state.loading;    
+    currentState = this.state.loading;
     experiment: ExperimentInfoResponse.Experiment;
     experimentInfo: ExperimentInfoResponse.ExperimentInfo;
 
@@ -31,7 +31,7 @@ export class InfoExperimentComponent implements OnInit {
             table: new MatTableDataSource([]),
             columnsToDisplay: ['id', 'resourceCodes', 'execStatus', 'maxValue', 'bts'],
         },
-    }
+    };
 
     columnsToDisplay = ['id', 'name', 'createdOn', 'bts'];
 
@@ -42,19 +42,19 @@ export class InfoExperimentComponent implements OnInit {
     ) {}
 
     ngOnInit() {
-        this.load()
+        this.load();
     }
 
     load() {
         const id = this.route.snapshot.paramMap.get('experimentId');
         let subscribe =  this.experimentsService.experiment.info(id)
-            .subscribe((response:ExperimentInfoResponse.Response) => {
-                this.experiment = response.experiment 
-                this.experimentInfo = response.experimentInfo 
-                this.tables.generalInfo.table = Object.keys(this.experiment).map(key => [key, this.experiment[key]])
-                this.tables.hyperParameters.table = new MatTableDataSource(this.experiment.hyperParams)
-                this.tables.features.table = new MatTableDataSource(this.experimentInfo.features)
-                subscribe.unsubscribe()
-            })
+            .subscribe((response: ExperimentInfoResponse.Response) => {
+                this.experiment = response.experiment;
+                this.experimentInfo = response.experimentInfo;
+                this.tables.generalInfo.table = Object.keys(this.experiment).map(key => [key, this.experiment[key]]);
+                this.tables.hyperParameters.table = new MatTableDataSource(this.experiment.hyperParams);
+                this.tables.features.table = new MatTableDataSource(this.experimentInfo.features);
+                subscribe.unsubscribe();
+            });
     }
 }

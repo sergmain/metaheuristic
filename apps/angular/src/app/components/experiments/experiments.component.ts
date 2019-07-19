@@ -3,7 +3,8 @@ import { MatButton, MatTableDataSource, MatDialog } from '@angular/material';
 import { CtTableComponent } from '@app/components/ct-table/ct-table.component';
 import { LoadStates } from '@app/enums/LoadStates';
 import { DefaultResponse } from '@app/models';
-import { ExperimentsService, Experiment, experiments, ExperimentItem } from '@app/services/experiments/experiments.service';
+import { ExperimentsService, experiments, ExperimentItem } from '@app/services/experiments/experiments.service';
+import { Experiment } from '@app/models';
 import { Subscription } from 'rxjs';
 import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
 

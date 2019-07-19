@@ -14,7 +14,7 @@ import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 // tslint:disable-next-line: max-line-length
-import { AboutComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppDialogConfirmationComponent, AppViewComponent, ArchivePlansComponent, AtlasComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, CtColComponent, CtColsComponent, CtSectionCaptionComponent, CtTableComponent, CtWrapBlockComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, EditWorkbookComponent, ExperimentsComponent, FileUploaderComponent, InfoExperimentComponent, LaunchpadComponent, LoginComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProcessResourcesComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './components';
+import { AboutComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppDialogConfirmationComponent, AppViewComponent, ArchivePlansComponent, AtlasComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, CtColComponent, CtColsComponent, CtSectionCaptionComponent, CtTableComponent, CtWrapBlockComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, EditWorkbookComponent, ExperimentsComponent, FileUploaderComponent, InfoExperimentComponent, LaunchpadComponent, LoginComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProcessResourcesComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent, AtlasInfoComponent,AtlasExperimentFeatureProgressComponent } from './components';
 import { JwtInterceptor } from './jwt.interceptor';
 import { MaterialAppModule } from './ngmaterial.module';
 import { NotificationsInterceptor } from './notifications.interceptor';
@@ -65,6 +65,9 @@ import { NotificationsInterceptor } from './notifications.interceptor';
         LoginComponent,
         //
         AtlasComponent,
+        // TODO rename AtlasInfoComponent
+        AtlasInfoComponent,
+        AtlasExperimentFeatureProgressComponent,
         //
         BatchComponent,
         BatchStatusComponent,

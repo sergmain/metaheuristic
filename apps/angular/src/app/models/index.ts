@@ -1,6 +1,7 @@
 // response
 export * from './DefaultResponse';
 export * from './DefaultItemsResponse';
+export * from './DefaultListOfItems';
 
 export * from './ExperimentsResponse';
 export * from './ExperimentInfoResponse';
@@ -31,12 +32,6 @@ export * from './PlanResponse';
 export * from './Plan';
 export * from './Workbook';
 export * from './Snippet';
-
-
-
-
-
-
-
-
-
+export * from './Experiment';
+export * from './ExperimentInfo';
+export * from './Atlas';
