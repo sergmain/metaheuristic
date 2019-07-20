@@ -268,12 +268,14 @@ public class ExperimentController {
                     "#285.260 experiment wasn't found, experimentId: " + id);
             return REDIRECT_LAUNCHPAD_EXPERIMENTS;
         }
-        Workbook wb = workbookCache.findById(experiment.workbookId);
-        if (wb!=null) {
-            OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(experiment.workbookId);
-            if (operationStatusRest.isErrorMessages()) {
-                redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
-                return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+        if (experiment.workbookId!=null) {
+            Workbook wb = workbookCache.findById(experiment.workbookId);
+            if (wb != null) {
+                OperationStatusRest operationStatusRest = planTopLevelService.deleteWorkbookById(experiment.workbookId);
+                if (operationStatusRest.isErrorMessages()) {
+                    redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+                    return REDIRECT_LAUNCHPAD_EXPERIMENTS;
+                }
             }
         }
         OperationStatusRest status = experimentTopLevelService.experimentDeleteCommit(id);

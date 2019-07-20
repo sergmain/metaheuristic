@@ -22,8 +22,8 @@ import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV1;
 
 public class PlanUtils {
 
-    public static String getResourceCode(long planId, long workbookId, String processCode, String snippetName, int processOrder, int snippetIdx) {
-        return String.format("%d-%d-%d-%s-%s-%d", planId, workbookId, processOrder, snippetName, processCode, snippetIdx);
+    public static String getResourceCode(Long workbookId, String processCode, String snippetName, int processOrder, int snippetIdx) {
+        return String.format("%d-%d-%s-%s-%d", workbookId, processOrder, snippetName, processCode, snippetIdx);
     }
 
     public static WorkbookParamsYaml parseToWorkbookParamsYaml(String inputResourceParams) {
