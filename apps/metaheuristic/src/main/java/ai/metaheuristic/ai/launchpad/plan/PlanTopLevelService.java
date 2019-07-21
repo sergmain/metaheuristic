@@ -126,10 +126,10 @@ public class PlanTopLevelService implements ApplicationEventPublisherAware {
             return new PlanApiData.WorkbookResult("#560.077 plan producing was failed, status: " + countTasks.planProducingStatus);
         }
 
-        if (globals.maxTasksPerPlan < countTasks.numberOfTasks) {
+        if (globals.maxTasksPerWorkbook < countTasks.numberOfTasks) {
             workbookService.changeValidStatus(producingResult.workbook.getId(), false);
             return new PlanApiData.WorkbookResult("#560.081 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
-                    "Allowed maximum number of tasks: " + globals.maxTasksPerPlan + ", tasks in this workbook:  " + countTasks.numberOfTasks);
+                    "Allowed maximum number of tasks: " + globals.maxTasksPerWorkbook + ", tasks in this workbook:  " + countTasks.numberOfTasks);
         }
 
         PlanApiData.WorkbookResult result = new PlanApiData.WorkbookResult(plan);

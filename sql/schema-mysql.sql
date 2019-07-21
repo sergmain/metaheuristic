@@ -70,6 +70,9 @@ CREATE INDEX mh_data_data_type_idx
 CREATE INDEX mh_data_ref_id_ref_type_idx
   ON mh_data (REF_ID, REF_TYPE);
 
+CREATE INDEX mh_data_ref_type_idx
+  ON mh_data (REF_TYPE);
+
 CREATE INDEX mh_data_pool_code_id_idx
     ON mh_data (POOL_CODE);
 

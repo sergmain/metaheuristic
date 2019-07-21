@@ -16,6 +16,7 @@
 package ai.metaheuristic.ai;
 
 import ai.metaheuristic.commons.utils.SecUtils;
+import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +39,7 @@ import java.util.Random;
 @Component
 @Slf4j
 @ToString
+@RequiredArgsConstructor
 public class Globals {
 
     private final Environment env;
@@ -91,8 +93,8 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.launchpad.dir' )) }")
     public File launchpadDir;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.max-tasks-per-plan'), 1, 10000, 2000) }")
-    public int maxTasksPerPlan;
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.max-tasks-per-workbook'), 1, 100000, 5000) }")
+    public int maxTasksPerWorkbook;
 
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('mh.launchpad.resource-table-rows-limit'), 5, 100, 20) }")
     public int resourceRowsLimit;
@@ -145,10 +147,6 @@ public class Globals {
     public PublicKey launchpadPublicKey = null;
 
     public Long chunkSize = null;
-
-    public Globals(Environment env) {
-        this.env = env;
-    }
 
     @PostConstruct
     public void init() {
@@ -351,6 +349,7 @@ public class Globals {
         log.info("'\tstationDir: {}", stationDir);
     }
 
+    // TODO 2019-07-20 should method createTempFileForLaunchpad() be moved to other class/package?
     private static final Random r = new Random();
     public File createTempFileForLaunchpad(String prefix) {
         if (StringUtils.isBlank(prefix)) {

@@ -591,9 +591,9 @@ public class ExperimentService {
         // feature has real value only when isPersist==true
         int totalVariants = features.size() * calcTotalVariants * 2;
 
-        if (totalVariants > globals.maxTasksPerPlan) {
+        if (totalVariants > globals.maxTasksPerWorkbook) {
             log.error("#179.200 number of tasks for this workbook exceeded the allowed maximum number. Workbook was created but its status is 'not valid'. " +
-                                "Allowed maximum number of tasks: " + globals.maxTasksPerPlan+", tasks in this workbook:  " + calcTotalVariants);
+                                "Allowed maximum number of tasks per workbook: " + globals.maxTasksPerWorkbook +", tasks in this workbook: " + totalVariants);
             return TOO_MANY_TASKS_PER_PLAN_ERROR;
         }
         final List<HyperParams> allHyperParams = ExperimentUtils.getAllHyperParams(map);
