@@ -1,4 +1,4 @@
-import { environment } from 'environments/environment';
+import { environment } from '@src/environments/environment';
 import { jsonToUrlParams as toURL } from '@app/helpers/jsonToUrlParams';
 
 const base: string = environment.baseUrl + 'launchpad/batch';

@@ -28,9 +28,7 @@
                             "src/assets"
                         ],
                         "styles": [
-                            "node_modules/normalize.css/normalize.css",
-                            "src/styles.scss",
-                            "src/styles-theme.scss"
+                            "src/styles.scss"
                         ],
                         "scripts": [],
                         "es5BrowserSupport": true

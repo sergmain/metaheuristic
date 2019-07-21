@@ -2,7 +2,7 @@ import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
 // tslint:disable-next-line: max-line-length
-import { AboutComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppViewComponent, AtlasComponent, AtlasInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, ExperimentsComponent, InfoExperimentComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProcessResourcesComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent, AtlasExperimentFeatureProgressComponent } from './components';
+import { AboutComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppViewComponent, AtlasComponent, AtlasExperimentFeatureProgressComponent, AtlasInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, ExperimentsComponent, InfoExperimentComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProcessResourcesComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './components';
 
 
 
@@ -110,14 +110,25 @@ const routes: Routes = [
     //
     //
     {
-        path: '**',
-        redirectTo: ''
+        path: 'testview',
+        loadChildren: './components/testview/testview.module#TestViewModule'
+    },
+    //
+    //
+    //
+    {
+        path: '',
+        redirectTo: '',
+        pathMatch: 'full'
     }
 ];
 
 @NgModule({
-    imports: [RouterModule.forRoot(routes)],
-    exports: [RouterModule]
+    imports: [
+        RouterModule.forRoot(routes)
+    ],
+    exports: [RouterModule],
+    providers: []
 })
 
 export class AppRoutingModule {}

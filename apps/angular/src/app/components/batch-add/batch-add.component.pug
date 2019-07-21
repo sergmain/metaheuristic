@@ -7,6 +7,8 @@
         ct-cols(align-items="baseline" '*ngIf'="currentStates.has(states.show)")
             ct-col(size='6')
                 .section__content
+                    file-uploader
+                .section__content
                     mat-form-field
                         mat-label list of Plans
                         mat-select([(ngModel)]="currentPlan")

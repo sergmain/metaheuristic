@@ -1,5 +1,5 @@
 import { jsonToUrlParams as toURL } from '@app/helpers/jsonToUrlParams';
-import { environment } from 'environments/environment';
+import { environment } from '@src/environments/environment';
 
 const base: string = environment.baseUrl + 'launchpad/plan';
 

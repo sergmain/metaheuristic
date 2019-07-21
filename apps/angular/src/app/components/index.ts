@@ -9,6 +9,8 @@ export * from './add-workbook/add-workbook.component';
 export * from './app-dialog-confirmation/app-dialog-confirmation.component';
 export * from './app-view/app-view.component';
 export * from './archive-plans/archive-plans.component';
+export * from './atlas-experiment-feature-progress/atlas-experiment-feature-progress.component';
+export * from './atlas-info/atlas-info.component';
 export * from './atlas/atlas.component';
 export * from './batch-add/batch-add.component';
 export * from './batch-status/batch-status.component';
@@ -39,5 +41,6 @@ export * from './resources/resources.component';
 export * from './snippets/snippets.component';
 export * from './stations/stations.component';
 export * from './workbooks/workbooks.component';
-export * from './atlas-info/atlas-info.component';
-export * from './atlas-experiment-feature-progress/atlas-experiment-feature-progress.component';
+
+export * from './testview/testview.component';
+export * from './testview/testview.module';

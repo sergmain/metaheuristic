@@ -6,82 +6,82 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
 import { AccountsService } from '@app/services/accounts/accounts.service';
-// import { AuthService } from '@app/services/auth/auth.service'
 import { AuthenticationService } from '@app/services/authentication/authentication.service';
 import { PlotlyModule } from 'angular-plotly.js';
 import { SimpleNotificationsModule } from 'angular2-notifications';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-// tslint:disable-next-line: max-line-length
-import { AboutComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppDialogConfirmationComponent, AppViewComponent, ArchivePlansComponent, AtlasComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, CtColComponent, CtColsComponent, CtSectionCaptionComponent, CtTableComponent, CtWrapBlockComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, EditWorkbookComponent, ExperimentsComponent, FileUploaderComponent, InfoExperimentComponent, LaunchpadComponent, LoginComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProcessResourcesComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent, AtlasInfoComponent, AtlasExperimentFeatureProgressComponent } from './components';
 import { JwtInterceptor } from './jwt.interceptor';
 import { MaterialAppModule } from './ngmaterial.module';
 import { NotificationsInterceptor } from './notifications.interceptor';
 
+import * as components from '@app/components';
+
+
 @NgModule({
     declarations: [
         AppComponent,
-        AppViewComponent,
+        components.AppViewComponent,
         // launchpad
-        NavLaunchpadComponent,
-        LaunchpadComponent,
+        components.NavLaunchpadComponent,
+        components.LaunchpadComponent,
 
-        AccountsComponent,
-        AddAccountComponent,
-        EditAccountComponent,
-        EditPassAccountComponent,
+        components.AccountsComponent,
+        components.AddAccountComponent,
+        components.EditAccountComponent,
+        components.EditPassAccountComponent,
 
-        ExperimentsComponent,
-        AddExperimentComponent,
-        EditExperimentComponent,
-        InfoExperimentComponent,
-        ProgressExperimentComponent,
+        components.ExperimentsComponent,
+        components.AddExperimentComponent,
+        components.EditExperimentComponent,
+        components.InfoExperimentComponent,
+        components.ProgressExperimentComponent,
 
-        PlansComponent,
-        AddPlanComponent,
-        EditPlanComponent,
-        ArchivePlansComponent,
+        components.PlansComponent,
+        components.AddPlanComponent,
+        components.EditPlanComponent,
+        components.ArchivePlansComponent,
 
-        WorkbooksComponent,
-        AddWorkbookComponent,
-        EditWorkbookComponent,
+        components.WorkbooksComponent,
+        components.AddWorkbookComponent,
+        components.EditWorkbookComponent,
 
-        ResourcesComponent,
-        AddResourceComponent,
+        components.ResourcesComponent,
+        components.AddResourceComponent,
 
-        SnippetsComponent,
-        AddSnippetComponent,
+        components.SnippetsComponent,
+        components.AddSnippetComponent,
 
-        StationsComponent,
-        EditStationComponent,
+        components.StationsComponent,
+        components.EditStationComponent,
         //
-        PilotComponent,
-        NavPilotComponent,
-        ProcessResourcesComponent,
+        components.PilotComponent,
+        components.NavPilotComponent,
+        components.ProcessResourcesComponent,
         //
-        AboutComponent,
+        components.AboutComponent,
         //
-        LoginComponent,
+        components.LoginComponent,
         //
-        AtlasComponent,
+        components.AtlasComponent,
         // TODO rename AtlasInfoComponent
-        AtlasInfoComponent,
-        AtlasExperimentFeatureProgressComponent,
+        components.AtlasInfoComponent,
+        components.AtlasExperimentFeatureProgressComponent,
         //
-        BatchComponent,
-        BatchStatusComponent,
-        BatchAddComponent,
+        components.BatchComponent,
+        components.BatchStatusComponent,
+        components.BatchAddComponent,
         //
-        AppDialogConfirmationComponent,
-        FileUploaderComponent,
+        components.AppDialogConfirmationComponent,
+        components.FileUploaderComponent,
 
         // custom-tags
-        CtColsComponent,
-        CtSectionCaptionComponent,
-        CtColComponent,
-        CtTableComponent,
-        CtWrapBlockComponent,
+        components.CtColsComponent,
+        components.CtSectionCaptionComponent,
+        components.CtColComponent,
+        components.CtTableComponent,
+        components.CtWrapBlockComponent,
     ],
     imports: [
         CommonModule,
@@ -94,10 +94,10 @@ import { NotificationsInterceptor } from './notifications.interceptor';
         ReactiveFormsModule,
         NgxJsonViewerModule,
         HttpClientModule,
-        SimpleNotificationsModule.forRoot(),
+        SimpleNotificationsModule.forRoot()
     ],
     entryComponents: [
-        AppDialogConfirmationComponent
+        components.AppDialogConfirmationComponent
     ],
     providers: [
         AuthGuard,
