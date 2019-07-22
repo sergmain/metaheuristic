@@ -17,7 +17,6 @@
 package ai.metaheuristic.ai.yaml.experiment;
 
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.data.experiment.ExperimentParamsYamlV1;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYamlV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
@@ -36,11 +35,11 @@ public class ExperimentParamsYamlUtilsV2
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     public Yaml getYaml() {
-        return YamlUtils.init(ExperimentParamsYamlV1.class);
+        return YamlUtils.init(ExperimentParamsYamlV2.class);
     }
 
     @Override

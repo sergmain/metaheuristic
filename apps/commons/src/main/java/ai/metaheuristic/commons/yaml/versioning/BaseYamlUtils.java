@@ -34,6 +34,11 @@ public class BaseYamlUtils<T > {
 
     public BaseYamlUtils(Map<Integer, AbstractParamsYamlUtils> map, AbstractParamsYamlUtils defYamlUtils) {
         FACTORY.map = map;
+        map.forEach((k,v)-> {
+            if (k!=v.getVersion()) {
+                throw new IllegalStateException("Version is different, class: " + v.getClass().toString());
+            }
+        });
         FACTORY.defYamlUtils = defYamlUtils;
     }
 

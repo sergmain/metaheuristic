@@ -100,7 +100,6 @@ public class ExperimentService {
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
     private final WorkbookRepository workbookRepository;
-    private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
     private final AtlasService atlasService;
     private final ExperimentCache experimentCache;
@@ -245,7 +244,7 @@ public class ExperimentService {
             }
             ExperimentParamsYaml epy = e.getExperimentParamsYaml();
             if (!epy.processing.maxValueCalculated) {
-                experimentService.updateMaxValueForExperimentFeatures(e.id);
+                updateMaxValueForExperimentFeatures(e.id);
             }
             if (!epy.processing.exportedToAtlas) {
                 atlasService.toAtlas(e.workbookId, experimentId);
@@ -288,7 +287,7 @@ public class ExperimentService {
         return data;
     }
 
-    public void updateMaxValueForExperimentFeatures(Long experimentId) {
+    private void updateMaxValueForExperimentFeatures(Long experimentId) {
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment==null) {
             return;
@@ -307,7 +306,7 @@ public class ExperimentService {
         experimentCache.save(experiment);
     }
 
-    public void setExportedToAtlas(Long experimentId) {
+    private void setExportedToAtlas(Long experimentId) {
         Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment==null) {
             return;
