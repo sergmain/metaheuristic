@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Data
 @NoArgsConstructor
-public class ExperimentParamsYamlV1 implements BaseParams {
+public class ExperimentParamsYamlV2 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
@@ -44,7 +44,7 @@ public class ExperimentParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class HyperParamV1 {
+    public static class HyperParamV2 {
         public String key;
         public String values;
         public Integer variants;
@@ -53,13 +53,13 @@ public class ExperimentParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ExperimentYamlV1 {
+    public static class ExperimentYamlV2 {
         public String name;
         public String description;
         public String code;
 
         public int seed = 42;
-        public List<HyperParamV1> hyperParams = new ArrayList<>();
+        public List<HyperParamV2> hyperParams = new ArrayList<>();
 
         public String fitSnippet;
         public String predictSnippet;
@@ -67,7 +67,7 @@ public class ExperimentParamsYamlV1 implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    public static class ExperimentFeatureV1 {
+    public static class ExperimentFeatureV2 {
 
         public Long id;
         public String resourceCodes;
@@ -79,7 +79,7 @@ public class ExperimentParamsYamlV1 implements BaseParams {
 
     @Data
     @NoArgsConstructor
-    public static class ExperimentTaskFeatureV1 {
+    public static class ExperimentTaskFeatureV2 {
         public Long id;
         public Long workbookId;
         public Long taskId;
@@ -90,19 +90,21 @@ public class ExperimentParamsYamlV1 implements BaseParams {
     @Data
     @NoArgsConstructor
     @AllArgsConstructor
-    public static class ExperimentProcessingV1 {
+    public static class ExperimentProcessingV2 {
         public boolean isAllTaskProduced = false;
         public boolean isFeatureProduced = false;
+        public boolean maxValueCalculated = false;
+        public boolean exportedToAtlas = false;
 
         public int numberOfTask = 0;
 
-        public List<ExperimentFeatureV1> features = new ArrayList<>();
-        public List<ExperimentTaskFeatureV1> taskFeatures = new ArrayList<>();
+        public List<ExperimentFeatureV2> features = new ArrayList<>();
+        public List<ExperimentTaskFeatureV2> taskFeatures = new ArrayList<>();
     }
 
     public long createdOn;
-    public final int version=1;
-    public ExperimentYamlV1 experimentYaml = new ExperimentYamlV1();
-    public ExperimentProcessingV1 processing = new ExperimentProcessingV1();
+    public final int version=2;
+    public ExperimentYamlV2 experimentYaml = new ExperimentYamlV2();
+    public ExperimentProcessingV2 processing = new ExperimentProcessingV2();
 
 }

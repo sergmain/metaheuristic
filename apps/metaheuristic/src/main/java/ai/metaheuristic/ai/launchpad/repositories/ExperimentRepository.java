@@ -42,6 +42,10 @@ public interface ExperimentRepository extends JpaRepository<Experiment, Long> {
     Experiment findByIdForUpdate(Long id);
 
     @Transactional(readOnly = true)
+    @Query(value="select e.id from Experiment e where e.workbookId is not null")
+    List<Long> findAllIds();
+
+    @Transactional(readOnly = true)
     Page<Experiment> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)

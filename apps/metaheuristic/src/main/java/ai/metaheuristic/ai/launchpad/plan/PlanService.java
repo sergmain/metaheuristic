@@ -72,13 +72,14 @@ public class PlanService {
     private final BinaryDataService binaryDataService;
 
     private final ExperimentProcessService experimentProcessService;
+    private final ExperimentService experimentService;
+    private final ExperimentProcessValidator experimentProcessValidator;
+
     private final FileProcessService fileProcessService;
     private final WorkbookRepository workbookRepository;
     private final PlanCache planCache;
     private final PlanRepository planRepository;
 
-    private final ExperimentService experimentService;
-    private final ExperimentProcessValidator experimentProcessValidator;
     private final FileProcessValidator fileProcessValidator;
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;

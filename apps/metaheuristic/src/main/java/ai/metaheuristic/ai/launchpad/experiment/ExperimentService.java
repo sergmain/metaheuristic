@@ -19,6 +19,7 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
+import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
@@ -99,9 +100,10 @@ public class ExperimentService {
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
     private final WorkbookRepository workbookRepository;
-
-    private final ExperimentCache experimentCache;
+    private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
+    private final AtlasService atlasService;
+    private final ExperimentCache experimentCache;
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
         for (int i = 0; i < Math.min(o1.getValues().size(), o2.getValues().size()); i++) {
@@ -220,6 +222,38 @@ public class ExperimentService {
         return paramByIndex;
     }
 
+    public void experimentFinisher() {
+
+        List<Long> experimentIds = experimentRepository.findAllIds();
+        for (Long experimentId : experimentIds) {
+            Experiment e = experimentCache.findById(experimentId);
+            if (e==null) {
+                log.warn("Experiment wasn't found for id: {}", experimentId);
+                continue;
+            }
+            if (e.workbookId==null) {
+                log.warn("This shouldn't be happened");
+                continue;
+            }
+            WorkbookImpl wb = workbookCache.findById(e.workbookId);
+            if (wb==null) {
+                log.info("Can't calc max values and export to atlas because workbookId is null");
+                continue;
+            }
+            if (wb.execState!=EnumsApi.WorkbookExecState.FINISHED.code) {
+                continue;
+            }
+            ExperimentParamsYaml epy = e.getExperimentParamsYaml();
+            if (!epy.processing.maxValueCalculated) {
+                experimentService.updateMaxValueForExperimentFeatures(e.id);
+            }
+            if (!epy.processing.exportedToAtlas) {
+                atlasService.toAtlas(e.workbookId, experimentId);
+                setExportedToAtlas(experimentId);
+            }
+        }
+    }
+
     private static class ParamFilter {
         String key;
         int idx;
@@ -254,8 +288,8 @@ public class ExperimentService {
         return data;
     }
 
-    public void updateMaxValueForExperimentFeatures(Long workbookId) {
-        Experiment experiment = experimentRepository.findIdByWorkbookIdForUpdate(workbookId);
+    public void updateMaxValueForExperimentFeatures(Long experimentId) {
+        Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
         if (experiment==null) {
             return;
         }
@@ -268,6 +302,18 @@ public class ExperimentService {
             log.info("\tFeature #{}, max value: {}", feature.getId(), value);
             feature.setMaxValue(value);
         }
+        epy.processing.maxValueCalculated = true;
+        experiment.updateParams(epy);
+        experimentCache.save(experiment);
+    }
+
+    public void setExportedToAtlas(Long experimentId) {
+        Experiment experiment = experimentRepository.findByIdForUpdate(experimentId);
+        if (experiment==null) {
+            return;
+        }
+        ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
+        epy.processing.exportedToAtlas = true;
         experiment.updateParams(epy);
         experimentCache.save(experiment);
     }

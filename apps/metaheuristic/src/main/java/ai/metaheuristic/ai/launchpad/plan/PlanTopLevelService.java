@@ -18,9 +18,7 @@ package ai.metaheuristic.ai.launchpad.plan;
 
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
@@ -74,7 +72,6 @@ public class PlanTopLevelService implements ApplicationEventPublisherAware {
     private final PlanRepository planRepository;
     private final WorkbookService workbookService;
     private final WorkbookCache workbookCache;
-    private final ExperimentRepository experimentRepository;
 
     private ApplicationEventPublisher publisher;
 
@@ -363,19 +360,6 @@ public class PlanTopLevelService implements ApplicationEventPublisherAware {
     }
 
     // ========= Workbook specific =============
-
-    public OperationStatusRest changeWorkbookExecStateWithExperimentCode(String state, String experimentCode) {
-        Experiment e = experimentRepository.findByCode(experimentCode);
-        if (e==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.380 Experiment not found for code: " + experimentCode);
-        }
-        if (e.workbookId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "#560.380 Experiment wasn't bound to any workbook, experiment code: " + experimentCode);
-        }
-        return changeWorkbookExecStateInternal(state, e.workbookId);
-    }
 
     public OperationStatusRest changeWorkbookExecState(String state, Long workbookId) {
         return changeWorkbookExecStateInternal(state, workbookId);

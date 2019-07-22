@@ -113,28 +113,6 @@ public class AtlasService {
         b.code = epy.experimentYaml.code;
         b.createdOn = System.currentTimeMillis();
         atlasRepository.save(b);
-
-/*
-        ConsoleOutputStoredToAtlas filed = toConsoleOutputStoredToAtlas(stored.atlasParamsYamlWithCache.atlasParams.workbook.workbookId);
-        if (filed.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, filed.errorMessages);
-        }
-        try(InputStream is = new FileInputStream(filed.dumpOfConsoleOutputs)) {
-            //noinspection unused
-            BinaryData data = binaryDataService.save(
-                    is, filed.dumpOfConsoleOutputs.length(), EnumsApi.BinaryDataType.CONSOLE,
-                    poolCode, poolCode, false, null, null, null);
-
-        } catch (FileNotFoundException e) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "A problem with stored console outputs, try to run again");
-        } catch (RuntimeException | IOException e) {
-            log.error("Error", e);
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
-                    "Error storing console outputs to db, " + e.toString());
-        }
-*/
-
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 

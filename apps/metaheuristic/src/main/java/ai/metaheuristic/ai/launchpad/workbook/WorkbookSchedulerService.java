@@ -16,11 +16,8 @@
 
 package ai.metaheuristic.ai.launchpad.workbook;
 
-import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
-import ai.metaheuristic.ai.launchpad.experiment.ExperimentService;
-import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.api.EnumsApi;
@@ -48,9 +45,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class WorkbookSchedulerService {
 
     private final WorkbookGraphService workbookGraphService;
-    private final ExperimentService experimentService;
-    private final ExperimentRepository experimentRepository;
-    private final AtlasService atlasService;
     private final WorkbookCache workbookCache;
     private final WorkbookService workbookService;
     private final WorkbookRepository workbookRepository;
@@ -74,16 +68,7 @@ public class WorkbookSchedulerService {
         final long countUnfinishedTasks = workbookGraphService.getCountUnfinishedTasks(workbook);
         if (countUnfinishedTasks==0) {
             log.info("Workbook #{} was finished", workbook.getId());
-            experimentService.updateMaxValueForExperimentFeatures(workbook.getId());
             workbookService.toFinished(workbook.getId());
-            WorkbookImpl instance = workbookCache.findById(workbook.id);
-
-            Long experimentId = experimentRepository.findIdByWorkbookId(instance.getId());
-            if (experimentId==null) {
-                log.info("#705.050 Can't store an experiment to atlas, the workbook "+instance.getId()+" doesn't contain an experiment" );
-                return;
-            }
-            atlasService.toAtlas(instance.getId(), experimentId);
             //noinspection UnnecessaryReturnStatement
             return;
         }
