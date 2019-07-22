@@ -46,7 +46,7 @@ public class Experiment implements Serializable {
     public Long id;
 
     @Version
-    private Integer version;
+    public Integer version;
 
     @Column(name = "WORKBOOK_ID")
     public Long workbookId;

@@ -61,7 +61,7 @@ public class ExperimentController {
     private final PlanTopLevelService planTopLevelService;
 
     @GetMapping("/experiments")
-    public String init(Model model, @PageableDefault(size = 5) Pageable pageable,
+    public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable,
                        @ModelAttribute("infoMessages") final ArrayList<String> infoMessages,
                        @ModelAttribute("errorMessage") final ArrayList<String> errorMessage) {
         ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
@@ -72,7 +72,7 @@ public class ExperimentController {
 
     // for AJAX
     @PostMapping("/experiments-part")
-    public String getExperiments(Model model, @PageableDefault(size = 5) Pageable pageable) {
+    public String getExperimentsAjax(Model model, @PageableDefault(size = 5) Pageable pageable) {
         ExperimentApiData.ExperimentsResult experiments = experimentTopLevelService.getExperiments(pageable);
         model.addAttribute("result", experiments);
         return "launchpad/experiment/experiments :: table";

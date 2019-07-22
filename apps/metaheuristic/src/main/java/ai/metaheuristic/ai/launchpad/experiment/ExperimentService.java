@@ -125,12 +125,34 @@ public class ExperimentService {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
 
         ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
-        BeanUtils.copyProperties(e, ed);
+        ed.id = e.id;
+        ed.version = e.version;
+        ed.code = e.code;
+        ed.workbookId = e.workbookId;
         ed.name = params.experimentYaml.name;
         ed.seed = params.experimentYaml.seed;
         ed.description = params.experimentYaml.description;
         ed.hyperParams = params.experimentYaml.hyperParams==null ? new ArrayList<>() : params.experimentYaml.hyperParams;
         ed.hyperParamsAsMap = getHyperParamsAsMap(ed.hyperParams);
+        ed.createdOn = params.createdOn;
+        ed.numberOfTask = params.processing.numberOfTask;
+
+        return ed;
+    }
+
+    public static ExperimentApiData.ExperimentData asExperimentDataShort(Experiment e) {
+        ExperimentParamsYaml params = e.getExperimentParamsYaml();
+
+        ExperimentApiData.ExperimentData ed = new ExperimentApiData.ExperimentData();
+        ed.id = e.id;
+        ed.version = e.version;
+        ed.code = e.code;
+        ed.workbookId = e.workbookId;
+        ed.name = params.experimentYaml.name;
+        ed.seed = params.experimentYaml.seed;
+        ed.description = params.experimentYaml.description;
+        ed.hyperParams = null;
+        ed.hyperParamsAsMap = null;
         ed.createdOn = params.createdOn;
         ed.numberOfTask = params.processing.numberOfTask;
 
@@ -222,7 +244,6 @@ public class ExperimentService {
 
     public ExperimentApiData.PlotData getPlotData(Long experimentId, Long featureId, String[] params, String[] paramsAxis) {
         Experiment experiment= experimentCache.findById(experimentId);
-//        ExperimentParamsYaml epy = ExperimentParamsYamlUtils.BASE_YAML_UTILS.to(experiment.getParams());
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         ExperimentFeature feature =
@@ -280,10 +301,6 @@ public class ExperimentService {
     }
 
     private Slice<TaskWIthType> findPredictTasks(Pageable pageable, Experiment experiment, Long featureId) {
-//        @Query("SELECT new ai.metaheuristic.api.data.task.TaskWIthType(t, tef.taskType) FROM TaskImpl t, ExperimentTaskFeature tef " +
-//                "where t.id=tef.taskId and tef.featureId=:featureId order by t.id asc ")
-//        Slice<TaskWIthType> findPredictTasks(Pageable pageable, Long featureId);
-
         ExperimentParamsYaml epy = experiment.getExperimentParamsYaml();
 
         long total = epy.processing.taskFeatures
@@ -516,14 +533,8 @@ public class ExperimentService {
     }
 
     public List<Task> findByIsCompletedIsTrueAndFeatureId(ExperimentParamsYaml epy, Long featureId) {
-        // execState>1 --> 1==Enums.TaskExecState.IN_PROGRESS
-//        @Query("SELECT t FROM TaskImpl t, ExperimentTaskFeature tef " +
-//                "where t.id=tef.taskId and tef.featureId=:featureId and " +
-//                " t.execState > 1")
-//        List<Task> findByIsCompletedIsTrueAndIds(Long featureId);
-
         List<Long> ids = epy.getTaskFeatureIds(featureId);
-
+        //noinspection UnnecessaryLocalVariable
         List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndIds(ids);
         return tasks;
     }
@@ -588,7 +599,7 @@ public class ExperimentService {
         final List<ExperimentFeature> features = epy.processing.features;
 
         // there is 2 because we have 2 types of snippets - fit and predict
-        // feature has real value only when isPersist==true
+        // feature has the real value only when isPersist==true
         int totalVariants = features.size() * calcTotalVariants * 2;
 
         if (totalVariants > globals.maxTasksPerWorkbook) {

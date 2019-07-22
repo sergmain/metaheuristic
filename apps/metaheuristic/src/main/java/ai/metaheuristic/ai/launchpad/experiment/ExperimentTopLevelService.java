@@ -96,15 +96,22 @@ public class ExperimentTopLevelService {
         return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(e), e.params);
     }
 
+    public static ExperimentApiData.ExperimentResult asExperimentResultShort(Experiment e) {
+        return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentDataShort(e), null);
+    }
+
     public ExperimentApiData.ExperimentsResult getExperiments(Pageable pageable) {
         pageable = ControllerUtils.fixPageSize(globals.experimentRowsLimit, pageable);
         ExperimentApiData.ExperimentsResult result = new ExperimentApiData.ExperimentsResult();
-        final Slice<Experiment> experiments = experimentRepository.findAllByOrderByIdDesc(pageable);
+        final Slice<Long> experimentIds = experimentRepository.findAllByOrderByIdDesc(pageable);
 
         List<ExperimentApiData.ExperimentResult> experimentResults =
-                experiments.stream().map(ExperimentTopLevelService::asExperimentResult).collect(Collectors.toList());
+                experimentIds.stream()
+                        .map(experimentCache::findById)
+                        .map(ExperimentTopLevelService::asExperimentResultShort)
+                        .collect(Collectors.toList());
 
-        result.items = new PageImpl<>(experimentResults, pageable, experimentResults.size() + (experiments.hasNext() ? 1 : 0) );
+        result.items = new PageImpl<>(experimentResults, pageable, experimentResults.size() + (experimentIds.hasNext() ? 1 : 0) );
         return result;
     }
 
@@ -174,7 +181,8 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.060 experiment wasn't found, experimentId: " + experimentId);
         }
-        experimentService.updateMaxValueForExperimentFeatures(experiment.getWorkbookId());
+        // TODO 2019-07-21 caculation of max shouldn't be called every time. Add button for recalculating?
+//        experimentService.updateMaxValueForExperimentFeatures(experiment.getWorkbookId());
 
         // one more time to get new object from cache
         experiment = experimentCache.findById(experimentId);
