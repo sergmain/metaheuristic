@@ -195,7 +195,8 @@
 			<!--License	MIT-->
 			<groupId>org.webjars.bower</groupId>
 			<artifactId>plotly.js</artifactId>
-			<version>1.39.3</version>
+			<version>1.48.3</version>
+<!--			<version>1.39.3</version>-->
 		</dependency>
 
 		<dependency>
