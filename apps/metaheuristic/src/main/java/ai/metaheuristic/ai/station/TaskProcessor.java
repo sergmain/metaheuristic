@@ -117,12 +117,14 @@ public class TaskProcessor {
             }
             EnumsApi.WorkbookExecState state = currentExecState.getState(task.launchpadUrl, task.workbookId);
             if (state== EnumsApi.WorkbookExecState.UNKNOWN) {
-                log.info("The state for Workbook #{}, host {} is unknown, skip it", task.workbookId, task.launchpadUrl);
+                stationTaskService.delete(task.launchpadUrl, task.taskId);
+                log.info("The state for Workbook #{}, host {} is unknown, delete a task #{}", task.workbookId, task.launchpadUrl, task.taskId);
                 continue;
             }
 
             if (state!= EnumsApi.WorkbookExecState.STARTED) {
-                log.info("The state for Workbook #{}, host: {}, is {}, skip it", task.workbookId, task.launchpadUrl, state);
+                stationTaskService.delete(task.launchpadUrl, task.taskId);
+                log.info("The state for Workbook #{}, host: {}, is {}, delete a task #{}", task.workbookId, task.launchpadUrl, state, task.taskId);
                 continue;
             }
 
