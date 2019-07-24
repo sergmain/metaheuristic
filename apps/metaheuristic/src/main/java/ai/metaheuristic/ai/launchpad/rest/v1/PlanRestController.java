@@ -89,7 +89,7 @@ public class PlanRestController {
 
     @PostMapping(value = "/plan-upload-from-file")
     @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
-    public OperationStatusRest uploadSnippet(final MultipartFile file) {
+    public OperationStatusRest uploadPlan(final MultipartFile file) {
         return planTopLevelService.uploadPlan(file);
     }
 
