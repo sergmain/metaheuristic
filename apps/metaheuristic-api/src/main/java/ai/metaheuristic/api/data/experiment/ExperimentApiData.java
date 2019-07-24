@@ -115,6 +115,21 @@ public class ExperimentApiData {
     @Data
     public static class HyperParamResult {
         public final List<ExperimentApiData.HyperParamList> elements = new ArrayList<>();
+
+        /**
+         * for plotting we need at least 2 HyperParams to be selected.
+         * in case when there is only one list ov values of params
+         * we will use all HyperParams for axises
+         */
+        public boolean useAllHyperParamsInPlot() {
+            int count=0;
+            for (ExperimentApiData.HyperParamList element : elements) {
+                if (element.list.size()>1) {
+                    count++;
+                }
+            }
+            return count<2;
+        }
     }
 
     @Data

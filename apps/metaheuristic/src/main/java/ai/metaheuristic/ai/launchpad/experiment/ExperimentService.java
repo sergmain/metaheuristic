@@ -282,9 +282,33 @@ public class ExperimentService {
         ExperimentFeature feature =
                 epy.processing.features.stream().filter(o->o.id.equals(featureId)).findFirst().orElse(null);
 
-        //noinspection UnnecessaryLocalVariable
         ExperimentApiData.PlotData data = findExperimentTaskForPlot(experiment, feature, params, paramsAxis);
+        // TODO 2019-07-23 right now 2D lines plot isn't working. need to investigate
+        //  so it'll be 3D with a fake zero data
+        fixData(data);
         return data;
+    }
+
+    @SuppressWarnings("Duplicates")
+    private void fixData(ExperimentApiData.PlotData data) {
+        if (data.x.size()==1) {
+            data.x.add("stub");
+            BigDecimal[][] z = new BigDecimal[data.z.length][2];
+            for (int i = 0; i < data.z.length; i++) {
+                z[i][0] = data.z[i][0];
+                z[i][1] = BigDecimal.ZERO;
+            }
+            data.z = z;
+        }
+        else if (data.y.size()==1) {
+            data.y.add("stub");
+            BigDecimal[][] z = new BigDecimal[2][data.z[0].length];
+            for (int i = 0; i < data.z[0].length; i++) {
+                z[0][i] = data.z[0][i];
+                z[1][i] = BigDecimal.ZERO;
+            }
+            data.z = z;
+        }
     }
 
     private void updateMaxValueForExperimentFeatures(Long experimentId) {

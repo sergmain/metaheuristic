@@ -17,6 +17,7 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
+import ai.metaheuristic.ai.launchpad.plan.PlanController;
 import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
@@ -162,6 +163,16 @@ public class ExperimentController {
         model.addAttribute("simpleExperiment", r.simpleExperiment);
         model.addAttribute("snippetResult", r.snippetResult);
         return "launchpad/experiment/experiment-edit-form";
+    }
+
+    @GetMapping("/workbook-target-exec-state/{experimentId}/{state}/{id}")
+    public String workbookTargetExecState(@PathVariable Long experimentId, @PathVariable String state, @PathVariable Long id, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest operationStatusRest = planTopLevelService.changeWorkbookExecState(state, id);
+        if (operationStatusRest.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
+            return PlanController.REDIRECT_LAUNCHPAD_PLAN_PLANS;
+        }
+        return "redirect:/launchpad/experiment/experiment-info/" + experimentId;
     }
 
     @PostMapping(value = "/experiment-upload-from-file")

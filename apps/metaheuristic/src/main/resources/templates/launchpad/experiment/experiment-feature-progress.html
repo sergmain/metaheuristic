@@ -222,12 +222,38 @@
                 printLogButtonAxis('url for plot data: ' + url);
                 $.post(url, function(data ) {
                     printLogButtonAxis('json for plotting:\n' + data);
-                    let x1 = data['x'];
-                    let y1 = data['y'];
-                    let z1 = data['z'];
+                    let is3D = data['x'].length!==1 && data['y'].length!==1;
+                    let data_plot;
+                    if (is3D) {
+                        let x1 = data['x'];
+                        let y1 = data['y'];
+                        let z1 = data['z'];
 
-                    let data_plot = {x:x1, y:y1, z: z1, type: 'surface'};
+                        data_plot = {x: x1, y: y1, z: z1, type: 'surface'};
+                    }
+                    else {
+                        // TODO right now simple 2D isn't working
+                        let x1;
+                        if (data['x'].length===1) {
+                            x1 = data['y'];
+                        }
+                        else if (data['y'].length===1) {
+                            x1 = data['x'];
+                        }
+                        else {
+                            printLogError( 'Something wrong' );
+                        }
+                        let y1 = data['z'];
 
+                        data_plot = {
+                            x: y1, y: x1, type: 'scatter', mode: 'lines',
+                            opacity: 1,
+                            line: {
+                                width: 6
+                            }
+                        };
+
+                    }
                     // Plotting the surfaces
                     Plotly.newPlot('plot-place', [data_plot], layout);
                 });
@@ -426,7 +452,7 @@
                             </td>
                             <td>
                                 <a class='pure-button' href="#" th:id="${'button-axis-'+g.index}"
-                                   th:if="${e.list.size()>1}"
+                                   th:if="${params.useAllHyperParamsInPlot() or e.list.size()>1}"
                                    th:data-id="${'button-axis-'+g.index}"
                                    th:data-key="${e.key}"
                                    onclick="switchButtonAxis(this.getAttribute('data-id'), this.getAttribute('data-key'));"
@@ -498,10 +524,7 @@
                             <p id="axes-selected">Axes: </p>
                         </td>
                         <td style="border-left:0">
-                            <a class='pure-button' href="#" id='button-draw-plot'
-                               onclick="drawPlot();"
-                               th:text="${'Draw plot'}">Axis for plotting</a>
-
+                            <a class='pure-button' href="#" id='button-draw-plot' onclick="drawPlot();">Draw plot</a>
                         </td>
                     </tr>
                     <tr>
