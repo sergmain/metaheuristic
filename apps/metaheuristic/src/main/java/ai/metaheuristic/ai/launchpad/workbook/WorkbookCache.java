@@ -50,7 +50,7 @@ public class WorkbookCache {
         if (workbook==null) {
             return null;
         }
-        log.info("#461.010 save workbook, id: #{}, workbook: {}", workbook.id, workbook);
+        log.debug("#461.010 save workbook, id: #{}, workbook: {}", workbook.id, workbook);
         return workbookRepository.save(workbook);
     }
 

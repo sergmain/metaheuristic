@@ -53,7 +53,7 @@ public class StationCache {
         if (station==null) {
             return null;
         }
-        log.info("#457.010 save station, id: #{}, station: {}", station.id, station);
+        log.debug("#457.010 save station, id: #{}, station: {}", station.id, station);
         return stationsRepository.save(station);
     }
 
