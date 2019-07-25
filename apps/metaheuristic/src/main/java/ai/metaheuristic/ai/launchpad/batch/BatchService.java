@@ -227,7 +227,9 @@ public class BatchService {
             synchronized (obj) {
                 try {
                     batch = batchCache.findById(batchId);
-                    if (batch.execState != Enums.BatchExecState.Finished.code && batch.execState != Enums.BatchExecState.Archived.code) {
+                    if (batch.execState != Enums.BatchExecState.Finished.code &&
+                            batch.execState != Enums.BatchExecState.Error.code &&
+                            batch.execState != Enums.BatchExecState.Archived.code) {
                         Boolean isFinished = null;
                         for (Workbook fi : workbookRepository.findWorkbookByBatchId(batch.id)) {
                             isFinished = Boolean.TRUE;
