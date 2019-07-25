@@ -219,12 +219,14 @@ public class BatchTopLevelService {
                     }
                 }
                 catch(UnzipArchiveException e) {
-                    log.error("Error", e);
-                    batchService.changeStateToError(batch.id, "#995.100 can't unzip an archive. Error: " + e.getMessage()+", class: " + e.getClass());
+                    final String es = "#995.100 can't unzip an archive. Error: " + e.getMessage() + ", class: " + e.getClass();
+                    log.error(es, e);
+                    batchService.changeStateToError(batch.id, es);
                 }
                 catch(Throwable th) {
-                    log.error("Error", th);
-                    batchService.changeStateToError(batch.id, "#995.110 General processing error. Error: " + th.getMessage()+", class: " + th.getClass());
+                    final String es = "#995.110 General processing error. Error: " + th.getMessage() + ", class: " + th.getClass();
+                    log.error(es, th);
+                    batchService.changeStateToError(batch.id, es);
                 }
 
             }).start();
