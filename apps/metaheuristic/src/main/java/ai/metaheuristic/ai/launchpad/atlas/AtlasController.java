@@ -132,7 +132,7 @@ public class AtlasController {
     }
 
     @PostMapping(value = "/atlas-experiment-upload-from-file")
-    public String uploadSnippet(final MultipartFile file, final RedirectAttributes redirectAttributes) {
+    public String uploadAtlas(final MultipartFile file, final RedirectAttributes redirectAttributes) {
         OperationStatusRest operationStatusRest = atlasTopLevelService.uploadExperiment(file);
         if (operationStatusRest.isErrorMessages()) {
             redirectAttributes.addFlashAttribute("errorMessage", operationStatusRest.errorMessages);
