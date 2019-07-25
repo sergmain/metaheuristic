@@ -158,11 +158,16 @@ public class BatchService {
                     log.warn("#990.050 batch wasn't found {}", batchId);
                     return null;
                 }
-                if (b.execState != Enums.BatchExecState.Processing.code && b.execState != Enums.BatchExecState.Finished.code) {
-                    throw new IllegalStateException("\"#990.060 Can't change state to Finished, " +
+                if (b.execState != Enums.BatchExecState.Processing.code
+                        && b.execState != Enums.BatchExecState.Finished.code
+                        && b.execState != Enums.BatchExecState.Error.code) {
+                    throw new IllegalStateException("#990.060 Can't change state to Finished, " +
                             "current state: " + Enums.BatchExecState.toState(b.execState));
                 }
                 if (b.execState == Enums.BatchExecState.Finished.code) {
+                    return b;
+                }
+                if (b.execState == Enums.BatchExecState.Error.code) {
                     return b;
                 }
                 b.execState = Enums.BatchExecState.Finished.code;
