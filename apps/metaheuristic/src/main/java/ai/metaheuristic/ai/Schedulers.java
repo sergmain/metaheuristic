@@ -201,7 +201,7 @@ public class Schedulers {
         /**
          * this scheduler is being run at the station side
          */
-        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('ai.metaheuristic.station.timeout.request-launchpad'), 3, 20, 3)*1000 }")
+        @Scheduled(initialDelay = 5_000, fixedDelayString = "#{ T(ai.metaheuristic.ai.utils.EnvProperty).minMax( environment.getProperty('ai.metaheuristic.station.timeout.request-launchpad'), 3, 20, 6)*1000 }")
         public void launchRequester() {
             if (globals.isUnitTesting) {
                 return;
