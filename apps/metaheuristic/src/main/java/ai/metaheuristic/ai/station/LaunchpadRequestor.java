@@ -189,7 +189,7 @@ public class LaunchpadRequestor {
                 Monitoring.log("##015", Enums.Monitor.MEMORY);
 
                 log.debug("Start to request a launchpad at {}", url);
-//                log.debug("ExchangeData: {}", data);
+                log.debug("ExchangeData: {}", data);
                 ResponseEntity<ExchangeData> response = restTemplate.exchange(url, HttpMethod.POST, request, ExchangeData.class);
                 Monitoring.log("##016", Enums.Monitor.MEMORY);
                 ExchangeData result = response.getBody();
