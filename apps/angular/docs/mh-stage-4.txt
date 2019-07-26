@@ -66,7 +66,7 @@ DONE
 7.4 - сделать интерфейс выбора ролей для конкретного пользователя. Набор возможных ролей приведен выше.
 7.5 - когда запрашивается урл /rest/v1/user возврашается json который сожержит поле authorities, например:
 {"username":"q=1","publicName":null,"authorities":[{"authority":"ROLE_ADMIN"},{"authority":"ROLE_MANAGER"},{"authority":"ROLE_ACCESS_REST"}]}
-  authority это и енсть роли
+  authority это и есть роли
 
 
 8. Billing ===============

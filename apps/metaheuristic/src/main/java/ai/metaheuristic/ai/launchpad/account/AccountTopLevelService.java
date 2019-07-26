@@ -31,13 +31,18 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Arrays;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Profile("launchpad")
 @Service
 @RequiredArgsConstructor
 public class AccountTopLevelService {
+
+    private static final Set<String> POSSIBLE_ROLES = Set.of("ROLE_ADMIN","ROLE_MANAGER","ROLE_OPERATOR","ROLE_BILLING","ROLE_DATA");
 
     private final AccountRepository accountRepository;
     private final AccountCache accountCache;
@@ -65,7 +70,8 @@ public class AccountTopLevelService {
                     "#237.030 Both passwords must be equal");
         }
 
-        if (accountRepository.findByUsername(account.getUsername())!=null) {
+        final Account byUsername = accountRepository.findByUsername(account.getUsername());
+        if (byUsername !=null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     String.format("#237.040 Username '%s' was already used", account.getUsername()));
         }
@@ -79,7 +85,7 @@ public class AccountTopLevelService {
         account.setCredentialsNonExpired(true);
         account.setEnabled(true);
 
-        accountRepository.saveAndFlush(account);
+        accountCache.save(account);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -93,13 +99,13 @@ public class AccountTopLevelService {
     }
 
     public OperationStatusRest editFormCommit(Long accountId, String publicName, boolean enabled) {
-        Account account = accountRepository.findById(accountId).orElse(null);
-        if (account == null) {
+        Account a = accountRepository.findByIdForUpdate(accountId);
+        if (a == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.060 account wasn't found, accountId: " + accountId);
         }
-        account.setEnabled(enabled);
-        account.setPublicName(publicName);
-        accountRepository.saveAndFlush(account);
+        a.setEnabled(enabled);
+        a.setPublicName(publicName);
+        accountCache.save(a);
         return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", null);
     }
 
@@ -113,7 +119,7 @@ public class AccountTopLevelService {
         }
         Account a = accountRepository.findByIdForUpdate(accountId);
         if (a == null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.070 account wasn't found, accountId: " + accountId);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#237.100 account wasn't found, accountId: " + accountId);
         }
         a.setPassword(passwordEncoder.encode(password));
         accountCache.save(a);
@@ -122,4 +128,18 @@ public class AccountTopLevelService {
     }
 
 
+    public OperationStatusRest roleFormCommit(Long accountId, String roles) {
+        Account account = accountRepository.findByIdForUpdate(accountId);
+        if (account == null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,"#237.110 account wasn't found, accountId: " + accountId);
+        }
+        String str = Arrays.stream(StringUtils.split(roles, ','))
+                .map(String::strip)
+                .filter(POSSIBLE_ROLES::contains)
+                .collect(Collectors.joining(", "));
+
+        account.setRoles(str);
+        accountRepository.save(account);
+        return new OperationStatusRest(EnumsApi.OperationStatus.OK,"The data of account was changed successfully", null);
+    }
 }

@@ -34,7 +34,7 @@ public class AccountCache {
 
     @CacheEvict(cacheNames = Consts.ACCOUNTS_CACHE, key = "#result.username")
     public Account save(Account account) {
-        return accountRepository.saveAndFlush(account);
+        return accountRepository.save(account);
     }
 
     @Cacheable(cacheNames = Consts.ACCOUNTS_CACHE, unless="#result==null")

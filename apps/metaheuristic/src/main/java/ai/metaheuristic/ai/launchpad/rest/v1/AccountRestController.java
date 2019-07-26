@@ -60,6 +60,11 @@ public class AccountRestController {
         return accountTopLevelService.editFormCommit(id, publicName, enabled);
     }
 
+    @PostMapping("/account-role-commit")
+    public OperationStatusRest roleFormCommit(Long accountId, String roles) {
+        return accountTopLevelService.roleFormCommit(accountId, roles);
+    }
+
     @PostMapping("/account-password-edit-commit")
     public OperationStatusRest passwordEditFormCommit(Long id, String password, String password2) {
         return accountTopLevelService.passwordEditFormCommit(id, password, password2);
