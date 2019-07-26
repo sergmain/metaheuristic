@@ -132,7 +132,7 @@ public class TaskPersistencer {
         SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
         SnippetApiData.SnippetExecResult actualSnippet = snippetExec.generalExec!=null ? snippetExec.generalExec : snippetExec.exec;
         if (!actualSnippet.isOk) {
-            log.info("#307.050 Task #{} finished with error, snippetCode: {}, console: {}",
+            log.warn("#307.050 Task #{} finished with error, snippetCode: {}, console: {}",
                     result.taskId,
                     actualSnippet.snippetCode,
                     StringUtils.isNotBlank(actualSnippet.console) ? actualSnippet.console : "<console output is empty>");
