@@ -52,7 +52,8 @@ DONE
 
 7. Безопасность ==================
 7.1 - добавить поддержку ролевой модели.
-  В настоящее время роли включают в себя - ROLE_OPERATOR, ROLE_MANAGER, ROLE_ADMIN, ROLE_BILLING, ROLE_DATA
+  В настоящее время роли включают в себя:
+  - ROLE_OPERATOR, ROLE_MANAGER, ROLE_ADMIN, ROLE_BILLING, ROLE_DATA, ROLE_SERVER_REST_ACCESS
 7.2 - описание ролей:
 -- ROLE_ADMIN - полный доступ ко всем функциям на сайте
 -- ROLE_MANAGER 
@@ -62,6 +63,7 @@ DONE
 -- ROLE_OPERATOR - полный досуп ко всем функциям Batch
 -- ROLE_BILLING - полный досуп ко всем функциям Billing
 -- ROLE_DATA - полный доступ к функциям Plan, Workbook, Experiment, Atlas, Resource, Snippet
+-- ROLE_SERVER_REST_ACCESS - указывает, что этот акк для системной коммуникации меджу станцией и площадкой
 7.3 - юзеру могут быть назначены роли в любых комбинациях
 7.4 - сделать интерфейс выбора ролей для конкретного пользователя. Набор возможных ролей приведен выше.
 7.5 - когда запрашивается урл /rest/v1/user возврашается json который сожержит поле authorities, например:
