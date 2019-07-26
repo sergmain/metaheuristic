@@ -138,7 +138,6 @@ public class TestRest {
         mockMvc.perform(get("/rest/v1/test"))
                 .andExpect(status().isOk())
                 .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
-
     }
 
     @Test

@@ -39,7 +39,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Profile("launchpad")
 @CrossOrigin
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class AtlasRestController {
 
     private final AtlasService atlasService;

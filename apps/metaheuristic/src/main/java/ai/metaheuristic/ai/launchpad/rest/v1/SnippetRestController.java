@@ -35,19 +35,19 @@ public class SnippetRestController {
     private final SnippetTopLevelService snippetTopLevelService;
 
     @GetMapping("/snippets")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
     public SnippetData.SnippetsResult getSnippets() {
         return snippetTopLevelService.getSnippets();
     }
 
     @GetMapping("/snippet-delete/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest deleteCommit(@PathVariable Long id) {
         return snippetTopLevelService.deleteSnippetById(id);
     }
 
     @PostMapping(value = "/snippet-upload-from-file")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest uploadSnippet(final MultipartFile file) {
         return snippetTopLevelService.uploadSnippet(file);
     }

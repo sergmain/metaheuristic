@@ -21,7 +21,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -40,6 +42,8 @@ import java.util.List;
  * Time: 15:12
  */
 @Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(prePostEnabled = true)
 public class MultiHttpSecurityConfig {
 
     @Bean
@@ -87,14 +91,19 @@ public class MultiHttpSecurityConfig {
                         .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                         .and()
                         .authorizeRequests()
-                        .antMatchers("/rest/login").permitAll()
+                        .antMatchers("/rest/**/**").authenticated()
                         .and()
-                        .antMatcher("/rest/**").authorizeRequests().anyRequest().hasAuthority("ROLE_ACCESS_REST")
-                        .and()
-                        .httpBasic().realmName(REST_REALM)
+                        .antMatcher("/rest/**/**").httpBasic().realmName(REST_REALM)
                         .and()
                         .csrf().disable()
                         .headers().cacheControl();
+
+//                        .authorizeRequests().antMatchers("/rest/login").permitAll()
+//                        .and()
+//                        .authorizeRequests().antMatchers("/rest/v1/srv/**/**", "/rest/v1/payload/**/**", "/rest/v1/upload/**/**").hasAuthority("ROLE_SERVER_REST_ACCESS")
+//                        .and()
+//                        .authorizeRequests().antMatchers("/rest/**").authenticated()
+
             }
             else {
                 http

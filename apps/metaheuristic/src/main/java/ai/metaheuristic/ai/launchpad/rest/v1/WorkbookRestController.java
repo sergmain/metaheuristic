@@ -56,20 +56,20 @@ public class WorkbookRestController {
     }
 
     @GetMapping("/workbooks/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'MANAGER')")
     public PlanApiData.WorkbooksResult workbooks(@PathVariable Long id, @PageableDefault(size = 5) Pageable pageable) {
         return workbookTopLevelService.getWorkbooksOrderByCreatedOnDesc(id, pageable);
     }
 
     @PostMapping("/plan-code-workbook-add-commit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public SimpleWorkbookAddingResult workbookAddCommit(String planCode, String poolCode, String inputResourceParams) {
         PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planCode, poolCode, inputResourceParams);
         return new SimpleWorkbookAddingResult(workbookResult.workbook.getId());
     }
 
     @PostMapping("/workbook-add-commit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public PlanApiData.WorkbookResult workbookAddCommit(Long planId, String poolCode, String inputResourceParams) {
         //noinspection UnnecessaryLocalVariable
         PlanApiData.WorkbookResult workbookResult = planTopLevelService.addWorkbook(planId, poolCode, inputResourceParams);
@@ -77,26 +77,26 @@ public class WorkbookRestController {
     }
 
     @PostMapping("/workbook-create")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public PlanApiData.TaskProducingResult createWorkbook(Long planId, String inputResourceParam) {
         return workbookTopLevelService.createWorkbook(planId, inputResourceParam);
     }
 
     @GetMapping(value = "/workbook/{planId}/{workbookId}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public PlanApiData.WorkbookResult workbookEdit(@SuppressWarnings("unused") @PathVariable Long planId, @PathVariable Long workbookId) {
         return workbookTopLevelService.getWorkbookExtended(workbookId);
     }
 
     @SuppressWarnings("unused")
     @PostMapping("/workbook-delete-commit")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest workbookDeleteCommit(Long planId, Long workbookId) {
         return planTopLevelService.deleteWorkbookById(workbookId);
     }
 
     @GetMapping("/workbook-target-exec-state/{planId}/{state}/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
     public OperationStatusRest workbookTargetExecState(@SuppressWarnings("unused") @PathVariable Long planId, @PathVariable String state, @PathVariable Long id) {
         return planTopLevelService.changeWorkbookExecState(state, id);
     }

@@ -95,7 +95,7 @@ public class CustomUserDetails implements UserDetailsService {
             account.setEnabled(true);
             account.setPassword(globals.launchpadMasterPassword);
 
-            account.setRoles("ROLE_ADMIN, ROLE_MANAGER, ROLE_ACCESS_REST");
+            account.setRoles("ROLE_ADMIN, ROLE_MANAGER, ROLE_SERVER_REST_ACCESS");
             return account;
         }
 

@@ -36,7 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 @CrossOrigin
 //@CrossOrigin(origins="*", maxAge=3600)
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'DATA', 'ACCESS_REST')")
+@PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class ExperimentRestController {
 
     private final ExperimentTopLevelService experimentTopLevelService;

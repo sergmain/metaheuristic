@@ -39,7 +39,7 @@ import org.springframework.web.multipart.MultipartFile;
 @Profile("launchpad")
 @CrossOrigin
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER', 'ACCESS_REST')")
+@PreAuthorize("hasAnyRole('ADMIN', 'OPERATOR', 'MANAGER')")
 public class BatchRestController {
 
     private final BatchTopLevelService batchTopLevelService;

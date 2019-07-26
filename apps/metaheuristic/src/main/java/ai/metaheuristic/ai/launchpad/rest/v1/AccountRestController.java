@@ -35,7 +35,7 @@ import org.springframework.web.bind.annotation.*;
 @Profile("launchpad")
 @CrossOrigin
 @RequiredArgsConstructor
-@PreAuthorize("hasAnyRole('ADMIN', 'ACCESS_REST')")
+@PreAuthorize("hasAnyRole('ADMIN')")
 public class AccountRestController {
 
     private final AccountTopLevelService accountTopLevelService;
