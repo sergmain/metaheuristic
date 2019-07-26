@@ -84,7 +84,7 @@ public class CustomUserDetails implements UserDetailsService {
 
             Account account = new Account();
 
-            // fake Id, I hope it won't make any collision with real accounts
+            // fake Id, I hope it won't make any collision with the real accounts
             // need to think of better solution for virtual accounts
             account.setId( Integer.MAX_VALUE -5L );
             account.setUsername(globals.launchpadMasterUsername);
