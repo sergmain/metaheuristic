@@ -305,15 +305,30 @@ class WorkbookGraphService {
         return descendants;
     }
 
-    public List<WorkbookParamsYaml.TaskVertex> findAllWithDirectOrderAndStatusNone(WorkbookImpl workbook) {
+    public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(WorkbookImpl workbook) {
         try {
             return readOnlyGraphListOfTaskVertex(workbook, graph -> {
+
+                // if this is newly created graph then return only start vertex of graph
+                WorkbookParamsYaml.TaskVertex startVertex = graph.vertexSet().stream()
+                        .filter( v -> v.execState== EnumsApi.TaskExecState.NONE && graph.incomingEdgesOf(v).isEmpty())
+                        .findFirst()
+                        .orElse(null);
+
+                if (startVertex!=null) {
+                    return List.of(startVertex);
+                }
+
+                // get all non-processed tasks
                 Iterator<WorkbookParamsYaml.TaskVertex> iterator = new BreadthFirstIterator<>(graph, (WorkbookParamsYaml.TaskVertex)null);
                 List<WorkbookParamsYaml.TaskVertex> vertices = new ArrayList<>();
 
-                iterator.forEachRemaining(e -> {
-                    if (e.execState==EnumsApi.TaskExecState.NONE) {
-                        vertices.add(e);
+                iterator.forEachRemaining(v -> {
+                    if (v.execState==EnumsApi.TaskExecState.NONE) {
+                        // remove all tasks which have non-processed as direct parent
+                        if (isParentFullyProcessedWithoutErrors(graph, v)) {
+                            vertices.add(v);
+                        }
                     }
                 });
 
@@ -324,6 +339,15 @@ class WorkbookGraphService {
             log.error("#915.030 Error", th);
             return null;
         }
+    }
+
+    private boolean isParentFullyProcessedWithoutErrors(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph, WorkbookParamsYaml.TaskVertex vertex) {
+        for (WorkbookParamsYaml.TaskVertex ancestor : graph.getAncestors(vertex)) {
+            if (ancestor.execState!=EnumsApi.TaskExecState.OK) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {

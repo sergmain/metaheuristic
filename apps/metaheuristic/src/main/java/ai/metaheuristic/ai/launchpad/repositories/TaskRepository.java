@@ -79,8 +79,8 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     Stream<Object[]> findByWorkbookId(Long workbookId);
 
     @Transactional
-    @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId ")
-    Slice<Task> findForAssigning(Pageable pageable, Long workbookId);
+    @Query("SELECT t FROM TaskImpl t where t.stationId is null and t.workbookId=:workbookId and t.id in :ids ")
+    List<Task> findForAssigning(Long workbookId, List<Long> ids);
 
     @Transactional(readOnly = true)
     @Query("SELECT t.id FROM TaskImpl t where t.stationId=:stationId and t.isCompleted=false")

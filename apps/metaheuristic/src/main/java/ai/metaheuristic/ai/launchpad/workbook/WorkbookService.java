@@ -51,9 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Profile;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -63,6 +61,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 @Service
 @Profile("launchpad")
@@ -345,6 +344,17 @@ public class WorkbookService {
 
     private final Map<Long, LongHolder> bannedSince = new HashMap<>();
 
+    public static List<Long> getIdsForSearch(List<WorkbookParamsYaml.TaskVertex> vertices, int page, int pageSize) {
+        final int fromIndex = page * pageSize;
+        if (vertices.size()== fromIndex) {
+            return List.of();
+        }
+        int toIndex = fromIndex + (vertices.size()-pageSize>=fromIndex ? pageSize : vertices.size() - fromIndex);
+        return vertices.subList(fromIndex, toIndex).stream()
+                .map(v -> v.taskId)
+                .collect(Collectors.toList());
+    }
+
     private TasksAndAssignToStationResult findUnassignedTaskAndAssign(Long workbookId, Station station, boolean isAcceptOnlySigned) {
 
         LongHolder longHolder = bannedSince.computeIfAbsent(station.getId(), o -> new LongHolder(0));
@@ -355,13 +365,12 @@ public class WorkbookService {
         if (workbook==null) {
             return EMPTY_RESULT;
         }
-        WorkbookParamsYaml wpy = workbook.getWorkbookParamsYaml();
-        List<WorkbookParamsYaml.TaskVertex> vertices = findAllWithDirectOrderAndStatusNone(workbookRepository.findByIdForUpdate(workbook.id));
+        List<WorkbookParamsYaml.TaskVertex> vertices = findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
 
         int page = 0;
         Task resultTask = null;
-        Slice<Task> tasks;
-        while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), workbookId)).hasContent()) {
+        List<Task> tasks;
+        while ((tasks=taskRepository.findForAssigning(workbookId, getIdsForSearch(vertices, page++, 20))).size()>0) {
             for (Task task : tasks) {
                 final TaskParamsYaml taskParamYaml;
                 try {
@@ -585,13 +594,13 @@ public class WorkbookService {
         }
     }
 
-    public List<WorkbookParamsYaml.TaskVertex> findAllWithDirectOrderAndStatusNone(WorkbookImpl workbook) {
+    public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(WorkbookImpl workbook) {
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
         log.debug("Before entering in sync block, findAll()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
-                return workbookGraphService.findAllWithDirectOrderAndStatusNone(workbook);
+                return workbookGraphService.findAllForAssigning(workbook);
             } finally {
                 syncMap.remove(workbook.getId());
             }
