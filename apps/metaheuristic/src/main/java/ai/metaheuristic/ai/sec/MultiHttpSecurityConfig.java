@@ -86,24 +86,18 @@ public class MultiHttpSecurityConfig {
             if (globals.isSecurityEnabled) {
 
                 http
-                        .cors()
+                        .antMatcher("/rest/**/**").cors()
                         .and()
-                        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .antMatcher("/rest/**/**").sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                         .and()
                         .authorizeRequests()
+                        .antMatchers("/rest/login").permitAll()
+                        .antMatchers("/rest/v1/srv/**/**", "/rest/v1/payload/**/**", "/rest/v1/upload/**/**").hasAuthority("ROLE_SERVER_REST_ACCESS")
                         .antMatchers("/rest/**/**").authenticated()
                         .and()
                         .antMatcher("/rest/**/**").httpBasic().realmName(REST_REALM)
                         .and()
-                        .csrf().disable()
-                        .headers().cacheControl();
-
-//                        .authorizeRequests().antMatchers("/rest/login").permitAll()
-//                        .and()
-//                        .authorizeRequests().antMatchers("/rest/v1/srv/**/**", "/rest/v1/payload/**/**", "/rest/v1/upload/**/**").hasAuthority("ROLE_SERVER_REST_ACCESS")
-//                        .and()
-//                        .authorizeRequests().antMatchers("/rest/**").authenticated()
-
+                        .antMatcher("/rest/**/**").csrf().disable().headers().cacheControl();
             }
             else {
                 http
