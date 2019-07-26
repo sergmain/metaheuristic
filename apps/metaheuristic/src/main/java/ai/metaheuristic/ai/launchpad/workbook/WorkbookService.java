@@ -317,13 +317,12 @@ public class WorkbookService {
             return EMPTY_RESULT;
         }
 
-        List<Workbook> workbooks;
+        List<Long> workbookIds;
         if (workbookId==null) {
-            workbooks = workbookRepository.findByExecStateOrderByCreatedOnAsc(
-                    EnumsApi.WorkbookExecState.STARTED.code);
+            workbookIds = workbookRepository.findByExecStateOrderByCreatedOnAsc(EnumsApi.WorkbookExecState.STARTED.code);
         }
         else {
-            Workbook workbook = workbookRepository.findById(workbookId).orElse(null);
+            WorkbookImpl workbook = workbookCache.findById(workbookId);
             if (workbook==null) {
                 log.warn("#705.170 Workbook wasn't found for id: {}", workbookId);
                 return EMPTY_RESULT;
@@ -332,11 +331,11 @@ public class WorkbookService {
                 log.warn("#705.180 Workbook wasn't started. Current exec state: {}", EnumsApi.WorkbookExecState.toState(workbook.getExecState()));
                 return EMPTY_RESULT;
             }
-            workbooks = Collections.singletonList(workbook);
+            workbookIds = List.of(workbook.id);
         }
 
-        for (Workbook workbook : workbooks) {
-            TasksAndAssignToStationResult result = findUnassignedTaskAndAssign(workbook, station, isAcceptOnlySigned);
+        for (long wbId : workbookIds) {
+            TasksAndAssignToStationResult result = findUnassignedTaskAndAssign(wbId, station, isAcceptOnlySigned);
             if (!result.equals(EMPTY_RESULT)) {
                 return result;
             }
@@ -346,17 +345,23 @@ public class WorkbookService {
 
     private final Map<Long, LongHolder> bannedSince = new HashMap<>();
 
-    private TasksAndAssignToStationResult findUnassignedTaskAndAssign(Workbook workbook, Station station, boolean isAcceptOnlySigned) {
+    private TasksAndAssignToStationResult findUnassignedTaskAndAssign(Long workbookId, Station station, boolean isAcceptOnlySigned) {
 
         LongHolder longHolder = bannedSince.computeIfAbsent(station.getId(), o -> new LongHolder(0));
         if (longHolder.value!=0 && System.currentTimeMillis() - longHolder.value < TimeUnit.MINUTES.toMillis(30)) {
             return EMPTY_RESULT;
         }
+        WorkbookImpl workbook = workbookCache.findById(workbookId);
+        if (workbook==null) {
+            return EMPTY_RESULT;
+        }
+        WorkbookParamsYaml wpy = workbook.getWorkbookParamsYaml();
+        List<WorkbookParamsYaml.TaskVertex> vertices = findAllWithDirectOrderAndStatusNone(workbookRepository.findByIdForUpdate(workbook.id));
 
         int page = 0;
         Task resultTask = null;
         Slice<Task> tasks;
-        while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), workbook.getId())).hasContent()) {
+        while ((tasks=taskRepository.findForAssigning(PageRequest.of(page++, 20), workbookId)).hasContent()) {
             for (Task task : tasks) {
                 final TaskParamsYaml taskParamYaml;
                 try {
@@ -417,7 +422,7 @@ public class WorkbookService {
 
         Protocol.AssignedTask.Task assignedTask = new Protocol.AssignedTask.Task();
         assignedTask.setTaskId(resultTask.getId());
-        assignedTask.setWorkbookId(workbook.getId());
+        assignedTask.setWorkbookId(workbookId);
         assignedTask.setParams(resultTask.getParams());
 
         resultTask.setAssignedOn(System.currentTimeMillis());
@@ -426,7 +431,7 @@ public class WorkbookService {
         resultTask.setResultResourceScheduledOn(0);
 
         taskRepository.save((TaskImpl)resultTask);
-        updateTaskExecStateByWorkbookId(workbook.getId(), resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
+        updateTaskExecStateByWorkbookId(workbookId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
 
         return new TasksAndAssignToStationResult(assignedTask);
     }
@@ -574,6 +579,19 @@ public class WorkbookService {
         synchronized (obj) {
             try {
                 return workbookGraphService.updateGraphWithResettingAllChildrenTasks(workbook, taskId);
+            } finally {
+                syncMap.remove(workbook.getId());
+            }
+        }
+    }
+
+    public List<WorkbookParamsYaml.TaskVertex> findAllWithDirectOrderAndStatusNone(WorkbookImpl workbook) {
+        final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
+        log.debug("Before entering in sync block, findAll()");
+        //noinspection SynchronizationOnLocalVariableOrMethodParameter
+        synchronized (obj) {
+            try {
+                return workbookGraphService.findAllWithDirectOrderAndStatusNone(workbook);
             } finally {
                 syncMap.remove(workbook.getId());
             }

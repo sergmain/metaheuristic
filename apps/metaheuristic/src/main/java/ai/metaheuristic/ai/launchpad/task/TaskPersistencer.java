@@ -51,14 +51,14 @@ public class TaskPersistencer {
                 try {
                     TaskImpl task = taskRepository.findById(taskId).orElse(null);
                     if (task == null) {
-                        log.warn("#307.01 Task with taskId {} wasn't found", taskId);
+                        log.warn("#307.010 Task with taskId {} wasn't found", taskId);
                         return null;
                     }
                     task.setParams(taskParams);
                     taskRepository.save(task);
                     return task;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.error("#307.07 Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
+                    log.error("#307.020 Error set setParams to {}, taskId: {}, error: {}", taskParams, taskId, e.toString());
                 }
             }
         }
@@ -74,7 +74,7 @@ public class TaskPersistencer {
                         return Enums.UploadResourceStatus.TASK_NOT_FOUND;
                     }
                     if (task.getExecState() == EnumsApi.TaskExecState.NONE.value) {
-                        log.warn("#307.12 Task {} was reset, can't set new value to field resultReceived", taskId);
+                        log.warn("#307.030 Task {} was reset, can't set new value to field resultReceived", taskId);
                         return Enums.UploadResourceStatus.TASK_WAS_RESET;
                     }
                     task.setCompleted(true);
@@ -83,7 +83,7 @@ public class TaskPersistencer {
                     taskRepository.save(task);
                     return Enums.UploadResourceStatus.OK;
                 } catch (ObjectOptimisticLockingFailureException e) {
-                    log.warn("#307.18 Error set resultReceived to {} try #{}, taskId: {}, error: {}", resultReceived, i, taskId, e.toString());
+                    log.warn("#307.040 Error set resultReceived to {} try #{}, taskId: {}, error: {}", resultReceived, i, taskId, e.toString());
                 }
             }
         }
@@ -132,7 +132,7 @@ public class TaskPersistencer {
         SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(result.getResult());
         SnippetApiData.SnippetExecResult actualSnippet = snippetExec.generalExec!=null ? snippetExec.generalExec : snippetExec.exec;
         if (!actualSnippet.isOk) {
-            log.info("#307.27 Task #{} finished with error, snippetCode: {}, console: {}",
+            log.info("#307.050 Task #{} finished with error, snippetCode: {}, console: {}",
                     result.taskId,
                     actualSnippet.snippetCode,
                     StringUtils.isNotBlank(actualSnippet.console) ? actualSnippet.console : "<console output is empty>");
@@ -142,31 +142,33 @@ public class TaskPersistencer {
             action.execute(t);
             return t;
         } catch (ObjectOptimisticLockingFailureException e) {
-            log.error("#307.29 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
+            log.error("#307.060 Error while storing result of execution of task, taskId: {}, error: {}", result.taskId, e.toString());
         }
         return null;
     }
 
     public void finishTaskAsBrokenOrError(Long taskId, EnumsApi.TaskExecState state) {
         if (state!=EnumsApi.TaskExecState.BROKEN && state!=EnumsApi.TaskExecState.ERROR) {
-            throw new IllegalStateException("#307.30 state must be EnumsApi.TaskExecState.BROKEN or EnumsApi.TaskExecState.ERROR, actual: " +state);
+            throw new IllegalStateException("#307.070 state must be EnumsApi.TaskExecState.BROKEN or EnumsApi.TaskExecState.ERROR, actual: " +state);
         }
         synchronized (syncObj) {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
-                log.warn("#307.33 Can't find Task for Id: {}", taskId);
+                log.warn("#307.080 Can't find Task for Id: {}", taskId);
                 return;
             }
             task.setExecState(EnumsApi.TaskExecState.BROKEN.value);
             task.setCompleted(true);
             task.setCompletedOn(System.currentTimeMillis());
 
-            TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
-            SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec();
-            snippetExec.exec = new SnippetApiData.SnippetExecResult(
-                    tpy.taskYaml.snippet.code,false,-999,"Task is broken, cant' process it"
-            );
-            task.setSnippetExecResults(SnippetExecUtils.toString(snippetExec));
+            if (task.snippetExecResults==null || task.snippetExecResults.isBlank()) {
+                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+                SnippetApiData.SnippetExec snippetExec = new SnippetApiData.SnippetExec();
+                snippetExec.exec = new SnippetApiData.SnippetExecResult(
+                        tpy.taskYaml.snippet.code, false, -999, "#307.080 Task is broken, error is unknown, cant' process it"
+                );
+                task.setSnippetExecResults(SnippetExecUtils.toString(snippetExec));
+            }
             task.setResultReceived(true);
 
             //noinspection UnusedAssignment
@@ -178,7 +180,7 @@ public class TaskPersistencer {
         synchronized (syncObj) {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
-                log.warn("#307.33 Can't find Task for Id: {}", taskId);
+                log.warn("#307.090 Can't find Task for Id: {}", taskId);
                 return;
             }
             task.setExecState(EnumsApi.TaskExecState.OK.value);
@@ -190,7 +192,7 @@ public class TaskPersistencer {
         synchronized (syncObj) {
             TaskImpl task = taskRepository.findById(taskId).orElse(null);
             if (task==null) {
-                log.warn("#307.34 Can't find Task for Id: {}", taskId);
+                log.warn("#307.100 Can't find Task for Id: {}", taskId);
                 return;
             }
             task.setExecState(EnumsApi.TaskExecState.IN_PROGRESS.value);
@@ -201,7 +203,7 @@ public class TaskPersistencer {
     private Task prepareAndSaveTask(SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
         TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
         if (task==null) {
-            log.warn("#307.33 Can't find Task for Id: {}", result.taskId);
+            log.warn("#307.110 Can't find Task for Id: {}", result.taskId);
             return null;
         }
         task.setExecState(state.value);

@@ -432,6 +432,7 @@ public class BatchService {
                     isOk = true;
                     continue;
                 case ERROR:
+                case BROKEN:
                     bs.add(getStatusForError(batchId, wb, mainDocument, task, snippetExec, stationIpAndHost));
                     isOk = true;
                     continue;
@@ -609,6 +610,7 @@ public class BatchService {
                     isOk = true;
                     continue;
                 case ERROR:
+                case BROKEN:
                     bs.add("#990.330 " + mainDocument + ", Task was completed with an error, batchId:" + batchId + ", workbookId: " + wb.getId() + ", " +
                             "taskId: " + task.getId() + "\n" +
                             "stationId: " + task.getStationId() + "\n" +

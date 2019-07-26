@@ -305,6 +305,27 @@ class WorkbookGraphService {
         return descendants;
     }
 
+    public List<WorkbookParamsYaml.TaskVertex> findAllWithDirectOrderAndStatusNone(WorkbookImpl workbook) {
+        try {
+            return readOnlyGraphListOfTaskVertex(workbook, graph -> {
+                Iterator<WorkbookParamsYaml.TaskVertex> iterator = new BreadthFirstIterator<>(graph, (WorkbookParamsYaml.TaskVertex)null);
+                List<WorkbookParamsYaml.TaskVertex> vertices = new ArrayList<>();
+
+                iterator.forEachRemaining(e -> {
+                    if (e.execState==EnumsApi.TaskExecState.NONE) {
+                        vertices.add(e);
+                    }
+                });
+
+                return vertices;
+            });
+        }
+        catch (Throwable th) {
+            log.error("#915.030 Error", th);
+            return null;
+        }
+    }
+
     public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
         try {
             return readOnlyGraphListOfTaskVertex(workbook, graph -> {

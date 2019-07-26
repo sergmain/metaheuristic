@@ -36,6 +36,7 @@
             }
         };
 
+        // init ajax links
         let table = function (html) {
             let html1 = $('#fragment-table').html(html);
 
@@ -246,7 +247,7 @@
                         let y1 = data['z'];
 
                         data_plot = {
-                            x: y1, y: x1, type: 'scatter', mode: 'lines',
+                            x: x1, y: y1, type: 'scatter', mode: 'lines',
                             opacity: 1,
                             line: {
                                 width: 6
@@ -516,8 +517,8 @@
             </td>
             <td width="20">&nbsp;</td>
             <td>
-                <h1 class="widget-header">As the graph</h1>
-                <table class="pure-table" id="fragment-metrics-graph-table" th:fragment="fragment-metrics-graph-table">
+                <h1 class="widget-header">As the plot</h1>
+                <table class="pure-table" id="fragment-metrics-plot-table" th:fragment="fragment-metrics-plot-table">
                     <tbody>
                     <tr>
                         <td width="200">
