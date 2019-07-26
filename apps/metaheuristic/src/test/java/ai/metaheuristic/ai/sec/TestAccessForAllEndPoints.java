@@ -16,6 +16,8 @@
 
 package ai.metaheuristic.ai.sec;
 
+import ai.metaheuristic.ai.Consts;
+import lombok.Data;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -27,12 +29,14 @@ import org.springframework.security.test.context.support.WithUserDetails;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.context.WebApplicationContext;
 
 import static org.junit.Assert.assertTrue;
 import static org.springframework.security.test.web.servlet.setup.SecurityMockMvcConfigurers.springSecurity;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 /**
@@ -56,6 +60,115 @@ public class TestAccessForAllEndPoints {
         this.mockMvc = webAppContextSetup(webApplicationContext)
                 .apply(springSecurity())
                 .build();
+    }
+
+    private enum AccessMethod {POST, GET}
+
+    @Data
+    public static class AccessUrl {
+        public final String url;
+        public final AccessMethod accessMethod;
+    }
+
+    private static final AccessUrl[] ACCOUNT_URLS = new AccessUrl[]{
+            new AccessUrl("/launchpad/account/accounts", AccessMethod.GET),
+            new AccessUrl("/launchpad/account/accounts-part", AccessMethod.POST),
+            new AccessUrl("/launchpad/account/account-password-edit-commit", AccessMethod.POST),
+            new AccessUrl("/launchpad/account/account-password-edit/1", AccessMethod.GET),
+            new AccessUrl("/launchpad/account/account-edit-commit", AccessMethod.POST),
+            new AccessUrl("/launchpad/account/account-edit/1", AccessMethod.GET),
+            new AccessUrl("/launchpad/account/account-add-commit", AccessMethod.POST),
+            new AccessUrl("/launchpad/account/account-add", AccessMethod.GET)
+    };
+
+    private static final AccessUrl[] ACCOUNT_REST_URLS = new AccessUrl[]{
+            new AccessUrl("/rest/v1/launchpad/account/accounts", AccessMethod.GET),
+            new AccessUrl("/rest/v1/launchpad/account/account/1", AccessMethod.GET),
+            new AccessUrl("/rest/v1/launchpad/account/account-add-commit", AccessMethod.POST),
+            new AccessUrl("/rest/v1/launchpad/account/account-edit-commit", AccessMethod.POST),
+            new AccessUrl("/rest/v1/launchpad/account/account-password-edit-commit", AccessMethod.POST),
+            new AccessUrl("/rest/v1/launchpad/account/account-account-role-commit", AccessMethod.POST)
+    };
+
+    private static final AccessUrl[] ATLAS_URLS = new AccessUrl[]{
+            new AccessUrl("/launchpad/atlas/atlas-experiments", AccessMethod.GET),
+            new AccessUrl("/launchpad/atlas/atlas-experiments-part", AccessMethod.POST),
+            new AccessUrl("/launchpad/atlas/atlas-experiment-info/1", AccessMethod.GET),
+            new AccessUrl("/launchpad/atlas/atlas-experiment-delete/1", AccessMethod.GET),
+            new AccessUrl("/launchpad/atlas/atlas-experiment-delete-commit", AccessMethod.POST),
+            new AccessUrl("/launchpad/atlas/atlas-experiment-upload-from-file", AccessMethod.POST),
+            new AccessUrl("/launchpad/atlas/atlas-experiment-export/atlas-1.yaml", AccessMethod.GET),
+            new AccessUrl("/launchpad/atlas/atlas-experiment-export-import/1", AccessMethod.GET),
+            new AccessUrl("/launchpad/atlas/atlas-experiment-feature-progress/1/1/1", AccessMethod.GET),
+            new AccessUrl("/launchpad/atlas/atlas-experiment-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
+            new AccessUrl("/launchpad/atlas/atlas-experiment-feature-progress-console-part/1/1", AccessMethod.POST),
+            new AccessUrl("/launchpad/atlas/atlas-experiment-feature-progress-part/1/1/1/1/part", AccessMethod.POST),
+    };
+
+    private static final AccessUrl[] ATLAS_REST_URLS = new AccessUrl[]{
+            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiments", AccessMethod.GET),
+            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-info/1", AccessMethod.GET),
+            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-delete-commit", AccessMethod.POST),
+            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-feature-progress/1/1/1", AccessMethod.POST),
+            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-feature-plot-data-part/1/1/1/1/1/part", AccessMethod.POST),
+            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-feature-progress-console-part/1/1", AccessMethod.POST),
+            new AccessUrl("/rest/v1/launchpad/atlas/atlas-experiment-feature-progress-part/1/1/1/1/part", AccessMethod.POST)
+    };
+
+    private static final AccessUrl[] SERVER_REST_URLS = new AccessUrl[]{
+            new AccessUrl("/rest/v1/srv/1", AccessMethod.POST),
+            new AccessUrl("/rest/v1/payload/resource/1/1", AccessMethod.GET),
+            new AccessUrl("/rest/v1/upload/1", AccessMethod.POST),
+            new AccessUrl("/rest/v1/payload/snippet-checksum/1", AccessMethod.POST),
+            new AccessUrl("/rest/v1/test", AccessMethod.GET),
+    };
+
+    // test anonymous access
+
+    @Test
+    public void testAnonymousAccess() throws Exception {
+        checkRestAccess(SERVER_REST_URLS);
+        checkAccess(ATLAS_URLS);
+        checkRestAccess(ATLAS_REST_URLS);
+        checkAccess(ACCOUNT_URLS);
+        checkRestAccess(ACCOUNT_REST_URLS);
+    }
+
+    public void checkRestAccess(AccessUrl[] accountRestUrls) throws Exception {
+        for (AccessUrl accessUrl : accountRestUrls) {
+            System.out.println("accessUrl: " + accessUrl);
+            ResultActions resultActions;
+            if (accessUrl.accessMethod== AccessMethod.GET) {
+                resultActions = mockMvc.perform(get(accessUrl.url));
+            }
+            else if (accessUrl.accessMethod== AccessMethod.POST) {
+                resultActions = mockMvc.perform(post(accessUrl.url));
+            }
+            else {
+                throw new IllegalStateException("Unknown http method: " + accessUrl.accessMethod);
+            }
+            resultActions.andExpect(status().isUnauthorized()).andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
+        }
+    }
+
+    public void checkAccess(AccessUrl[] accountUrls) throws Exception {
+        for (AccessUrl accessUrl : accountUrls) {
+            System.out.println("accessUrl: " + accessUrl);
+            if (accessUrl.accessMethod== AccessMethod.GET) {
+                mockMvc.perform(get(accessUrl.url))
+                        .andExpect(status().isFound())
+                        .andExpect(redirectedUrlPattern("http://*/login"))
+                        .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
+            }
+            else if (accessUrl.accessMethod== AccessMethod.POST) {
+                mockMvc.perform(post(accessUrl.url))
+                        .andExpect(status().isForbidden())
+                        .andExpect(cookie().doesNotExist(Consts.SESSIONID_NAME));
+            }
+            else {
+                throw new IllegalStateException("Unknown http method: " + accessUrl.accessMethod);
+            }
+        }
     }
 
     @Test
