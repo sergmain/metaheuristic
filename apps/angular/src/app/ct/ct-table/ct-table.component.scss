@@ -2,6 +2,7 @@
     display: block;
     position: relative;
     margin: 0 16px;
+    overflow-y: auto;
 
     /deep/ {
         .mat-table {
