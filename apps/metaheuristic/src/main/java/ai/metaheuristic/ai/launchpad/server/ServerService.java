@@ -275,10 +275,10 @@ public class ServerService {
         final long diff = millis - ss.sessionCreatedOn;
         if (diff > SESSION_UPDATE_TIMEOUT) {
             log.warn("#442.074 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
-                    "'    millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
+                    "'    station.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
                     "'    station.status:\n{},\n" +
                     "'    return ReAssignStationId() with the same stationId and sessionId. only session's timestamp was updated.",
-                    millis, ss.sessionCreatedOn, diff, SESSION_UPDATE_TIMEOUT, station.status);
+                    station.version, millis, ss.sessionCreatedOn, diff, SESSION_UPDATE_TIMEOUT, station.status);
             // the same station, with the same sessionId
             // so we need just to refresh sessionId timestamp
             ss.sessionCreatedOn = millis;
@@ -292,7 +292,7 @@ public class ServerService {
                 throw e;
             }
             Station s = stationCache.findById(station.id);
-            log.warn("#442.086 station.status:\n{},\n", station.status);
+            log.warn("#442.086 station.version: {}, station.status:\n{},\n", station.version, station.status);
             // the same stationId but new sessionId
 //            return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
             return null;
@@ -307,6 +307,7 @@ public class ServerService {
         ss.sessionId = StationTopLevelService.createNewSessionId();
         ss.sessionCreatedOn = System.currentTimeMillis();
         station.status = StationStatusUtils.toString(ss);
+        station.updatedOn = ss.sessionCreatedOn;
         stationCache.save(station);
         // the same stationId but new sessionId
         return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
@@ -324,6 +325,7 @@ public class ServerService {
                 "[unknown]", "[unknown]", null, false, 1);
 
         s.status = StationStatusUtils.toString(ss);
+        s.updatedOn = ss.sessionCreatedOn;
         stationCache.save(s);
         return new Command[]{new Protocol.ReAssignStationId(s.getId(), sessionId)};
     }
