@@ -1,4 +1,13 @@
 .section
+	.section__footer
+		.flex.flex--jc_sb
+			.buttons.buttons--left
+			.buttons.buttons--right
+				a(routerLink="/launchpad/snippets/add"
+				'[disabled]'="currentState == states.loading" 
+				mat-flat-button color="primary") Add Snippet
+
+.section
 	.section__header
 		ct-section-caption Snippets
 	.section__body
@@ -36,4 +45,4 @@
 			.buttons.buttons--right
 				a(routerLink="/launchpad/snippets/add"
 				'[disabled]'="currentState == states.loading" 
-				mat-flat-button color="primary") Add 
+				mat-flat-button color="primary") Add Snippet

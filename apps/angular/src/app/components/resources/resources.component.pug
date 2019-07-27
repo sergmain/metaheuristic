@@ -1,4 +1,13 @@
 .section
+    .section__footer
+        .flex.flex--jc_sb
+            .buttons.buttons--left 
+            .buttons.buttons--right
+                button(mat-flat-button color="primary"
+                    '[disabled]'="currentStates.has(states.loading) || currentStates.has(states.firstLoading)"
+                    routerLink="/launchpad/resources/add/") Create resource
+
+.section
     .section__header
         ct-section-caption Resources
     .section__body

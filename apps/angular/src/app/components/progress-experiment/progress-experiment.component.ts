@@ -2,7 +2,7 @@ import { Location } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
-import { CtWrapBlockComponent } from '@app/components/ct-wrap-block/ct-wrap-block.component';
+import { CtWrapBlockComponent } from '@src/app/ct/ct-wrap-block/ct-wrap-block.component';
 import { DefaultResponse, ExperimentFeaturePlotDataPartResponse, ExperimentFeatureProgressConsolePartResponse, ExperimentFeatureProgressResponse } from '@app/models';
 import { ExperimentsService } from '@app/services/experiments/experiments.service';
 import { PlotComponent } from 'angular-plotly.js';

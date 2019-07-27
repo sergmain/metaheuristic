@@ -3,7 +3,7 @@ import { Location } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatTableDataSource, MatDialog } from '@angular/material';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CtWrapBlockComponent } from '@app/components/ct-wrap-block/ct-wrap-block.component';
+import { CtWrapBlockComponent } from '@src/app/ct/ct-wrap-block/ct-wrap-block.component';
 import { DefaultResponse, Experiment } from '@app/models';
 import { ExperimentsService, experiment, SimpleExperiment, HyperParams, HyperParam, SnippetResult, Snippet } from '@app/services/experiments/experiments.service';
 import { Subscription } from 'rxjs';

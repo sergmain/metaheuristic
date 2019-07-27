@@ -1,8 +1,9 @@
-.section
-    .section__header
-        ct-section-caption Status of execution of batch \#{{response ? response.batchId : ''}}
-    .section__body
-        .section__content('*ngIf'="currentState == states.firstLoading")
+ct-section
+    ct-section-header
+        ct-section-header-row
+            ct-heading Status of execution of batch \#{{response ? response.batchId : ''}}
+    ct-section-body
+        ct-section-body-row('*ngIf'="currentState == states.firstLoading")
             mat-progress-bar(mode="indeterminate")
-        .section__content('*ngIf'="[states.wait,states.show].includes(currentState)") 
-            pre {{response.console}}
+        ct-section-body-row('*ngIf'="[states.wait,states.show].includes(currentState)") 
+            ct-pre {{response.console}}

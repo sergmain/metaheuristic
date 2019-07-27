@@ -1,12 +1,19 @@
 div(*ngIf='experimentInfo')
-	div 
-		br
-		|Progress of experiment — {{experimentInfo.workbookExecState}}
-		br
-		br
-	ct-section-caption The experiment info
-	include general-info.partial.pug
-	br
-	include hyper-parameters.partial.pug
-	br
-	include features.partial.pug
+    ct-section
+        ct-section-header
+            ct-section-header-row
+                ct-flex(justify-content="space-between" align-items="flex-end")
+                    ct-flex-item
+                        div Workbook Exec state
+                        div(style="font-size:48px") {{experimentInfo.workbookExecState}}
+                    ct-flex-item
+                     button(mat-flat-button wide size-x color="primary") to Atlas
+
+
+
+    ct-section-caption The experiment info
+    include general-info.partial.pug
+    br
+    include hyper-parameters.partial.pug
+    br
+    include features.partial.pug

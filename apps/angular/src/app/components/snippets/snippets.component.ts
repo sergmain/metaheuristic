@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatButton, MatTableDataSource, MatDialog } from '@angular/material';
-import { CtTableComponent } from '@app/components/ct-table/ct-table.component';
+import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
 import { LoadStates } from '@app/enums/LoadStates';
 import { SnippetsService, snippets, Snippet } from '@app/services/snippets/snippets.service';
 import { Subscription } from 'rxjs';

@@ -1,32 +1,10 @@
-import {
-    Location
-} from '@angular/common';
-import {
-    Component,
-    ElementRef,
-    OnInit,
-    ViewChild
-} from '@angular/core';
-import {
-    LoadStates
-} from '@app/enums/LoadStates';
-import {
-    ResourcesService
-} from '@app/services/resources/resources.service';
-import {
-    DefaultResponse
-} from '@app/models';
-import {
-    Router
-} from '@angular/router';
-import {
-    FormControl,
-    FormGroup,
-    Validators
-} from '@angular/forms';
-import {
-    error
-} from '@angular/compiler/src/util';
+import { Location } from '@angular/common';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { LoadStates } from '@app/enums/LoadStates';
+import { DefaultResponse } from '@app/models';
+import { ResourcesService } from '@app/services/resources/resources.service';
 
 @Component({
     // tslint:disable-next-line: component-selector

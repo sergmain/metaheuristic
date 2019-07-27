@@ -1,11 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
-import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
-import { CtTableComponent } from '@app/components/ct-table/ct-table.component';
+import { Router } from '@angular/router';
 import { LoadStates } from '@app/enums/LoadStates';
-import { Batch, batches, BatchService, batch } from '@app/services/batch/batch.service';
-import { Subscription } from 'rxjs';
 import { Plan } from '@app/models/Plan';
+import { batch, BatchService } from '@app/services/batch/batch.service';
+import { CtFileUploadComponent } from '@src/app/ct';
+import { Subscription } from 'rxjs';
+
+
 
 
 @Component({
@@ -17,22 +18,24 @@ import { Plan } from '@app/models/Plan';
 
 export class BatchAddComponent implements OnInit {
     readonly states = LoadStates;
+
+
     currentStates = new Set();
     response: batch.add.Response;
+    uploadResponse: batch.upload.Response;
 
-    currentPlan: Plan;
+    plan: Plan;
     listOfPlans: Plan[] = [];
+    @ViewChild('fileUpload') fileUpload: CtFileUploadComponent;
 
     constructor(
-        private batchService: BatchService
+        private batchService: BatchService,
+        private router: Router
     ) {
         this.currentStates.add(this.states.firstLoading);
     }
 
-    ngOnInit() {
-        this.updateResponse();
-    }
-
+    ngOnInit() { this.updateResponse(); }
 
     updateResponse() {
         const subscribe: Subscription = this.batchService.batch
@@ -49,6 +52,32 @@ export class BatchAddComponent implements OnInit {
                     this.currentStates.add(this.states.show);
                     subscribe.unsubscribe();
                 }
+            );
+    }
+
+    back() {
+        this.router.navigate(['/launchpad', 'batch']);
+    }
+
+    upload() {
+        const formData: FormData = new FormData();
+        formData.append('file', this.fileUpload.fileInput.nativeElement.files[0]);
+        formData.append('planId', this.plan.id);
+        // TODO what if no planId
+        console.log(this);
+        const subscribe: Subscription = this.batchService.batch
+            .upload(formData)
+            .subscribe(
+                (response: batch.upload.Response) => {
+                    // TODO replace|update conditional
+                    if (response.status.toLowerCase() === 'ok') {
+                        this.router.navigate(['/launchpad', 'batch']);
+                    } else {
+                        this.uploadResponse = response;
+                    }
+                },
+                () => {},
+                () => subscribe.unsubscribe()
             );
     }
 }

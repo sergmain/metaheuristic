@@ -15,73 +15,51 @@ import { AppComponent } from './app.component';
 import { JwtInterceptor } from './jwt.interceptor';
 import { MaterialAppModule } from './ngmaterial.module';
 import { NotificationsInterceptor } from './notifications.interceptor';
-
+import { CtAppModule } from './ct.module';
 import * as components from '@app/components';
-
 
 @NgModule({
     declarations: [
         AppComponent,
         components.AppViewComponent,
-        // launchpad
         components.NavLaunchpadComponent,
         components.LaunchpadComponent,
-
         components.AccountsComponent,
         components.AddAccountComponent,
         components.EditAccountComponent,
         components.EditPassAccountComponent,
-
         components.ExperimentsComponent,
         components.AddExperimentComponent,
         components.EditExperimentComponent,
         components.InfoExperimentComponent,
         components.ProgressExperimentComponent,
-
         components.PlansComponent,
-        components.AddPlanComponent,
+        components.PlanAddComponent,
         components.EditPlanComponent,
-        components.ArchivePlansComponent,
-
+        components.PlansArchiveComponent,
         components.WorkbooksComponent,
         components.AddWorkbookComponent,
         components.EditWorkbookComponent,
-
         components.ResourcesComponent,
         components.AddResourceComponent,
-
         components.SnippetsComponent,
         components.AddSnippetComponent,
-
         components.StationsComponent,
         components.EditStationComponent,
-        //
         components.PilotComponent,
         components.NavPilotComponent,
-        components.ProcessResourcesComponent,
-        //
         components.AboutComponent,
-        //
         components.LoginComponent,
-        //
         components.AtlasComponent,
-        // TODO rename AtlasInfoComponent
-        components.AtlasInfoComponent,
+        components.AtlasExperimentInfoComponent,
         components.AtlasExperimentFeatureProgressComponent,
-        //
         components.BatchComponent,
         components.BatchStatusComponent,
         components.BatchAddComponent,
-        //
         components.AppDialogConfirmationComponent,
-        components.FileUploaderComponent,
-
-        // custom-tags
-        components.CtColsComponent,
-        components.CtSectionCaptionComponent,
-        components.CtColComponent,
-        components.CtTableComponent,
-        components.CtWrapBlockComponent,
+        components.AtlasExperimentExportImportComponent,
+        components.AccountsAccessComponent,
+        components.BillingComponent
     ],
     imports: [
         CommonModule,
@@ -90,6 +68,7 @@ import * as components from '@app/components';
         AppRoutingModule,
         BrowserAnimationsModule,
         MaterialAppModule,
+        CtAppModule,
         FormsModule,
         ReactiveFormsModule,
         NgxJsonViewerModule,

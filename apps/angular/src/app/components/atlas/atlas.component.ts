@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
 import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
-import { CtTableComponent } from '@app/components/ct-table/ct-table.component';
+import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
 import { LoadStates } from '@app/enums/LoadStates';
 import { Experiment, ExperimentInfoResponse, DefaultResponse } from '@app/models';
 import { AtlasService } from '@app/services/atlas/atlas.service';
@@ -72,9 +72,9 @@ export class AtlasComponent implements OnInit {
                     this.dataSource = new MatTableDataSource(response.items.content || []);
                     this.prevTable.disabled = response.items.first;
                     this.nextTable.disabled = response.items.last;
-                    this.table.show();
                     this.currentStates.delete(this.states.firstLoading);
                     this.currentStates.delete(this.states.loading);
+                    this.table.show();
                 },
                 () => {},
                 () => subscribe.unsubscribe()
