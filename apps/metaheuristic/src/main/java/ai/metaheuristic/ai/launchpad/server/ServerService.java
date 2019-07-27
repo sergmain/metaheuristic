@@ -69,7 +69,7 @@ public class ServerService {
     private static final ExchangeData EXCHANGE_DATA_NOP = new ExchangeData(Protocol.NOP);
 
     public static final long SESSION_TTL = TimeUnit.MINUTES.toMillis(30);
-    public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(1);
+    public static final long SESSION_UPDATE_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
     private final Globals globals;
     private final BinaryDataService binaryDataService;
@@ -267,9 +267,13 @@ public class ServerService {
         }
     }
 
+    /**
+     * session is Ok, so we need to update session's timestamp periodically
+     */
     private Command[] updateSession(Station station, StationStatus ss) {
         if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_UPDATE_TIMEOUT) {
-            log.warn("#442.074 (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_UPDATE_TIMEOUT), return ReAssignStationId() with the same stationId and sessionId. only session's timestamp was updated.");
+            log.warn("#442.074 (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_UPDATE_TIMEOUT), \n" +
+                    "'    return ReAssignStationId() with the same stationId and sessionId. only session's timestamp was updated.");
             // the same station, with the same sessionId
             // so we need just to refresh sessionId timestamp
             ss.sessionCreatedOn = System.currentTimeMillis();
@@ -282,8 +286,10 @@ public class ServerService {
                 throw e;
             }
             // the same stationId but new sessionId
-            return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
-        } else {
+//            return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
+            return null;
+        }
+        else {
             // the same stationId, the same sessionId, session isn't expired
             return null;
         }

@@ -108,12 +108,13 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
     }
 
     @Test
-    public void testReAssignStationIdTimeoutSessionId() {
+    public void testReAssignStationIdDifferentSessionId() {
 
         // in this scenario we test that a station has got a refreshed sessionId
 
         final ExchangeData data = new ExchangeData();
-        data.initRequestToLaunchpad(stationIdBefore.toString(), sessionIdBefore);
+        final String newSessionId = sessionIdBefore + '-';
+        data.initRequestToLaunchpad(stationIdBefore.toString(), newSessionId);
 
         ExchangeData d = serverService.processRequest(data, "127.0.0.1");
 
@@ -124,7 +125,7 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
 
         final Long stationId = Long.valueOf(d.getReAssignedStationId().getReAssignedStationId());
         assertEquals(stationIdBefore, stationId);
-        assertEquals(sessionIdBefore, d.getReAssignedStationId().getSessionId());
+        assertNotEquals(newSessionId, d.getReAssignedStationId().getSessionId());
 
         Station s = stationCache.findById(stationId);
 
@@ -132,7 +133,7 @@ public class TestReAssignStationIdTimeoutDifferentSessionId {
         StationStatus ss = StationStatusUtils.to(s.status);
         assertNotEquals(0L, ss.sessionCreatedOn);
         assertNotEquals(sessionCreatedOn, ss.sessionCreatedOn);
-        assertEquals(sessionIdBefore, ss.sessionId);
+        assertEquals(d.getReAssignedStationId().getSessionId(), ss.sessionId);
         assertTrue(ss.sessionCreatedOn > sessionCreatedOn);
     }
 }
