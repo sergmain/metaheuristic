@@ -53,11 +53,6 @@ public interface BinaryDataRepository extends JpaRepository<BinaryDataImpl, Long
             "from BinaryDataImpl b where b.poolCode in :poolCodes")
     List<SimpleCodeAndStorageUrl> getCodeAndStorageUrlInPool(List<String> poolCodes);
 
-    @Query(value="select new ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl(" +
-            "b.code, b.poolCode, b.params ) " +
-            "from BinaryDataImpl b where b.code in :codes ")
-    List<SimpleCodeAndStorageUrl> getCodeAndStorageUrl(List<String> codes);
-
     List<BinaryDataImpl> findAllByPoolCode(String poolCode);
 
     @Query(value="select b.id from BinaryDataImpl b where b.poolCode=:poolCode and b.dataType=:dataType ")

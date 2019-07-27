@@ -56,25 +56,19 @@ public class TestFeatureWithAllError extends FeatureMethods {
         finishCurrentWithError(1);
         log.info("finishCurrentWithError() was finished for {}", System.currentTimeMillis() - mills);
 
-/*
-        noNewTask();
-
-        taskPersistencer.setResultReceived(simpleTask.taskId, true);
-
-        noNewTask();
-
-        workbookService.checkWorkbookStatuses();
-*/
-
         mills = System.currentTimeMillis();
-        log.info("Start getTaskAndAssignToStation_mustBeNewTask()");
-        getTaskAndAssignToStation_mustBeNewTask();
-        log.info("getTaskAndAssignToStation_mustBeNewTask() was finished for {}", System.currentTimeMillis() - mills);
+        log.info("Start noNewTask()");
 
+        noNewTask();
+
+        log.info("noNewTask() was finished for {}", System.currentTimeMillis() - mills);
+
+/*
         mills = System.currentTimeMillis();
         log.info("Start finishCurrentWithError()");
         finishCurrentWithError(2);
         log.info("finishCurrentWithError() was finished for {}", System.currentTimeMillis() - mills);
+*/
 
     }
 

@@ -21,8 +21,6 @@ import ai.metaheuristic.api.launchpad.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Slice;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
@@ -96,7 +94,6 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query("SELECT t FROM TaskImpl t where t.id in :ids and t.execState > 1 ")
     List<Task> findByIsCompletedIsTrueAndIds(List<Long> ids);
 
-    // !!! class must not be inner class
     @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.id in :ids order by t.id asc ")
     List<TaskImpl> findTasksByIds(Pageable pageable, List<Long> ids);

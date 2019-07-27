@@ -40,6 +40,9 @@ public class MetricsMaxValueCollector {
 
     public double calcMaxValueForMetrics(ExperimentParamsYaml epy, Long featureId) {
         List<Long> ids = epy.getTaskFeatureIds(featureId);
+        if (ids.isEmpty()) {
+            return 0.0;
+        }
 
         List<Object[]> list = taskRepository.findMetricsByIds(ids);
         //noinspection UnnecessaryLocalVariable

@@ -370,7 +370,7 @@ public class WorkbookService {
         int page = 0;
         Task resultTask = null;
         List<Task> tasks;
-        while ((tasks=taskRepository.findForAssigning(workbookId, getIdsForSearch(vertices, page++, 20))).size()>0) {
+        while ((tasks= getAllByStationIdIsNullAndWorkbookIdAndIdIn(workbookId, vertices, page++)).size()>0) {
             for (Task task : tasks) {
                 final TaskParamsYaml taskParamYaml;
                 try {
@@ -443,6 +443,14 @@ public class WorkbookService {
         updateTaskExecStateByWorkbookId(workbookId, resultTask.getId(), EnumsApi.TaskExecState.IN_PROGRESS.value);
 
         return new TasksAndAssignToStationResult(assignedTask);
+    }
+
+    private List<Task> getAllByStationIdIsNullAndWorkbookIdAndIdIn(Long workbookId, List<WorkbookParamsYaml.TaskVertex> vertices, int page) {
+        final List<Long> idsForSearch = getIdsForSearch(vertices, page, 20);
+        if (idsForSearch.isEmpty()) {
+            return List.of();
+        }
+        return taskRepository.findForAssigning(workbookId, idsForSearch);
     }
 
     public List<Long> storeAllConsoleResults(List<SimpleTaskExecResult> results) {

@@ -171,7 +171,7 @@ public class StationTopLevelService {
         log.debug("After leaving sync block");
     }
 
-    private boolean isStationStatusDifferent(StationStatus status, StationStatus ss) {
+    public static boolean isStationStatusDifferent(StationStatus status, StationStatus ss) {
         return
         !Objects.equals(ss.env, status.env) ||
         !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||

@@ -386,6 +386,10 @@ public class ExperimentService {
 
         List<Long> ids = etfs.stream().mapToLong(ExperimentTaskFeature::getTaskId).boxed().collect(Collectors.toList());
 
+        if (ids.isEmpty()) {
+            return Page.empty();
+        }
+
         List<TaskImpl> tasks = taskRepository.findTasksByIds(pageable, ids);
         List<TaskWIthType> list = new ArrayList<>();
         for (TaskImpl task : tasks) {
@@ -603,6 +607,9 @@ public class ExperimentService {
 
     public List<Task> findByIsCompletedIsTrueAndFeatureId(ExperimentParamsYaml epy, Long featureId) {
         List<Long> ids = epy.getTaskFeatureIds(featureId);
+        if (ids.isEmpty()) {
+            return List.of();
+        }
         //noinspection UnnecessaryLocalVariable
         List<Task> tasks = taskRepository.findByIsCompletedIsTrueAndIds(ids);
         return tasks;
