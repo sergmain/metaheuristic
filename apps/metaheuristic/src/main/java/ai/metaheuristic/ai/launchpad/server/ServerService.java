@@ -282,6 +282,7 @@ public class ServerService {
             // the same station, with the same sessionId
             // so we need just to refresh sessionId timestamp
             ss.sessionCreatedOn = millis;
+            station.updatedOn = millis;
             station.status = StationStatusUtils.toString(ss);
             try {
                 stationCache.save(station);
@@ -290,6 +291,8 @@ public class ServerService {
                 log.error("#442.085 Error");
                 throw e;
             }
+            Station s = stationCache.findById(station.id);
+            log.warn("#442.086 station.status:\n{},\n", station.status);
             // the same stationId but new sessionId
 //            return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
             return null;
