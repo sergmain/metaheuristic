@@ -69,7 +69,7 @@ public class TaskPersistencer {
         synchronized (syncObj) {
             for (int i = 0; i < NUMBER_OF_TRY; i++) {
                 try {
-                    TaskImpl task = taskRepository.findById(taskId).orElse(null);
+                    TaskImpl task = taskRepository.findByIdForUpdate(taskId);
                     if (task == null) {
                         return Enums.UploadResourceStatus.TASK_NOT_FOUND;
                     }

@@ -34,6 +34,10 @@ import java.util.stream.Stream;
 @Profile("launchpad")
 public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
+    @Transactional
+    @Query(value="select t from TaskImpl t where t.id=:id")
+    TaskImpl findByIdForUpdate(Long id);
+
     @Transactional(readOnly = true)
     @Query(value="select t.id, t.metrics from TaskImpl t where t.id in :ids ")
     List<Object[]> findMetricsByIds(List<Long> ids);

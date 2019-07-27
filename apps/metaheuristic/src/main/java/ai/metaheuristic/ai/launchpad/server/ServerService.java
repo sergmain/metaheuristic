@@ -242,20 +242,20 @@ public class ServerService {
             return Protocol.NOP_ARRAY;
         }
         if (StringUtils.isBlank(sessionId)) {
-            log.warn("#442.070 StringUtils.isBlank(sessionId), return ReAssignStationId() with new sessionId");
+            log.debug("#442.070 StringUtils.isBlank(sessionId), return ReAssignStationId() with new sessionId");
             // the same station but with different and expired sessionId
             // so we can continue to use this stationId with new sessionId
             return assignNewSessionId(station, ss);
         }
         if (!ss.sessionId.equals(sessionId)) {
             if ((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL) {
-                log.warn("#442.071 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignStationId() with new sessionId");
+                log.debug("#442.071 !ss.sessionId.equals(sessionId) && (System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL, return ReAssignStationId() with new sessionId");
                 // the same station but with different and expired sessionId
                 // so we can continue to use this stationId with new sessionId
                 // we won't use station's sessionIf to be sure that sessionId has valid format
                 return assignNewSessionId(station, ss);
             } else {
-                log.warn("#442.072 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignStationId() with new stationId and new sessionId");
+                log.debug("#442.072 !ss.sessionId.equals(sessionId) && !((System.currentTimeMillis() - ss.sessionCreatedOn) > SESSION_TTL), return ReAssignStationId() with new stationId and new sessionId");
                 // different stations with the same stationId
                 // there is other active station with valid sessionId
                 return reassignStationId(remoteAddress, "Id was reassigned from " + stationId);
@@ -274,13 +274,13 @@ public class ServerService {
         final long millis = System.currentTimeMillis();
         final long diff = millis - ss.sessionCreatedOn;
         if (diff > SESSION_UPDATE_TIMEOUT) {
-            log.warn("#442.074 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
+            log.debug("#442.074 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
                     "'    station.version: {}, millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
                     "'    station.status:\n{},\n" +
                     "'    return ReAssignStationId() with the same stationId and sessionId. only session's timestamp was updated.",
                     station.version, millis, ss.sessionCreatedOn, diff, SESSION_UPDATE_TIMEOUT, station.status);
             // the same station, with the same sessionId
-            // so we need just to refresh sessionId timestamp
+            // so we just need to refresh sessionId timestamp
             ss.sessionCreatedOn = millis;
             station.updatedOn = millis;
             station.status = StationStatusUtils.toString(ss);
@@ -292,9 +292,8 @@ public class ServerService {
                 throw e;
             }
             Station s = stationCache.findById(station.id);
-            log.warn("#442.086 old station.version: {}, in cache station.version: {}, station.status:\n{},\n", station.version, s.version, s.status);
+            log.debug("#442.086 old station.version: {}, in cache station.version: {}, station.status:\n{},\n", station.version, s.version, s.status);
             // the same stationId but new sessionId
-//            return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
             return null;
         }
         else {
