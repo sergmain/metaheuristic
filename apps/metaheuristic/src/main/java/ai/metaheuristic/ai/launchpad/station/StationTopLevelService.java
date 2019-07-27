@@ -133,9 +133,13 @@ public class StationTopLevelService {
                     ss.env = command.status.env;
                     ss.gitStatusInfo = command.status.gitStatusInfo;
                     ss.schedule = command.status.schedule;
-                    ss.sessionId = command.status.sessionId;
+
+                    // Do not include updating of sessionId
+                    // ss.sessionId = command.status.sessionId;
+
                     // Do not include updating of sessionCreatedOn!
                     // ss.sessionCreatedOn = command.status.sessionCreatedOn;
+
                     ss.ip = command.status.ip;
                     ss.host = command.status.host;
                     ss.errors = command.status.errors;
@@ -171,7 +175,6 @@ public class StationTopLevelService {
         !ss.env.equals(status.env) ||
         !ss.gitStatusInfo.equals(status.gitStatusInfo ) ||
         !ss.schedule.equals(status.schedule) ||
-        !ss.sessionId.equals(status.sessionId) ||
         !ss.ip.equals(status.ip) ||
         !ss.host.equals(status.host) ||
         !ss.errors.equals(status.errors) ||
