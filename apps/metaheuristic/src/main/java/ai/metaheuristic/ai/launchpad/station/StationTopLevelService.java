@@ -41,6 +41,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -172,12 +173,12 @@ public class StationTopLevelService {
 
     private boolean isStationStatusDifferent(StationStatus status, StationStatus ss) {
         return
-        !ss.env.equals(status.env) ||
-        !ss.gitStatusInfo.equals(status.gitStatusInfo ) ||
-        !ss.schedule.equals(status.schedule) ||
-        !ss.ip.equals(status.ip) ||
-        !ss.host.equals(status.host) ||
-        !ss.errors.equals(status.errors) ||
+        !Objects.equals(ss.env, status.env) ||
+        !Objects.equals(ss.gitStatusInfo, status.gitStatusInfo) ||
+        !Objects.equals(ss.schedule, status.schedule) ||
+        !Objects.equals(ss.ip, status.ip) ||
+        !Objects.equals(ss.host, status.host) ||
+        !Objects.equals(ss.errors, status.errors) ||
         ss.logDownloadable!=status.logDownloadable ||
         ss.taskParamsVersion!=status.taskParamsVersion;
     }
