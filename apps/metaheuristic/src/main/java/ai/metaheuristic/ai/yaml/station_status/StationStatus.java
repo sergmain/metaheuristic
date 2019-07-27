@@ -44,6 +44,8 @@ public class StationStatus {
     public long sessionCreatedOn;
     public String ip;
     public String host;
+
+    // contains text of error which can occur while preparing a station status
     public List<String> errors = null;
     public boolean logDownloadable;
     public int taskParamsVersion;

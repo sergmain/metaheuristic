@@ -292,7 +292,7 @@ public class ServerService {
                 throw e;
             }
             Station s = stationCache.findById(station.id);
-            log.warn("#442.086 station.version: {}, station.status:\n{},\n", station.version, station.status);
+            log.warn("#442.086 old station.version: {}, in cache station.version: {}, station.status:\n{},\n", station.version, s.version, s.status);
             // the same stationId but new sessionId
 //            return new Command[]{new Protocol.ReAssignStationId(station.getId(), ss.sessionId)};
             return null;

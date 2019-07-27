@@ -19,16 +19,16 @@ package ai.metaheuristic.ai.launchpad.station;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.launchpad.beans.Station;
-import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
-import ai.metaheuristic.ai.yaml.station_status.StationStatus;
-import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
-import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.ai.launchpad.data.StationData;
 import ai.metaheuristic.ai.launchpad.repositories.StationsRepository;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.yaml.station_status.StationStatus;
+import ai.metaheuristic.ai.yaml.station_status.StationStatusUtils;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -128,10 +128,22 @@ public class StationTopLevelService {
                     // we throw ISE cos all checks have to be made early
                     throw new IllegalStateException("Station wasn't found for stationId: " + stationId);
                 }
-                final String stationStatus = StationStatusUtils.toString(command.status);
-                if (!stationStatus.equals(station.status)) {
-                    station.status = stationStatus;
-                    station.setUpdatedOn(System.currentTimeMillis());
+                StationStatus ss = StationStatusUtils.to(station.status);
+                if (isStationStatusDifferent(command.status, ss)) {
+                    ss.env = command.status.env;
+                    ss.gitStatusInfo = command.status.gitStatusInfo;
+                    ss.schedule = command.status.schedule;
+                    ss.sessionId = command.status.sessionId;
+                    // Do not include updating of sessionCreatedOn!
+                    // ss.sessionCreatedOn = command.status.sessionCreatedOn;
+                    ss.ip = command.status.ip;
+                    ss.host = command.status.host;
+                    ss.errors = command.status.errors;
+                    ss.logDownloadable = command.status.logDownloadable;
+                    ss.taskParamsVersion = command.status.taskParamsVersion;
+
+                    station.status = StationStatusUtils.toString(ss);
+                    station.updatedOn = System.currentTimeMillis();
                     try {
                         log.debug("Save new station status, station: {}", station);
                         stationCache.save(station);
@@ -144,7 +156,7 @@ public class StationTopLevelService {
                     }
                 }
                 else {
-                    log.info("Station status is equal to stored in db, new: {}, db: {}", stationStatus, station.status);
+                    log.info("Station status is equal to stored in db");
                 }
             }
             finally {
@@ -152,6 +164,19 @@ public class StationTopLevelService {
             }
         }
         log.debug("After leaving sync block");
+    }
+
+    private boolean isStationStatusDifferent(StationStatus status, StationStatus ss) {
+        return
+        !ss.env.equals(status.env) ||
+        !ss.gitStatusInfo.equals(status.gitStatusInfo ) ||
+        !ss.schedule.equals(status.schedule) ||
+        !ss.sessionId.equals(status.sessionId) ||
+        !ss.ip.equals(status.ip) ||
+        !ss.host.equals(status.host) ||
+        !ss.errors.equals(status.errors) ||
+        ss.logDownloadable!=status.logDownloadable ||
+        ss.taskParamsVersion!=status.taskParamsVersion;
     }
 
     // TODO Need to re-write this method
