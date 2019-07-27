@@ -161,7 +161,7 @@ public class StationTopLevelService {
                     }
                 }
                 else {
-                    log.info("Station status is equal to stored in db");
+                    log.debug("Station status is equal to stored in db");
                 }
             }
             finally {
