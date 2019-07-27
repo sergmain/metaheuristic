@@ -271,15 +271,17 @@ public class ServerService {
      * session is Ok, so we need to update session's timestamp periodically
      */
     private Command[] updateSession(Station station, StationStatus ss) {
-        final long diff = System.currentTimeMillis() - ss.sessionCreatedOn;
+        final long millis = System.currentTimeMillis();
+        final long diff = millis - ss.sessionCreatedOn;
         if (diff > SESSION_UPDATE_TIMEOUT) {
             log.warn("#442.074 (System.currentTimeMillis()-ss.sessionCreatedOn)>SESSION_UPDATE_TIMEOUT),\n" +
-                    "'    ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {}, \n" +
+                    "'    millis: {}, ss.sessionCreatedOn: {}, diff: {}, SESSION_UPDATE_TIMEOUT: {},\n" +
+                    "'    station.status:\n{},\n" +
                     "'    return ReAssignStationId() with the same stationId and sessionId. only session's timestamp was updated.",
-                    ss.sessionCreatedOn, diff, SESSION_UPDATE_TIMEOUT);
+                    millis, ss.sessionCreatedOn, diff, SESSION_UPDATE_TIMEOUT, station.status);
             // the same station, with the same sessionId
             // so we need just to refresh sessionId timestamp
-            ss.sessionCreatedOn = System.currentTimeMillis();
+            ss.sessionCreatedOn = millis;
             station.status = StationStatusUtils.toString(ss);
             try {
                 stationCache.save(station);
