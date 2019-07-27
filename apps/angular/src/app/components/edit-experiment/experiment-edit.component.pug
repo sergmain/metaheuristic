@@ -1,0 +1,94 @@
+
+mixin default-metadata
+    ct-section('*ngIf'='hyperParams')
+        ct-section-header
+            ct-section-header-row
+                ct-heading Metadata
+        ct-section-body
+            ct-section-body-row
+                ct-pre
+                    | Array of concrete values - [10,27,21]
+                    | Array defined in loop - range(10,30,10)
+                    | Array defined in loop - (10,30,10)
+                    | Concrete value - 10
+                    | Array of strings, some strings contain space - ['#some custom accuracy', accuracy]
+            ct-section-body-row
+                button(mat-flat-button color="primary" wide size="x" '(click)'="addDefaultHyperParams()") Fill with Default Metadatas
+
+mixin metadata-new-param
+    ct-section('*ngIf'='hyperParams' style="font-size:14px")
+        ct-section-body
+            ct-section-body-row
+                ct-flex(align-items="baseline" justify-content="space-between" gap="8px")
+                    ct-flex-item(flex="1")
+                        mat-form-field(appearance="outline")
+                            mat-label Key
+                            input(matInput autocomplete="off" '[(ngModel)]'="newHyperParams.key")
+                    ct-flex-item(flex="2")
+                        mat-form-field(appearance="outline")
+                            mat-label Value
+                            input(matInput autocomplete="off" '[(ngModel)]'="newHyperParams.values")
+            ct-section-body-row
+                ct-flex(justify-content="flex-end")
+                    ct-flex-item    
+                        button(mat-flat-button color="primary" size="x" '(click)'="addHyperParams(el)") Add Metadata
+
+
+
+mixin metadata-params
+    ct-section('*ngIf'='hyperParams' class="metadata-sections")
+        ct-section-body
+            ct-section-body-row
+                ct-table(class="metadata-params")
+                    mat-table('[dataSource]'="hyperParamsDataSource" class="mat-table" multiTemplateDataRows) 
+                        ng-container(matColumnDef="key") 
+                            mat-header-cell(*matHeaderCellDef)  Key 
+                            mat-cell(*matCellDef="let el") {{el.key}} 
+                            mat-cell(*matCellDef="let el") 
+                        ng-container(matColumnDef="edit") 
+                            mat-cell(*matCellDef="let el") 
+                                mat-form-field(appearance="outline")
+                                    mat-label New Value
+                                    input(matInput autocomplete="off" '[(ngModel)]'="currentEditHyperParams.newValues")
+                        ng-container(matColumnDef="empty") 
+                            mat-cell(*matCellDef="let el") 
+                        ng-container(matColumnDef="done") 
+                            mat-cell(*matCellDef="let el")
+                                button(mat-flat-button color="primary" 
+                                    '(click)'="updateHyperParams(el,$event)"
+                                    style="position:relative; top: -5px;") Update
+                        ng-container(matColumnDef="values") 
+                            mat-header-cell(*matHeaderCellDef) Value 
+                            mat-cell(*matCellDef="let el") {{el.values}} 
+                        ng-container(matColumnDef="delete") 
+                            mat-header-cell(*matHeaderCellDef) 
+                            mat-cell(*matCellDef="let el" '(click)'="$event.stopPropagation()") 
+                                button(mat-flat-button color="warn" '(click)'="deleteHyperParams(el)" title="Delete"): mat-icon delete
+                        mat-header-row(*matHeaderRowDef="hyperParamsColumnsToDisplay")
+                        mat-row.caption-row(
+                            '[@editMetadataCaption]'="(currentEditHyperParams == row) ? 'expanded' : 'collapsed' " 
+                            '*matRowDef'="let row; columns: hyperParamsColumnsToDisplay;" 
+                            '(click)'="openEditHyperParams(row)"
+                            '[class.picked-row]'="currentEditHyperParams == row")
+                        mat-row.edit-row('[@editMetadataValue]'="(currentEditHyperParams == row) ? 'expanded' : 'collapsed' " '*matRowDef'="let row; columns: hyperParamsSecondColumnsToDisplay;") 
+
+
+
+
+mixin metadata
+    ct-wrap-block(#metadataBlock)
+        +default-metadata
+        +metadata-new-param
+        +metadata-params
+
+
+
+
+
+
+
+
+
+include simple-experiment.partial.pug
+include snippets.partial.pug
++metadata

@@ -9,6 +9,7 @@
     padding: 0 3em
 }
 
+// TODO remove and update size-x
 .mat-button[size-x],
 .mat-flat-button[size-x],
 .mat-icon-button[size-x],
@@ -16,6 +17,15 @@
     height: 48px;
     font-size: 133%;
 }
+
+.mat-button[size=x],
+.mat-flat-button[size=x],
+.mat-icon-button[size=x],
+.mat-stroked-button[size=x] {
+    height: 48px;
+    font-size: 133%;
+}
+
 
 .mat-button[size-s],
 .mat-flat-button[size-s],

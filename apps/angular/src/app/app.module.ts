@@ -30,7 +30,7 @@ import * as components from '@app/components';
         components.EditPassAccountComponent,
         components.ExperimentsComponent,
         components.AddExperimentComponent,
-        components.EditExperimentComponent,
+        components.ExperimentEditComponent,
         components.InfoExperimentComponent,
         components.ProgressExperimentComponent,
         components.PlansComponent,

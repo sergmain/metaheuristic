@@ -10,9 +10,9 @@ import { Subscription } from 'rxjs';
 import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
 
 @Component({
-    selector: 'edit-experiment',
-    templateUrl: './edit-experiment.component.pug',
-    styleUrls: ['./edit-experiment.component.scss'],
+    selector: 'experiment-edit',
+    templateUrl: './experiment-edit.component.pug',
+    styleUrls: ['./experiment-edit.component.scss'],
     animations: [
         trigger('editMetadataCaption', [
             state('collapsed', style({
@@ -39,7 +39,7 @@ import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmatio
     ]
 })
 
-export class EditExperimentComponent implements OnInit {
+export class ExperimentEditComponent implements OnInit {
     experimentEditResponse: experiment.edit.Response;
     simpleExperimentResponse: experiment.edit.Response;
     addHyperParamsResponse: DefaultResponse;
@@ -63,15 +63,6 @@ export class EditExperimentComponent implements OnInit {
     snippetsDataSource = new MatTableDataSource([]);
     snippetsColumnsToDisplay = ['type', 'code', 'bts'];
 
-    defaultMetadata = [
-        ['epoch', '[10]'],
-        ['RNN', '[LSTM, GRU, SimpleRNN]'],
-        ['activation', '[hard_sigmoid, softplus, softmax, softsign, relu, tanh, sigmoid, linear, elu]'],
-        ['optimizer', '[sgd, nadam, adagrad, adadelta, rmsprop, adam, adamax]'],
-        ['batch_size', '[20, 40, 60]'],
-        ['time_steps', '[5, 40, 60]'],
-        ['metrics_functions', '[\'#in_top_draw_digit, accuracy\', \'accuracy\']']
-    ];
 
     // snippets: any = false;
     // currentEditMetadata: Metadata | null;

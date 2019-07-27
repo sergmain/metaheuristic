@@ -1,0 +1,36 @@
+ct-wrap-block(#snippetsBlock)
+    ct-section('*ngIf'='snippetResult')
+        ct-section-header
+            ct-section-header-row
+                ct-heading Snippets
+        ct-section-body
+
+            ct-section-body-row('*ngIf'="snippetResult.selectOptions.length")
+                ct-section-content
+                    ct-flex(justify-content="space-between" align-items="baseline" gap="8px")
+                        ct-flex-item(flex="1")
+                            mat-form-field
+                                mat-label Snippet
+                                mat-select([(ngModel)]="currentSnippetAddCommit")
+                                    div(*ngFor="let snippet of snippetResult.selectOptions")
+                                        mat-option([value]="snippet") {{snippet.desc}}
+                        ct-flex-item
+                            button(mat-flat-button wide '(click)'="snippetAddCommit(currentSnippetAddCommit)" color="primary" title="Save") Add Snippet
+
+            ct-section-body-row('*ngIf'="snippetsDataSource.filteredData.length")
+                ct-table
+                    table(mat-table '[dataSource]'="snippetsDataSource" class="mat-table") 
+                        ng-container(matColumnDef="type") 
+                            th(mat-header-cell *matHeaderCellDef) Type 
+                            td(mat-cell *matCellDef="let el") {{el.type}} 
+                        ng-container(matColumnDef="code") 
+                            th(mat-header-cell *matHeaderCellDef) Code 
+                            td(mat-cell *matCellDef="let el") {{el.snippetCode}} 
+                        ng-container(matColumnDef="bts") 
+                            th(mat-header-cell *matHeaderCellDef) 
+                            td(mat-cell *matCellDef="let el") 
+                                ct-flex(gap="4px" justify-content="flex-end")
+                                    ct-flex-item: button(mat-flat-button size="forTableRow" color="warn" '(click)'="snippetDeleteCommit(el)" title="Delete"): mat-icon delete
+                        tr(mat-header-row *matHeaderRowDef="snippetsColumnsToDisplay")
+                        tr(mat-row *matRowDef="let row; columns: snippetsColumnsToDisplay;")  
+

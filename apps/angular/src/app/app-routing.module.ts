@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
-import { AboutComponent, AccountsAccessComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, PlanAddComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppViewComponent, AtlasComponent, AtlasExperimentExportImportComponent, AtlasExperimentFeatureProgressComponent, AtlasExperimentInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, BillingComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, ExperimentsComponent, InfoExperimentComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './components';
+import { AboutComponent, AccountsAccessComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, PlanAddComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppViewComponent, AtlasComponent, AtlasExperimentExportImportComponent, AtlasExperimentFeatureProgressComponent, AtlasExperimentInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, BillingComponent, EditAccountComponent, ExperimentEditComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, ExperimentsComponent, InfoExperimentComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './components';
 
 export function launchpadRoute(p: any): any {
     return {
@@ -68,7 +68,7 @@ const routes: Routes = [
 
     launchpadRoute({ path: 'launchpad/experiments', body: ExperimentsComponent, data: { section: 'experiments' } }),
     launchpadRoute({ path: 'launchpad/experiments/add', body: AddExperimentComponent, data: { section: 'experiments' } }),
-    launchpadRoute({ path: 'launchpad/experiments/:experimentId/edit', body: EditExperimentComponent, data: { section: 'experiments' } }),
+    launchpadRoute({ path: 'launchpad/experiments/:experimentId/edit', body: ExperimentEditComponent, data: { section: 'experiments' } }),
     launchpadRoute({ path: 'launchpad/experiments/:experimentId/info', body: InfoExperimentComponent, data: { section: 'experiments' } }),
     launchpadRoute({ path: 'launchpad/experiments/:experimentId/feature-progress/:featureId', body: ProgressExperimentComponent, data: { section: 'experiments' } }),
 
