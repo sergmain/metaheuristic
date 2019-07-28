@@ -103,7 +103,7 @@ public class TaskPersistencer {
 
     public Task resetTask(TaskImpl task) {
         if (task==null) {
-            log.error("task is null");
+            log.error("#307.045 task is null");
             return null;
         }
         log.info("Start resetting task #{}", task.getId());
