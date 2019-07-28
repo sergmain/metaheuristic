@@ -88,7 +88,7 @@ public class WorkbookService {
         Protocol.AssignedTask.Task simpleTask;
     }
 
-    public OperationStatusRest resetTask(long taskId) {
+    public OperationStatusRest resetTask(Long taskId) {
         TaskImpl task = taskRepository.findById(taskId).orElse(null);
         if (task == null) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
@@ -101,7 +101,7 @@ public class WorkbookService {
                     "#705.020 Can't re-run task "+taskId+", this task is orphan and doesn't belong to any workbook");
         }
 
-        Task t = taskPersistencer.resetTask(task);
+        Task t = taskPersistencer.resetTask(task.id);
         if (t==null) {
             WorkbookOperationStatusWithTaskList withTaskList = updateGraphWithSettingAllChildrenTasksAsBroken(workbook, task.id);
             updateTasksStateInDb(withTaskList);
@@ -454,7 +454,7 @@ public class WorkbookService {
     }
 
     public List<Long> storeAllConsoleResults(List<SimpleTaskExecResult> results) {
-        final TaskPersistencer.PostTaskCreationAction action = t -> {
+        final Consumer<Task> action = t -> {
             if (t!=null) {
                 updateTaskExecStateByWorkbookId(t.getWorkbookId(), t.getId(), t.getExecState());
             }

@@ -137,7 +137,7 @@ public class ExperimentRestController {
     }
 
     @PostMapping("/task-rerun/{taskId}")
-    public OperationStatusRest rerunTask(@PathVariable long taskId) {
+    public OperationStatusRest rerunTask(@PathVariable Long taskId) {
         return workbookService.resetTask(taskId);
     }
 

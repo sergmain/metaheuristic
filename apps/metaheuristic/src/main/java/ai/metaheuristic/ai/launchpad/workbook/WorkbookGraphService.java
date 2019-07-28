@@ -34,6 +34,8 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -48,36 +50,11 @@ import java.util.stream.Collectors;
 class WorkbookGraphService {
 
     public static final String EMPTY_GRAPH = "strict digraph G { }";
-    public static final String TASK_EXEC_STATE_ATTR = "task_exec_state";
+    private static final String TASK_EXEC_STATE_ATTR = "task_exec_state";
 
     private final WorkbookCache workbookCache;
 
-    @FunctionalInterface
-    public interface WorkWithGraphVoid {
-        void execute(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph);
-    }
-
-    @FunctionalInterface
-    public interface WorkWithGraphLong {
-        long execute(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph);
-    }
-
-    @FunctionalInterface
-    public interface WorkWithGraphListOfTaskVertex {
-        List<WorkbookParamsYaml.TaskVertex> execute(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph);
-    }
-
-    @FunctionalInterface
-    public interface WorkWithGraphSetOfTaskVertex {
-        Set<WorkbookParamsYaml.TaskVertex> execute(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph);
-    }
-
-    @FunctionalInterface
-    public interface WorkWithGraphTaskVertex {
-        WorkbookParamsYaml.TaskVertex execute(DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph);
-    }
-
-    public void changeGraph(WorkbookImpl workbook, WorkWithGraphVoid callable) throws ImportException {
+    private void changeGraph(WorkbookImpl workbook, Consumer<DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge>> callable) throws ImportException {
         WorkbookParamsYaml wpy = workbook.getWorkbookParamsYaml();
 
         GraphImporter<WorkbookParamsYaml.TaskVertex, DefaultEdge> importer = buildImporter();
@@ -86,7 +63,7 @@ class WorkbookGraphService {
         importer.importGraph(graph, new StringReader(wpy.graph));
 
         try {
-            callable.execute(graph);
+            callable.accept(graph);
         } finally {
             ComponentNameProvider<WorkbookParamsYaml.TaskVertex> vertexIdProvider = v -> v.taskId.toString();
             ComponentAttributeProvider<WorkbookParamsYaml.TaskVertex> vertexAttributeProvider = v -> {
@@ -107,24 +84,29 @@ class WorkbookGraphService {
         }
     }
 
-    public List<WorkbookParamsYaml.TaskVertex> readOnlyGraphListOfTaskVertex(WorkbookImpl workbook, WorkWithGraphListOfTaskVertex callable) throws ImportException {
+    private List<WorkbookParamsYaml.TaskVertex> readOnlyGraphListOfTaskVertex(
+            WorkbookImpl workbook,
+            Function<DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge>, List<WorkbookParamsYaml.TaskVertex>> callable) throws ImportException {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
-        return callable.execute(graph);
+        return callable.apply(graph);
     }
 
-    public Set<WorkbookParamsYaml.TaskVertex> readOnlyGraphSetOfTaskVertex(WorkbookImpl workbook, WorkWithGraphSetOfTaskVertex callable) throws ImportException {
+    private Set<WorkbookParamsYaml.TaskVertex> readOnlyGraphSetOfTaskVertex(
+            WorkbookImpl workbook, Function<DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge>, Set<WorkbookParamsYaml.TaskVertex>> callable) throws ImportException {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
-        return callable.execute(graph);
+        return callable.apply(graph);
     }
 
-    public WorkbookParamsYaml.TaskVertex readOnlyGraphTaskVertex(WorkbookImpl workbook, WorkWithGraphTaskVertex callable) throws ImportException {
+    private WorkbookParamsYaml.TaskVertex readOnlyGraphTaskVertex(
+            WorkbookImpl workbook,
+            Function<DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge>, WorkbookParamsYaml.TaskVertex> callable) throws ImportException {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
-        return callable.execute(graph);
+        return callable.apply(graph);
     }
 
-    public long readOnlyGraphLong(WorkbookImpl workbook, WorkWithGraphLong callable) throws ImportException {
+    private long readOnlyGraphLong(WorkbookImpl workbook, Function<DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge>, Long> callable) throws ImportException {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
-        return callable.execute(graph);
+        return callable.apply(graph);
     }
 
     private DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> prepareGraph(WorkbookImpl workbook) throws ImportException {
@@ -133,11 +115,6 @@ class WorkbookGraphService {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = new DirectedAcyclicGraph<>(DefaultEdge.class);
         importer.importGraph(graph, new StringReader(wpy.graph));
         return graph;
-    }
-
-    public void readOnlyGraphVoid(WorkbookImpl workbook, WorkWithGraphVoid callable) throws ImportException {
-        DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
-        callable.execute(graph);
     }
 
     private static WorkbookParamsYaml.TaskVertex toTaskVertex(String id, Map<String, Attribute> attributes) {

@@ -40,6 +40,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.*;
 
@@ -220,7 +221,7 @@ public class TestPlanService extends PreparingPlan {
         r.setMetrics(null);
         r.setResult(getOKExecResult());
 
-        final TaskPersistencer.PostTaskCreationAction action = t -> {
+        final Consumer<Task> action = t -> {
             if (t!=null) {
                 WorkbookImpl workbook = workbookRepository.findByIdForUpdate(t.getWorkbookId());
                 workbookService.updateTaskExecState(workbook, t.getId(), t.getExecState());
