@@ -1,48 +1,42 @@
-.section
-	.section__footer
-		.flex.flex--jc_sb
-			.buttons.buttons--left
-			.buttons.buttons--right
-				a(routerLink="/launchpad/snippets/add"
-				'[disabled]'="currentState == states.loading" 
-				mat-flat-button color="primary") Add Snippet
+ct-section
+    ct-section-header
+        ct-section-header-row
+            ct-flex(justify-content="space-between")
+                ct-flex-item: ct-heading Snippets
+                ct-flex-item: a(routerLink="/launchpad/snippets/add"): button(mat-flat-button color="primary" '[disabled]'="currentState.has(states.loading)") Add Snippet
+    
+    ct-section-body
+        ct-section-body-row('*ngIf'="currentState.has(states.loading)")
+            mat-progress-bar(mode="indeterminate")
 
-.section
-	.section__header
-		ct-section-caption Snippets
-	.section__body
-		.section__content('*ngIf'="currentState == states.empty")
-			.flex.flex--jc_c Empty
-		.section__content('*ngIf'="currentState == states.loading")
-			mat-progress-bar(mode="indeterminate")
-		.simple-table('*ngIf'="currentState == states.show")
-				table(mat-table '[dataSource]'="dataSource" multiTemplateDataRows class="mat-table")
-					ng-container(matColumnDef="code")
-						th(mat-header-cell *matHeaderCellDef) Code
-						td(mat-cell *matCellDef="let el") {{el.code}}
-					ng-container(matColumnDef="type")
-						th(mat-header-cell *matHeaderCellDef) Type
-						td(mat-cell *matCellDef="let el") {{el.type}}
-					ng-container(matColumnDef="params")
-						th(mat-header-cell *matHeaderCellDef) Params
-						td(mat-cell *matCellDef="let el") 
-							pre {{el.params}}
-					ng-container(matColumnDef="bts")
-						th(mat-header-cell *matHeaderCellDef)
-						td(mat-cell *matCellDef="let el")
-							.buttons.buttons--right
-								button(mat-flat-button color="warn" '(click)'="delete(el)")
-									mat-icon delete
-					tr(mat-header-row *matHeaderRowDef="columnsToDisplay")
-					tr(mat-row *matRowDef="let row; columns: columnsToDisplay;" '[class.deleted-table-row]'="deletedSnippets.includes(row)")
-		.section__content('*ngIf'="currentState == states.loading")
-			mat-progress-bar(mode="indeterminate")
-	.section__footer
-		.flex.flex--jc_sb
-			.buttons.buttons--left
-				button(mat-flat-button #prevTable '(click)'='prev()' disabled): mat-icon arrow_back_ios
-				button(mat-flat-button #nextTable '(click)'='next()' disabled): mat-icon arrow_forward_ios
-			.buttons.buttons--right
-				a(routerLink="/launchpad/snippets/add"
-				'[disabled]'="currentState == states.loading" 
-				mat-flat-button color="primary") Add Snippet
+        ct-section-body-row('*ngIf'="currentState.has(states.show)")
+            ct-table
+                table(mat-table '[dataSource]'="dataSource" multiTemplateDataRows class="mat-table")
+                    ng-container(matColumnDef="code")
+                        th(mat-header-cell *matHeaderCellDef) Code
+                        td(mat-cell *matCellDef="let el") {{el.code}}
+                    ng-container(matColumnDef="type")
+                        th(mat-header-cell *matHeaderCellDef) Type
+                        td(mat-cell *matCellDef="let el") {{el.type}}
+                    ng-container(matColumnDef="params")
+                        th(mat-header-cell *matHeaderCellDef) Params
+                        td(mat-cell *matCellDef="let el") 
+                            ct-pre {{el.params}}
+                    ng-container(matColumnDef="bts")
+                        th(mat-header-cell *matHeaderCellDef)
+                        td(mat-cell *matCellDef="let el")
+                            ct-flex(justify-content="flex-end" gap="8px")
+                                ct-flex-item: button(mat-flat-button color="warn" size="forTableRow" '(click)'="delete(el)"): mat-icon delete
+                    tr(mat-header-row *matHeaderRowDef="columnsToDisplay")
+                    tr(mat-row *matRowDef="let row; columns: columnsToDisplay;" '[class.deleted-table-row]'="deletedSnippets.includes(row)")
+
+    ct-section-footer
+        ct-section-footer-row
+            ct-flex(justify-content="space-between")
+                ct-flex-item
+                    ct-flex(justify-content="space-between" gap="8px")
+                        ct-flex-item: button(mat-flat-button #prevTable '(click)'='prev()' disabled): mat-icon arrow_back_ios
+                        ct-flex-item: button(mat-flat-button #nextTable '(click)'='next()' disabled): mat-icon arrow_forward_ios
+
+                ct-flex-item: a(routerLink="/launchpad/snippets/add"): button(mat-flat-button color="primary" '[disabled]'="currentState.has(states.loading)") Add Snippet
+

@@ -22,8 +22,6 @@
             border-bottom-style: solid;
             border-top-width: 1px;
             border-top-style: solid;
-            border-top-color: rgba(0, 0, 0, 0.05);
-            border-bottom-color: rgba(0, 0, 0, 0.05);
         }
 
         .mat-header-cell {
@@ -57,14 +55,25 @@
     }
 }
 
-:host-context(.dark-theme) {
-
+:host-context(.light-theme) {
     /deep/ {
         .mat-header-cell,
         .mat-cell,
         .mat-footer-cell {
-            border-color: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.05);
+            border-top-color: rgb(240, 240, 240,);
+            border-bottom-color: rgb(240, 240, 240,);
+        }
+    }
+}
+
+
+:host-context(.dark-theme) {
+    /deep/ {
+        .mat-header-cell,
+        .mat-cell,
+        .mat-footer-cell {
+            border-top-color: rgb(32, 32, 32,);
+            border-bottom-color: rgb(32, 32, 32,);
         }
     }
 }
@@ -75,7 +84,6 @@
 
     position: relative;
 }
-
 
 .ct-table__wait {
     position: absolute;
