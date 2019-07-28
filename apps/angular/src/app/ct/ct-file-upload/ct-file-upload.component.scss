@@ -1,3 +1,7 @@
+:host {
+    display: block;
+}
+
 .file {
     display: flex;
     justify-content: space-between;
@@ -16,6 +20,7 @@
     padding: 4px;
     border-left: 1px solid rgba(black, 0.05);
     cursor: pointer;
+
     mat-icon {
         display: block;
     }

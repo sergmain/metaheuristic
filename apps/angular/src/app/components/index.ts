@@ -3,7 +3,7 @@ export * from './accounts-access/accounts-access.component';
 export * from './accounts/accounts.component';
 export * from './add-account/add-account.component';
 export * from './add-experiment/add-experiment.component';
-export * from './add-resource/add-resource.component';
+export * from './resource-add/resource-add.component';
 export * from './add-workbook/add-workbook.component';
 export * from './app-dialog-confirmation/app-dialog-confirmation.component';
 export * from './app-view/app-view.component';

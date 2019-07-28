@@ -41,7 +41,7 @@ import * as components from '@app/components';
         components.AddWorkbookComponent,
         components.EditWorkbookComponent,
         components.ResourcesComponent,
-        components.AddResourceComponent,
+        components.ResourceAddComponent,
         components.SnippetsComponent,
         components.SnippetAddComponent,
         components.StationsComponent,

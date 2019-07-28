@@ -1,0 +1,102 @@
+ct-cols
+    ct-col(size="6")
+        ct-section
+            ct-section-header
+                ct-section-header-row
+                    ct-heading Create Resource from File
+
+            ct-section-body
+                ct-section-body-row
+                    ct-section-content
+                        form( '[formGroup]'="uploadForm" novalidate)
+                            ct-file-upload(#fileUpload)
+                            br
+                            mat-form-field(appearance="outline")
+                                mat-label Resource code
+                                input(autocomplete="off" matInput formControlName="code")
+                                mat-hint This is a required field.
+                            br
+                            mat-form-field(appearance="outline")
+                                mat-label Resource pool code
+                                input(autocomplete="off" matInput formControlName="poolCode")
+                                mat-hint This is a required field.
+                            br
+            ct-section-footer
+                ct-section-footer-row
+                    ct-flex(justify-content="flex-end" gap="8px")
+                        ct-flex-item: button(mat-stroked-button '(click)'="cancel()") Cancel
+                        ct-flex-item: button(mat-flat-button '(click)'="upload()" color="primary") Create
+
+    ct-col(size="6")
+        ct-section('*ngIf'="fileResponse")
+            ct-section-body
+                ct-section-body-row
+                    p STATUS: {{fileResponse.status}}
+                    div(*ngIf="fileResponse.errorMessages")
+                        p(*ngFor="let error of response.errorMessages; index as i; trackBy: trackByFn") {{error}}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ct-cols
+    ct-col(size="6")
+        ct-section
+            ct-section-header
+                ct-section-header-row
+                    ct-heading Create Resource with Storage URL
+
+            ct-section-body
+                ct-section-body-row
+                    ct-section-content
+                        form('[formGroup]'="urlForm" novalidate)
+                            mat-form-field(appearance="outline")
+                                mat-label Resource pool code
+                                input(autocomplete="off" matInput formControlName="poolCode")
+                                mat-hint This is a required field.
+                            br
+                            br
+                            mat-form-field(appearance="outline")
+                                mat-label Params of resources
+                                textarea(autocomplete="off" matInput formControlName="storageUrl"  cdkTextareaAutosize style="min-height:5em;overflow: hidden;")
+                            ct-section-content
+                                mat-hint
+                                    ct-pre
+                                        b Example:
+                                        pre
+                                            |sourcing: disk 
+                                            |disk: 
+                                            |   code: storage-code 
+                                            |   mask: '*' 
+                                        br
+                                        b Example:
+                                        pre
+                                            |sourcing: git
+                                            |git:
+                                            |   repo: https://github.com/sergmain/metaheuristic.git
+                                            |   branch: master
+                                            |   commit: b25331edba72a1a901634212ac55752238fd2dd5
+                            br
+            ct-section-footer
+                ct-section-footer-row
+                    ct-flex(justify-content="flex-end" gap="8px")
+                        ct-flex-item: button(mat-stroked-button '(click)'="cancel()") Cancel
+                        ct-flex-item: button(mat-flat-button '(click)'="create()" color="primary" '[disabled]'="urlForm.invalid") Create
+
+    ct-col(size="6")
+        ct-section('*ngIf'="urlResponse")
+            ct-section-body
+                ct-section-body-row
+                    p STATUS: {{urlResponse.status}}
+                    p(*ngFor="let error of urlResponse.errorMessages; index as i; trackBy: trackByFn") {{error}}
