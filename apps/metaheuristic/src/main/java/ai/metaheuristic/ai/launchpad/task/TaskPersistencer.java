@@ -191,33 +191,35 @@ public class TaskPersistencer {
     }
 
     private Task prepareAndSaveTask(SimpleTaskExecResult result, EnumsApi.TaskExecState state) {
-        TaskImpl task = taskRepository.findById(result.taskId).orElse(null);
-        if (task==null) {
-            log.warn("#307.110 Can't find Task for Id: {}", result.taskId);
-            return null;
-        }
-        task.setExecState(state.value);
+        return TaskFunctions.changeTaskReturnTask(result.taskId, () -> {
+            TaskImpl task = taskRepository.findByIdForUpdate(result.taskId);
+            if (task==null) {
+                log.warn("#307.110 Can't find Task for Id: {}", result.taskId);
+                return null;
+            }
+            task.setExecState(state.value);
 
-        if (state== EnumsApi.TaskExecState.ERROR) {
-            task.setCompleted(true);
-            task.setCompletedOn(System.currentTimeMillis());
-        }
-        else {
-            TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
-            final DataStorageParams dataStorageParams = yaml.taskYaml.resourceStorageUrls.get(yaml.taskYaml.outputResourceCode);
-
-            if (dataStorageParams.sourcing == EnumsApi.DataSourcing.disk) {
+            if (state== EnumsApi.TaskExecState.ERROR) {
                 task.setCompleted(true);
                 task.setCompletedOn(System.currentTimeMillis());
             }
-        }
+            else {
+                TaskParamsYaml yaml = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.getParams());
+                final DataStorageParams dataStorageParams = yaml.taskYaml.resourceStorageUrls.get(yaml.taskYaml.outputResourceCode);
 
-        task.setSnippetExecResults(result.getResult());
-        task.setMetrics(result.getMetrics());
-        task.setResultResourceScheduledOn(System.currentTimeMillis());
-        task = taskRepository.save(task);
+                if (dataStorageParams.sourcing == EnumsApi.DataSourcing.disk) {
+                    task.setCompleted(true);
+                    task.setCompletedOn(System.currentTimeMillis());
+                }
+            }
 
-        return task;
+            task.setSnippetExecResults(result.getResult());
+            task.setMetrics(result.getMetrics());
+            task.setResultResourceScheduledOn(System.currentTimeMillis());
+            task = taskRepository.save(task);
+
+            return task;
+        });
     }
 
 }
