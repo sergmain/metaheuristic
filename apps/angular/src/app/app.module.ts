@@ -50,7 +50,7 @@ import * as components from '@app/components';
         components.NavPilotComponent,
         components.AboutComponent,
         components.LoginComponent,
-        components.AtlasComponent,
+        components.AtlasExperimentsComponent,
         components.AtlasExperimentInfoComponent,
         components.AtlasExperimentFeatureProgressComponent,
         components.BatchComponent,

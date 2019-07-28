@@ -10,7 +10,7 @@ export * from './app-view/app-view.component';
 export * from './atlas-experiment-export-import/atlas-experiment-export-import.component';
 export * from './atlas-experiment-feature-progress/atlas-experiment-feature-progress.component';
 export * from './atlas-experiment-info/atlas-experiment-info.component';
-export * from './atlas/atlas.component';
+export * from './atlas-experiments/atlas-experiments.component';
 export * from './batch-add/batch-add.component';
 export * from './batch-status/batch-status.component';
 export * from './batch/batch.component';

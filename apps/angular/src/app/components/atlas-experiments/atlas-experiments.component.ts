@@ -11,12 +11,12 @@ import { ExperimentItem, experiments } from '@app/services/experiments/experimen
 import { Subscription } from 'rxjs';
 
 @Component({
-    selector: 'atlas',
-    templateUrl: './atlas.component.pug',
-    styleUrls: ['./atlas.component.scss']
+    selector: 'atlas-experiments',
+    templateUrl: './atlas-experiments.component.pug',
+    styleUrls: ['./atlas-experiments.component.scss']
 })
 
-export class AtlasComponent implements OnInit {
+export class AtlasExperimentsComponent implements OnInit {
     readonly states = LoadStates;
     currentStates = new Set();
     experiment: ExperimentInfoResponse.Experiment;

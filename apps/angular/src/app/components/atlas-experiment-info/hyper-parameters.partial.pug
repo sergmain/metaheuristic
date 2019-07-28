@@ -1,15 +1,20 @@
-ct-section-caption Hyper parameters
-.simple-table
-    table(mat-table [dataSource]="tables.hyperParameters.table") 
-        ng-container(matColumnDef="key") 
-            th(mat-header-cell *matHeaderCellDef) Key
-            td(mat-cell *matCellDef="let el") {{el.key}}
-        ng-container(matColumnDef="value") 
-            th(mat-header-cell *matHeaderCellDef) Value
-            td(mat-cell *matCellDef="let el") {{el.values}}
-        ng-container(matColumnDef="variants") 
-            th(mat-header-cell *matHeaderCellDef) Variants
-            td(mat-cell *matCellDef="let el") {{el.variants}}
-        tr(mat-header-row *matHeaderRowDef="tables.hyperParameters.columnsToDisplay") 
-        tr(mat-row *matRowDef="let row; columns: tables.hyperParameters.columnsToDisplay;") 
+ct-section
+    ct-section-header
+        ct-section-header-row
+            ct-heading Hyper parameters
+    ct-section-body
+        ct-section-body-row
+            ct-table
+                table(mat-table [dataSource]="tables.hyperParameters.table") 
+                    ng-container(matColumnDef="key") 
+                        th(mat-header-cell *matHeaderCellDef) Key
+                        td(mat-cell *matCellDef="let el") {{el.key}}
+                    ng-container(matColumnDef="value") 
+                        th(mat-header-cell *matHeaderCellDef) Value
+                        td(mat-cell *matCellDef="let el") {{el.values}}
+                    ng-container(matColumnDef="variants") 
+                        th(mat-header-cell *matHeaderCellDef) Variants
+                        td(mat-cell *matCellDef="let el") {{el.variants}}
+                    tr(mat-header-row *matHeaderRowDef="tables.hyperParameters.columnsToDisplay") 
+                    tr(mat-row *matRowDef="let row; columns: tables.hyperParameters.columnsToDisplay;") 
 

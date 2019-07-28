@@ -1,14 +1,9 @@
 :host {
-    width: 100%;
-    display: flex;
-    justify-content: space-between;
+    display: block;
     margin-bottom: 1em;
 
     &:last-child {
         margin-bottom: 0;
     }
 
-    &[align-items=flex-end] {
-        align-items: flex-end;
-    }
 }

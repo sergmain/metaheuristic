@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
-import { AboutComponent, AccountsAccessComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, PlanAddComponent, ResourceAddComponent, SnippetAddComponent, AddWorkbookComponent, AppViewComponent, AtlasComponent, AtlasExperimentExportImportComponent, AtlasExperimentFeatureProgressComponent, AtlasExperimentInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, BillingComponent, EditAccountComponent, ExperimentEditComponent, EditPassAccountComponent, EditPlanComponent, StationEditComponent, ExperimentsComponent, ExperimentInfoComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './components';
+import { AboutComponent, AccountsAccessComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, PlanAddComponent, ResourceAddComponent, SnippetAddComponent, AddWorkbookComponent, AppViewComponent, AtlasExperimentsComponent, AtlasExperimentExportImportComponent, AtlasExperimentFeatureProgressComponent, AtlasExperimentInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, BillingComponent, EditAccountComponent, ExperimentEditComponent, EditPassAccountComponent, EditPlanComponent, StationEditComponent, ExperimentsComponent, ExperimentInfoComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './components';
 
 export function launchpadRoute(p: any): any {
     return {
@@ -92,7 +92,7 @@ const routes: Routes = [
     launchpadRoute({ path: 'launchpad/batch/:id/status', body: BatchStatusComponent, data: { section: 'batch' } }),
     launchpadRoute({ path: 'launchpad/batch/add', body: BatchAddComponent, data: { section: 'batch' } }),
 
-    launchpadRoute({ path: 'launchpad/atlas/experiments', body: AtlasComponent, data: { section: 'atlas' } }),
+    launchpadRoute({ path: 'launchpad/atlas/experiments', body: AtlasExperimentsComponent, data: { section: 'atlas' } }),
     launchpadRoute({ path: 'launchpad/atlas/experiment-export-import/:atlasId', body: AtlasExperimentExportImportComponent, data: { section: 'atlas' } }),
     launchpadRoute({ path: 'launchpad/atlas/experiment-info/:id', body: AtlasExperimentInfoComponent, data: { section: 'atlas' } }),
     launchpadRoute({ path: 'launchpad/atlas/experiment-feature-progress/:atlasId/:experimentId/:featureId', body: AtlasExperimentFeatureProgressComponent, data: { section: 'atlas' } }),

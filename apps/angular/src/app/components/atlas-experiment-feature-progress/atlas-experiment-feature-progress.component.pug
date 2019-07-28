@@ -1,11 +1,8 @@
 div(*ngIf="response")
-	ct-section-caption The Experiment Info
-	br
-	br
+	ct-section
+		ct-section-header
+			ct-section-header-row
+				ct-heading The Experiment Info:
 	include general-info.partial.pug
-	br
-	br
 	include metrics.partial.pug
-	br
-	br
 	include tasks-console.partial.pug
