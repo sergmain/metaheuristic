@@ -3,8 +3,12 @@ ct-section
         ct-section-header-row
             ct-flex(justify-content="space-between")
                 ct-flex-item: ct-heading Snippets
-                ct-flex-item: a(routerLink="/launchpad/snippets/add"): button(mat-flat-button color="primary" '[disabled]'="currentState.has(states.loading)") Add Snippet
+                ct-flex-item
+                    ct-flex(justify-content="flex-end" align-items="center" gap="16px")
+                        ct-flex-item: mat-slide-toggle('[(ngModel)]'="showParams") Show Params
+                        ct-flex-item: a(routerLink="/launchpad/snippets/add"): button(mat-flat-button color="primary" '[disabled]'="currentState.has(states.loading)") Add Snippet
     
+
     ct-section-body
         ct-section-body-row('*ngIf'="currentState.has(states.loading)")
             mat-progress-bar(mode="indeterminate")
@@ -21,7 +25,8 @@ ct-section
                     ng-container(matColumnDef="params")
                         th(mat-header-cell *matHeaderCellDef) Params
                         td(mat-cell *matCellDef="let el") 
-                            ct-pre {{el.params}}
+                            div('[hidden]'="!showParams")
+                                ct-pre {{el.params}}
                     ng-container(matColumnDef="bts")
                         th(mat-header-cell *matHeaderCellDef)
                         td(mat-cell *matCellDef="let el")

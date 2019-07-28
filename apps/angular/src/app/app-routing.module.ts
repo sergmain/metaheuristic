@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
-import { AboutComponent, AccountsAccessComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, PlanAddComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppViewComponent, AtlasComponent, AtlasExperimentExportImportComponent, AtlasExperimentFeatureProgressComponent, AtlasExperimentInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, BillingComponent, EditAccountComponent, ExperimentEditComponent, EditPassAccountComponent, EditPlanComponent, StationEditComponent, ExperimentsComponent, ExperimentInfoComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './components';
+import { AboutComponent, AccountsAccessComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, PlanAddComponent, AddResourceComponent, SnippetAddComponent, AddWorkbookComponent, AppViewComponent, AtlasComponent, AtlasExperimentExportImportComponent, AtlasExperimentFeatureProgressComponent, AtlasExperimentInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, BillingComponent, EditAccountComponent, ExperimentEditComponent, EditPassAccountComponent, EditPlanComponent, StationEditComponent, ExperimentsComponent, ExperimentInfoComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent } from './components';
 
 export function launchpadRoute(p: any): any {
     return {
@@ -77,7 +77,7 @@ const routes: Routes = [
     launchpadRoute({ path: 'launchpad/resources/:id', body: ResourcesComponent, data: { section: 'resources' } }),
 
     launchpadRoute({ path: 'launchpad/snippets', body: SnippetsComponent, data: { section: 'snippets' } }),
-    launchpadRoute({ path: 'launchpad/snippets/add', body: AddSnippetComponent, data: { section: 'snippets' } }),
+    launchpadRoute({ path: 'launchpad/snippets/add', body: SnippetAddComponent, data: { section: 'snippets' } }),
 
     launchpadRoute({ path: 'launchpad/stations', body: StationsComponent, data: { section: 'stations' } }),
     launchpadRoute({ path: 'launchpad/stations/:id/edit', body: StationEditComponent, data: { section: 'stations' } }),

@@ -21,6 +21,8 @@ export class SnippetsComponent implements OnInit {
     columnsToDisplay: string[] = ['code', 'type', 'params', 'bts'];
     deletedSnippets: (Snippet)[] = [];
 
+    showParams: boolean = false;
+
     @ViewChild('nextTable') nextTable: MatButton;
     @ViewChild('prevTable') prevTable: MatButton;
     @ViewChild('table') table: CtTableComponent;
@@ -36,7 +38,7 @@ export class SnippetsComponent implements OnInit {
         this.updateTable(0);
     }
 
-    updateTable(page) {
+    updateTable(page: number) {
         // TODO: response не содержит pageable
         // TODO: листание
         const subscribe: Subscription = this.snippetsService.snippets.get(page)

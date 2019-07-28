@@ -43,7 +43,7 @@ import * as components from '@app/components';
         components.ResourcesComponent,
         components.AddResourceComponent,
         components.SnippetsComponent,
-        components.AddSnippetComponent,
+        components.SnippetAddComponent,
         components.StationsComponent,
         components.StationEditComponent,
         components.PilotComponent,
