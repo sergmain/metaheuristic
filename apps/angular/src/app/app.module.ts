@@ -45,7 +45,7 @@ import * as components from '@app/components';
         components.SnippetsComponent,
         components.AddSnippetComponent,
         components.StationsComponent,
-        components.EditStationComponent,
+        components.StationEditComponent,
         components.PilotComponent,
         components.NavPilotComponent,
         components.AboutComponent,

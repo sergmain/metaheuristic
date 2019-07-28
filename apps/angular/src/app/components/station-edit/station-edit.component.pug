@@ -1,0 +1,36 @@
+ct-cols
+    ct-col(size="6")
+        ct-section
+            ct-section-header
+                ct-section-header-row
+                    ct-heading Edit Station {{station ? station.id : '...'}}
+            ct-section-body
+                ct-section-body-row('*ngIf'="currentState != states.firstLoading")
+                    ct-section-content
+                        //- mat-form-field(appearance="outline") 
+                        //-     mat-label IP 
+                        //-     input(matInput '[(ngModel)]'="station.ip" value="") 
+                        mat-form-field(appearance="outline") 
+                            mat-label Description 
+                            textarea(matInput '[(ngModel)]'="station.description" value="" cdkTextareaAutosize cdkAutosizeMinRows="5") 
+                    //- ct-section-content
+                    //-     pre {{station.env}}
+                    //- ct-section-content
+                    //-     div Active Time — {{station.activeTime || 'NONE'}}
+                    //- ct-section-content
+                ct-section-body-row('*ngIf'="currentState == states.firstLoading")
+                    mat-progress-bar(mode="indeterminate")
+            ct-section-footer
+                ct-section-footer-row
+                    ct-flex(justify-content="flex-end" gap="8px")
+                        ct-flex-item: button(mat-stroked-button '(click)'="cancel()") Cancel
+                        ct-flex-item: button(mat-flat-button '(click)'="save()" color="primary" '[disabled]'="[states.wait,states.firstLoading].includes(currentState)") Save
+
+
+    ct-col(size="6")
+        ct-section(*ngIf="formResponse")
+            ct-section-body
+                ct-section-body-row
+                    p STATUS: {{formResponse.status}}
+                    p(*ngFor="let error of formResponse.errorMessages; index as i; trackBy: trackByFn") {{error}}
+                    p(*ngFor="let info of formResponse.infoMessages; index as i; trackBy: trackByFn") {{info}}

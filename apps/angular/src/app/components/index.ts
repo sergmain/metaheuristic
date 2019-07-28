@@ -20,7 +20,7 @@ export * from './edit-account/edit-account.component';
 export * from './edit-experiment/experiment-edit.component';
 export * from './edit-pass-account/edit-pass-account.component';
 export * from './edit-plan/edit-plan.component';
-export * from './edit-station/edit-station.component';
+export * from './station-edit/station-edit.component';
 export * from './edit-workbook/edit-workbook.component';
 export * from './experiments/experiments.component';
 export * from './info-experiment/info-experiment.component';
