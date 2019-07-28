@@ -1,3 +1,4 @@
+@import "../node_modules/normalize.css/normalize.css";
 @import "./fonts/roboto/roboto.css";
 @import "./fonts/robotocondensed/robotocondensed.css";
 @import "./fonts/robotomono/robotomono.css";
@@ -34,19 +35,6 @@ button * {
     pointer-events: none;
 }
 
-.simple-notification {
-    word-break: break-word;
-    float: right !important;
-    width: auto !important;
-    min-width: 300px;
-}
-
-.simple-notification-wrapper {
-    min-width: 300px;
-    width: auto !important;
-    max-width: 400px;
-}
-
 .deleted-table-row {
     opacity: 0.5;
     filter: grayscale(1);
@@ -54,4 +42,5 @@ button * {
     user-select: none;
 }
 
-@import "./override-mat-slyles/button.scss";
+@import "./overrided-slyles/mat-button.scss";
+@import './styles-theme.scss'

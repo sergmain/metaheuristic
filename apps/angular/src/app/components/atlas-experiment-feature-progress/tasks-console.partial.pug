@@ -1,52 +1,64 @@
 ct-cols
     ct-col
-        ct-section-caption Tasks 
-        .simple-table.tasks
-            table(mat-table [dataSource]="tables.tasks.table") 
-                ng-container(matColumnDef="id") 
-                    td(mat-cell *matCellDef="let el") {{el.taskId}}
-                ng-container(matColumnDef="col1") 
-                    td(mat-cell *matCellDef="let el") 
-                        table
-                            tr
-                                td type: 
-                                td: span(style="text-transform: uppercase;") {{el.typeAsString}}
-                            tr
-                                td completed: 
-                                td
-                                    span.completed('[class.completed--on]'="el.completed") {{el.completed}} 
-                            tr
-                                td assigned: 
-                                td 
-                                    span(*ngIf="el.assignedOn == null") null
-                                    span {{el.assignedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
-                            tr
-                                td completed: 
-                                td 
-                                    span(*ngIf="el.completedOn == null") null
-                                    span {{el.completedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
-                ng-container(matColumnDef="col2") 
-                    td(mat-cell *matCellDef="let el") 
-                        .flex.flex--fd_c.flex--ai_s
-                            button(mat-stroked-button
-                                '(click)'='currentTask = el; featureProgressConsolePart(el.taskId)'
-                                '[color]'="currentTask == el ? 'primary' : ''" 
-                                '[class.mat-flat-button]'="currentTask == el"
-                                '[class.mat-stroked-button]'="currentTask != el") Info
-                            //- button(mat-stroked-button '(click)'='taskRerun(el.id)' ) Re-run
-                tr(mat-row *matRowDef="let row; columns: tables.tasks.columnsToDisplay;") 
+        ct-section
+            ct-section-header
+                ct-section-header-row
+                    ct-heading Tasks
+            ct-section-body
+                ct-section-body-row
+                    ct-table.tasks
+                        table(mat-table [dataSource]="tables.tasks.table") 
+                            ng-container(matColumnDef="id") 
+                                td(mat-cell *matCellDef="let el") {{el.taskId}}
+                            ng-container(matColumnDef="col1") 
+                                td(mat-cell *matCellDef="let el") 
+                                    table
+                                        tr
+                                            td type: 
+                                            td: span(style="text-transform: uppercase;") {{el.typeAsString}}
+                                        tr
+                                            td completed: 
+                                            td
+                                                span.completed('[class.completed--on]'="el.completed") {{el.completed}} 
+                                        tr
+                                            td assigned: 
+                                            td 
+                                                span(*ngIf="el.assignedOn == null") null
+                                                span {{el.assignedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
+                                        tr
+                                            td completed: 
+                                            td 
+                                                span(*ngIf="el.completedOn == null") null
+                                                span {{el.completedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
+                            ng-container(matColumnDef="col2") 
+                                td(mat-cell *matCellDef="let el") 
+                                    .flex.flex--fd_c.flex--ai_s
+                                        button(mat-stroked-button
+                                            '(click)'='currentTask = el; featureProgressConsolePart(el.taskId)'
+                                            '[color]'="currentTask == el ? 'primary' : ''" 
+                                            '[class.mat-flat-button]'="currentTask == el"
+                                            '[disabled]'="!el.completed"
+                                            '[class.mat-stroked-button]'="currentTask != el") Info
+                                        //- button(mat-stroked-button '(click)'='taskRerun(el.id)' ) Re-run
+                            tr(mat-row *matRowDef="let row; columns: tables.tasks.columnsToDisplay;") 
+   
+   
     ct-col(style="flex:1")
-        ct-section-caption Console output 
-        ct-wrap-block(#consoleView) 
-            .section(*ngIf="!consolePartResponse")
-                .section__body
-                    .section__content
-                        .flex.flex--jc_c.flex--ai_c(style="min-height: 100px;") No Task Info
-
-            pre.console(*ngIf="consolePartResponse")
-                div exitCode: {{consolePartResponse.exidCode || 'NONE'}}
-                div isOk: {{consolePartResponse.isOk}}
-                div ok: {{consolePartResponse.ok}}
-                br
-                div {{consolePartResponse.console}}
-                    //- ngx-json-viewer('[json]'="item.console" '[expanded]'="true") 
+        ct-section
+            ct-section-header
+                ct-section-header-row
+                    ct-heading Console output
+            ct-section-body
+                ct-section-body-row
+                    ct-wrap-block(#consoleView) 
+                        ct-flex(justify-content="center" align-items="center" '*ngIf'="!consolePartResponse")
+                            ct-flex-item
+                                div(style="min-height: 100px;") No Task Info
+                        ct-pre
+                            pre.console(*ngIf="consolePartResponse")
+                                div exitCode: {{consolePartResponse.exidCode || 'NONE'}}
+                                div isOk: {{consolePartResponse.isOk}}
+                                div ok: {{consolePartResponse.ok}}
+                                br
+                                div {{consolePartResponse.console}}
+                                    //- ngx-json-viewer('[json]'="item.console" '[expanded]'="true") 

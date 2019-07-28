@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatButton, MatTableDataSource, MatDialog } from '@angular/material';
-import { CtTableComponent } from '@app/components/ct-table/ct-table.component';
+import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
 import { LoadStates } from '@app/enums/LoadStates';
 import { ResourcesService, resources, Resource } from '@app/services/resources/resources.service';
 import { Subscription } from 'rxjs';
@@ -21,6 +21,7 @@ export class ResourcesComponent implements OnInit {
     deletedResourses: Resource[] = [];
     dataSource = new MatTableDataSource < Resource > ([]);
     columnsToDisplay: (string)[] = [
+        'id',
         'valid',
         'uploadTs',
         'dataTypeAsStr',

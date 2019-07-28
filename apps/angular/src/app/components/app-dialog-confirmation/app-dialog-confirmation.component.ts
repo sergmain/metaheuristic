@@ -1,17 +1,24 @@
 import { Component, Inject } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material';
 
 export interface DialogData {
     resolveTitle: string;
     rejectTitle: string;
-    question ? (...data: any[]) : string;
+    question ?(...data: any[]) : string;
 }
+
+export interface ConfirmationDialogInterface {
+    readonly dialog: MatDialog;
+}
+
 
 @Component({
     selector: 'app-dialog-confirmation',
     templateUrl: './app-dialog-confirmation.component.pug',
     styleUrls: ['./app-dialog-confirmation.component.scss']
 })
+
+
 export class AppDialogConfirmationComponent {
     constructor(
         public dialogRef: MatDialogRef < AppDialogConfirmationComponent > ,

@@ -1,4 +1,4 @@
-import { environment } from 'environments/environment';
+import { environment } from '@src/environments/environment';
 import { jsonToUrlParams as toURL } from '@app/helpers/jsonToUrlParams';
 
 const base: string = environment.baseUrl + 'launchpad/batch';
@@ -28,7 +28,7 @@ const urls: any = {
         // public OperationStatusRest uploadFile(final MultipartFile file, Long planId) {
         //     return batchTopLevelService.batchUploadFromFile(file, planId);
         // }
-        upload: (): string => '',
+        upload: (planId: string, file: any): string => `${base}/batch-upload-from-file`,
 
         // @GetMapping(value= "/batch-status/{batchId}" )
         // public BatchData.Status getProcessingResourceStatus(@PathVariable("batchId") Long batchId) {
@@ -40,13 +40,13 @@ const urls: any = {
         // public BatchData.Status processResourceDelete(@PathVariable Long batchId) {
         //     return batchTopLevelService.getProcessingResourceStatus(batchId);
         // }
-        delete2: (data: any): string => `${base}/batch-delete/?${toURL(data)}`,
+        delete: (data: any): string => `${base}/batch-delete/?${toURL(data)}`,
 
         // @PostMapping("/batch-delete-commit")
         // public OperationStatusRest processResourceDeleteCommit(Long batchId) {
         //     return batchTopLevelService.processResourceDeleteCommit(batchId);
         // }
-        delete: (data: any): string => `${base}/batch-delete-commit?${toURL(data)}`
+        deleteCommit: (data: any): string => `${base}/batch-delete-commit?${toURL(data)}`
     }
 };
 

@@ -1,6 +1,5 @@
 import { DefaultResponse } from '@app/models/DefaultResponse';
-import { Pageable } from '@app/models/Pageable';
-import { Sort } from '@app/models/Sort';
+import { Batches } from './Batches'
 import { Plan } from '@app/models/Plan';
 
 export namespace batches {
@@ -35,45 +34,9 @@ export namespace batch {
             items: Plan[];
         }
     }
-}
+    export namespace upload {
+        export interface Response extends DefaultResponse {
 
-
-export interface Batches {
-    content ? : Batch[] | null;
-    pageable: Pageable;
-    totalPages: number;
-    last: boolean;
-    totalElements: number;
-    size: number;
-    sort: Sort;
-    first: boolean;
-    numberOfElements: number;
-    number: number;
-    empty: boolean;
-}
-
-export interface Batch {
-    batch: {
-        id: number;
-        version: number;
-        planId: number;
-        createdOn: number;
-        execState: number;
-        params: string;
-    };
-    planCode: string;
-    execStateStr: string;
-    execState: number;
-    ok: boolean;
-}
-
-
-export interface Plan {
-    code: string;
-    createdOn: number;
-    id: string | number;
-    locked: boolean;
-    params: string;
-    valid: boolean;
-    version: number;
+        }
+    }
 }

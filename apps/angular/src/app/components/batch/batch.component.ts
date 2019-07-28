@@ -1,10 +1,11 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
 import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
-import { CtTableComponent } from '@app/components/ct-table/ct-table.component';
+import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
 import { LoadStates } from '@app/enums/LoadStates';
 import { Batch, batches, BatchService } from '@app/services/batch/batch.service';
 import { Subscription } from 'rxjs';
+import { AuthenticationService } from '@src/app/services/authentication/authentication.service';
 
 @Component({
     selector: 'batch',
@@ -12,10 +13,8 @@ import { Subscription } from 'rxjs';
     styleUrls: ['./batch.component.scss']
 })
 
-//  TODO: enum of execState
-
 export class BatchComponent implements OnInit {
-    readonly states = LoadStates;
+    states = LoadStates;
     currentStates = new Set();
 
     response: batches.get.Response;
@@ -29,7 +28,8 @@ export class BatchComponent implements OnInit {
 
     constructor(
         private dialog: MatDialog,
-        private batchService: BatchService
+        private batchService: BatchService,
+        private authenticationService: AuthenticationService
     ) {}
 
     ngOnInit() {
@@ -67,7 +67,7 @@ export class BatchComponent implements OnInit {
         resolveTitle: 'Delete'
     })
     delete(batch: Batch) {
-        console.log(batch)
+        console.log(batch);
         // const subscribe = this.batchService.batch.delete()
     }
 

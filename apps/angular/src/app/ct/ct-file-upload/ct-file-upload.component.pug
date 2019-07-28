@@ -1,0 +1,5 @@
+input(#fileInput hidden type="file" name="file" '(change)'="fileChanged($event)") 
+button('*ngIf'="!value" mat-flat-button wide color="primary" '(click)'="fileInput.click()") Select File
+.file('*ngIf'="value")
+    .file__value {{value}}
+    .file__close('(click)'="removeFile()"): mat-icon close

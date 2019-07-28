@@ -6,82 +6,60 @@ import { BrowserModule } from '@angular/platform-browser';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
 import { AccountsService } from '@app/services/accounts/accounts.service';
-// import { AuthService } from '@app/services/auth/auth.service'
 import { AuthenticationService } from '@app/services/authentication/authentication.service';
 import { PlotlyModule } from 'angular-plotly.js';
 import { SimpleNotificationsModule } from 'angular2-notifications';
 import { NgxJsonViewerModule } from 'ngx-json-viewer';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
-// tslint:disable-next-line: max-line-length
-import { AboutComponent, AccountsComponent, AddAccountComponent, AddExperimentComponent, AddPlanComponent, AddResourceComponent, AddSnippetComponent, AddWorkbookComponent, AppDialogConfirmationComponent, AppViewComponent, ArchivePlansComponent, AtlasComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, CtColComponent, CtColsComponent, CtSectionCaptionComponent, CtTableComponent, CtWrapBlockComponent, EditAccountComponent, EditExperimentComponent, EditPassAccountComponent, EditPlanComponent, EditStationComponent, EditWorkbookComponent, ExperimentsComponent, FileUploaderComponent, InfoExperimentComponent, LaunchpadComponent, LoginComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ProcessResourcesComponent, ProgressExperimentComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent, AtlasInfoComponent, AtlasExperimentFeatureProgressComponent } from './components';
 import { JwtInterceptor } from './jwt.interceptor';
 import { MaterialAppModule } from './ngmaterial.module';
 import { NotificationsInterceptor } from './notifications.interceptor';
+import { CtAppModule } from './ct.module';
+import * as components from '@app/components';
 
 @NgModule({
     declarations: [
         AppComponent,
-        AppViewComponent,
-        // launchpad
-        NavLaunchpadComponent,
-        LaunchpadComponent,
-
-        AccountsComponent,
-        AddAccountComponent,
-        EditAccountComponent,
-        EditPassAccountComponent,
-
-        ExperimentsComponent,
-        AddExperimentComponent,
-        EditExperimentComponent,
-        InfoExperimentComponent,
-        ProgressExperimentComponent,
-
-        PlansComponent,
-        AddPlanComponent,
-        EditPlanComponent,
-        ArchivePlansComponent,
-
-        WorkbooksComponent,
-        AddWorkbookComponent,
-        EditWorkbookComponent,
-
-        ResourcesComponent,
-        AddResourceComponent,
-
-        SnippetsComponent,
-        AddSnippetComponent,
-
-        StationsComponent,
-        EditStationComponent,
-        //
-        PilotComponent,
-        NavPilotComponent,
-        ProcessResourcesComponent,
-        //
-        AboutComponent,
-        //
-        LoginComponent,
-        //
-        AtlasComponent,
-        // TODO rename AtlasInfoComponent
-        AtlasInfoComponent,
-        AtlasExperimentFeatureProgressComponent,
-        //
-        BatchComponent,
-        BatchStatusComponent,
-        BatchAddComponent,
-        //
-        AppDialogConfirmationComponent,
-        FileUploaderComponent,
-
-        // custom-tags
-        CtColsComponent,
-        CtSectionCaptionComponent,
-        CtColComponent,
-        CtTableComponent,
-        CtWrapBlockComponent,
+        components.AppViewComponent,
+        components.NavLaunchpadComponent,
+        components.LaunchpadComponent,
+        components.AccountsComponent,
+        components.AddAccountComponent,
+        components.EditAccountComponent,
+        components.EditPassAccountComponent,
+        components.ExperimentsComponent,
+        components.AddExperimentComponent,
+        components.ExperimentEditComponent,
+        components.ExperimentInfoComponent,
+        components.ProgressExperimentComponent,
+        components.PlansComponent,
+        components.PlanAddComponent,
+        components.EditPlanComponent,
+        components.PlansArchiveComponent,
+        components.WorkbooksComponent,
+        components.AddWorkbookComponent,
+        components.EditWorkbookComponent,
+        components.ResourcesComponent,
+        components.ResourceAddComponent,
+        components.SnippetsComponent,
+        components.SnippetAddComponent,
+        components.StationsComponent,
+        components.StationEditComponent,
+        components.PilotComponent,
+        components.NavPilotComponent,
+        components.AboutComponent,
+        components.LoginComponent,
+        components.AtlasExperimentsComponent,
+        components.AtlasExperimentInfoComponent,
+        components.AtlasExperimentFeatureProgressComponent,
+        components.BatchComponent,
+        components.BatchStatusComponent,
+        components.BatchAddComponent,
+        components.AppDialogConfirmationComponent,
+        components.AtlasExperimentExportImportComponent,
+        components.AccountsAccessComponent,
+        components.BillingComponent
     ],
     imports: [
         CommonModule,
@@ -90,14 +68,15 @@ import { NotificationsInterceptor } from './notifications.interceptor';
         AppRoutingModule,
         BrowserAnimationsModule,
         MaterialAppModule,
+        CtAppModule,
         FormsModule,
         ReactiveFormsModule,
         NgxJsonViewerModule,
         HttpClientModule,
-        SimpleNotificationsModule.forRoot(),
+        SimpleNotificationsModule.forRoot()
     ],
     entryComponents: [
-        AppDialogConfirmationComponent
+        components.AppDialogConfirmationComponent
     ],
     providers: [
         AuthGuard,

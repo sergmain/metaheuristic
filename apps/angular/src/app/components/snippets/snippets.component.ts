@@ -1,10 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatButton, MatTableDataSource, MatDialog } from '@angular/material';
-import { CtTableComponent } from '@app/components/ct-table/ct-table.component';
-import { LoadStates } from '@app/enums/LoadStates';
-import { SnippetsService, snippets, Snippet } from '@app/services/snippets/snippets.service';
-import { Subscription } from 'rxjs';
+import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
 import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
+import { LoadStates } from '@app/enums/LoadStates';
+import { Snippet, snippets, SnippetsService } from '@app/services/snippets/snippets.service';
+import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
+import { Subscription } from 'rxjs';
 
 @Component({
     // tslint:disable-next-line: component-selector
@@ -15,11 +15,13 @@ import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmatio
 
 export class SnippetsComponent implements OnInit {
     readonly states: any = LoadStates;
-    currentState: LoadStates = this.states.loading;
+    currentState: Set < LoadStates > = new Set();
     response: snippets.get.Response;
     dataSource = new MatTableDataSource < Snippet > ([]);
     columnsToDisplay: string[] = ['code', 'type', 'params', 'bts'];
     deletedSnippets: (Snippet)[] = [];
+
+    showParams: boolean = false;
 
     @ViewChild('nextTable') nextTable: MatButton;
     @ViewChild('prevTable') prevTable: MatButton;
@@ -28,32 +30,35 @@ export class SnippetsComponent implements OnInit {
     constructor(
         private snippetsService: SnippetsService,
         private dialog: MatDialog
-    ) {}
-
-    // TODO: add pageale
-    // TODO: переделать вид загрузки
-
-    applyFilter(filterValue: string) {
-        this.dataSource.filter = filterValue.trim().toLowerCase();
+    ) {
+        this.currentState.add(this.states.loading);
     }
+
     ngOnInit() {
-        this.getSnippets(0);
+        this.updateTable(0);
     }
 
-    getSnippets(page) {
+    updateTable(page: number) {
         // TODO: response не содержит pageable
         // TODO: листание
-        this.snippetsService.snippets.get(page)
-            .subscribe((response: snippets.get.Response) => {
-                this.response = response;
-                const items: Snippet[] = response.snippets || [];
-                if (items.length) {
-                    this.dataSource = new MatTableDataSource(items);
-                    this.currentState = this.states.show;
-                } else {
-                    this.currentState = this.states.empty;
+        const subscribe: Subscription = this.snippetsService.snippets.get(page)
+            .subscribe(
+                (response: snippets.get.Response) => {
+                    this.response = response;
+                    const items: Snippet[] = response.snippets || [];
+                    if (items.length) {
+                        this.dataSource = new MatTableDataSource(items);
+                        this.currentState.add(LoadStates.show);
+                    } else {
+                        this.currentState.add(LoadStates.empty);
+                    }
+                },
+                () => {},
+                () => {
+                    this.currentState.delete(LoadStates.loading);
+                    subscribe.unsubscribe();
                 }
-            });
+            );
     }
 
     @ConfirmationDialogMethod({
@@ -68,7 +73,7 @@ export class SnippetsComponent implements OnInit {
             .delete(snippet.id)
             .subscribe(
                 () => {
-                    // this.getSnippets(0);
+                    // this.updateTable(0);
                 },
                 () => {},
                 () => {

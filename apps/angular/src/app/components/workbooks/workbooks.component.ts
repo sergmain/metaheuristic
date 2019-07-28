@@ -1,30 +1,11 @@
-import {
-    Component,
-    OnInit,
-    ViewChild
-} from '@angular/core';
-import {
-    PlansService
-} from '@app/services/plans/plans.service';
-import {
-    MatButton,
-    MatTableDataSource
-} from '@angular/material';
-import {
-    ActivatedRoute
-} from '@angular/router';
+import { Component, OnInit, ViewChild } from '@angular/core';
+import { MatButton, MatTableDataSource } from '@angular/material';
+import { ActivatedRoute } from '@angular/router';
+import { LoadStates } from '@app/enums/LoadStates';
+import { WorkbookExecState } from '@app/enums/WorkbookExecState';
+import { WorkbooksResponse } from '@app/models';
+import { PlansService } from '@app/services/plans/plans.service';
 
-import {
-    WorkbooksResponse,
-    Plan,
-    Workbook
-} from '@app/models';
-import {
-    WorkbookExecState
-} from '@app/enums/WorkbookExecState';
-import {
-    LoadStates
-} from '@app/enums/LoadStates';
 
 
 @Component({

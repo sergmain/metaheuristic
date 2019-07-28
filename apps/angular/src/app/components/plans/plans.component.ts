@@ -1,11 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
-import { CtTableComponent } from '@app/components/ct-table/ct-table.component';
+import { ConfirmationDialogInterface, ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
 import { LoadStates } from '@app/enums/LoadStates';
 import { PlansResponse } from '@app/models';
 import { PlansService } from '@app/services/plans/plans.service';
-import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
-
+import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -13,9 +12,9 @@ import { Subscription } from 'rxjs';
     templateUrl: './plans.component.pug',
     styleUrls: ['./plans.component.scss']
 })
-// @ConfirmationDialogClass
-export class PlansComponent implements OnInit {
-    readonly states = LoadStates;
+
+export class PlansComponent implements OnInit, ConfirmationDialogInterface {
+    states = LoadStates;
     currentStates = new Set();
     response: PlansResponse.Response;
     dataSource = new MatTableDataSource < PlansResponse.Plan > ([]);
@@ -23,25 +22,27 @@ export class PlansComponent implements OnInit {
     deletedPlans: PlansResponse.Plan[] = [];
     archivedPlans: PlansResponse.Plan[] = [];
 
+
     @ViewChild('nextTable') nextTable: MatButton;
     @ViewChild('prevTable') prevTable: MatButton;
     @ViewChild('table') table: CtTableComponent;
 
     constructor(
-        private dialog: MatDialog,
+        readonly dialog: MatDialog,
         private planService: PlansService
-    ) {}
-
-    ngOnInit() {
+    ) {
         this.currentStates.add(this.states.firstLoading);
         this.updateTable(0);
     }
 
+    ngOnInit() {
+
+    }
+
     updateTable(page: number) {
         this.currentStates.add(this.states.loading);
-        const subscribe: Subscription = this.planService.plans.get({
-                page
-            })
+        const subscribe: Subscription = this.planService.plans
+            .get({ page })
             .subscribe(
                 (response: PlansResponse.Response) => {
                     this.response = response;
@@ -86,7 +87,6 @@ export class PlansComponent implements OnInit {
         rejectTitle: 'Cancel',
         resolveTitle: 'Archive'
     })
-
     archive(plan: PlansResponse.Plan) {
         this.archivedPlans.push(plan);
         const subscribe: Subscription = this.planService.plan
@@ -113,5 +113,4 @@ export class PlansComponent implements OnInit {
         this.nextTable.disabled = true;
         this.updateTable(this.response.items.number - 1);
     }
-
 }

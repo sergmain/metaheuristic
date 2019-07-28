@@ -3,7 +3,7 @@ import { MatButton, MatTableDataSource, MatDialog } from '@angular/material';
 import { LoadStates } from '@app/enums/LoadStates';
 import { StationsService, stations, Station, ListItemStation } from '@app/services/stations/stations.service';
 import { Subscription } from 'rxjs';
-import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
+import { ConfirmationDialogMethod, ConfirmationDialogInterface } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
 
 @Component({
     selector: 'stations-view',
@@ -11,11 +11,13 @@ import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmatio
     styleUrls: ['./stations.component.scss']
 })
 
-export class StationsComponent implements OnInit {
+export class StationsComponent implements OnInit, ConfirmationDialogInterface {
     readonly states = LoadStates;
     currentState: LoadStates = this.states.loading;
 
     response: stations.get.Response;
+
+    showStatusOfStation: boolean = false;
 
     dataSource = new MatTableDataSource < ListItemStation > ([]);
     columnsToDisplay: string[] = ['id', 'ip', 'description', 'isActive', 'isBlacklisted', 'lastSeen', 'bts'];
@@ -25,7 +27,7 @@ export class StationsComponent implements OnInit {
     @ViewChild('prevTable') prevTable: MatButton;
 
     constructor(
-        private dialog: MatDialog,
+        readonly dialog: MatDialog,
         private stationsService: StationsService
     ) {}
 
@@ -65,7 +67,6 @@ export class StationsComponent implements OnInit {
                 }
             );
     }
-    // tslint:disable-next-line: typedef
     // TODO: визуально не удаляются
 
     @ConfirmationDialogMethod({
