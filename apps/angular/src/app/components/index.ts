@@ -23,7 +23,7 @@ export * from './edit-plan/edit-plan.component';
 export * from './station-edit/station-edit.component';
 export * from './edit-workbook/edit-workbook.component';
 export * from './experiments/experiments.component';
-export * from './info-experiment/info-experiment.component';
+export * from './experiment-info/experiment-info.component';
 export * from './launchpad/launchpad.component';
 export * from './login/login.component';
 export * from './nav-launchpad/nav-launchpad.component';

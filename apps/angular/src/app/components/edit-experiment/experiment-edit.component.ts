@@ -1,13 +1,13 @@
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { Location } from '@angular/common';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatTableDataSource, MatDialog } from '@angular/material';
+import { MatDialog, MatTableDataSource } from '@angular/material';
 import { ActivatedRoute, Router } from '@angular/router';
-import { CtWrapBlockComponent } from '@src/app/ct/ct-wrap-block/ct-wrap-block.component';
-import { DefaultResponse, Experiment } from '@app/models';
-import { ExperimentsService, experiment, SimpleExperiment, HyperParams, HyperParam, SnippetResult, Snippet } from '@app/services/experiments/experiments.service';
-import { Subscription } from 'rxjs';
 import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
+import { DefaultResponse } from '@app/models';
+import { experiment, ExperimentsService, HyperParam, HyperParams, SimpleExperiment, Snippet, SnippetResult } from '@app/services/experiments/experiments.service';
+import { CtWrapBlockComponent } from '@src/app/ct/ct-wrap-block/ct-wrap-block.component';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'experiment-edit',
@@ -137,7 +137,7 @@ export class ExperimentEditComponent implements OnInit {
             key: el.key,
             value: el.newValues
         };
-        let experimentId = this.simpleExperiment.id;
+        let experimentId = this.simpleExperiment.id.toString();
         let subscribe = this.experimentsService.experiment
             .metadataEditCommit(experimentId, data)
             .subscribe((response: DefaultResponse) => {
@@ -154,7 +154,7 @@ export class ExperimentEditComponent implements OnInit {
             key: this.newHyperParams.key,
             value: this.newHyperParams.values
         };
-        let experimentId = this.simpleExperiment.id;
+        let experimentId = this.simpleExperiment.id.toString();
         let subscribe = this.experimentsService.experiment
             .metadataAddCommit(experimentId, data)
             .subscribe(
@@ -179,7 +179,7 @@ export class ExperimentEditComponent implements OnInit {
     deleteHyperParams(el) {
         this.metadataBlock.wait();
         const subscribe: Subscription = this.experimentsService.experiment
-            .metadataDeleteCommit(this.simpleExperiment.id, el.id)
+            .metadataDeleteCommit(this.simpleExperiment.id.toString(), el.id)
             .subscribe(
                 () => this.loadExperimet(),
                 () => {},
@@ -189,7 +189,7 @@ export class ExperimentEditComponent implements OnInit {
 
     addDefaultHyperParams() {
         this.metadataBlock.wait();
-        let experimentId = this.simpleExperiment.id;
+        let experimentId = this.simpleExperiment.id.toString();
         let subscribe = this.experimentsService.experiment
             .metadataDefaultAddCommit(experimentId)
             .subscribe(
@@ -236,10 +236,8 @@ export class ExperimentEditComponent implements OnInit {
 
     snippetAddCommit(el) {
         this.snippetsBlock.wait();
-        const experimentId = this.simpleExperiment.id;
-        const data = {
-            code: el.value
-        };
+        const experimentId = this.simpleExperiment.id.toString();
+        const data = { code: el.value };
         const subscribe = this.experimentsService.experiment
             .snippetAddCommit(experimentId, data)
             .subscribe(

@@ -31,7 +31,7 @@ import * as components from '@app/components';
         components.ExperimentsComponent,
         components.AddExperimentComponent,
         components.ExperimentEditComponent,
-        components.InfoExperimentComponent,
+        components.ExperimentInfoComponent,
         components.ProgressExperimentComponent,
         components.PlansComponent,
         components.PlanAddComponent,
