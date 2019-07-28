@@ -21,6 +21,7 @@ export class ResourcesComponent implements OnInit {
     deletedResourses: Resource[] = [];
     dataSource = new MatTableDataSource < Resource > ([]);
     columnsToDisplay: (string)[] = [
+        'id',
         'valid',
         'uploadTs',
         'dataTypeAsStr',
