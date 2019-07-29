@@ -148,6 +148,9 @@ public class Globals {
 
     public Long chunkSize = null;
 
+    // TODO 2019-07-28 need to handle this case
+    //  https://stackoverflow.com/questions/37436927/utf-8-encoding-of-application-properties-attributes-in-spring-boot
+
     @PostConstruct
     public void init() {
         String publicKeyAsStr = env.getProperty("MH_PUBLIC_KEY");

@@ -1,0 +1,20 @@
+* -text
+
+#
+# The above will handle all files NOT found below
+#
+*.css           text
+*.html          text
+*.java          text
+*.js            text
+*.json          text
+*.properties    text
+*.txt           text
+*.xml           text
+
+# These files are binary and should be left untouched
+*.class         binary
+*.jar           binary
+*.gif           binary
+*.jpg           binary
+*.png           binary
