@@ -1,3 +1,19 @@
+---- bug-501
+url - http://localhost:4200/launchpad/plans
+перенести кнопку "Add" до начала таблицы с Планами
+
+---- bug-502
+url - http://localhost:4200/launchpad/stations
+вывод поля params (AKA  status of station )
+должет сохранять лидирующие пробелы
+
+---- bug-503
+все "плашки" (красные, зеленые, синие) должны убираться не только по таймауту но и по нажатию на них
+
+---- bug-503
+размер "плашек" уменьшить на 25% (шрифт соответственно тоже)
+
+
 1. Снипеты ============
 1.1 - починить Snippets
 DONE, checked 2019-07-29
@@ -36,48 +52,28 @@ DONE, checked 2019-07-29
 4.2 - добавить кнопку отправки Плана в архив. перед отправкой Плана в архив запрашивать подтверждение так же,
     как и при удалении Плана
     rest url длz отправки в архив - /rest/v1/launchpad/plan/plan-archive-commit
-
-NOT_YET
-    план помещается в архив но при этом если переключиться на вкладку Archive там этот план не появляется
-    при этом план все также присутствует на вкладке Current и его можно удалить с этой вкладки.
-    по идее после удаления инфа в списке должна обновляться. если предполагается,
-    что после удаления запись лочится в форме и с ней нельзя ничего сделать, то это не работате
-
 4.3 - на странице Планы сделать 2 таба - Current, Archive. По умолчанию показывать Current.
   rest url для обычных Планов(не менялся) - http://localhost:8080/rest/v1/launchpad/plan/plans
   rest url для архивированных Планов - http://localhost:8080/rest/v1/launchpad/plan/plans-archived-only
   на табе Archive у Плана только кнопка Delete
-NOT_YET
-    после помещения Плана в архив, на вкладку Archive там этот план не появляется, необзодимо послность рефрешить страницу
-    тут скорее всего суть в том что данные для обоих табов загрузаются одновременно.
-    Инфа для каждого таба должна загрудаться только когда таб активен.
 
 5. Batch ===============
 5.1 - реализовать новый модуль Batch (бывший Pilot).
-DONE, checked 2019-07-29
 5.2 - основной линк к Batch распологается в меню launchpad (которое выезжает слева)
-DONE, checked 2019-07-29
 5.3 - - все rest url перечислены в классе ai.metaheuristic.ai.launchpad.rest.v1.BatchRestController
-DONE, checked 2019-07-29
 
 6. Atlas ===============
 6.1 - реализовать новый модуль Atlas. Фактически это таже функциональность, которая доступна по урл /launchpad/experiment-info
-DONE, checked 2019-07-29
 6.2 - т.е. фактически можно скопировать модуль apps/angular/src/app/views/launchpad/views/info-experiment ,
   поменять названия и сделать небольшие изменения
-DONE, checked 2019-07-29
 6.3 - правильное содержимое таблицы mh_atlas можно сгенерить через /launchpad/experiment/experiment-info/ нажав на кнопку 'to Atlas'
-DONE, checked 2019-07-29
 6.4 - основной линк к Atlas распологается в меню launchpad (которое выезжает слева)
-DONE, checked 2019-07-29
 6.5 - все rest url перечислены в классе ai.metaheuristic.ai.launchpad.rest.v1.AtlasRestController
-DONE, checked 2019-07-29
 
 7. Безопасность ==================
 7.1 - добавить поддержку ролевой модели.
   В настоящее время роли включают в себя:
   - ROLE_OPERATOR, ROLE_MANAGER, ROLE_ADMIN, ROLE_BILLING, ROLE_DATA, ROLE_SERVER_REST_ACCESS
-DONE, checked 2019-07-29
 7.2 - описание ролей:
 -- ROLE_ADMIN - полный доступ ко всем функциям на сайте
 -- ROLE_MANAGER 
@@ -90,24 +86,20 @@ DONE, checked 2019-07-29
 -- ROLE_SERVER_REST_ACCESS - указывает, что этот акк для системной коммуникации меджу станцией и площадкой
     эта роль не будет использоваться для разграничения доступа в ангуларе.
     нужно только включить ее в список ролей, на сстранице назначения ролей юзеру
-DONE, checked 2019-07-29
 
 7.3 - юзеру могут быть назначены роли в любых комбинациях
-DONE, checked 2019-07-29
 7.4 - сделать интерфейс выбора ролей для конкретного пользователя. Набор возможных ролей приведен выше.
-DONE, checked 2019-07-29
 7.5 - когда запрашивается урл /rest/v1/user возврашается json который сожержит поле authorities, например:
 {"username":"q=1","publicName":null,"authorities":[{"authority":"ROLE_ADMIN"},{"authority":"ROLE_MANAGER"},{"authority":"ROLE_ACCESS_REST"}]}
   authority это и есть роли
-DONE, checked 2019-07-29
 
 
 8. Billing ===============
 8.1 - реализовать новый модуль Billing.
   TODO - предоставить rest урл для Billing
-DONE, MOVED_TO_NEXT_STAGE
 8.2 - основной линк к биллингу распологается в верхнем меню
-DONE, MOVED_TO_NEXT_STAGE
+
+
 
 
 
@@ -117,10 +109,6 @@ DONE, MOVED_TO_NEXT_STAGE
 http://localhost:4200/launchpad/experiments/300/edit
 
 в открывающуюся форму должно копироваться текущее значение. сейчас поле пустое и предлагается все с нуля заполнять
-NOT_YET
-    сейчас поле seed пустое, из за этого нельзя создать эксперимент.
-    надо сделать деволтным значение этого поля 1
-
 
 ---- bug-101
 на этой же странице сразу после начала раздела Metadata
@@ -130,7 +118,6 @@ Array defined in loop - range(10,30,10)
 Array defined in loop - (10,30,10)
 Concrete value - 10
 Array of strings, some strings contain space - ['#some custom accuracy', accuracy]
-DONE, checked 2019-07-29
 
 ---- bug-102
 страница http://localhost:4200/launchpad/atlas-experiment-feature-progress/14/253/1
@@ -139,15 +126,11 @@ DONE, checked 2019-07-29
 #285.040 workbookId is null
 
 правильный запрос - http://localhost:8080/rest/v1/launchpad/atlas/atlas-experiment-feature-progress
-DONE, checked 2019-07-29
 
 ---- bug-103
 url - http://localhost:4200/launchpad/resources/add
 раздел Create resource from file
 поле должно быть опциональным
-NOT_YET
-    функциональншо сделано, но подпись все еще "This is a required field."
-    подпись должна быть "This is an optional field"
 
 ---- bug-104
 url - http://localhost:4200/launchpad/resources/add
@@ -167,46 +150,34 @@ git:
   branch: master
   commit: b25331edba72a1a901634212ac55752238fd2dd5
 
-NOT_YET
-    поменять местами поле ввода "Params of resources" и вывод примеров.
-    Т.е. порядок должен быть такой:
-    - поле Resource pool code
-    - Examples
-    - Params of resources
 
 ---- bug-105
 url - http://localhost:4200/launchpad/resources
 должна быть возможность горизонтального скролинга страницы.
 сейчас кнопри удаления ресурса недоступны т.к.в ыходят за границу экрана
 Update: или решить проблему выхода кнопок за экран по другому
-DONE, checked 2019-07-29
 
 ---- bug-106
 url - http://localhost:4200/launchpad/stations
 должны быть радио-кнопка которая управляет выводом поля params (AKA  status of station )
 как сделано смотреть здесь - http://localhost:8080/launchpad/station/stations
-DONE, checked 2019-07-29
 
 ---- bug-107
 url - http://localhost:4200/launchpad/experiments
 если кнопка "Info" акивна, то кнопка "Edit" Должна быть задисаблена
-DONE, checked 2019-07-29
 
 ---- bug-108
 url - http://localhost:4200/launchpad/experiments/299/info
 отсутствует кнопка "to Atlas"
 как сделано смотреть здесь в html-версии
-DONE, checked 2019-07-29
 
 ---- bug-109
 url - http://localhost:4200/launchpad/resources
 перенести кнопку "Create resource" до начала таблицы с ресурсами
-DONE, checked 2019-07-29
 
 ---- bug-110
 url - http://localhost:4200/launchpad/snippets
 перенести кнопку "Add" до начала таблицы со снипетами
-DONE, checked 2019-07-29
 
 
 - тестирование версии от 2019-07-29
@@ -232,30 +203,6 @@ url - http://localhost:4200/launchpad/batch
 url - http://localhost:4200/launchpad/snippets
 поле Params в формате yaml. Поэтому отображение отступов необзодимо для понимания сути конфига.
 Сейчас лидирующие пробелы удаляются
-
----- bug-206
-url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
-execStatus показывается как число, надо использовать поле feature.execStatusAsString
-
----- bug-207
-url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
-в таблице "Metrics as the table" значения выводятся как строка через запятую.
-Должно быть вывод ввиде таблицы
-
----- bug-208
-url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
-у таблицы "Tasks" отсутствует навигация по записям
-
----- bug-209
-url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
-у "Console output" не должно быть переводов строки, инфа должна выводиться как есть
-если разметка на это странице поедет, то ок. главное чтобы строки выводились без wrap'ов
-
-
-
-
-
-
 
 
 
