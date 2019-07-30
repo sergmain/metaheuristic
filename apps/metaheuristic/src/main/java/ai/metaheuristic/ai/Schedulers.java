@@ -75,6 +75,8 @@ public class Schedulers {
                 launchpadService.getWorkbookSchedulerService().updateWorkbookStatuses(needReconciliation);
             } catch (InvalidDataAccessResourceUsageException e) {
                 log.error("!!! need to investigate. Error while updateWorkbookStatuses()",e);
+            } catch (Throwable th) {
+                log.error("Error while updateWorkbookStatuses()", th);
             }
             finally {
                 if (needReconciliation) {

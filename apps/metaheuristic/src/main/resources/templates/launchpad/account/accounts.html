@@ -48,7 +48,7 @@
         <tr th:each="r : ${result.accounts}">
             <td th:text="${r.id}">#Id</td>
             <td th:text="${r.enabled} ? 'Yes' : 'No'">Is enabled</td>
-            <td th:text="${r.username +'='+r.token}">Login</td>
+            <td th:text="${r.username}">Login</td>
             <td th:text="${r.publicName}">publicName</td>
             <td th:text="${#dates.formatISO(r.createdOn)}">CreatedOn</td>
             <td><a class="pure-button pure-button-primary" th:href="${'/launchpad/account/account-edit/' + r.id}">Edit</a></td>

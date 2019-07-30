@@ -94,7 +94,6 @@ public class SpringSecurityWebAuxTestConfig {
 
             account.setId(DATA_REST_ID);
             account.setUsername("data_rest");
-            account.setToken("123");
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);
@@ -109,7 +108,6 @@ public class SpringSecurityWebAuxTestConfig {
 
             account.setId(ADMIN_ID);
             account.setUsername("admin");
-            account.setToken("123");
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);
@@ -124,7 +122,6 @@ public class SpringSecurityWebAuxTestConfig {
 
             account.setId(DATA_ID);
             account.setUsername("data");
-            account.setToken("123");
             account.setAccountNonExpired(true);
             account.setAccountNonLocked(true);
             account.setCredentialsNonExpired(true);

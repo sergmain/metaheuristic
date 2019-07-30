@@ -85,8 +85,6 @@ public class WorkbookSchedulerService {
                     Integer execState = (Integer) o[1];
                     states.put(taskId, execState);
                 }
-//                final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-//                readWriteLock.writeLock().lock();
                 ConcurrentHashMap<Long, Integer> taskStates = new ConcurrentHashMap<>();
                 AtomicBoolean isNullState = new AtomicBoolean(false);
                 vertices.stream().parallel().forEach(tv -> {

@@ -77,7 +77,6 @@ public class AccountTopLevelService {
         }
 
         account.setPassword(passwordEncoder.encode(account.getPassword()));
-        account.setToken(UUID.randomUUID().toString());
         account.setCreatedOn(System.currentTimeMillis());
         account.setRoles("ROLE_OPERATOR");
         account.setAccountNonExpired(true);

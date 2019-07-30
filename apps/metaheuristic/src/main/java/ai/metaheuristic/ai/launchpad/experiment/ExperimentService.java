@@ -246,10 +246,13 @@ public class ExperimentService {
             if (!epy.processing.maxValueCalculated) {
                 updateMaxValueForExperimentFeatures(e.id);
             }
+/*
+            // TODO 2019-07-29 because of OOM don't export to atlas right now
             if (!epy.processing.exportedToAtlas) {
                 atlasService.toAtlas(e.workbookId, experimentId);
                 setExportedToAtlas(experimentId);
             }
+*/
         }
     }
 
