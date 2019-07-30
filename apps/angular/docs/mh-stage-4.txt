@@ -229,24 +229,19 @@ url - http://localhost:4200/launchpad/batch
 при удалении Batch ничего не происходит. батч все так же в бд
 
 ---- bug-205
-url - http://localhost:4200/launchpad/snippets
-поле Params в формате yaml. Поэтому отображение отступов необзодимо для понимания сути конфига.
-Сейчас лидирующие пробелы удаляются
-
----- bug-206
 url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
 execStatus показывается как число, надо использовать поле feature.execStatusAsString
 
----- bug-207
+---- bug-206
 url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
 в таблице "Metrics as the table" значения выводятся как строка через запятую.
 Должно быть вывод ввиде таблицы
 
----- bug-208
+---- bug-207
 url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
 у таблицы "Tasks" отсутствует навигация по записям
 
----- bug-209
+---- bug-208
 url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
 у "Console output" не должно быть переводов строки, инфа должна выводиться как есть
 если разметка на это странице поедет, то ок. главное чтобы строки выводились без wrap'ов
