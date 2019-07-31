@@ -237,12 +237,17 @@ class WorkbookGraphService {
         try {
             return readOnlyGraphListOfTaskVertex(workbook, graph -> {
 
-                //noinspection UnnecessaryLocalVariable
-                List<WorkbookParamsYaml.TaskVertex> vertices = graph.vertexSet()
-                        .stream()
-                        .filter(o -> graph.outDegreeOf(o)==0)
-                        .collect(Collectors.toList());
-                return vertices;
+                try {
+                    //noinspection UnnecessaryLocalVariable
+                    List<WorkbookParamsYaml.TaskVertex> vertices = graph.vertexSet()
+                            .stream()
+                            .filter(o -> graph.outDegreeOf(o)==0)
+                            .collect(Collectors.toList());
+                    return vertices;
+                } catch (Throwable th) {
+                    log.error("#915.019 error", th);
+                    throw new RuntimeException("Error", th);
+                }
             });
         }
         catch (Throwable th) {
