@@ -100,7 +100,7 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
 
     @Transactional(readOnly = true)
     @Query("SELECT t FROM TaskImpl t where t.id in :ids order by t.id asc ")
-    List<TaskImpl> findTasksByIds(Pageable pageable, List<Long> ids);
+    List<TaskImpl> findTasksByIds(List<Long> ids);
 
 
     @SuppressWarnings("SqlRedundantOrderingDirection")
