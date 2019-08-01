@@ -510,7 +510,7 @@ public class WorkbookService {
 
     public List<WorkbookParamsYaml.TaskVertex> findAll(WorkbookImpl workbook) {
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block, findAll()");
+//        log.debug("Before entering in sync block, findAll()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {
@@ -604,7 +604,7 @@ public class WorkbookService {
 
     public List<WorkbookParamsYaml.TaskVertex> findAllForAssigning(WorkbookImpl workbook) {
         final Object obj = syncMap.computeIfAbsent(workbook.getId(), o -> new Object());
-        log.debug("Before entering in sync block, findAll()");
+//        log.debug("Before entering in sync block, findAll()");
         //noinspection SynchronizationOnLocalVariableOrMethodParameter
         synchronized (obj) {
             try {

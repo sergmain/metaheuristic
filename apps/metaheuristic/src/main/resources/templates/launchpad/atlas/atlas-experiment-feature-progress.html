@@ -2,9 +2,9 @@
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
 >
-    <!--/*@thymesVar id="tasks" type="Slice<AtlasParamsYaml.TaskWithParams>"*/-->
-    <!--/*@thymesVar id="feature" type="ai.metaheuristic.api.data.experiment.ExperimentParamsYaml$ExperimentFeature"*/-->
-    <!--/*@thymesVar id="consoleResult" type="ai.metaheuristic.ai.launchpad.data.AtlasData.ConsoleResult"*/-->
+    <!--/*@thymesVar id="tasks" type="Slice<ai.metaheuristic.api.data.atlas.AtlasParamsYaml$TaskWithParams>"*/-->
+    <!--/*@thymesVar id="feature" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentFeatureData"*/-->
+    <!--/*@thymesVar id="consoleResult" type="ai.metaheuristic.ai.launchpad.data.AtlasData$ConsoleResult"*/-->
     <!--/*@thymesVar id="params" type="ai.metaheuristic.ai.launchpad.data.AtlasData$HyperParamResult"*/-->
     <!--/*@thymesVar id="metrics" type="ai.metaheuristic.ai.launchpad.data.AtlasData$MetricsResult"*/-->
     <!--/*@thymesVar id="atlasId" type="java.lang.Long"*/-->
