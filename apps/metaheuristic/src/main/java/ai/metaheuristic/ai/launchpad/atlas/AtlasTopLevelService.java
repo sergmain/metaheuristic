@@ -300,6 +300,7 @@ public class AtlasTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#280.19 experiment wasn't found in atlas, id: " + id);
         }
+        atlasTaskRepository.deleteByAtlasId(id);
         atlasRepository.deleteById(id);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

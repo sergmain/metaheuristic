@@ -47,5 +47,8 @@ public class AtlasTaskParamsYamlV1 implements BaseParams {
     public Long assignedOn;
     public String typeAsString;
 
+    public String metrics;
+    public String snippetExecResults;
+
     public final int version = 1;
 }

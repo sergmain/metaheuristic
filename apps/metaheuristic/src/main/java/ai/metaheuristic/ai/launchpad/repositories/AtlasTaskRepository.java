@@ -39,4 +39,5 @@ public interface AtlasTaskRepository extends CrudRepository<AtlasTask, Long> {
     @Transactional(readOnly = true)
     AtlasTask findByAtlasIdAndTaskId(Long atlasId, Long taskId);
 
+    void deleteByAtlasId(Long atlasId);
 }

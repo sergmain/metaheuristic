@@ -27,10 +27,10 @@ import java.io.Serializable;
  * Time: 1:15 AM
  */
 @Entity
-@Table(name = "MH_ATLAS")
+@Table(name = "MH_ATLAS_TASK")
 @Data
 public class AtlasTask implements Serializable {
-    private static final long serialVersionUID = -1225513309547283331L;
+    private static final long serialVersionUID = -1225513309547284431L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
