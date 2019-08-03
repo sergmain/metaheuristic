@@ -65,21 +65,6 @@ public class AtlasParamsYaml implements BaseParams {
         public int execState;
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @ToString
-    public static class TaskWithParams {
-        public Long taskId;
-        public String taskParams;
-        public int execState;
-
-        public Long completedOn;
-        public boolean completed;
-        public Long assignedOn;
-        public String typeAsString;
-    }
-
     public long createdOn;
     public final int version = 2;
     public PlanWithParams plan;

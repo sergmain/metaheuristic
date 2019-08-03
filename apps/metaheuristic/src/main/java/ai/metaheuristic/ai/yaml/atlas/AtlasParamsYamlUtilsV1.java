@@ -18,7 +18,6 @@ package ai.metaheuristic.ai.yaml.atlas;
 
 import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV1;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV2;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.yaml.snakeyaml.Yaml;
@@ -73,11 +72,7 @@ public class AtlasParamsYamlUtilsV1
 
     @Override
     public String toString(AtlasParamsYamlV1 yaml) {
-        return null;
-    }
-
-    public String toString(PlanParamsYamlV1 planYaml) {
-        return getYaml().dump(planYaml);
+        return getYaml().dump(yaml);
     }
 
     public AtlasParamsYamlV1 to(String s) {

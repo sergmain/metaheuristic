@@ -29,13 +29,14 @@ import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
+import ai.metaheuristic.ai.yaml.atlas.AtlasTaskParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
+import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
-import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -124,7 +125,23 @@ public class AtlasService {
                     AtlasTask at = new AtlasTask();
                     at.atlasId = atlas.id;
                     at.taskId = t.getId();
-                    at.params = t.getParams();
+                    AtlasTaskParamsYaml atpy = new AtlasTaskParamsYaml();
+                    atpy.assignedOn = t.getAssignedOn();
+                    atpy.completed = t.isCompleted();
+                    atpy.completedOn = t.getCompletedOn();
+                    atpy.execState = t.getExecState();
+                    atpy.taskId = t.getId();
+                    atpy.taskParams = t.getParams();
+                    atpy.typeAsString = epy.processing.taskFeatures.stream()
+                            .filter(tf->tf.taskId.equals(t.getId()))
+                            .map(tf->EnumsApi.ExperimentTaskType.from(tf.taskType))
+                            .findFirst()
+                            .orElse(EnumsApi.ExperimentTaskType.UNKNOWN)
+                            .toString();
+                    atpy.snippetExecResults = t.getSnippetExecResults();
+                    atpy.metrics = t.getMetrics();
+
+                    at.params = AtlasTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
                     atlasTaskRepository.save(at);
                 });
 

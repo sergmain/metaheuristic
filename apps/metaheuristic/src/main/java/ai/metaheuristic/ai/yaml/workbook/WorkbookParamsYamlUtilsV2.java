@@ -69,8 +69,8 @@ public class WorkbookParamsYamlUtilsV2
         return null;
     }
 
-    public String toString(WorkbookParamsYamlV2 planYaml) {
-        return getYaml().dump(planYaml);
+    public String toString(WorkbookParamsYamlV2 yaml) {
+        return getYaml().dump(yaml);
     }
 
     public WorkbookParamsYamlV2 to(String s) {
