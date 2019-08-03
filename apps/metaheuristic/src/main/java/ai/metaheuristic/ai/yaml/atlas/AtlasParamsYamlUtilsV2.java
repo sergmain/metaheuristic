@@ -16,41 +16,39 @@
 
 package ai.metaheuristic.ai.yaml.atlas;
 
-import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV1;
+import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV2;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.stream.Collectors;
-
 /**
  * @author Serge
  * Date: 6/22/2019
  * Time: 11:36 PM
  */
-public class AtlasParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<AtlasParamsYamlV1, AtlasParamsYamlV2, AtlasParamsYamlUtilsV2, Void, Void, Void> {
+public class AtlasParamsYamlUtilsV2
+        extends AbstractParamsYamlUtils<AtlasParamsYamlV2, AtlasParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     public Yaml getYaml() {
-        return YamlUtils.init(AtlasParamsYamlV1.class);
+        return YamlUtils.init(AtlasParamsYamlV2.class);
     }
 
     @Override
-    public AtlasParamsYamlV2 upgradeTo(AtlasParamsYamlV1 src) {
+    public AtlasParamsYaml upgradeTo(AtlasParamsYamlV2 src) {
         src.checkIntegrity();
-        AtlasParamsYamlV2 trg = new AtlasParamsYamlV2();
+        AtlasParamsYaml trg = new AtlasParamsYaml();
         trg.createdOn = src.createdOn;
-        trg.plan = new AtlasParamsYamlV2.PlanWithParamsV2(src.plan.planId, src.plan.planParams);
-        trg.workbook = new AtlasParamsYamlV2.WorkbookWithParamsV2(src.workbook.workbookId, src.workbook.workbookParams, src.workbook.execState);
-        trg.experiment = new AtlasParamsYamlV2.ExperimentWithParamsV2(src.experiment.experimentId, src.experiment.experimentParams);
-        trg.taskIds = src.tasks.stream().map(o->o.taskId).collect(Collectors.toList());
+        trg.plan = new AtlasParamsYaml.PlanWithParams(src.plan.planId, src.plan.planParams);
+        trg.workbook = new AtlasParamsYaml.WorkbookWithParams(src.workbook.workbookId, src.workbook.workbookParams, src.workbook.execState);
+        trg.experiment = new AtlasParamsYaml.ExperimentWithParams(src.experiment.experimentId, src.experiment.experimentParams);
+        trg.taskIds = src.taskIds;
 
         trg.checkIntegrity();
         return trg;
@@ -62,8 +60,8 @@ public class AtlasParamsYamlUtilsV1
     }
 
     @Override
-    public AtlasParamsYamlUtilsV2 nextUtil() {
-        return (AtlasParamsYamlUtilsV2)AtlasParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
@@ -72,7 +70,7 @@ public class AtlasParamsYamlUtilsV1
     }
 
     @Override
-    public String toString(AtlasParamsYamlV1 yaml) {
+    public String toString(AtlasParamsYamlV2 yaml) {
         return null;
     }
 
@@ -80,9 +78,9 @@ public class AtlasParamsYamlUtilsV1
         return getYaml().dump(planYaml);
     }
 
-    public AtlasParamsYamlV1 to(String s) {
+    public AtlasParamsYamlV2 to(String s) {
         //noinspection UnnecessaryLocalVariable
-        final AtlasParamsYamlV1 p = getYaml().load(s);
+        final AtlasParamsYamlV2 p = getYaml().load(s);
         return p;
     }
 

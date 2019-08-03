@@ -46,10 +46,6 @@ public class AtlasParamsYamlWithCache {
         return getExperimentParamsYaml().processing.features.stream().filter(o -> Objects.equals(o.id, featureId)).findAny().orElse(null);
     }
 
-    public AtlasParamsYaml.TaskWithParams getTask(Long taskId) {
-        return atlasParams.tasks.stream().filter(o -> Objects.equals(o.taskId, taskId)).findAny().orElse(null);
-    }
-
     public ExperimentParamsYaml.ExperimentTaskFeature getExperimentTaskFeature(Long taskId) {
         return getExperimentParamsYaml().processing.taskFeatures
                 .stream()

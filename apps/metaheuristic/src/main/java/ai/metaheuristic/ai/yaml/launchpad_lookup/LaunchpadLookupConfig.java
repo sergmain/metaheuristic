@@ -51,7 +51,18 @@ public class LaunchpadLookupConfig {
         public String taskProcessingTime;
         public String restPassword;
         public String restUsername;
+
+        /**
+         * won't delete this field for backward compatibility
+         */
+        @Deprecated
         public String restToken;
+        // for backward compatibility
+        public String getRestToken() {
+            return "";
+        }
+
+
         public boolean acceptOnlySignedSnippets;
 
         public PublicKey createPublicKey() {

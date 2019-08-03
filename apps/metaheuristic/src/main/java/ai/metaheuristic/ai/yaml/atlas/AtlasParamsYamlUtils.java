@@ -29,11 +29,13 @@ import java.util.Map;
 public class AtlasParamsYamlUtils {
 
     private static final AtlasParamsYamlUtilsV1 YAML_UTILS_V_1 = new AtlasParamsYamlUtilsV1();
-    private static final AtlasParamsYamlUtilsV1 DEFAULT_UTILS = YAML_UTILS_V_1;
+    private static final AtlasParamsYamlUtilsV2 YAML_UTILS_V_2 = new AtlasParamsYamlUtilsV2();
+    private static final AtlasParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
     public static final BaseYamlUtils<AtlasParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
             Map.of(
-                    1, YAML_UTILS_V_1
+                    1, YAML_UTILS_V_1,
+                    2, YAML_UTILS_V_2
             ),
             DEFAULT_UTILS
     );

@@ -45,9 +45,8 @@ public class GeneratePasswords implements CommandLineRunner {
             return;
         }
 
-        System.out.println("Passwords and tokens:");
-        System.out.println("\tmaster password: " + args[0]);
-        System.out.println("\tmaster password encoded: " + passwordEncoder.encode(args[0]));
-        System.out.println("\tmaster token: " + UUID.randomUUID());
+        System.out.println("Passwords:");
+        System.out.println("\tplain password: " + args[0]);
+        System.out.println("\tpassword encoded: " + passwordEncoder.encode(args[0]));
    }
 }

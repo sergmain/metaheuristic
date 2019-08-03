@@ -27,7 +27,7 @@ import java.util.List;
 
 @Data
 @NoArgsConstructor
-public class AtlasParamsYaml implements BaseParams {
+public class AtlasParamsYamlV2 implements BaseParams {
 
     @Override
     public boolean checkIntegrity() {
@@ -41,7 +41,7 @@ public class AtlasParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class PlanWithParams {
+    public static class PlanWithParamsV2 {
         public Long planId;
         public String planParams;
     }
@@ -50,7 +50,7 @@ public class AtlasParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class ExperimentWithParams {
+    public static class ExperimentWithParamsV2 {
         public Long experimentId;
         public String experimentParams;
     }
@@ -59,31 +59,16 @@ public class AtlasParamsYaml implements BaseParams {
     @NoArgsConstructor
     @AllArgsConstructor
     @ToString
-    public static class WorkbookWithParams {
+    public static class WorkbookWithParamsV2 {
         public Long workbookId;
         public String workbookParams;
         public int execState;
     }
 
-    @Data
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @ToString
-    public static class TaskWithParams {
-        public Long taskId;
-        public String taskParams;
-        public int execState;
-
-        public Long completedOn;
-        public boolean completed;
-        public Long assignedOn;
-        public String typeAsString;
-    }
-
     public long createdOn;
     public final int version = 2;
-    public PlanWithParams plan;
-    public WorkbookWithParams workbook;
-    public ExperimentWithParams experiment;
+    public PlanWithParamsV2 plan;
+    public WorkbookWithParamsV2 workbook;
+    public ExperimentWithParamsV2 experiment;
     public List<Long> taskIds = new ArrayList<>();
 }

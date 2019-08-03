@@ -18,14 +18,12 @@ package ai.metaheuristic.ai.launchpad.atlas;
 
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.beans.Atlas;
-import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
+import ai.metaheuristic.ai.launchpad.repositories.AtlasTaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
 import ai.metaheuristic.ai.utils.ControllerUtils;
@@ -36,6 +34,7 @@ import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.launchpad.Task;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -61,6 +60,7 @@ public class AtlasService {
     private final ExperimentCache experimentCache;
     private final TaskRepository taskRepository;
     private final AtlasRepository atlasRepository;
+    private final AtlasTaskRepository atlasTaskRepository;
     private final WorkbookCache workbookCache;
 
     @Data
@@ -83,7 +83,11 @@ public class AtlasService {
         return result;
     }
 
-    public OperationStatusRest toAtlas(Long workbookId, long experimentId) {
+    private static String getPoolCodeForExperiment(Long workbookId, Long experimentId) {
+        return String.format("stored-experiment-%d-%d",workbookId, experimentId);
+    }
+
+    public OperationStatusRest storeExperimentToAtlas(Long workbookId, Long experimentId) {
         StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(experimentId);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.errorMessages);
@@ -99,28 +103,35 @@ public class AtlasService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Experiment already stored");
         }
 */
-        Atlas b = new Atlas();
+        Atlas a = new Atlas();
         try {
-            b.params = AtlasParamsYamlUtils.BASE_YAML_UTILS.toString(stored.atlasParamsYamlWithCache.atlasParams);
+            a.params = AtlasParamsYamlUtils.BASE_YAML_UTILS.toString(stored.atlasParamsYamlWithCache.atlasParams);
         } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "General error while storing experiment, " + e.toString());
         }
         ExperimentParamsYaml epy = stored.atlasParamsYamlWithCache.getExperimentParamsYaml();
 
-        b.name = epy.experimentYaml.name;
-        b.description = epy.experimentYaml.description;
-        b.code = epy.experimentYaml.code;
-        b.createdOn = System.currentTimeMillis();
-        atlasRepository.save(b);
+        a.name = epy.experimentYaml.name;
+        a.description = epy.experimentYaml.description;
+        a.code = epy.experimentYaml.code;
+        a.createdOn = System.currentTimeMillis();
+        final Atlas atlas = atlasRepository.save(a);
+
+        // store all tasks' results
+        taskRepository.findAllByWorkbookId(workbookId)
+                .forEach(t->{
+                    AtlasTask at = new AtlasTask();
+                    at.atlasId = atlas.id;
+                    at.taskId = t.getId();
+                    at.params = t.getParams();
+                    atlasTaskRepository.save(at);
+                });
+
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
-    public static String getPoolCodeForExperiment(long workbookId, long experimentId) {
-        return String.format("stored-experiment-%d-%d",workbookId, experimentId);
-    }
-
-    public StoredToAtlasWithStatus toExperimentStoredToAtlas(long experimentId) {
+    public StoredToAtlasWithStatus toExperimentStoredToAtlas(Long experimentId) {
 
         Experiment experiment = experimentCache.findById(experimentId);
         if (experiment==null) {
@@ -143,31 +154,12 @@ public class AtlasService {
         atlasParamsYaml.plan = new AtlasParamsYaml.PlanWithParams(plan.id, plan.params);
         atlasParamsYaml.workbook = new AtlasParamsYaml.WorkbookWithParams(workbook.id, workbook.params, workbook.execState);
         atlasParamsYaml.experiment = new AtlasParamsYaml.ExperimentWithParams(experiment.id, experiment.params);
-        atlasParamsYaml.tasks = taskRepository.findAllByWorkbookId(workbook.getId()).stream()
-                .map(o-> {
-                    String typeAsString = TaskParamsYamlUtils.BASE_YAML_UTILS.to(o.getParams()).taskYaml.snippet.type;
-                    return new AtlasParamsYaml.TaskWithParams(
-                            o.getId(), o.getParams(), o.getExecState(), o.getMetrics(), o.getSnippetExecResults(),
-                            o.getCompletedOn(),
-                            o.isCompleted(),
-                            o.getAssignedOn(),
-                            typeAsString
-
-                    );
-                })
-                .collect(Collectors.toList());
+        atlasParamsYaml.taskIds = taskRepository.findAllByWorkbookId(workbook.getId()).stream()
+                .map(Task::getId).collect(Collectors.toList());
 
         StoredToAtlasWithStatus result = new StoredToAtlasWithStatus();
         result.atlasParamsYamlWithCache = new AtlasParamsYamlWithCache( atlasParamsYaml );
         result.status = Enums.StoringStatus.OK;
         return result;
     }
-
-/*
-    public ConsoleOutputStoredToAtlas toConsoleOutputStoredToAtlas(long workbookId) {
-        //noinspection UnnecessaryLocalVariable
-        ConsoleOutputStoredToAtlas result = consoleFormAtlasService.collectConsoleOutputs(workbookId);
-        return result;
-    }
-*/
 }
