@@ -59,7 +59,10 @@ public class StationTopLevelService {
     private final WorkbookService workbookService;
     private final TaskRepository taskRepository;
 
-    private static final long STATION_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
+    // Attention, this value must be greater than
+    // ai.metaheuristic.ai.launchpad.server.ServerService.SESSION_UPDATE_TIMEOUT
+    // at least for 20 seconds
+    public static final long STATION_TIMEOUT = TimeUnit.SECONDS.toMillis(140);
 
     public static String createNewSessionId() {
         return UUID.randomUUID().toString() + '-' + UUID.randomUUID().toString();
