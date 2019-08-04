@@ -61,6 +61,7 @@ public class AtlasService {
     private final AtlasRepository atlasRepository;
     private final AtlasTaskRepository atlasTaskRepository;
     private final AtlasParamsYamlUtils atlasParamsYamlUtils;
+    private final AtlasStreamService atlasStreamService;
     private final WorkbookCache workbookCache;
 
     @Data
@@ -119,27 +120,7 @@ public class AtlasService {
         final Atlas atlas = atlasRepository.save(a);
 
         // store all tasks' results
-        taskRepository.findAllByWorkbookIdAsStream(workbookId)
-                .forEach(t->{
-                    AtlasTask at = new AtlasTask();
-                    at.atlasId = atlas.id;
-                    at.taskId = t.getId();
-                    AtlasTaskParamsYaml atpy = new AtlasTaskParamsYaml();
-                    atpy.assignedOn = t.getAssignedOn();
-                    atpy.completed = t.isCompleted();
-                    atpy.completedOn = t.getCompletedOn();
-                    atpy.execState = t.getExecState();
-                    atpy.taskId = t.getId();
-                    atpy.taskParams = t.getParams();
-                    // typeAsString will be initialized when AtlasTaskParamsYaml will be requested
-                    // see method ai.metaheuristic.ai.launchpad.atlas.AtlasTopLevelService.findTasks
-                    atpy.typeAsString = null;
-                    atpy.snippetExecResults = t.getSnippetExecResults();
-                    atpy.metrics = t.getMetrics();
-
-                    at.params = AtlasTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
-                    atlasTaskRepository.save(at);
-                });
+        atlasStreamService.transferTasksToAtlas(atlas.id, workbookId);
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
