@@ -46,27 +46,5 @@ public class AtlasStreamService {
 
     @Transactional
     public void transferTasksToAtlas(Long atlasId, Long workbookId) {
-        try (Stream<Task> stream = taskRepository.findAllByWorkbookIdAsStream(workbookId)) {
-            stream.forEach(t -> {
-                AtlasTask at = new AtlasTask();
-                at.atlasId = atlasId;
-                at.taskId = t.getId();
-                AtlasTaskParamsYaml atpy = new AtlasTaskParamsYaml();
-                atpy.assignedOn = t.getAssignedOn();
-                atpy.completed = t.isCompleted();
-                atpy.completedOn = t.getCompletedOn();
-                atpy.execState = t.getExecState();
-                atpy.taskId = t.getId();
-                atpy.taskParams = t.getParams();
-                // typeAsString will be initialized when AtlasTaskParamsYaml will be requested
-                // see method ai.metaheuristic.ai.launchpad.atlas.AtlasTopLevelService.findTasks
-                atpy.typeAsString = null;
-                atpy.snippetExecResults = t.getSnippetExecResults();
-                atpy.metrics = t.getMetrics();
-
-                at.params = AtlasTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
-                atlasTaskRepository.save(at);
-            });
-        }
     }
 }

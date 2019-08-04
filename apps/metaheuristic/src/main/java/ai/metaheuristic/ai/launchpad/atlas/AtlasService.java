@@ -36,6 +36,7 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.launchpad.Task;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -120,7 +121,33 @@ public class AtlasService {
         final Atlas atlas = atlasRepository.save(a);
 
         // store all tasks' results
-        atlasStreamService.transferTasksToAtlas(atlas.id, workbookId);
+        stored.atlasParamsYamlWithCache.atlasParams.taskIds
+                .forEach(id -> {
+                    Task t = taskRepository.findById(id).orElse(null);
+                    if (t == null) {
+                        return;
+                    }
+                    AtlasTask at = new AtlasTask();
+                    at.atlasId = atlas.id;
+                    at.taskId = t.getId();
+                    AtlasTaskParamsYaml atpy = new AtlasTaskParamsYaml();
+                    atpy.assignedOn = t.getAssignedOn();
+                    atpy.completed = t.isCompleted();
+                    atpy.completedOn = t.getCompletedOn();
+                    atpy.execState = t.getExecState();
+                    atpy.taskId = t.getId();
+                    atpy.taskParams = t.getParams();
+                    // typeAsString will be initialized when AtlasTaskParamsYaml will be requested
+                    // see method ai.metaheuristic.ai.launchpad.atlas.AtlasTopLevelService.findTasks
+                    atpy.typeAsString = null;
+                    atpy.snippetExecResults = t.getSnippetExecResults();
+                    atpy.metrics = t.getMetrics();
+
+                    at.params = AtlasTaskParamsYamlUtils.BASE_YAML_UTILS.toString(atpy);
+                    atlasTaskRepository.save(at);
+
+                });
+
 
         return OperationStatusRest.OPERATION_STATUS_OK;
     }

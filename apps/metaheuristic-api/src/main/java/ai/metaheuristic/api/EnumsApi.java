@@ -213,6 +213,8 @@ public class EnumsApi {
     }
 
     public enum WorkbookExecState {
+        ERROR(-2),          // some error in configuration
+        UNKNOWN(-1),        // unknown state
         NONE(0),            // just created workbook
         PRODUCING(1),       // producing was just started
         PRODUCED(2),        // producing was finished
@@ -220,8 +222,7 @@ public class EnumsApi {
         STOPPED(4),         // stopped
         FINISHED(5),        // finished
         DOESNT_EXIST(6),    // doesn't exist. this state is needed at station side to reconcile list of experiments
-        UNKNOWN(-1),        // unknown state
-        ERROR(-2);          // some error in configuration
+        EXPORTING_TO_ATLAS(7);    // workbook is marked as needed to be exported to atlas
 
         public int code;
 
@@ -231,6 +232,11 @@ public class EnumsApi {
 
         public static WorkbookExecState toState(int code) {
             switch (code) {
+                case -2:
+                    return ERROR;
+                case -1:
+                    //noinspection
+                    return UNKNOWN;
                 case 0:
                     return NONE;
                 case 1:
@@ -245,11 +251,8 @@ public class EnumsApi {
                     return FINISHED;
                 case 6:
                     return DOESNT_EXIST;
-                case -1:
-                    //noinspection
-                    return UNKNOWN;
-                case -2:
-                    return ERROR;
+                case 7:
+                    return EXPORTING_TO_ATLAS;
                 default:
                     return UNKNOWN;
             }
