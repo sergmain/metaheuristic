@@ -36,7 +36,6 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
-import ai.metaheuristic.api.launchpad.Task;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -48,7 +47,6 @@ import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.util.Collections;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -121,7 +119,7 @@ public class AtlasService {
         final Atlas atlas = atlasRepository.save(a);
 
         // store all tasks' results
-        taskRepository.findAllByWorkbookId(workbookId)
+        taskRepository.findAllByWorkbookIdAsStream(workbookId)
                 .forEach(t->{
                     AtlasTask at = new AtlasTask();
                     at.atlasId = atlas.id;
@@ -169,8 +167,7 @@ public class AtlasService {
         atlasParamsYaml.plan = new AtlasParamsYaml.PlanWithParams(plan.id, plan.params);
         atlasParamsYaml.workbook = new AtlasParamsYaml.WorkbookWithParams(workbook.id, workbook.params, workbook.execState);
         atlasParamsYaml.experiment = new AtlasParamsYaml.ExperimentWithParams(experiment.id, experiment.params);
-        atlasParamsYaml.taskIds = taskRepository.findAllByWorkbookId(workbook.getId()).stream()
-                .map(Task::getId).collect(Collectors.toList());
+        atlasParamsYaml.taskIds = taskRepository.findAllTaskIdsByWorkbookId(workbook.getId());
 
         StoredToAtlasWithStatus result = new StoredToAtlasWithStatus();
         result.atlasParamsYamlWithCache = new AtlasParamsYamlWithCache( atlasParamsYaml );
