@@ -62,6 +62,7 @@ public class AtlasService {
     private final TaskRepository taskRepository;
     private final AtlasRepository atlasRepository;
     private final AtlasTaskRepository atlasTaskRepository;
+    private final AtlasParamsYamlUtils atlasParamsYamlUtils;
     private final WorkbookCache workbookCache;
 
     @Data
@@ -106,7 +107,7 @@ public class AtlasService {
 */
         Atlas a = new Atlas();
         try {
-            a.params = AtlasParamsYamlUtils.BASE_YAML_UTILS.toString(stored.atlasParamsYamlWithCache.atlasParams);
+            a.params = atlasParamsYamlUtils.BASE_YAML_UTILS.toString(stored.atlasParamsYamlWithCache.atlasParams);
         } catch (YAMLException e) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "General error while storing experiment, " + e.toString());
@@ -132,12 +133,9 @@ public class AtlasService {
                     atpy.execState = t.getExecState();
                     atpy.taskId = t.getId();
                     atpy.taskParams = t.getParams();
-                    atpy.typeAsString = epy.processing.taskFeatures.stream()
-                            .filter(tf->tf.taskId.equals(t.getId()))
-                            .map(tf->EnumsApi.ExperimentTaskType.from(tf.taskType))
-                            .findFirst()
-                            .orElse(EnumsApi.ExperimentTaskType.UNKNOWN)
-                            .toString();
+                    // typeAsString will be initialized when AtlasTaskParamsYaml will be requested
+                    // see method ai.metaheuristic.ai.launchpad.atlas.AtlasTopLevelService.findTasks
+                    atpy.typeAsString = null;
                     atpy.snippetExecResults = t.getSnippetExecResults();
                     atpy.metrics = t.getMetrics();
 

@@ -41,7 +41,7 @@ public class WorkbookParamsYamlUtilsV1
     }
 
     @Override
-    public WorkbookParamsYamlV2 upgradeTo(WorkbookParamsYamlV1 workbookParams) {
+    public WorkbookParamsYamlV2 upgradeTo(WorkbookParamsYamlV1 workbookParams, Long ... vars) {
         WorkbookParamsYamlV2 t = new WorkbookParamsYamlV2();
         BeanUtils.copyProperties(workbookParams, t.workbookYaml);
         if (workbookParams.poolCodes!=null) {

@@ -43,7 +43,7 @@ public class TaskParamsYamlUtilsV1
     }
 
     @Override
-    public TaskParamsYamlV2 upgradeTo(TaskParamsYamlV1 taskParams) {
+    public TaskParamsYamlV2 upgradeTo(TaskParamsYamlV1 taskParams, Long ... vars) {
         TaskParamsYamlV2 t = new TaskParamsYamlV2();
         BeanUtils.copyProperties(taskParams, t.taskYaml, "preSnippet", "postSnippet");
         if (taskParams.preSnippet!=null) {

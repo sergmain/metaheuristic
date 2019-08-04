@@ -43,7 +43,7 @@ public class TaskParamsYamlUtilsV2
     }
 
     @Override
-    public TaskParamsYaml upgradeTo(TaskParamsYamlV2 yaml) {
+    public TaskParamsYaml upgradeTo(TaskParamsYamlV2 yaml, Long ... vars) {
         TaskParamsYaml t = new TaskParamsYaml();
         t.taskYaml = new TaskParamsYaml.TaskYaml();
         BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml);

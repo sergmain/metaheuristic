@@ -28,7 +28,7 @@ import java.util.Map;
  * Date: 6/17/2019
  * Time: 9:58 PM
  */
-public class BaseYamlUtils<T > {
+public class BaseYamlUtils<T> {
 
     private final ParamsYamlUtilsFactory FACTORY = new ParamsYamlUtilsFactory();
 
@@ -77,14 +77,14 @@ public class BaseYamlUtils<T > {
         }
     }
 
-    public T to(String s) {
+    public T to(String s, Long ... vars) {
         try {
             YamlVersion v = YamlForVersioning.getYamlForVersion().load(s);
             AbstractParamsYamlUtils yamlUtils = getForVersion(v.getActualVersion());
             BaseParams currPlanParamsYaml = yamlUtils.to(s);
             do {
                 //noinspection unchecked
-                currPlanParamsYaml = yamlUtils.upgradeTo(currPlanParamsYaml);
+                currPlanParamsYaml = yamlUtils.upgradeTo(currPlanParamsYaml, vars);
             } while ((yamlUtils=(AbstractParamsYamlUtils)yamlUtils.nextUtil())!=null);
 
             //noinspection unchecked,UnnecessaryLocalVariable

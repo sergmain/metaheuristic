@@ -46,6 +46,9 @@ public class TestExperimentToJson extends PreparingPlan {
     @Autowired
     private AtlasService atlasService;
 
+    @Autowired
+    private AtlasParamsYamlUtils atlasParamsYamlUtils;
+
     @Override
     public String getPlanYamlAsString() {
         return getPlanParamsYamlAsString_Simple();
@@ -66,10 +69,10 @@ public class TestExperimentToJson extends PreparingPlan {
         AtlasService.StoredToAtlasWithStatus r = atlasService.toExperimentStoredToAtlas(experimentId);
         assertEquals(Enums.StoringStatus.OK, r.status);
 
-        String yaml = AtlasParamsYamlUtils.BASE_YAML_UTILS.toString(r.atlasParamsYamlWithCache.atlasParams);
+        String yaml = atlasParamsYamlUtils.BASE_YAML_UTILS.toString(r.atlasParamsYamlWithCache.atlasParams);
 
         System.out.println("yaml =\n" + yaml);
-        AtlasParamsYamlWithCache atywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(yaml));
+        AtlasParamsYamlWithCache atywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(yaml));
         System.out.println("atywc = " + atywc);
 
         // TODO 2019-07-13 add here comparisons of r.atlasParamsYamlWithCache.atlasParams and atywc

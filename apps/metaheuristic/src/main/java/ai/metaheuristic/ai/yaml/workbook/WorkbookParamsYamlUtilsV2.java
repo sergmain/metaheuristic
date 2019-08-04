@@ -41,7 +41,7 @@ public class WorkbookParamsYamlUtilsV2
     }
 
     @Override
-    public WorkbookParamsYaml upgradeTo(WorkbookParamsYamlV2 yaml) {
+    public WorkbookParamsYaml upgradeTo(WorkbookParamsYamlV2 yaml, Long ... vars) {
         WorkbookParamsYaml t = new WorkbookParamsYaml();
 
         // right now we don't need to convert Graph because if has only one version of structure

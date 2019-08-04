@@ -86,6 +86,7 @@ public class AtlasTopLevelService {
 
     private final AtlasRepository atlasRepository;
     private final AtlasTaskRepository atlasTaskRepository;
+    private final AtlasParamsYamlUtils atlasParamsYamlUtils;
     private final WorkbookService workbookService;
 
     private static class ParamFilter {
@@ -169,29 +170,29 @@ public class AtlasTopLevelService {
 
     }
 
-    public AtlasData.ExperimentDataOnly getExperimentDataOnly(Long id) {
+    public AtlasData.ExperimentDataOnly getExperimentDataOnly(Long atlasId) {
 
-        Atlas atlas = atlasRepository.findById(id).orElse(null);
+        Atlas atlas = atlasRepository.findById(atlasId).orElse(null);
         if (atlas == null) {
-            return new AtlasData.ExperimentDataOnly("#280.02 experiment wasn't found in atlas, id: " + id);
+            return new AtlasData.ExperimentDataOnly("#280.02 experiment wasn't found in atlas, atlasId: " + atlasId);
         }
 
         AtlasParamsYamlWithCache ypywc;
         try {
-            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+            ypywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
         } catch (YAMLException e) {
             String es = "#280.05 Can't parse an atlas, error: " + e.toString();
             log.error(es, e);
             return new AtlasData.ExperimentDataOnly(es);
         }
         if (ypywc.atlasParams.experiment == null) {
-            return new AtlasData.ExperimentDataOnly("#280.07 experiment wasn't found, experimentId: " + id);
+            return new AtlasData.ExperimentDataOnly("#280.07 experiment wasn't found, experimentId: " + atlasId);
         }
         if (ypywc.atlasParams.workbook == null) {
-            return new AtlasData.ExperimentDataOnly("#280.16 experiment has broken ref to workbook, experimentId: " + id);
+            return new AtlasData.ExperimentDataOnly("#280.16 experiment has broken ref to workbook, experimentId: " + atlasId);
         }
         if (ypywc.atlasParams.workbook.workbookId==null ) {
-            return new AtlasData.ExperimentDataOnly("#280.12 experiment wasn't startet yet, experimentId: " + id);
+            return new AtlasData.ExperimentDataOnly("#280.12 experiment wasn't startet yet, experimentId: " + atlasId);
         }
 
         ExperimentApiData.ExperimentData experiment = new ExperimentApiData.ExperimentData();
@@ -219,29 +220,29 @@ public class AtlasTopLevelService {
         return result;
     }
 
-    public AtlasData.ExperimentInfoExtended getExperimentInfoExtended(Long id) {
+    public AtlasData.ExperimentInfoExtended getExperimentInfoExtended(Long atlasId) {
 
-        Atlas atlas = atlasRepository.findById(id).orElse(null);
+        Atlas atlas = atlasRepository.findById(atlasId).orElse(null);
         if (atlas == null) {
-            return new AtlasData.ExperimentInfoExtended("#280.02 experiment wasn't found in atlas, id: " + id);
+            return new AtlasData.ExperimentInfoExtended("#280.02 experiment wasn't found in atlas, atlasId: " + atlasId);
         }
 
         AtlasParamsYamlWithCache ypywc;
         try {
-            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+            ypywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
         } catch (YAMLException e) {
             String es = "#280.05 Can't parse an atlas, error: " + e.toString();
             log.error(es, e);
             return new AtlasData.ExperimentInfoExtended(es);
         }
         if (ypywc.atlasParams.experiment == null) {
-            return new AtlasData.ExperimentInfoExtended("#280.07 experiment wasn't found, experimentId: " + id);
+            return new AtlasData.ExperimentInfoExtended("#280.07 experiment wasn't found, experimentId: " + atlasId);
         }
         if (ypywc.atlasParams.workbook == null) {
-            return new AtlasData.ExperimentInfoExtended("#280.16 experiment has broken ref to workbook, experimentId: " + id);
+            return new AtlasData.ExperimentInfoExtended("#280.16 experiment has broken ref to workbook, experimentId: " + atlasId);
         }
         if (ypywc.atlasParams.workbook.workbookId==null ) {
-            return new AtlasData.ExperimentInfoExtended("#280.12 experiment wasn't startet yet, experimentId: " + id);
+            return new AtlasData.ExperimentInfoExtended("#280.12 experiment wasn't startet yet, experimentId: " + atlasId);
         }
 
         ExperimentApiData.ExperimentData experiment = new ExperimentApiData.ExperimentData();
@@ -313,7 +314,7 @@ public class AtlasTopLevelService {
 
         AtlasParamsYamlWithCache ypywc;
         try {
-            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+            ypywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
         } catch (YAMLException e) {
             String es = "#280.05 Can't parse an atlas, error: " + e.toString();
             log.error(es, e);
@@ -521,7 +522,7 @@ public class AtlasTopLevelService {
 
         AtlasParamsYamlWithCache ypywc;
         try {
-            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+            ypywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
         } catch (YAMLException e) {
             final String es = "#280.35 Can't extract experiment from atlas, error: " + e.toString();
             log.error(es, e);
@@ -533,7 +534,7 @@ public class AtlasTopLevelService {
             return new AtlasData.ExperimentFeatureExtendedResult("#280.37 feature wasn't found, experimentFeatureId: " + featureId);
         }
 
-        AtlasData.ExperimentFeatureExtendedResult result = prepareExperimentFeatures(ypywc, experimentFeature);
+        AtlasData.ExperimentFeatureExtendedResult result = prepareExperimentFeatures(atlasId, ypywc, experimentFeature);
         if (result==null) {
             return new AtlasData.ExperimentFeatureExtendedResult("#280.40 can't prepare experiment data");
         }
@@ -541,7 +542,7 @@ public class AtlasTopLevelService {
     }
 
     private AtlasData.ExperimentFeatureExtendedResult prepareExperimentFeatures(
-            AtlasParamsYamlWithCache ypywc, final ExperimentFeature experimentFeature) {
+            Long atlasId, AtlasParamsYamlWithCache ypywc, final ExperimentFeature experimentFeature) {
 
         ExperimentParamsYaml epy = ypywc.getExperimentParamsYaml();
         final Map<Long, Integer> taskToTaskType = epy.processing.taskFeatures
@@ -558,7 +559,7 @@ public class AtlasTopLevelService {
         Slice<AtlasTaskParamsYaml> tasks = new SliceImpl<>(
                 taskWIthTypes.subList(0, taskWIthTypes.size()>Consts.PAGE_REQUEST_10_REC.getPageSize() ? Consts.PAGE_REQUEST_10_REC.getPageSize() : taskWIthTypes.size())
                         .stream()
-                        .map(id-> atlasTaskRepository.findById(id).orElse(null))
+                        .map(id-> atlasTaskRepository.findByAtlasIdAndTaskId(atlasId, id))
                         .filter(Objects::nonNull)
                         .map( o-> AtlasTaskParamsYamlUtils.BASE_YAML_UTILS.to(o.params))
                         .collect(Collectors.toList()),
@@ -630,7 +631,7 @@ public class AtlasTopLevelService {
             return new AtlasData.ConsoleResult("#280.42 experiment wasn't found in atlas, id: " + atlasId);
         }
 
-        AtlasTask task = atlasTaskRepository.findById(taskId).orElse(null);
+        AtlasTask task = atlasTaskRepository.findByAtlasIdAndTaskId(atlasId, taskId);
         if (task==null ) {
             return new AtlasData.ConsoleResult("#280.47 Can't find a console output");
         }
@@ -648,7 +649,7 @@ public class AtlasTopLevelService {
 
         AtlasParamsYamlWithCache ypywc;
         try {
-            ypywc = new AtlasParamsYamlWithCache(AtlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params));
+            ypywc = new AtlasParamsYamlWithCache(atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params, atlasId));
         } catch (YAMLException e) {
             final String es = "#280.60 Can't extract experiment from atlas, error: " + e.toString();
             log.error(es, e);
@@ -676,6 +677,17 @@ public class AtlasTopLevelService {
         }
         List<AtlasTaskParamsYaml> selected = getTasksForFeatureIdAndParams(atlasId, estb, feature, params);
         List<AtlasTaskParamsYaml> subList = selected.subList((int)pageable.getOffset(), (int)Math.min(selected.size(), pageable.getOffset() + pageable.getPageSize()));
+
+        ExperimentParamsYaml epy = estb.getExperimentParamsYaml();
+
+        for (AtlasTaskParamsYaml atpy : subList) {
+            atpy.typeAsString = epy.processing.taskFeatures.stream()
+                    .filter(tf->tf.taskId.equals(atpy.taskId))
+                    .map(tf->EnumsApi.ExperimentTaskType.from(tf.taskType))
+                    .findFirst()
+                    .orElse(EnumsApi.ExperimentTaskType.UNKNOWN)
+                    .toString();
+        }
         //noinspection UnnecessaryLocalVariable
         Slice<AtlasTaskParamsYaml> slice = new PageImpl<>(subList, pageable, selected.size());
         return slice;

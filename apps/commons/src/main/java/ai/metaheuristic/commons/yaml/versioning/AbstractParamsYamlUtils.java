@@ -28,7 +28,7 @@ abstract public class AbstractParamsYamlUtils<CurrT extends BaseParams, NextT ex
 
     public abstract Yaml getYaml();
 
-    public abstract NextT upgradeTo(CurrT yaml);
+    public abstract NextT upgradeTo(CurrT yaml, Long ... vars);
 
     public abstract PrevT downgradeTo(CurrForDownT yaml);
 

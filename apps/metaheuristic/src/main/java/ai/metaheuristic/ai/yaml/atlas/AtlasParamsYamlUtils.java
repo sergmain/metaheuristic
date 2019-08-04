@@ -18,7 +18,11 @@ package ai.metaheuristic.ai.yaml.atlas;
 
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 
+import javax.annotation.PostConstruct;
 import java.util.Map;
 
 /**
@@ -26,19 +30,25 @@ import java.util.Map;
  * Date: 6/22/2019
  * Time: 11:36 PM
  */
+@Service
+@Profile("launchpad")
+@RequiredArgsConstructor
 public class AtlasParamsYamlUtils {
 
-    private static final AtlasParamsYamlUtilsV1 YAML_UTILS_V_1 = new AtlasParamsYamlUtilsV1();
-    private static final AtlasParamsYamlUtilsV2 YAML_UTILS_V_2 = new AtlasParamsYamlUtilsV2();
-    private static final AtlasParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private final AtlasParamsYamlUtilsV1 YAML_UTILS_V_1;
+    private final AtlasParamsYamlUtilsV2 YAML_UTILS_V_2;
+//    private static final AtlasParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
 
-    public static final BaseYamlUtils<AtlasParamsYaml> BASE_YAML_UTILS = new BaseYamlUtils<>(
-            Map.of(
-                    1, YAML_UTILS_V_1,
-                    2, YAML_UTILS_V_2
-            ),
-            DEFAULT_UTILS
-    );
+    public BaseYamlUtils<AtlasParamsYaml> BASE_YAML_UTILS;
 
-
+    @PostConstruct
+    private void postConstruct() {
+        BASE_YAML_UTILS = new BaseYamlUtils<>(
+                Map.of(
+                        1, YAML_UTILS_V_1,
+                        2, YAML_UTILS_V_2
+                ),
+                YAML_UTILS_V_2
+        );
+    }
 }

@@ -41,7 +41,7 @@ public class AtlasTaskParamsYamlUtilsV1
     }
 
     @Override
-    public AtlasTaskParamsYaml upgradeTo(AtlasTaskParamsYamlV1 src) {
+    public AtlasTaskParamsYaml upgradeTo(AtlasTaskParamsYamlV1 src, Long ... vars) {
         src.checkIntegrity();
         AtlasTaskParamsYaml trg = new AtlasTaskParamsYaml();
         BeanUtils.copyProperties(src, trg);

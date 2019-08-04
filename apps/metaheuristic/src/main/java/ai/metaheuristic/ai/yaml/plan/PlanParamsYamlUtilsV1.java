@@ -47,7 +47,7 @@ public class PlanParamsYamlUtilsV1
     }
 
     @Override
-    public PlanParamsYamlV2 upgradeTo(PlanParamsYamlV1 yaml) {
+    public PlanParamsYamlV2 upgradeTo(PlanParamsYamlV1 yaml, Long ... vars) {
         PlanParamsYamlV2 p = new PlanParamsYamlV2();
         p.planYaml = new PlanParamsYamlV2.PlanYamlV2();
         p.planYaml.metas = yaml.metas;

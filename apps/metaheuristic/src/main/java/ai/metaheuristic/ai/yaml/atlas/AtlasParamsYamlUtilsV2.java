@@ -20,6 +20,9 @@ import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYamlV2;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
+import org.springframework.stereotype.Service;
 import org.yaml.snakeyaml.Yaml;
 
 /**
@@ -27,6 +30,9 @@ import org.yaml.snakeyaml.Yaml;
  * Date: 6/22/2019
  * Time: 11:36 PM
  */
+@Service
+@Profile("launchpad")
+@RequiredArgsConstructor
 public class AtlasParamsYamlUtilsV2
         extends AbstractParamsYamlUtils<AtlasParamsYamlV2, AtlasParamsYaml, Void, Void, Void, Void> {
 
@@ -40,7 +46,7 @@ public class AtlasParamsYamlUtilsV2
     }
 
     @Override
-    public AtlasParamsYaml upgradeTo(AtlasParamsYamlV2 src) {
+    public AtlasParamsYaml upgradeTo(AtlasParamsYamlV2 src, Long ... vars) {
         src.checkIntegrity();
         AtlasParamsYaml trg = new AtlasParamsYaml();
         trg.createdOn = src.createdOn;
