@@ -16,24 +16,15 @@
 
 package ai.metaheuristic.ai.launchpad.atlas;
 
-import ai.metaheuristic.ai.launchpad.batch.beans.BatchStatus;
-import ai.metaheuristic.ai.launchpad.beans.Atlas;
 import ai.metaheuristic.ai.launchpad.data.AtlasData;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.api.data.OperationStatusRest;
-import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
-import ai.metaheuristic.commons.utils.DirUtils;
-import ai.metaheuristic.commons.utils.ZipUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.io.AbstractResource;
-import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -43,10 +34,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 @SuppressWarnings("Duplicates")
@@ -194,7 +181,7 @@ public class AtlasController {
     @PostMapping("/atlas-experiment-feature-progress-part/{atlasId}/{experimentId}/{featureId}/{params}/part")
     public String getFeatureProgressPart(Model model, @PathVariable Long atlasId, @PathVariable Long experimentId, @PathVariable Long featureId, @PathVariable String[] params, @SuppressWarnings("DefaultAnnotationParam") @PageableDefault(size = 10) Pageable pageable) {
         AtlasData.ExperimentFeatureExtendedResult experimentProgressResult =
-                atlasTopLevelService.getFeatureProgressPart(atlasId, experimentId, featureId, params, pageable);
+                atlasTopLevelService.getFeatureProgressPart(atlasId, featureId, params, pageable);
 
         model.addAttribute("metrics", experimentProgressResult.metricsResult);
         model.addAttribute("params", experimentProgressResult.hyperParamResult);

@@ -641,7 +641,7 @@ public class AtlasTopLevelService {
         return new AtlasData.ConsoleResult(snippetExec.exec.exitCode, snippetExec.exec.isOk, snippetExec.exec.console);
     }
 
-    public AtlasData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long atlasId, Long experimentId, Long featureId, String[] params, Pageable pageable) {
+    public AtlasData.ExperimentFeatureExtendedResult getFeatureProgressPart(Long atlasId, Long featureId, String[] params, Pageable pageable) {
         Atlas atlas = atlasRepository.findById(atlasId).orElse(null);
         if (atlas == null) {
             return new AtlasData.ExperimentFeatureExtendedResult("#280.57 experiment wasn't found in atlas, id: " + atlasId);
