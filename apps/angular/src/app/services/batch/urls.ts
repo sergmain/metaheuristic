@@ -48,7 +48,7 @@ const urls: any = {
         // }
         deleteCommit: (data: any): string => `${base}/batch-delete-commit?${toURL(data)}`
     },
-    downloadFile: (batchId: string): string => `${environment.baseServer}launchpad/batch/batch-download-result/${batchId}/result.zip`
+    downloadFile: (batchId: string): string => `${environment.host}launchpad/batch/batch-download-result/${batchId}/result.zip`
 
 };
 

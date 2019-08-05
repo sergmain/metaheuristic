@@ -5,7 +5,7 @@
 export const environment = {
     production: false,
     baseUrl: '//localhost:8080/rest/v1/',
-    baseServer: '//localhost:8080/'
+    host: '//localhost:8080/'
 };
 
 /*
