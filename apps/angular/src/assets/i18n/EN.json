@@ -1,0 +1,21 @@
+{
+    "batch-add.Cancel": "Cancel",
+    "batch-add.List of Plans": "List of Plans",
+    "batch-add.STATUS": "STATUS",
+    "batch-add.Upload File": "Upload File",
+    "batch-add.Select File": "Select File",
+    "batch-add.Upload file for processing": "Upload file for processing",
+    "batch-add.Only .xml and .zip files are supported": "Only .xml and .zip files are supported",
+    "batch-add.This is a required field.": "This is a required field.",
+    "batch.Created On": "Created On",
+    "batch.Download Result": "Download Result",
+    "batch.Exec State": "Exec State",
+    "batch.Id": "Id",
+    "batch.Is Batch Consistent?": "Is Batch Consistent?",
+    "batch.Plan Code": "Plan Code",
+    "batch.Status": "Status",
+    "batch.Upload files and start processing": "Upload files and start processing",
+    "batch.delete-dialo.Cancel": "Cancel",
+    "batch.delete-dialo.Delete": "Delete",
+    "batch.delete-dialo.Do you want to delete Batch": "Do you want to delete Batch"
+}

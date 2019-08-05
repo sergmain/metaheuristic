@@ -1,0 +1,21 @@
+{
+	"batch-add.Cancel": "",
+	"batch-add.List of Plans": "",
+	"batch-add.Only .xml and .zip files are supported": "",
+	"batch-add.STATUS": "",
+	"batch-add.Select File": "",
+	"batch-add.This is a required field.": "",
+	"batch-add.Upload File": "",
+	"batch-add.Upload file for processing": "",
+	"batch.Created On": "",
+	"batch.Download Result": "",
+	"batch.Exec State": "",
+	"batch.Id": "",
+	"batch.Is Batch Consistent?": "",
+	"batch.Plan Code": "",
+	"batch.Status": "",
+	"batch.Upload files and start processing": "",
+	"batch.delete-dialog.Cancel": "",
+	"batch.delete-dialog.Delete": "",
+	"batch.delete-dialog.Do you want to delete Batch": ""
+}

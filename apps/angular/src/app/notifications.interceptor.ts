@@ -64,7 +64,7 @@ export class NotificationsInterceptor implements HttpInterceptor {
                     timeOut: 10000,
                     showProgressBar: true,
                     pauseOnHover: true,
-                    clickToClose: false,
+                    clickToClose: true,
                 });
             } else {
                 this.notificationsService.info(status, info, {
@@ -80,7 +80,7 @@ export class NotificationsInterceptor implements HttpInterceptor {
                 timeOut: 10000,
                 showProgressBar: true,
                 pauseOnHover: true,
-                clickToClose: false,
+                clickToClose: true,
             });
         }
     }

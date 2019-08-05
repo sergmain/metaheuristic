@@ -30,7 +30,8 @@ interface URLS {
             atlasId: string,
             experimentId: string,
             featureId: string,
-            params: string): string
+            params: any,
+            page: any): string
         featureProgress(
             atlasId: string,
             experimentId: string,
@@ -59,32 +60,30 @@ interface URLS {
 
 const urls: URLS = {
     experiments: {
-        get: (page: number): string => `${base}/atlas-experiments?page=${page}`
+        get: (page: number): string =>
+            `${base}/atlas-experiments?page=${page}`
     },
     experiment: {
-        get: (id: string): string => `${base}/experiment/${id}`,
-        info: (id: string): string => `${base}/atlas-experiment-info/${id}`,
-        // edit: (id: string): string => `${base}/experiment-edit/${id}`,
-        // addCommit: (): string => `${base}/experiment-add-commit`,
-        // editCommit: (): string => `${base}/experiment-edit-commit`,
-        deleteCommit: (data: any): string => `${base}/atlas-experiment-delete-commit?${toURL(data)}`,
-        // cloneCommit: (data: any): string => `${base}/experiment-clone-commit?${toURL(data)}`,
+        get: (id: string): string =>
+            `${base}/experiment/${id}`,
 
-        featurePlotDataPart: (atlasId: string, experimentId: string, featureId: string, params: string, paramsAxis: string): string => `${base}/atlas-experiment-feature-plot-data-part/${atlasId}/${experimentId}/${featureId}/${params}/${paramsAxis}/part`,
-        featureProgressConsolePart: (atlasId: string, taskId: string): string => `${base}/atlas-experiment-feature-progress-console-part/${atlasId}/${taskId}`,
-        // featureProgressConsole: (taskId: string): string => `${base}/experiment-feature-progress-console/${taskId}`,
-        featureProgressPart: (atlasId: string, experimentId: string, featureId: string, params: string): string => `${base}/atlas-experiment-feature-progress-part/${atlasId}/${experimentId}/${featureId}/${params}/part`,
-        featureProgress: (atlasId: string, experimentId: string, featureId: string): string => `${base}/atlas-experiment-feature-progress/${atlasId}/${experimentId}/${featureId}`,
+        info: (id: string): string =>
+            `${base}/atlas-experiment-info/${id}`,
 
-        // metadataAddCommit: (experimentId: string, data: any): string => `${base}/experiment-metadata-add-commit/${experimentId}?${toURL(data)}`,
-        // metadataEditCommit: (experimentId: string, data: any): string => `${base}/experiment-metadata-edit-commit/${experimentId}?${toURL(data)}`,
-        // metadataDeleteCommit: (experimentId: string, id: string): string => `${base}/experiment-metadata-delete-commit/${experimentId}/${id}`,
-        // metadataDefaultAddCommit: (experimentId: string): string => `${base}/experiment-metadata-default-add-commit/${experimentId}`,
+        deleteCommit: (data: any): string =>
+            `${base}/atlas-experiment-delete-commit?${toURL(data)}`,
 
-        // snippetAddCommit: (id: string, data: any): string => `${base}/experiment-snippet-add-commit/${id}?${toURL(data)}`,
-        // snippetDeleteCommit: (experimentId: string, id: string): string => `${base}/experiment-snippet-delete-commit/${experimentId}/${id}`,
+        featurePlotDataPart: (atlasId: string, experimentId: string, featureId: string, params: string, paramsAxis: string): string =>
+            `${base}/atlas-experiment-feature-plot-data-part/${atlasId}/${experimentId}/${featureId}/${params}/${paramsAxis}/part`,
 
-        // taskRerun: (taskId: string): string => `${base}/task-rerun/${taskId}`
+        featureProgressConsolePart: (atlasId: string, taskId: string): string =>
+            `${base}/atlas-experiment-feature-progress-console-part/${atlasId}/${taskId}`,
+
+        featureProgressPart: (atlasId: string, experimentId: string, featureId: string, params: string, page: any): string =>
+            `${base}/atlas-experiment-feature-progress-part/${atlasId}/${experimentId}/${featureId}/${params}/part?${toURL(page)}`,
+
+        featureProgress: (atlasId: string, experimentId: string, featureId: string): string =>
+            `${base}/atlas-experiment-feature-progress/${atlasId}/${experimentId}/${featureId}`,
     }
 };
 

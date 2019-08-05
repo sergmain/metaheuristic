@@ -5,9 +5,8 @@ import { Plan } from '@app/models/Plan';
 import { batch, BatchService } from '@app/services/batch/batch.service';
 import { CtFileUploadComponent } from '@src/app/ct';
 import { Subscription } from 'rxjs';
-
-
-
+import { TranslateService } from '@ngx-translate/core';
+import { SettingsService } from '@services/settings/settings.service';
 
 @Component({
     selector: 'batch-add',
@@ -15,24 +14,26 @@ import { Subscription } from 'rxjs';
     styleUrls: ['./batch-add.component.scss']
 })
 
-
 export class BatchAddComponent implements OnInit {
     readonly states = LoadStates;
-
 
     currentStates = new Set();
     response: batch.add.Response;
     uploadResponse: batch.upload.Response;
 
     plan: Plan;
+    file: any;
     listOfPlans: Plan[] = [];
     @ViewChild('fileUpload') fileUpload: CtFileUploadComponent;
 
     constructor(
         private batchService: BatchService,
-        private router: Router
+        private router: Router,
+        private translate: TranslateService,
+        private settingsService: SettingsService
     ) {
         this.currentStates.add(this.states.firstLoading);
+        this.settingsService.languageObserver.subscribe((lang: string) => this.translate.use(lang));
     }
 
     ngOnInit() { this.updateResponse(); }
@@ -79,5 +80,8 @@ export class BatchAddComponent implements OnInit {
                 () => {},
                 () => subscribe.unsubscribe()
             );
+    }
+    fileUploadChanged() {
+        this.file = this.fileUpload.fileInput.nativeElement.files[0] || false;
     }
 }

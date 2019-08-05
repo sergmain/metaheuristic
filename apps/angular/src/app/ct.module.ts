@@ -22,7 +22,8 @@ const list: any[] = [
     components.CtSectionHeaderRowComponent,
     components.CtFlexComponent,
     components.CtFlexItemComponent,
-    components.CtSectionBodyComponent
+    components.CtSectionBodyComponent,
+    components.CtHintComponent
 ];
 
 @NgModule({

@@ -1,12 +1,12 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatButton, MatTableDataSource, MatDialog } from '@angular/material';
-import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
+import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
+import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
 import { LoadStates } from '@app/enums/LoadStates';
 import { DefaultResponse } from '@app/models';
-import { ExperimentsService, experiments, ExperimentItem } from '@app/services/experiments/experiments.service';
-import { Experiment } from '@app/models';
+import { ExperimentItem, ExperimentsService, response } from '@services/experiments';
+import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
 import { Subscription } from 'rxjs';
-import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
+
 
 @Component({
     selector: 'experiments-view',
@@ -17,7 +17,7 @@ import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmatio
 export class ExperimentsComponent implements OnInit {
     readonly states = LoadStates;
     currentStates = new Set();
-    experimentsResponse: experiments.get.Response;
+    experimentsResponse: response.experiments.Get;
     dataSource = new MatTableDataSource < ExperimentItem > ([]);
     columnsToDisplay = ['id', 'name', 'createdOn', 'bts'];
 
@@ -43,7 +43,7 @@ export class ExperimentsComponent implements OnInit {
         const subscribe: Subscription = this.experimentsService.experiments
             .get(page)
             .subscribe(
-                (response: experiments.get.Response) => {
+                (response: response.experiments.Get) => {
                     this.experimentsResponse = response;
                     this.dataSource = new MatTableDataSource(response.items.content || []);
                     this.prevTable.disabled = response.items.first;

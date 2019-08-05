@@ -4,8 +4,11 @@ import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmatio
 import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
 import { LoadStates } from '@app/enums/LoadStates';
 import { Batch, batches, BatchService } from '@app/services/batch/batch.service';
-import { Subscription } from 'rxjs';
+import { Subscription, BehaviorSubject } from 'rxjs';
 import { AuthenticationService } from '@src/app/services/authentication/authentication.service';
+import { TranslateService } from '@ngx-translate/core';
+import { marker } from '@biesbjerg/ngx-translate-extract-marker';
+import { SettingsService } from '@services/settings/settings.service';
 
 @Component({
     selector: 'batch',
@@ -27,10 +30,15 @@ export class BatchComponent implements OnInit {
     @ViewChild('table') table: CtTableComponent;
 
     constructor(
+        private translate: TranslateService,
         private dialog: MatDialog,
         private batchService: BatchService,
-        private authenticationService: AuthenticationService
-    ) {}
+        private authenticationService: AuthenticationService,
+        private settingsService: SettingsService
+    ) {
+        this.settingsService.languageObserver.subscribe((lang: string) => this.translate.use(lang));
+
+    }
 
     ngOnInit() {
         this.currentStates.add(this.states.firstLoading);
@@ -61,14 +69,19 @@ export class BatchComponent implements OnInit {
 
     @ConfirmationDialogMethod({
         question: (batch: Batch): string => {
-            return `Do you want to delete Bacth #${batch.batch.id}`;
+            return `${marker('batch.delete-dialog.Do you want to delete Batch')} #${batch.batch.id}`;
         },
-        rejectTitle: 'Cancel',
-        resolveTitle: 'Delete'
+        rejectTitle: `${marker('batch.delete-dialog.Cancel')}`,
+        resolveTitle: `${marker('batch.delete-dialog.Delete')}`,
     })
     delete(batch: Batch) {
-        console.log(batch);
-        // const subscribe = this.batchService.batch.delete()
+        const subscribe: Subscription = this.batchService.batch
+            .delete(batch.batch.id)
+            .subscribe(
+                (response: any) => {},
+                () => {},
+                () => subscribe.unsubscribe()
+            );
     }
 
     next() {

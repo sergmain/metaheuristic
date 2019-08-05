@@ -1,25 +1,42 @@
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, Input, OnChanges, EventEmitter, Output } from '@angular/core';
+import { marker } from '@biesbjerg/ngx-translate-extract-marker';
+import { TranslateService } from '@ngx-translate/core';
+import { SettingsService } from '@services/settings/settings.service';
 
 @Component({
     selector: 'ct-file-upload',
     templateUrl: './ct-file-upload.component.pug',
     styleUrls: ['./ct-file-upload.component.scss']
 })
-export class CtFileUploadComponent implements OnInit {
+export class CtFileUploadComponent implements OnInit, OnChanges {
+    @Output() changed = new EventEmitter < string > ();
+
+    @ViewChild('fileInput') fileInput: ElementRef;
+    @Input('buttonTitle') buttonTitle: string;
+    @Input('acceptTypes') acceptTypes: string;
+
 
     value: string = '';
-    @ViewChild('fileInput') fileInput: ElementRef;
+    buttonTitleString: string;
+    accept: string;
 
     constructor() {}
 
     ngOnInit() {}
 
+    ngOnChanges() {
+        this.buttonTitleString = this.buttonTitle || 'Select File';
+        this.accept = this.acceptTypes || '';
+    }
+
     fileChanged() {
         this.value = this.fileInput.nativeElement.value;
-        console.log(this)
+        this.changed.emit('fileChanged');
     }
+
     removeFile() {
         this.fileInput.nativeElement.value = '';
         this.value = '';
+        this.changed.emit('fileChanged');
     }
 }

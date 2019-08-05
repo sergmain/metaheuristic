@@ -8,7 +8,6 @@ export * from './ExperimentInfoResponse';
 
 export * from './ExperimentEditCommitResponse';
 
-export * from './ExperimentFeatureProgressResponse';
 export * from './ExperimentFeatureProgressConsolePartResponse';
 export * from './ExperimentFeaturePlotDataPartResponse';
 
@@ -32,6 +31,4 @@ export * from './PlanResponse';
 export * from './Plan';
 export * from './Workbook';
 export * from './Snippet';
-export * from './Experiment';
 export * from './ExperimentInfo';
-export * from './Atlas';

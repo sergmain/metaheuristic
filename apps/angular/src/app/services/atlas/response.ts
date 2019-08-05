@@ -1,46 +1,54 @@
 import {
-    Experiment,
     ExperimentInfo,
     DefaultResponse,
-    DefaultListOfItems,
-    Atlas
+    DefaultListOfItems
 } from '@app/models';
 
+import { Atlas } from './Atlas';
 import { MetricsResult } from './MetricsResult';
 import { HyperParamResult } from './HyperParamResult';
 import { ConsoleResult } from './ConsoleResult';
 import { ExperimentFeature } from './ExperimentFeature';
 import { Tasks } from './Tasks';
+import { Experiment } from './Experiment';
+
+export interface ListOfItems extends DefaultListOfItems {
+    content: ExperimentItem[];
+}
+
+export interface ExperimentItem extends DefaultResponse {
+    experiment: Experiment;
+}
+
+export namespace response {
+    export namespace experiments {
+        export interface Get extends DefaultResponse {
+            items: ListOfItems;
+        }
+    }
 
 
-export namespace experiment {
-    export namespace info {
-        export interface Response extends DefaultResponse {
+    export namespace experiment {
+        export interface Info extends DefaultResponse {
             experiment: Experiment;
             experimentInfo: ExperimentInfo;
             atlas: Atlas;
         }
-    }
-    export namespace featureProgress {
-        export interface Response extends DefaultResponse {
+        export interface FeatureProgress extends DefaultResponse {
             consoleResult: ConsoleResult;
             experimentFeature: ExperimentFeature;
             hyperParamResult: HyperParamResult;
             metricsResult: MetricsResult;
             tasks: Tasks;
         }
-    }
-    export namespace featureProgressConsolePart {
-        export interface Response extends DefaultResponse {
+        export interface FeatureProgressConsolePart extends DefaultResponse {
             console: string;
             exitCode: number;
             isOk: boolean;
             ok: boolean;
         }
-    }
 
-    export namespace featureProgressPart {
-        export interface Response extends DefaultResponse {
+        export interface FeatureProgressPart extends DefaultResponse {
             consoleResult: ConsoleResult;
             experimentFeature: ExperimentFeature;
             hyperParamResult: HyperParamResult;

@@ -3,8 +3,8 @@ import { Component, OnInit } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
 import { state } from '@app/helpers/state';
-import { Experiment, ExperimentInfo, Atlas } from '@app/models/';
-import { AtlasService, experiment } from '@app/services/atlas/atlas.service';
+import { ExperimentInfo } from '@app/models/';
+import { AtlasService, Experiment, Atlas, response } from '@services/atlas';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -50,7 +50,7 @@ export class AtlasExperimentInfoComponent implements OnInit {
         const id: string = this.route.snapshot.paramMap.get('id');
         const subscribe: Subscription = this.atlasService.experiment.info(id)
             .subscribe(
-                (response: experiment.info.Response) => {
+                (response: response.experiment.Info) => {
                     this.experiment = response.experiment;
                     this.experimentInfo = response.experimentInfo;
                     this.atlas = response.atlas;

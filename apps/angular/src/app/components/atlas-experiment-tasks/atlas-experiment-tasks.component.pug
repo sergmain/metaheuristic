@@ -1,0 +1,74 @@
+ct-cols
+    ct-col
+        ct-section
+            ct-section-header
+                ct-section-header-row
+                    ct-heading Tasks
+            ct-section-body
+                ct-section-body-row
+                    ct-table.tasks(#table)
+                        table(mat-table [dataSource]="dataSource") 
+                            ng-container(matColumnDef="id") 
+                                td(mat-cell *matCellDef="let el") {{el.taskId}}
+                            ng-container(matColumnDef="info") 
+                                td(mat-cell *matCellDef="let el") 
+                                    table
+                                        tr
+                                            td type: 
+                                            td(style="text-transform:uppercase;") {{el.typeAsString}}
+                                        tr
+                                            td completed: 
+                                            td
+                                                span.completed('[class.completed--on]'="el.completed") {{el.completed}} 
+                                        tr
+                                            td assigned: 
+                                            td 
+                                                span(*ngIf="el.assignedOn == null") null
+                                                span {{el.assignedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
+                                        tr
+                                            td completed: 
+                                            td 
+                                                span(*ngIf="el.completedOn == null") null
+                                                span {{el.completedOn | date:'MMM d, yyyy, HH:mm:ss'}} 
+                            ng-container(matColumnDef="bts") 
+                                td(mat-cell *matCellDef="let el") 
+                                    button(mat-stroked-button
+                                        '(click)'='currentTask = el; featureProgressConsolePart(el.taskId)'
+                                        '[color]'="currentTask == el ? 'primary' : ''" 
+                                        '[class.mat-flat-button]'="currentTask == el"
+                                        '[class.mat-stroked-button]'="currentTask != el") Info
+                            tr(mat-row *matRowDef="let row; columns: columnsToDisplay;") 
+            ct-section-footer
+                ct-section-footer-row
+                    ct-flex(justify-content="flex-start" gap="8px")
+                        ct-flex-item(flex='1'): button(style="width:100%" mat-flat-button color="primary" #prevTable '(click)'='prev()' ): mat-icon arrow_back_ios
+                        ct-flex-item(flex='1'): button(style="width:100%" mat-flat-button color="primary" #nextTable '(click)'='next()' ): mat-icon arrow_forward_ios
+
+
+
+    ct-col(style="flex:1; overflow:auto;")
+        ct-section
+            ct-section-header
+                ct-section-header-row
+                    ct-heading Console output
+            ct-section-body
+                ct-section-body-row
+                    ct-section-content
+                        ct-wrap-block(#consoleView) 
+                            ct-flex(justify-content="center" align-items="center" '*ngIf'="!consolePartResponse")
+                                ct-flex-item
+                                    div(style="min-height: 100px;") No Task Info
+                            div(*ngIf="consolePartResponse")
+                                ct-pre(overflow-x="auto")
+                                    pre(style="white-space:pre;")
+                                        table
+                                            tr
+                                                td exitCode:
+                                                td {{consolePartResponse.exitCode}}
+                                            tr
+                                                td isOk:
+                                                td {{consolePartResponse.isOk}}
+                                br
+                                ct-pre(overflow-x="auto")
+                                    pre(style="white-space:pre;")
+                                        div {{consolePartResponse.console}}

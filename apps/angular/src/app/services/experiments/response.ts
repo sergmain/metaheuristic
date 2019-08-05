@@ -1,9 +1,19 @@
 import {
     Snippet,
-    Experiment,
     DefaultResponse,
-    DefaultListOfItems
+    DefaultListOfItems,
 } from '@app/models';
+
+import {
+    Task,
+    Experiment,
+    MetricsResult,
+    HyperParamResult,
+    TasksResult,
+    ExperimentFeature,
+    ConsoleResult,
+    FeatureProgressConsolePartEntity
+} from './index';
 
 export interface ListOfItems extends DefaultListOfItems {
     content: ExperimentItem[];
@@ -54,111 +64,112 @@ export interface SelectOptionsEntity {
     desc: string;
 }
 
+//
+//
+//
+export namespace response {
 
-export namespace experiments {
-    export namespace get {
-        export interface Response extends DefaultResponse {
+    export namespace experiments {
+        export interface Get extends DefaultResponse {
             items: ListOfItems;
         }
     }
-}
 
-export namespace experiment {
-    export namespace get {
-        export interface Response extends DefaultResponse {
+    export namespace experiment {
+        export interface Get extends DefaultResponse {
             Experiment: Experiment;
         }
-    }
-    // export namespace info {
-    //     export interface Response {
+        // export namespace info {
+        //     export interface Response {
 
-    //     }
-    // }
-    export namespace edit {
-        export interface Response {
+        //     }
+        // }
+        export interface Edit {
             simpleExperiment: SimpleExperiment;
             hyperParams: HyperParams;
             snippetResult: SnippetResult;
         }
+        // export namespace addCommit {
+        //     export interface Response {
+
+        //     }
+        // }
+        // export namespace editCommit {
+        //     export interface Response {
+
+        //     }
+        // }
+        // export namespace deleteCommit {
+        //     export interface Response {
+
+        //     }
+        // }
+        // export namespace cloneCommit {
+        //     export interface Response {
+
+        //     }
+        // }
+        // export namespace featurePlotDataPart {
+        //     export interface Response {
+
+        //     }
+        // }
+        // export namespace featureProgressPart {
+        //     export interface Response {
+
+        //     }
+        // }
+        export interface FeatureProgress extends DefaultResponse {
+            metricsResult: MetricsResult;
+            hyperParamResult: HyperParamResult;
+            tasksResult: TasksResult;
+            experiment: Experiment;
+            experimentFeature: ExperimentFeature;
+            consoleResult: ConsoleResult;
+        }
+        // export namespace featureProgressConsole {
+        //     export interface Response {
+
+        //     }
+        // }
+        export interface FeatureProgressConsolePart {
+            items: FeatureProgressConsolePartEntity[];
+
+        }
+        // export namespace taskRerun {
+        //     export interface Response {
+
+        //     }
+        // }
+        // export namespace metadataAddCommit {
+        //     export interface Response {
+
+        //     }
+        // }
+        // export namespace metadataEditCommit {
+        //     export interface Response {
+
+        //     }
+        // }
+        // export namespace metadataDeleteCommit {
+        //     export interface Response {
+
+        //     }
+        // }
+        // export namespace metadataDefaultAddCommit {
+        //     export interface Response {
+
+        //     }
+        // }
+        // export namespace snippetAddCommit {
+        //     export interface Response {
+
+        //     }
+        // }
+        // export namespace snippetDeleteCommit {
+        //     export interface Response {
+
+        //     }
+        // }
     }
-    // export namespace addCommit {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace editCommit {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace deleteCommit {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace cloneCommit {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace featurePlotDataPart {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace featureProgressPart {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace featureProgress {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace featureProgressConsole {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace featureProgressConsolePart {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace taskRerun {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace metadataAddCommit {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace metadataEditCommit {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace metadataDeleteCommit {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace metadataDefaultAddCommit {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace snippetAddCommit {
-    //     export interface Response {
-
-    //     }
-    // }
-    // export namespace snippetDeleteCommit {
-    //     export interface Response {
-
-    //     }
-    // }
 }

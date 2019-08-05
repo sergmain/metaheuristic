@@ -3,11 +3,10 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
 import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
-import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
 import { LoadStates } from '@app/enums/LoadStates';
-import { Experiment, ExperimentInfoResponse, DefaultResponse } from '@app/models';
-import { AtlasService } from '@app/services/atlas/atlas.service';
-import { ExperimentItem, experiments } from '@app/services/experiments/experiments.service';
+import { DefaultResponse, ExperimentInfoResponse } from '@app/models';
+import { AtlasService, Experiment, response, ExperimentItem } from '@services/atlas/';
+import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -21,7 +20,7 @@ export class AtlasExperimentsComponent implements OnInit {
     currentStates = new Set();
     experiment: ExperimentInfoResponse.Experiment;
     experimentInfo: ExperimentInfoResponse.ExperimentInfo;
-    response: experiments.get.Response;
+    response: response.experiments.Get;
 
     dataSource = new MatTableDataSource < ExperimentItem > ([]);
 
@@ -67,7 +66,7 @@ export class AtlasExperimentsComponent implements OnInit {
         const subscribe: Subscription = this.atlasService.experiments
             .get(page)
             .subscribe(
-                (response: experiments.get.Response) => {
+                (response: response.experiments.Get) => {
                     this.response = response;
                     this.dataSource = new MatTableDataSource(response.items.content || []);
                     this.prevTable.disabled = response.items.first;
