@@ -35,4 +35,7 @@ export class BatchService {
         upload: (formData: any): Observable < any > =>
             this.http.post(urls.batch.upload(), formData)
     };
+    downloadFile(batchId: string) {
+        return urls.downloadFile(batchId)
+    }
 }

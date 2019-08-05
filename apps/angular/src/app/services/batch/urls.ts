@@ -1,5 +1,5 @@
-import { environment } from '@src/environments/environment';
 import { jsonToUrlParams as toURL } from '@app/helpers/jsonToUrlParams';
+import { environment } from '@src/environments/environment';
 
 const base: string = environment.baseUrl + 'launchpad/batch';
 
@@ -47,7 +47,9 @@ const urls: any = {
         //     return batchTopLevelService.processResourceDeleteCommit(batchId);
         // }
         deleteCommit: (data: any): string => `${base}/batch-delete-commit?${toURL(data)}`
-    }
+    },
+    downloadFile: (batchId: string): string => `${environment.baseServer}launchpad/batch/batch-download-result/${batchId}/result.zip`
+
 };
 
 export { urls };
