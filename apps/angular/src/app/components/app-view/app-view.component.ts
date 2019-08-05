@@ -1,8 +1,9 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatSidenav, MatSelect } from '@angular/material';
+import { MatSidenav, MatSelect, MatSlideToggle } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
 import { AuthenticationService } from '@app/services/authentication/authentication.service';
 import { SettingsService, enumOfLanguages, setOfLanguages } from '@app/services/settings/settings.service';
+import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-view',
@@ -17,7 +18,8 @@ export class AppViewComponent implements OnInit {
     language: any;
     languageSelected: string;
 
-    @ViewChild('matSlideToggleTheme') matSlideToggleTheme: MatSidenav;
+    @ViewChild(MatSidenav) sidenav: MatSidenav;
+    @ViewChild('matSlideToggleTheme') matSlideToggleTheme: MatSlideToggle;
     @ViewChild('matSelectLanguage') matSelectLanguage: MatSelect;
 
     constructor(
@@ -44,17 +46,21 @@ export class AppViewComponent implements OnInit {
     }
 
     checkSidenav() {
-        this.route.data.subscribe(data => {
-            this.sidenavIsDisabled = data.sidenavIsDisabled || false;
-            this.sidenavIsDisabled ?
-                this.sidenavIsOpen = false :
-                this.sidenavIsOpen = this.sidenavIsOpen;
-        });
+        const subscribe: Subscription = this.route.data.subscribe(
+            (response: any) => {
+                this.sidenavIsDisabled = response.sidenavIsDisabled || false;
+                this.sidenavIsDisabled ?
+                    this.sidenavIsOpen = false :
+                    this.sidenavIsOpen = this.sidenavIsOpen;
+            },
+            () => {},
+            () => subscribe.unsubscribe()
+        );
     }
 
     sideToggle() {
-        this.matSlideToggleTheme.toggle();
-        this.matSlideToggleTheme.opened ?
+        this.sidenav.toggle();
+        this.sidenav.opened ?
             this.settingsService.showSide() :
             this.settingsService.hideSide();
     }

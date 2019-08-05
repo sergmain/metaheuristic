@@ -1,11 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, Subscription } from 'rxjs';
+import { Settings } from './Settings';
 
-export interface Settings {
-    darkTheme: boolean;
-    openSide: boolean;
-    language: string;
-}
 export enum enumOfLanguages {
     RU = 'RU',
         EN = 'EN'
@@ -28,15 +24,19 @@ export class SettingsService {
         language: enumOfLanguages.EN
     };
 
+    settingsObserver: BehaviorSubject < any > ;
     languageObserver: BehaviorSubject < any > ;
+
 
     constructor() {
         this.settings = Object.assign({},
             this.defaultSettings,
             JSON.parse(localStorage.getItem('settingsService'))
         );
+        this.settingsObserver = new BehaviorSubject < any > (this.settings);
         this.languageObserver = new BehaviorSubject < string > (this.settings.language);
         this.updateTheme();
+        console.log(this.getSettingsFromLocalStore())
     }
 
     getSettings() {
@@ -95,5 +95,16 @@ export class SettingsService {
         this.settings.language = value;
         this.setParam('language', value);
         this.languageObserver.next(this.settings.language);
+    }
+
+    private setSettingsToLocalStore(): void {
+        localStorage.setItem('settingsService', JSON.stringify(this.settings));
+    }
+
+    private getSettingsFromLocalStore(): Settings {
+        this.settings = Object.assign({},
+            this.defaultSettings,
+            (JSON.parse(localStorage.getItem('settingsService')) || {}));
+        return this.settings;
     }
 }
