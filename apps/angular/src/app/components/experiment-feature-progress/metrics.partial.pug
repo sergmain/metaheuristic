@@ -10,11 +10,11 @@ ct-cols
 						table(mat-table '[dataSource]'="tables.metrics.table") 
 							ng-container(matColumnDef="values") 
 								th(mat-header-cell *matHeaderCellDef) {{response.metricsResult.metricNames}} 
-								td(mat-cell *matCellDef="let el") {{el.values}} 
+								td(mat-cell *matCellDef="let el") 
+									div('*ngFor'="let value of el.values") {{value}}
 							ng-container(matColumnDef="params") 
 								th(mat-header-cell *matHeaderCellDef) Hyper Params 
-								td(mat-cell *matCellDef="let el")
-									div('*ngFor'="let param of el.params") {{param}}
+								td(mat-cell *matCellDef="let el")  {{el.params}}
 							tr(mat-header-row *matHeaderRowDef="tables.metrics.columnsToDisplay") 
 							tr(mat-row *matRowDef="let row; columns: tables.metrics.columnsToDisplay;") 
 	ct-col(style="flex:1")
