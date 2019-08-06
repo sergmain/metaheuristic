@@ -61,10 +61,12 @@ public class WorkbookSchedulerService {
 
         List<Long> workbooksIds = workbookRepository.findIdsByExecState(EnumsApi.WorkbookExecState.EXPORTING_TO_ATLAS.code);
         for (Long workbookId : workbooksIds) {
+            log.info("Start exporting workbook #{} to atlas", workbookId);
             OperationStatusRest status = atlasService.storeExperimentToAtlas(workbookId);
             if (status.status!= EnumsApi.OperationStatus.OK) {
                 log.error("Error exporting experiment to atlas, workbookID #{}\n{}", workbookId, status.getErrorMessagesAsStr());
             }
+            log.info("Exporting of workbook #{} was finished", workbookId);
         }
     }
 

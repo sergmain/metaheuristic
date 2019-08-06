@@ -184,7 +184,7 @@ public class AtlasService {
         AtlasParamsYaml atlasParamsYaml = new AtlasParamsYaml();
         atlasParamsYaml.createdOn = System.currentTimeMillis();
         atlasParamsYaml.plan = new AtlasParamsYaml.PlanWithParams(plan.id, plan.params);
-        atlasParamsYaml.workbook = new AtlasParamsYaml.WorkbookWithParams(workbook.id, workbook.params, workbook.execState);
+        atlasParamsYaml.workbook = new AtlasParamsYaml.WorkbookWithParams(workbook.id, workbook.params, EnumsApi.WorkbookExecState.EXPORTED_TO_ATLAS.code);
         atlasParamsYaml.experiment = new AtlasParamsYaml.ExperimentWithParams(experiment.id, experiment.params);
         atlasParamsYaml.taskIds = taskRepository.findAllTaskIdsByWorkbookId(workbook.getId());
 
