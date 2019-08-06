@@ -1,8 +1,5 @@
 * -text
 
-#
-# The above will handle all files NOT found below
-#
 *.css           text
 *.html          text
 *.java          text
@@ -11,6 +8,20 @@
 *.properties    text
 *.txt           text
 *.xml           text
+*.py            text
+*.cmd           text
+*.bat           text
+*.yaml          text
+*.yml           text
+*.sql           text
+
+.gitignore      text
+.gitattributes  text
+.slugignore     text
+COPYING         text
+README.md       text
+mvnw            text
+
 
 # These files are binary and should be left untouched
 *.class         binary

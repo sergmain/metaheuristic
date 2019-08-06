@@ -222,7 +222,8 @@ public class EnumsApi {
         STOPPED(4),         // stopped
         FINISHED(5),        // finished
         DOESNT_EXIST(6),    // doesn't exist. this state is needed at station side to reconcile list of experiments
-        EXPORTING_TO_ATLAS(7);    // workbook is marked as needed to be exported to atlas
+        EXPORTING_TO_ATLAS(7),    // workbook is marked as needed to be exported to atlas
+        EXPORTING_TO_ATLAS_WAS_STARTED(8);    // workbook is marked as needed to be exported to atlas and export was started
 
         public int code;
 
@@ -253,6 +254,8 @@ public class EnumsApi {
                     return DOESNT_EXIST;
                 case 7:
                     return EXPORTING_TO_ATLAS;
+                case 8:
+                    return EXPORTING_TO_ATLAS_WAS_STARTED;
                 default:
                     return UNKNOWN;
             }

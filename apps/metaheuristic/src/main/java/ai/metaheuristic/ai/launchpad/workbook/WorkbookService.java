@@ -166,12 +166,23 @@ public class WorkbookService {
             log.error(es);
             throw new IllegalStateException(es);
         }
+        if (workbook.execState==state.code) {
+            return;
+        }
         workbook.setExecState(state.code);
         workbookCache.save(workbook);
     }
 
     public void toFinished(Long workbookId) {
         toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.FINISHED);
+    }
+
+    public void toExportingToAtlas(Long workbookId) {
+        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.EXPORTING_TO_ATLAS);
+    }
+
+    public void toExportingToAtlasStarted(Long workbookId) {
+        toStateWithCompletion(workbookId, EnumsApi.WorkbookExecState.EXPORTING_TO_ATLAS_WAS_STARTED);
     }
 
     public void toError(Long workbookId) {
@@ -184,6 +195,9 @@ public class WorkbookService {
             String es = "#705.080 Can't change exec state to "+state+" for workbook #" + workbookId;
             log.error(es);
             throw new IllegalStateException(es);
+        }
+        if (workbook.execState==state.code) {
+            return;
         }
         workbook.setCompletedOn(System.currentTimeMillis());
         workbook.setExecState(state.code);
@@ -238,6 +252,9 @@ public class WorkbookService {
         WorkbookImpl wb = workbookRepository.findByIdForUpdate(workbookId);
         if (wb==null) {
             return EnumsApi.PlanProducingStatus.WORKBOOK_NOT_FOUND_ERROR;
+        }
+        if (wb.execState==EnumsApi.WorkbookExecState.PRODUCING.code) {
+            return EnumsApi.PlanProducingStatus.OK;
         }
         wb.setExecState(EnumsApi.WorkbookExecState.PRODUCING.code);
         workbookCache.save(wb);

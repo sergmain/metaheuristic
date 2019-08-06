@@ -620,11 +620,7 @@ public class ExperimentTopLevelService {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
                     "#285.420 This experiment isn't bound to Workbook");
         }
-
-        OperationStatusRest status = atlasService.storeExperimentToAtlas(experiment.workbookId, id);
-        if (status.isErrorMessages()) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, status.errorMessages);
-        }
-        return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Experiment was successfully stored to atlas", null);
+        workbookService.toExportingToAtlas(experiment.workbookId);
+        return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Exporting of experiment was successfully started", null);
     }
 }

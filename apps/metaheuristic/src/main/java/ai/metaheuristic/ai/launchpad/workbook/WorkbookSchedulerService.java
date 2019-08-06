@@ -16,11 +16,13 @@
 
 package ai.metaheuristic.ai.launchpad.workbook;
 
+import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,11 +51,20 @@ public class WorkbookSchedulerService {
     private final WorkbookService workbookService;
     private final WorkbookRepository workbookRepository;
     private final TaskRepository taskRepository;
+    private final AtlasService atlasService;
 
     public void updateWorkbookStatuses(boolean needReconciliation) {
         List<WorkbookImpl> workbooks = workbookRepository.findByExecState(EnumsApi.WorkbookExecState.STARTED.code);
         for (WorkbookImpl workbook : workbooks) {
             updateWorkbookStatus(workbook, needReconciliation);
+        }
+
+        List<Long> workbooksIds = workbookRepository.findIdsByExecState(EnumsApi.WorkbookExecState.EXPORTING_TO_ATLAS.code);
+        for (Long workbookId : workbooksIds) {
+            OperationStatusRest status = atlasService.storeExperimentToAtlas(workbookId);
+            if (status.status!= EnumsApi.OperationStatus.OK) {
+                log.error("Error exporting experiment to atlas, workbookID #{}\n{}", workbookId, status.getErrorMessagesAsStr());
+            }
         }
     }
 
@@ -69,8 +80,6 @@ public class WorkbookSchedulerService {
         if (countUnfinishedTasks==0) {
             log.info("Workbook #{} was finished", workbook.getId());
             workbookService.toFinished(workbook.getId());
-            //noinspection UnnecessaryReturnStatement
-            return;
         }
         else {
             if (needReconciliation) {
