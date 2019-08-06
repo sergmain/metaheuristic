@@ -1,8 +1,60 @@
-div(*ngIf="response")
+div(*ngIf="featureProgressResponse")
 	ct-section
 		ct-section-header
 			ct-section-header-row
-				ct-heading The Experiment Info:
-	include general-info.partial.pug
-	include metrics.partial.pug
-	include tasks-console.partial.pug
+				ct-heading The Experiment Info
+	ct-section
+		ct-section-header
+			ct-section-header-row
+				ct-heading General info
+
+		ct-section-body
+			ct-section-body-row
+				ct-cols
+					ct-col(size=6)
+						ct-table
+							table(mat-table '[dataSource]'="tables.features.table")
+								ng-container(matColumnDef="key")
+									th(mat-header-cell *matHeaderCellDef) Key
+									td(mat-cell *matCellDef="let el") 
+										span(*ngIf="el[0] === 'id'") id
+										span(*ngIf="el[0] === 'resourceCodes'") Feature ids
+										span(*ngIf="el[0] === 'execStatusAsString'") Exec Status
+								ng-container(matColumnDef="value")
+									th(mat-header-cell *matHeaderCellDef) Value
+									td(mat-cell *matCellDef="let el") {{el[1]}}
+								//- tr(mat-header-row *matHeaderRowDef="tables.features.columnsToDisplay")
+								tr(mat-row *matRowDef="let row; columns: tables.features.columnsToDisplay;")
+					ct-col(size=6)
+						ct-table.general-info
+							table(mat-table '[dataSource]'="tables.hyperParameters.table")
+								ng-container(matColumnDef="key")
+									th(mat-header-cell *matHeaderCellDef) Hyper Param Name
+									td(mat-cell *matCellDef="let el") {{el.key}}
+								ng-container(matColumnDef="values")
+									th(mat-header-cell *matHeaderCellDef) Hyper Param Values
+									td(mat-cell *matCellDef="let el")
+										button(mat-stroked-button
+											*ngFor="let button of el.list;"
+											'[disabled]' = "!el.selectable"
+											'[class.mat-flat-button]'="button.selected"
+											'[class.mat-stroked-button]'="!button.selected"
+											'(click)'="pickHyperParam(button)" 
+											'[color]'="button.selected ? 'primary':''") {{button.param}}
+								ng-container(matColumnDef="axes")
+									th(mat-header-cell *matHeaderCellDef) X, Y axes for plotting
+									td(mat-cell *matCellDef="let el") 
+										button(mat-stroked-button
+											'[class.mat-flat-button]'="pickedAxes.includes(el)"
+											'[class.mat-stroked-button]'="!pickedAxes.includes(el)"
+											'[color]'="pickedAxes.includes(el) ? 'primary' : ''" 
+											'[disabled]' = "!el.selectable"
+											'(click)'="pickAxis(el)") Axis 
+								tr(mat-header-row *matHeaderRowDef="tables.hyperParameters.columnsToDisplay")
+								tr(mat-row *matRowDef="let row; columns: tables.hyperParameters.columnsToDisplay;")
+
+
+
+	atlas-experiment-metrics('[metricsResult]'="metricsResult" '[dataGraph]'="dataGraph" '[canDraw]'="canDraw" '(draw)'="drawPlot()")
+	atlas-experiment-tasks('(nextPage)'='nextPage()' '(prevPage)'='prevPage()' '[tasks]'="tasks" '[atlasId]'="atlasId")
+

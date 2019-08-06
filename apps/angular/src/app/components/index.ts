@@ -1,9 +1,9 @@
 export * from './about/about.component';
+export * from './account-edit-pass/account-edit-pass.component';
+export * from './account-edit/account-edit.component';
 export * from './accounts-access/accounts-access.component';
 export * from './accounts/accounts.component';
 export * from './add-account/add-account.component';
-export * from './add-experiment/add-experiment.component';
-export * from './resource-add/resource-add.component';
 export * from './add-workbook/add-workbook.component';
 export * from './app-dialog-confirmation/app-dialog-confirmation.component';
 export * from './app-view/app-view.component';
@@ -15,11 +15,10 @@ export * from './batch-add/batch-add.component';
 export * from './batch-status/batch-status.component';
 export * from './batch/batch.component';
 export * from './billing/billing.component';
-export * from './edit-account/edit-account.component';
-export * from './edit-experiment/experiment-edit.component';
-export * from './edit-pass-account/edit-pass-account.component';
+export * from './experiment-edit/experiment-edit.component';
 export * from './edit-plan/edit-plan.component';
 export * from './edit-workbook/edit-workbook.component';
+export * from './experiment-add/experiment-add.component';
 export * from './experiment-info/experiment-info.component';
 export * from './experiments/experiments.component';
 export * from './launchpad/launchpad.component';
@@ -30,7 +29,7 @@ export * from './pilot/pilot.component';
 export * from './plan-add/plan-add.component';
 export * from './plans-archive/plans-archive.component';
 export * from './plans/plans.component';
-export * from './progress-experiment/progress-experiment.component';
+export * from './resource-add/resource-add.component';
 export * from './resources/resources.component';
 export * from './snippet-add/snippet-add.component';
 export * from './snippets/snippets.component';
@@ -40,3 +39,10 @@ export * from './testview/testview.component';
 export * from './testview/testview.module';
 export * from './workbooks/workbooks.component';
 
+export * from './experiment-feature-progress/experiment-feature-progress.component';
+export * from './experiment-metrics/experiment-metrics.component';
+export * from './experiment-tasks/experiment-tasks.component';
+
+export * from './atlas-experiment-tasks/atlas-experiment-tasks.component';
+
+export * from './atlas-experiment-metrics/atlas-experiment-metrics.component';

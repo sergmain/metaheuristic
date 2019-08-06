@@ -13,12 +13,9 @@ import { User } from './User';
 
 
 export class AuthenticationService {
-
     constructor(
         private http: HttpClient
-    ) {
-        console.log(new User(JSON.parse(localStorage.getItem('user'))).getRoleSet());
-    }
+    ) {}
 
     isAuth() {
         if (localStorage.getItem('user')) {

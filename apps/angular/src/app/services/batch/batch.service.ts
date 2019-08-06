@@ -23,10 +23,10 @@ export class BatchService {
         get: (id: string): Observable < any > =>
             this.http.get(urls.batch.get(id)),
 
-        delete: (id: string | number): Observable < any > =>
-            this.http.post(urls.batch.delete({ id }), { id }),
+        delete: (batchId: string): Observable < any > =>
+            this.http.get(urls.batch.delete(batchId)),
 
-        status: (id: string | number): Observable < any > =>
+        status: (id: string): Observable < any > =>
             this.http.get(urls.batch.status(id)),
 
         add: (): Observable < any > =>

@@ -5,7 +5,9 @@
         // "baseUrl": "src",
         "paths": {
             "@src/*": ["./src/*"],
-            "@app/*": ["./src/app/*"]
+            "@app/*": ["./src/app/*"],
+            "@services/*": ["./src/app/services/*"]
+
         },
         "outDir": "./dist/out-tsc",
         "sourceMap": true,

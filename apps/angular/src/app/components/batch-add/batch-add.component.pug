@@ -9,31 +9,35 @@ ct-cols('*ngIf'="currentStates.has(states.show)")
         ct-section
             ct-section-header
                 ct-section-header-row
-                    ct-heading Upload file for processing
+                    ct-heading {{ 'batch-add.Upload file for processing' | translate }}
+            ct-section-body
                 ct-section-body-row('*ngIf'="currentStates.has(states.show)")
                     ct-section-content
                         mat-form-field
-                            mat-label list of Plans
+                            mat-label  {{ 'batch-add.List of Plans' | translate }}
                             mat-select('[(ngModel)]'="plan")
                                 div('*ngFor'="let plan of listOfPlans")
                                     mat-option([value]="plan") {{plan.code}}
+                            mat-hint {{ 'batch-add.This is a required field.' | translate }}
                 ct-section-body-row('*ngIf'="currentStates.has(states.show)")
                     ct-section-content
-                        // TODO add accept types 
-                        ct-file-upload(#fileUpload accepTypes="sdfsd")
+                        ct-file-upload(#fileUpload acceptTypes=".zip, .xml"  buttonTitle="{{'batch-add.Select File' | translate}}" '(changed)'="fileUploadChanged()")
+                        ct-hint {{ 'batch-add.This is a required field.' | translate }}
+                        ct-hint {{ 'batch-add.Only .xml and .zip files are supported' | translate }}
+
             ct-section-footer
                 ct-section-footer-row
                     ct-flex(justify-content="flex-end" gap="8px")
                         ct-flex-item
-                            button(mat-stroked-button '(click)'="back()") Cancel
+                            button(mat-stroked-button '(click)'="back()")  {{ 'batch-add.Cancel' | translate }}
                         ct-flex-item
-                            button(mat-flat-button color="primary" '[disabled]'="currentStates.has(states.loading) || currentStates.has(states.firstLoading)" '(click)'="upload()") Upload File
+                            button(mat-flat-button color="primary" '[disabled]'="!plan || !file" '(click)'="upload()")  {{ 'batch-add.Upload File' | translate }}
     ct-col(size="6")
         ct-section('*ngIf'="uploadResponse")
             ct-section-body
                 ct-section-body-row
                     ct-section-content
                         div
-                            div STATUS: {{response.status}}
+                            div {{ 'batch-add.STATUS' | translate }}: {{response.status}}
                             p('*ngFor'="let error of response.errorMessages; index as i; trackBy: trackByFn") {{error}}
                             p('*ngFor'="let info of response.infoMessages; index as i; trackBy: trackByFn") {{info}}

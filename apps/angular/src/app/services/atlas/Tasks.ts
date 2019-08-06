@@ -1,28 +1,7 @@
-import { Sort, Pageable } from '@app/models';
+import { DefaultListOfItems } from '@app/models';
+import { Task } from './Task';
 
-export interface Tasks {
-    content ? : (ContentEntity)[] | null;
-    pageable: Pageable;
-    number: number;
-    size: number;
-    sort: Sort;
-    first: boolean;
-    numberOfElements: number;
-    last: boolean;
-    empty: boolean;
-}
-export interface ContentEntity {
-    task: Task;
-    type: number;
-}
-export interface Task {
-    assignedOn: number;
-    completed: boolean;
-    completedOn: number;
-    exec: string;
-    execState: number;
-    metrics: any;
-    taskId: number;
-    taskParams: string;
-    typeAsString: string;
+
+export interface Tasks extends DefaultListOfItems {
+    content: Task[];
 }

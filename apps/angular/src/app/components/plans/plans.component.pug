@@ -2,7 +2,13 @@ mixin CURRENT
     ct-section
         ct-section-header
             ct-section-header-row
-                ct-heading Plans
+                ct-flex(justify-content="space-between")
+                    ct-flex-item
+                        ct-flex(justify-content="flex-start" gap="8px")
+                            ct-heading Plans
+                    ct-flex-item
+                        button(mat-flat-button color="primary" '[disabled]'="currentStates.has(states.loading) || currentStates.has(states.firstLoading)" routerLink="/launchpad/plans/add") Add Plan
+    
         ct-section-body
             ct-section-body-row
                 ct-table(#table)
@@ -32,7 +38,7 @@ mixin CURRENT
                                     ct-flex-item: button(mat-flat-button size="forTableRow" color="warn" '(click)'="delete(el)" title="Delete"): mat-icon delete
                         tr(mat-header-row *matHeaderRowDef="columnsToDisplay")  
                         tr(mat-row *matRowDef="let row; columns: columnsToDisplay;" 
-                            '[class.deleted-table-row]'="deletedPlans.includes(row)")
+                            '[class.deleted-table-row]'="deletedPlans.includes(row) || archivedPlans.includes(row)")
             ct-section-body-row(*ngIf="currentStates.has(states.firstLoading)")
                 mat-progress-bar(mode="indeterminate")
 
@@ -49,11 +55,11 @@ mixin CURRENT
 
 
 
-mat-tab-group(mat-stretch-tabs dynamicHeight)
+mat-tab-group(#matTabGroup mat-stretch-tabs dynamicHeight '(selectedIndexChange)'="tabChange()")
     mat-tab(label="CURRENT")
         br
         +CURRENT
     mat-tab(label="ARCHIVE")
         br
-        plans-archive
+        plans-archive(#plansArchive)
     

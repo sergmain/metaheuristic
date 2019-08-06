@@ -3,8 +3,6 @@ import { Injectable } from '@angular/core';
 import { experiment, experiments } from './urls';
 import { Observable } from 'rxjs';
 
-export * from './response';
-
 @Injectable({ providedIn: 'root' })
 
 export class ExperimentsService {

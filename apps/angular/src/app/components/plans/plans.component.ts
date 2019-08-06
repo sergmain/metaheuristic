@@ -1,9 +1,10 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
+import { MatButton, MatDialog, MatTabGroup, MatTableDataSource } from '@angular/material';
 import { ConfirmationDialogInterface, ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
 import { LoadStates } from '@app/enums/LoadStates';
 import { PlansResponse } from '@app/models';
 import { PlansService } from '@app/services/plans/plans.service';
+import { PlansArchiveComponent } from '@src/app/components/plans-archive/plans-archive.component';
 import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
 import { Subscription } from 'rxjs';
 
@@ -14,6 +15,8 @@ import { Subscription } from 'rxjs';
 })
 
 export class PlansComponent implements OnInit, ConfirmationDialogInterface {
+    TABINDEX: number = 0;
+
     states = LoadStates;
     currentStates = new Set();
     response: PlansResponse.Response;
@@ -22,22 +25,21 @@ export class PlansComponent implements OnInit, ConfirmationDialogInterface {
     deletedPlans: PlansResponse.Plan[] = [];
     archivedPlans: PlansResponse.Plan[] = [];
 
-
     @ViewChild('nextTable') nextTable: MatButton;
     @ViewChild('prevTable') prevTable: MatButton;
+    @ViewChild('matTabGroup') matTabGroup: MatTabGroup;
     @ViewChild('table') table: CtTableComponent;
+    @ViewChild('plansArchive') plansArchive: PlansArchiveComponent;
 
     constructor(
         readonly dialog: MatDialog,
-        private planService: PlansService
+        private planService: PlansService,
     ) {
         this.currentStates.add(this.states.firstLoading);
         this.updateTable(0);
     }
 
-    ngOnInit() {
-
-    }
+    ngOnInit() {}
 
     updateTable(page: number) {
         this.currentStates.add(this.states.loading);
@@ -98,6 +100,12 @@ export class PlansComponent implements OnInit, ConfirmationDialogInterface {
                     subscribe.unsubscribe();
                 },
             );
+    }
+
+    tabChange() {
+        if (this.matTabGroup.selectedIndex === 1) {
+            this.plansArchive.updateTable(0);
+        }
     }
 
     next() {

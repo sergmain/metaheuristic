@@ -20,7 +20,7 @@ ct-section
                         th(mat-header-cell *matHeaderCellDef) 
                         td(mat-cell *matCellDef="let el") 
                             ct-flex(justify-content="flex-end" gap="4px")
-                                ct-flex-item: a('[routerLink]'="['/launchpad/experiments',el.experiment.id,'edit']"): button(mat-flat-button  color="primary" size="forTableRow" '[disabled]'="el.experiment.workbookId") Edit
+                                ct-flex-item: a('[routerLink]'="['/launchpad/experiments',el.experiment.id,'edit']"): button(mat-flat-button color="primary" size="forTableRow" '[disabled]'="el.experiment.workbookId") Edit
                                 ct-flex-item: a('[routerLink]'="['/launchpad/experiments',el.experiment.id,'info']"): button(mat-flat-button color="primary" size="forTableRow" '[disabled]'="!el.experiment.workbookId") Info
                                 ct-flex-item: button(mat-flat-button size="forTableRow" color="primary" '(click)'="clone(el)") Clone
                                 ct-flex-item: button(mat-flat-button size="forTableRow" color="warn" '(click)'="delete(el)" ): mat-icon delete
@@ -35,7 +35,7 @@ ct-section
             ct-flex(justify-content="space-between")
                 ct-flex-item
                     ct-flex(justify-content="flex-start" gap="8px")
-                        ct-flex-item: button(mat-flat-button #prevTable disabled '(click)'='prev()'): mat-icon arrow_back_ios
-                        ct-flex-item: button(mat-flat-button #nextTable disabled '(click)'='next()'): mat-icon arrow_forward_ios
+                        ct-flex-item: button(mat-flat-button color="primary" #prevTable disabled '(click)'='prev()'): mat-icon arrow_back_ios
+                        ct-flex-item: button(mat-flat-button color="primary" #nextTable disabled '(click)'='next()'): mat-icon arrow_forward_ios
                 ct-flex-item: button(mat-flat-button color="primary" wide '[disabled]'="currentStates.has(states.loading) || currentStates.has(states.firstLoading)"  routerLink="/launchpad/experiments/add/") Add Experiment
 

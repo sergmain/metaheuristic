@@ -9,7 +9,7 @@ ct-cols
 					ct-table
 						table(mat-table '[dataSource]'="tables.metrics.table") 
 							ng-container(matColumnDef="values") 
-								th(mat-header-cell *matHeaderCellDef) {{response.metricsResult.metricNames}} 
+								th(mat-header-cell *matHeaderCellDef) {{featureProgressResponse.metricsResult.metricNames}} 
 								td(mat-cell *matCellDef="let el") {{el.values}} 
 							ng-container(matColumnDef="params") 
 								th(mat-header-cell *matHeaderCellDef) Hyper Params 
