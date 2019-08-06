@@ -16,6 +16,8 @@ url - http://localhost:4200/launchpad/batch
 скачивание архива не работает
 файл с архивом на самом деле содержит html код
 NOT_YET
+    сделал специальный урл для скачки
+    /rest/v1/launchpad/batch/batch-download-result/{batchId}/{fileName}
 
 ---- bug-203
 url - http://localhost:4200/launchpad
