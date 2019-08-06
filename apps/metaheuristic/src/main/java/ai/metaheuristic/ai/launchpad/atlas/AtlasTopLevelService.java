@@ -44,6 +44,7 @@ import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.commons.utils.DirUtils;
 import ai.metaheuristic.commons.utils.StrUtils;
+import ai.metaheuristic.commons.utils.ZipUtils;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -148,26 +149,53 @@ public class AtlasTopLevelService {
         File zipDir = new File(resultDir, "zip");
         zipDir.mkdir();
         if (!zipDir.exists()) {
-            log.error("Error, temp dir wasn't created, path: {}", zipDir.getAbsolutePath());
+            log.error("Error, zip dir wasn't created, path: {}", zipDir.getAbsolutePath());
+            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        File taskDir = new File(zipDir, "tasks");
+        taskDir.mkdir();
+        if (!taskDir.exists()) {
+            log.error("Error, task dir wasn't created, path: {}", taskDir.getAbsolutePath());
+            return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        File zipFile = new File(resultDir, "export-"+atlasId+".zip");
+        if (zipFile.isDirectory()) {
+            log.error("Error, path for zip file is actually directory, path: {}", zipFile.getAbsolutePath());
             return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
         }
         Atlas atlas = atlasRepository.findById(atlasId).orElse(null);
         if (atlas==null) {
             return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.NOT_FOUND);
         }
-        File exportFile = new File(zipDir, "export.yaml");
+        File exportFile = new File(zipDir, "experiment.yaml");
         try {
             FileUtils.write(exportFile, atlas.params, StandardCharsets.UTF_8);
         } catch (IOException e) {
             log.error("Error", e);
             return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
         }
+        List<Long> taskIds = atlasTaskRepository.findIdsByAtlasId(atlasId);
+        for (Long taskId : taskIds) {
+            AtlasTask at = atlasTaskRepository.findById(taskId).orElse(null);
+            if (at==null) {
+                log.error("AtlasTask wasn't found for is #{}", taskId);
+                continue;
+            }
+            File taskFile = new File(taskDir, "task-"+taskId+".yaml");
+            try {
+                FileUtils.writeStringToFile(taskFile, at.params, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                log.error("Error writing task's params to file {}", taskFile.getAbsolutePath());
+                return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+
+        ZipUtils.createZip(zipDir, zipFile);
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-//        httpHeaders.setContentDispositionFormData("attachment", RESULT_ZIP);
-        return new ResponseEntity<>(new FileSystemResource(exportFile.toPath()), RestUtils.getHeader(httpHeaders, exportFile.length()), HttpStatus.OK);
-
+        httpHeaders.setContentDispositionFormData("attachment", zipFile.getName());
+        return new ResponseEntity<>(new FileSystemResource(zipFile.toPath()), RestUtils.getHeader(httpHeaders, zipFile.length()), HttpStatus.OK);
     }
 
     public AtlasData.ExperimentDataOnly getExperimentDataOnly(Long atlasId) {

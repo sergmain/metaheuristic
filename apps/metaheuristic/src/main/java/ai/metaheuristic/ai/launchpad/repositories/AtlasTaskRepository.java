@@ -37,6 +37,10 @@ public interface AtlasTaskRepository extends CrudRepository<AtlasTask, Long> {
     List<AtlasTask> findTasksById(Long atlasId, Collection<Long> ids);
 
     @Transactional(readOnly = true)
+    @Query("SELECT at.id FROM AtlasTask at where at.atlasId=:atlasId ")
+    List<Long> findIdsByAtlasId(Long atlasId);
+
+    @Transactional(readOnly = true)
     AtlasTask findByAtlasIdAndTaskId(Long atlasId, Long taskId);
 
     void deleteByAtlasId(Long atlasId);
