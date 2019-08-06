@@ -46,7 +46,8 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     Page<TaskImpl> findAll(Pageable pageable);
 
     @Transactional(readOnly = true)
-    List<Task> findAllByWorkbookId(Long workbookId);
+    @Query(value="select t.id from TaskImpl t where t.workbookId=:workbookId")
+    List<Long> findAllTaskIdsByWorkbookId(Long workbookId);
 
     @Transactional
     @Query(value="select t from TaskImpl t where t.workbookId=:workbookId")

@@ -179,7 +179,7 @@ public class LaunchpadRequestor {
                 headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
                 headers.setContentType(MediaType.APPLICATION_JSON);
                 if (launchpad.launchpadLookup.securityEnabled) {
-                    String auth = launchpad.launchpadLookup.restUsername + '=' + launchpad.launchpadLookup.restToken + ':' + launchpad.launchpadLookup.restPassword;
+                    String auth = launchpad.launchpadLookup.restUsername + ':' + launchpad.launchpadLookup.restPassword;
                     byte[] encodedAuth = Base64.encodeBase64(auth.getBytes(StandardCharsets.US_ASCII));
                     String authHeader = "Basic " + new String(encodedAuth);
                     headers.set("Authorization", authHeader);

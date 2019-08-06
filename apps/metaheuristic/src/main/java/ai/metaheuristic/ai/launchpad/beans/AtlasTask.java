@@ -14,31 +14,37 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.versioning;
+package ai.metaheuristic.ai.launchpad.beans;
 
-import ai.metaheuristic.api.data.BaseParams;
-import org.yaml.snakeyaml.Yaml;
+import lombok.Data;
+
+import javax.persistence.*;
+import java.io.Serializable;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 12:17 AM
+ * Date: 8/3/2019
+ * Time: 1:15 AM
  */
-abstract public class AbstractParamsYamlUtils<CurrT extends BaseParams, NextT extends BaseParams, NextU, PrevT, PrevU, CurrForDownT> {
+@Entity
+@Table(name = "MH_ATLAS_TASK")
+@Data
+public class AtlasTask implements Serializable {
+    private static final long serialVersionUID = -1225513309547284431L;
 
-    public abstract Yaml getYaml();
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    public Long id;
 
-    public abstract NextT upgradeTo(CurrT yaml, Long ... vars);
+    @Version
+    public Integer version;
 
-    public abstract PrevT downgradeTo(CurrForDownT yaml);
+    @Column(name = "ATLAS_ID")
+    public Long atlasId;
 
-    public abstract NextU nextUtil();
+    @Column(name = "TASK_ID")
+    public Long taskId;
 
-    public abstract PrevU prevUtil();
-
-    public abstract String toString(CurrT yaml);
-
-    public abstract CurrT to(String s);
-
-    public abstract int getVersion();
+    @Column(name = "PARAMS")
+    public String params;
 }

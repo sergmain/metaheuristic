@@ -128,7 +128,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
                         Response response;
                         if (task.launchpad.securityEnabled) {
-                            response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
+                            response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restPassword).execute(request);
                         } else {
                             response = request.execute();
                         }
@@ -173,7 +173,7 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
 
                         Response response;
                         if (task.launchpad.securityEnabled) {
-                            response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restToken, task.launchpad.restPassword).execute(request);
+                            response = HttpClientExecutor.getExecutor(task.launchpad.url, task.launchpad.restUsername, task.launchpad.restPassword).execute(request);
                         }
                         else {
                             response = request.execute();

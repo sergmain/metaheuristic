@@ -1,0 +1,63 @@
+---- bug-103
+url - http://localhost:4200/launchpad/resources/add
+раздел Create resource from file
+поле должно быть опциональным
+NOT_YET
+    функциональншо сделано, но подпись все еще "This is a required field."
+    подпись должна быть "This is an optional field"
+
+    должно быть:
+    "Resource code" This is an optional field.
+    "Resource pool code This is a required field.
+
+
+---- bug-202
+url - http://localhost:4200/launchpad/batch
+скачивание архива не работает
+файл с архивом на самом деле содержит html код
+NOT_YET
+
+---- bug-203
+url - http://localhost:4200/launchpad
+кнопка Billing не должна быть доступна роли ROLE_OPERATOR
+NOT_YET
+
+---- bug-204
+url - http://localhost:4200/launchpad/batch
+при удалении Batch ничего не происходит. батч все так же в бд
+
+NOT_YET
+    используется неправильный урл - надо использовать:
+    @PostMapping("/batch-delete-commit")
+
+---- bug-206
+url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
+в таблице "Metrics as the table" значения выводятся как строка через запятую.
+Должно быть вывод ввиде таблицы
+
+NOT_YET
+все так же выводится через запятую
+<td _ngcontent-c50="" class="mat-cell cdk-column-values mat-column-values ng-star-inserted"
+mat-cell="" role="gridcell">190,180,176 </td>
+
+
+- тестирование версии от 2019-08-05
+---- bug-207
+url - http://localhost:4200/launchpad/resources/add
+в разделе "Create resource from file"
+потерялось поле выбора файла для загрузки
+
+---- bug-208
+кнопка управления боковым меню сломана - меню не убирается
+при нажатии "убрать боковое меню" происходит взаимодействие с кнопкой управления темами (темная-светлая)
+
+
+
+
+
+
+
+
+
+
+

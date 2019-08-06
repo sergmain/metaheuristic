@@ -35,6 +35,7 @@ import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.utils.ControllerUtils;
+import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.plan.PlanParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -50,18 +51,25 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.io.AbstractResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.error.YAMLException;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
@@ -82,6 +90,7 @@ import java.util.stream.Collectors;
 public class BatchTopLevelService {
 
     private static final String ATTACHMENTS_POOL_CODE = "attachments";
+    private static final String RESULT_ZIP = "result.zip";
 
     private static final String CONFIG_FILE = "config.yaml";
     private static final String ALLOWED_CHARS_IN_ZIP_REGEXP = "^[/\\\\A-Za-z0-9._-]*$";
@@ -441,6 +450,24 @@ public class BatchTopLevelService {
         }
         BatchStatus status = batchService.updateStatus(batchId, false);
         return new BatchData.Status(batchId, status.getStatus(), status.ok);
+    }
+
+    public HttpEntity<AbstractResource> getBatchProcessingResult(Long batchId) throws IOException {
+        File resultDir = DirUtils.createTempDir("prepare-file-processing-result-");
+        File zipDir = new File(resultDir, "zip");
+        zipDir.mkdir();
+        BatchStatus status = batchService.prepareStatusAndData(batchId, zipDir, false, true);
+
+        File statusFile = new File(zipDir, "status.txt");
+        FileUtils.write(statusFile, status.getStatus(), StandardCharsets.UTF_8);
+        File zipFile = new File(resultDir, RESULT_ZIP);
+        ZipUtils.createZip(zipDir, zipFile, status.renameTo);
+
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        httpHeaders.setContentDispositionFormData("attachment", RESULT_ZIP);
+        return new HttpEntity<>(new FileSystemResource(zipFile), RestUtils.getHeader(httpHeaders, zipFile.length()));
     }
 
 

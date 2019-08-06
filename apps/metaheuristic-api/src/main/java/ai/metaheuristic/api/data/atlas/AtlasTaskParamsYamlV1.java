@@ -14,31 +14,41 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.versioning;
+package ai.metaheuristic.api.data.atlas;
 
 import ai.metaheuristic.api.data.BaseParams;
-import org.yaml.snakeyaml.Yaml;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 12:17 AM
+ * Date: 8/3/2019
+ * Time: 12:57 PM
  */
-abstract public class AbstractParamsYamlUtils<CurrT extends BaseParams, NextT extends BaseParams, NextU, PrevT, PrevU, CurrForDownT> {
 
-    public abstract Yaml getYaml();
+@Data
+@NoArgsConstructor
+public class AtlasTaskParamsYamlV1 implements BaseParams {
 
-    public abstract NextT upgradeTo(CurrT yaml, Long ... vars);
+    @Override
+    public boolean checkIntegrity() {
+        if (taskId==null) {
+            throw new IllegalArgumentException("(taskId==null)");
+        }
+        return true;
+    }
 
-    public abstract PrevT downgradeTo(CurrForDownT yaml);
+    public Long taskId;
+    public String taskParams;
+    public int execState;
 
-    public abstract NextU nextUtil();
+    public Long completedOn;
+    public boolean completed;
+    public Long assignedOn;
+    public String typeAsString;
 
-    public abstract PrevU prevUtil();
+    public String metrics;
+    public String snippetExecResults;
 
-    public abstract String toString(CurrT yaml);
-
-    public abstract CurrT to(String s);
-
-    public abstract int getVersion();
+    public final int version = 1;
 }

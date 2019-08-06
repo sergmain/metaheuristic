@@ -22,6 +22,7 @@ import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.BaseDataClass;
 import ai.metaheuristic.api.data.SimpleSelectOption;
 import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
+import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
 import ai.metaheuristic.api.data.experiment.BaseMetricElement;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.launchpad.Workbook;
@@ -160,7 +161,7 @@ public class AtlasData {
     @AllArgsConstructor
     @EqualsAndHashCode(callSuper = false)
     public static class TasksResult extends BaseDataClass {
-        public Slice<AtlasParamsYaml.TaskWithParams> items;
+        public Slice<AtlasTaskParamsYaml> items;
     }
 
     @Data
@@ -169,7 +170,7 @@ public class AtlasData {
     public static class ExperimentFeatureExtendedResult extends BaseDataClass {
         public MetricsResult metricsResult;
         public HyperParamResult hyperParamResult;
-        public Slice<AtlasParamsYaml.TaskWithParams> tasks;
+        public Slice<AtlasTaskParamsYaml> tasks;
         public ExperimentApiData.ExperimentFeatureData experimentFeature;
         public ConsoleResult consoleResult;
 

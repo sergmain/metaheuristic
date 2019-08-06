@@ -56,7 +56,7 @@ public class PlanParamsYamlUtilsV4
 
     @SuppressWarnings("Duplicates")
     @Override
-    public PlanParamsYamlV5 upgradeTo(PlanParamsYamlV4 pV4) {
+    public PlanParamsYamlV5 upgradeTo(PlanParamsYamlV4 pV4, Long ... vars) {
         PlanParamsYamlV5 p = new PlanParamsYamlV5();
         p.internalParams = pV4.internalParams;
         p.planYaml = new PlanParamsYamlV5.PlanYamlV5();

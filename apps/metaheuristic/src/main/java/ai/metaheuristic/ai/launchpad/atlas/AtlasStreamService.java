@@ -14,41 +14,37 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.atlas;
+package ai.metaheuristic.ai.launchpad.atlas;
 
-import ai.metaheuristic.api.data.atlas.AtlasParamsYaml;
-import ai.metaheuristic.commons.yaml.versioning.BaseYamlUtils;
+import ai.metaheuristic.ai.launchpad.beans.AtlasTask;
+import ai.metaheuristic.ai.launchpad.repositories.AtlasTaskRepository;
+import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
+import ai.metaheuristic.ai.yaml.atlas.AtlasTaskParamsYamlUtils;
+import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
+import ai.metaheuristic.api.launchpad.Task;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.PostConstruct;
-import java.util.Map;
+import java.util.stream.Stream;
 
 /**
  * @author Serge
- * Date: 6/22/2019
- * Time: 11:36 PM
+ * Date: 8/4/2019
+ * Time: 12:36 AM
  */
+@Slf4j
 @Service
 @Profile("launchpad")
 @RequiredArgsConstructor
-public class AtlasParamsYamlUtils {
+public class AtlasStreamService {
 
-    private final AtlasParamsYamlUtilsV1 YAML_UTILS_V_1;
-    private final AtlasParamsYamlUtilsV2 YAML_UTILS_V_2;
-//    private static final AtlasParamsYamlUtilsV2 DEFAULT_UTILS = YAML_UTILS_V_2;
+    private final TaskRepository taskRepository;
+    private final AtlasTaskRepository atlasTaskRepository;
 
-    public BaseYamlUtils<AtlasParamsYaml> BASE_YAML_UTILS;
-
-    @PostConstruct
-    private void postConstruct() {
-        BASE_YAML_UTILS = new BaseYamlUtils<>(
-                Map.of(
-                        1, YAML_UTILS_V_1,
-                        2, YAML_UTILS_V_2
-                ),
-                YAML_UTILS_V_2
-        );
+    @Transactional
+    public void transferTasksToAtlas(Long atlasId, Long workbookId) {
     }
 }

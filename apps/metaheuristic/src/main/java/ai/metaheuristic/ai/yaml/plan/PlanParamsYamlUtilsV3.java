@@ -51,7 +51,7 @@ public class PlanParamsYamlUtilsV3
     }
 
     @Override
-    public PlanParamsYamlV4 upgradeTo(PlanParamsYamlV3 pV3) {
+    public PlanParamsYamlV4 upgradeTo(PlanParamsYamlV3 pV3, Long ... vars) {
         PlanParamsYamlV4 p = new PlanParamsYamlV4();
         p.internalParams = pV3.internalParams;
         p.planYaml = new PlanParamsYamlV4.PlanYamlV4();

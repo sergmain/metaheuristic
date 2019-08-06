@@ -14,10 +14,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.yaml.workbook;
+package ai.metaheuristic.ai.yaml.atlas;
 
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV1;
-import ai.metaheuristic.api.data.workbook.WorkbookParamsYamlV2;
+import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYaml;
+import ai.metaheuristic.api.data.atlas.AtlasTaskParamsYamlV1;
 import ai.metaheuristic.commons.yaml.YamlUtils;
 import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.springframework.beans.BeanUtils;
@@ -25,11 +25,11 @@ import org.yaml.snakeyaml.Yaml;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 12:10 AM
+ * Date: 6/22/2019
+ * Time: 11:36 PM
  */
-public class WorkbookParamsYamlUtilsV1
-        extends AbstractParamsYamlUtils<WorkbookParamsYamlV1, WorkbookParamsYamlV2, WorkbookParamsYamlUtilsV2, Void, Void, Void> {
+public class AtlasTaskParamsYamlUtilsV1
+        extends AbstractParamsYamlUtils<AtlasTaskParamsYamlV1, AtlasTaskParamsYaml, Void, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -37,43 +37,41 @@ public class WorkbookParamsYamlUtilsV1
     }
 
     public Yaml getYaml() {
-        return YamlUtils.init(WorkbookParamsYamlV1.class);
+        return YamlUtils.init(AtlasTaskParamsYamlV1.class);
     }
 
     @Override
-    public WorkbookParamsYamlV2 upgradeTo(WorkbookParamsYamlV1 workbookParams, Long ... vars) {
-        WorkbookParamsYamlV2 t = new WorkbookParamsYamlV2();
-        BeanUtils.copyProperties(workbookParams, t.workbookYaml);
-        if (workbookParams.poolCodes!=null) {
-            t.workbookYaml.poolCodes.putAll(workbookParams.poolCodes);
-        }
-        return t;
+    public AtlasTaskParamsYaml upgradeTo(AtlasTaskParamsYamlV1 src, Long ... vars) {
+        src.checkIntegrity();
+        AtlasTaskParamsYaml trg = new AtlasTaskParamsYaml();
+        BeanUtils.copyProperties(src, trg);
+        trg.checkIntegrity();
+        return trg;
     }
 
     @Override
     public Void downgradeTo(Void yaml) {
-        // there isn't any prev version
         return null;
     }
 
     @Override
-    public WorkbookParamsYamlUtilsV2 nextUtil() {
-        return (WorkbookParamsYamlUtilsV2)WorkbookParamsYamlUtils.BASE_YAML_UTILS.getForVersion(2);
+    public Void nextUtil() {
+        return null;
     }
 
     @Override
     public Void prevUtil() {
-        // there isn't any prev version
         return null;
     }
 
-    public String toString(WorkbookParamsYamlV1 yaml) {
-        return getYaml().dump(yaml);
+    @Override
+    public String toString(AtlasTaskParamsYamlV1 planYaml) {
+        return getYaml().dump(planYaml);
     }
 
-    public WorkbookParamsYamlV1 to(String s) {
+    public AtlasTaskParamsYamlV1 to(String s) {
         //noinspection UnnecessaryLocalVariable
-        final WorkbookParamsYamlV1 p = getYaml().load(s);
+        final AtlasTaskParamsYamlV1 p = getYaml().load(s);
         return p;
     }
 

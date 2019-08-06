@@ -14,31 +14,28 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.commons.yaml.versioning;
+package ai.metaheuristic.ai.station;
 
-import ai.metaheuristic.api.data.BaseParams;
-import org.yaml.snakeyaml.Yaml;
+import ai.metaheuristic.ai.launchpad.server.ServerService;
+import ai.metaheuristic.ai.launchpad.station.StationTopLevelService;
+import org.junit.Test;
+
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Serge
- * Date: 6/17/2019
- * Time: 12:17 AM
+ * Date: 8/3/2019
+ * Time: 12:02 AM
  */
-abstract public class AbstractParamsYamlUtils<CurrT extends BaseParams, NextT extends BaseParams, NextU, PrevT, PrevU, CurrForDownT> {
+public class TestStationTimeout {
 
-    public abstract Yaml getYaml();
-
-    public abstract NextT upgradeTo(CurrT yaml, Long ... vars);
-
-    public abstract PrevT downgradeTo(CurrForDownT yaml);
-
-    public abstract NextU nextUtil();
-
-    public abstract PrevU prevUtil();
-
-    public abstract String toString(CurrT yaml);
-
-    public abstract CurrT to(String s);
-
-    public abstract int getVersion();
+    @Test
+    public void test() {
+        assertTrue(
+                StationTopLevelService.STATION_TIMEOUT - ServerService.SESSION_UPDATE_TIMEOUT
+                        >= TimeUnit.SECONDS.toMillis(20)
+        );
+    }
 }

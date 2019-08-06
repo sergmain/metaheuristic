@@ -41,7 +41,7 @@ public class WorkbookParamsYamlUtilsV2
     }
 
     @Override
-    public WorkbookParamsYaml upgradeTo(WorkbookParamsYamlV2 yaml) {
+    public WorkbookParamsYaml upgradeTo(WorkbookParamsYamlV2 yaml, Long ... vars) {
         WorkbookParamsYaml t = new WorkbookParamsYaml();
 
         // right now we don't need to convert Graph because if has only one version of structure
@@ -69,8 +69,8 @@ public class WorkbookParamsYamlUtilsV2
         return null;
     }
 
-    public String toString(WorkbookParamsYamlV2 planYaml) {
-        return getYaml().dump(planYaml);
+    public String toString(WorkbookParamsYamlV2 yaml) {
+        return getYaml().dump(yaml);
     }
 
     public WorkbookParamsYamlV2 to(String s) {

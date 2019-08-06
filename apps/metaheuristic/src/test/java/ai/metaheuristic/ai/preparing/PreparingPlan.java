@@ -305,7 +305,7 @@ public abstract class PreparingPlan extends PreparingExperiment {
         result = planService.produceAllTasks(true, plan, this.workbook);
         experiment = experimentCache.findById(experiment.id);
         this.workbook = (WorkbookImpl)result.workbook;
-        assertEquals(result.numberOfTasks, taskRepository.findAllByWorkbookId(workbook.id).size());
+        assertEquals(result.numberOfTasks, taskRepository.findAllTaskIdsByWorkbookId(workbook.id).size());
         assertEquals(result.numberOfTasks, workbookService.getCountUnfinishedTasks(workbook));
 
 

@@ -78,9 +78,6 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-username')) }")
     public String launchpadMasterUsername;
 
-    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-token')) }")
-    public String launchpadMasterToken;
-
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).strIfNotBlankElseNull( environment.getProperty('mh.launchpad.master-password')) }")
     public String launchpadMasterPassword;
 
@@ -236,10 +233,10 @@ public class Globals {
         }
 
         if (isLaunchpadEnabled) {
-            if (launchpadMasterUsername==null || launchpadMasterToken==null || launchpadMasterPassword==null) {
+            if (launchpadMasterUsername==null || launchpadMasterPassword==null) {
                 throw new IllegalArgumentException(
                         "if mh.secure-rest-url=true, then mh.launchpad.master-username, " +
-                                "mh.launchpad.master-token, and mh.launchpad.master-password have to be not null");
+                                "and mh.launchpad.master-password have to be not null");
             }
 
             launchpadTempDir = new File(launchpadDir, "temp");

@@ -116,7 +116,14 @@ public class LaunchpadSchedule {
     }
 
     public boolean isCurrentTimeInactive() {
-        return !isActive(LocalDateTime.now());
+        final LocalDateTime now = LocalDateTime.now();
+
+        //noinspection RedundantIfStatement
+        if (isActive(now)) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
 }
