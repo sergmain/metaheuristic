@@ -114,7 +114,7 @@ public class AtlasController {
     @GetMapping(value= "/atlas-experiment-export/atlas-{atlasId}.yaml", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<AbstractResource> downloadProcessingResult(@PathVariable("atlasId") Long atlasId) {
         //noinspection UnnecessaryLocalVariable
-        ResponseEntity<AbstractResource> res = atlasTopLevelService.exportAtlas(atlasId);
+        ResponseEntity<AbstractResource> res = atlasTopLevelService.exportAtlasToFile(atlasId);
         return res;
     }
 

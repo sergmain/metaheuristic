@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 @Repository
 @Transactional
@@ -37,8 +38,8 @@ public interface AtlasTaskRepository extends CrudRepository<AtlasTask, Long> {
     List<AtlasTask> findTasksById(Long atlasId, Collection<Long> ids);
 
     @Transactional(readOnly = true)
-    @Query("SELECT at.id FROM AtlasTask at where at.atlasId=:atlasId ")
-    List<Long> findIdsByAtlasId(Long atlasId);
+    @Query("SELECT at.taskId FROM AtlasTask at where at.atlasId=:atlasId ")
+    Set<Long> findTaskIdsByAtlasId(Long atlasId);
 
     @Transactional(readOnly = true)
     AtlasTask findByAtlasIdAndTaskId(Long atlasId, Long taskId);
