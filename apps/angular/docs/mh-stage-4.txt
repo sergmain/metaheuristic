@@ -37,7 +37,7 @@ DONE, checked 2019-07-29
     как и при удалении Плана
     rest url длz отправки в архив - /rest/v1/launchpad/plan/plan-archive-commit
 
-NOT_YET
+DONE
     план помещается в архив но при этом если переключиться на вкладку Archive там этот план не появляется
     при этом план все также присутствует на вкладке Current и его можно удалить с этой вкладки.
     по идее после удаления инфа в списке должна обновляться. если предполагается,
@@ -47,7 +47,7 @@ NOT_YET
   rest url для обычных Планов(не менялся) - http://localhost:8080/rest/v1/launchpad/plan/plans
   rest url для архивированных Планов - http://localhost:8080/rest/v1/launchpad/plan/plans-archived-only
   на табе Archive у Плана только кнопка Delete
-NOT_YET
+DONE
     после помещения Плана в архив, на вкладку Archive там этот план не появляется, необзодимо послность рефрешить страницу
     тут скорее всего суть в том что данные для обоих табов загрузаются одновременно.
     Инфа для каждого таба должна загрудаться только когда таб активен.
@@ -117,7 +117,7 @@ DONE, MOVED_TO_NEXT_STAGE
 http://localhost:4200/launchpad/experiments/300/edit
 
 в открывающуюся форму должно копироваться текущее значение. сейчас поле пустое и предлагается все с нуля заполнять
-NOT_YET
+DONE
     сейчас поле seed пустое, из за этого нельзя создать эксперимент.
     надо сделать деволтным значение этого поля 1
 
@@ -167,7 +167,7 @@ git:
   branch: master
   commit: b25331edba72a1a901634212ac55752238fd2dd5
 
-NOT_YET
+DONE
     поменять местами поле ввода "Params of resources" и вывод примеров.
     Т.е. порядок должен быть такой:
     - поле Resource pool code
@@ -214,23 +214,33 @@ DONE, checked 2019-07-29
 url - http://localhost:4200/launchpad/accounts/edit-password/4
 пароль 123 не принимается. поле ввода делается красным, но в чем ошибка - не говорится
 сейчас нет ограницений на формат пароля. если это про длину пароля, то мин длина должна быть 3 символа
+DONE
 
 ---- bug-202
 url - http://localhost:4200/launchpad/batch
 скачивание архива не работает
 файл с архивом на самом деле содержит html код
+NOT_YET
 
 ---- bug-203
 url - http://localhost:4200/launchpad
 кнопка Billing не должна быть доступна роли ROLE_OPERATOR
+NOT_YET
 
 ---- bug-204
 url - http://localhost:4200/launchpad/batch
 при удалении Batch ничего не происходит. батч все так же в бд
 
+NOT_YET
+    используется неправильный урл - надо использовать:
+    @PostMapping("/batch-delete-commit")
+
+
 ---- bug-205
 url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
 execStatus показывается как число, надо использовать поле feature.execStatusAsString
+DONE
+
 
 ---- bug-206
 url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
@@ -240,16 +250,20 @@ url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
 ---- bug-207
 url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
 у таблицы "Tasks" отсутствует навигация по записям
+DONE
 
 ---- bug-208
 url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
 у "Console output" не должно быть переводов строки, инфа должна выводиться как есть
 если разметка на это странице поедет, то ок. главное чтобы строки выводились без wrap'ов
+DONE
 
 
-
-
-
+- тестирование версии от 2019-08-05
+---- bug-206
+url - http://localhost:4200/launchpad/resources/add
+в разделе "Create resource from file"
+потерялось поле выбора файла для загрузки
 
 
 
