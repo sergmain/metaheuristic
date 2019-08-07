@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { UserRoleInterface, AuthenticationService, Role } from '@src/app/services/authentication';
+import { AuthenticationService, Role } from '@src/app/services/authentication';
+
 
 @Component({
     selector: 'app-nav-launchpad',
@@ -11,7 +12,7 @@ export class NavLaunchpadComponent implements OnInit {
     userRole: Set < Role > ;
 
     constructor(
-        private authenticationService: AuthenticationService
+        private authenticationService: AuthenticationService, 
     ) {
         this.userRole = this.authenticationService.getUserRole();
     }

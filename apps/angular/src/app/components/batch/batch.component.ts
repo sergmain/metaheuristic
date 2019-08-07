@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
-import { ConfirmationDialogMethod, QuestionData } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
+import { ConfirmationDialogMethod, QuestionData } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component'; 
 import { LoadStates } from '@app/enums/LoadStates';
 import { Batch, batches, BatchService } from '@app/services/batch/batch.service';
 import { marker } from '@biesbjerg/ngx-translate-extract-marker';
@@ -40,7 +40,6 @@ export class BatchComponent implements OnInit {
         private authenticationService: AuthenticationService,
         private settingsService: SettingsService
     ) {
-        this.settingsService.languageObserver.subscribe((lang: string) => this.translate.use(lang));
     }
 
     ngOnInit() {
