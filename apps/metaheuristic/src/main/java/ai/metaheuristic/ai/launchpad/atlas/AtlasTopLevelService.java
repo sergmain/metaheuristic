@@ -215,8 +215,19 @@ public class AtlasTopLevelService {
             log.error("#422.090 Error", e);
             return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        Set<Long> atlasTaskIds = atlasTaskRepository.findTaskIdsByAtlasId(atlasId);
+        Set<Long> atlasTaskIds = atlasTaskRepository.findIdsByAtlasId(atlasId);
+
+        AtlasParamsYaml apy = atlasParamsYamlUtils.BASE_YAML_UTILS.to(atlas.params);
+        if (atlasTaskIds.size()!=apy.taskIds.size()) {
+            log.warn("numbers of tasks in params of stored experiment and in db are different, " +
+                    "atlasTaskIds.size: {}, apy.taskIds.size: {}", atlasTaskIds.size(), apy.taskIds.size());
+        }
+
+        int count = 1;
         for (Long atlasTaskId : atlasTaskIds) {
+            if (count++%100==0) {
+                log.info("Current number of imported task: {} of total {}", count, atlasTaskIds.size());
+            }
             AtlasTask at = atlasTaskRepository.findById(atlasTaskId).orElse(null);
             if (at==null) {
                 log.error("#422.100 AtlasTask wasn't found for is #{}", atlasTaskId);

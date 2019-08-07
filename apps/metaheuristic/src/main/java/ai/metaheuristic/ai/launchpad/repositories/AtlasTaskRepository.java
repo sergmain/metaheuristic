@@ -38,8 +38,8 @@ public interface AtlasTaskRepository extends CrudRepository<AtlasTask, Long> {
     List<AtlasTask> findTasksById(Long atlasId, Collection<Long> ids);
 
     @Transactional(readOnly = true)
-    @Query("SELECT at.taskId FROM AtlasTask at where at.atlasId=:atlasId ")
-    Set<Long> findTaskIdsByAtlasId(Long atlasId);
+    @Query("SELECT at.id FROM AtlasTask at where at.atlasId=:atlasId ")
+    Set<Long> findIdsByAtlasId(Long atlasId);
 
     @Transactional(readOnly = true)
     AtlasTask findByAtlasIdAndTaskId(Long atlasId, Long taskId);
