@@ -21,13 +21,14 @@ export class CtFileUploadComponent implements OnInit, OnChanges {
     accept: string;
 
     constructor() {
-        this.buttonTitleString = this.buttonTitle || 'Select File';
         this.accept = this.acceptTypes || '';
     }
 
     ngOnInit() {}
 
-    ngOnChanges() {}
+    ngOnChanges() {
+        this.buttonTitleString = this.buttonTitle || 'Select File';
+    }
 
     fileChanged() {
         this.value = this.fileInput.nativeElement.value;

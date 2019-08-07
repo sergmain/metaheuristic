@@ -29,7 +29,7 @@ export class AuthenticationService {
         return user.getRoleSet();
     }
 
-    login(username: string, password: string) {
+    login(username: string, password: string, remember: boolean) {
         const url: string = environment.baseUrl + 'user';
         const token: string = 'Basic ' + btoa(username + ':' + password);
         const headers: HttpHeaders = new HttpHeaders({ Authorization: token });

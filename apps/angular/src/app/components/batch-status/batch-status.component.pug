@@ -1,7 +1,8 @@
 ct-section
     ct-section-header
         ct-section-header-row
-            ct-heading Status of execution of batch \#{{response ? response.batchId : ''}}
+            ct-heading   
+                div {{ 'batch-status.Status of execution of batch _batchId_' | translate:{batchId: batchId} }} 
     ct-section-body
         ct-section-body-row('*ngIf'="currentState == states.firstLoading")
             mat-progress-bar(mode="indeterminate")

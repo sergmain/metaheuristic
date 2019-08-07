@@ -16,6 +16,7 @@ export class BatchStatusComponent implements OnInit {
     currentState: LoadStates = LoadStates.firstLoading;
 
     response: batch.status.Response;
+    batchId: string
 
     constructor(
         private route: ActivatedRoute,
@@ -24,12 +25,12 @@ export class BatchStatusComponent implements OnInit {
     ) {}
 
     ngOnInit() {
+        this.batchId = this.route.snapshot.paramMap.get('id');
         this.updateResponse();
     }
     updateResponse() {
-        const id: string | number = this.route.snapshot.paramMap.get('id');
         const subscribe: Subscription = this.batchService.batch
-            .status(id)
+            .status(this.batchId )
             .subscribe(
                 (response: batch.status.Response) => {
                     this.response = response;

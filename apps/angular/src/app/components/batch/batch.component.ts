@@ -87,7 +87,7 @@ export class BatchComponent implements OnInit {
     @ConfirmationDialogMethod({
         question: (batch: Batch): QuestionData => {
             return {
-                text: marker('batch.delete-dialog.Do you want to delete Batch #{{batchId}}'),
+                text: marker('batch.delete-dialog.Do you want to delete Batch _batchId_'),
                 params: { batchId: batch.batch.id }
             };
         },

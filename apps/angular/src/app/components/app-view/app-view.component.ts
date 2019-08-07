@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatSidenav, MatSelect, MatSlideToggle } from '@angular/material';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { AuthenticationService } from '@app/services/authentication/authentication.service';
 import { SettingsService, enumOfLanguages, setOfLanguages } from '@app/services/settings/settings.service';
 import { Subscription } from 'rxjs';
@@ -25,7 +25,9 @@ export class AppViewComponent implements OnInit {
     constructor(
         private authenticationService: AuthenticationService,
         private settingsService: SettingsService,
-        private route: ActivatedRoute
+        private route: ActivatedRoute,
+        private router: Router,
+
     ) {}
 
     ngOnInit() {
@@ -43,6 +45,7 @@ export class AppViewComponent implements OnInit {
 
     isAuth() {
         return this.authenticationService.isAuth();
+
     }
 
     checkSidenav() {
@@ -76,6 +79,7 @@ export class AppViewComponent implements OnInit {
     }
 
     logout() {
-        return this.authenticationService.logout();
+        this.authenticationService.logout();
+        this.router.navigate(['/']);
     }
 }

@@ -53,9 +53,8 @@
 
 
         mat-sidenav-container(class="app-view__container")
-            mat-sidenav(class="app-view__sidenav" mode="side" 
-                '[opened]'="sidenavIsOpen")
-                    router-outlet(name="nav")
+            mat-sidenav(class="app-view__sidenav" mode="side" '[opened]'="sidenavIsOpen")
+                router-outlet(name="nav")
             mat-sidenav-content(class="app-view__sidenav-content")
                 .content
                     .content__body
@@ -73,7 +72,8 @@
             mat-sidenav-content(class="app-view__sidenav-content")
                 .content
                     .content__body
-                        div(class="flex space-between flex-start")
-                            about-view 
-                            login-view 
+                        ct-cols
+                            ct-col(size="8"): about-view 
+                            ct-col(size="4"): login-view 
+
                     .content__footer Metaheuristic, © 2017-2019
