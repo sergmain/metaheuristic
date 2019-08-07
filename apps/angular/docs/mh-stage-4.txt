@@ -145,9 +145,10 @@ DONE, checked 2019-07-29
 url - http://localhost:4200/launchpad/resources/add
 раздел Create resource from file
 поле должно быть опциональным
-NOT_YET
+
     функциональншо сделано, но подпись все еще "This is a required field."
     подпись должна быть "This is an optional field"
+DONE
 
 ---- bug-104
 url - http://localhost:4200/launchpad/resources/add
@@ -220,21 +221,21 @@ DONE
 url - http://localhost:4200/launchpad/batch
 скачивание архива не работает
 файл с архивом на самом деле содержит html код
-NOT_YET
+DONE
 
 ---- bug-203
 url - http://localhost:4200/launchpad
 кнопка Billing не должна быть доступна роли ROLE_OPERATOR
-NOT_YET
+DONE
 
 ---- bug-204
 url - http://localhost:4200/launchpad/batch
 при удалении Batch ничего не происходит. батч все так же в бд
 
-NOT_YET
+
     используется неправильный урл - надо использовать:
     @PostMapping("/batch-delete-commit")
-
+DONE
 
 ---- bug-205
 url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
@@ -264,9 +265,24 @@ DONE
 url - http://localhost:4200/launchpad/resources/add
 в разделе "Create resource from file"
 потерялось поле выбора файла для загрузки
+DONE
 
 
+- тестирование версии от 2019-08-06
+---- bug-209
+url - http://localhost:4200/launchpad/resources/add
+раздел Create resource from file
+- выбрать файл
+- занести в поле "Resource pool code" что нибудь, например: dsfhksdhfk
+- нажать на Create
 
+результат - не происходит ничего
+
+должно быть -  ресурс загружается, юзер перенаправляется на список ресурсов http://localhost:4200/launchpad/resources
+
+
+---- bug-210
+невозможно залогироваться другим юзером после того как был зареген под учеткой другого
 
 
 

@@ -63,6 +63,7 @@ Status of execution of batch - Статус выполнения пакета
 
 ---- bug-511
 убрать кнопку TEst из главной панели
+DONE
 
 
 
