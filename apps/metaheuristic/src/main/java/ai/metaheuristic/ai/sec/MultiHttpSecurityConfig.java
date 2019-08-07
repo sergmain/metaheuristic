@@ -101,14 +101,13 @@ public class MultiHttpSecurityConfig {
             }
             else {
                 http
-                        .cors()
+                        .antMatcher("/rest/**/**").cors()
                         .and()
-                        .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                        .antMatcher("/rest/**/**").sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                         .and()
-                        .antMatcher("/rest/**").authorizeRequests().anyRequest().anonymous()
+                        .antMatcher("/rest/**/**").authorizeRequests().anyRequest().anonymous()
                         .and()
-                        .csrf().disable()
-                        .headers().cacheControl();
+                        .antMatcher("/rest/**/**").csrf().disable().headers().cacheControl();
 
             }
             if (globals.isSslRequired) {
