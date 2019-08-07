@@ -167,7 +167,11 @@ public class AtlasTopLevelService {
             atlas = atlasRepository.save(atlas);
 
             AtlasParamsYaml apy = atlasParamsYamlUtils.BASE_YAML_UTILS.to(params);
+            int count = 0;
             for (Long taskId : apy.taskIds) {
+                if (++count%100==0) {
+                    log.info("#422.045 Current number of imported task: {} of total {}", count, apy.taskIds.size());
+                }
                 File taskFile = new File(tasksDir, S.f(TASK_YAML_FILE, taskId));
 
                 AtlasTask at = new AtlasTask();
@@ -223,10 +227,10 @@ public class AtlasTopLevelService {
                     "atlasTaskIds.size: {}, apy.taskIds.size: {}", atlasTaskIds.size(), apy.taskIds.size());
         }
 
-        int count = 1;
+        int count = 0;
         for (Long atlasTaskId : atlasTaskIds) {
-            if (count++%100==0) {
-                log.info("Current number of imported task: {} of total {}", count, atlasTaskIds.size());
+            if (++count%100==0) {
+                log.info("#422.095 Current number of exported task: {} of total {}", count, atlasTaskIds.size());
             }
             AtlasTask at = atlasTaskRepository.findById(atlasTaskId).orElse(null);
             if (at==null) {

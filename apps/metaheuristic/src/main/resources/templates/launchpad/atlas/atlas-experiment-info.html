@@ -1,14 +1,16 @@
 <div layout:fragment="content" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" xmlns:th="http://www.thymeleaf.org"
-     xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
      layout:decorate="~{layout-launchpad}"
      th:if="${#bools.isTrue(@environment.getProperty('mh.launchpad.enabled'))}"
-     sec:authorize="isAuthenticated()"
 >
     <h1 class="widget-header">The experiment info</h1>
 
     <!--/*@thymesVar id="experimentResult" type="ai.metaheuristic.api.data.experiment.ExperimentApiData.ExperimentInfoResult"*/-->
     <!--/*@thymesVar id="experiment" type="ai.metaheuristic.ai.launchpad.beans.Experiment"*/-->
     <!--/*@thymesVar id="atlas" type="ai.metaheuristic.ai.launchpad.beans.Atlas"*/-->
+
+    <div align="right">
+        <a class="pure-button pure-button-primary" href="atlas-experiments.html" th:href="${'/launchpad/atlas/atlas-experiments'}">To list of experiments</a>
+    </div>
 
     <h1 class="widget-header">Progress of experiment</h1>
     <table>
@@ -135,7 +137,7 @@
         <p>&nbsp;</p>
     </div>
 
-        <a class="pure-button pure-button-primary" href="atlas-experiments.html" th:href="${'/launchpad/atlas/atlas-experiments'}">To list of experiments</a>
+    <a class="pure-button pure-button-primary" href="atlas-experiments.html" th:href="${'/launchpad/atlas/atlas-experiments'}">To list of experiments</a>
 
 
 </div>
