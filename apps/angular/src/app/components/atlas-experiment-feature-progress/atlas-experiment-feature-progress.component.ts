@@ -83,21 +83,6 @@ export class AtlasExperimentFeatureProgressComponent implements OnInit {
     };
 
 
-    test: any = {
-        "metricNames": ["sum","sum1","sum2"],
-        "metrics": [{
-            "values": [192,193,194],
-            "params": null
-        }, {
-            "values": [136,137,138],
-            "params": null
-        }, {
-            "values": [110,111,112],
-            "params": null
-        }]
-    }
-
-
     constructor(
         private route: ActivatedRoute,
         private atlasService: AtlasService,
@@ -121,7 +106,7 @@ export class AtlasExperimentFeatureProgressComponent implements OnInit {
                         .filter(key => ['resourceCodes', 'id', 'execStatusAsString'].includes(key))
                         .map(key => [key, response.experimentFeature[key]]);
                     this.tables.hyperParameters.table = new MatTableDataSource(response.hyperParamResult.elements || []);
-                    this.metricsResult = this.test || response.metricsResult;
+                    this.metricsResult = response.metricsResult;
                     this.tasks = response.tasks;
                 },
                 () => {},

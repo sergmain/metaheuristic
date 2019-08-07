@@ -14,7 +14,7 @@ export class AtlasExperimentMetricsComponent implements OnInit, OnChanges {
     @Input() canDraw: boolean;
 
     dataSource = new MatTableDataSource < any > ([]);
-    columnsToDisplay: string[] = ['values', 'params'];
+    columnsToDisplay: string[] = [];
 
     constructor() {}
 
@@ -26,20 +26,20 @@ export class AtlasExperimentMetricsComponent implements OnInit, OnChanges {
         if (this.metricsResult) { this.update(); }
     }
     private update() {
-        const columns: string[] = [].concat(this.metricsResult.metricNames, ['params']);
-        const data = [];
-        this.metricsResult.metrics.forEach((item) => {
-            const values = [].concat(item.values, [item.params]);
-            const row = {}
-            values.forEach((elem, index) => {
-                row[columns[index]] = elem
+        const newColumnsToDisplay: string[] = [].concat(this.metricsResult.metricNames, ['params']);
+        const newDataSource: any = [];
+
+        this.metricsResult.metrics.forEach((item: MetricsEntity) => {
+            const values: string[] = [].concat(item.values, [item.params]);
+            const row: any = {};
+            values.forEach((elem: string, index: number) => {
+                row[newColumnsToDisplay[index]] = elem;
             });
-            data.push(row);
+            newDataSource.push(row);
         });
 
-        this.columnsToDisplay = columns;
-        console.log(data, columns);
-        this.dataSource = new MatTableDataSource(data);
+        this.columnsToDisplay = newColumnsToDisplay;
+        this.dataSource = new MatTableDataSource(newDataSource);
     }
 
     drawPlot() {
