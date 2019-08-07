@@ -15,7 +15,7 @@
     "batch.Plan Code": "Plan Code",
     "batch.Status": "Status",
     "batch.Upload files and start processing": "Upload files and start processing",
-    "batch.delete-dialo.Cancel": "Cancel",
-    "batch.delete-dialo.Delete": "Delete",
-    "batch.delete-dialo.Do you want to delete Batch": "Do you want to delete Batch"
+    "batch.delete-dialog.Cancel": "Cancel",
+    "batch.delete-dialog.Delete": "Delete",
+	"batch.delete-dialog.Do you want to delete Batch #{{batchId}}": "Do you want to delete Batch {{batchId}}"
 }

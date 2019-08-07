@@ -1,14 +1,15 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatButton, MatDialog, MatTableDataSource } from '@angular/material';
-import { ConfirmationDialogMethod } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
-import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
+import { ConfirmationDialogMethod, QuestionData } from '@app/components/app-dialog-confirmation/app-dialog-confirmation.component';
 import { LoadStates } from '@app/enums/LoadStates';
 import { Batch, batches, BatchService } from '@app/services/batch/batch.service';
-import { Subscription, BehaviorSubject } from 'rxjs';
-import { AuthenticationService } from '@src/app/services/authentication/authentication.service';
-import { TranslateService } from '@ngx-translate/core';
 import { marker } from '@biesbjerg/ngx-translate-extract-marker';
+import { TranslateService } from '@ngx-translate/core';
 import { SettingsService } from '@services/settings/settings.service';
+import { CtTableComponent } from '@src/app/ct/ct-table/ct-table.component';
+import { AuthenticationService } from '@src/app/services/authentication/authentication.service';
+import { Subscription } from 'rxjs';
+import * as fileSaver from 'file-saver'
 
 @Component({
     selector: 'batch',
@@ -25,6 +26,9 @@ export class BatchComponent implements OnInit {
     columnsToDisplay = ['id', 'createdOn', 'isBatchConsistent', 'planCode', 'execState', 'bts'];
     deletedRows: Batch[] = [];
 
+    fileSystemName: string;
+    classpathFileName: string;
+
     @ViewChild('nextTable') nextTable: MatButton;
     @ViewChild('prevTable') prevTable: MatButton;
     @ViewChild('table') table: CtTableComponent;
@@ -37,7 +41,6 @@ export class BatchComponent implements OnInit {
         private settingsService: SettingsService
     ) {
         this.settingsService.languageObserver.subscribe((lang: string) => this.translate.use(lang));
-
     }
 
     ngOnInit() {
@@ -67,16 +70,45 @@ export class BatchComponent implements OnInit {
             );
     }
 
+    downloadFileSystem(batchId: string) {
+        this.batchService.downloadFileSystem(batchId)
+            .subscribe(response => {
+                const filename = response.headers.get('filename');
+
+                this.saveFile(response.body, filename);
+            });
+    }
+
+    downloadClasspathFile(batchId: string) {
+        this.batchService.downloadClasspathFile(batchId)
+            .subscribe(response => {
+                const filename = response.headers.get('filename');
+
+                this.saveFile(response.body, filename);
+            });
+    }
+
+    saveFile(data: any, filename ? : string) {
+        const blob = new Blob([data], { type: 'text/csv; charset=utf-8' });
+        fileSaver.saveAs(blob, filename);
+    }
+
+
+
     @ConfirmationDialogMethod({
-        question: (batch: Batch): string => {
-            return `${marker('batch.delete-dialog.Do you want to delete Batch')} #${batch.batch.id}`;
+        question: (batch: Batch): QuestionData => {
+            return {
+                text: marker('batch.delete-dialog.Do you want to delete Batch #{{batchId}}'),
+                params: { batchId: batch.batch.id }
+            };
         },
         rejectTitle: `${marker('batch.delete-dialog.Cancel')}`,
         resolveTitle: `${marker('batch.delete-dialog.Delete')}`,
     })
     delete(batch: Batch) {
+        this.deletedRows.push(batch);
         const subscribe: Subscription = this.batchService.batch
-            .delete(batch.batch.id)
+            .deleteCommit(batch.batch.id)
             .subscribe(
                 (response: any) => {},
                 () => {},

@@ -46,10 +46,11 @@ const urls: any = {
         // public OperationStatusRest processResourceDeleteCommit(Long batchId) {
         //     return batchTopLevelService.processResourceDeleteCommit(batchId);
         // }
-        deleteCommit: (data: any): string => `${base}/batch-delete-commit?${toURL(data)}`
-    },
-    downloadFile: (batchId: string): string => `${environment.host}launchpad/batch/batch-download-result/${batchId}/result.zip`
+        deleteCommit: (batchId: string): string => `${base}/batch-delete-commit?${toURL({batchId})}`,
 
+        downloadBatchResult: (batchId: string): string =>
+            `${base}/batch-download-result/${batchId}/result.zip`
+    }
 };
 
 export { urls };

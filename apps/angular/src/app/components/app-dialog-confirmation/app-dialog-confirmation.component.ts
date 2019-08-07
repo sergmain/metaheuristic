@@ -1,10 +1,16 @@
 import { Component, Inject } from '@angular/core';
-import { MatDialogRef, MAT_DIALOG_DATA, MatDialog } from '@angular/material';
+import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { forkJoin } from 'rxjs';
+
+export interface QuestionData {
+    text: string;
+    params: any;
+}
 
 export interface DialogData {
     resolveTitle: string;
     rejectTitle: string;
-    question ?(...data: any[]) : string;
+    question ?(...data: any[]) : QuestionData | string;
 }
 
 export interface ConfirmationDialogInterface {
@@ -54,32 +60,91 @@ export function ConfirmationDialogMethod(dialogData: DialogData) {
     ): PropertyDescriptor {
         const method: any = propertyDesciptor.value;
         propertyDesciptor.value = function(...args: any[]) {
-            if (!this.dialog) {
-                throw new Error(`
 
-require MatDialog
+            let questionData: QuestionData = {
+                text: '',
+                params: false
+            };
+
+            if (typeof dialogData.question(...args) === 'string') {
+                questionData.text = dialogData.question(...args) as string;
+            } else {
+                questionData = dialogData.question(...args) as QuestionData;
+            }
+
+            if (!this.dialog) { dialogError(); }
+            if (questionData.params && !this.translate) { translateError(); }
+
+            if (this.translate) {
+                forkJoin(
+                        this.translate.get(questionData.text, questionData.params),
+                        this.translate.get(dialogData.resolveTitle),
+                        this.translate.get(dialogData.rejectTitle)
+                    )
+                    .subscribe(
+                        (response: any) => {
+                            this.dialog.open(AppDialogConfirmationComponent, {
+                                    width: '300px',
+                                    data: {
+                                        question: response[0],
+                                        resolveTitle: response[1],
+                                        rejectTitle: response[2]
+                                    }
+                                })
+                                .afterClosed()
+                                .subscribe((result: boolean) => {
+                                    if (result) {
+                                        method.apply(this, args);
+                                    }
+                                });
+                        }
+                    );
+            } else {
+                this.dialog.open(AppDialogConfirmationComponent, {
+                        width: '300px',
+                        data: {
+                            question: questionData.text,
+                            resolveTitle: dialogData.resolveTitle,
+                            rejectTitle: dialogData.rejectTitle
+                        }
+                    })
+                    .afterClosed()
+                    .subscribe((result: boolean) => {
+                        if (result) {
+                            method.apply(this, args);
+                        }
+                    });
+            }
+        };
+
+        return propertyDesciptor;
+    };
+}
+
+function dialogError() {
+    throw new Error(`
+component require MatDialog
+
+import { MatDialog } from '@angular/material';
+...
 constructor(
     ...
     private dialog: MatDialog
     ...
 ) {}
                 `);
-            }
-            const dialogRef: MatDialogRef < any > = this.dialog.open(AppDialogConfirmationComponent, {
-                width: '300px',
-                data: {
-                    question: dialogData.question(...args),
-                    rejectTitle: dialogData.rejectTitle,
-                    resolveTitle: dialogData.resolveTitle
-                }
-            });
-            dialogRef.afterClosed().subscribe((result: boolean) => {
-                if (result) {
-                    method.apply(this, args);
-                }
-            });
-        };
+}
 
-        return propertyDesciptor;
-    };
+function translateError() {
+    throw new Error(`
+component require TranslateService
+
+import { TranslateService } from '@ngx-translate/core';
+...
+constructor(
+    ...
+    private translate: TranslateService
+    ...
+) {}
+                `);
 }

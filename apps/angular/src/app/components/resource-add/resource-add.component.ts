@@ -20,7 +20,7 @@ export class ResourceAddComponent implements OnInit {
 
     uploadForm = new FormGroup({
         code: new FormControl('', []),
-        poolCode: new FormControl('', []),
+        poolCode: new FormControl('', [Validators.required, Validators.minLength(1)]),
     });
 
     urlForm = new FormGroup({

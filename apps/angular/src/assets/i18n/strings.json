@@ -17,5 +17,5 @@
 	"batch.Upload files and start processing": "",
 	"batch.delete-dialog.Cancel": "",
 	"batch.delete-dialog.Delete": "",
-	"batch.delete-dialog.Do you want to delete Batch": ""
+	"batch.delete-dialog.Do you want to delete Batch #{{batchId}}": ""
 }

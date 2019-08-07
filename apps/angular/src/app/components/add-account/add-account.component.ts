@@ -20,10 +20,10 @@ export class AddAccountComponent implements OnInit {
     response: DefaultResponse;
     form = new FormGroup({
         username: new FormControl('', [Validators.required, Validators.minLength(3)]),
-        password: new FormControl('', [Validators.required, Validators.minLength(4)]),
+        password: new FormControl('', [Validators.required, Validators.minLength(3)]),
         password2: new FormControl('', [
             Validators.required,
-            Validators.minLength(4),
+            Validators.minLength(3),
             (control: FormControl) => {
                 const group: FormGroup = this.form;
                 if (group) {
