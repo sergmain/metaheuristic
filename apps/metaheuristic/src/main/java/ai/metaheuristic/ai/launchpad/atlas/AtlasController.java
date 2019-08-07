@@ -45,7 +45,7 @@ import java.util.ArrayList;
 @PreAuthorize("hasAnyRole('ADMIN', 'DATA')")
 public class AtlasController {
 
-    public static final String REDIRECT_LAUNCHPAD_ATLAS_ATLAS_EXPERIMENTS = "redirect:/launchpad/atlas/atlas-experiments";
+    private static final String REDIRECT_LAUNCHPAD_ATLAS_ATLAS_EXPERIMENTS = "redirect:/launchpad/atlas/atlas-experiments";
     private final AtlasService atlasService;
     private final AtlasTopLevelService atlasTopLevelService;
 
@@ -127,10 +127,15 @@ public class AtlasController {
         return REDIRECT_LAUNCHPAD_ATLAS_ATLAS_EXPERIMENTS;
     }
 
-    @GetMapping(value= "/atlas-experiment-export-import/{atlasId}")
-    public String selectExportImport(Model model, @PathVariable("atlasId") Long atlasId) {
+    @GetMapping(value= "/atlas-experiment-export/{atlasId}")
+    public String exportExperiment(Model model, @PathVariable("atlasId") Long atlasId) {
         model.addAttribute("atlasId", atlasId);
-        return "launchpad/atlas/atlas-experiment-export-import";
+        return "launchpad/atlas/atlas-experiment-export";
+    }
+
+    @GetMapping(value= "/atlas-experiment-import")
+    public String importExperiment(Model model) {
+        return "launchpad/atlas/atlas-experiment-import";
     }
 
     @GetMapping(value = "/atlas-experiment-feature-progress/{atlasId}/{experimentId}/{featureId}")

@@ -215,14 +215,14 @@ public class AtlasTopLevelService {
             log.error("#422.090 Error", e);
             return new ResponseEntity<>(new ByteArrayResource(new byte[0]), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        Set<Long> taskIds = atlasTaskRepository.findTaskIdsByAtlasId(atlasId);
-        for (Long taskId : taskIds) {
-            AtlasTask at = atlasTaskRepository.findById(taskId).orElse(null);
+        Set<Long> atlasTaskIds = atlasTaskRepository.findTaskIdsByAtlasId(atlasId);
+        for (Long atlasTaskId : atlasTaskIds) {
+            AtlasTask at = atlasTaskRepository.findById(atlasTaskId).orElse(null);
             if (at==null) {
-                log.error("#422.100 AtlasTask wasn't found for is #{}", taskId);
+                log.error("#422.100 AtlasTask wasn't found for is #{}", atlasTaskId);
                 continue;
             }
-            File taskFile = new File(taskDir, S.f(TASK_YAML_FILE, taskId));
+            File taskFile = new File(taskDir, S.f(TASK_YAML_FILE, at.taskId));
             try {
                 FileUtils.writeStringToFile(taskFile, at.params, StandardCharsets.UTF_8);
             } catch (IOException e) {
