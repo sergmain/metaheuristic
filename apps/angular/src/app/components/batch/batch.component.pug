@@ -3,7 +3,7 @@ ct-section
         ct-section-header-row
             ct-flex(justify-content="space-between" align-items="center")
                 ct-flex-item
-                    ct-heading Batch
+                    ct-heading {{ 'batch.Batch' | translate }} 
                 ct-flex-item
                     button(mat-flat-button color="primary" '[disabled]'="currentStates.has(states.loading) || currentStates.has(states.firstLoading)" routerLink="/launchpad/batch/add") {{ 'batch.Upload files and start processing' | translate }}
 
@@ -14,18 +14,28 @@ ct-section
                     ng-container(matColumnDef="id") 
                         th(mat-header-cell *matHeaderCellDef) {{ 'batch.Id' | translate }}
                         td(mat-cell *matCellDef="let el") {{el.batch.id}} 
+
                     ng-container(matColumnDef="createdOn") 
                         th(mat-header-cell *matHeaderCellDef) {{ 'batch.Created On' | translate }}
                         td(mat-cell *matCellDef="let el") {{el.batch.createdOn | date:'MMM d, yyyy, HH:mm:ss'}} 
+
                     ng-container(matColumnDef="isBatchConsistent") 
                         th(mat-header-cell *matHeaderCellDef) {{ 'batch.Is Batch Consistent?' | translate }} 
-                        td(mat-cell *matCellDef="let el") {{el.ok}} 
+                        td(mat-cell *matCellDef="let el") 
+                            span(*ngIf="el.ok") {{ 'batch.isBatchConsistent.true' | translate }}
+                            span(*ngIf="!el.ok") {{ 'batch.isBatchConsistent.false' | translate }}
+
                     ng-container(matColumnDef="planCode") 
                         th(mat-header-cell *matHeaderCellDef) {{ 'batch.Plan Code' | translate }}
                         td(mat-cell *matCellDef="let el") {{el.planCode}} 
+
                     ng-container(matColumnDef="execState") 
                         th(mat-header-cell *matHeaderCellDef)  {{ 'batch.Exec State' | translate }}
-                        td(mat-cell *matCellDef="let el") {{el.execStateStr}} 
+                        td(mat-cell *matCellDef="let el") 
+                            span(*ngIf="el.execState === -1") {{ 'batch.isBatchConsistent.Error' | translate }}
+                            span(*ngIf="el.execState === 3") {{ 'batch.isBatchConsistent.Processing' | translate }}
+                            span(*ngIf="el.execState === 4") {{ 'batch.isBatchConsistent.Finished' | translate }}
+
                     ng-container(matColumnDef="bts") 
                         th(mat-header-cell '*matHeaderCellDef')  
                         td(mat-cell *matCellDef="let el") 

@@ -1,26 +1,26 @@
 mat-list(class="page-sidenav-list" color="primary")
     
     mat-list-item(*ngIf="accessPlans()")
-        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/plans") Plans
+        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/plans")  {{ 'nav-launchpad.Plans' | translate }}
 
     mat-list-item(*ngIf="accessBatch()")
-        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/batch") Batch
+        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/batch") {{ 'nav-launchpad.Batch' | translate }}
     
     mat-list-item(*ngIf="accessExperiments()")
-        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/experiments") Experiments
+        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/experiments") {{ 'nav-launchpad.Experiments' | translate }}
     
     mat-list-item(*ngIf="accessAtlas()")
-        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/atlas/experiments") Atlas
+        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/atlas/experiments") {{ 'nav-launchpad.Atlas' | translate }}
     
     mat-list-item(*ngIf="accessResourses()")
-        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/resources") Resources
+        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/resources") {{ 'nav-launchpad.Resources' | translate }}
 
     mat-list-item(*ngIf="accessSnippets()")
-        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/snippets") Snippets
+        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/snippets") {{ 'nav-launchpad.Snippets' | translate }}
 
     mat-list-item(*ngIf="accessStations()")
-        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/stations") Stations
+        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/stations") {{ 'nav-launchpad.Stations' | translate }}
 
     mat-list-item(*ngIf="accessAccounts()")
-        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/accounts") Accounts
+        button(class="mat-button" mat-button="" routerLinkActive="active" routerLink="/launchpad/accounts") {{ 'nav-launchpad.Accounts' | translate }}
 

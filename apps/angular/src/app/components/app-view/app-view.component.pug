@@ -22,7 +22,7 @@
                                 button(class="mat-button mat-button--menu-item" 
                                     mat-button 
                                     routerLinkActive="active" 
-                                    routerLink="/launchpad") Launchpad
+                                    routerLink="/launchpad") {{ 'app-view.Launchpad' | translate }}
                             //- ct-flex-item
                             //-     button(class="mat-button mat-button--menu-item" 
                             //-         mat-button 
@@ -40,7 +40,7 @@
                                 button(class="mat-button mat-button--menu-item" 
                                     mat-button 
                                     routerLinkActive="active" 
-                                    routerLink="/about") About
+                                    routerLink="/about") {{ 'app-view.About' | translate }}
                             //- ct-flex-item
                             //-     button(class="mat-button mat-button--menu-item" 
                             //-         mat-button 
@@ -49,7 +49,7 @@
                             ct-flex-item
                                 button(class="mat-button mat-button--menu-item" 
                                     mat-button
-                                    '(click)'="logout()") Logout
+                                    '(click)'="logout()") {{ 'app-view.Logout' | translate }}
 
 
         mat-sidenav-container(class="app-view__container")

@@ -1,4 +1,7 @@
 {
+	"app-view.About": "",
+	"app-view.Launchpad": "",
+	"app-view.Logout": "",
 	"batch-add.Cancel": "",
 	"batch-add.List of Plans": "",
 	"batch-add.Only .xml and .zip files are supported": "",
@@ -7,6 +10,7 @@
 	"batch-add.This is a required field.": "",
 	"batch-add.Upload File": "",
 	"batch-add.Upload file for processing": "",
+	"batch.Batch": "",
 	"batch.Created On": "",
 	"batch.Download Result": "",
 	"batch.Exec State": "",
@@ -17,5 +21,18 @@
 	"batch.Upload files and start processing": "",
 	"batch.delete-dialog.Cancel": "",
 	"batch.delete-dialog.Delete": "",
-	"batch.delete-dialog.Do you want to delete Batch #{{batchId}}": ""
+	"batch.delete-dialog.Do you want to delete Batch #{{batchId}}": "",
+	"batch.isBatchConsistent.Error": "",
+	"batch.isBatchConsistent.Finished": "",
+	"batch.isBatchConsistent.Processing": "",
+	"batch.isBatchConsistent.false": "",
+	"batch.isBatchConsistent.true": "",
+	"nav-launchpad.Accounts": "",
+	"nav-launchpad.Atlas": "",
+	"nav-launchpad.Batch": "",
+	"nav-launchpad.Experiments": "",
+	"nav-launchpad.Plans": "",
+	"nav-launchpad.Resources": "",
+	"nav-launchpad.Snippets": "",
+	"nav-launchpad.Stations": ""
 }
