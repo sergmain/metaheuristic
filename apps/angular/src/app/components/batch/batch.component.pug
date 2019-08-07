@@ -35,9 +35,6 @@ ct-section
                                 // TODO download file
                                 ct-flex-item
                                     button(mat-flat-button size="forTableRow" color="primary" '(click)'="downloadFileSystem(el.batch.id)")  {{ 'batch.Download Result' | translate }}
-                                    br
-                                    br
-                                    button(mat-flat-button size="forTableRow" color="primary" '(click)'="downloadClasspathFile(el.batch.id)")  {{ 'batch.Download Result' | translate }}
                                 ct-flex-item: button(mat-flat-button color="warn" size="forTableRow" '(click)'="delete(el)" title="Delete"): mat-icon delete
                     tr(mat-header-row *matHeaderRowDef="columnsToDisplay")  
                     tr(mat-row *matRowDef="let row; columns: columnsToDisplay;" '[class.deleted-table-row]'="deletedRows.includes(row)")

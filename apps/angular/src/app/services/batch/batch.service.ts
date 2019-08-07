@@ -43,7 +43,7 @@ export class BatchService {
 
     downloadFileSystem(batchId: string): Observable < HttpResponse < Blob >> {
         let headers = new HttpHeaders();
-        headers = headers.append('Accept', 'application/zip');
+        headers = headers.append('Accept', 'application/octet-stream');
 
         return this.http.get(urls.batch.downloadBatchResult(batchId), {
             headers,
@@ -51,16 +51,4 @@ export class BatchService {
             responseType: 'blob'
         });
     }
-
-    downloadClasspathFile(batchId: string): Observable < HttpResponse < Blob >> {
-        let headers = new HttpHeaders();
-        headers = headers.append('Accept', 'application/zip');
-
-        return this.http.get(urls.batch.downloadBatchResult(batchId), {
-            headers,
-            observe: 'response',
-            responseType: 'blob'
-        }); 
-    }
-
 }

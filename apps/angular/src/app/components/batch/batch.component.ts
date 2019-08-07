@@ -73,23 +73,13 @@ export class BatchComponent implements OnInit {
     downloadFileSystem(batchId: string) {
         this.batchService.downloadFileSystem(batchId)
             .subscribe(response => {
-                const filename = response.headers.get('filename');
-
-                this.saveFile(response.body, filename);
+                this.saveFile(response.body, 'result.zip');
             });
     }
 
-    downloadClasspathFile(batchId: string) {
-        this.batchService.downloadClasspathFile(batchId)
-            .subscribe(response => {
-                const filename = response.headers.get('filename');
-
-                this.saveFile(response.body, filename);
-            });
-    }
 
     saveFile(data: any, filename ? : string) {
-        const blob = new Blob([data], { type: 'text/csv; charset=utf-8' });
+        const blob = new Blob([data], { type: 'application/octet-stream' });
         fileSaver.saveAs(blob, filename);
     }
 
