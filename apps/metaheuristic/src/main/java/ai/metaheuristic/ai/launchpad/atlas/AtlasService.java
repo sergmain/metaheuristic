@@ -24,8 +24,10 @@ import ai.metaheuristic.ai.launchpad.experiment.ExperimentCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasRepository;
 import ai.metaheuristic.ai.launchpad.repositories.AtlasTaskRepository;
+import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
+import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
 import ai.metaheuristic.ai.utils.ControllerUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlUtils;
 import ai.metaheuristic.ai.yaml.atlas.AtlasParamsYamlWithCache;
@@ -58,12 +60,13 @@ public class AtlasService {
     private final Globals globals;
     private final PlanCache planCache;
     private final ExperimentCache experimentCache;
+    private final ExperimentRepository experimentRepository;
     private final TaskRepository taskRepository;
     private final AtlasRepository atlasRepository;
     private final AtlasTaskRepository atlasTaskRepository;
     private final AtlasParamsYamlUtils atlasParamsYamlUtils;
-    private final AtlasStreamService atlasStreamService;
     private final WorkbookCache workbookCache;
+    private final WorkbookService workbookService;
 
     @Data
     @EqualsAndHashCode(callSuper = false)
@@ -89,7 +92,14 @@ public class AtlasService {
         return String.format("stored-experiment-%d-%d",workbookId, experimentId);
     }
 
-    public OperationStatusRest storeExperimentToAtlas(Long workbookId, Long experimentId) {
+    public OperationStatusRest storeExperimentToAtlas(Long workbookId) {
+        workbookService.toExportingToAtlasStarted(workbookId);
+        Long experimentId = experimentRepository.findIdByWorkbookId(workbookId);
+
+        if (experimentId==null ) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "Can't find experiment for workbookId #" + workbookId);
+        }
+
         StoredToAtlasWithStatus stored = toExperimentStoredToAtlas(experimentId);
         if (stored.isErrorMessages()) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, stored.errorMessages);
@@ -149,6 +159,7 @@ public class AtlasService {
                 });
 
 
+        workbookService.toFinished(workbookId);
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
@@ -173,7 +184,7 @@ public class AtlasService {
         AtlasParamsYaml atlasParamsYaml = new AtlasParamsYaml();
         atlasParamsYaml.createdOn = System.currentTimeMillis();
         atlasParamsYaml.plan = new AtlasParamsYaml.PlanWithParams(plan.id, plan.params);
-        atlasParamsYaml.workbook = new AtlasParamsYaml.WorkbookWithParams(workbook.id, workbook.params, workbook.execState);
+        atlasParamsYaml.workbook = new AtlasParamsYaml.WorkbookWithParams(workbook.id, workbook.params, EnumsApi.WorkbookExecState.EXPORTED_TO_ATLAS.code);
         atlasParamsYaml.experiment = new AtlasParamsYaml.ExperimentWithParams(experiment.id, experiment.params);
         atlasParamsYaml.taskIds = taskRepository.findAllTaskIdsByWorkbookId(workbook.getId());
 
