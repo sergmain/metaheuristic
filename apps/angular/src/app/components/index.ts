@@ -1,25 +1,30 @@
 export * from './about/about.component';
+export * from './account-access/account-access.component';
+export * from './account-add/account-add.component';
 export * from './account-edit-pass/account-edit-pass.component';
 export * from './account-edit/account-edit.component';
-export * from './accounts-access/accounts-access.component';
 export * from './accounts/accounts.component';
-export * from './add-account/add-account.component';
 export * from './add-workbook/add-workbook.component';
 export * from './app-dialog-confirmation/app-dialog-confirmation.component';
 export * from './app-view/app-view.component';
 export * from './atlas-experiment-export-import/atlas-experiment-export-import.component';
 export * from './atlas-experiment-feature-progress/atlas-experiment-feature-progress.component';
 export * from './atlas-experiment-info/atlas-experiment-info.component';
+export * from './atlas-experiment-metrics/atlas-experiment-metrics.component';
+export * from './atlas-experiment-tasks/atlas-experiment-tasks.component';
 export * from './atlas-experiments/atlas-experiments.component';
 export * from './batch-add/batch-add.component';
 export * from './batch-status/batch-status.component';
 export * from './batch/batch.component';
 export * from './billing/billing.component';
-export * from './experiment-edit/experiment-edit.component';
 export * from './edit-plan/edit-plan.component';
 export * from './edit-workbook/edit-workbook.component';
 export * from './experiment-add/experiment-add.component';
+export * from './experiment-edit/experiment-edit.component';
+export * from './experiment-feature-progress/experiment-feature-progress.component';
 export * from './experiment-info/experiment-info.component';
+export * from './experiment-metrics/experiment-metrics.component';
+export * from './experiment-tasks/experiment-tasks.component';
 export * from './experiments/experiments.component';
 export * from './launchpad/launchpad.component';
 export * from './login/login.component';
@@ -39,10 +44,5 @@ export * from './testview/testview.component';
 export * from './testview/testview.module';
 export * from './workbooks/workbooks.component';
 
-export * from './experiment-feature-progress/experiment-feature-progress.component';
-export * from './experiment-metrics/experiment-metrics.component';
-export * from './experiment-tasks/experiment-tasks.component';
 
-export * from './atlas-experiment-tasks/atlas-experiment-tasks.component';
 
-export * from './atlas-experiment-metrics/atlas-experiment-metrics.component';

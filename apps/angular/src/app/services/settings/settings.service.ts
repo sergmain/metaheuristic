@@ -27,7 +27,6 @@ export class SettingsService {
     settingsObserver: BehaviorSubject < any > ;
     languageObserver: BehaviorSubject < any > ;
 
-
     constructor() {
         this.settings = Object.assign({},
             this.defaultSettings,
@@ -36,7 +35,6 @@ export class SettingsService {
         this.settingsObserver = new BehaviorSubject < any > (this.settings);
         this.languageObserver = new BehaviorSubject < string > (this.settings.language);
         this.updateTheme();
-        console.log(this.getSettingsFromLocalStore())
     }
 
     getSettings() {
@@ -48,7 +46,7 @@ export class SettingsService {
         });
     }
 
-    setSettings() {
+    private setSettings() {
         localStorage.setItem('settingsService', JSON.stringify(this.settings));
         this.updateTheme();
     }
@@ -67,6 +65,17 @@ export class SettingsService {
                 body.classList.add('dark-theme') :
                 body.classList.add('light-theme');
         });
+    }
+
+    private setSettingsToLocalStore(): void {
+        localStorage.setItem('settingsService', JSON.stringify(this.settings));
+    }
+
+    private getSettingsFromLocalStore(): Settings {
+        this.settings = Object.assign({},
+            this.defaultSettings,
+            (JSON.parse(localStorage.getItem('settingsService')) || {}));
+        return this.settings;
     }
 
     setDarkTheme() {
@@ -95,16 +104,5 @@ export class SettingsService {
         this.settings.language = value;
         this.setParam('language', value);
         this.languageObserver.next(this.settings.language);
-    }
-
-    private setSettingsToLocalStore(): void {
-        localStorage.setItem('settingsService', JSON.stringify(this.settings));
-    }
-
-    private getSettingsFromLocalStore(): Settings {
-        this.settings = Object.assign({},
-            this.defaultSettings,
-            (JSON.parse(localStorage.getItem('settingsService')) || {}));
-        return this.settings;
     }
 }

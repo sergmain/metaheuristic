@@ -1,20 +1,19 @@
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '@src/environments/environment';
-import { Subscription } from 'rxjs';
+import { Subscription, from } from 'rxjs';
 import { user as userResponse } from './response';
 import { User } from './User';
-
+import { SettingsService } from '@services/settings/settings.service';
 
 @Injectable({
     providedIn: 'root'
 })
 
-
-
 export class AuthenticationService {
     constructor(
-        private http: HttpClient
+        private http: HttpClient,
+        private settingsService: SettingsService
     ) {}
 
     isAuth() {
@@ -38,8 +37,7 @@ export class AuthenticationService {
             .subscribe(
                 (response: userResponse.get.Response) => {
                     if (response.username) {
-                        localStorage
-                            .setItem('user', JSON.stringify(Object.assign({}, response, { token })));
+                        localStorage.setItem('user', JSON.stringify(Object.assign({}, response, { token })));
                     }
                 },
                 () => {},
@@ -48,6 +46,6 @@ export class AuthenticationService {
     }
 
     logout() {
-        localStorage.removeItem('user');
+        localStorage.clear();
     }
 }

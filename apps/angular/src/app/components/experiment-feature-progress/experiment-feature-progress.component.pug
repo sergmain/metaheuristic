@@ -4,6 +4,6 @@ div(*ngIf="response")
             ct-section-header-row
                 ct-heading The Experiment Info
     include general-info.partial.pug
-    include metrics.partial.pug
-    //- experiment-metrics
+    
+    experiment-metrics('[metricsResult]'="metricsResult" '[dataGraph]'="dataGraph" '[canDraw]'="canDraw" '(draw)'="drawPlot()")
     experiment-tasks('[tasks]'="tasks")

@@ -3,7 +3,7 @@ import { Component, OnInit, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material';
 import { ActivatedRoute } from '@angular/router';
 import { DefaultResponse, ExperimentFeaturePlotDataPartResponse, ExperimentFeatureProgressConsolePartResponse } from '@app/models';
-import { ExperimentsService, response, Experiment, Task } from '@app/services/experiments';
+import { ExperimentsService, response, Experiment, Task, MetricsResult } from '@app/services/experiments';
 import { CtWrapBlockComponent } from '@src/app/ct/ct-wrap-block/ct-wrap-block.component';
 import { PlotComponent } from 'angular-plotly.js';
 import { Subscription } from 'rxjs';
@@ -20,6 +20,11 @@ export class ExperimentFeatureProgressComponent implements OnInit {
     @ViewChild('consoleView') consoleView: CtWrapBlockComponent;
 
     plotly: PlotComponent;
+
+    metricsResult: MetricsResult;
+    canDraw: boolean = false;
+
+
 
     response: response.experiment.FeatureProgress;
     consolePartResponse: ExperimentFeatureProgressConsolePartResponse.Response;
@@ -113,6 +118,7 @@ export class ExperimentFeatureProgressComponent implements OnInit {
                     this.tables.metrics.table = new MatTableDataSource(response.metricsResult.metrics);
                     this.tables.tasks.table = new MatTableDataSource(response.tasksResult.items.content);
 
+                    this.metricsResult = response.metricsResult;
                     this.tasks = response.tasksResult;
                 },
                 () => {},
@@ -201,6 +207,7 @@ export class ExperimentFeatureProgressComponent implements OnInit {
         } else {
             this.pickedAxes[this.pickedAxes.indexOf(false)] = el;
         }
+        this.canDraw = !this.pickedAxes.includes(false);
     }
 
     featureProgressConsole(taskId) {

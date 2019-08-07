@@ -6,11 +6,11 @@ import { Subscription } from 'rxjs';
 
 
 @Component({
-    selector: 'accounts-access',
-    templateUrl: './accounts-access.component.pug',
-    styleUrls: ['./accounts-access.component.scss']
+    selector: 'account-access',
+    templateUrl: './account-access.component.pug',
+    styleUrls: ['./account-access.component.scss']
 })
-export class AccountsAccessComponent implements OnInit {
+export class AccountAccessComponent implements OnInit {
     account: Account;
     response: account.get.Response;
 

@@ -1,7 +1,7 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { AuthGuard } from '@app/guards/auth/auth.guard';
-import { AboutComponent, AccountsAccessComponent, AccountsComponent, AddAccountComponent, ExperimentAddComponent, PlanAddComponent, ResourceAddComponent, SnippetAddComponent, AddWorkbookComponent, AppViewComponent, AtlasExperimentsComponent, AtlasExperimentExportImportComponent, AtlasExperimentFeatureProgressComponent, AtlasExperimentInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, BillingComponent, AccountEditComponent, ExperimentEditComponent, AccountEditPassComponent, EditPlanComponent, StationEditComponent, ExperimentsComponent, ExperimentInfoComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent, ExperimentFeatureProgressComponent } from './components';
+import { AboutComponent, AccountAccessComponent, AccountsComponent, AccountAddComponent, ExperimentAddComponent, PlanAddComponent, ResourceAddComponent, SnippetAddComponent, AddWorkbookComponent, AppViewComponent, AtlasExperimentsComponent, AtlasExperimentExportImportComponent, AtlasExperimentFeatureProgressComponent, AtlasExperimentInfoComponent, BatchAddComponent, BatchComponent, BatchStatusComponent, BillingComponent, AccountEditComponent, ExperimentEditComponent, AccountEditPassComponent, EditPlanComponent, StationEditComponent, ExperimentsComponent, ExperimentInfoComponent, LaunchpadComponent, NavLaunchpadComponent, NavPilotComponent, PilotComponent, PlansComponent, ResourcesComponent, SnippetsComponent, StationsComponent, WorkbooksComponent, ExperimentFeatureProgressComponent } from './components';
 
 export function launchpadRoute(p: any): any {
     return {
@@ -70,7 +70,6 @@ const routes: Routes = [
     launchpadRoute({ path: 'launchpad/experiments/add', body: ExperimentAddComponent, data: { section: 'experiments' } }),
     launchpadRoute({ path: 'launchpad/experiments/:experimentId/edit', body: ExperimentEditComponent, data: { section: 'experiments' } }),
     launchpadRoute({ path: 'launchpad/experiments/:experimentId/info', body: ExperimentInfoComponent, data: { section: 'experiments' } }),
-    // launchpadRoute({ path: 'launchpad/experiments/:experimentId/feature-progress/:featureId', body: ProgressExperimentComponent, data: { section: 'experiments' } }),
     launchpadRoute({ path: 'launchpad/experiments/:experimentId/feature-progress/:featureId', body: ExperimentFeatureProgressComponent, data: { section: 'experiments' } }),
 
 
@@ -85,8 +84,8 @@ const routes: Routes = [
     launchpadRoute({ path: 'launchpad/stations/:id/edit', body: StationEditComponent, data: { section: 'stations' } }),
 
     launchpadRoute({ path: 'launchpad/accounts', body: AccountsComponent, data: { section: 'accounts' } }),
-    launchpadRoute({ path: 'launchpad/accounts/add', body: AddAccountComponent, data: { section: 'accounts' } }),
-    launchpadRoute({ path: 'launchpad/accounts/access/:accountId', body: AccountsAccessComponent, data: { section: 'accounts' } }),
+    launchpadRoute({ path: 'launchpad/accounts/add', body: AccountAddComponent, data: { section: 'accounts' } }),
+    launchpadRoute({ path: 'launchpad/accounts/access/:accountId', body: AccountAccessComponent, data: { section: 'accounts' } }),
     launchpadRoute({ path: 'launchpad/accounts/edit/:id', body: AccountEditComponent, data: { section: 'accounts' } }),
     launchpadRoute({ path: 'launchpad/accounts/edit-password/:id', body: AccountEditPassComponent, data: { section: 'accounts' } }),
 

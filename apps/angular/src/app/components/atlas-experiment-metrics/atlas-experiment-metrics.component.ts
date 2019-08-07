@@ -25,6 +25,7 @@ export class AtlasExperimentMetricsComponent implements OnInit, OnChanges {
     ngOnChanges() {
         if (this.metricsResult) { this.update(); }
     }
+    
     private update() {
         const newColumnsToDisplay: string[] = [].concat(this.metricsResult.metricNames, ['params']);
         const newDataSource: any = [];

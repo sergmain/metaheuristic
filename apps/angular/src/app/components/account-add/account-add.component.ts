@@ -8,13 +8,12 @@ import { Router } from '@angular/router';
 import { DefaultResponse } from '@app/models/DefaultResponse';
 
 @Component({
-    // tslint:disable-next-line: component-selector
-    selector: 'add-account',
-    templateUrl: './add-account.component.pug',
-    styleUrls: ['./add-account.component.scss']
+    selector: 'account-add',
+    templateUrl: './account-add.component.pug',
+    styleUrls: ['./account-add.component.scss']
 })
 
-export class AddAccountComponent implements OnInit {
+export class AccountAddComponent implements OnInit {
     readonly states = LoadStates;
     currentStates = new Set();
     response: DefaultResponse;
