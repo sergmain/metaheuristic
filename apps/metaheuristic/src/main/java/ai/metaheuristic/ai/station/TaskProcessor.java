@@ -74,6 +74,7 @@ public class TaskProcessor {
         public AssetFile snippetAssetFile;
         public SnippetApiData.SnippetExecResult snippetExecResult;
         boolean isLoaded = true;
+        boolean isError = false;
     }
 
     public void fixedDelay() {
@@ -199,6 +200,11 @@ public class TaskProcessor {
             SnippetPrepareResult result;
             for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
                 result = prepareSnippet(launchpadCode, preSnippetConfig);
+                if (result.isError) {
+                    makrSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
+                    isNotReady = true;
+                    break;
+                }
                 if (!result.isLoaded || !isAllLoaded) {
                     isNotReady = true;
                     break;
@@ -210,6 +216,10 @@ public class TaskProcessor {
             }
 
             result = prepareSnippet(launchpadCode, taskParamYaml.taskYaml.getSnippet());
+            if (result.isError) {
+                makrSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
+                continue;
+            }
             results[idx++] = result;
             if (!result.isLoaded || !isAllLoaded) {
                 continue;
@@ -217,6 +227,11 @@ public class TaskProcessor {
 
             for (SnippetApiData.SnippetConfig postSnippetConfig : taskParamYaml.taskYaml.postSnippets) {
                 result = prepareSnippet(launchpadCode, postSnippetConfig);
+                if (result.isError) {
+                    makrSnippetAsFinishedWithPermanentError(task.launchpadUrl, task.taskId, result);
+                    isNotReady = true;
+                    break;
+                }
                 if (!result.isLoaded) {
                     isNotReady = true;
                     break;
@@ -240,6 +255,15 @@ public class TaskProcessor {
                 taskProcessorStateService.currentTaskId = null;
             }
         }
+    }
+
+    private void makrSnippetAsFinishedWithPermanentError(String launchpadUrl, Long taskId, SnippetPrepareResult result) {
+        SnippetApiData.SnippetExecResult execResult = new SnippetApiData.SnippetExecResult(
+                result.getSnippet().code, false, -990,
+                "#100.105 Snippet "+result.getSnippet().code+" has permanent error: " + result.getSnippetExecResult().console);
+        stationTaskService.markAsFinished(launchpadUrl, taskId,
+                new SnippetApiData.SnippetExec(null, null, null, execResult));
+
     }
 
     private void execAllSnippets(StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamsYaml taskParamYaml, File artifactDir, File systemDir, SnippetPrepareResult[] results) {
@@ -472,6 +496,7 @@ public class TaskProcessor {
                 log.warn("Snippet {} has a permanent error, {}", snippetPrepareResult.snippet.code, result.error);
                 snippetPrepareResult.snippetExecResult = new SnippetApiData.SnippetExecResult(snippet.code, false, -1, result.error);
                 snippetPrepareResult.isLoaded = false;
+                snippetPrepareResult.isError = true;
                 return snippetPrepareResult;
             }
             snippetPrepareResult.snippetAssetFile = new AssetFile();

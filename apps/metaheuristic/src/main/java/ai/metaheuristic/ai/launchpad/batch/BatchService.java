@@ -483,6 +483,10 @@ public class BatchService {
                 "stationId: " + task.getStationId() + "\n" +
                 stationIpAndHost + "\n\n";
         StringBuilder sb = new StringBuilder(header);
+        if (snippetExec.generalExec!=null) {
+            sb.append("General execution state:\n");
+            sb.append(execResultAsStr(snippetExec.generalExec));
+        }
         if (snippetExec.preExecs!=null && !snippetExec.preExecs.isEmpty()) {
             sb.append("Pre snippets:\n");
             for (SnippetApiData.SnippetExecResult preExec : snippetExec.preExecs) {

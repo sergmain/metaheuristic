@@ -88,29 +88,32 @@ class WorkbookGraphService {
             WorkbookImpl workbook,
             Function<DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge>, List<WorkbookParamsYaml.TaskVertex>> callable) throws ImportException {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
-        return callable.apply(graph);
+        return graph != null ? callable.apply(graph) : null;
     }
 
     private Set<WorkbookParamsYaml.TaskVertex> readOnlyGraphSetOfTaskVertex(
             WorkbookImpl workbook, Function<DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge>, Set<WorkbookParamsYaml.TaskVertex>> callable) throws ImportException {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
-        return callable.apply(graph);
+        return graph != null ? callable.apply(graph) : null;
     }
 
     private WorkbookParamsYaml.TaskVertex readOnlyGraphTaskVertex(
             WorkbookImpl workbook,
             Function<DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge>, WorkbookParamsYaml.TaskVertex> callable) throws ImportException {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
-        return callable.apply(graph);
+        return graph != null ? callable.apply(graph) : null;
     }
 
     private long readOnlyGraphLong(WorkbookImpl workbook, Function<DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge>, Long> callable) throws ImportException {
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = prepareGraph(workbook);
-        return callable.apply(graph);
+        return graph != null ? callable.apply(graph) : 0;
     }
 
     private DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> prepareGraph(WorkbookImpl workbook) throws ImportException {
         WorkbookParamsYaml wpy = workbook.getWorkbookParamsYaml();
+        if (wpy.graph==null || wpy.graph.isBlank()) {
+            return null;
+        }
         GraphImporter<WorkbookParamsYaml.TaskVertex, DefaultEdge> importer = buildImporter();
         DirectedAcyclicGraph<WorkbookParamsYaml.TaskVertex, DefaultEdge> graph = new DirectedAcyclicGraph<>(DefaultEdge.class);
         importer.importGraph(graph, new StringReader(wpy.graph));
