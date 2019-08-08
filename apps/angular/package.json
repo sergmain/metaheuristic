@@ -11,7 +11,7 @@
         "e2e": "ng e2e",
         "review": "ng build --stats-json && webpack-bundle-analyzer dist/metaheuristic-app/stats.json",
         "review-prod": "ng build --prod=true --stats-json && webpack-bundle-analyzer dist/metaheuristic-app/stats.json",
-        "extract-i18n": "ngx-translate-extract  -p /**/*.html /**/*.ts /**/*.pug --input ./src --output ./src/assets/i18n/ --clean --sort --format json --marker marker",
+        "extract-i18n": "ngx-translate-extract  -p /**/*.html /**/*.ts /**/*.pug --input ./src --output ./src/assets/i18n/EN.json ./src/assets/i18n/RU.json --clean --sort --format json --marker marker",
         "postinstall": "node ./ng-add-pug-loader.js"
     },
     "private": true,

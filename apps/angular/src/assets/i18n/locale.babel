@@ -11,7 +11,7 @@
     <preset_collections/>
     <framework>ngx-translate</framework>
     <filename>locale.babel</filename>
-    <source_root_dir>../../../</source_root_dir>
+    <source_root_dir>../../</source_root_dir>
     <folder_node>
         <name></name>
         <children>
@@ -23,16 +23,12 @@
                 <default_text></default_text>
                 <translations>
                     <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
                         <language>en-US</language>
-                        <approved>false</approved>
+                        <approved>true</approved>
                     </translation>
                     <translation>
                         <language>ru-RU</language>
-                        <approved>false</approved>
+                        <approved>true</approved>
                     </translation>
                 </translations>
             </concept_node>
@@ -44,16 +40,12 @@
                 <default_text></default_text>
                 <translations>
                     <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
                         <language>en-US</language>
-                        <approved>false</approved>
+                        <approved>true</approved>
                     </translation>
                     <translation>
                         <language>ru-RU</language>
-                        <approved>false</approved>
+                        <approved>true</approved>
                     </translation>
                 </translations>
             </concept_node>
@@ -64,10 +56,6 @@
                 <comment></comment>
                 <default_text></default_text>
                 <translations>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                     <translation>
                         <language>en-US</language>
                         <approved>false</approved>
@@ -93,10 +81,6 @@
                         <language>ru-RU</language>
                         <approved>false</approved>
                     </translation>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                 </translations>
             </concept_node>
             <concept_node>
@@ -112,10 +96,6 @@
                     </translation>
                     <translation>
                         <language>ru-RU</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
-                        <language>en-GB</language>
                         <approved>false</approved>
                     </translation>
                 </translations>
@@ -135,10 +115,6 @@
                         <language>ru-RU</language>
                         <approved>false</approved>
                     </translation>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                 </translations>
             </concept_node>
             <concept_node>
@@ -154,10 +130,6 @@
                     </translation>
                     <translation>
                         <language>ru-RU</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
-                        <language>en-GB</language>
                         <approved>false</approved>
                     </translation>
                 </translations>
@@ -177,10 +149,6 @@
                         <language>ru-RU</language>
                         <approved>false</approved>
                     </translation>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                 </translations>
             </concept_node>
             <concept_node>
@@ -196,10 +164,6 @@
                     </translation>
                     <translation>
                         <language>ru-RU</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
-                        <language>en-GB</language>
                         <approved>false</approved>
                     </translation>
                 </translations>
@@ -219,10 +183,6 @@
                         <language>ru-RU</language>
                         <approved>false</approved>
                     </translation>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                 </translations>
             </concept_node>
             <concept_node>
@@ -240,10 +200,6 @@
                         <language>ru-RU</language>
                         <approved>false</approved>
                     </translation>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                 </translations>
             </concept_node>
             <concept_node>
@@ -253,10 +209,6 @@
                 <comment></comment>
                 <default_text></default_text>
                 <translations>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                     <translation>
                         <language>en-US</language>
                         <approved>false</approved>
@@ -274,10 +226,6 @@
                 <comment></comment>
                 <default_text></default_text>
                 <translations>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                     <translation>
                         <language>en-US</language>
                         <approved>false</approved>
@@ -303,10 +251,6 @@
                         <language>ru-RU</language>
                         <approved>false</approved>
                     </translation>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                 </translations>
             </concept_node>
             <concept_node>
@@ -322,10 +266,6 @@
                     </translation>
                     <translation>
                         <language>ru-RU</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
-                        <language>en-GB</language>
                         <approved>false</approved>
                     </translation>
                 </translations>
@@ -345,10 +285,6 @@
                         <language>ru-RU</language>
                         <approved>false</approved>
                     </translation>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                 </translations>
             </concept_node>
             <concept_node>
@@ -364,10 +300,6 @@
                     </translation>
                     <translation>
                         <language>ru-RU</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
-                        <language>en-GB</language>
                         <approved>false</approved>
                     </translation>
                 </translations>
@@ -387,10 +319,6 @@
                         <language>ru-RU</language>
                         <approved>false</approved>
                     </translation>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                 </translations>
             </concept_node>
             <concept_node>
@@ -406,10 +334,6 @@
                     </translation>
                     <translation>
                         <language>ru-RU</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
-                        <language>en-GB</language>
                         <approved>false</approved>
                     </translation>
                 </translations>
@@ -429,10 +353,6 @@
                         <language>ru-RU</language>
                         <approved>false</approved>
                     </translation>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                 </translations>
             </concept_node>
             <concept_node>
@@ -448,10 +368,6 @@
                     </translation>
                     <translation>
                         <language>ru-RU</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
-                        <language>en-GB</language>
                         <approved>false</approved>
                     </translation>
                 </translations>
@@ -471,10 +387,6 @@
                         <language>ru-RU</language>
                         <approved>false</approved>
                     </translation>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                 </translations>
             </concept_node>
             <concept_node>
@@ -492,10 +404,6 @@
                         <language>ru-RU</language>
                         <approved>false</approved>
                     </translation>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                 </translations>
             </concept_node>
             <concept_node>
@@ -505,10 +413,6 @@
                 <comment></comment>
                 <default_text></default_text>
                 <translations>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                     <translation>
                         <language>en-US</language>
                         <approved>false</approved>
@@ -527,10 +431,6 @@
                 <default_text></default_text>
                 <translations>
                     <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
                         <language>en-US</language>
                         <approved>false</approved>
                     </translation>
@@ -547,10 +447,6 @@
                 <comment></comment>
                 <default_text></default_text>
                 <translations>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                     <translation>
                         <language>en-US</language>
                         <approved>false</approved>
@@ -569,10 +465,6 @@
                 <default_text></default_text>
                 <translations>
                     <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
                         <language>en-US</language>
                         <approved>false</approved>
                     </translation>
@@ -589,10 +481,6 @@
                 <comment></comment>
                 <default_text></default_text>
                 <translations>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                     <translation>
                         <language>en-US</language>
                         <approved>false</approved>
@@ -611,10 +499,6 @@
                 <default_text></default_text>
                 <translations>
                     <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
                         <language>en-US</language>
                         <approved>false</approved>
                     </translation>
@@ -631,10 +515,6 @@
                 <comment></comment>
                 <default_text></default_text>
                 <translations>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                     <translation>
                         <language>en-US</language>
                         <approved>false</approved>
@@ -653,10 +533,6 @@
                 <default_text></default_text>
                 <translations>
                     <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
                         <language>en-US</language>
                         <approved>false</approved>
                     </translation>
@@ -673,10 +549,6 @@
                 <comment></comment>
                 <default_text></default_text>
                 <translations>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                     <translation>
                         <language>en-US</language>
                         <approved>false</approved>
@@ -695,10 +567,6 @@
                 <default_text></default_text>
                 <translations>
                     <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
                         <language>en-US</language>
                         <approved>false</approved>
                     </translation>
@@ -715,10 +583,6 @@
                 <comment></comment>
                 <default_text></default_text>
                 <translations>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                     <translation>
                         <language>en-US</language>
                         <approved>false</approved>
@@ -737,10 +601,6 @@
                 <default_text></default_text>
                 <translations>
                     <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
                         <language>en-US</language>
                         <approved>false</approved>
                     </translation>
@@ -757,10 +617,6 @@
                 <comment></comment>
                 <default_text></default_text>
                 <translations>
-                    <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
                     <translation>
                         <language>en-US</language>
                         <approved>false</approved>
@@ -779,10 +635,6 @@
                 <default_text></default_text>
                 <translations>
                     <translation>
-                        <language>en-GB</language>
-                        <approved>false</approved>
-                    </translation>
-                    <translation>
                         <language>en-US</language>
                         <approved>false</approved>
                     </translation>
@@ -796,11 +648,6 @@
     </folder_node>
     <isTemplateProject>false</isTemplateProject>
     <languages>
-        <language>
-            <code>en-GB</code>
-            <source_id></source_id>
-            <source_file>strings.json</source_file>
-        </language>
         <language>
             <code>en-US</code>
             <source_id></source_id>
@@ -818,9 +665,6 @@
         </translation_file>
         <translation_file>
             <file>RU.json</file>
-        </translation_file>
-        <translation_file>
-            <file>strings.json</file>
         </translation_file>
     </translation_files>
     <editor_configuration>
