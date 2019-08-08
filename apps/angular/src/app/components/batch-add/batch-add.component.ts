@@ -73,9 +73,8 @@ export class BatchAddComponent implements OnInit {
                     // TODO replace|update conditional
                     if (response.status.toLowerCase() === 'ok') {
                         this.router.navigate(['/launchpad', 'batch']);
-                    } else {
-                        this.uploadResponse = response;
                     }
+                    this.uploadResponse = response;
                 },
                 () => {},
                 () => subscribe.unsubscribe()

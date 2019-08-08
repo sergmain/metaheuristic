@@ -38,6 +38,6 @@ ct-cols('*ngIf'="currentStates.has(states.show)")
                 ct-section-body-row
                     ct-section-content
                         div
-                            div {{ 'batch-add.STATUS' | translate }}: {{response.status}}
-                            p('*ngFor'="let error of response.errorMessages; index as i; trackBy: trackByFn") {{error}}
-                            p('*ngFor'="let info of response.infoMessages; index as i; trackBy: trackByFn") {{info}}
+                            div {{ 'batch-add.STATUS' | translate }}: {{uploadResponse.status}}
+                            p('*ngFor'="let error of uploadResponse.errorMessages; index as i; trackBy: trackByFn") {{error}}
+                            p('*ngFor'="let info of uploadResponse.infoMessages; index as i; trackBy: trackByFn") {{info}}
