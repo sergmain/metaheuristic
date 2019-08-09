@@ -192,7 +192,7 @@ public class BatchTopLevelService {
                 return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#995.070 can't create temporary directory in " + System.getProperty("java.io.tmpdir"));
             }
 
-            final File dataFile = new File(tempDir, originFilename );
+            final File dataFile = File.createTempFile("uploaded-file-", ".bin", tempDir);
             log.debug("Start storing an uploaded file to disk");
             try(OutputStream os = new FileOutputStream(dataFile)) {
                 IOUtils.copy(file.getInputStream(), os, 32000);
@@ -224,7 +224,7 @@ public class BatchTopLevelService {
                     }
                     else {
                         log.debug("Start loading file data to db");
-                        loadFilesFromDirAfterZip(batch, tempDir, Collections.emptyMap());
+                        loadFilesFromDirAfterZip(batch, tempDir, Map.of(dataFile.getName(), originFilename));
                     }
                 }
                 catch(UnzipArchiveException e) {

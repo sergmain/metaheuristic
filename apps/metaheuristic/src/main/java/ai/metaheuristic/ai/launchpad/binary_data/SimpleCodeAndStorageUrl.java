@@ -29,6 +29,7 @@ public class SimpleCodeAndStorageUrl {
     public String code;
     public String poolCode;
     public String storageUrl;
+    public String originalFilename;
 
     public DataStorageParams getParams() {
         return DataStorageParamsUtils.to(storageUrl);

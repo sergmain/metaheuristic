@@ -1,0 +1,8 @@
+holder: |
+  week:
+    mon: 0:00-8:45, 19:00-23:59
+    thu: 0:00-8:45, 19:00-23:59
+    sat: 0:00-8:45, 19:00-23:59
+  dayMask: dd/MM/yyyy
+  holiday: 15/01/2019,16/01/2019
+  exceptionWorkingDay: 19/01/2019

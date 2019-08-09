@@ -55,8 +55,7 @@ public class FileProcessService {
             boolean isPersist, Long planId, PlanParamsYaml planParams, Long workbookId,
             Process process, PlanService.ResourcePools pools, List<Long> parentTaskIds) {
 
-        Map<String, List<String>> collectedInputs = pools.collectedInputs;
-        Map<String, DataStorageParams> inputStorageUrls = pools.inputStorageUrls;
+        Map<String, DataStorageParams> inputStorageUrls = new HashMap<>(pools.inputStorageUrls);
 
         PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
 
@@ -70,7 +69,7 @@ public class FileProcessService {
                 result.outputResourceCodes.add(outputResourceCode);
                 inputStorageUrls.put(outputResourceCode, process.outputParams);
                 if (isPersist) {
-                    Task t = createTaskInternal(planParams, workbookId, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
+                    Task t = createTaskInternal(planParams, workbookId, process, outputResourceCode, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
                     if (t!=null) {
                         result.taskIds.add(t.getId());
                     }
@@ -85,7 +84,7 @@ public class FileProcessService {
             result.outputResourceCodes.add(outputResourceCode);
             inputStorageUrls.put(outputResourceCode, process.outputParams);
             if (isPersist) {
-                Task t = createTaskInternal(planParams, workbookId, process, outputResourceCode, snDef, collectedInputs, inputStorageUrls);
+                Task t = createTaskInternal(planParams, workbookId, process, outputResourceCode, snDef, pools.collectedInputs, inputStorageUrls, pools.mappingCodeToOriginalFilename);
                 if (t!=null) {
                     result.taskIds.add(t.getId());
                 }
@@ -103,7 +102,8 @@ public class FileProcessService {
     private TaskImpl createTaskInternal(
             PlanParamsYaml planParams, Long workbookId, Process process,
             String outputResourceCode,
-            SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls) {
+            SnippetDefForPlan snDef, Map<String, List<String>> collectedInputs, Map<String, DataStorageParams> inputStorageUrls,
+            Map<String, String> mappingCodeToOriginalFilename) {
         if (process.type!= EnumsApi.ProcessType.FILE_PROCESSING) {
             throw new IllegalStateException("#171.01 Wrong type of process, " +
                     "expected: "+ EnumsApi.ProcessType.FILE_PROCESSING+", " +
@@ -115,6 +115,7 @@ public class FileProcessService {
             yaml.taskYaml.inputResourceCodes.put(entry.getKey(), entry.getValue());
         }
         yaml.taskYaml.outputResourceCode = outputResourceCode;
+        yaml.taskYaml.realNames = mappingCodeToOriginalFilename;
 
         // work around with SnakeYaml's refs
         Map<String, DataStorageParams> map = new HashMap<>();

@@ -359,6 +359,7 @@ public class PlanService {
     public static class ResourcePools {
         public final Map<String, List<String>> collectedInputs = new HashMap<>();
         public Map<String, DataStorageParams> inputStorageUrls=null;
+        public final Map<String, String> mappingCodeToOriginalFilename = new HashMap<>();
         public EnumsApi.PlanProducingStatus status = EnumsApi.PlanProducingStatus.OK;
 
         public ResourcePools(List<SimpleCodeAndStorageUrl> initialInputResourceCodes) {
@@ -372,6 +373,8 @@ public class PlanService {
                 collectedInputs.computeIfAbsent(o.poolCode, p -> new ArrayList<>()).add(o.code)
             );
 
+            initialInputResourceCodes.forEach(o-> mappingCodeToOriginalFilename.put(o.code, o.originalFilename));
+
             //noinspection Convert2MethodRef
             inputStorageUrls = initialInputResourceCodes
                     .stream()
@@ -382,6 +385,7 @@ public class PlanService {
         public void clean() {
             collectedInputs.values().forEach(o-> o.forEach(inputStorageUrls::remove));
             collectedInputs.clear();
+            mappingCodeToOriginalFilename.clear();
         }
 
         public void add(String outputType, List<String> outputResourceCodes) {
@@ -395,6 +399,7 @@ public class PlanService {
                     key, value, (o, o1) -> {o.addAll(o1); return o;} )
             );
             inputStorageUrls.putAll(metaPools.inputStorageUrls);
+            mappingCodeToOriginalFilename.putAll((metaPools.mappingCodeToOriginalFilename));
         }
     }
 
