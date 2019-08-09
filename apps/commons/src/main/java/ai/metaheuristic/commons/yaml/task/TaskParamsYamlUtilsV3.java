@@ -56,7 +56,7 @@ public class TaskParamsYamlUtilsV3
     public TaskParamsYamlV2 downgradeTo(TaskParamsYaml yaml) {
         yaml.checkIntegrity();
         TaskParamsYamlV2 t = new TaskParamsYamlV2();
-        BeanUtils.copyProperties(yaml.taskYaml, t);
+        BeanUtils.copyProperties(yaml.taskYaml, t.taskYaml);
 /*
         yaml.taskYaml.preSnippets = t.taskYaml.preSnippets;
         yaml.taskYaml.postSnippets = t.taskYaml.postSnippets;
