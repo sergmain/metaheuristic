@@ -55,11 +55,13 @@ Is Batch Consistent? - Пакет консистен?
 http://localhost:4200/launchpad/batch/176/status
 Status of execution of batch - Статус выполнения пакета
 
+DONE
 
 
 - тестирование версии от 2019-08-05
 ---- bug-510
 кнопки для удаления батча не локализованы - выводятся кода надписей
+DONE
 
 ---- bug-511
 убрать кнопку TEst из главной панели

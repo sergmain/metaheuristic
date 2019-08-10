@@ -247,6 +247,7 @@ DONE
 url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
 в таблице "Metrics as the table" значения выводятся как строка через запятую.
 Должно быть вывод ввиде таблицы
+DONE
 
 ---- bug-207
 url - http://localhost:4200/launchpad/atlas/experiment-feature-progress/24/302/1
@@ -279,11 +280,11 @@ url - http://localhost:4200/launchpad/resources/add
 результат - не происходит ничего
 
 должно быть -  ресурс загружается, юзер перенаправляется на список ресурсов http://localhost:4200/launchpad/resources
-
+DONE
 
 ---- bug-210
 невозможно залогироваться другим юзером после того как был зареген под учеткой другого
-
+DONE
 
 
 
