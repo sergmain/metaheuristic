@@ -42,9 +42,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -74,17 +74,20 @@ public class StationTaskService {
                 try {
                     String launchpadUrl = metadataService.findHostByCode(top.toFile().getName());
                     Files.list(top).forEach(p -> {
-                        final File launchpadDir = p.toFile();
-                        if (!launchpadDir.isDirectory()) {
+                        final File taskGroupDir = p.toFile();
+                        if (!taskGroupDir.isDirectory()) {
                             return;
                         }
                         try {
-                            Files.list(launchpadDir.toPath()).forEach(s -> {
-                                String launchpadDirName = launchpadDir.getName();
-                                String name = s.toFile().getName();
+                            AtomicBoolean isEmpty = new AtomicBoolean(true);
+                            Files.list(p).forEach(s -> {
+                                isEmpty.set(false);
+                                String launchpadDirName = taskGroupDir.getName();
+                                final File currDir = s.toFile();
+                                String name = currDir.getName();
                                 long taskId = Long.parseLong(launchpadDirName) * DigitUtils.DIV + Long.parseLong(name);
                                 log.info("Found dir of task with id: {}, {}, {}", taskId, launchpadDirName, name);
-                                File taskYamlFile = new File(s.toFile(), Consts.TASK_YAML);
+                                File taskYamlFile = new File(currDir, Consts.TASK_YAML);
                                 if (taskYamlFile.exists()) {
                                     try(FileInputStream fis = new FileInputStream(taskYamlFile)) {
                                         StationTask task = StationTaskUtils.to(fis);
@@ -106,13 +109,22 @@ public class StationTaskService {
                                     catch (YAMLException e) {
                                         String es = "#713.020 yaml Error: " + e.getMessage();
                                         log.warn(es, e);
-                                        deleteDirWithBrokenTask(s);
+                                        deleteDirForTasks(currDir, "Delete not valid dir of task " + s);
                                     }
                                 }
                                 else {
-                                    deleteDirWithBrokenTask(s);
+                                    deleteDirForTasks(currDir, "Delete not valid dir of task " + s);
                                 }
                             });
+                            if (isEmpty.get()) {
+                                if (taskGroupDir.exists()) {
+                                    log.info("Start deleting empty dir " + taskGroupDir.getPath());
+                                    if (!taskGroupDir.delete()) {
+                                        log.warn("Unable to delete directory {}", taskGroupDir.getPath());
+                                    }
+                                }
+
+                            }
                         }
                         catch (IOException e) {
                             String es = "#713.030 Error";
@@ -136,15 +148,18 @@ public class StationTaskService {
         int i=0;
     }
 
-    public void deleteDirWithBrokenTask(Path s) {
-        String path = s.toFile().getPath();
-        log.info("Delete not valid dir of task {}", path);
+    public void deleteDirForTasks(File f, String info) {
+        log.info(info);
         try {
-            FileUtils.deleteDirectory(s.toFile());
+            if (f.exists()) {
+                FileUtils.deleteDirectory(f);
+            }
             // IDK is that bug or side-effect. so delete one more time
-            FileUtils.deleteDirectory(s.toFile());
+            if (f.exists()) {
+                FileUtils.deleteDirectory(f);
+            }
         } catch (IOException e) {
-            log.warn("#713.060 Error while deleting dir " + path, e);
+            log.warn("#713.060 Error while deleting dir {}, error: {}", f.getPath(), e.toString());
         }
     }
 
