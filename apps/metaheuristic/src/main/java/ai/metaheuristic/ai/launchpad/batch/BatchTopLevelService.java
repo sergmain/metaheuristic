@@ -71,12 +71,16 @@ import org.yaml.snakeyaml.error.YAMLException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author Serge
@@ -274,46 +278,44 @@ public class BatchTopLevelService {
 
     private void loadFilesFromDirAfterZip(Batch batch, File srcDir, final Map<String, String> mapping) throws IOException {
 
-        List<Path> paths = Files.list(srcDir.toPath())
+        final AtomicBoolean isEmpty = new AtomicBoolean(true);
+        Files.list(srcDir.toPath())
                 .filter(o -> {
                     File f = o.toFile();
                     return !EXCLUDE_EXT.contains(StrUtils.getExtension(f.getName()));
                 })
-                .collect(Collectors.toList());
+                .forEach( dataFilePath ->  {
+                    isEmpty.set(false);
+                    File file = dataFilePath.toFile();
+                    try {
+                        if (file.isDirectory()) {
+                            final File mainDocFile = getMainDocumentFileFromConfig(file, mapping);
+                            final Stream<FileWithMapping> files = Files.list(dataFilePath)
+                                    .filter(o -> o.toFile().isFile())
+                                    .map(f -> {
+                                        final String currFileName = file.getName() + File.separatorChar + f.toFile().getName();
+                                        final String actualFileName = mapping.get(currFileName);
+                                        return new FileWithMapping(f.toFile(), actualFileName);
+                                    });
+                            createAndProcessTask(batch, files, mainDocFile);
+                        } else {
+                            String actualFileName = mapping.get(file.getName());
+                            createAndProcessTask(batch, Stream.of(new FileWithMapping(file, actualFileName)), file);
+                        }
+                    } catch (StoreNewFileWithRedirectException e) {
+                        throw e;
+                    } catch (Throwable th) {
+                        String es = "#995.130 An error while saving data to file, " + th.toString();
+                        log.error(es, th);
+                        throw new BatchResourceProcessingException(es);
+                    }
+                });
 
-        if (paths.isEmpty()) {
+
+        if (isEmpty.get()) {
             batchService.changeStateToFinished(batch.id);
-            return;
         }
 
-        for (Path dataFile : paths) {
-            File file = dataFile.toFile();
-            if (file.isDirectory()) {
-                try {
-                    final File mainDocFile = getMainDocumentFileFromConfig(file, mapping);
-                    final List<FileWithMapping> files = new ArrayList<>();
-                    Files.list(dataFile)
-                            .filter(o -> o.toFile().isFile())
-                            .forEach(f -> {
-                                final String currFileName = file.getName() + File.separatorChar + f.toFile().getName();
-                                final String actualFileName = mapping.get(currFileName);
-                                files.add(new FileWithMapping(f.toFile(), actualFileName));
-                            });
-
-                    createAndProcessTask(batch, files, mainDocFile);
-                } catch (StoreNewFileWithRedirectException e) {
-                    throw e;
-                } catch (Throwable th) {
-                    String es = "#995.130 An error while saving data to file, " + th.toString();
-                    log.error(es, th);
-                    throw new BatchResourceProcessingException(es);
-                }
-            } else {
-                String actualFileName = mapping.get(file.getName());
-                final List<FileWithMapping> files = Collections.singletonList(new FileWithMapping(file, actualFileName));
-                createAndProcessTask(batch, files, file);
-            }
-        }
     }
 
     private File getMainDocumentFileFromConfig(File srcDir, Map<String, String> mapping) throws IOException {
@@ -363,15 +365,38 @@ public class BatchTopLevelService {
         return yaml;
     }
 
-    private void createAndProcessTask(Batch batch, List<FileWithMapping> dataFile, File mainDocFile) {
+    private void createAndProcessTask(Batch batch, Stream<FileWithMapping> dataFiles, File mainDocFile) {
 
         Long planId = batch.planId;
         long nanoTime = System.nanoTime();
         List<String> attachments = new ArrayList<>();
         String mainPoolCode = String.format("%d-%s-%d", planId, Consts.MAIN_DOCUMENT_POOL_CODE_FOR_BATCH, nanoTime);
         String attachPoolCode = String.format("%d-%s-%d", planId, ATTACHMENTS_POOL_CODE, nanoTime);
-        boolean isMainDocPresent = false;
-        for (FileWithMapping fileWithMapping : dataFile) {
+        final AtomicBoolean isMainDocPresent = new AtomicBoolean(false);
+        dataFiles.forEach( fileWithMapping -> {
+            String originFilename = fileWithMapping.originName!=null ? fileWithMapping.originName : fileWithMapping.file.getName();
+            if (EXCLUDE_EXT.contains(StrUtils.getExtension(originFilename))) {
+                return;
+            }
+            final String code = ResourceUtils.toResourceCode(fileWithMapping.file.getName());
+
+            String poolCode;
+            if (fileWithMapping.file.equals(mainDocFile)) {
+                poolCode = mainPoolCode;
+                isMainDocPresent.set(true);
+            }
+            else {
+                poolCode = attachPoolCode;
+                attachments.add(code);
+            }
+
+            resourceService.storeInitialResource(fileWithMapping.file, code, poolCode, originFilename);
+
+                }
+        );
+/*
+        // TODO this is original version without stream. if stream works, delete this block of code
+        for (FileWithMapping fileWithMapping : dataFiles) {
             String originFilename = fileWithMapping.originName!=null ? fileWithMapping.originName : fileWithMapping.file.getName();
             if (EXCLUDE_EXT.contains(StrUtils.getExtension(originFilename))) {
                 continue;
@@ -390,8 +415,9 @@ public class BatchTopLevelService {
 
             resourceService.storeInitialResource(fileWithMapping.file, code, poolCode, originFilename);
         }
+*/
 
-        if (!isMainDocPresent) {
+        if (!isMainDocPresent.get()) {
             throw new BatchResourceProcessingException("#995.180 main document wasn't found");
         }
 

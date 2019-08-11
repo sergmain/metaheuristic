@@ -127,7 +127,7 @@ public class TestGraph extends PreparingPlan {
         TaskImpl t1 = new TaskImpl();
         t1.id = id;
         t1.execState = execState.value;
-        workbookService.updateTaskExecState(workbook, t1.id, t1.execState );
+        workbookService.updateTaskExecStateByWorkbookId(workbook.id, t1.id, t1.execState );
     }
 
 }

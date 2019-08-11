@@ -121,8 +121,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertEquals(Long.valueOf(1L), vertices.get(0).taskId);
 
-        OperationStatusRest status = workbookService.updateTaskExecState(
-                workbookRepository.findByIdForUpdate(workbook.id),1L, EnumsApi.TaskExecState.OK.value);
+        OperationStatusRest status = workbookService.updateTaskExecStateByWorkbookId(workbook.id,1L, EnumsApi.TaskExecState.OK.value);
 
         assertEquals(EnumsApi.OperationStatus.OK, status.status);
         workbook = workbookCache.findById(workbook.id);
@@ -133,8 +132,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertTrue(Set.of(21L, 22L).contains(vertices.get(0).taskId));
 
-        status = workbookService.updateTaskExecState(
-                workbookRepository.findByIdForUpdate(workbook.id),22L, EnumsApi.TaskExecState.IN_PROGRESS.value);
+        status = workbookService.updateTaskExecStateByWorkbookId(workbook.id,22L, EnumsApi.TaskExecState.IN_PROGRESS.value);
         workbook = workbookCache.findById(workbook.id);
 
         vertices = workbookService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
@@ -144,8 +142,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
         assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
 
-        status = workbookService.updateTaskExecState(
-                workbookRepository.findByIdForUpdate(workbook.id),22L, EnumsApi.TaskExecState.BROKEN.value);
+        status = workbookService.updateTaskExecStateByWorkbookId(workbook.id,22L, EnumsApi.TaskExecState.BROKEN.value);
         workbook = workbookCache.findById(workbook.id);
 
         vertices = workbookService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
@@ -154,8 +151,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
         assertEquals(EnumsApi.TaskExecState.NONE, vertices.get(0).execState);
         assertEquals(Long.valueOf(21L), vertices.get(0).taskId);
 
-        status = workbookService.updateTaskExecState(
-                workbookRepository.findByIdForUpdate(workbook.id),21L, EnumsApi.TaskExecState.OK.value);
+        status = workbookService.updateTaskExecStateByWorkbookId(workbook.id,21L, EnumsApi.TaskExecState.OK.value);
 
         vertices = workbookService.findAllForAssigning(workbookRepository.findByIdForUpdate(workbook.id));
 
@@ -165,8 +161,7 @@ public class TestFindUnassignedTaskInGraph extends PreparingPlan {
         assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(1).taskId));
         assertTrue(Set.of(311L, 312L, 313L).contains(vertices.get(2).taskId));
 
-        status = workbookService.updateTaskExecState(
-                workbookRepository.findByIdForUpdate(workbook.id),22L, EnumsApi.TaskExecState.OK.value);
+        status = workbookService.updateTaskExecStateByWorkbookId(workbook.id,22L, EnumsApi.TaskExecState.OK.value);
         workbook = workbookCache.findById(workbook.id);
 
 

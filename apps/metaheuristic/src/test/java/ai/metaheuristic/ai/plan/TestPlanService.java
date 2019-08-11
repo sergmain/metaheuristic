@@ -224,7 +224,7 @@ public class TestPlanService extends PreparingPlan {
         final Consumer<Task> action = t -> {
             if (t!=null) {
                 WorkbookImpl workbook = workbookRepository.findByIdForUpdate(t.getWorkbookId());
-                workbookService.updateTaskExecState(workbook, t.getId(), t.getExecState());
+                workbookService.updateTaskExecStateByWorkbookId(workbook.id, t.getId(), t.getExecState());
             }
         };
 

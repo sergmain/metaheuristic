@@ -127,8 +127,7 @@ public class WorkbookSchedulerService {
                             Long taskId = e.getKey();
                             TaskImpl task = taskRepository.findById(taskId).orElse(null);
                             if (task!=null && task.resultReceived && task.isCompleted ) {
-                                WorkbookImpl wb = workbookRepository.findByIdForUpdate(workbookId);
-                                workbookService.updateTaskExecState(wb, task.id, EnumsApi.TaskExecState.OK.value);
+                                workbookService.updateTaskExecStateByWorkbookId(workbookId, task.id, EnumsApi.TaskExecState.OK.value);
                             }
                         });
             }

@@ -16,10 +16,8 @@
 
 package ai.metaheuristic.ai.graph;
 
-import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookCache;
-import ai.metaheuristic.ai.launchpad.workbook.WorkbookOperationStatusWithTaskList;
 import ai.metaheuristic.ai.preparing.PreparingPlan;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
@@ -35,7 +33,6 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
 
@@ -103,12 +100,5 @@ public class TestGraphEdges extends PreparingPlan {
 
         leafs = workbookService.findLeafs(workbook);
         assertEquals(5, leafs.size());
-    }
-
-    public void setExecState(WorkbookImpl workbook, Long id, EnumsApi.TaskExecState execState) {
-        TaskImpl t1 = new TaskImpl();
-        t1.id = id;
-        t1.execState = execState.value;
-        workbookService.updateTaskExecState(workbook, t1.id, t1.execState );
     }
 }
