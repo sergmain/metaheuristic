@@ -144,11 +144,9 @@ mh.launchpad.is-ssl-required=false
 # password - 123
 mh.launchpad.master-password=$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu
 mh.launchpad.master-username=q
-mh.launchpad.master-token=1
 
 mh.launchpad.rest-password=$2a$10$jaQkP.gqwgenn.xKtjWIbeP4X.LDJx92FKaQ9VfrN2jgdOUTPTMIu
 mh.launchpad.rest-username=q1
-mh.launchpad.rest-token=11
 
 mh.launchpad.public-key= <!!! insert real public key here !!!> 
 
@@ -176,7 +174,7 @@ mh.launchpad.master-* - данные для аутенсификации для 
 mh.launchpad.master-password
 необходимо использовать приложение из apps/gen-passwords
 
--username и -token выбираются самостоятельно, но не могут включать в себя символ '=' (символ равно)
+-username выбирается самостоятельно, но не может включать в себя символ '=' (символ равно)
 
 3.7 Станция
 3.7.1 application.properties для станции
@@ -199,7 +197,6 @@ launchpads:
     authType: basic
     restPassword: 123
     restUsername: q1
-    restToken: 11
     taskProcessingTime: |
       workingDay: 0:00-23:59
       weekend: 0:00-23:59
@@ -217,7 +214,6 @@ lookupType: см параметр url
 authType: тип аутенсификации, basic - стандартная BASIC аутенсификация, oauth - аутенсификация по OAuth2.0
 restPassword: пароль для rest урл
 restUsername: пароль для rest
-restToken: токен для rest
 taskProcessingTime: рассписание, когда задачи с данной стартовой площадки активны,
       workingDay:  время для запуска в рабочие дни
       weekend: время для запуска в выходные дни
@@ -277,7 +273,6 @@ java -jar apps/gen-passwords/target/gen-passwords.jar <master password> <rest pa
 
 результат работы поместить в соответствующие параметры:
 master password --> mh.launchpad.master-password
-master token --> mh.launchpad.master-token
 
 токены могут быть изменены по желанию,
 но не должны быть пустыми и включать в себя символ '=' (символ равно)
@@ -298,14 +293,8 @@ mvn-all.bat
 7. Управление стартовой площадкой
 после того, как все параметры были прописаны, можно запустить стартовую площадку
 по адресу на котором она была запущена
-логин - mh.master-username=,j.master-token
+логин - mh.launchpad.master-username
 пароль - mh.launchpad.master-password
-
-т.е если
-mh.master-username=yyy
-mh.master-token=xxx
-
-то логин будет - yyy=xxx
 
 если все запустилось успешно, то можно перейти к созданию сущеностей
 

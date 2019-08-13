@@ -636,7 +636,7 @@ public class ExperimentService {
         return experimentHyperParams.stream().collect(Collectors.toMap(HyperParam::getKey, HyperParam::getValues, (a, b) -> b, HashMap::new));
     }
 
-    public void resetExperimentByWorkbookId(long workbookId) {
+    public void resetExperimentByWorkbookId(Long workbookId) {
 
         Experiment e = experimentRepository.findIdByWorkbookIdForUpdate(workbookId);
         if (e==null) {
@@ -647,6 +647,22 @@ public class ExperimentService {
         epy.processing = new ExperimentProcessing();
         e.updateParams(epy);
         e.setWorkbookId(null);
+
+        //noinspection UnusedAssignment
+        e = experimentCache.save(e);
+    }
+
+    public void bindExperimentToWorkbook(Long experimentId, Long workbookId) {
+
+        Experiment e = experimentRepository.findByIdForUpdate(experimentId);
+        if (e==null) {
+            return;
+        }
+
+        ExperimentParamsYaml epy = e.getExperimentParamsYaml();
+        epy.processing = new ExperimentProcessing();
+        e.updateParams(epy);
+        e.setWorkbookId(workbookId);
 
         //noinspection UnusedAssignment
         e = experimentCache.save(e);

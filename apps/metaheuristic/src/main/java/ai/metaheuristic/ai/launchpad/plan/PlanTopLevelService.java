@@ -207,16 +207,16 @@ public class PlanTopLevelService implements ApplicationEventPublisherAware {
         try {
             ppy = PlanParamsYamlUtils.BASE_YAML_UTILS.to(planYamlAsStr);
         } catch (WrongVersionOfYamlFileException e) {
-            return new PlanApiData.PlanResult("#560.110 Error parsing yaml: " + e.getMessage());
+            return new PlanApiData.PlanResult("#560.110 An error parsing yaml: " + e.getMessage());
         }
 
         final String code = ppy.planYaml.planCode;
         if (StringUtils.isBlank(code)) {
-            return new PlanApiData.PlanResult("#560.130 code of plan is empty");
+            return new PlanApiData.PlanResult("#560.130 the code of plan is empty");
         }
         Plan f = planRepository.findByCode(code);
         if (f!=null) {
-            return new PlanApiData.PlanResult("#560.150 plan with such code already exists, code: " + code);
+            return new PlanApiData.PlanResult("#560.150 the plan with such code already exists, code: " + code);
         }
 
         PlanImpl plan = new PlanImpl();
@@ -362,10 +362,6 @@ public class PlanTopLevelService implements ApplicationEventPublisherAware {
     // ========= Workbook specific =============
 
     public OperationStatusRest changeWorkbookExecState(String state, Long workbookId) {
-        return changeWorkbookExecStateInternal(state, workbookId);
-    }
-
-    private OperationStatusRest changeWorkbookExecStateInternal(String state, Long workbookId) {
         EnumsApi.WorkbookExecState execState = EnumsApi.WorkbookExecState.valueOf(state.toUpperCase());
         if (execState== EnumsApi.WorkbookExecState.UNKNOWN) {
             return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.390 Unknown exec state, state: " + state);
@@ -377,7 +373,7 @@ public class PlanTopLevelService implements ApplicationEventPublisherAware {
 
     public OperationStatusRest deleteWorkbookById(Long workbookId) {
         if (workbookId==null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#705.090 workbookId is null");
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#560.395 workbookId is null");
         }
         Workbook wb = workbookCache.findById(workbookId);
         if (wb==null) {

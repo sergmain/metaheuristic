@@ -27,6 +27,9 @@
             <td width="50">&nbsp;</td>
             <td valign="top">
                 <a class="pure-button pure-button-primary" href="#"
+                   th:if="${experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).NONE.code}"
+                   th:href="${'/launchpad/experiment/workbook-target-exec-state/'+experiment.id+'/producing/' + experimentResult.workbook.id}">Produce tasks</a>
+                <a class="pure-button pure-button-primary" href="#"
                    th:if="${experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).PRODUCED.code or
                    experimentResult.workbook.execState==T(ai.metaheuristic.api.EnumsApi.WorkbookExecState).STOPPED.code}"
                    th:href="${'/launchpad/experiment/workbook-target-exec-state/'+experiment.id+'/started/' + experimentResult.workbook.id}">Start</a>

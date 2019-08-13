@@ -21,7 +21,9 @@ import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.SneakyThrows;
 import lombok.ToString;
+import lombok.experimental.Wither;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -38,7 +40,8 @@ import java.util.List;
 @Table(name = "MH_EXPERIMENT")
 @Data
 @ToString(exclude = {"params"})
-public class Experiment implements Serializable {
+
+public class Experiment implements Serializable, Cloneable {
     private static final long serialVersionUID = -3509391644278818781L;
 
     @Id
@@ -60,6 +63,11 @@ public class Experiment implements Serializable {
     @Transient
     @JsonIgnore
     private ExperimentParamsYaml epy = null;
+
+    @SneakyThrows
+    public Experiment clone() {
+        return (Experiment) super.clone();
+    }
 
     @JsonIgnore
     public ExperimentParamsYaml getExperimentParamsYaml() {

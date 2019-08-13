@@ -72,13 +72,16 @@ public class ExperimentProcessService {
         else {
             e = experimentCache.findById(experimentId);
         }
+
         PlanService.ProduceTaskResult result = new PlanService.ProduceTaskResult();
         if (e==null) {
             result.status = EnumsApi.PlanProducingStatus.EXPERIMENT_NOT_FOUND_BY_CODE_ERROR;
             return result;
         }
 
-        // TODO 2019-06-23 workbookId is set even it isn't in persistent mode. Need to check fro side-effects
+        if (!isPersist) {
+            e = e.clone();
+        }
         e.setWorkbookId(workbookId);
         if (isPersist) {
             e = experimentCache.save(e);

@@ -17,11 +17,15 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
+import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.plan.PlanCache;
+import ai.metaheuristic.ai.launchpad.plan.PlanService;
+import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
 import ai.metaheuristic.ai.launchpad.repositories.ExperimentRepository;
+import ai.metaheuristic.ai.launchpad.repositories.PlanRepository;
 import ai.metaheuristic.ai.launchpad.repositories.SnippetRepository;
 import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.snippet.SnippetService;
@@ -36,9 +40,13 @@ import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import ai.metaheuristic.api.data.experiment.ExperimentParamsYaml;
+import ai.metaheuristic.api.data.plan.PlanApiData;
+import ai.metaheuristic.api.data.plan.PlanParamsYaml;
 import ai.metaheuristic.api.data.task.TaskApiData;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
 import ai.metaheuristic.api.launchpad.Task;
+import ai.metaheuristic.api.launchpad.Workbook;
+import ai.metaheuristic.api.launchpad.process.Process;
 import ai.metaheuristic.commons.CommonConsts;
 import ai.metaheuristic.commons.exceptions.WrongVersionOfYamlFileException;
 import ai.metaheuristic.commons.utils.DirUtils;
@@ -85,16 +93,21 @@ public class ExperimentTopLevelService {
     private final ExperimentCache experimentCache;
     private final ExperimentService experimentService;
     private final ExperimentRepository experimentRepository;
-    private final AtlasService atlasService;
+    private final PlanRepository planRepository;
+    private final PlanCache planCache;
+    private final PlanTopLevelService planTopLevelService;
+    private final PlanService planService;
 
     public static ExperimentApiData.SimpleExperiment asSimpleExperiment(Experiment e) {
         ExperimentParamsYaml params = e.getExperimentParamsYaml();
         return new ExperimentApiData.SimpleExperiment(params.experimentYaml.getName(), params.experimentYaml.getDescription(), params.experimentYaml.getCode(), params.experimentYaml.getSeed(), e.getId());
     }
 
+/*
     public static ExperimentApiData.ExperimentResult asExperimentResult(Experiment e) {
         return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentData(e), e.params);
     }
+*/
 
     public static ExperimentApiData.ExperimentResult asExperimentResultShort(Experiment e) {
         return new ExperimentApiData.ExperimentResult(ExperimentService.asExperimentDataShort(e), null);
@@ -597,7 +610,7 @@ public class ExperimentTopLevelService {
 
         Long experimentId = experimentRepository.findIdByCode(code);
         if (experimentId!=null) {
-            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.400 plan with such code already exists, code: " + code);
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.400 The experiment with such code already exists, code: " + code);
         }
 
         Experiment e = new Experiment();
@@ -623,4 +636,95 @@ public class ExperimentTopLevelService {
         workbookService.toExportingToAtlas(experiment.workbookId);
         return  new OperationStatusRest(EnumsApi.OperationStatus.OK,"Exporting of experiment was successfully started", null);
     }
+
+    public OperationStatusRest bindExperimentToPlanWithResource(String experimentCode, String resourcePoolCode) {
+        if (resourcePoolCode==null || resourcePoolCode.isBlank()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.480 resource pool code is blank");
+        }
+        if (experimentCode==null || experimentCode.isBlank()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.485 experiment code is blank");
+        }
+        Experiment experiment = experimentRepository.findByCode(experimentCode);
+        if (experiment==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.500 can't find an experiment for code: " + experimentCode);
+        }
+        if (experiment.workbookId!=null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.502 an experiment '"+experimentCode+"' was already bound to plan");
+        }
+        PlanImpl p = getPlanByExperimentCode(experimentCode);
+        if (p==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.510 can't find a plan with experiment code: " + experimentCode);
+        }
+        PlanApiData.WorkbookResult workbookResultRest = planTopLevelService.addWorkbook(p.id, resourcePoolCode, null);
+        if (workbookResultRest.isErrorMessages()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, workbookResultRest.errorMessages, workbookResultRest.infoMessages);
+        }
+
+        experimentService.bindExperimentToWorkbook(experiment.id, workbookResultRest.workbook.getId());
+
+        return  new OperationStatusRest(EnumsApi.OperationStatus.OK,
+                "Binding an experiment '"+experimentCode+"' to plan '"+p.code+"' with using a resource '"+resourcePoolCode+"' was successful", null);
+    }
+
+    private PlanImpl getPlanByExperimentCode(String experimentCode) {
+        List<Long> planIds = planRepository.findAllAsIds();
+        PlanImpl p = null;
+        for (Long planId : planIds) {
+            PlanImpl plan = planCache.findById(planId);
+            PlanParamsYaml ppy = plan.getPlanParamsYaml();
+            for (Process process : ppy.planYaml.processes) {
+                if (process.type== EnumsApi.ProcessType.EXPERIMENT && process.code.equals(experimentCode)) {
+                    p = plan;
+                    break;
+                }
+            }
+            if (p!=null) {
+                break;
+            }
+        }
+        return p;
+    }
+
+    public OperationStatusRest produceTasks(String experimentCode) {
+        return changeExecStateTo(experimentCode, EnumsApi.WorkbookExecState.PRODUCING);
+    }
+
+    public EnumsApi.WorkbookExecState getExperimentProcessingStatus(String experimentCode) {
+        if (experimentCode==null || experimentCode.isBlank()) {
+            return EnumsApi.WorkbookExecState.UNKNOWN;
+        }
+        Experiment experiment = experimentRepository.findByCode(experimentCode);
+        if (experiment==null || experiment.workbookId==null) {
+            return EnumsApi.WorkbookExecState.UNKNOWN;
+        }
+        Workbook wb = workbookCache.findById(experiment.workbookId);
+        return EnumsApi.WorkbookExecState.toState(wb.getExecState());
+    }
+
+    public OperationStatusRest startProcessingOfTasks(String experimentCode) {
+        return changeExecStateTo(experimentCode, EnumsApi.WorkbookExecState.STARTED);
+    }
+
+    private OperationStatusRest changeExecStateTo(String experimentCode, EnumsApi.WorkbookExecState execState) {
+        if (experimentCode==null || experimentCode.isBlank()) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.550 experiment code is blank");
+        }
+        Experiment experiment = experimentRepository.findByCode(experimentCode);
+        if (experiment==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR, "#285.560 can't find an experiment for code: " + experimentCode);
+        }
+        PlanImpl p = getPlanByExperimentCode(experimentCode);
+        if (p==null) {
+            return new OperationStatusRest(EnumsApi.OperationStatus.ERROR,
+                    "#285.570 can't find a plan with experiment code: " + experimentCode);
+        }
+        OperationStatusRest status = planService.workbookTargetExecState(experiment.workbookId, execState);
+        if (status.isErrorMessages()) {
+            return status;
+        }
+        return  new OperationStatusRest(EnumsApi.OperationStatus.OK,
+                "State of experiment '"+experimentCode+"' was successfully changed to " + execState, null);
+    }
+
 }

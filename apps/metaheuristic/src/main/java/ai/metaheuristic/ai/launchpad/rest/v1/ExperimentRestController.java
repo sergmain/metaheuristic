@@ -18,6 +18,7 @@ package ai.metaheuristic.ai.launchpad.rest.v1;
 
 import ai.metaheuristic.ai.launchpad.experiment.ExperimentTopLevelService;
 import ai.metaheuristic.ai.launchpad.workbook.WorkbookService;
+import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
 import ai.metaheuristic.api.data.experiment.ExperimentApiData;
 import lombok.RequiredArgsConstructor;
@@ -144,6 +145,26 @@ public class ExperimentRestController {
     @PostMapping(value = "/experiment-upload-from-file")
     public OperationStatusRest uploadSnippet(final MultipartFile file) {
         return experimentTopLevelService.uploadExperiment(file);
+    }
+
+    @PostMapping("/bind-experiment-to-plan-with-resource")
+    public OperationStatusRest bindExperimentToPlanWithResource(String experimentCode, String resourcePoolCode) {
+        return experimentTopLevelService.bindExperimentToPlanWithResource(experimentCode, resourcePoolCode);
+    }
+
+    @PostMapping("/produce-tasks")
+    public OperationStatusRest produceTasks(String experimentCode) {
+        return experimentTopLevelService.produceTasks(experimentCode);
+    }
+
+    @PostMapping("/start-processing-of-tasks")
+    public OperationStatusRest startProcessingOfTasks(String experimentCode) {
+        return experimentTopLevelService.startProcessingOfTasks(experimentCode);
+    }
+
+    @GetMapping("/processing-status/{experimentCode}")
+    public EnumsApi.WorkbookExecState getExperimentProcessingStatus(@PathVariable String experimentCode) {
+        return experimentTopLevelService.getExperimentProcessingStatus(experimentCode);
     }
 
     @GetMapping(value = "/experiment-to-atlas/{id}")

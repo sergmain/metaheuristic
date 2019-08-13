@@ -314,9 +314,19 @@ public class ExperimentController {
         return "redirect:/launchpad/experiment/experiment-info/"+id;
     }
 
+    // this method is here and not in rest controller because it's using from html via ajax request
     @PostMapping("/task-rerun/{taskId}")
     public @ResponseBody boolean rerunTask(@PathVariable Long taskId) {
         return workbookService.resetTask(taskId).status== EnumsApi.OperationStatus.OK;
+    }
+
+    @PostMapping("/bind-experiment-to-plan-with-resource")
+    public String bindExperimentToPlanWithResource(Long experimentId, String experimentCode, String resourcePoolCode, final RedirectAttributes redirectAttributes) {
+        OperationStatusRest status = experimentTopLevelService.bindExperimentToPlanWithResource(experimentCode, resourcePoolCode);
+        if (status.isErrorMessages()) {
+            redirectAttributes.addFlashAttribute("errorMessage", status.errorMessages);
+        }
+        return "redirect:/launchpad/experiment/experiment-info/"+experimentId;
     }
 
 }

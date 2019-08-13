@@ -194,10 +194,12 @@ public class PlanService {
             throw new IllegalStateException("#701.110 Error: (result.plan==null || result.workbook==null)");
         }
 
-        workbook.setExecState(execState.code);
-        workbookCache.save(workbook);
+        if (workbook.execState!=execState.code) {
+            workbook.setExecState(execState.code);
+            workbookCache.save(workbook);
 
-        setLockedTo(plan.getId(), true);
+            setLockedTo(plan.getId(), true);
+        }
         return OperationStatusRest.OPERATION_STATUS_OK;
     }
 
