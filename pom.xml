@@ -34,26 +34,4 @@
         <module>apps/simple-app</module>
     </modules>
 
-
-    <build>
-        <plugins>
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.0.2</version>
-                <executions>
-                    <execution>
-                        <id>prepare-station-files</id>
-                        <configuration>
-                            <outputDirectory>${basedir}/mh-station</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <file>docs-dev/cfg/launchpad.yaml</file>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
 </project>
