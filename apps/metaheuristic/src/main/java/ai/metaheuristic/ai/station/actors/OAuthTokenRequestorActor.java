@@ -19,6 +19,7 @@ package ai.metaheuristic.ai.station.actors;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.station.oauth.OAuthTokenHolder;
 import ai.metaheuristic.ai.station.tasks.OAuthTokenTask;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -26,15 +27,11 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @Profile("station")
+@RequiredArgsConstructor
 public class OAuthTokenRequestorActor extends AbstractTaskQueue<OAuthTokenTask>{
 
     private final Globals globals;
     private final OAuthTokenHolder oAuthTokenHolder;
-
-    public OAuthTokenRequestorActor(Globals globals, OAuthTokenHolder oAuthTokenHolder) {
-        this.globals = globals;
-        this.oAuthTokenHolder = oAuthTokenHolder;
-    }
 
     public void fixedDelay() {
         if (globals.isUnitTesting) {

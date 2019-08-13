@@ -19,13 +19,14 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.resource.AssetFile;
+import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.StationTaskService;
 import ai.metaheuristic.ai.station.net.HttpClientExecutor;
 import ai.metaheuristic.ai.station.tasks.DownloadResourceTask;
-import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.utils.RestUtils;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.EnumsApi;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.client.HttpResponseException;
@@ -35,7 +36,6 @@ import org.apache.http.client.utils.URIBuilder;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -50,19 +50,11 @@ import java.util.UUID;
 @Service
 @Slf4j
 @Profile("station")
+@RequiredArgsConstructor
 public class DownloadResourceActor extends AbstractTaskQueue<DownloadResourceTask> {
 
     private final Globals globals;
     private final StationTaskService stationTaskService;
-
-    public DownloadResourceActor(Globals globals, StationTaskService stationTaskService) {
-        this.globals = globals;
-        this.stationTaskService = stationTaskService;
-    }
-
-    @PostConstruct
-    public void postConstruct() {
-    }
 
     @SuppressWarnings("Duplicates")
     public void fixedDelay() {

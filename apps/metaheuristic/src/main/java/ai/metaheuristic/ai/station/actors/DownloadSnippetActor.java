@@ -30,6 +30,7 @@ import ai.metaheuristic.ai.utils.checksum.ChecksumWithSignatureService;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.commons.utils.Checksum;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.http.client.HttpResponseException;
@@ -56,6 +57,7 @@ import java.util.UUID;
 @Service
 @Slf4j
 @Profile("station")
+@RequiredArgsConstructor
 public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask> {
 
     private final Globals globals;
@@ -63,12 +65,6 @@ public class DownloadSnippetActor extends AbstractTaskQueue<DownloadSnippetTask>
     private final StationTaskService stationTaskService;
 
     private final Map<String, Boolean> preparedMap = new LinkedHashMap<>();
-
-    public DownloadSnippetActor(Globals globals, MetadataService metadataService, StationTaskService stationTaskService) {
-        this.globals = globals;
-        this.metadataService = metadataService;
-        this.stationTaskService = stationTaskService;
-    }
 
     @SuppressWarnings("Duplicates")
     public void fixedDelay() {

@@ -25,6 +25,7 @@ import ai.metaheuristic.ai.station.tasks.UploadResourceTask;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.HttpResponseException;
@@ -46,6 +47,7 @@ import java.util.UUID;
 @Service
 @Slf4j
 @Profile("station")
+@RequiredArgsConstructor
 public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
 
     private static ObjectMapper mapper;
@@ -58,18 +60,13 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
     private final Globals globals;
     private final StationTaskService stationTaskService;
 
-    public UploadResourceActor(Globals globals, StationTaskService stationTaskService) {
-        this.globals = globals;
-        this.stationTaskService = stationTaskService;
-    }
-
     private static UploadResult fromJson(String json) {
         try {
             //noinspection UnnecessaryLocalVariable
             UploadResult result = mapper.readValue(json, UploadResult.class);
             return result;
         } catch (IOException e) {
-            throw new RuntimeException("#311.77 error", e);
+            throw new RuntimeException("#311.010 error", e);
         }
     }
 
@@ -87,16 +84,16 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
         while((task = poll())!=null) {
             StationTask stationTask = stationTaskService.findById(task.launchpad.url, task.taskId);
             if (stationTask == null) {
-                log.info("#311.71 task was already cleaned or didn't exist, {}, #{}", task.launchpad.url, task.taskId);
+                log.info("#311.020 task was already cleaned or didn't exist, {}, #{}", task.launchpad.url, task.taskId);
                 continue;
             }
             if (stationTask.resourceUploaded) {
-                log.info("#311.73 resource was already uploaded, {}, #{}", task.launchpad.url, task.taskId);
+                log.info("#311.030 resource was already uploaded, {}, #{}", task.launchpad.url, task.taskId);
                 continue;
             }
             log.info("Start uploading result data to server, resultDataFile: {}", task.file);
             if (!task.file.exists()) {
-                log.error("#311.67 File {} doesn't exist", task.file.getPath());
+                log.error("#311.040 File {} doesn't exist", task.file.getPath());
                 continue;
             }
             Enums.UploadResourceStatus status = null;
@@ -131,20 +128,20 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                 log.info("Server response: length: {}, content {}", json.length(), result);
 
                 if (result.status!= Enums.UploadResourceStatus.OK) {
-                    log.error("#311.51 Error uploading file, server's error : " + result.error);
+                    log.error("#311.050 Error uploading file, server's error : " + result.error);
                 }
                 status = result.status;
 
             } catch (HttpResponseException e) {
-                log.error("#311.55 Error uploading resource to server, code: " + e.getStatusCode(), e);
+                log.error("#311.060 Error uploading resource to server, code: " + e.getStatusCode(), e);
             } catch (SocketTimeoutException e) {
-                log.error("#311.58 SocketTimeoutException, {}", e.toString());
+                log.error("#311.070 SocketTimeoutException, {}", e.toString());
             }
             catch (IOException e) {
-                log.error("#311.61 IOException", e);
+                log.error("#311.080 IOException", e);
             }
             catch (Throwable th) {
-                log.error("#311.64 Throwable", th);
+                log.error("#311.090 Throwable", th);
             }
             if (status!=null) {
                 switch(status) {
@@ -157,20 +154,20 @@ public class UploadResourceActor extends AbstractTaskQueue<UploadResourceTask> {
                     case TASK_NOT_FOUND:
                     case UNRECOVERABLE_ERROR:
                         stationTaskService.delete(task.launchpad.url, task.taskId);
-                        log.error("#311.01 server return status {}, this task will be deleted.", status);
+                        log.error("#311.100 server return status {}, this task will be deleted.", status);
                         break;
                     case PROBLEM_WITH_LOCKING:
-                        log.warn("#311.05 problem with locking in DB at server side, {}", status);
+                        log.warn("#311.110 problem with locking in DB at server side, {}", status);
                         repeat.add(task);
                         break;
                     case GENERAL_ERROR:
-                        log.warn("#311.07 general error at server side, {}", status);
+                        log.warn("#311.120 general error at server side, {}", status);
                         repeat.add(task);
                         break;
                 }
             }
             else {
-                log.error("#311.09 Error accessing rest-server. Assign task one more time.");
+                log.error("#311.130 Error accessing rest-server. Assign task one more time.");
                 repeat.add(task);
             }
         }
