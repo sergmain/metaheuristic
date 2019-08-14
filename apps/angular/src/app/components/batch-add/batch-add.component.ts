@@ -64,13 +64,10 @@ export class BatchAddComponent implements OnInit {
         const formData: FormData = new FormData();
         formData.append('file', this.fileUpload.fileInput.nativeElement.files[0]);
         formData.append('planId', this.plan.id);
-        // TODO what if no planId
-        console.log(this);
         const subscribe: Subscription = this.batchService.batch
             .upload(formData)
             .subscribe(
                 (response: batch.upload.Response) => {
-                    // TODO replace|update conditional
                     if (response.status.toLowerCase() === 'ok') {
                         this.router.navigate(['/launchpad', 'batch']);
                     }
