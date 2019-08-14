@@ -8,13 +8,12 @@ import { Subscription } from 'rxjs';
 
 
 @Component({
-    selector: 'edit-plan',
-    templateUrl: './edit-plan.component.pug',
-    styleUrls: ['./edit-plan.component.scss']
+    selector: 'plan-edit',
+    templateUrl: './plan-edit.component.pug',
+    styleUrls: ['./plan-edit.component.scss']
 })
 
-export class EditPlanComponent implements OnInit {
-    // tslint:disable-next-line: typedef
+export class PlanEditComponent implements OnInit {
     readonly states = LoadStates;
     currentState: LoadStates = LoadStates.firstLoading;
 
@@ -28,11 +27,10 @@ export class EditPlanComponent implements OnInit {
         private router: Router,
     ) {}
 
-    // tslint:disable-next-line: typedef
     ngOnInit() {
         this.updateResponse();
     }
-    // tslint:disable-next-line: typedef
+
     updateResponse() {
         const id: string | number = this.route.snapshot.paramMap.get('planId');
         const subscribe: Subscription = this.plansService.plan
@@ -48,35 +46,45 @@ export class EditPlanComponent implements OnInit {
                 }
             );
     }
-    // tslint:disable-next-line: typedef
+
     cancel() {
         this.router.navigate(['/launchpad', 'plans']);
     }
-    // tslint:disable-next-line: typedef
+
     save() {
         this.currentState = this.states.wait;
         const subscribe: Subscription = this.plansService.plan
             .update(this.plan.id, this.plan.params)
             .subscribe((data: PlanResponse.Response) => {
-                if (data.errorMessages) {
+                    if (data.errorMessages) {
+                        this.currentState = this.states.show;
+                        this.response = data;
+                    } else {
+                        this.cancel();
+                    }
+                    subscribe.unsubscribe();
+                },
+                () => {
                     this.currentState = this.states.show;
-                    this.response = data;
-                } else {
-                    this.cancel();
-                }
-                subscribe.unsubscribe();
-            });
+                    subscribe.unsubscribe();
+                });
     }
-    // tslint:disable-next-line: typedef
+
     validate() {
         this.currentState = this.states.wait;
         const id: string | number = this.route.snapshot.paramMap.get('planId');
         const subscribe: Subscription = this.plansService
             .plan.validate(id)
-            .subscribe((data: PlanResponse.Response) => {
-                this.response = data;
-                this.currentState = this.states.show;
-                subscribe.unsubscribe();
-            });
+            .subscribe(
+                (data: PlanResponse.Response) => {
+                    this.response = data;
+                    this.currentState = this.states.show;
+                    subscribe.unsubscribe();
+                },
+                () => {
+                    this.currentState = this.states.show;
+                    subscribe.unsubscribe();
+                }
+            );
     }
 }

@@ -5,19 +5,18 @@ ct-cols
                 ct-section-header-row
                     ct-heading New Plan
             ct-section-body
-                ct-section-body-row
-                    //- mat-form-field(appearance="outline")
-                    //-     mat-label Code
-                    //-     input(matInput '[(ngModel)]'="code" autocomplete="off")
-                    mat-form-field(appearance="outline")
-                        mat-label Parameters of Plan
-                        textarea('[(ngModel)]'="planYaml" matInput cdkTextareaAutosize cdkAutosizeMinRows="10" value="" autocomplete="off")
+                form( '[formGroup]'="form" novalidate)
+                    ct-section-body-row
+                        mat-form-field(appearance="outline")
+                            mat-label Parameters of Plan
+                            textarea(formControlName="planYaml" matInput cdkTextareaAutosize cdkAutosizeMinRows="10" value="" autocomplete="off")
+                            mat-hint This is a required field.
 
             ct-section-footer
                 ct-section-footer-row
                     ct-flex(justify-content="flex-end" gap="8px")
                         ct-flex-item: button(mat-stroked-button '(click)'="cancel()") Back 
-                        ct-flex-item: button(mat-flat-button '(click)'="create()" color="primary" '[disabled]'="currentState.has(states.loading)" title="") Add
+                        ct-flex-item: button(#submitButton mat-flat-button '(click)'="create()" color="primary" '[disabled]'="!form.valid") Add
     ct-col(size='6' '*ngIf'="response")
         ct-section
             ct-section-body
