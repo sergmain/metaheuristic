@@ -187,8 +187,9 @@ public class StationService {
                 for (String resourceCode : value) {
                     final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(resourceCode);
                     if (params==null) {
-                        log.error("#747.040 resource code: "+resourceCode+", inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml));
-                        throw new BreakFromForEachException();
+                        final String es = "#747.040 resource code: " + resourceCode + ", inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml);
+                        log.error(es);
+                        throw new BreakFromForEachException(es);
                     }
                     ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
                     List<AssetFile> assetFiles = resourceProvider.prepareForDownloadingDataFile(taskDir, launchpad, task, launchpadCode, resourceCode, params);
@@ -204,7 +205,7 @@ public class StationService {
             });
         }
         catch (BreakFromForEachException e) {
-            stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.toString());
+            stationTaskService.markAsFinishedWithError(task.launchpadUrl, task.taskId, e.getMessage());
             result.isError = true;
             return result;
         }

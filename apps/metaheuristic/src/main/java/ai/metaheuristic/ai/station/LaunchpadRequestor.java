@@ -239,7 +239,7 @@ public class LaunchpadRequestor {
         if (list.isEmpty()) {
             return;
         }
-        log.info("#775.138 numner of tasks for reporting: " + list.size());
+        log.info("Number of tasks for reporting: " + list.size());
         final Protocol.ReportTaskProcessingResult command = new Protocol.ReportTaskProcessingResult();
         for (StationTask task : list) {
             if (task.isDelivered() && !task.isReported() ) {

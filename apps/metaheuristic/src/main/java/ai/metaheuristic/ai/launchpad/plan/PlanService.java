@@ -491,6 +491,9 @@ public class PlanService {
             Monitoring.log("##030", Enums.Monitor.MEMORY);
             if (process.outputParams.storageType!=null) {
                 pools.add(process.outputParams.storageType, produceTaskResult.outputResourceCodes);
+                for (String outputResourceCode : produceTaskResult.outputResourceCodes) {
+                    pools.inputStorageUrls.put(outputResourceCode, process.outputParams);
+                }
             }
             Monitoring.log("##031", Enums.Monitor.MEMORY);
         }

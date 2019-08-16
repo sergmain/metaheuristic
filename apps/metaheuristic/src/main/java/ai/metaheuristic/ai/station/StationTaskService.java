@@ -242,7 +242,7 @@ public class StationTaskService {
             markAsFinished(launchpadUrl, taskId,
                     new SnippetApiData.SnippetExec(
                             null, null, null,
-                            new SnippetApiData.SnippetExecResult("system-error", false, -1, es)));
+                            new SnippetApiData.SnippetExecResult("system-error", false, -991, es)));
         }
     }
 

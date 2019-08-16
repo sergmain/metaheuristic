@@ -20,6 +20,10 @@ public class BreakFromForEachException extends RuntimeException {
     public BreakFromForEachException() {
     }
 
+    public BreakFromForEachException(String message) {
+        super(message);
+    }
+
     public BreakFromForEachException(Throwable cause) {
         super(cause);
     }
