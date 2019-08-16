@@ -722,6 +722,9 @@ public class AtlasTopLevelService {
         AtlasTaskParamsYaml atpy = AtlasTaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
 
         SnippetApiData.SnippetExec snippetExec = SnippetExecUtils.to(atpy.snippetExecResults);
+        if (snippetExec==null ) {
+            return new AtlasData.ConsoleResult("#422.313 Can't find a console output");
+        }
         return new AtlasData.ConsoleResult(snippetExec.exec.exitCode, snippetExec.exec.isOk, snippetExec.exec.console);
     }
 

@@ -187,7 +187,7 @@ public class StationService {
                 for (String resourceCode : value) {
                     final DataStorageParams params = taskParamYaml.taskYaml.resourceStorageUrls.get(resourceCode);
                     if (params==null) {
-                        log.error("#747.040 inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml));
+                        log.error("#747.040 resource code: "+resourceCode+", inconsistent taskParamsYaml:\n" + TaskParamsYamlUtils.BASE_YAML_UTILS.toString(taskParamYaml));
                         throw new BreakFromForEachException();
                     }
                     ResourceProvider resourceProvider = resourceProviderFactory.getResourceProvider(params.sourcing);
