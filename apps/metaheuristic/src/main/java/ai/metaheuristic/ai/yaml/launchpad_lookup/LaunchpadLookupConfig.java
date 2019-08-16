@@ -63,7 +63,7 @@ public class LaunchpadLookupConfig {
         }
 
 
-        public boolean acceptOnlySignedSnippets;
+        public boolean acceptOnlySignedSnippets = false;
 
         public PublicKey createPublicKey() {
             return SecUtils.getPublicKey(publicKey);

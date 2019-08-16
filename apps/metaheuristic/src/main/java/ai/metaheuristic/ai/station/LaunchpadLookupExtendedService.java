@@ -19,10 +19,11 @@ package ai.metaheuristic.ai.station;
 import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.launchpad.server.LaunchpadConfig;
-import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfig;
 import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadLookupConfigUtils;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.Charsets;
 import org.apache.commons.io.FileUtils;
@@ -39,6 +40,7 @@ import java.util.Map;
 @Service
 @Slf4j
 @Profile("station")
+@RequiredArgsConstructor
 public class LaunchpadLookupExtendedService {
 
     private final Globals globals;
@@ -52,40 +54,50 @@ public class LaunchpadLookupExtendedService {
         public LaunchpadConfig config;
     }
 
-    public LaunchpadLookupExtendedService(Globals globals) {
-        this.globals = globals;
-    }
-
     @PostConstruct
     public void init() {
         final File launchpadFile = new File(globals.stationDir, Consts.LAUNCHPAD_YAML_FILE_NAME);
+        final String cfg;
         if (!launchpadFile.exists()) {
-            log.warn("Station's launchpad config file doesn't exist: {}", launchpadFile.getPath());
-            return;
+            if (globals.defaultLaunchpadYamlFile == null) {
+                log.warn("Station's launchpad config file {} doesn't exist and default file wasn't specified", launchpadFile.getPath());
+                return;
+            }
+            if (!globals.defaultLaunchpadYamlFile.exists()) {
+                log.warn("Station's default launchpad.yaml file doesn't exist: {}", globals.defaultLaunchpadYamlFile.getAbsolutePath());
+                return;
+            }
+            try {
+                FileUtils.copyFile(globals.defaultLaunchpadYamlFile, launchpadFile);
+            } catch (IOException e) {
+                log.error("Error", e);
+                throw new IllegalStateException("Error while copying "+ globals.defaultLaunchpadYamlFile.getAbsolutePath()+" to " + launchpadFile.getAbsolutePath(), e);
+            }
         }
-        try {
-            final String cfg = FileUtils.readFileToString(launchpadFile, Charsets.UTF_8);
-            LaunchpadLookupConfig launchpadLookupConfig = LaunchpadLookupConfigUtils.to(cfg);
 
-            if (launchpadLookupConfig == null) {
-                log.error("{} wasn't found or empty. path: {}{}{}",
-                        Consts.LAUNCHPAD_YAML_FILE_NAME, globals.stationDir,
-                        File.separatorChar, Consts.LAUNCHPAD_YAML_FILE_NAME);
-                throw new IllegalStateException("Station isn't configured, launchpad.yaml is empty or doesn't exist");
-            }
-            final Map<String, LaunchpadLookupExtended> map = new HashMap<>();
-            for (LaunchpadLookupConfig.LaunchpadLookup launchpad : launchpadLookupConfig.launchpads) {
-                LaunchpadLookupExtended lookupExtended = new LaunchpadLookupExtended();
-                lookupExtended.launchpadLookup = launchpad;
-                lookupExtended.schedule = new LaunchpadSchedule(launchpad.taskProcessingTime);
-                map.put(launchpad.url, lookupExtended);
-            }
-            lookupExtendedMap = Collections.unmodifiableMap(map);
+        try {
+            cfg = FileUtils.readFileToString(launchpadFile, Charsets.UTF_8);
         } catch (IOException e) {
             log.error("Error", e);
-            throw new IllegalStateException("Error while loading file: " + launchpadFile.getPath(), e);
+            throw new IllegalStateException("Error while reading file: " + launchpadFile.getAbsolutePath(), e);
         }
 
+        LaunchpadLookupConfig launchpadLookupConfig = LaunchpadLookupConfigUtils.to(cfg);
+
+        if (launchpadLookupConfig == null) {
+            log.error("{} wasn't found or empty. path: {}{}{}",
+                    Consts.LAUNCHPAD_YAML_FILE_NAME, globals.stationDir,
+                    File.separatorChar, Consts.LAUNCHPAD_YAML_FILE_NAME);
+            throw new IllegalStateException("Station isn't configured, launchpad.yaml is empty or doesn't exist");
+        }
+        final Map<String, LaunchpadLookupExtended> map = new HashMap<>();
+        for (LaunchpadLookupConfig.LaunchpadLookup launchpad : launchpadLookupConfig.launchpads) {
+            LaunchpadLookupExtended lookupExtended = new LaunchpadLookupExtended();
+            lookupExtended.launchpadLookup = launchpad;
+            lookupExtended.schedule = new LaunchpadSchedule(launchpad.taskProcessingTime);
+            map.put(launchpad.url, lookupExtended);
+        }
+        lookupExtendedMap = Collections.unmodifiableMap(map);
     }
 
 }

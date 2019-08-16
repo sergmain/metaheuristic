@@ -132,6 +132,12 @@ public class Globals {
     @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.dir' )) }")
     public File stationDir;
 
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.default-launchpad-yaml-file' )) }")
+    public File defaultLaunchpadYamlFile;
+
+    @Value("#{ T(ai.metaheuristic.ai.utils.EnvProperty).toFile( environment.getProperty('mh.station.default-env-yaml-file' )) }")
+    public File defaultEnvYamlFile;
+
 
     // some fields
     public File launchpadTempDir;

@@ -63,7 +63,6 @@ public class Consts {
     public static final String ARTIFACTS_DIR = "artifacts";
 
     public static final String METADATA_YAML_FILE_NAME = "metadata.yaml";
-    public static final String RAW_FILE_NAME = "raw-file.txt";
     public static final String ENV_YAML_FILE_NAME = "env.yaml";
     public static final String LAUNCHPAD_YAML_FILE_NAME = "launchpad.yaml";
 
