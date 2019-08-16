@@ -10,3 +10,12 @@ git clone --mirror url
 https://stackoverflow.com/questions/7130639/make-a-local-copy-of-a-remote-git-repository
 
 https://www.jeffgeerling.com/blog/2018/cloning-private-github-repositories-ansible-on-remote-server-through-ssh
+
+
+
+------------
+cd metaheuristic
+git clean -df
+git reset --hard HEAD
+git pull origin master
+git checkout origin/master
