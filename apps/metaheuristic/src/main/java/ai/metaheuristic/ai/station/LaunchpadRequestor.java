@@ -35,6 +35,7 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -220,7 +221,11 @@ public class LaunchpadRequestor {
                 Throwable cause = e.getCause();
                 if (cause instanceof SocketException) {
                     log.error("#775.090 Connection error: url: {}, err: {}", url, cause.toString());
-                } else {
+                }
+                else if (cause instanceof UnknownHostException) {
+                    log.error("#775.093 Host unreachable, url: {}, error: {}", serverRestUrl, cause.getMessage());
+                }
+                else {
                     log.error("#775.100 Error, url: " + url, e);
                 }
             } catch (RestClientException e) {
