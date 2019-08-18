@@ -65,17 +65,17 @@ public class EnvService {
         if (!envYamlFile.exists()) {
             if (globals.defaultEnvYamlFile == null) {
                 log.warn("#747.020 Station's env.yaml config file doesn't exist: {}", envYamlFile.getPath());
-                return;
+                throw new IllegalStateException("#747.012 Station isn't configured, env.yaml is empty or doesn't exist");
             }
             if (!globals.defaultEnvYamlFile.exists()) {
                 log.warn("#747.030 Station's default yaml.yaml file doesn't exist: {}", globals.defaultEnvYamlFile.getAbsolutePath());
-                return;
+                throw new IllegalStateException("#747.014 Station isn't configured, env.yaml is empty or doesn't exist");
             }
             try {
-                FileUtils.copyFile(globals.defaultLaunchpadYamlFile, envYamlFile);
+                FileUtils.copyFile(globals.defaultEnvYamlFile, envYamlFile);
             } catch (IOException e) {
                 log.error("Error", e);
-                throw new IllegalStateException("#747.040 Error while copying "+ globals.defaultLaunchpadYamlFile.getAbsolutePath()+" to " + envYamlFile.getAbsolutePath(), e);
+                throw new IllegalStateException("#747.040 Error while copying "+ globals.defaultEnvYamlFile.getAbsolutePath()+" to " + envYamlFile.getAbsolutePath(), e);
             }
         }
 
@@ -89,7 +89,7 @@ public class EnvService {
         envYaml = EnvYamlUtils.to(env);
         if (envYaml==null) {
             log.error("#747.060 env.yaml wasn't found or empty. path: {}{}env.yaml", globals.stationDir, File.separatorChar );
-            throw new IllegalStateException("Station isn't configured, env.yaml is empty or doesn't exist");
+            throw new IllegalStateException("#747.062 Station isn't configured, env.yaml is empty or doesn't exist");
         }
     }
 

@@ -53,6 +53,7 @@
     </table>
     <p>&nbsp;</p>
 
+    <h1 class="widget-header">Progress of all tasks</h1>
     <table class="pure-table pure-table-bordered">
         <thead>
         <tr>
@@ -73,18 +74,18 @@
     </table>
     <p>&nbsp;</p>
 
-        <h1 class="widget-header">General info</h1>
-        <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table">
-            <tbody>
-            <tr><td>#Id</td><td  th:text="${experiment.id}">#Id</td></tr>
-            <tr><td>Created on</td><td th:text="${#dates.formatISO(experiment.createdOn)}">CreatedOn</td></tr>
-            <tr><td>Name</td><td th:text="${experiment.name}">name</td></tr>
-            <tr><td>Description</td><td th:text="${experiment.description}">desc</td></tr>
-            <tr><td>Seed</td><td th:text="${experiment.seed}">seed</td></tr>
-            <tr><td>Number of tasks</td><td th:text="${experiment.getNumberOfTask()}">Number of sequnces</td></tr>
-            </tbody>
-        </table>
-        <p>&nbsp;</p>
+    <h1 class="widget-header">General info</h1>
+    <table class="pure-table pure-table-bordered" id="dataset-table" th:fragment="table">
+        <tbody>
+        <tr><td>#Id</td><td  th:text="${experiment.id}">#Id</td></tr>
+        <tr><td>Created on</td><td th:text="${#dates.formatISO(experiment.createdOn)}">CreatedOn</td></tr>
+        <tr><td>Name</td><td th:text="${experiment.name}">name</td></tr>
+        <tr><td>Description</td><td th:text="${experiment.description}">desc</td></tr>
+        <tr><td>Seed</td><td th:text="${experiment.seed}">seed</td></tr>
+        <tr><td>Number of ML tasks</td><td th:text="${experiment.getNumberOfTask()}">Number of ML tasks</td></tr>
+        </tbody>
+    </table>
+    <p>&nbsp;</p>
 
 <!--
         TODO need to fix this part
@@ -106,26 +107,26 @@
         </table>
 -->
 
-        <p>&nbsp;</p>
-        <h1 class="widget-header">Hyper parameterst</h1>
-        <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
-            <thead>
-            <tr>
-                <th width="150">Key</th>
-                <th width="550">Value</th>
-                <th width="150">Variants</th>
-            </tr>
-            </thead>
+    <p>&nbsp;</p>
+    <h1 class="widget-header">Hyper parameterst</h1>
+    <table class="pure-table pure-table-bordered" id="table" th:fragment="table">
+        <thead>
+        <tr>
+            <th width="150">Key</th>
+            <th width="550">Value</th>
+            <th width="150">Variants</th>
+        </tr>
+        </thead>
 
-            <tbody>
-            <tr th:each="m : ${experiment.hyperParams}">
-                <td th:text="${m.key}">Key</td>
-                <td th:text="${m.values}">Value</td>
-                <td th:text="${m.variants}">Variants</td>
-            </tr>
-            </tbody>
-        </table>
-        <p>&nbsp;</p>
+        <tbody>
+        <tr th:each="m : ${experiment.hyperParams}">
+            <td th:text="${m.key}">Key</td>
+            <td th:text="${m.values}">Value</td>
+            <td th:text="${m.variants}">Variants</td>
+        </tr>
+        </tbody>
+    </table>
+    <p>&nbsp;</p>
 
 
     <div th:remove="tag">
@@ -155,7 +156,7 @@
         <p>&nbsp;</p>
     </div>
 
-        <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiment/experiments'}">To list of experiments</a>
+    <a class="pure-button pure-button-primary" href="experiments.html" th:href="${'/launchpad/experiment/experiments'}">To list of experiments</a>
 
 
 </div>
