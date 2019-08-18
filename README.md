@@ -25,6 +25,7 @@ layout: default
 - [Quick start for evaluation UI only](#quick-start-for-evaluation-ui-only)
 - [Quick start with running the actual tasks](#quick-start-with-running-the-actual-tasks)
 - [License and licensing](#license-and-licensing)
+- [Copyright](#copyright)
 
 ## Prerequisites: Java Development Kit (JDK) 11
 
@@ -120,4 +121,7 @@ For commercial use you must buy commercial annual subscription if needed:
 
 \* Station is a client part of metaheuristic which is processing tasks.   
 \*\* Launchpad is a server part of metaheuristic which is serving all configurations 
-and managing the process of assigning tasks to Stations. 
+and managing the process of assigning tasks to Stations.
+
+## Copyright
+Innovation platforms LLC, CA US 
