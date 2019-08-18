@@ -58,11 +58,6 @@ public class EnvService {
 
         final File envYamlFile = new File(globals.stationDir, Consts.ENV_YAML_FILE_NAME);
         if (!envYamlFile.exists()) {
-            log.warn("#747.010 Station's environment config file doesn't exist: {}", envYamlFile.getPath());
-            return;
-        }
-
-        if (!envYamlFile.exists()) {
             if (globals.defaultEnvYamlFile == null) {
                 log.warn("#747.020 Station's env.yaml config file doesn't exist: {}", envYamlFile.getPath());
                 throw new IllegalStateException("#747.012 Station isn't configured, env.yaml is empty or doesn't exist");
