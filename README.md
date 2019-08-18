@@ -1,7 +1,3 @@
----
-layout: default
----
-
 <!---
 <p align="center">
   <a href="https://getbootstrap.com/">
@@ -29,7 +25,7 @@ layout: default
 
 ## Prerequisites: Java Development Kit (JDK) 11
 
-To run Metaheuristic you have to have jdk 11
+To run Metaheuristic you have to have jdk 11  
 Right now there isn't any known bug which restricts to use certain JDK.
 
 [Amazon Corretto 11](https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html)  
@@ -124,4 +120,4 @@ For commercial use you must buy commercial annual subscription if needed:
 and managing the process of assigning tasks to Stations.
 
 ## Copyright
-Innovation platforms LLC, CA US 
+Innovation platforms LLC, San Francisco, US 
