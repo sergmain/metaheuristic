@@ -17,10 +17,7 @@
 package ai.metaheuristic.ai.launchpad.experiment;
 
 import ai.metaheuristic.ai.Globals;
-import ai.metaheuristic.ai.launchpad.beans.Experiment;
-import ai.metaheuristic.ai.launchpad.beans.PlanImpl;
-import ai.metaheuristic.ai.launchpad.beans.Snippet;
-import ai.metaheuristic.ai.launchpad.beans.WorkbookImpl;
+import ai.metaheuristic.ai.launchpad.beans.*;
 import ai.metaheuristic.ai.launchpad.plan.PlanCache;
 import ai.metaheuristic.ai.launchpad.plan.PlanService;
 import ai.metaheuristic.ai.launchpad.plan.PlanTopLevelService;
@@ -194,7 +191,7 @@ public class ExperimentTopLevelService {
         if (experiment == null) {
             return new ExperimentApiData.ExperimentInfoExtendedResult("#285.060 experiment wasn't found, experimentId: " + experimentId);
         }
-        // TODO 2019-07-21 caculation of max shouldn't be called every time. Add button for recalculating?
+        // TODO 2019-07-21 calculation of max shouldn't be called every time. Add button for recalculating?
 //        experimentService.updateMaxValueForExperimentFeatures(experiment.getWorkbookId());
 
         // one more time to get new object from cache
@@ -233,6 +230,11 @@ public class ExperimentTopLevelService {
         experimentInfoResult.workbookExecState = EnumsApi.WorkbookExecState.toState(workbook.getExecState());
         result.experiment = ExperimentService.asExperimentData(experiment);
         result.experimentInfo = experimentInfoResult;
+
+        List<TaskProgress> taskProgresses = taskRepository.getTaskProgress(workbook.id);
+        result.progress = taskProgresses.stream()
+                .map(t->new ExperimentApiData.ExperimentProgressResult(t.count, t.execState, EnumsApi.TaskExecState.from(t.execState).toString(), t.isCompleted, t.isResultReceived))
+                .collect(Collectors.toList());
         return result;
     }
 

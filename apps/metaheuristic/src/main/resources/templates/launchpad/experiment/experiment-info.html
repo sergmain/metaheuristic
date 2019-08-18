@@ -7,6 +7,7 @@
 
     <!--/*@thymesVar id="experimentResult" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentInfoResult"*/-->
     <!--/*@thymesVar id="experiment" type="ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentData"*/-->
+    <!--/*@thymesVar id="progress" type="java.util.List<ai.metaheuristic.api.data.experiment.ExperimentApiData$ExperimentProgressResult>"*/-->
 
     <h1 class="widget-header">Progress of experiment</h1>
     <table>
@@ -22,6 +23,7 @@
                     <tr>
                         <td th:text="${experimentResult.workbookExecState}">exec state</td>
                     </tr>
+                    </tbody>
                 </table>
             </td>
             <td width="50">&nbsp;</td>
@@ -48,6 +50,26 @@
                    th:href="${'/launchpad/experiment/experiments'}">To list of experiments</a>
             </td>
         </tr>
+    </table>
+    <p>&nbsp;</p>
+
+    <table class="pure-table pure-table-bordered">
+        <thead>
+        <tr>
+            <th width="150">Exec state</th>
+            <th width="150">Count</th>
+            <th width="150">Is completed</th>
+            <th width="150">Is result received</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${progress}">
+            <td th:text="${p.execStateAsStr}">exec state as string</td>
+            <td th:text="${p.count}">count</td>
+            <td th:text="${p.completed}">Is completed</td>
+            <td th:text="${p.resultReceived}">Is result received</td>
+        </tr>
+        </tbody>
     </table>
     <p>&nbsp;</p>
 

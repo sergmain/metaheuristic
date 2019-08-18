@@ -273,11 +273,22 @@ public class ExperimentApiData {
     }
 
     @Data
+    @AllArgsConstructor
+    public static class ExperimentProgressResult {
+        public final long count;
+        public final int execState;
+        public final String execStateAsStr;
+        public final boolean isCompleted;
+        public final boolean isResultReceived;
+    }
+
+    @Data
     @EqualsAndHashCode(callSuper = false)
     @NoArgsConstructor
     public static class ExperimentInfoExtendedResult extends BaseDataClass {
         public ExperimentData experiment;
         public ExperimentInfoResult experimentInfo;
+        public List<ExperimentProgressResult> progress;
 
         public ExperimentInfoExtendedResult(String errorMessage) {
             addErrorMessage(errorMessage);

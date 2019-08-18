@@ -148,6 +148,7 @@ public class ExperimentController {
 
         model.addAttribute("experiment", result.experiment);
         model.addAttribute("experimentResult", result.experimentInfo);
+        model.addAttribute("progress", result.progress);
         return "launchpad/experiment/experiment-info";
     }
 

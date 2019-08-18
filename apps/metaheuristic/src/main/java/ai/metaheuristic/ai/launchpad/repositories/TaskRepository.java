@@ -17,6 +17,8 @@
 package ai.metaheuristic.ai.launchpad.repositories;
 
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
+import ai.metaheuristic.ai.launchpad.beans.TaskProgress;
+import ai.metaheuristic.ai.launchpad.binary_data.SimpleCodeAndStorageUrl;
 import ai.metaheuristic.api.launchpad.Task;
 import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
@@ -109,12 +111,19 @@ public interface TaskRepository extends CrudRepository<TaskImpl, Long> {
     @Query(nativeQuery = true, value = "select z.* "+
             "from ( "+
             "           SELECT count(*) count, t.TASK_ORDER "+
-            "           FROM MH_TASK t  \n"+
+            "           FROM MH_TASK t  "+
             "           where t.WORKBOOK_ID =:workbookId "+
             "           group by t.TASK_ORDER "+
             "     ) z "+
             "order by z.TASK_ORDER asc")
     List<Object[]> getCountPerOrder(Long workbookId);
+
+    @Query(value="select new ai.metaheuristic.ai.launchpad.beans.TaskProgress(" +
+            "t.workbookId, count(*), t.execState, t.isCompleted, t.resultReceived ) " +
+            "from TaskImpl t where t.workbookId=:workbookId " +
+            "group by t.workbookId, t.execState, t.isCompleted, t.resultReceived "
+    )
+    List<TaskProgress> getTaskProgress(Long workbookId);
 
 }
 
