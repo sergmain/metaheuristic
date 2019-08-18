@@ -49,33 +49,34 @@ It'll be /mh-root in follow text.
 
 ##### Quick start with running the actual tasks
 >To run actual tasks in Metaheuristic you have to have python 3.x.  
-Be sure to add the python bin dir to your **$PATH**
+Be sure to add the python bin dir to your **$PATH**  
+Also PyYAML 5.1 package must [be installed](https://pyyaml.org/wiki/PyYAMLDocumentation) 
 
 1. Change dir to /mh-root/metaheuristic-assets/examples/simple-metrics and run scripts:
     ```
-    curl-snippet-as-one-file
-    curl-resource-stub
-    curl-experiment
-    curl-plan
+    curl-add-snippet-as-one-file
+    curl-add-resource-stub
+    curl-add-experiment
+    curl-add-plan
     curl-bind-experiment-to-plan-with-resource
     curl-add-workbook
-    curl-experiment-produce-tasks
+    curl-produce-experiment-tasks
     ```
 
 1. At this point Metaheuristic started to produce tasks 
 and you have to have until status will 'PRODUCED'. You can check current status by running script
     ```
-    curl-experiment-processing-status
+    curl-get-experiment-processing-status
     ```
 
 1. After being changed to 'PRODUCED' run the command:
     ```
-    curl-experiment-start-processing-of-tasks
+    curl-start-processing-of-experiment-tasks
     ```
 
 1. All tasks will be completed in 10 minutes approximately. You can get the current status of processing by command:
     ```
-    curl-experiment-processing-status
+    curl-get-experiment-processing-status
     ```
 
     there are 3 possible statuses at this point:  
@@ -96,7 +97,7 @@ Metaheuristic has 2-license type.
 
 All code in repository (https://github.com/sergmain/metaheuristic) is licensed under GPL-3.0  
 
-For commercial use you must buy commercial annual subscription if needed:
+For commercial use you must buy commercial license with annual subscription if needed:
 
 | Type of customer (Org or personal)                     | Conditions of using |
 |--------------------------------------------------------|---------------------|
