@@ -1,18 +1,7 @@
-<!---
-<p align="center">
-  <a href="https://getbootstrap.com/">
-    <img src="https://docs.metaheuristic.ai/assets/brand/mh-logo.svg" alt="Metaheuristic logo" width="72" height="72">
-  </a>
-</p>
---->
- 
-<h3 align="center">Metaheuristic</h3>
+# Metaheuristic
 
-<p align="center">
-  Distributer framework for hyper-parameter optimization and AutoML.
-  <br>
-  <a href="https://docs.metaheuristic.ai">Explore Metaheuristic docs »</a>
-</p>
+Distributed framework for hyper-parameter optimization and AutoML.  
+[Explore Metaheuristic docs »](https://docs.metaheuristic.ai)
 
 
 ## Table of contents
@@ -34,6 +23,8 @@ Right now there isn't any known bug which restricts to use certain JDK.
 
 
 ## Quick start
+>**Attention**. The 'Quick start' mode is working with embedded db which is hosting in memory. 
+As a result after stopping Metaheuristic all data will be lost.
 
 ##### Quick start for evaluation UI only
 
