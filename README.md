@@ -104,15 +104,20 @@ login - q, password - 123
 
 
 ## License and licensing
+Metaheuristic has 2-license type.
 
-| | [H2](https://h2database.com/) | [Derby](https://db.apache.org/derby) | [HSQLDB](http://hsqldb.org) | [MySQL](https://www.mysql.com/) | [PostgreSQL](https://www.postgresql.org) |
-|--------------------------------|---------|---------|---------|-------|---------|
-| Pure Java                      | Yes     | Yes     | Yes     | No    | No      |
-| Memory Mode                    | Yes     | Yes     | Yes     | No    | No      |
-| Encrypted Database             | Yes     | Yes     | Yes     | No    | No      |
-| ODBC Driver                    | Yes     | No      | No      | Yes   | Yes     |
-| Fulltext Search                | Yes     | No      | No      | Yes   | Yes     |
-| Multi Version Concurrency      | Yes     | No      | Yes     | Yes   | Yes     |
-| Footprint (embedded database)  | ~2 MB   | ~3 MB   | ~1.5 MB | —     | —       |
-| Footprint (JDBC client driver) | ~500 KB | ~600 KB | ~1.5 MB | ~1 MB | ~700 KB |
+All code in repository (https://github.com/sergmain/metaheuristic) is licensed under GPL-3.0  
 
+For commercial use you must buy commercial annual subscription if needed:
+
+| Type of customer (Org or personal)                     | Conditions of using |
+|--------------------------------------------------------|---------------------|
+| Personal use  (using in commercial project prohibited) | Free to use         |
+| Scientific researches                                  | Free to use, citing | 
+| Non-profit organizations                               | Free to use, citing | 
+| Commercial use, less than 25 Stations\*                | Free to use         | 
+| All other cases when there are 25 Stations\* or more   | Annual subscription, $50k for Launchpad\*\*, $500 per station | 
+
+\* Station is a client part of metaheuristic which is processing tasks.   
+\*\* Launchpad is a server part of metaheuristic which is serving all configurations 
+and managing the process of assigning tasks to Stations. 
