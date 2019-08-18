@@ -1,38 +1,20 @@
-import {
-    Component,
-    OnInit
-} from '@angular/core';
-import {
-    Location
-} from '@angular/common';
-import {
-    PlansService
-} from '@app/services/plans/plans.service';
-import {
-    ActivatedRoute,
-    Router
-} from '@angular/router';
-import {
-    state
-} from '@app/helpers/state';
-import {
-    LoadStates
-} from '@app/enums/LoadStates';
-import {
-    WorkbookAddCommitResponse
-} from '@app/models';
-import {
-    Subscription
-} from 'rxjs';
+import { Location } from '@angular/common';
+import { Component, OnInit } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
+import { LoadStates } from '@app/enums/LoadStates';
+import { state } from '@app/helpers/state';
+import { WorkbookAddCommitResponse } from '@app/models';
+import { PlansService } from '@app/services/plans/plans.service';
+import { Subscription } from 'rxjs';
 @Component({
     // tslint:disable-next-line: component-selector
-    selector: 'add-workbook',
-    templateUrl: './add-workbook.component.pug',
-    styleUrls: ['./add-workbook.component.scss']
+    selector: 'workbook-add',
+    templateUrl: './workbook-add.component.pug',
+    styleUrls: ['./workbook-add.component.scss']
 })
 
 
-export class AddWorkbookComponent implements OnInit {
+export class WorkbookAddComponent implements OnInit {
     readonly states = LoadStates;
     currentStates = new Set();
 
@@ -72,7 +54,9 @@ export class AddWorkbookComponent implements OnInit {
                         this.router.navigate(['/launchpad', 'plans', response.plan.id, 'workbooks']);
                     }
                 },
-                () => {},
+                () => {
+                    this.currentStates.delete(this.states.loading);
+                },
                 () => {
                     this.currentStates.delete(this.states.loading);
                     subscribe.unsubscribe();
@@ -92,7 +76,9 @@ export class AddWorkbookComponent implements OnInit {
                         this.router.navigate(['/launchpad', 'plans', response.plan.id, 'workbooks']);
                     }
                 },
-                () => {},
+                () => {
+                    this.currentStates.delete(this.states.loading);
+                },
                 () => {
                     this.currentStates.delete(this.states.loading);
                     subscribe.unsubscribe();

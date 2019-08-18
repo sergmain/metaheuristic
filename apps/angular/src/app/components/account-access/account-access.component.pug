@@ -1,24 +1,25 @@
-ct-section(mode="card")
-    ct-section-header
-        ct-heading Account Role 
-            span('*ngIf'='response') id {{account.id }}, login {{account.username}}
-            span('*ngIf'='!response') ...
-    ct-section-body
-        ct-section-body-row('*ngIf'='response' style="font-size:125%;")
-            ct-section-content: p: mat-checkbox([(ngModel)]="isManager") Manager
-            ct-section-content: p: mat-checkbox([(ngModel)]="isOperator") Operator
-            ct-section-content: p: mat-checkbox([(ngModel)]="isBilling") Billing
-            ct-section-content: p: mat-checkbox([(ngModel)]="isData") Data
-            ct-section-content: p: mat-checkbox([(ngModel)]="isServerRestAccess") Server Rest Access
-            
-            ct-section-content: p: mat-checkbox([(ngModel)]="isAdmin") Admin
+ct-cols(align-items="baseline")
+    ct-col(size='6')
+        ct-section
+            ct-section-header
+                ct-heading Account Role 
+                    span('*ngIf'='response') id {{account.id }}, login {{account.username}}
+                    span('*ngIf'='!response') ...
+            ct-section-body
+                ct-section-body-row('*ngIf'='response' style="font-size:125%;")
+                    ct-section-content:  mat-checkbox([(ngModel)]="isManager") Manager
+                    ct-section-content:  mat-checkbox([(ngModel)]="isOperator") Operator
+                    ct-section-content:  mat-checkbox([(ngModel)]="isBilling") Billing
+                    ct-section-content:  mat-checkbox([(ngModel)]="isData") Data
+                    ct-section-content:  mat-checkbox([(ngModel)]="isServerRestAccess") Server Rest Access
+                    ct-section-content:  mat-checkbox([(ngModel)]="isAdmin") Admin
 
 
 
-        ct-section-body-row('*ngIf'='!response')
-            mat-progress-bar(mode="indeterminate")
-    ct-section-footer
-        ct-section-footer-row
-            ct-flex(justify-content="flex-end" gap="8px")
-                ct-flex-item: button(mat-stroked-button color="primary" '(click)'='back()') Cancel
-                ct-flex-item: button(mat-flat-button color="primary" '(click)'='save()' ) Save
+                ct-section-body-row('*ngIf'='!response')
+                    mat-progress-bar(mode="indeterminate")
+            ct-section-footer
+                ct-section-footer-row
+                    ct-flex(justify-content="flex-end" gap="8px")
+                        ct-flex-item: button(mat-stroked-button '(click)'='back()') Cancel
+                        ct-flex-item: button(mat-flat-button color="primary" '(click)'='save()' ) Save

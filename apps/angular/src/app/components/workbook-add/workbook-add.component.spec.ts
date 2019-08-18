@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { AddWorkbookComponent } from './add-workbook.component';
+import { WorkbookAddComponent } from './workbook-add.component';
 
-describe('AddWorkbookComponent', () => {
-  let component: AddWorkbookComponent;
-  let fixture: ComponentFixture<AddWorkbookComponent>;
+describe('WorkbookAddComponent', () => {
+  let component: WorkbookAddComponent;
+  let fixture: ComponentFixture<WorkbookAddComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ AddWorkbookComponent ]
+      declarations: [ WorkbookAddComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(AddWorkbookComponent);
+    fixture = TestBed.createComponent(WorkbookAddComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
