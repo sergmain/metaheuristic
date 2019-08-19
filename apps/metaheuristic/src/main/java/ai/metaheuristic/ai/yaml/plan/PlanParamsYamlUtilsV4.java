@@ -16,10 +16,8 @@
 
 package ai.metaheuristic.ai.yaml.plan;
 
-import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.plan.PlanApiData;
-import ai.metaheuristic.api.data.plan.PlanParamsYamlV3;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV4;
 import ai.metaheuristic.api.data.plan.PlanParamsYamlV5;
 import ai.metaheuristic.api.data_storage.DataStorageParams;
@@ -27,6 +25,7 @@ import ai.metaheuristic.api.launchpad.process.ProcessV4;
 import ai.metaheuristic.api.launchpad.process.ProcessV5;
 import ai.metaheuristic.api.launchpad.process.SnippetDefForPlanV5;
 import ai.metaheuristic.commons.yaml.YamlUtils;
+import ai.metaheuristic.commons.yaml.versioning.AbstractParamsYamlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.yaml.snakeyaml.Yaml;
@@ -43,7 +42,7 @@ import java.util.stream.Collectors;
  * Time: 12:10 AM
  */
 public class PlanParamsYamlUtilsV4
-        extends AbstractParamsYamlUtils<PlanParamsYamlV4, PlanParamsYamlV5, PlanParamsYamlUtilsV5, PlanParamsYamlV3, PlanParamsYamlUtilsV3, Void> {
+        extends AbstractParamsYamlUtils<PlanParamsYamlV4, PlanParamsYamlV5, PlanParamsYamlUtilsV5, Void, Void, Void> {
 
     @Override
     public int getVersion() {
@@ -93,7 +92,7 @@ public class PlanParamsYamlUtilsV4
     }
 
     @Override
-    public PlanParamsYamlV3 downgradeTo(Void yaml) {
+    public Void downgradeTo(Void yaml) {
         // not supported
         return null;
     }
@@ -104,7 +103,7 @@ public class PlanParamsYamlUtilsV4
     }
 
     @Override
-    public PlanParamsYamlUtilsV3 prevUtil() {
+    public Void prevUtil() {
         // not supported
         return null;
     }

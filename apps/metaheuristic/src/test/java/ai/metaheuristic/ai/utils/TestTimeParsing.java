@@ -207,15 +207,15 @@ public class TestTimeParsing {
         LocalDateTime time = LocalDateTime.parse("14/01/2019 23:59:29", fmt1);
         assertTrue(schedule.isActive(time));
 
-        DateTimeFormatter fmt2 = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
-        time = LocalDateTime.parse("2019-05-10 23:59:19", fmt2);
+        DateTimeFormatter fmt2 = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss.SSS");
+        time = LocalDateTime.parse("2019-05-10 23:59:19.138", fmt2);
         assertTrue(schedule.isActive(time));
     }
 
     @Test
     public void parseExtendedTimeYaml_weekendRestricted() throws IOException {
         SimpleYamlHolder holder;
-        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods//extended-time-weekend-restricted.yaml")) {
+        try (InputStream is = TestTimeParsing.class.getResourceAsStream("/yaml/time_periods/extended-time-weekend-restricted.yaml")) {
             holder = SimpleYamlHolderUtils.to(is);
         }
         assertNotNull(holder);
@@ -229,9 +229,9 @@ public class TestTimeParsing {
         assertNull(period.exceptionWorkingDay);
 
         LaunchpadSchedule schedule = new LaunchpadSchedule(holder.holder);
-        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss");
-        assertFalse(schedule.isActive(LocalDateTime.parse( "27/04/2019 23:59:59", fmt)));
-        assertFalse(schedule.isActive(LocalDateTime.parse( "27/04/2019 00:01:00", fmt)));
+        DateTimeFormatter fmt = DateTimeFormat.forPattern("dd/MM/yyyy HH:mm:ss.SSS");
+        assertFalse(schedule.isActive(LocalDateTime.parse( "27/04/2019 23:59:59.138", fmt)));
+        assertTrue(schedule.isActive(LocalDateTime.parse( "27/04/2019 00:01:00.000", fmt)));
 
     }
 

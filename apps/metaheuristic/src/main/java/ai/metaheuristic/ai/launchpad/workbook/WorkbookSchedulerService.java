@@ -23,7 +23,9 @@ import ai.metaheuristic.ai.launchpad.repositories.TaskRepository;
 import ai.metaheuristic.ai.launchpad.repositories.WorkbookRepository;
 import ai.metaheuristic.api.EnumsApi;
 import ai.metaheuristic.api.data.OperationStatusRest;
+import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.workbook.WorkbookParamsYaml;
+import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Profile;
@@ -33,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -119,15 +122,30 @@ public class WorkbookSchedulerService {
                     workbookService.updateTaskExecStates(workbook, taskStates);
                 }
 
-                // fix actual state of tasks (can be as a result of OptimisticLockingException) {
-                // fix IN_PROCESSING stae
+                // fix actual state of tasks (can be as a result of OptimisticLockingException)
+                // fix IN_PROCESSING state
+                // find and reset all hanging up tasks
                 states.entrySet().stream()
                         .filter(e-> EnumsApi.TaskExecState.IN_PROGRESS.value==e.getValue())
                         .forEach(e->{
                             Long taskId = e.getKey();
                             TaskImpl task = taskRepository.findById(taskId).orElse(null);
-                            if (task!=null && task.resultReceived && task.isCompleted ) {
-                                workbookService.updateTaskExecStateByWorkbookId(workbookId, task.id, EnumsApi.TaskExecState.OK.value);
+                            if (task != null) {
+                                TaskParamsYaml tpy = TaskParamsYamlUtils.BASE_YAML_UTILS.to(task.params);
+
+                                // did this task hang up at station?
+                                if (task.assignedOn!=null && tpy.taskYaml.timeoutBeforeTerminate != null && tpy.taskYaml.timeoutBeforeTerminate!=0L) {
+                                    final long multiplyBy2 = tpy.taskYaml.timeoutBeforeTerminate * 2 * 1000;
+                                    final long oneHourToMills = TimeUnit.HOURS.toMillis(1);
+                                    long timeout = multiplyBy2 > oneHourToMills ? oneHourToMills : multiplyBy2;
+                                    if ((System.currentTimeMillis() - task.assignedOn) > timeout) {
+                                        log.info("Reset task #{}, multiplyBy2: {}, timeout: {}", task.id, multiplyBy2, timeout);
+                                        workbookService.resetTask(task.id);
+                                    }
+                                }
+                                else if (task.resultReceived && task.isCompleted) {
+                                    workbookService.updateTaskExecStateByWorkbookId(workbookId, task.id, EnumsApi.TaskExecState.OK.value);
+                                }
                             }
                         });
             }

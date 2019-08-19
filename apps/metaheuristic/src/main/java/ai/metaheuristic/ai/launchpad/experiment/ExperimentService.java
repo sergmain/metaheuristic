@@ -19,7 +19,6 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Enums;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.Monitoring;
-import ai.metaheuristic.ai.launchpad.atlas.AtlasService;
 import ai.metaheuristic.ai.launchpad.beans.Experiment;
 import ai.metaheuristic.ai.launchpad.beans.Snippet;
 import ai.metaheuristic.ai.launchpad.beans.TaskImpl;
@@ -101,7 +100,6 @@ public class ExperimentService {
     private final WorkbookCache workbookCache;
     private final WorkbookRepository workbookRepository;
     private final ExperimentRepository experimentRepository;
-    private final AtlasService atlasService;
     private final ExperimentCache experimentCache;
 
     public static int compareMetricElement(BaseMetricElement o2, BaseMetricElement o1) {
@@ -851,6 +849,7 @@ public class ExperimentService {
                             }
                         }
                         yaml.taskYaml.clean = planParams.planYaml.clean;
+                        yaml.taskYaml.timeoutBeforeTerminate = process.timeoutBeforeTerminate;
 
                         String currTaskParams = TaskParamsYamlUtils.BASE_YAML_UTILS.toString(yaml);
 

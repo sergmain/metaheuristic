@@ -106,6 +106,7 @@ public class ExperimentProcessService {
             for (String poolCode : list) {
                 List<String> newResources = collectedInputs.get(poolCode);
                 if (newResources==null) {
+                    log.warn("#714.010 Can't find input resource for poolCode {}", poolCode);
                     result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
@@ -120,6 +121,7 @@ public class ExperimentProcessService {
 
                 PlanService.ResourcePools metaPools = new PlanService.ResourcePools(initialInputResourceCodes);
                 if (metaPools.status != EnumsApi.PlanProducingStatus.OK) {
+                    log.warn("#714.020 (metaPools.status != EnumsApi.PlanProducingStatus.OK), metaPools.status {}", metaPools.status);
                     result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                     return result;
                 }
@@ -128,6 +130,7 @@ public class ExperimentProcessService {
 
             features = collectedInputs.get(meta.getValue());
             if (features==null) {
+                log.warn("#714.030 Can't find input resource for meta.value {}", meta.getValue());
                 result.status = EnumsApi.PlanProducingStatus.INPUT_POOL_CODE_FROM_META_DOESNT_EXIST_ERROR;
                 return result;
             }
