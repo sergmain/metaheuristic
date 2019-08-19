@@ -51,6 +51,9 @@ export class AccountEditPassComponent implements OnInit {
         this.getAccount();
     }
 
+    back(){
+        this.location.back();
+    }
 
     getAccount(): void {
         const id = this.route.snapshot.paramMap.get('id');

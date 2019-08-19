@@ -18,7 +18,7 @@ ct-cols(align-items="baseline")
             ct-section-footer
                 ct-section-footer-row
                     ct-flex(justify-content="flex-end" gap="8px")
-                        ct-flex-item: button(mat-stroked-button '(click)'="location.back()") Cancel
+                        ct-flex-item: button(mat-stroked-button '(click)'="back()") Cancel
                         ct-flex-item: button(mat-flat-button '(click)'="save()" color="primary" '[disabled]'="currentStates.has(states.wait) || form.invalid") Save
     ct-col(size='6')
         ct-section(*ngIf="response")

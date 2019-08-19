@@ -46,6 +46,10 @@ export class AccountEditComponent implements OnInit {
             );
     }
 
+    back() {
+        this.location.back();
+    }
+
     save() {
         this.currentStates.add(this.states.wait)
         const subscribe = this.accountsService.account
