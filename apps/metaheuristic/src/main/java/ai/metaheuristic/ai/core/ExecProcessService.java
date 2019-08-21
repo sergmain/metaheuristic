@@ -15,6 +15,8 @@
  */
 package ai.metaheuristic.ai.core;
 
+import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.api.data.SnippetApiData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,7 +44,8 @@ public class ExecProcessService {
     }
 
     public SnippetApiData.SnippetExecResult execCommand(
-            List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate, String snippetCode) throws IOException, InterruptedException {
+            List<String> cmd, File execDir, File consoleLogFile, Long timeoutBeforeTerminate, String snippetCode,
+            final LaunchpadSchedule schedule) throws IOException, InterruptedException {
         log.info("Exec info:");
         log.info("\tcmd: {}", cmd);
         log.info("\ttaskDir: {}", execDir.getPath());
@@ -50,6 +53,7 @@ public class ExecProcessService {
         log.info("\tconsoleLogFile abs: {}", consoleLogFile.getAbsolutePath());
         log.info("\tsnippetCode: {}", snippetCode);
         log.info("\ttimeoutBeforeTerminate (seconds): {}", timeoutBeforeTerminate);
+        log.info("\tschedule: {}", schedule);
 
         final AtomicLong timeout = new AtomicLong(0);
         if (timeoutBeforeTerminate!=null && timeoutBeforeTerminate!=0) {
@@ -70,9 +74,11 @@ public class ExecProcessService {
 
         final StringBuilder timeoutMessage = new StringBuilder();
         final AtomicBoolean isTerminated = new AtomicBoolean(false);
+        final AtomicBoolean isInactivePeriod = new AtomicBoolean(false);
         try (final FileOutputStream fos = new FileOutputStream(consoleLogFile);
                 BufferedOutputStream bos = new BufferedOutputStream(fos)) {
             final AtomicBoolean isRun = new AtomicBoolean(false);
+            final AtomicBoolean isDone = new AtomicBoolean(false);
             final Thread reader = new Thread(() -> {
                 try {
                     log.info("thread #" + Thread.currentThread().getId() + ", start receiving stream from external process");
@@ -86,10 +92,14 @@ public class ExecProcessService {
                 catch (IOException e) {
                     log.error("Error collect data from output stream", e);
                 }
+                finally {
+                    isDone.set(true);
+                }
             });
             reader.start();
 
             if (timeout.get()>0) {
+                final long terminateAt = System.currentTimeMillis() + timeout.get();
                 timeoutThread = new Thread(() -> {
                     try {
                         while (!isRun.get()) {
@@ -97,7 +107,22 @@ public class ExecProcessService {
                             Thread.sleep(TimeUnit.MILLISECONDS.toMillis(500));
                         }
                         log.info("thread #" + Thread.currentThread().getId() + ", time before sleep - " + new Date());
-                        Thread.sleep(timeout.longValue());
+                        while (true) {
+                            Thread.sleep(TimeUnit.SECONDS.toMillis(2));
+                            if (System.currentTimeMillis() > terminateAt) {
+                                break;
+                            }
+                            // case when SchedulePolicy is strict
+                            if (schedule!=null && schedule.isCurrentTimeInactive()) {
+                                isInactivePeriod.set(true);
+                                break;
+                            }
+                            // normal termination of the reader thread. We don't need to terminate any application
+                            if (isDone.get()) {
+                                log.info("A reader thread stopped the execution in a normal way");
+                                return;
+                            }
+                        }
                         log.info("thread #" + Thread.currentThread().getId() + ", time before destroy - " + new Date());
 
                         final LinkedList<ProcessHandle> handles = new LinkedList<>();
@@ -111,7 +136,8 @@ public class ExecProcessService {
                         isTerminated.set(true);
                         log.info("thread #" + Thread.currentThread().getId() + ", time after destroy - " + new Date());
                     } catch (InterruptedException e) {
-                        log.info("thread #" + Thread.currentThread().getId() + ", current thread was interrupted");
+                        // this is a normal operation so it'll be debug level
+                        log.debug("thread #" + Thread.currentThread().getId() + ", current thread was interrupted");
                     }
                 });
                 timeoutThread.start();
@@ -137,6 +163,9 @@ public class ExecProcessService {
             catch(Throwable th) {
                 log.warn("Error with interrupting InputStream", th);
             }
+        }
+        if (isInactivePeriod.get()) {
+            throw new ScheduleInactivePeriodException();
         }
 
         log.info("Any errors of execution? {}", (exitCode == 0 ? "No" : "Yes"));

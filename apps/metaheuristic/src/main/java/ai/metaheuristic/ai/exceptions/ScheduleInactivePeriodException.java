@@ -14,22 +14,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ai.metaheuristic.ai.station;
-
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Profile;
-import org.springframework.stereotype.Service;
+package ai.metaheuristic.ai.exceptions;
 
 /**
  * @author Serge
- * Date: 7/16/2019
- * Time: 1:59 AM
+ * Date: 8/20/2019
+ * Time: 5:35 PM
  */
-@Service
-@Profile("station")
-public class TaskProcessorStateService {
-
-    // TODO 2019.08.20 not finished logic. maybe it should be deleted
-    public Long currentTaskId;
-
+public class ScheduleInactivePeriodException extends RuntimeException {
 }

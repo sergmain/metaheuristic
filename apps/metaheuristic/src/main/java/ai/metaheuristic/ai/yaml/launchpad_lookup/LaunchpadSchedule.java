@@ -42,6 +42,7 @@ public class LaunchpadSchedule {
     private TimePeriods friday = TimePeriods.ALWAYS_ACTIVE;
     private TimePeriods saturday = TimePeriods.ALWAYS_ACTIVE;
     private TimePeriods sunday = TimePeriods.ALWAYS_ACTIVE;
+    public final ExtendedTimePeriod.SchedulePolicy policy;
 
 /*
     Monday 	    Mon. 	Mo.
@@ -53,16 +54,17 @@ public class LaunchpadSchedule {
     Sunday 	    Sun. 	Su
 */
 
-
     public final String asString;
 
     public LaunchpadSchedule(String cfg) {
         if (StringUtils.isBlank(cfg)) {
+            this.policy = ExtendedTimePeriod.SchedulePolicy.normal;
             this.asString = "";
             return;
         }
         this.asString = cfg;
         final ExtendedTimePeriod config = ExtendedTimePeriodUtils.to(cfg);
+        this.policy = config.policy;
 
         try {
             if (!S.b(config.workingDay)) {
@@ -173,7 +175,7 @@ public class LaunchpadSchedule {
                 periods = sunday;
                 break;
             default:
-                throw new IllegalStateException("Wrong day of week " + i);
+                throw new IllegalStateException("Wrong number of day of week " + i);
         }
         return periods.isActive(curr.toLocalTime());
     }

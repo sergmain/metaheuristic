@@ -440,6 +440,17 @@ public class StationTaskService {
         return true;
     }
 
+    public StationTask resetTask(String launchpadUrl, Long taskId) {
+        synchronized (StationSyncHolder.stationGlobalSync) {
+            StationTask task = findById(launchpadUrl, taskId);
+            if (task == null) {
+                return null;
+            }
+            task.setLaunchedOn(null);
+            return save(task);
+        }
+    }
+
     public StationTask setLaunchOn(String launchpadUrl, long taskId) {
         synchronized (StationSyncHolder.stationGlobalSync) {
             StationTask task = findById(launchpadUrl, taskId);

@@ -19,12 +19,15 @@ import ai.metaheuristic.ai.Consts;
 import ai.metaheuristic.ai.Globals;
 import ai.metaheuristic.ai.comm.Protocol;
 import ai.metaheuristic.ai.core.ExecProcessService;
+import ai.metaheuristic.ai.exceptions.ScheduleInactivePeriodException;
 import ai.metaheuristic.ai.resource.AssetFile;
 import ai.metaheuristic.ai.resource.ResourceUtils;
 import ai.metaheuristic.ai.station.env.EnvService;
 import ai.metaheuristic.ai.station.sourcing.git.GitSourcingService;
 import ai.metaheuristic.ai.station.station_resource.ResourceProvider;
 import ai.metaheuristic.ai.station.station_resource.ResourceProviderFactory;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.ExtendedTimePeriod;
+import ai.metaheuristic.ai.yaml.launchpad_lookup.LaunchpadSchedule;
 import ai.metaheuristic.ai.yaml.metadata.Metadata;
 import ai.metaheuristic.ai.yaml.station_task.StationTask;
 import ai.metaheuristic.api.EnumsApi;
@@ -108,7 +111,7 @@ public class TaskProcessor {
             LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad = launchpadLookupExtendedService.lookupExtendedMap.get(task.launchpadUrl);
 
             if (launchpad.schedule.isCurrentTimeInactive()) {
-                log.info("Can't process task for url {} at this time, time: {}, permitted period of time: {}", task.launchpadUrl, new Date(), launchpad.schedule.asString);
+                log.info("Can't process task #{} for url {} at this time, time: {}, permitted period of time: {}", task.taskId, task.launchpadUrl, new Date(), launchpad.schedule.asString);
                 return;
             }
 
@@ -251,7 +254,14 @@ public class TaskProcessor {
             try {
                 taskProcessorStateService.currentTaskId = task.taskId;
                 execAllSnippets(task, launchpadCode, launchpad, taskDir, taskParamYaml, artifactDir, systemDir, results);
-            } finally {
+            }
+            catch(ScheduleInactivePeriodException e) {
+                stationTaskService.resetTask(task.launchpadUrl, task.taskId);
+                stationTaskService.delete(task.launchpadUrl, task.taskId);
+                log.info("An execution of task #{} was terminated because of inactivity period. " +
+                        "This task will be processed later", task.taskId);
+            }
+            finally {
                 taskProcessorStateService.currentTaskId = null;
             }
         }
@@ -266,11 +276,17 @@ public class TaskProcessor {
 
     }
 
-    private void execAllSnippets(StationTask task, Metadata.LaunchpadInfo launchpadCode, LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad, File taskDir, TaskParamsYaml taskParamYaml, File artifactDir, File systemDir, SnippetPrepareResult[] results) {
+    private void execAllSnippets(
+            StationTask task, Metadata.LaunchpadInfo launchpadCode,
+            LaunchpadLookupExtendedService.LaunchpadLookupExtended launchpad,
+            File taskDir, TaskParamsYaml taskParamYaml, File artifactDir,
+            File systemDir, SnippetPrepareResult[] results) {
         List<SnippetApiData.SnippetExecResult> preSnippetExecResult = new ArrayList<>();
         List<SnippetApiData.SnippetExecResult> postSnippetExecResult = new ArrayList<>();
         boolean isOk = true;
         int idx = 0;
+        LaunchpadSchedule schedule = launchpad.schedule!=null && launchpad.schedule.policy== ExtendedTimePeriod.SchedulePolicy.strict
+                ? launchpad.schedule : null;
         for (SnippetApiData.SnippetConfig preSnippetConfig : taskParamYaml.taskYaml.preSnippets) {
             SnippetPrepareResult result = results[idx++];
             SnippetApiData.SnippetExecResult execResult;
@@ -280,7 +296,7 @@ public class TaskProcessor {
                         "#100.110 Illegal State, result of preparing of snippet "+preSnippetConfig.code+" is null");
             }
             else {
-                execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
+                execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result, schedule);
             }
             preSnippetExecResult.add(execResult);
             if (!execResult.isOk) {
@@ -300,7 +316,7 @@ public class TaskProcessor {
             }
             if (isOk) {
                 SnippetApiData.SnippetConfig mainSnippetConfig = result.snippet;
-                snippetExecResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
+                snippetExecResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result, schedule);
                 if (!snippetExecResult.isOk) {
                     isOk = false;
                 }
@@ -314,7 +330,7 @@ public class TaskProcessor {
                                     "#100.130 Illegal State, result of preparing of snippet "+postSnippetConfig.code+" is null");
                         }
                         else {
-                            execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result);
+                            execResult = execSnippet(task, taskDir, taskParamYaml, systemDir, result, schedule);
                         }
                         postSnippetExecResult.add(execResult);
                         if (!execResult.isOk) {
@@ -386,7 +402,8 @@ public class TaskProcessor {
     @SuppressWarnings("WeakerAccess")
     // TODO 2019.05.02 implement unit-test for this method
     public SnippetApiData.SnippetExecResult execSnippet(
-            StationTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, SnippetPrepareResult snippetPrepareResult) {
+            StationTask task, File taskDir, TaskParamsYaml taskParamYaml, File systemDir, SnippetPrepareResult snippetPrepareResult,
+            LaunchpadSchedule schedule) {
 
         File paramFile = new File(taskDir, Consts.ARTIFACTS_DIR + File.separatorChar + String.format(Consts.PARAMS_YAML_MASK, snippetPrepareResult.snippet.getTaskParamsVersion()));
 
@@ -453,9 +470,13 @@ public class TaskProcessor {
 
             // Exec snippet
             snippetExecResult = execProcessService.execCommand(
-                    cmd, taskDir, consoleLogFile, taskParamYaml.taskYaml.timeoutBeforeTerminate, snippetPrepareResult.snippet.code);
+                    cmd, taskDir, consoleLogFile, taskParamYaml.taskYaml.timeoutBeforeTerminate, snippetPrepareResult.snippet.code, schedule);
 
-        } catch (Throwable th) {
+        }
+        catch (ScheduleInactivePeriodException e) {
+            throw e;
+        }
+        catch (Throwable th) {
             log.error("#100.180 Error exec process:\n" +
                     "\tenv: " + snippetPrepareResult.snippet.env +"\n" +
                     "\tinterpreter: " + interpreter+"\n" +
