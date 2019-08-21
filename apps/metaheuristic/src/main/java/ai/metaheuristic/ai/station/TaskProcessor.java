@@ -258,7 +258,7 @@ public class TaskProcessor {
             catch(ScheduleInactivePeriodException e) {
                 stationTaskService.resetTask(task.launchpadUrl, task.taskId);
                 stationTaskService.delete(task.launchpadUrl, task.taskId);
-                log.info("An execution of task #{} was terminated because of inactivity period. " +
+                log.info("An execution of task #{} was terminated because of the beginning of inactivity period. " +
                         "This task will be processed later", task.taskId);
             }
             finally {
