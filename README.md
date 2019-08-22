@@ -120,7 +120,7 @@ For commercial use you must buy commercial license with annual subscription if n
 | Scientific researches                                  | Free to use, citing | 
 | Non-profit organizations                               | Free to use, citing | 
 | Commercial use, less than 25 Stations\*                | Free to use         | 
-| All other cases when there are 25 Stations\* or more   | Annual subscription, $50k for Launchpad\*\*, $500 per station | 
+| All other cases when there are 25 Stations\* or more   | Annual subscription, $50k for Launchpad\*\*, $200 per station | 
 
 \* Station is a client part of metaheuristic which is processing tasks.   
 \*\* Launchpad is a server part of metaheuristic which is serving all configurations 
