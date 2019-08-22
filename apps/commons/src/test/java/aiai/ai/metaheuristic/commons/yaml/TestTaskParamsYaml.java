@@ -17,12 +17,14 @@
 package aiai.ai.metaheuristic.commons.yaml;
 
 import ai.metaheuristic.api.EnumsApi;
+import ai.metaheuristic.api.data.Meta;
 import ai.metaheuristic.api.data.SnippetApiData;
 import ai.metaheuristic.api.data.task.TaskParamsYaml;
 import ai.metaheuristic.api.data.task.TaskParamsYamlV2;
 import ai.metaheuristic.commons.yaml.task.TaskParamsYamlUtils;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -34,6 +36,32 @@ import static org.junit.Assert.*;
  * Time: 6:35 PM
  */
 public class TestTaskParamsYaml {
+
+    @Test
+    public void testMetas() {
+        final SnippetApiData.SnippetConfig snippet = new SnippetApiData.SnippetConfig();
+        snippet.metas = new ArrayList<>();
+        snippet.metas.add(new Meta("key1", "value1", null));
+
+        Meta m;
+        m = snippet.getMeta("key1");
+        assertEquals("value1", m.getValue());
+
+        m = snippet.getMeta("key2", "key1");
+        assertEquals("value1", m.getValue());
+
+        m = snippet.getMeta("key2", "key3");
+        assertNull(m);
+
+        m = snippet.getMeta();
+        assertNull(m);
+
+        snippet.metas = null;
+
+        m = snippet.getMeta();
+        assertNull(m);
+    }
+
 
     @Test
     public void test() {

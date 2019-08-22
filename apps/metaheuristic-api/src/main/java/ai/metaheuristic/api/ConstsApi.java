@@ -22,5 +22,8 @@ package ai.metaheuristic.api;
  * Time: 1:45 AM
  */
 public class ConstsApi {
+    public static final String META_MH_TASK_PARAMS_VERSION = "mh.task-params-version";
+
+    @Deprecated
     public static final String META_TASK_PARAMS_VERSION = "task-params-version";
 }
